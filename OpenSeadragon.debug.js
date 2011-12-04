@@ -1,56 +1,54 @@
 // (c) 2010 OpenSeadragon, (c) 2010 CodePlex Foundation
-/// <reference path="../Seadragon.Helpers.pre.js" />
-/// <reference path="../Seadragon.Utils.pre.js" />
-/// <reference path="../Seadragon.MouseTracker.pre.js" />
-/// <reference path="../Seadragon.pre.js" />
-/// <reference path="../Seadragon.Strings.pre.js" />
-/// <reference path="../Seadragon.Point.pre.js" />
-/// <reference path="../Seadragon.Profiler.pre.js" />
-/// <reference path="../Seadragon.ImageLoader.pre.js" />
-/// <reference path="../Seadragon.TileSource.pre.js" />
-/// <reference path="../Seadragon.Config.pre.js" />
-/// <reference path="../Seadragon.DeepZoom.pre.js" />
-/// <reference path="../Seadragon.Buttons.pre.js" />
-/// <reference path="../Seadragon.Rect.pre.js" />
-/// <reference path="../Seadragon.DisplayRect.pre.js" />
-/// <reference path="../Seadragon.Spring.pre.js" />
-/// <reference path="../Seadragon.Drawer.pre.js" />
-/// <reference path="../Seadragon.Viewport.pre.js" />
-/// <reference path="../Seadragon.Debug.pre.js" />
+//Start Thatcher - general changes include adding ; where best practice
+//End Thatcher
 
-/// <reference path="embed/OpenSeadragon.pre.js" />
+//Start Thatcher - .add was only used once
+//Array.prototype.add = function(array, item) {
+//    array[array.length] = item;
+//};
+//End Thatcher
 
-Array.prototype.add = function(array, item) {
-    array[array.length] = item;
-};
+//Start Thatcher - .clear is never used in this code base
+//Array.prototype.clear = function(array) {
+//    array.length = 0;
+//};
+//End Thatcher
 
-Array.prototype.clear = function(array) {
-    array.length = 0;
-};
+//Start Thatcher - .clone is only used once 
+//Array.prototype.clone = function(array) {
+//    return array.length === 1 ? [array[0]] : Array.apply(null, array);
+//};
+//SArray = Array();
+//Thatcher
 
-Array.prototype.clone = function(array) {
-    return array.length === 1 ? [array[0]] : Array.apply(null, array);
-};
-SArray = Array();
+//Start Thatcher - This is silly, Function is defined
+//if (!window.Function) {
+//    window.Function = {};
+//}
+//End Thatcher
 
-if (!window.Function) {
-    window.Function = {};
-}
-Function.prototype.createDelegate = function (object, method) {
-    return function () {
-        if (arguments === undefined)
-            arguments = [];
-        return method.apply(object, arguments);
-    };
-};
+//Start Thatcher - moved into Seadragon namespace
+//Function.prototype.delegate = function(object, method) {
+//    return function() {
+//        if (arguments === undefined)
+//            arguments = [];
+//        return method.apply(object, arguments);
+//    };
+//}
+//End Thatcher
 
-function String() {
+//Start Thatcher - This is also silly and has terrible side effects
+//function String() {
+//
+//}
+//End Thatcher
 
-}
-String.format = function (format, args) {
+//Start Thatcher - moved into Seadragon namespace
+/*
+String.format = function(format, args) {
     return String._toFormattedString(false, arguments);
-};
-String._toFormattedString = function (useLocale, args) {
+}
+String._toFormattedString = function(useLocale, args) {
     var result = '';
     var format = args[0];
 
@@ -109,11 +107,18 @@ String._toFormattedString = function (useLocale, args) {
     }
 
     return result;
-};
+}
+*/
+//End Thatcher
 
+//Start Thatcher - Observer is only used twice and always uses the following
+//               - call "this._observer._getContext(this, true).events;"
+//               - To start I'm just making 'events' a member variable that
+//               - is an instance of EventHandlerList
+/*
 function Observer() { }
 Observer.prototype = {
-    _getContext: function (obj, create) {
+    _getContext: function(obj, create) {
         var ctx = obj._observerContext;
         if (ctx) return ctx();
         if (create) {
@@ -121,70 +126,221 @@ Observer.prototype = {
         }
         return null;
     },
-    _createContext: function () {
+    _createContext: function() {
         var ctx = {
             events: new EventHandlerList()
         };
-        return function () {
+        return function() {
             return ctx;
-        };
+        }
     }
-};
+}
+*/
+//End Thatcher
+
+//Start Thatcher - Adding singular global namespace declaration and closure
+Seadragon = function(){};
+(function($){
+//End Thatcher
 
 var EventHandlerList = function EventHandlerList() {
     this._list = {};
 };
+
 EventHandlerList.prototype = {
-    _addHandler: function (id, handler) {
-        SArray.add(this._getEvent(id, true), handler);
+    //Start Thatcher - unneccessary indirection, just use addHandler
+    //_addHandler: function(id, handler) {
+        //Start Thatcher
+        //SArray.add(this._getEvent(id, true), handler);
+    //    var events = this._getEvent(id, true);
+    //    events[events.length] = handler;
+        //End Thatcher
+    //},
+    //End Thatcher
+    addHandler: function(id, handler) {
+        //Start Thatcher - unneccessary indirection
+        //this._addHandler(id, handler);
+        //End Thatcher
+
+        //Start Thatcher - removing indirection
+        //var events = this._getEvent(id, true);
+        var events = this._list[ id ];
+        if( !events ){
+            this._list[ id ] = events = [];
+        }
+        //End Thatcher
+        events[events.length] = handler;
     },
-    addHandler: function (id, handler) {
-        this._addHandler(id, handler);
-    },
-    _removeHandler: function (id, handler) {
-        var evt = this._getEvent(id);
+    //Start Thatcher - unneccessary indirection, just use _removeHandler
+    //_removeHandler: function(id, handler) {
+    //    var evt = this._getEvent(id);
+    //    if (!evt) return;
+        //Start Thatcher - SArray.remove is not defined anywhere in this code base
+        //               - and is not a natural function of the Array.prototype!
+        //SArray.remove(evt, handler);
+        //End Thatcher
+    //},
+    //EndThatcher
+    //Start Thatcher - _removeHandlers is not used in the entire codebase
+    //_removeHandlers: function(id) {
+    //    if (!id) {
+    //        this._list = {};
+    //    }
+    //    else {
+    //        var evt = this._getEvent(id);
+    //        if (!evt) return;
+    //        evt.length = 0;
+    //    }
+    //},
+    //End Thatcher
+    removeHandler: function(id, handler) {
+        //Start Thatcher - unneccessary indirection.  Also, because events were
+        //               - not actually being removed, we need to add the code
+        //               - to do the removal ourselves. TODO
+        //this._removeHandler(id, handler);
+        var evt = this._list[ id ];
         if (!evt) return;
-        SArray.remove(evt, handler);
+        //End Thatcher
     },
-    _removeHandlers: function (id) {
-        if (!id) {
-            this._list = {};
-        }
-        else {
-            var evt = this._getEvent(id);
-            if (!evt) return;
-            evt.length = 0;
-        }
-    },
-    removeHandler: function (id, handler) {
-        this._removeHandler(id, handler);
-    },
-    getHandler: function (id) {
-        var evt = this._getEvent(id);
+    getHandler: function(id) {
+        //Start Thatcher - remove indirection
+        //var evt = this._getEvent(id);
+        var evt = this._list[ id ] || [];
+        //End Thatcher
         if (!evt || !evt.length) return null;
-        evt = SArray.clone(evt);
-        return function (source, args) {
+        //Start Thatcher - .clone only used once in entire codebase  so just do it
+        //evt = SArray.clone(evt);
+        evt = evt.length === 1 ? 
+            [evt[0]] : 
+            Array.apply( null, evt );
+        //End Thatcher
+        return function(source, args) {
             for (var i = 0, l = evt.length; i < l; i++) {
                 evt[i](source, args);
             }
         };
-    },
-    _getEvent: function (id, create) {
-        var e = this._list[id];
-        if (!e) {
-            if (!create) return null;
-            this._list[id] = e = [];
-        }
-        return e;
     }
+    //Start Thatcher - removing indirection
+    //,
+    //_getEvent: function(id, create) {
+    //    var e = this._list[id];
+    //    if (!e) {
+    //        if (!create) return null;
+    //        this._list[id] = e = [];
+    //    }
+    //    return e;
+    //}
+    //End Thatcher
 };
-/// <reference path="embed/OpenSeadragon.pre.js" />
 
-var Seadragon = new function () {
+//Start Thatcher - Created a global declaration with closure
+//var Seadragon = new function() {
+//
+//}
+//End Thatcher
 
+//Start Thatcher - Moved this function into closure namespace, more importantly 
+//               - avoids polluting built in Function
+function delegate(object, method) {
+    return function() {
+        if (arguments === undefined)
+            arguments = [];
+        return method.apply(object, arguments);
+    };
 };
+//End Thatcher
 
-Seadragon.Utils = function () {
+//Start Thatcher - Moved this function into closure namespace, more importantly
+//               - avoids polluting built in String. Also removed indirection.
+//var format = function(format, args) {
+//    return $._toFormattedString(false, arguments);
+//};
+//$._toFormattedString = function(useLocale, args) {
+function format(){
+    //Start Thatcher - removeing indirection
+    var args = arguments,
+        useLocale = false;
+    //End Thatcher
+    var result = '';
+    var format = args[0];
+
+    for (var i = 0; ; ) {
+        var open = format.indexOf('{', i);
+        var close = format.indexOf('}', i);
+        if ((open < 0) && (close < 0)) {
+            result += format.slice(i);
+            break;
+        }
+        if ((close > 0) && ((close < open) || (open < 0))) {
+            if (format.charAt(close + 1) !== '}') {
+                //Start Thatcher - There is no Sys object or Error.argument
+                //throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
+                throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
+                //End Thatcher
+            }
+            result += format.slice(i, close + 1);
+            i = close + 2;
+            continue;
+        }
+
+        result += format.slice(i, open);
+        i = open + 1;
+
+        if (format.charAt(i) === '{') {
+            result += '{';
+            i++;
+            continue;
+        }
+
+        //Start Thatcher - No Sys object or Error.argument
+        //if (close < 0) throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
+        if (close < 0) {
+            throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
+        }
+        //End Thatcher
+
+
+        var brace = format.substring(i, close);
+        var colonIndex = brace.indexOf(':');
+        var argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10) + 1;
+        //Start Thatcher - No Sys object or Error,argument
+        //if (isNaN(argNumber)) throw Error.argument('format', Sys.Res.stringFormatInvalid);
+        if( isNaN( argNumber ) ){
+            throw Error('SeadragonError: Invalid Format String\n' + format );
+        }
+        //End Thatcher
+        var argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
+
+        var arg = args[argNumber];
+        if (typeof (arg) === "undefined" || arg === null) {
+            arg = '';
+        }
+
+        if (arg.toFormattedString) {
+            result += arg.toFormattedString(argFormat);
+        }
+        else if (useLocale && arg.localeFormat) {
+            result += arg.localeFormat(argFormat);
+        }
+        else if ( arg.format ) {
+            result += arg.format(argFormat);
+        }
+        else
+            result += arg.toString();
+
+        i = close + 1;
+    }
+
+    return result;
+};
+//End Thatcher
+
+
+//Start Thatcher - Notes for refactoring Utils
+//  * Use .prototype pattern
+//  * Provide closure
+//End Thatcher
+$.Utils = function() {
 
 
     var Browser = {
@@ -196,7 +352,7 @@ Seadragon.Utils = function () {
         OPERA: 5
     };
 
-    Seadragon.Browser = Browser;
+    $.Browser = Browser;
 
 
     var self = this;
@@ -218,7 +374,7 @@ Seadragon.Utils = function () {
     var urlParams = {};
 
 
-    (function () {
+    (function() {
 
 
         var app = navigator.appName;
@@ -285,25 +441,24 @@ Seadragon.Utils = function () {
     }
 
 
-    this.getBrowser = function () {
+    this.getBrowser = function() {
         return browser;
     };
 
-    this.getBrowserVersion = function () {
+    this.getBrowserVersion = function() {
         return browserVersion;
     };
 
-    this.getElement = function (elmt) {
+    this.getElement = function(elmt) {
         if (typeof (elmt) == "string") {
             elmt = document.getElementById(elmt);
         }
-
         return elmt;
     };
 
-    this.getElementPosition = function (elmt) {
-        elmt = self.getElement(elmt);
-        var result = new Seadragon.Point();
+    this.getElementPosition = function(elmt) {
+        var elmt = self.getElement(elmt);
+        var result = new $.Point();
 
 
         var isFixed = self.getElementStyle(elmt).position == "fixed";
@@ -325,31 +480,30 @@ Seadragon.Utils = function () {
         return result;
     };
 
-    this.getElementSize = function (elmt) {
-        elmt = self.getElement(elmt);
-        return new Seadragon.Point(elmt.clientWidth, elmt.clientHeight);
+    this.getElementSize = function(elmt) {
+        var elmt = self.getElement(elmt);
+        return new $.Point(elmt.clientWidth, elmt.clientHeight);
     };
 
-    this.getElementStyle = function (elmt) {
-        elmt = self.getElement(elmt);
+    this.getElementStyle = function(elmt) {
+        var elmt = self.getElement(elmt);
 
         if (elmt.currentStyle) {
             return elmt.currentStyle;
         } else if (window.getComputedStyle) {
             return window.getComputedStyle(elmt, "");
         } else {
-            Seadragon.Debug.fail("Unknown element style, no known technique.");
-            return null;
+            $.Debug.fail("Unknown element style, no known technique.");
         }
     };
 
-    this.getEvent = function (event) {
+    this.getEvent = function(event) {
         return event ? event : window.event;
     };
 
-    this.getMousePosition = function (event) {
-        event = self.getEvent(event);
-        var result = new Seadragon.Point();
+    this.getMousePosition = function(event) {
+        var event = self.getEvent(event);
+        var result = new $.Point();
 
 
         if (typeof (event.pageX) == "number") {
@@ -359,14 +513,14 @@ Seadragon.Utils = function () {
             result.x = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
             result.y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
         } else {
-            Seadragon.Debug.fail("Unknown event mouse position, no known technique.");
+            $.Debug.fail("Unknown event mouse position, no known technique.");
         }
 
         return result;
     };
 
-    this.getPageScroll = function () {
-        var result = new Seadragon.Point();
+    this.getPageScroll = function() {
+        var result = new $.Point();
         var docElmt = document.documentElement || {};
         var body = document.body || {};
 
@@ -386,8 +540,8 @@ Seadragon.Utils = function () {
         return result;
     };
 
-    this.getWindowSize = function () {
-        var result = new Seadragon.Point();
+    this.getWindowSize = function() {
+        var result = new $.Point();
         var docElmt = document.documentElement || {};
         var body = document.body || {};
 
@@ -403,19 +557,19 @@ Seadragon.Utils = function () {
             result.x = body.clientWidth;
             result.y = body.clientHeight;
         } else {
-            Seadragon.Debug.fail("Unknown window size, no known technique.");
+            $.Debug.fail("Unknown window size, no known technique.");
         }
 
         return result;
     };
 
-    this.imageFormatSupported = function (ext) {
-        ext = ext ? ext : "";
+    this.imageFormatSupported = function(ext) {
+        var ext = ext ? ext : "";
         return !!fileFormats[ext.toLowerCase()];
     };
 
-    this.makeCenteredNode = function (elmt) {
-        elmt = Seadragon.Utils.getElement(elmt);
+    this.makeCenteredNode = function(elmt) {
+        var elmt = $.Utils.getElement(elmt);
         var div = self.makeNeutralElement("div");
         var html = [];
 
@@ -444,7 +598,7 @@ Seadragon.Utils = function () {
         return div;
     };
 
-    this.makeNeutralElement = function (tagName) {
+    this.makeNeutralElement = function(tagName) {
         var elmt = document.createElement(tagName);
         var style = elmt.style;
 
@@ -457,7 +611,7 @@ Seadragon.Utils = function () {
         return elmt;
     };
 
-    this.makeTransparentImage = function (src) {
+    this.makeTransparentImage = function(src) {
         var img = self.makeNeutralElement("img");
         var elmt = null;
 
@@ -465,7 +619,7 @@ Seadragon.Utils = function () {
             elmt = self.makeNeutralElement("span");
             elmt.style.display = "inline-block";
 
-            img.onload = function () {
+            img.onload = function() {
                 elmt.style.width = elmt.style.width || img.width + "px";
                 elmt.style.height = elmt.style.height || img.height + "px";
 
@@ -485,8 +639,8 @@ Seadragon.Utils = function () {
         return elmt;
     };
 
-    this.setElementOpacity = function (elmt, opacity, usesAlpha) {
-        elmt = self.getElement(elmt);
+    this.setElementOpacity = function(elmt, opacity, usesAlpha) {
+        var elmt = self.getElement(elmt);
 
         if (usesAlpha && badAlphaBrowser) {
             opacity = Math.round(opacity);
@@ -518,8 +672,8 @@ Seadragon.Utils = function () {
         }
     };
 
-    this.addEvent = function (elmt, eventName, handler, useCapture) {
-        elmt = self.getElement(elmt);
+    this.addEvent = function(elmt, eventName, handler, useCapture) {
+        var elmt = self.getElement(elmt);
 
 
         if (elmt.addEventListener) {
@@ -530,12 +684,12 @@ Seadragon.Utils = function () {
                 elmt.setCapture();
             }
         } else {
-            Seadragon.Debug.fail("Unable to attach event handler, no known technique.");
+            $.Debug.fail("Unable to attach event handler, no known technique.");
         }
     };
 
-    this.removeEvent = function (elmt, eventName, handler, useCapture) {
-        elmt = self.getElement(elmt);
+    this.removeEvent = function(elmt, eventName, handler, useCapture) {
+        var elmt = self.getElement(elmt);
 
 
         if (elmt.removeEventListener) {
@@ -546,12 +700,12 @@ Seadragon.Utils = function () {
                 elmt.releaseCapture();
             }
         } else {
-            Seadragon.Debug.fail("Unable to detach event handler, no known technique.");
+            $.Debug.fail("Unable to detach event handler, no known technique.");
         }
     };
 
-    this.cancelEvent = function (event) {
-        event = self.getEvent(event);
+    this.cancelEvent = function(event) {
+        var event = self.getEvent(event);
 
 
         if (event.preventDefault) {
@@ -562,8 +716,8 @@ Seadragon.Utils = function () {
         event.returnValue = false;      // IE for preventing default
     };
 
-    this.stopEvent = function (event) {
-        event = self.getEvent(event);
+    this.stopEvent = function(event) {
+        var event = self.getEvent(event);
 
 
         if (event.stopPropagation) {
@@ -573,13 +727,13 @@ Seadragon.Utils = function () {
         event.cancelBubble = true;      // IE for stopping propagation
     };
 
-    this.createCallback = function (object, method) {
+    this.createCallback = function(object, method) {
         var initialArgs = [];
         for (var i = 2; i < arguments.length; i++) {
             initialArgs.push(arguments[i]);
         }
 
-        return function () {
+        return function() {
             var args = initialArgs.concat([]);
             for (var i = 0; i < arguments.length; i++) {
                 args.push(arguments[i]);
@@ -589,19 +743,19 @@ Seadragon.Utils = function () {
         };
     };
 
-    this.getUrlParameter = function (key) {
+    this.getUrlParameter = function(key) {
         var value = urlParams[key];
         return value ? value : null;
     };
 
-    this.makeAjaxRequest = function (url, callback) {
+    this.makeAjaxRequest = function(url, callback) {
         var async = typeof (callback) == "function";
         var req = null;
 
         if (async) {
             var actual = callback;
-            callback = function () {
-                window.setTimeout(Seadragon.Utils.createCallback(null, actual, req), 1);
+            var callback = function() {
+                window.setTimeout($.Utils.createCallback(null, actual, req), 1);
             };
         }
 
@@ -619,14 +773,14 @@ Seadragon.Utils = function () {
         }
 
         if (!req) {
-            Seadragon.Debug.fail("Browser doesn't support XMLHttpRequest.");
+            $.Debug.fail("Browser doesn't support XMLHttpRequest.");
         }
 
 
         if (async) {
-            req.onreadystatechange = function () {
+            req.onreadystatechange = function() {
                 if (req.readyState == 4) {
-                    req.onreadystatechange = new function () { };
+                    req.onreadystatechange = new function() { };
                     callback();
                 }
             };
@@ -636,7 +790,7 @@ Seadragon.Utils = function () {
             req.open("GET", url, async);
             req.send(null);
         } catch (e) {
-            Seadragon.Debug.log(e.name + " while making AJAX request: " + e.message);
+            $.Debug.log(e.name + " while making AJAX request: " + e.message);
 
             req.onreadystatechange = null;
             req = null;
@@ -649,7 +803,7 @@ Seadragon.Utils = function () {
         return async ? null : req;
     };
 
-    this.parseXml = function (string) {
+    this.parseXml = function(string) {
         var xmlDoc = null;
 
         if (window.ActiveXObject) {
@@ -658,34 +812,37 @@ Seadragon.Utils = function () {
                 xmlDoc.async = false;
                 xmlDoc.loadXML(string);
             } catch (e) {
-                Seadragon.Debug.log(e.name + " while parsing XML (ActiveX): " + e.message);
+                $.Debug.log(e.name + " while parsing XML (ActiveX): " + e.message);
             }
         } else if (window.DOMParser) {
             try {
                 var parser = new DOMParser();
                 xmlDoc = parser.parseFromString(string, "text/xml");
             } catch (e) {
-                Seadragon.Debug.log(e.name + " while parsing XML (DOMParser): " + e.message);
+                $.Debug.log(e.name + " while parsing XML (DOMParser): " + e.message);
             }
         } else {
-            Seadragon.Debug.fail("Browser doesn't support XML DOM.");
+            $.Debug.fail("Browser doesn't support XML DOM.");
         }
 
         return xmlDoc;
     };
 
 };
-Seadragon.Utils = new Seadragon.Utils();
-/// <reference path="embed/OpenSeadragon.pre.js" />
+
+//Start Thatcher - Remove Singleton pattern in favor of object literals
+//  TODO
+$.Utils = new $.Utils();
+//End Thatcher
+
 
 (function () {
-
-    if (Seadragon.MouseTracker) {
+    if ($.MouseTracker) {
         return;
     }
 
 
-    var isIE = Seadragon.Utils.getBrowser() == Seadragon.Browser.IE;
+    var isIE = $.Utils.getBrowser() == $.Browser.IE;
 
 
     var buttonDownAny = false;
@@ -696,12 +853,12 @@ Seadragon.Utils = new Seadragon.Utils();
 
 
     function getMouseAbsolute(event) {
-        return Seadragon.Utils.getMousePosition(event);
+        return $.Utils.getMousePosition(event);
     }
 
     function getMouseRelative(event, elmt) {
-        var mouse = Seadragon.Utils.getMousePosition(event);
-        var offset = Seadragon.Utils.getElementPosition(elmt);
+        var mouse = $.Utils.getMousePosition(event);
+        var offset = $.Utils.getElementPosition(elmt);
 
         return mouse.minus(offset);
     }
@@ -732,23 +889,26 @@ Seadragon.Utils = new Seadragon.Utils();
 
     (function () {
         if (isIE) {
-            Seadragon.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
-            Seadragon.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
+            $.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
+            $.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
         } else {
-            Seadragon.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
-            Seadragon.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
+            $.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
+            $.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
         }
     })();
 
 
-    Seadragon.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
-
-
+    $.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
+        //Start Thatcher - TODO: remove local function definitions in favor of 
+        //               -       a global closre for MouseTracker so the number
+        //               -       of Viewers has less memory impact.  Also use 
+        //               -       prototype pattern instead of Singleton pattern.
+        //End Thatcher
         var self = this;
         var ieSelf = null;
 
         var hash = Math.random();     // a unique hash for this tracker
-        elmt = Seadragon.Utils.getElement(elmt);
+        var elmt = $.Utils.getElement(elmt);
 
         var tracking = false;
         var capturing = false;
@@ -758,6 +918,8 @@ Seadragon.Utils = new Seadragon.Utils();
         var lastPoint = null;           // position of last mouse down/move
         var lastMouseDownTime = null;   // time of last mouse down
         var lastMouseDownPoint = null;  // position of last mouse down
+        var clickTimeThreshold = clickTimeThreshold;
+        var clickDistThreshold = clickDistThreshold;
 
 
         this.target = elmt;
@@ -773,13 +935,13 @@ Seadragon.Utils = new Seadragon.Utils();
 
         function startTracking() {
             if (!tracking) {
-                Seadragon.Utils.addEvent(elmt, "mouseover", onMouseOver, false);
-                Seadragon.Utils.addEvent(elmt, "mouseout", onMouseOut, false);
-                Seadragon.Utils.addEvent(elmt, "mousedown", onMouseDown, false);
-                Seadragon.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
-                Seadragon.Utils.addEvent(elmt, "click", onMouseClick, false);
-                Seadragon.Utils.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                Seadragon.Utils.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
+                $.Utils.addEvent(elmt, "mouseover", onMouseOver, false);
+                $.Utils.addEvent(elmt, "mouseout", onMouseOut, false);
+                $.Utils.addEvent(elmt, "mousedown", onMouseDown, false);
+                $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
+                $.Utils.addEvent(elmt, "click", onMouseClick, false);
+                $.Utils.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.Utils.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
 
                 tracking = true;
                 ieTrackersActive[hash] = ieSelf;
@@ -788,13 +950,13 @@ Seadragon.Utils = new Seadragon.Utils();
 
         function stopTracking() {
             if (tracking) {
-                Seadragon.Utils.removeEvent(elmt, "mouseover", onMouseOver, false);
-                Seadragon.Utils.removeEvent(elmt, "mouseout", onMouseOut, false);
-                Seadragon.Utils.removeEvent(elmt, "mousedown", onMouseDown, false);
-                Seadragon.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                Seadragon.Utils.removeEvent(elmt, "click", onMouseClick, false);
-                Seadragon.Utils.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                Seadragon.Utils.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
+                $.Utils.removeEvent(elmt, "mouseover", onMouseOver, false);
+                $.Utils.removeEvent(elmt, "mouseout", onMouseOut, false);
+                $.Utils.removeEvent(elmt, "mousedown", onMouseDown, false);
+                $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
+                $.Utils.removeEvent(elmt, "click", onMouseClick, false);
+                $.Utils.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.Utils.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
 
                 releaseMouse();
                 tracking = false;
@@ -805,12 +967,12 @@ Seadragon.Utils = new Seadragon.Utils();
         function captureMouse() {
             if (!capturing) {
                 if (isIE) {
-                    Seadragon.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                    Seadragon.Utils.addEvent(elmt, "mouseup", onMouseUpIE, true);
-                    Seadragon.Utils.addEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
+                    $.Utils.addEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.Utils.addEvent(elmt, "mousemove", onMouseMoveIE, true);
                 } else {
-                    Seadragon.Utils.addEvent(window, "mouseup", onMouseUpWindow, true);
-                    Seadragon.Utils.addEvent(window, "mousemove", onMouseMove, true);
+                    $.Utils.addEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.Utils.addEvent(window, "mousemove", onMouseMove, true);
                 }
 
                 capturing = true;
@@ -820,12 +982,12 @@ Seadragon.Utils = new Seadragon.Utils();
         function releaseMouse() {
             if (capturing) {
                 if (isIE) {
-                    Seadragon.Utils.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
-                    Seadragon.Utils.removeEvent(elmt, "mouseup", onMouseUpIE, true);
-                    Seadragon.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
+                    $.Utils.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.Utils.removeEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
                 } else {
-                    Seadragon.Utils.removeEvent(window, "mousemove", onMouseMove, true);
-                    Seadragon.Utils.removeEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.Utils.removeEvent(window, "mousemove", onMouseMove, true);
+                    $.Utils.removeEvent(window, "mouseup", onMouseUpWindow, true);
                 }
 
                 capturing = false;
@@ -848,7 +1010,7 @@ Seadragon.Utils = new Seadragon.Utils();
 
 
         function onMouseOver(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOver", event);
@@ -867,14 +1029,14 @@ Seadragon.Utils = new Seadragon.Utils();
                     self.enterHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing enter handler: " + e.message, e);
                 }
             }
         }
 
         function onMouseOut(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOut", event);
@@ -893,14 +1055,14 @@ Seadragon.Utils = new Seadragon.Utils();
                     self.exitHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing exit handler: " + e.message, e);
                 }
             }
         }
 
         function onMouseDown(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -916,13 +1078,13 @@ Seadragon.Utils = new Seadragon.Utils();
                 try {
                     self.pressHandler(self, getMouseRelative(event, elmt));
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing press handler: " + e.message, e);
                 }
             }
 
             if (self.pressHandler || self.dragHandler) {
-                Seadragon.Utils.cancelEvent(event);
+                $.Utils.cancelEvent(event);
             }
 
             if (!isIE || !ieCapturingAny) {
@@ -935,7 +1097,7 @@ Seadragon.Utils = new Seadragon.Utils();
         }
 
         function onMouseUp(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
             var insideElmtPress = buttonDownElmt;
             var insideElmtRelease = insideElmt;
 
@@ -950,7 +1112,7 @@ Seadragon.Utils = new Seadragon.Utils();
                     self.releaseHandler(self, getMouseRelative(event, elmt),
                             insideElmtPress, insideElmtRelease);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing release handler: " + e.message, e);
                 }
             }
@@ -969,7 +1131,7 @@ Seadragon.Utils = new Seadragon.Utils();
         * mouseup on the event that this event was meant for.
         */
         function onMouseUpIE(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -987,7 +1149,7 @@ Seadragon.Utils = new Seadragon.Utils();
             event.srcElement.fireEvent("on" + event.type,
                     document.createEventObject(event));
 
-            Seadragon.Utils.stopEvent(event);
+            $.Utils.stopEvent(event);
         }
 
         /**
@@ -1008,7 +1170,7 @@ Seadragon.Utils = new Seadragon.Utils();
         function onMouseClick(event) {
 
             if (self.clickHandler) {
-                Seadragon.Utils.cancelEvent(event);
+                $.Utils.cancelEvent(event);
             }
         }
 
@@ -1033,16 +1195,16 @@ Seadragon.Utils = new Seadragon.Utils();
                 try {
                     self.scrollHandler(self, getMouseRelative(event, elmt), nDelta, event.shiftKey);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing scroll handler: " + e.message, e);
                 }
 
-                Seadragon.Utils.cancelEvent(event);
+                $.Utils.cancelEvent(event);
             }
         }
 
         function handleMouseClick(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -1059,14 +1221,14 @@ Seadragon.Utils = new Seadragon.Utils();
                     self.clickHandler(self, getMouseRelative(event, elmt),
                             quick, event.shiftKey);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing click handler: " + e.message, e);
                 }
             }
         }
 
         function onMouseMove(event) {
-            event = Seadragon.Utils.getEvent(event);
+            var event = $.Utils.getEvent(event);
             var point = getMouseAbsolute(event);
             var delta = point.minus(lastPoint);
 
@@ -1077,11 +1239,11 @@ Seadragon.Utils = new Seadragon.Utils();
                     self.dragHandler(self, getMouseRelative(event, elmt),
                             delta, event.shiftKey);
                 } catch (e) {
-                    Seadragon.Debug.error(e.name +
+                    $.Debug.error(e.name +
                             " while executing drag handler: " + e.message, e);
                 }
 
-                Seadragon.Utils.cancelEvent(event);
+                $.Utils.cancelEvent(event);
             }
         }
 
@@ -1096,7 +1258,7 @@ Seadragon.Utils = new Seadragon.Utils();
                 ieTrackersCapturing[i].onMouseMove(event);
             }
 
-
+            $.Utils.stopEvent(event);
         }
 
 
@@ -1126,27 +1288,28 @@ Seadragon.Utils = new Seadragon.Utils();
     };
 
 })();
-/// <reference path="embed/OpenSeadragon.pre.js" />
+
 
 if (!window.SIGNAL)
     window.SIGNAL = "----seadragon----";
 
-Seadragon.ControlAnchor = function () {
+
+$.ControlAnchor = function() {
     throw Error.invalidOperation();
-};
-Seadragon.ControlAnchor = {
+}
+$.ControlAnchor = {
     NONE: 0,
     TOP_LEFT: 1,
     TOP_RIGHT: 2,
     BOTTOM_RIGHT: 3,
     BOTTOM_LEFT: 4
-};
-Seadragon.ControlAnchor = Seadragon.ControlAnchor;
+}
+$.ControlAnchor = $.ControlAnchor;
 
-Seadragon.OverlayPlacement = function () {
+$.OverlayPlacement = function() {
     throw Error.invalidOperation();
-};
-Seadragon.OverlayPlacement = {
+}
+$.OverlayPlacement = {
     CENTER: 0,
     TOP_LEFT: 1,
     TOP: 2,
@@ -1156,10 +1319,10 @@ Seadragon.OverlayPlacement = {
     BOTTOM: 6,
     BOTTOM_LEFT: 7,
     LEFT: 8
-};
-Seadragon.OverlayPlacement = Seadragon.OverlayPlacement;
+}
+$.OverlayPlacement = $.OverlayPlacement;
 
-Seadragon.NavControl = function (viewer) {
+$.NavControl = function(viewer) {
     this._group = null;
     this._zooming = false;    // whether we should be continuously zooming
     this._zoomFactor = null;  // how much we should be continuously zooming by
@@ -1169,67 +1332,110 @@ Seadragon.NavControl = function (viewer) {
 
     this.elmt = null;
     this.initialize();
-};
-Seadragon.NavControl.prototype = {
-    initialize: function () {
-        var beginZoomingInHandler = Function.createDelegate(this, this._beginZoomingIn);
-        var endZoomingHandler = Function.createDelegate(this, this._endZooming);
-        var doSingleZoomInHandler = Function.createDelegate(this, this._doSingleZoomIn);
-        var beginZoomingOutHandler = Function.createDelegate(this, this._beginZoomingOut);
-        var doSingleZoomOutHandler = Function.createDelegate(this, this._doSingleZoomOut);
-        var onHomeHandler = Function.createDelegate(this, this._onHome);
-        var onFullPageHandler = Function.createDelegate(this, this._onFullPage);
+}
+$.NavControl.prototype = {
+    initialize: function() {
+        var beginZoomingInHandler = delegate(this, this._beginZoomingIn);
+        var endZoomingHandler = delegate(this, this._endZooming);
+        var doSingleZoomInHandler = delegate(this, this._doSingleZoomIn);
+        var beginZoomingOutHandler = delegate(this, this._beginZoomingOut);
+        var doSingleZoomOutHandler = delegate(this, this._doSingleZoomOut);
+        var onHomeHandler = delegate(this, this._onHome);
+        var onFullPageHandler = delegate(this, this._onFullPage);
 
         var navImages = this._viewer.config.navImages;
-        var zoomIn = new Seadragon.Button(
-                    { config: this._viewer.config, tooltip: Seadragon.Strings.getString("Tooltips.ZoomIn"), srcRest: this._resolveUrl(navImages.zoomIn.REST), srcGroup: this._resolveUrl(navImages.zoomIn.GROUP), srcHover: this._resolveUrl(navImages.zoomIn.HOVER), srcDown: this._resolveUrl(navImages.zoomIn.DOWN) },
-                    { onPress: beginZoomingInHandler, onRelease: endZoomingHandler, onClick: doSingleZoomInHandler, onEnter: beginZoomingInHandler, onExit: endZoomingHandler });
-        var zoomOut = new Seadragon.Button(
-                    { config: this._viewer.config, tooltip: Seadragon.Strings.getString("Tooltips.ZoomOut"), srcRest: this._resolveUrl(navImages.zoomOut.REST), srcGroup: this._resolveUrl(navImages.zoomOut.GROUP), srcHover: this._resolveUrl(navImages.zoomOut.HOVER), srcDown: this._resolveUrl(navImages.zoomOut.DOWN) },
-                    { onPress: beginZoomingOutHandler, onRelease: endZoomingHandler, onClick: doSingleZoomOutHandler, onEnter: beginZoomingOutHandler, onExit: endZoomingHandler });
-        var goHome = new Seadragon.Button(
-                    { config: this._viewer.config, tooltip: Seadragon.Strings.getString("Tooltips.Home"), srcRest: this._resolveUrl(navImages.home.REST), srcGroup: this._resolveUrl(navImages.home.GROUP), srcHover: this._resolveUrl(navImages.home.HOVER), srcDown: this._resolveUrl(navImages.home.DOWN) },
-                    { onRelease: onHomeHandler });
-        var fullPage = new Seadragon.Button(
-                    { config: this._viewer.config, tooltip: Seadragon.Strings.getString("Tooltips.FullPage"), srcRest: this._resolveUrl(navImages.fullpage.REST), srcGroup: this._resolveUrl(navImages.fullpage.GROUP), srcHover: this._resolveUrl(navImages.fullpage.HOVER), srcDown: this._resolveUrl(navImages.fullpage.DOWN) },
-                    { onRelease: onFullPageHandler });
-        this._group = new Seadragon.ButtonGroup({ config: this._viewer.config, buttons: [zoomIn, zoomOut, goHome, fullPage] });
+        //Start Thatcher - reformatted for readability
+        var zoomIn = new $.Button({ 
+            config: this._viewer.config, 
+            tooltip: $.Strings.getString("Tooltips.ZoomIn"), 
+            srcRest: this._resolveUrl(navImages.zoomIn.REST), 
+            srcGroup: this._resolveUrl(navImages.zoomIn.GROUP), 
+            srcHover: this._resolveUrl(navImages.zoomIn.HOVER), 
+            srcDown: this._resolveUrl(navImages.zoomIn.DOWN) 
+        },{ 
+            onPress: beginZoomingInHandler, 
+            onRelease: endZoomingHandler, 
+            onClick: doSingleZoomInHandler, 
+            onEnter: beginZoomingInHandler, 
+            onExit: endZoomingHandler 
+        });
+        var zoomOut = new $.Button({ 
+            config: this._viewer.config, 
+            tooltip: $.Strings.getString("Tooltips.ZoomOut"), 
+            srcRest: this._resolveUrl(navImages.zoomOut.REST), 
+            srcGroup: this._resolveUrl(navImages.zoomOut.GROUP), 
+            srcHover: this._resolveUrl(navImages.zoomOut.HOVER), 
+            srcDown: this._resolveUrl(navImages.zoomOut.DOWN) 
+        }, { 
+            onPress: beginZoomingOutHandler, 
+            onRelease: endZoomingHandler, 
+            onClick: doSingleZoomOutHandler, 
+            onEnter: beginZoomingOutHandler, 
+            onExit: endZoomingHandler 
+        });
+        var goHome = new $.Button({ 
+            config: this._viewer.config, 
+            tooltip: $.Strings.getString("Tooltips.Home"), 
+            srcRest: this._resolveUrl(navImages.home.REST), 
+            srcGroup: this._resolveUrl(navImages.home.GROUP), 
+            srcHover: this._resolveUrl(navImages.home.HOVER), 
+            srcDown: this._resolveUrl(navImages.home.DOWN) 
+        },{ 
+            onRelease: onHomeHandler 
+        });
+        var fullPage = new $.Button({ 
+            config: this._viewer.config, 
+            tooltip: $.Strings.getString("Tooltips.FullPage"), 
+            srcRest: this._resolveUrl(navImages.fullpage.REST), 
+            srcGroup: this._resolveUrl(navImages.fullpage.GROUP), 
+            srcHover: this._resolveUrl(navImages.fullpage.HOVER), 
+            srcDown: this._resolveUrl(navImages.fullpage.DOWN) 
+        },{ 
+            onRelease: onFullPageHandler 
+        });
+        this._group = new $.ButtonGroup({ 
+            config: this._viewer.config, 
+            buttons: [zoomIn, zoomOut, goHome, fullPage] 
+        });
+        //End Thatcher
 
         this.elmt = this._group.get_element();
         this.elmt[SIGNAL] = true;   // hack to get our controls to fade
-        this._viewer.add_open(Function.createDelegate(this, this._lightUp));
+        this._viewer.add_open(delegate(this, this._lightUp));
     },
-    dispose: function () {
-    },
-    get_events: function () {
+    //Start Thatcher - never called internally
+    //dispose: function() {
+    //},
+    //End Thatcher
+    get_events: function() {
         return this._events;
     },
-    set_events: function (value) {
+    set_events: function(value) {
         this._events = value;
     },
-    _resolveUrl: function (url) {
-        return String.format("{1}", this._viewer.get_prefixUrl(), url);
+    _resolveUrl: function(url) {
+        return format("{1}", this._viewer.get_prefixUrl(), url);
     },
-    _beginZoomingIn: function () {
+    _beginZoomingIn: function() {
         this._lastZoomTime = new Date().getTime();
         this._zoomFactor = this.config.zoomPerSecond;
         this._zooming = true;
         this._scheduleZoom();
     },
-    _beginZoomingOut: function () {
+    _beginZoomingOut: function() {
         this._lastZoomTime = new Date().getTime();
         this._zoomFactor = 1.0 / this.config.zoomPerSecond;
         this._zooming = true;
         this._scheduleZoom();
     },
 
-    _endZooming: function () {
+    _endZooming: function() {
         this._zooming = false;
     },
-    _scheduleZoom: function () {
-        window.setTimeout(Function.createDelegate(this, this._doZoom), 10);
+    _scheduleZoom: function() {
+        window.setTimeout(delegate(this, this._doZoom), 10);
     },
-    _doZoom: function () {
+    _doZoom: function() {
         if (this._zooming && this._viewer.viewport) {
             var currentTime = new Date().getTime();
             var deltaTime = currentTime - this._lastZoomTime;
@@ -1241,30 +1447,30 @@ Seadragon.NavControl.prototype = {
             this._scheduleZoom();
         }
     },
-    _doSingleZoomIn: function () {
+    _doSingleZoomIn: function() {
         if (this._viewer.viewport) {
             this._zooming = false;
             this._viewer.viewport.zoomBy(this.config.zoomPerClick / 1.0);
             this._viewer.viewport.applyConstraints();
         }
     },
-    _doSingleZoomOut: function () {
+    _doSingleZoomOut: function() {
         if (this._viewer.viewport) {
             this._zooming = false;
             this._viewer.viewport.zoomBy(1.0 / this.config.zoomPerClick);
             this._viewer.viewport.applyConstraints();
         }
     },
-    _lightUp: function () {
+    _lightUp: function() {
         this._group.emulateEnter();
         this._group.emulateExit();
     },
-    _onHome: function () {
+    _onHome: function() {
         if (this._viewer.viewport) {
             this._viewer.viewport.goHome();
         }
     },
-    _onFullPage: function () {
+    _onFullPage: function() {
         this._viewer.setFullPage(!this._viewer.isFullPage());
         this._group.emulateExit();  // correct for no mouseout event on change
 
@@ -1272,48 +1478,48 @@ Seadragon.NavControl.prototype = {
             this._viewer.viewport.applyConstraints();
         }
     }
-};
+}
 
-Seadragon.Control = function (elmt, anchor, container) {
+$.Control = function (elmt, anchor, container) {
     this.elmt = elmt;
     this.anchor = anchor;
     this.container = container;
-    this.wrapper = Seadragon.Utils.makeNeutralElement("span");
+    this.wrapper = $.Utils.makeNeutralElement("span");
     this.wrapper.style.display = "inline-block";
     this.wrapper.appendChild(this.elmt);
-    if (this.anchor == Seadragon.ControlAnchor.NONE) {
+    if (this.anchor == $.ControlAnchor.NONE) {
         this.wrapper.style.width = this.wrapper.style.height = "100%";    // IE6 fix
     }
 
-    if (this.anchor == Seadragon.ControlAnchor.TOP_RIGHT || this.anchor == Seadragon.ControlAnchor.BOTTOM_RIGHT) {
+    if (this.anchor == $.ControlAnchor.TOP_RIGHT || this.anchor == $.ControlAnchor.BOTTOM_RIGHT) {
         this.container.insertBefore(this.wrapper, this.container.firstChild);
     } else {
         this.container.appendChild(this.wrapper);
     }
-};
-Seadragon.Control.prototype = {
-    destroy: function () {
+}
+$.Control.prototype = {
+    destroy: function() {
         this.wrapper.removeChild(this.elmt);
         this.container.removeChild(this.wrapper);
     },
-    isVisible: function () {
+    isVisible: function() {
         return this.wrapper.style.display != "none";
     },
-    setVisible: function (visible) {
+    setVisible: function(visible) {
         this.wrapper.style.display = visible ? "inline-block" : "none";
     },
-    setOpacity: function (opacity) {
-        if (this.elmt[SIGNAL] && Seadragon.Utils.getBrowser() == Seadragon.Browser.IE) {
-            Seadragon.Utils.setElementOpacity(this.elmt, opacity, true);
+    setOpacity: function(opacity) {
+        if (this.elmt[SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
+            $.Utils.setElementOpacity(this.elmt, opacity, true);
         } else {
-            Seadragon.Utils.setElementOpacity(this.wrapper, opacity, true);
+            $.Utils.setElementOpacity(this.wrapper, opacity, true);
         }
     }
-};
+}
 
-Seadragon.Viewer = function (element, xmlPath, prefixUrl, controls, overlays, overlayControls, config) {
+$.Viewer = function(element, xmlPath, prefixUrl, controls, overlays, overlayControls) {
 
-    this.config = config ? config : new Seadragon.Config();
+    this.config = new $.Config();
     this._prefixUrl = prefixUrl ? prefixUrl : "";
     this._element = document.getElementById(element);
 
@@ -1346,29 +1552,32 @@ Seadragon.Viewer = function (element, xmlPath, prefixUrl, controls, overlays, ov
     this.profiler = null;
 
     this.initialize();
-};
-Seadragon.Viewer.prototype = {
+}
+$.Viewer.prototype = {
     initialize: function () {
 
-        this._observer = new Observer();
+        //Start Thatcher - Observer pattern is over abstracted
+        //this._observer = new Observer();
+        this._events = new EventHandlerList();
+        //End Thatcher
 
-        this._container = Seadragon.Utils.makeNeutralElement("div");
-        this._canvas = Seadragon.Utils.makeNeutralElement("div");
+        this._container = $.Utils.makeNeutralElement("div");
+        this._canvas = $.Utils.makeNeutralElement("div");
 
-        this._controlsTL = Seadragon.Utils.makeNeutralElement("div");
-        this._controlsTR = Seadragon.Utils.makeNeutralElement("div");
-        this._controlsBR = Seadragon.Utils.makeNeutralElement("div");
-        this._controlsBL = Seadragon.Utils.makeNeutralElement("div");
+        this._controlsTL = $.Utils.makeNeutralElement("div");
+        this._controlsTR = $.Utils.makeNeutralElement("div");
+        this._controlsBR = $.Utils.makeNeutralElement("div");
+        this._controlsBL = $.Utils.makeNeutralElement("div");
 
-        this._innerTracker = new Seadragon.MouseTracker(this._canvas, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        this._outerTracker = new Seadragon.MouseTracker(this._container, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+        var innerTracker = new $.MouseTracker(this._canvas, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+        var outerTracker = new $.MouseTracker(this._container, this.config.clickTimeThreshold, this.config.clickDistThreshold);
 
         this._bodyWidth = document.body.style.width;
         this._bodyHeight = document.body.style.height;
         this._bodyOverflow = document.body.style.overflow;
         this._docOverflow = document.documentElement.style.overflow;
 
-        this._fsBoundsDelta = new Seadragon.Point(1, 1);
+        this._fsBoundsDelta = new $.Point(1, 1);
 
         var canvasStyle = this._canvas.style;
         var containerStyle = this._container.style;
@@ -1400,27 +1609,27 @@ Seadragon.Viewer.prototype = {
         controlsTRStyle.right = controlsBRStyle.right = "0px";
         controlsBLStyle.bottom = controlsBRStyle.bottom = "0px";
 
-        this._innerTracker.clickHandler = Function.createDelegate(this, this._onCanvasClick);
-        this._innerTracker.dragHandler = Function.createDelegate(this, this._onCanvasDrag);
-        this._innerTracker.releaseHandler = Function.createDelegate(this, this._onCanvasRelease);
-        this._innerTracker.scrollHandler = Function.createDelegate(this, this._onCanvasScroll);
-        this._innerTracker.setTracking(true);     // default state
+        innerTracker.clickHandler = delegate(this, this._onCanvasClick);
+        innerTracker.dragHandler = delegate(this, this._onCanvasDrag);
+        innerTracker.releaseHandler = delegate(this, this._onCanvasRelease);
+        innerTracker.scrollHandler = delegate(this, this._onCanvasScroll);
+        innerTracker.setTracking(true);     // default state
 
         if (this.get_showNavigationControl()) {
-            navControl = (new Seadragon.NavControl(this)).elmt;
+            navControl = (new $.NavControl(this)).elmt;
             navControl.style.marginRight = "4px";
             navControl.style.marginBottom = "4px";
-            this.addControl(navControl, Seadragon.ControlAnchor.BOTTOM_RIGHT);
+            this.addControl(navControl, $.ControlAnchor.BOTTOM_RIGHT);
         }
         for (var i = 0; i < this._customControls.length; i++) {
             this.addControl(this._customControls[i].id, this._customControls[i].anchor);
         }
 
-        this._outerTracker.enterHandler = Function.createDelegate(this, this._onContainerEnter);
-        this._outerTracker.exitHandler = Function.createDelegate(this, this._onContainerExit);
-        this._outerTracker.releaseHandler = Function.createDelegate(this, this._onContainerRelease);
-        this._outerTracker.setTracking(true); // always tracking
-        window.setTimeout(Function.createDelegate(this, this._beginControlsAutoHide), 1);    // initial fade out
+        outerTracker.enterHandler = delegate(this, this._onContainerEnter);
+        outerTracker.exitHandler = delegate(this, this._onContainerExit);
+        outerTracker.releaseHandler = delegate(this, this._onContainerRelease);
+        outerTracker.setTracking(true); // always tracking
+        window.setTimeout(delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
 
         this._container.appendChild(this._canvas);
         this._container.appendChild(this._controlsTL);
@@ -1433,7 +1642,10 @@ Seadragon.Viewer.prototype = {
             this.openDzi(this._xmlPath);
     },
     get_events: function get_events() {
-        return this._observer._getContext(this, true).events;
+        //Start Thatcher - Removing Observer pattern
+        //return this._observer._getContext(this, true).events;
+        return this._events;
+        //End Thatcher
     },
     _raiseEvent: function (eventName, eventArgs) {
         var handler = this.get_events().getHandler(eventName);
@@ -1453,10 +1665,10 @@ Seadragon.Viewer.prototype = {
 
         this._controlsShouldFade = true;
         this._controlsFadeBeginTime = new Date().getTime() + this._controlsFadeDelay;
-        window.setTimeout(Function.createDelegate(this, this._scheduleControlsFade), this._controlsFadeDelay);
+        window.setTimeout(delegate(this, this._scheduleControlsFade), this._controlsFadeDelay);
     },
     _scheduleControlsFade: function () {
-        window.setTimeout(Function.createDelegate(this, this._updateControlsFade), 20);
+        window.setTimeout(delegate(this, this._updateControlsFade), 20);
     },
     _updateControlsFade: function () {
         if (this._controlsShouldFade) {
@@ -1496,7 +1708,7 @@ Seadragon.Viewer.prototype = {
     },
     _onCanvasScroll: function (tracker, position, scroll, shift) {
         if (this.viewport) {
-            var factor = Math.pow(this.config.zoomPerScroll, scroll);
+            var factor = Math.pow(this.config.zoomPerScroll,scroll);
             this.viewport.zoomBy(factor, this.viewport.pointFromPixel(position, true));
             this.viewport.applyConstraints();
         }
@@ -1536,108 +1748,6 @@ Seadragon.Viewer.prototype = {
         this._mouseInside = true;
         this._abortControlsAutoHide();
     },
-    _onClose: function () {
-
-        this.source = null;
-        this.viewport = null;
-        this.drawer = null;
-        this.profiler = null;
-
-        this._canvas.innerHTML = "";
-    },
-    _beforeOpen: function () {
-        if (this.source) {
-            this._onClose();
-        }
-
-        this._lastOpenStartTime = new Date().getTime();   // to ignore earlier opens
-
-        window.setTimeout(Function.createDelegate(this, function () {
-            if (this._lastOpenStartTime > this._lastOpenEndTime) {
-                this._setMessage(Seadragon.Strings.getString("Messages.Loading"));
-            }
-        }), 2000);
-
-        return this._lastOpenStartTime;
-    },
-    _setMessage: function (message) {
-        var textNode = document.createTextNode(message);
-
-        this._canvas.innerHTML = "";
-        this._canvas.appendChild(Seadragon.Utils.makeCenteredNode(textNode));
-
-        var textStyle = textNode.parentNode.style;
-
-        textStyle.color = "white";
-        textStyle.fontFamily = "verdana";
-        textStyle.fontSize = "13px";
-        textStyle.fontSizeAdjust = "none";
-        textStyle.fontStyle = "normal";
-        textStyle.fontStretch = "normal";
-        textStyle.fontVariant = "normal";
-        textStyle.fontWeight = "normal";
-        textStyle.lineHeight = "1em";
-        textStyle.textAlign = "center";
-        textStyle.textDecoration = "none";
-    },
-    _onOpen: function (time, _source, error) {
-        this._lastOpenEndTime = new Date().getTime();
-
-        if (time < this._lastOpenStartTime) {
-            Seadragon.Debug.log("Ignoring out-of-date open.");
-            this._raiseEvent("ignore");
-            return;
-        } else if (!_source) {
-            this._setMessage(error);
-            this._raiseEvent("error");
-            return;
-        }
-
-        this._canvas.innerHTML = "";
-        this._prevContainerSize = Seadragon.Utils.getElementSize(this._container);
-
-        this.source = _source;
-        this.viewport = new Seadragon.Viewport(this._prevContainerSize, this.source.dimensions, this.config);
-        this.drawer = new Seadragon.Drawer(this.source, this.viewport, this._canvas);
-        this.profiler = new Seadragon.Profiler();
-
-        this._animating = false;
-        this._forceRedraw = true;
-        this._scheduleUpdate(this._updateMulti);
-
-        for (var i = 0; i < this._overlayControls.length; i++) {
-            var overlay = this._overlayControls[i];
-            if (overlay.point != null) {
-                this.drawer.addOverlay(overlay.id, new Seadragon.Point(overlay.point.X, overlay.point.Y), Seadragon.OverlayPlacement.TOP_LEFT);
-            }
-            else {
-                this.drawer.addOverlay(overlay.id, new Seadragon.Rect(overlay.rect.Point.X, overlay.rect.Point.Y, overlay.rect.Width, overlay.rect.Height), overlay.placement);
-            }
-        }
-        this._raiseEvent("open");
-    },
-    _scheduleUpdate: function (updateFunc, prevUpdateTime) {
-        if (this._animating) {
-            return window.setTimeout(Function.createDelegate(this, updateFunc), 1);
-        }
-
-        var currentTime = new Date().getTime();
-        prevUpdateTime = prevUpdateTime ? prevUpdateTime : currentTime;
-        var targetTime = prevUpdateTime + 1000 / 60;    // 60 fps ideal
-
-        var deltaTime = Math.max(1, targetTime - currentTime);
-        return window.setTimeout(Function.createDelegate(this, updateFunc), deltaTime);
-    },
-    _updateMulti: function () {
-        if (!this.source) {
-            return;
-        }
-
-        var beginTime = new Date().getTime();
-
-        this._updateOnce();
-        this._scheduleUpdate(arguments.callee, beginTime);
-    },
     _updateOnce: function () {
         if (!this.source) {
             return;
@@ -1645,7 +1755,7 @@ Seadragon.Viewer.prototype = {
 
         this.profiler.beginUpdate();
 
-        var containerSize = Seadragon.Utils.getElementSize(this._container);
+        var containerSize = $.Utils.getElementSize(this._container);
 
         if (!containerSize.equals(this._prevContainerSize)) {
             this.viewport.resize(containerSize, true); // maintain image position
@@ -1672,6 +1782,152 @@ Seadragon.Viewer.prototype = {
 
         if (this._animating && !animated) {
             this._raiseEvent("animationfinish", this);
+
+            if (!this._mouseInside) {
+                this._beginControlsAutoHide();
+            }
+        }
+
+        this._animating = animated;
+
+        this.profiler.endUpdate();
+    },
+    _onClose: function () {
+
+        this.source = null;
+        this.viewport = null;
+        this.drawer = null;
+        this.profiler = null;
+
+        this._canvas.innerHTML = "";
+    },
+    _beforeOpen: function () {
+        if (this.source) {
+            this._onClose();
+        }
+
+        this._lastOpenStartTime = new Date().getTime();   // to ignore earlier opens
+
+        window.setTimeout(delegate(this, function () {
+            if (this._lastOpenStartTime > this._lastOpenEndTime) {
+                this._setMessage($.Strings.getString("Messages.Loading"));
+            }
+        }), 2000);
+
+        return this._lastOpenStartTime;
+    },
+    _setMessage: function (message) {
+        var textNode = document.createTextNode(message);
+
+        this._canvas.innerHTML = "";
+        this._canvas.appendChild($.Utils.makeCenteredNode(textNode));
+
+        var textStyle = textNode.parentNode.style;
+
+        textStyle.color = "white";
+        textStyle.fontFamily = "verdana";
+        textStyle.fontSize = "13px";
+        textStyle.fontSizeAdjust = "none";
+        textStyle.fontStyle = "normal";
+        textStyle.fontStretch = "normal";
+        textStyle.fontVariant = "normal";
+        textStyle.fontWeight = "normal";
+        textStyle.lineHeight = "1em";
+        textStyle.textAlign = "center";
+        textStyle.textDecoration = "none";
+    },
+    _onOpen: function (time, _source, error) {
+        this._lastOpenEndTime = new Date().getTime();
+
+        if (time < this._lastOpenStartTime) {
+            $.Debug.log("Ignoring out-of-date open.");
+            this._raiseEvent("ignore");
+            return;
+        } else if (!_source) {
+            this._setMessage(error);
+            this._raiseEvent("error");
+            return;
+        }
+
+        this._canvas.innerHTML = "";
+        this._prevContainerSize = $.Utils.getElementSize(this._container);
+
+        this.source = _source;
+        this.viewport = new $.Viewport(this._prevContainerSize, this.source.dimensions, this.config);
+        this.drawer = new $.Drawer(this.source, this.viewport, this._canvas);
+        this.profiler = new $.Profiler();
+
+        this._animating = false;
+        this._forceRedraw = true;
+        this._scheduleUpdate(this._updateMulti);
+
+        for (var i = 0; i < this._overlayControls.length; i++) {
+            var overlay = this._overlayControls[i];
+            if (overlay.point != null) {
+                this.drawer.addOverlay(overlay.id, new $.Point(overlay.point.X, overlay.point.Y), $.OverlayPlacement.TOP_LEFT);
+            }
+            else {
+                this.drawer.addOverlay(overlay.id, new $.Rect(overlay.rect.Point.X, overlay.rect.Point.Y, overlay.rect.Width, overlay.rect.Height), overlay.placement);
+            }
+        }
+        this._raiseEvent("open");
+    },
+    _scheduleUpdate: function (updateFunc, prevUpdateTime) {
+        if (this._animating) {
+            return window.setTimeout(delegate(this, updateFunc), 1);
+        }
+
+        var currentTime = new Date().getTime();
+        var prevUpdateTime = prevUpdateTime ? prevUpdateTime : currentTime;
+        var targetTime = prevUpdateTime + 1000 / 60;    // 60 fps ideal
+
+        var deltaTime = Math.max(1, targetTime - currentTime);
+        return window.setTimeout(delegate(this, updateFunc), deltaTime);
+    },
+    _updateMulti: function () {
+        if (!this.source) {
+            return;
+        }
+
+        var beginTime = new Date().getTime();
+
+        this._updateOnce();
+        this._scheduleUpdate(arguments.callee, beginTime);
+    },
+    _updateOnce: function () {
+        if (!this.source) {
+            return;
+        }
+
+        this.profiler.beginUpdate();
+
+        var containerSize = $.Utils.getElementSize(this._container);
+
+        if (!containerSize.equals(this._prevContainerSize)) {
+            this.viewport.resize(containerSize, true); // maintain image position
+            this._prevContainerSize = containerSize;
+            this._raiseEvent("resize");
+        }
+
+        var animated = this.viewport.update();
+
+        if (!this._animating && animated) {
+            this._raiseEvent("animationstart");
+            this._abortControlsAutoHide();
+        }
+
+        if (animated) {
+            this.drawer.update();
+            this._raiseEvent("animation");
+        } else if (this._forceRedraw || this.drawer.needsUpdate()) {
+            this.drawer.update();
+            this._forceRedraw = false;
+        } else {
+            this.drawer.idle();
+        }
+
+        if (this._animating && !animated) {
+            this._raiseEvent("animationfinish");
 
             if (!this._mouseInside) {
                 this._beginControlsAutoHide();
@@ -1888,7 +2144,7 @@ Seadragon.Viewer.prototype = {
         this.get_events().removeHandler("animationfinish", handler);
     },
     addControl: function (elmt, anchor) {
-        elmt = Seadragon.Utils.getElement(elmt);
+        var elmt = $.Utils.getElement(elmt);
 
         if (this._getControlIndex(elmt) >= 0) {
             return;     // they're trying to add a duplicate control
@@ -1897,30 +2153,30 @@ Seadragon.Viewer.prototype = {
         var div = null;
 
         switch (anchor) {
-            case Seadragon.ControlAnchor.TOP_RIGHT:
+            case $.ControlAnchor.TOP_RIGHT:
                 div = this._controlsTR;
                 elmt.style.position = "relative";
                 break;
-            case Seadragon.ControlAnchor.BOTTOM_RIGHT:
+            case $.ControlAnchor.BOTTOM_RIGHT:
                 div = this._controlsBR;
                 elmt.style.position = "relative";
                 break;
-            case Seadragon.ControlAnchor.BOTTOM_LEFT:
+            case $.ControlAnchor.BOTTOM_LEFT:
                 div = this._controlsBL;
                 elmt.style.position = "relative";
                 break;
-            case Seadragon.ControlAnchor.TOP_LEFT:
+            case $.ControlAnchor.TOP_LEFT:
                 div = this._controlsTL;
                 elmt.style.position = "relative";
                 break;
-            case Seadragon.ControlAnchor.NONE:
+            case $.ControlAnchor.NONE:
             default:
                 div = this._container;
                 elmt.style.position = "absolute";
                 break;
         }
 
-        this._controls.push(new Seadragon.Control(elmt, anchor, div));
+        this._controls.push(new $.Control(elmt, anchor, div));
 
         elmt.style.display = "inline-block";
     },
@@ -1929,13 +2185,13 @@ Seadragon.Viewer.prototype = {
     },
     openDzi: function (xmlUrl, xmlString) {
         var currentTime = this._beforeOpen();
-        Seadragon.DziTileSourceHelper.createFromXml(xmlUrl, xmlString,
-                    Seadragon.Utils.createCallback(null, Function.createDelegate(this, this._onOpen), currentTime));
+        $.DziTileSourceHelper.createFromXml(xmlUrl, xmlString,
+                    $.Utils.createCallback(null, delegate(this, this._onOpen), currentTime));
     },
     openTileSource: function (tileSource) {
-        var currentTime = this._beforeOpen();
-        window.setTimeout(Function.createDelegate(this, function () {
-            this._onOpen(currentTime, tileSource);
+        var currentTime = beforeOpen();
+        window.setTimeout(delegate(this, function () {
+            onOpen(currentTime, tileSource);
         }), 1);
     },
     close: function () {
@@ -1946,7 +2202,7 @@ Seadragon.Viewer.prototype = {
         this._onClose();
     },
     removeControl: function (elmt) {
-        elmt = Seadragon.Utils.getElement(elmt);
+        var elmt = $.Utils.getElement(elmt);
         var i = this._getControlIndex(elmt);
 
         if (i >= 0) {
@@ -2016,7 +2272,7 @@ Seadragon.Viewer.prototype = {
             containerStyle.zIndex = "99999999";
 
             body.appendChild(this._container);
-            this._prevContainerSize = Seadragon.Utils.getWindowSize();
+            this._prevContainerSize = $.Utils.getWindowSize();
 
             this._onContainerEnter();     // mouse will be inside container now
         } else {
@@ -2033,7 +2289,7 @@ Seadragon.Viewer.prototype = {
             containerStyle.zIndex = "";
 
             this.get_element().appendChild(this._container);
-            this._prevContainerSize = Seadragon.Utils.getElementSize(this.get_element());
+            this._prevContainerSize = $.Utils.getElementSize(this.get_element());
 
             this._onContainerExit();      // mouse will likely be outside now
         }
@@ -2043,7 +2299,7 @@ Seadragon.Viewer.prototype = {
             var newBounds = this.viewport.getBounds();
 
             if (fullPage) {
-                this._fsBoundsDelta = new Seadragon.Point(newBounds.width / oldBounds.width,
+                this._fsBoundsDelta = new $.Point(newBounds.width / oldBounds.width,
                         newBounds.height / oldBounds.height);
             } else {
                 this.viewport.update();
@@ -2065,10 +2321,8 @@ Seadragon.Viewer.prototype = {
         this._container.style.visibility = visible ? "" : "hidden";
     }
 
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.Strings = {
+}
+$.Strings = {
     Errors: {
         Failure: "Sorry, but Seadragon Ajax can't run on your browser!\n" +
                     "Please try using IE 7 or Firefox 3.\n",
@@ -2093,9 +2347,9 @@ Seadragon.Strings = {
         ZoomIn: "Zoom in",
         ZoomOut: "Zoom out"
     },
-    getString: function (prop) {
+    getString: function(prop) {
         var props = prop.split('.');
-        var string = Seadragon.Strings;
+        var string = $.Strings;
 
         for (var i = 0; i < props.length; i++) {
             string = string[props[i]] || {};    // in case not a subproperty
@@ -2106,15 +2360,15 @@ Seadragon.Strings = {
         }
 
         var args = arguments;
-        return string.replace(/\{\d+\}/g, function (capture) {
+        return string.replace(/\{\d+\}/g, function(capture) {
             var i = parseInt(capture.match(/\d+/)) + 1;
             return i < args.length ? args[i] : "";
         });
     },
 
-    setString: function (prop, value) {
+    setString: function(prop, value) {
         var props = prop.split('.');
-        var container = Seadragon.Strings;
+        var container = $.Strings;
 
         for (var i = 0; i < props.length - 1; i++) {
             if (!container[props[i]]) {
@@ -2126,59 +2380,55 @@ Seadragon.Strings = {
         container[props[i]] = value;
     }
 
-};
-Seadragon.Strings = Seadragon.Strings;
+}
+$.Strings = $.Strings;
 
 
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.Point = Seadragon.Point = function (x, y) {
+$.Point=$.Point = function(x, y) {
     this.x = typeof (x) == "number" ? x : 0;
     this.y = typeof (y) == "number" ? y : 0;
-};
-Seadragon.Point.prototype = {
+}
+$.Point.prototype = {
 
-    plus: function (point) {
-        return new Seadragon.Point(this.x + point.x, this.y + point.y);
+    plus: function(point) {
+        return new $.Point(this.x + point.x, this.y + point.y);
     },
 
-    minus: function (point) {
-        return new Seadragon.Point(this.x - point.x, this.y - point.y);
+    minus: function(point) {
+        return new $.Point(this.x - point.x, this.y - point.y);
     },
 
-    times: function (factor) {
-        return new Seadragon.Point(this.x * factor, this.y * factor);
+    times: function(factor) {
+        return new $.Point(this.x * factor, this.y * factor);
     },
 
-    divide: function (factor) {
-        return new Seadragon.Point(this.x / factor, this.y / factor);
+    divide: function(factor) {
+        return new $.Point(this.x / factor, this.y / factor);
     },
 
-    negate: function () {
-        return new Seadragon.Point(-this.x, -this.y);
+    negate: function() {
+        return new $.Point(-this.x, -this.y);
     },
 
-    distanceTo: function (point) {
+    distanceTo: function(point) {
         return Math.sqrt(Math.pow(this.x - point.x, 2) +
                         Math.pow(this.y - point.y, 2));
     },
 
-    apply: function (func) {
-        return new Seadragon.Point(func(this.x), func(this.y));
+    apply: function(func) {
+        return new $.Point(func(this.x), func(this.y));
     },
 
-    equals: function (point) {
-        return (point instanceof Seadragon.Point) &&
+    equals: function(point) {
+        return (point instanceof $.Point) &&
                 (this.x === point.x) && (this.y === point.y);
     },
 
-    toString: function () {
+    toString: function() {
         return "(" + this.x + "," + this.y + ")";
     }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.Profiler = function () {
+}
+$.Profiler = function() {
 
     this._midUpdate = false;
     this._numUpdates = 0;
@@ -2193,45 +2443,45 @@ Seadragon.Profiler = function () {
     this._minIdleTime = Infinity;
     this._avgIdleTime = 0;
     this._maxIdleTime = 0;
-};
-Seadragon.Profiler.prototype = {
+}
+$.Profiler.prototype = {
 
-    getAvgUpdateTime: function () {
+    getAvgUpdateTime: function() {
         return this._avgUpdateTime;
     },
 
-    getMinUpdateTime: function () {
+    getMinUpdateTime: function() {
         return this._minUpdateTime;
     },
 
-    getMaxUpdateTime: function () {
+    getMaxUpdateTime: function() {
         return this._maxUpdateTime;
     },
 
 
-    getAvgIdleTime: function () {
+    getAvgIdleTime: function() {
         return this._avgIdleTime;
     },
 
-    getMinIdleTime: function () {
+    getMinIdleTime: function() {
         return this._minIdleTime;
     },
 
-    getMaxIdleTime: function () {
+    getMaxIdleTime: function() {
         return this._maxIdleTime;
     },
 
 
-    isMidUpdate: function () {
+    isMidUpdate: function() {
         return this._midUpdate;
     },
 
-    getNumUpdates: function () {
+    getNumUpdates: function() {
         return this._numUpdates;
     },
 
 
-    beginUpdate: function () {
+    beginUpdate: function() {
         if (this._midUpdate) {
             this.endUpdate();
         }
@@ -2255,7 +2505,7 @@ Seadragon.Profiler.prototype = {
         }
     },
 
-    endUpdate: function () {
+    endUpdate: function() {
         if (!this._midUpdate) {
             return;
         }
@@ -2276,7 +2526,7 @@ Seadragon.Profiler.prototype = {
         }
     },
 
-    clearProfile: function () {
+    clearProfile: function() {
         this._midUpdate = false;
         this._numUpdates = 0;
 
@@ -2291,18 +2541,16 @@ Seadragon.Profiler.prototype = {
         this._avgIdleTime = 0;
         this._maxIdleTime = 0;
     }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.Job = function (src, callback) {
+}
+$.Job = function(src, callback) {
     this._image = null;
     this._timeout = null;
     this._src = src;
     this._callback = callback;
     this.TIMEOUT = 5000;
-};
-Seadragon.Job.prototype = {
-    _finish: function (success) {
+}
+$.Job.prototype = {
+    _finish: function(success) {
         this._image.onload = null;
         this._image.onabort = null;
         this._image.onerror = null;
@@ -2314,102 +2562,101 @@ Seadragon.Job.prototype = {
 
         var image = this._image;
         var callback = this._callback;
-        window.setTimeout(function () {
+        window.setTimeout(function() {
             callback(this._src, success ? image : null);
         }, 1);
     },
-    _onloadHandler: function () {
+    _onloadHandler: function() {
         this._finish(true);
     },
-    _onerrorHandler: function () {
+    _onerrorHandler: function() {
         this._finish(false);
     },
-    start: function () {
+    start: function() {
         this._image = new Image();
-        this._image.onload = Function.createDelegate(this, this._onloadHandler);
-        this._image.onabort = Function.createDelegate(this, this._onerrorHandler);
-        this._image.onerror = Function.createDelegate(this, this._onerrorHandler);
+        this._image.onload = delegate(this, this._onloadHandler);
+        this._image.onabort = delegate(this, this._onerrorHandler);
+        this._image.onerror = delegate(this, this._onerrorHandler);
 
-        this._timeout = window.setTimeout(Function.createDelegate(this, this._onerrorHandler), this.TIMEOUT);
+        this._timeout = window.setTimeout(delegate(this, this._onerrorHandler), this.TIMEOUT);
 
         this._image.src = this._src;
     }
-};
+}
 
 
-Seadragon.ImageLoader = function (imageLoaderLimit) {
-    this._downloading = 0;
-    this.imageLoaderLimit = imageLoaderLimit;
-};
-Seadragon.ImageLoader.prototype = {
-    _onComplete: function (callback, src, image) {
+$.ImageLoader = function(imageLoaderLimit) {
+	this._downloading = 0;
+	this.imageLoaderLimit = imageLoaderLimit;
+}
+$.ImageLoader.prototype = {
+    _onComplete: function(callback, src, image) {
         this._downloading--;
         if (typeof (callback) == "function") {
             try {
                 callback(image);
             } catch (e) {
-                Seadragon.Debug.error(e.name + " while executing " + src +
+                $.Debug.error(e.name + " while executing " + src +
                             " callback: " + e.message, e);
             }
         }
     },
-    loadImage: function (src, callback) {
+    loadImage: function(src, callback) {
         if (this._downloading >= this.imageLoaderLimit) {
             return false;
         }
 
-        var func = Seadragon.Utils.createCallback(null, Function.createDelegate(this, this._onComplete), callback);
-        var job = new Seadragon.Job(src, func);
+        var func = $.Utils.createCallback(null, delegate(this, this._onComplete), callback);
+        var job = new $.Job(src, func);
 
         this._downloading++;
         job.start();
 
         return true;
     }
-};
+}
 
-/// <reference path="embed/OpenSeadragon.pre.js" />
 
-Seadragon.TileSource = function (width, height, tileSize, tileOverlap, minLevel, maxLevel) {
+$.TileSource = function(width, height, tileSize, tileOverlap, minLevel, maxLevel) {
     this.aspectRatio = width / height;
-    this.dimensions = new Seadragon.Point(width, height);
+    this.dimensions = new $.Point(width, height);
     this.minLevel = minLevel ? minLevel : 0;
     this.maxLevel = maxLevel ? maxLevel :
             Math.ceil(Math.log(Math.max(width, height)) / Math.log(2));
     this.tileSize = tileSize ? tileSize : 0;
     this.tileOverlap = tileOverlap ? tileOverlap : 0;
-};
-Seadragon.TileSource.prototype = {
-    getLevelScale: function (level) {
+}
+$.TileSource.prototype = {
+    getLevelScale: function(level) {
         return 1 / (1 << (this.maxLevel - level));
     },
 
-    getNumTiles: function (level) {
+    getNumTiles: function(level) {
         var scale = this.getLevelScale(level);
         var x = Math.ceil(scale * this.dimensions.x / this.tileSize);
         var y = Math.ceil(scale * this.dimensions.y / this.tileSize);
 
-        return new Seadragon.Point(x, y);
+        return new $.Point(x, y);
     },
 
-    getPixelRatio: function (level) {
+    getPixelRatio: function(level) {
         var imageSizeScaled = this.dimensions.times(this.getLevelScale(level));
         var rx = 1.0 / imageSizeScaled.x;
         var ry = 1.0 / imageSizeScaled.y;
 
-        return new Seadragon.Point(rx, ry);
+        return new $.Point(rx, ry);
     },
 
-    getTileAtPoint: function (level, point) {
+    getTileAtPoint: function(level, point) {
         var pixel = point.times(this.dimensions.x).times(this.getLevelScale(level));
 
         var tx = Math.floor(pixel.x / this.tileSize);
         var ty = Math.floor(pixel.y / this.tileSize);
 
-        return new Seadragon.Point(tx, ty);
+        return new $.Point(tx, ty);
     },
 
-    getTileBounds: function (level, x, y) {
+    getTileBounds: function(level, x, y) {
         var dimensionsScaled = this.dimensions.times(this.getLevelScale(level));
 
         var px = (x === 0) ? 0 : this.tileSize * x - this.tileOverlap;
@@ -2422,22 +2669,600 @@ Seadragon.TileSource.prototype = {
         sy = Math.min(sy, dimensionsScaled.y - py);
 
         var scale = 1.0 / dimensionsScaled.x;
-        return new Seadragon.Rect(px * scale, py * scale, sx * scale, sy * scale);
+        return new $.Rect(px * scale, py * scale, sx * scale, sy * scale);
     },
 
-    getTileUrl: function (level, x, y) {
+    getTileUrl: function(level, x, y) {
         throw new Error("Method not implemented.");
     },
 
-    tileExists: function (level, x, y) {
+    tileExists: function(level, x, y) {
         var numTiles = this.getNumTiles(level);
         return level >= this.minLevel && level <= this.maxLevel &&
                 x >= 0 && y >= 0 && x < numTiles.x && y < numTiles.y;
     }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
+}
+$.DziError = function(message) {
+    Error.apply(this, arguments);
+    this.message = message;
+}
+$.DziError.prototype = new Error();
+$.DziError.constructor = $.DziError;
 
-Seadragon.Config = function () {
+$.DziTileSource = function(width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects) {
+    $.TileSource.call(this, width, height, tileSize, tileOverlap, null, null);
+
+    this._levelRects = {};
+    this.tilesUrl = tilesUrl;
+
+    this.fileFormat = fileFormat;
+    this.displayRects = displayRects;
+    this.initialize();
+}
+$.DziTileSource.prototype = new $.TileSource();
+$.DziTileSource.prototype.constructor = $.DziTileSource;
+$.DziTileSource.prototype.initialize = function() {
+    if (!this.displayRects) {
+        return;
+    }
+
+    for (var i = this.displayRects.length - 1; i >= 0; i--) {
+        var rect = this.displayRects[i];
+        for (var level = rect.minLevel; level <= rect.maxLevel; level++) {
+            if (!this._levelRects[level]) {
+                this._levelRects[level] = [];
+            }
+            this._levelRects[level].push(rect);
+        }
+    }
+}
+$.DziTileSource.prototype.getTileUrl = function(level, x, y) {
+    return [this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat].join('');
+}
+$.DziTileSource.prototype.tileExists = function(level, x, y) {
+    var rects = this._levelRects[level];
+
+    if (!rects || !rects.length) {
+        return true;
+    }
+
+    for (var i = rects.length - 1; i >= 0; i--) {
+        var rect = rects[i];
+
+        if (level < rect.minLevel || level > rect.maxLevel) {
+            continue;
+        }
+
+        var scale = this.getLevelScale(level);
+        var xMin = rect.x * scale;
+        var yMin = rect.y * scale;
+        var xMax = xMin + rect.width * scale;
+        var yMax = yMin + rect.height * scale;
+
+        xMin = Math.floor(xMin / this.tileSize);
+        yMin = Math.floor(yMin / this.tileSize);
+        xMax = Math.ceil(xMax / this.tileSize);
+        yMax = Math.ceil(yMax / this.tileSize);
+
+        if (xMin <= x && x < xMax && yMin <= y && y < yMax) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+$._DziTileSourceHelper = function() {
+
+}
+$._DziTileSourceHelper.prototype = {
+    createFromXml: function(xmlUrl, xmlString, callback) {
+        var async = typeof (callback) == "function";
+        var error = null;
+
+        if (!xmlUrl) {
+            this.error = $.Strings.getString("Errors.Empty");
+            if (async) {
+                window.setTimeout(function() {
+                    callback(null, error);
+                }, 1);
+                return null;
+            }
+            throw new $.DziError(error);
+        }
+
+        var urlParts = xmlUrl.split('/');
+        var filename = urlParts[urlParts.length - 1];
+        var lastDot = filename.lastIndexOf('.');
+
+        if (lastDot > -1) {
+            urlParts[urlParts.length - 1] = filename.slice(0, lastDot);
+        }
+
+        var tilesUrl = urlParts.join('/') + "_files/";
+        function finish(func, obj) {
+            try {
+                return func(obj, tilesUrl);
+            } catch (e) {
+                if (async) {
+                    //Start Thatcher - Throwable doesnt have getError
+                    //error = this.getError(e).message;
+                    return null;
+                    //End Thatcher
+                } else {
+                    throw this.getError(e);
+                }
+            }
+        }
+        if (async) {
+            if (xmlString) {
+                var handler = delegate(this, this.processXml);
+                window.setTimeout(function() {
+                    var source = finish(handler, $.Utils.parseXml(xmlString));
+                    callback(source, error);    // call after finish sets error
+                }, 1);
+            } else {
+                var handler = delegate(this, this.processResponse);
+                $.Utils.makeAjaxRequest(xmlUrl, function(xhr) {
+                    var source = finish(handler, xhr);
+                    callback(source, error);    // call after finish sets error
+                });
+            }
+
+            return null;
+        }
+
+        if (xmlString) {
+            return finish(delegate(this, this.processXml), $.Utils.parseXml(xmlString));
+        } else {
+            return finish(delegate(this, this.processResponse), $.Utils.makeAjaxRequest(xmlUrl));
+        }
+    },
+    processResponse: function(xhr, tilesUrl) {
+        if (!xhr) {
+            throw new $.DziError($.Strings.getString("Errors.Security"));
+        } else if (xhr.status !== 200 && xhr.status !== 0) {
+            var status = xhr.status;
+            var statusText = (status == 404) ? "Not Found" : xhr.statusText;
+            throw new $.DziError($.Strings.getString("Errors.Status", status, statusText));
+        }
+
+        var doc = null;
+
+        if (xhr.responseXML && xhr.responseXML.documentElement) {
+            doc = xhr.responseXML;
+        } else if (xhr.responseText) {
+            doc = $.Utils.parseXml(xhr.responseText);
+        }
+
+        return this.processXml(doc, tilesUrl);
+    },
+
+    processXml: function(xmlDoc, tilesUrl) {
+        if (!xmlDoc || !xmlDoc.documentElement) {
+            throw new $.DziError($.Strings.getString("Errors.Xml"));
+        }
+
+        var root = xmlDoc.documentElement;
+        var rootName = root.tagName;
+
+        if (rootName == "Image") {
+            try {
+                return this.processDzi(root, tilesUrl);
+            } catch (e) {
+                var defMsg = $.Strings.getString("Errors.Dzi");
+                throw (e instanceof $.DziError) ? e : new $.DziError(defMsg);
+            }
+        } else if (rootName == "Collection") {
+            throw new $.DziError($.Strings.getString("Errors.Dzc"));
+        } else if (rootName == "Error") {
+            return this.processError(root);
+        }
+
+        throw new $.DziError($.Strings.getString("Errors.Dzi"));
+    },
+
+    processDzi: function(imageNode, tilesUrl) {
+        var fileFormat = imageNode.getAttribute("Format");
+
+        if (!$.Utils.imageFormatSupported(fileFormat)) {
+            throw new $.DziError($.Strings.getString("Errors.ImageFormat",
+                    fileFormat.toUpperCase()));
+        }
+
+        var sizeNode = imageNode.getElementsByTagName("Size")[0];
+        var dispRectNodes = imageNode.getElementsByTagName("DisplayRect");
+
+        var width = parseInt(sizeNode.getAttribute("Width"), 10);
+        var height = parseInt(sizeNode.getAttribute("Height"), 10);
+        var tileSize = parseInt(imageNode.getAttribute("TileSize"));
+        var tileOverlap = parseInt(imageNode.getAttribute("Overlap"));
+        var dispRects = [];
+
+        for (var i = 0; i < dispRectNodes.length; i++) {
+            var dispRectNode = dispRectNodes[i];
+            var rectNode = dispRectNode.getElementsByTagName("Rect")[0];
+
+            dispRects.push(new $.DisplayRect(
+                parseInt(rectNode.getAttribute("X"), 10),
+                parseInt(rectNode.getAttribute("Y"), 10),
+                parseInt(rectNode.getAttribute("Width"), 10),
+                parseInt(rectNode.getAttribute("Height"), 10),
+                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                parseInt(dispRectNode.getAttribute("MaxLevel"), 10)
+            ));
+        }
+        return new $.DziTileSource(width, height, tileSize, tileOverlap,
+                tilesUrl, fileFormat, dispRects);
+    },
+
+    processError: function(errorNode) {
+        var messageNode = errorNode.getElementsByTagName("Message")[0];
+        var message = messageNode.firstChild.nodeValue;
+
+        throw new $.DziError(message);
+    },
+    getError: function(e) {
+        if (!(e instanceof DziError)) {
+            $.Debug.error(e.name + " while creating DZI from XML: " + e.message);
+            e = new $.DziError($.Strings.getString("Errors.Unknown"));
+        }
+
+    }
+}
+$.DziTileSourceHelper = new $._DziTileSourceHelper();
+
+$.ButtonState = function() {
+	throw Error.invalidOperation();
+}
+$.ButtonState = {
+	REST: 0,
+	GROUP: 1,
+	HOVER: 2,
+	DOWN: 3
+}
+
+$.Button = function(properties, events) {
+
+    this._tooltip = properties.tooltip;
+    this._srcRest = properties.srcRest;
+    this._srcGroup = properties.srcGroup;
+    this._srcHover = properties.srcHover;
+    this._srcDown = properties.srcDown;
+    this._button = properties.button;
+    this.config = properties.config;
+
+    this.initialize(events);
+}
+$.Button.prototype = {
+    initialize: function(events) {
+
+        //Start Thatcher - Observer pattern is over abstracted
+        //this._observer = new Observer();
+        this._events = new EventHandlerList();
+        //End Thatcher
+
+        if (events.onPress != undefined)
+            this.add_onPress(events.onPress);
+        if (events.onRelease != undefined)
+            this.add_onRelease(events.onRelease);
+        if (events.onClick != undefined)
+            this.add_onClick(events.onClick);
+        if (events.onEnter != undefined)
+            this.add_onEnter(events.onEnter);
+        if (events.onExit != undefined)
+            this.add_onExit(events.onExit);
+
+        this._button = $.Utils.makeNeutralElement("span");
+        this._currentState = $.ButtonState.GROUP;
+        this._tracker = new $.MouseTracker(this._button, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+        this._imgRest = $.Utils.makeTransparentImage(this._srcRest);
+        this._imgGroup = $.Utils.makeTransparentImage(this._srcGroup);
+        this._imgHover = $.Utils.makeTransparentImage(this._srcHover);
+        this._imgDown = $.Utils.makeTransparentImage(this._srcDown);
+
+        this._fadeDelay = 0;      // begin fading immediately
+        this._fadeLength = 2000;  // fade over a period of 2 seconds
+        this._fadeBeginTime = null;
+        this._shouldFade = false;
+
+        this._button.style.display = "inline-block";
+        this._button.style.position = "relative";
+        this._button.title = this._tooltip;
+
+        this._button.appendChild(this._imgRest);
+        this._button.appendChild(this._imgGroup);
+        this._button.appendChild(this._imgHover);
+        this._button.appendChild(this._imgDown);
+
+        var styleRest = this._imgRest.style;
+        var styleGroup = this._imgGroup.style;
+        var styleHover = this._imgHover.style;
+        var styleDown = this._imgDown.style;
+
+        styleGroup.position = styleHover.position = styleDown.position = "absolute";
+        styleGroup.top = styleHover.top = styleDown.top = "0px";
+        styleGroup.left = styleHover.left = styleDown.left = "0px";
+        styleHover.visibility = styleDown.visibility = "hidden";
+
+        if ($.Utils.getBrowser() == $.Browser.FIREFOX &&
+                    $.Utils.getBrowserVersion() < 3) {
+            styleGroup.top = styleHover.top = styleDown.top = "";
+        }
+
+        this._tracker.enterHandler = delegate(this, this._enterHandler);
+        this._tracker.exitHandler = delegate(this, this._exitHandler);
+        this._tracker.pressHandler = delegate(this, this._pressHandler);
+        this._tracker.releaseHandler = delegate(this, this._releaseHandler);
+        this._tracker.clickHandler = delegate(this, this._clickHandler);
+
+        this._tracker.setTracking(true);
+        this._outTo($.ButtonState.REST);
+    },
+    //Start Thatcher - never called internally
+    //dispose: function() {
+    //},
+    //End Thatcher
+    _scheduleFade: function() {
+        window.setTimeout(delegate(this, this._updateFade), 20);
+    },
+    _updateFade: function() {
+        if (this._shouldFade) {
+            var currentTime = new Date().getTime();
+            var deltaTime = currentTime - this._fadeBeginTime;
+            var opacity = 1.0 - deltaTime / this._fadeLength;
+
+            opacity = Math.min(1.0, opacity);
+            opacity = Math.max(0.0, opacity);
+
+            $.Utils.setElementOpacity(this._imgGroup, opacity, true);
+            if (opacity > 0) {
+                this._scheduleFade();    // fade again
+            }
+        }
+    },
+    _beginFading: function() {
+        this._shouldFade = true;
+        this._fadeBeginTime = new Date().getTime() + this._fadeDelay;
+        window.setTimeout(delegate(this, this._scheduleFade), this._fadeDelay);
+    },
+    _stopFading: function() {
+        this._shouldFade = false;
+        $.Utils.setElementOpacity(this._imgGroup, 1.0, true);
+    },
+    _inTo: function(newState) {
+        if (newState >= $.ButtonState.GROUP && this._currentState == $.ButtonState.REST) {
+            this._stopFading();
+            this._currentState = $.ButtonState.GROUP;
+        }
+
+        if (newState >= $.ButtonState.HOVER && this._currentState == $.ButtonState.GROUP) {
+            this._imgHover.style.visibility = "";
+            this._currentState = $.ButtonState.HOVER;
+        }
+
+        if (newState >= $.ButtonState.DOWN && this._currentState == $.ButtonState.HOVER) {
+            this._imgDown.style.visibility = "";
+            this._currentState = $.ButtonState.DOWN;
+        }
+    },
+    _outTo: function(newState) {
+        if (newState <= $.ButtonState.HOVER && this._currentState == $.ButtonState.DOWN) {
+            this._imgDown.style.visibility = "hidden";
+            this._currentState = $.ButtonState.HOVER;
+        }
+
+        if (newState <= $.ButtonState.GROUP && this._currentState == $.ButtonState.HOVER) {
+            this._imgHover.style.visibility = "hidden";
+            this._currentState = $.ButtonState.GROUP;
+        }
+
+        if (this._newState <= $.ButtonState.REST && this._currentState == $.ButtonState.GROUP) {
+            this._beginFading();
+            this._currentState = $.ButtonState.REST;
+        }
+    },
+    _enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+        if (buttonDownElmt) {
+            this._inTo($.ButtonState.DOWN);
+            this._raiseEvent("onEnter", this);
+        } else if (!buttonDownAny) {
+            this._inTo($.ButtonState.HOVER);
+        }
+    },
+    _exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+        this._outTo($.ButtonState.GROUP);
+        if (buttonDownElmt) {
+            this._raiseEvent("onExit", this);
+        }
+    },
+    _pressHandler: function(tracker, position) {
+        this._inTo($.ButtonState.DOWN);
+        this._raiseEvent("onPress", this);
+    },
+    _releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
+        if (insideElmtPress && insideElmtRelease) {
+            this._outTo($.ButtonState.HOVER);
+            this._raiseEvent("onRelease", this);
+        } else if (insideElmtPress) {
+            this._outTo($.ButtonState.GROUP);
+        } else {
+            this._inTo($.ButtonState.HOVER);
+        }
+    },
+    _clickHandler: function(tracker, position, quick, shift) {
+        if (quick) {
+            this._raiseEvent("onClick", this);
+        }
+    },
+    get_events: function get_events() {
+        //Start Thatcher - Removing Observer pattern
+        //return this._observer._getContext(this, true).events;
+        return this._events;
+        //End Thatcher
+    },
+    _raiseEvent: function(eventName, eventArgs) {
+        var handler = this.get_events().getHandler(eventName);
+
+        if (handler) {
+            if (!eventArgs) {
+                eventArgs = new Object(); // Sys.EventArgs.Empty;
+            }
+
+            handler(this, eventArgs);
+        }
+    },
+    get_element: function() {
+        return this._button;
+    },
+    get_tooltip: function() {
+        return this._tooltip;
+    },
+    set_tooltip: function(value) {
+        this._tooltip = value;
+    },
+    get_config: function() {
+        return this.config;
+    },
+    set_config: function(value) {
+        this.config = value;
+    },
+    get_srcRest: function() {
+        return this._srcRest;
+    },
+    set_srcRest: function(value) {
+        this._srcRest = value;
+    },
+    get_srcGroup: function() {
+        return this._srcGroup;
+    },
+    set_srcGroup: function(value) {
+        this._srcGroup = value;
+    },
+    get_srcHover: function() {
+        return this._srcHover;
+    },
+    set_srcHover: function(value) {
+        this._srcHover = value;
+    },
+    get_srcDown: function() {
+        return this._srcDown;
+    },
+    set_srcDown: function(value) {
+        this._srcDown = value;
+    },
+    add_onPress: function(handler) {
+        this.get_events().addHandler("onPress", handler);
+    },
+    remove_onPress: function(handler) {
+        this.get_events().removeHandler("onPress", handler);
+    },
+    add_onClick: function(handler) {
+        this.get_events().addHandler("onClick", handler);
+    },
+    remove_onClick: function(handler) {
+        this.get_events().removeHandler("onClick", handler);
+    },
+    add_onEnter: function(handler) {
+        this.get_events().addHandler("onEnter", handler);
+    },
+    remove_onEnter: function(handler) {
+        this.get_events().removeHandler("onEnter", handler);
+    },
+    add_onRelease: function(handler) {
+        this.get_events().addHandler("onRelease", handler);
+    },
+    remove_onRelease: function(handler) {
+        this.get_events().removeHandler("onRelease", handler);
+    },
+    add_onExit: function(handler) {
+        this.get_events().addHandler("onExit", handler);
+    },
+    remove_onExit: function(handler) {
+        this.get_events().removeHandler("onExit", handler);
+    },
+    notifyGroupEnter: function() {
+        this._inTo($.ButtonState.GROUP);
+    },
+    notifyGroupExit: function() {
+        this._outTo($.ButtonState.REST);
+    }
+}
+
+$.ButtonGroup = function(properties) {
+
+    this._buttons = properties.buttons;
+    this._group = properties.group;
+    this.config = properties.config;
+
+    this.initialize();
+}
+$.ButtonGroup.prototype = {
+	initialize: function() {
+
+		this._group = $.Utils.makeNeutralElement("span");
+		var buttons = this._buttons.concat([]);   // copy
+		var tracker = new $.MouseTracker(this._group, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+		this._group.style.display = "inline-block";
+
+		for (var i = 0; i < buttons.length; i++) {
+			this._group.appendChild(buttons[i].get_element());
+		}
+
+		tracker.enterHandler = delegate(this, this._enterHandler);
+		tracker.exitHandler = delegate(this, this._exitHandler);
+		tracker.releaseHandler = delegate(this, this._releaseHandler);
+
+		tracker.setTracking(true);
+	},
+    //Start Thatcher - never called internally
+    //dispose: function() {
+    //},
+    //End Thatcher
+	get_buttons: function() {
+		return this._buttons;
+	},
+	set_buttons: function(value) {
+		this._buttons = value;
+	},
+	get_element: function() {
+		return this._group;
+	},
+	get_config: function() {
+		return this.config;
+	},
+	set_config: function(value) {
+		this.config = value;
+	},
+	_enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+		for (var i = 0; i < this._buttons.length; i++) {
+			this._buttons[i].notifyGroupEnter();
+		}
+	},
+	_exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+		if (!buttonDownElmt) {
+			for (var i = 0; i < this._buttons.length; i++) {
+				this._buttons[i].notifyGroupExit();
+			}
+		}
+	},
+	_releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
+
+		if (!insideElmtRelease) {
+			for (var i = 0; i < this._buttons.length; i++) {
+				this._buttons[i].notifyGroupExit();
+			}
+		}
+	},
+	emulateEnter: function() {
+		this._enterHandler();
+	},
+
+	emulateExit: function() {
+		this._exitHandler();
+	}
+}
+$.Config = function () {
 
     this.debugMode = true;
 
@@ -2508,701 +3333,122 @@ Seadragon.Config = function () {
             HOVER: '/Scripts/images/fullpage_hover.png',
             DOWN: '/Scripts/images/fullpage_pressed.png'
         }
-    };
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.DziError = function (message) {
-    Error.apply(this, arguments);
-    this.message = message;
-};
-Seadragon.DziError.prototype = new Error();
-Seadragon.DziError.constructor = Seadragon.DziError;
-
-Seadragon.DziTileSource = function (width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects, minLevel) {
-    Seadragon.TileSource.call(this, width, height, tileSize, tileOverlap, minLevel, null);
-
-    this._levelRects = {};
-    this.tilesUrl = tilesUrl;
-
-    this.fileFormat = fileFormat;
-    this.displayRects = displayRects;
-    this.initialize();
-};
-Seadragon.DziTileSource.prototype = new Seadragon.TileSource();
-Seadragon.DziTileSource.prototype.constructor = Seadragon.DziTileSource;
-Seadragon.DziTileSource.prototype.initialize = function () {
-    if (!this.displayRects) {
-        return;
     }
-
-    for (var i = this.displayRects.length - 1; i >= 0; i--) {
-        var rect = this.displayRects[i];
-        for (var level = rect.minLevel; level <= rect.maxLevel; level++) {
-            if (!this._levelRects[level]) {
-                this._levelRects[level] = [];
-            }
-            this._levelRects[level].push(rect);
-        }
-    }
-};
-Seadragon.DziTileSource.prototype.getTileUrl = function (level, x, y) {
-    return [this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat].join('');
-};
-Seadragon.DziTileSource.prototype.tileExists = function (level, x, y) {
-    var rects = this._levelRects[level];
-
-    if (!rects || !rects.length) {
-        return true;
-    }
-
-    for (var i = rects.length - 1; i >= 0; i--) {
-        var rect = rects[i];
-
-        if (level < rect.minLevel || level > rect.maxLevel) {
-            continue;
-        }
-
-        var scale = this.getLevelScale(level);
-        var xMin = rect.x * scale;
-        var yMin = rect.y * scale;
-        var xMax = xMin + rect.width * scale;
-        var yMax = yMin + rect.height * scale;
-
-        xMin = Math.floor(xMin / this.tileSize);
-        yMin = Math.floor(yMin / this.tileSize);
-        xMax = Math.ceil(xMax / this.tileSize);
-        yMax = Math.ceil(yMax / this.tileSize);
-
-        if (xMin <= x && x < xMax && yMin <= y && y < yMax) {
-            return true;
-        }
-    }
-
-    return false;
-};
-
-Seadragon._DziTileSourceHelper = function () {
-
-};
-Seadragon._DziTileSourceHelper.prototype = {
-    createFromXml: function (xmlUrl, xmlString, callback) {
-        var async = typeof (callback) == "function";
-        var error = null;
-
-        if (!xmlUrl) {
-            this.error = Seadragon.Strings.getString("Errors.Empty");
-            if (async) {
-                window.setTimeout(function () {
-                    callback(null, error);
-                }, 1);
-                return null;
-            }
-            throw new Seadragon.DziError(error);
-        }
-
-        var urlParts = xmlUrl.split('/');
-        var filename = urlParts[urlParts.length - 1];
-        var lastDot = filename.lastIndexOf('.');
-
-        if (lastDot > -1) {
-            urlParts[urlParts.length - 1] = filename.slice(0, lastDot);
-        }
-
-        var tilesUrl = urlParts.join('/') + "_files/";
-        function finish(func, obj) {
-            try {
-                return func(obj, tilesUrl);
-            } catch (e) {
-                if (async) {
-                    error = this.getError(e).message;
-                    return null;
-                } else {
-                    throw this.getError(e);
-                }
-            }
-        }
-        if (async) {
-            if (xmlString) {
-                var handler1 = Function.createDelegate(this, this.processXml);
-                window.setTimeout(function () {
-                    var source = finish(handler1, Seadragon.Utils.parseXml(xmlString));
-                    callback(source, error);    // call after finish sets error
-                }, 1);
-            } else {
-                var handler2 = Function.createDelegate(this, this.processResponse);
-                Seadragon.Utils.makeAjaxRequest(xmlUrl, function (xhr) {
-                    var source = finish(handler2, xhr);
-                    callback(source, error);    // call after finish sets error
-                });
-            }
-
-            return null;
-        }
-
-        if (xmlString) {
-            return finish(Function.createDelegate(this, this.processXml), Seadragon.Utils.parseXml(xmlString));
-        } else {
-            return finish(Function.createDelegate(this, this.processResponse), Seadragon.Utils.makeAjaxRequest(xmlUrl));
-        }
-    },
-    processResponse: function (xhr, tilesUrl) {
-        if (!xhr) {
-            throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.Security"));
-        } else if (xhr.status !== 200 && xhr.status !== 0) {
-            var status = xhr.status;
-            var statusText = (status == 404) ? "Not Found" : xhr.statusText;
-            throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.Status", status, statusText));
-        }
-
-        var doc = null;
-
-        if (xhr.responseXML && xhr.responseXML.documentElement) {
-            doc = xhr.responseXML;
-        } else if (xhr.responseText) {
-            doc = Seadragon.Utils.parseXml(xhr.responseText);
-        }
-
-        return this.processXml(doc, tilesUrl);
-    },
-
-    processXml: function (xmlDoc, tilesUrl) {
-        if (!xmlDoc || !xmlDoc.documentElement) {
-            throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.Xml"));
-        }
-
-        var root = xmlDoc.documentElement;
-        var rootName = root.tagName;
-
-        if (rootName == "Image") {
-            try {
-                return this.processDzi(root, tilesUrl);
-            } catch (e) {
-                var defMsg = Seadragon.Strings.getString("Errors.Dzi");
-                throw (e instanceof Seadragon.DziError) ? e : new Seadragon.DziError(defMsg);
-            }
-        } else if (rootName == "Collection") {
-            throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.Dzc"));
-        } else if (rootName == "Error") {
-            return this.processError(root);
-        }
-
-        throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.Dzi"));
-    },
-
-    processDzi: function (imageNode, tilesUrl) {
-        var fileFormat = imageNode.getAttribute("Format");
-        var minTileLevel = parseInt(imageNode.getAttribute("MinTileLevel")); // This attribute is not supported by the official DZI format,
-
-        if (!Seadragon.Utils.imageFormatSupported(fileFormat)) {
-            throw new Seadragon.DziError(Seadragon.Strings.getString("Errors.ImageFormat",
-                    fileFormat.toUpperCase()));
-        }
-
-        var sizeNode = imageNode.getElementsByTagName("Size")[0];
-        var dispRectNodes = imageNode.getElementsByTagName("DisplayRect");
-
-        var width = parseInt(sizeNode.getAttribute("Width"), 10);
-        var height = parseInt(sizeNode.getAttribute("Height"), 10);
-        var tileSize = parseInt(imageNode.getAttribute("TileSize"));
-        var tileOverlap = parseInt(imageNode.getAttribute("Overlap"));
-        var dispRects = [];
-
-        for (var i = 0; i < dispRectNodes.length; i++) {
-            var dispRectNode = dispRectNodes[i];
-            var rectNode = dispRectNode.getElementsByTagName("Rect")[0];
-
-            dispRects.push(new Seadragon.DisplayRect(
-                parseInt(rectNode.getAttribute("X"), 10),
-                parseInt(rectNode.getAttribute("Y"), 10),
-                parseInt(rectNode.getAttribute("Width"), 10),
-                parseInt(rectNode.getAttribute("Height"), 10),
-                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt(dispRectNode.getAttribute("MaxLevel"), 10)));
-        }
-        return new Seadragon.DziTileSource(width, height, tileSize, tileOverlap,
-                tilesUrl, fileFormat, dispRects, minTileLevel);
-    },
-
-    processError: function (errorNode) {
-        var messageNode = errorNode.getElementsByTagName("Message")[0];
-        var message = messageNode.firstChild.nodeValue;
-
-        throw new Seadragon.DziError(message);
-    },
-    getError: function (e) {
-        if (!(e instanceof DziError)) {
-            Seadragon.Debug.error(e.name + " while creating DZI from XML: " + e.message);
-            e = new Seadragon.DziError(Seadragon.Strings.getString("Errors.Unknown"));
-        }
-
-    }
-};
-Seadragon.DziTileSourceHelper = new Seadragon._DziTileSourceHelper();
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.ButtonState = function () {
-    throw Error.invalidOperation();
-};
-Seadragon.ButtonState = {
-    REST: 0,
-    GROUP: 1,
-    HOVER: 2,
-    DOWN: 3
-};
-
-Seadragon.Button = function (properties, events) {
-
-    this._tooltip = properties.tooltip;
-    this._srcRest = properties.srcRest;
-    this._srcGroup = properties.srcGroup;
-    this._srcHover = properties.srcHover;
-    this._srcDown = properties.srcDown;
-    this._button = properties.button;
-    this.config = properties.config;
-
-    this.initialize(events);
-};
-Seadragon.Button.prototype = {
-    initialize: function (events) {
-
-        this._observer = new Observer();
-
-        if (events.onPress != undefined)
-            this.add_onPress(events.onPress);
-        if (events.onRelease != undefined)
-            this.add_onRelease(events.onRelease);
-        if (events.onClick != undefined)
-            this.add_onClick(events.onClick);
-        if (events.onEnter != undefined)
-            this.add_onEnter(events.onEnter);
-        if (events.onExit != undefined)
-            this.add_onExit(events.onExit);
-
-        this._button = Seadragon.Utils.makeNeutralElement("span");
-        this._currentState = Seadragon.ButtonState.GROUP;
-        this._tracker = new Seadragon.MouseTracker(this._button, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        this._imgRest = Seadragon.Utils.makeTransparentImage(this._srcRest);
-        this._imgGroup = Seadragon.Utils.makeTransparentImage(this._srcGroup);
-        this._imgHover = Seadragon.Utils.makeTransparentImage(this._srcHover);
-        this._imgDown = Seadragon.Utils.makeTransparentImage(this._srcDown);
-
-        this._fadeDelay = 0;      // begin fading immediately
-        this._fadeLength = 2000;  // fade over a period of 2 seconds
-        this._fadeBeginTime = null;
-        this._shouldFade = false;
-
-        this._button.style.display = "inline-block";
-        this._button.style.position = "relative";
-        this._button.title = this._tooltip;
-
-        this._button.appendChild(this._imgRest);
-        this._button.appendChild(this._imgGroup);
-        this._button.appendChild(this._imgHover);
-        this._button.appendChild(this._imgDown);
-
-        var styleRest = this._imgRest.style;
-        var styleGroup = this._imgGroup.style;
-        var styleHover = this._imgHover.style;
-        var styleDown = this._imgDown.style;
-
-        styleGroup.position = styleHover.position = styleDown.position = "absolute";
-        styleGroup.top = styleHover.top = styleDown.top = "0px";
-        styleGroup.left = styleHover.left = styleDown.left = "0px";
-        styleHover.visibility = styleDown.visibility = "hidden";
-
-        if (Seadragon.Utils.getBrowser() == Seadragon.Browser.FIREFOX &&
-                    Seadragon.Utils.getBrowserVersion() < 3) {
-            styleGroup.top = styleHover.top = styleDown.top = "";
-        }
-
-        this._tracker.enterHandler = Function.createDelegate(this, this._enterHandler);
-        this._tracker.exitHandler = Function.createDelegate(this, this._exitHandler);
-        this._tracker.pressHandler = Function.createDelegate(this, this._pressHandler);
-        this._tracker.releaseHandler = Function.createDelegate(this, this._releaseHandler);
-        this._tracker.clickHandler = Function.createDelegate(this, this._clickHandler);
-
-        this._tracker.setTracking(true);
-        this._outTo(Seadragon.ButtonState.REST);
-    },
-    dispose: function () {
-    },
-    _scheduleFade: function () {
-        window.setTimeout(Function.createDelegate(this, this._updateFade), 20);
-    },
-    _updateFade: function () {
-        if (this._shouldFade) {
-            var currentTime = new Date().getTime();
-            var deltaTime = currentTime - this._fadeBeginTime;
-            var opacity = 1.0 - deltaTime / this._fadeLength;
-
-            opacity = Math.min(1.0, opacity);
-            opacity = Math.max(0.0, opacity);
-
-            Seadragon.Utils.setElementOpacity(this._imgGroup, opacity, true);
-            if (opacity > 0) {
-                this._scheduleFade();    // fade again
-            }
-        }
-    },
-    _beginFading: function () {
-        this._shouldFade = true;
-        this._fadeBeginTime = new Date().getTime() + this._fadeDelay;
-        window.setTimeout(Function.createDelegate(this, this._scheduleFade), this._fadeDelay);
-    },
-    _stopFading: function () {
-        this._shouldFade = false;
-        Seadragon.Utils.setElementOpacity(this._imgGroup, 1.0, true);
-    },
-    _inTo: function (newState) {
-        if (newState >= Seadragon.ButtonState.GROUP && this._currentState == Seadragon.ButtonState.REST) {
-            this._stopFading();
-            this._currentState = Seadragon.ButtonState.GROUP;
-        }
-
-        if (newState >= Seadragon.ButtonState.HOVER && this._currentState == Seadragon.ButtonState.GROUP) {
-            this._imgHover.style.visibility = "";
-            this._currentState = Seadragon.ButtonState.HOVER;
-        }
-
-        if (newState >= Seadragon.ButtonState.DOWN && this._currentState == Seadragon.ButtonState.HOVER) {
-            this._imgDown.style.visibility = "";
-            this._currentState = Seadragon.ButtonState.DOWN;
-        }
-    },
-    _outTo: function (newState) {
-        if (newState <= Seadragon.ButtonState.HOVER && this._currentState == Seadragon.ButtonState.DOWN) {
-            this._imgDown.style.visibility = "hidden";
-            this._currentState = Seadragon.ButtonState.HOVER;
-        }
-
-        if (newState <= Seadragon.ButtonState.GROUP && this._currentState == Seadragon.ButtonState.HOVER) {
-            this._imgHover.style.visibility = "hidden";
-            this._currentState = Seadragon.ButtonState.GROUP;
-        }
-
-        if (this._newState <= Seadragon.ButtonState.REST && this._currentState == Seadragon.ButtonState.GROUP) {
-            this._beginFading();
-            this._currentState = Seadragon.ButtonState.REST;
-        }
-    },
-    _enterHandler: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        if (buttonDownElmt) {
-            this._inTo(Seadragon.ButtonState.DOWN);
-            this._raiseEvent("onEnter", this);
-        } else if (!buttonDownAny) {
-            this._inTo(Seadragon.ButtonState.HOVER);
-        }
-    },
-    _exitHandler: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        this._outTo(Seadragon.ButtonState.GROUP);
-        if (buttonDownElmt) {
-            this._raiseEvent("onExit", this);
-        }
-    },
-    _pressHandler: function (tracker, position) {
-        this._inTo(Seadragon.ButtonState.DOWN);
-        this._raiseEvent("onPress", this);
-    },
-    _releaseHandler: function (tracker, position, insideElmtPress, insideElmtRelease) {
-        if (insideElmtPress && insideElmtRelease) {
-            this._outTo(Seadragon.ButtonState.HOVER);
-            this._raiseEvent("onRelease", this);
-        } else if (insideElmtPress) {
-            this._outTo(Seadragon.ButtonState.GROUP);
-        } else {
-            this._inTo(Seadragon.ButtonState.HOVER);
-        }
-    },
-    _clickHandler: function (tracker, position, quick, shift) {
-        if (quick) {
-            this._raiseEvent("onClick", this);
-        }
-    },
-    get_events: function get_events() {
-        return this._observer._getContext(this, true).events;
-    },
-    _raiseEvent: function (eventName, eventArgs) {
-        var handler = this.get_events().getHandler(eventName);
-
-        if (handler) {
-            if (!eventArgs) {
-                eventArgs = new Object(); // Sys.EventArgs.Empty;
-            }
-
-            handler(this, eventArgs);
-        }
-    },
-    get_element: function () {
-        return this._button;
-    },
-    get_tooltip: function () {
-        return this._tooltip;
-    },
-    set_tooltip: function (value) {
-        this._tooltip = value;
-    },
-    get_config: function () {
-        return this.config;
-    },
-    set_config: function (value) {
-        this.config = value;
-    },
-    get_srcRest: function () {
-        return this._srcRest;
-    },
-    set_srcRest: function (value) {
-        this._srcRest = value;
-    },
-    get_srcGroup: function () {
-        return this._srcGroup;
-    },
-    set_srcGroup: function (value) {
-        this._srcGroup = value;
-    },
-    get_srcHover: function () {
-        return this._srcHover;
-    },
-    set_srcHover: function (value) {
-        this._srcHover = value;
-    },
-    get_srcDown: function () {
-        return this._srcDown;
-    },
-    set_srcDown: function (value) {
-        this._srcDown = value;
-    },
-    add_onPress: function (handler) {
-        this.get_events().addHandler("onPress", handler);
-    },
-    remove_onPress: function (handler) {
-        this.get_events().removeHandler("onPress", handler);
-    },
-    add_onClick: function (handler) {
-        this.get_events().addHandler("onClick", handler);
-    },
-    remove_onClick: function (handler) {
-        this.get_events().removeHandler("onClick", handler);
-    },
-    add_onEnter: function (handler) {
-        this.get_events().addHandler("onEnter", handler);
-    },
-    remove_onEnter: function (handler) {
-        this.get_events().removeHandler("onEnter", handler);
-    },
-    add_onRelease: function (handler) {
-        this.get_events().addHandler("onRelease", handler);
-    },
-    remove_onRelease: function (handler) {
-        this.get_events().removeHandler("onRelease", handler);
-    },
-    add_onExit: function (handler) {
-        this.get_events().addHandler("onExit", handler);
-    },
-    remove_onExit: function (handler) {
-        this.get_events().removeHandler("onExit", handler);
-    },
-    notifyGroupEnter: function () {
-        this._inTo(Seadragon.ButtonState.GROUP);
-    },
-    notifyGroupExit: function () {
-        this._outTo(Seadragon.ButtonState.REST);
-    }
-};
-
-Seadragon.ButtonGroup = function (properties) {
-
-    this._buttons = properties.buttons;
-    this._group = properties.group;
-    this.config = properties.config;
-
-    this.initialize();
-};
-Seadragon.ButtonGroup.prototype = {
-    initialize: function () {
-
-        this._group = Seadragon.Utils.makeNeutralElement("span");
-        var buttons = this._buttons.concat([]);   // copy
-        var tracker = new Seadragon.MouseTracker(this._group, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        this._group.style.display = "inline-block";
-
-        for (var i = 0; i < buttons.length; i++) {
-            this._group.appendChild(buttons[i].get_element());
-        }
-
-        tracker.enterHandler = Function.createDelegate(this, this._enterHandler);
-        tracker.exitHandler = Function.createDelegate(this, this._exitHandler);
-        tracker.releaseHandler = Function.createDelegate(this, this._releaseHandler);
-
-        tracker.setTracking(true);
-    },
-    dispose: function () {
-    },
-    get_buttons: function () {
-        return this._buttons;
-    },
-    set_buttons: function (value) {
-        this._buttons = value;
-    },
-    get_element: function () {
-        return this._group;
-    },
-    get_config: function () {
-        return this.config;
-    },
-    set_config: function (value) {
-        this.config = value;
-    },
-    _enterHandler: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        for (var i = 0; i < this._buttons.length; i++) {
-            this._buttons[i].notifyGroupEnter();
-        }
-    },
-    _exitHandler: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        if (!buttonDownElmt) {
-            for (var i = 0; i < this._buttons.length; i++) {
-                this._buttons[i].notifyGroupExit();
-            }
-        }
-    },
-    _releaseHandler: function (tracker, position, insideElmtPress, insideElmtRelease) {
-
-        if (!insideElmtRelease) {
-            for (var i = 0; i < this._buttons.length; i++) {
-                this._buttons[i].notifyGroupExit();
-            }
-        }
-    },
-    emulateEnter: function () {
-        this._enterHandler();
-    },
-
-    emulateExit: function () {
-        this._exitHandler();
-    }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.Rect = function (x, y, width, height) {
+}
+$.Rect = function(x, y, width, height) {
 
     this.x = typeof (x) == "number" ? x : 0;
     this.y = typeof (y) == "number" ? y : 0;
     this.width = typeof (width) == "number" ? width : 0;
     this.height = typeof (height) == "number" ? height : 0;
-};
-Seadragon.Rect.prototype = {
-    getAspectRatio: function () {
+}
+$.Rect.prototype = {
+    getAspectRatio: function() {
         return this.width / this.height;
     },
 
-    getTopLeft: function () {
-        return new Seadragon.Point(this.x, this.y);
+    getTopLeft: function() {
+    return new $.Point(this.x, this.y);
     },
 
-    getBottomRight: function () {
-        return new Seadragon.Point(this.x + this.width, this.y + this.height);
+    getBottomRight: function() {
+    return new $.Point(this.x + this.width, this.y + this.height);
     },
 
-    getCenter: function () {
-        return new Seadragon.Point(this.x + this.width / 2.0,
+    getCenter: function() {
+    return new $.Point(this.x + this.width / 2.0,
                         this.y + this.height / 2.0);
     },
 
-    getSize: function () {
-        return new Seadragon.Point(this.width, this.height);
+    getSize: function() {
+    return new $.Point(this.width, this.height);
     },
 
-    equals: function (other) {
-        return (other instanceof Seadragon.Rect) &&
+    equals: function(other) {
+        return (other instanceof $.Rect) &&
                 (this.x === other.x) && (this.y === other.y) &&
                 (this.width === other.width) && (this.height === other.height);
     },
 
-    toString: function () {
+    toString: function() {
         return "[" + this.x + "," + this.y + "," + this.width + "x" +
                 this.height + "]";
     }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon.DisplayRect = function (x, y, width, height, minLevel, maxLevel) {
-    Seadragon.Rect.apply(this, [x, y, width, height]);
+}
+$.DisplayRect = function(x, y, width, height, minLevel, maxLevel) {
+    $.Rect.apply(this, [x, y, width, height]);
 
     this.minLevel = minLevel;
     this.maxLevel = maxLevel;
-};
-Seadragon.DisplayRect.prototype = new Seadragon.Rect();
-Seadragon.DisplayRect.prototype.constructor = Seadragon.DisplayRect;
-/// <reference path="embed/OpenSeadragon.pre.js" />
+}
+$.DisplayRect.prototype = new $.Rect();
+$.DisplayRect.prototype.constructor = $.DisplayRect;
+$.Spring = $.Spring = function(initialValue, config) {
+	this._currentValue = typeof (initialValue) == "number" ? initialValue : 0;
+	this._startValue = this._currentValue;
+	this._targetValue = this._currentValue;
+	this.config = config;
 
-Seadragon.Spring = Seadragon.Spring = function (initialValue, config) {
-    this._currentValue = typeof (initialValue) == "number" ? initialValue : 0;
-    this._startValue = this._currentValue;
-    this._targetValue = this._currentValue;
-    this.config = config;
+	this._currentTime = new Date().getTime(); // always work in milliseconds
+	this._startTime = this._currentTime;
+	this._targetTime = this._currentTime;
+}
+$.Spring.prototype = {
+	_transform: function(x) {
+		var s = this.config.springStiffness;
+		return (1.0 - Math.exp(-x * s)) / (1.0 - Math.exp(-s));
+	},
+	getCurrent: function() {
+		return this._currentValue;
+	},
 
-    this._currentTime = new Date().getTime(); // always work in milliseconds
-    this._startTime = this._currentTime;
-    this._targetTime = this._currentTime;
-};
-Seadragon.Spring.prototype = {
-    _transform: function (x) {
-        var s = this.config.springStiffness;
-        return (1.0 - Math.exp(-x * s)) / (1.0 - Math.exp(-s));
-    },
-    getCurrent: function () {
-        return this._currentValue;
-    },
+	getTarget: function() {
+		return this._targetValue;
+	},
 
-    getTarget: function () {
-        return this._targetValue;
-    },
+	resetTo: function(target) {
+		this._targetValue = target;
+		this._targetTime = this._currentTime;
+		this._startValue = this._targetValue;
+		this._startTime = this._targetTime;
+	},
 
-    resetTo: function (target) {
-        this._targetValue = target;
-        this._targetTime = this._currentTime;
-        this._startValue = this._targetValue;
-        this._startTime = this._targetTime;
-    },
+	springTo: function(target) {
+		this._startValue = this._currentValue;
+		this._startTime = this._currentTime;
+		this._targetValue = target;
+		this._targetTime = this._startTime + 1000 * this.config.animationTime;
+	},
 
-    springTo: function (target) {
-        this._startValue = this._currentValue;
-        this._startTime = this._currentTime;
-        this._targetValue = target;
-        this._targetTime = this._startTime + 1000 * this.config.animationTime;
-    },
+	shiftBy: function(delta) {
+		this._startValue += delta;
+		this._targetValue += delta;
+	},
 
-    shiftBy: function (delta) {
-        this._startValue += delta;
-        this._targetValue += delta;
-    },
-
-    update: function () {
-        this._currentTime = new Date().getTime();
-        this._currentValue = (this._currentTime >= this._targetTime) ? this._targetValue :
+	update: function() {
+		this._currentTime = new Date().getTime();
+		this._currentValue = (this._currentTime >= this._targetTime) ? this._targetValue :
                 this._startValue + (this._targetValue - this._startValue) *
                 this._transform((this._currentTime - this._startTime) / (this._targetTime - this._startTime));
-    }
-};
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
+	}
+}
 
 var QUOTA = 100;    // the max number of images we should keep in memory
 var MIN_PIXEL_RATIO = 0.5;  // the most shrunk a tile should be
 
 
-var browser = Seadragon.Utils.getBrowser();
-var browserVer = Seadragon.Utils.getBrowserVersion();
+var browser = $.Utils.getBrowser();
+var browserVer = $.Utils.getBrowserVersion();
 
-var subpixelRenders = browser == Seadragon.Browser.FIREFOX ||
-            browser == Seadragon.Browser.OPERA ||
-            (browser == Seadragon.Browser.SAFARI && browserVer >= 4) ||
-            (browser == Seadragon.Browser.CHROME && browserVer >= 2);
+var subpixelRenders = browser == $.Browser.FIREFOX ||
+            browser == $.Browser.OPERA ||
+            (browser == $.Browser.SAFARI && browserVer >= 4) ||
+            (browser == $.Browser.CHROME && browserVer >= 2);
 
 var useCanvas =
             typeof (document.createElement("canvas").getContext) == "function" &&
             subpixelRenders;
-Seadragon.Tile = function (level, x, y, bounds, exists, url) {
+$.Tile = function(level, x, y, bounds, exists, url) {
     this.level = level;
     this.x = x;
     this.y = y;
@@ -3228,22 +3474,25 @@ Seadragon.Tile = function (level, x, y, bounds, exists, url) {
 
     this.beingDrawn = false; // whether this tile is currently being drawn
     this.lastTouchTime = 0; // the time that tile was last touched
-};
-Seadragon.Tile.prototype = {
-    dispose: function () {
-    },
-    toString: function () {
+}
+$.Tile.prototype = {
+    
+    //Start Thatcher - never called internally
+    //dispose: function() {
+    //},
+    //End Thatcher
+    toString: function() {
         return this.level + "/" + this.x + "_" + this.y;
     },
-    drawHTML: function (container) {
+    drawHTML: function(container) {
         if (!this.loaded) {
-            Seadragon.Debug.error("Attempting to draw tile " + this.toString() +
-                    " when it's not yet loaded.", this);
+            $.Debug.error("Attempting to draw tile " + this.toString() +
+                    " when it's not yet loaded.");
             return;
         }
 
         if (!this.elmt) {
-            this.elmt = Seadragon.Utils.makeNeutralElement("img");
+            this.elmt = $.Utils.makeNeutralElement("img");
             this.elmt.src = this.url;
             this.style = this.elmt.style;
             this.style.position = "absolute";
@@ -3265,12 +3514,12 @@ Seadragon.Tile.prototype = {
         style.width = size.x + "px";
         style.height = size.y + "px";
 
-        Seadragon.Utils.setElementOpacity(elmt, this.opacity);
+        $.Utils.setElementOpacity(elmt, this.opacity);
     },
-    drawCanvas: function (context) {
+    drawCanvas: function(context) {
         if (!this.loaded) {
-            Seadragon.Debug.error("Attempting to draw tile " + this.toString() +
-                    " when it's not yet loaded.", this);
+            $.Debug.error("Attempting to draw tile " + this.toString() +
+                    " when it's not yet loaded.");
             return;
         }
 
@@ -3280,7 +3529,7 @@ Seadragon.Tile.prototype = {
         context.globalAlpha = this.opacity;
         context.drawImage(this.image, position.x, position.y, size.x, size.y);
     },
-    unload: function () {
+    unload: function() {
         if (this.elmt && this.elmt.parentNode) {
             this.elmt.parentNode.removeChild(this.elmt);
         }
@@ -3290,55 +3539,55 @@ Seadragon.Tile.prototype = {
         this.loaded = false;
         this.loading = false;
     }
-};
+}
 
-Seadragon.Overlay = function (elmt, loc, placement) {
+$.Overlay = function(elmt, loc, placement) {
     this.elmt = elmt;
-    this.scales = (loc instanceof Seadragon.Rect);
-    this.bounds = new Seadragon.Rect(loc.x, loc.y, loc.width, loc.height);
-    this.placement = loc instanceof Seadragon.Point ? placement : Seadragon.OverlayPlacement.TOP_LEFT;    // rects are always top-left
-    this.position = new Seadragon.Point(loc.x, loc.y);
-    this.size = new Seadragon.Point(loc.width, loc.height);
+    this.scales = (loc instanceof $.Rect);
+    this.bounds = new $.Rect(loc.x, loc.y, loc.width, loc.height);
+    this.placement = loc instanceof $.Point ? placement : $.OverlayPlacement.TOP_LEFT;    // rects are always top-left
+    this.position = new $.Point(loc.x, loc.y);
+    this.size = new $.Point(loc.width, loc.height);
     this.style = elmt.style;
-};
-Seadragon.Overlay.prototype = {
+}
+$.Overlay.prototype = {
 
-    adjust: function (position, size) {
+    adjust: function(position, size) {
         switch (this.placement) {
-            case Seadragon.OverlayPlacement.TOP_LEFT:
+            case $.OverlayPlacement.TOP_LEFT:
                 break;
-            case Seadragon.OverlayPlacement.TOP:
+            case $.OverlayPlacement.TOP:
                 position.x -= size.x / 2;
                 break;
-            case Seadragon.OverlayPlacement.TOP_RIGHT:
+            case $.OverlayPlacement.TOP_RIGHT:
                 position.x -= size.x;
                 break;
-            case Seadragon.OverlayPlacement.RIGHT:
+            case $.OverlayPlacement.RIGHT:
                 position.x -= size.x;
                 position.y -= size.y / 2;
                 break;
-            case Seadragon.OverlayPlacement.BOTTOM_RIGHT:
+            case $.OverlayPlacement.BOTTOM_RIGHT:
                 position.x -= size.x;
                 position.y -= size.y;
                 break;
-            case Seadragon.OverlayPlacement.BOTTOM:
+            case $.OverlayPlacement.BOTTOM:
                 position.x -= size.x / 2;
                 position.y -= size.y;
                 break;
-            case Seadragon.OverlayPlacement.BOTTOM_LEFT:
+            case $.OverlayPlacement.BOTTOM_LEFT:
                 position.y -= size.y;
                 break;
-            case Seadragon.OverlayPlacement.LEFT:
+            case $.OverlayPlacement.LEFT:
                 position.y -= size.y / 2;
                 break;
-            case Seadragon.OverlayPlacement.CENTER:
+            case $.OverlayPlacement.CENTER:
             default:
                 position.x -= size.x / 2;
                 position.y -= size.y / 2;
                 break;
         }
     },
-    destroy: function () {
+    destroy: function() {
         var elmt = this.elmt;
         var style = this.style;
 
@@ -3355,7 +3604,7 @@ Seadragon.Overlay.prototype = {
             style.height = "";
         }
     },
-    drawHTML: function (container) {
+    drawHTML: function(container) {
         var elmt = this.elmt;
         var style = this.style;
         var scales = this.scales;
@@ -3365,7 +3614,7 @@ Seadragon.Overlay.prototype = {
         }
 
         if (!scales) {
-            this.size = Seadragon.Utils.getElementSize(elmt);
+            this.size = $.Utils.getElementSize(elmt);
         }
 
         var position = this.position;
@@ -3385,62 +3634,64 @@ Seadragon.Overlay.prototype = {
             style.height = size.y + "px";
         }
     },
-    update: function (loc, placement) {
-        this.scales = (loc instanceof Seadragon.Rect);
-        this.bounds = new Seadragon.Rect(loc.x, loc.y, loc.width, loc.height);
-        this.placement = loc instanceof Seadragon.Point ?
-                placement : Seadragon.OverlayPlacement.TOP_LEFT;    // rects are always top-left
+    update: function(loc, placement) {
+        this.scales = (loc instanceof $.Rect);
+        this.bounds = new $.Rect(loc.x, loc.y, loc.width, loc.height);
+        this.placement = loc instanceof $.Point ?
+                placement : $.OverlayPlacement.TOP_LEFT;    // rects are always top-left
     }
 
-};
+}
 
-Seadragon.Drawer = function (source, viewport, elmt) {
+$.Drawer = function(source, viewport, elmt) {
 
-    this._container = Seadragon.Utils.getElement(elmt);
-    this._canvas = Seadragon.Utils.makeNeutralElement(useCanvas ? "canvas" : "div");
-    this._context = useCanvas ? this._canvas.getContext("2d") : null;
-    this._viewport = viewport;
-    this._source = source;
-    this.config = this._viewport.config;
+	this._container = $.Utils.getElement(elmt);
+	this._canvas = $.Utils.makeNeutralElement(useCanvas ? "canvas" : "div");
+	this._context = useCanvas ? this._canvas.getContext("2d") : null;
+	this._viewport = viewport;
+	this._source = source;
+	this.config = this._viewport.config;
 
-    this._imageLoader = new Seadragon.ImageLoader(this.config.imageLoaderLimit);
-    this._profiler = new Seadragon.Profiler();
+	this._imageLoader = new $.ImageLoader(this.config.imageLoaderLimit);
+	this._profiler = new $.Profiler();
 
-    this._minLevel = source.minLevel;
-    this._maxLevel = source.maxLevel;
-    this._tileSize = source.tileSize;
-    this._tileOverlap = source.tileOverlap;
-    this._normHeight = source.dimensions.y / source.dimensions.x;
+	this._minLevel = source.minLevel;
+	this._maxLevel = source.maxLevel;
+	this._tileSize = source.tileSize;
+	this._tileOverlap = source.tileOverlap;
+	this._normHeight = source.dimensions.y / source.dimensions.x;
 
-    this._cacheNumTiles = {};     // 1d dictionary [level] --> Point
-    this._cachePixelRatios = {};  // 1d dictionary [level] --> Point
-    this._tilesMatrix = {};       // 3d dictionary [level][x][y] --> Tile
-    this._tilesLoaded = [];       // unordered list of Tiles with loaded images
-    this._coverage = {};          // 3d dictionary [level][x][y] --> Boolean
+	this._cacheNumTiles = {};     // 1d dictionary [level] --> Point
+	this._cachePixelRatios = {};  // 1d dictionary [level] --> Point
+	this._tilesMatrix = {};       // 3d dictionary [level][x][y] --> Tile
+	this._tilesLoaded = [];       // unordered list of Tiles with loaded images
+	this._coverage = {};          // 3d dictionary [level][x][y] --> Boolean
 
-    this._overlays = [];          // unordered list of Overlays added
-    this._lastDrawn = [];         // unordered list of Tiles drawn last frame
-    this._lastResetTime = 0;
-    this._midUpdate = false;
-    this._updateAgain = true;
-
-
-    this.elmt = this._container;
+	this._overlays = [];          // unordered list of Overlays added
+	this._lastDrawn = [];         // unordered list of Tiles drawn last frame
+	this._lastResetTime = 0;
+	this._midUpdate = false;
+	this._updateAgain = true;
 
 
-    this._init();
-};
-Seadragon.Drawer.prototype = {
-    dispose: function () {
-    },
-    _init: function () {
+	this.elmt = this._container;
+
+
+	this._init();
+}
+$.Drawer.prototype = {
+    //Start Thatcher - never called internally
+    //dispose: function() {
+    //},
+    //End Thatcher
+    _init: function() {
         this._canvas.style.width = "100%";
         this._canvas.style.height = "100%";
         this._canvas.style.position = "absolute";
         this._container.style.textAlign = "left";    // explicit left-align
         this._container.appendChild(this._canvas);
     },
-    _compareTiles: function (prevBest, tile) {
+    _compareTiles: function(prevBest, tile) {
         if (!prevBest) {
             return tile;
         }
@@ -3455,7 +3706,7 @@ Seadragon.Drawer.prototype = {
 
         return prevBest;
     },
-    _getNumTiles: function (level) {
+    _getNumTiles: function(level) {
         if (!this._cacheNumTiles[level]) {
             this._cacheNumTiles[level] = this._source.getNumTiles(level);
         }
@@ -3463,7 +3714,7 @@ Seadragon.Drawer.prototype = {
         return this._cacheNumTiles[level];
     },
 
-    _getPixelRatio: function (level) {
+    _getPixelRatio: function(level) {
         if (!this._cachePixelRatios[level]) {
             this._cachePixelRatios[level] = this._source.getPixelRatio(level);
         }
@@ -3472,7 +3723,7 @@ Seadragon.Drawer.prototype = {
     },
 
 
-    _getTile: function (level, x, y, time, numTilesX, numTilesY) {
+    _getTile: function(level, x, y, time, numTilesX, numTilesY) {
         if (!this._tilesMatrix[level]) {
             this._tilesMatrix[level] = {};
         }
@@ -3490,7 +3741,7 @@ Seadragon.Drawer.prototype = {
             bounds.x += 1.0 * (x - xMod) / numTilesX;
             bounds.y += this._normHeight * (y - yMod) / numTilesY;
 
-            this._tilesMatrix[level][x][y] = new Seadragon.Tile(level, x, y, bounds, exists, url);
+            this._tilesMatrix[level][x][y] = new $.Tile(level, x, y, bounds, exists, url);
         }
 
         var tile = this._tilesMatrix[level][x][y];
@@ -3500,23 +3751,23 @@ Seadragon.Drawer.prototype = {
         return tile;
     },
 
-    _loadTile: function (tile, time) {
+    _loadTile: function(tile, time) {
         tile.loading = this._imageLoader.loadImage(tile.url,
-                    Seadragon.Utils.createCallback(null, Function.createDelegate(this, this._onTileLoad), tile, time));
+                    $.Utils.createCallback(null, delegate(this, this._onTileLoad), tile, time));
     },
 
-    _onTileLoad: function (tile, time, image) {
+    _onTileLoad: function(tile, time, image) {
         tile.loading = false;
 
         if (this._midUpdate) {
-            Seadragon.Debug.error("Tile load callback in middle of drawing routine.", this);
+            $.Debug.error("Tile load callback in middle of drawing routine.");
             return;
         } else if (!image) {
-            Seadragon.Debug.fail("Tile " + tile + " failed to load: " + tile.url, tile);
+            $.Debug.log("Tile " + tile + " failed to load: " + tile.url);
             tile.exists = false;
             return;
         } else if (time < this._lastResetTime) {
-            Seadragon.Debug.log("Ignoring tile " + tile + " loaded before reset: " + tile.url, tile);
+            $.Debug.log("Ignoring tile " + tile + " loaded before reset: " + tile.url);
             return;
         }
 
@@ -3562,11 +3813,9 @@ Seadragon.Drawer.prototype = {
 
         this._tilesLoaded[insertionIndex] = tile;
         this._updateAgain = true;
-
-        setTimeout(Function.createDelegate(this, function () { this._updateAgain = true; }), 500);
     },
 
-    _clearTiles: function () {
+    _clearTiles: function() {
         this._tilesMatrix = {};
         this._tilesLoaded = [];
     },
@@ -3582,7 +3831,7 @@ Seadragon.Drawer.prototype = {
     * there's no content that they would need to cover. Tiles at non-existent
     * levels that are within the image bounds, however, do not.
     */
-    _providesCoverage: function (level, x, y) {
+    _providesCoverage: function(level, x, y) {
         if (!this._coverage[level]) {
             return false;
         }
@@ -3613,7 +3862,7 @@ Seadragon.Drawer.prototype = {
     * tiles of higher resolution representing the same content. If neither x
     * nor y is given, returns true if the entire visible level is covered.
     */
-    _isCovered: function (level, x, y) {
+    _isCovered: function(level, x, y) {
         if (x === undefined || y === undefined) {
             return this._providesCoverage(level + 1);
         } else {
@@ -3627,10 +3876,10 @@ Seadragon.Drawer.prototype = {
     /**
     * Sets whether the given tile provides coverage or not.
     */
-    _setCoverage: function (level, x, y, covers) {
+    _setCoverage: function(level, x, y, covers) {
         if (!this._coverage[level]) {
-            Seadragon.Debug.error("Setting coverage for a tile before its " +
-                        "level's coverage has been reset: " + level, this);
+            $.Debug.error("Setting coverage for a tile before its " +
+                        "level's coverage has been reset: " + level);
             return;
         }
 
@@ -3646,12 +3895,12 @@ Seadragon.Drawer.prototype = {
     * after every draw routine. Note that at the beginning of the next draw
     * routine, coverage for every visible tile should be explicitly set. 
     */
-    _resetCoverage: function (level) {
+    _resetCoverage: function(level) {
         this._coverage[level] = {};
     },
 
 
-    _compareTiles: function (prevBest, tile) {
+    _compareTiles: function(prevBest, tile) {
         if (!prevBest) {
             return tile;
         }
@@ -3668,7 +3917,7 @@ Seadragon.Drawer.prototype = {
     },
 
 
-    _getOverlayIndex: function (elmt) {
+    _getOverlayIndex: function(elmt) {
         for (var i = this._overlays.length - 1; i >= 0; i--) {
             if (this._overlays[i].elmt == elmt) {
                 return i;
@@ -3679,7 +3928,7 @@ Seadragon.Drawer.prototype = {
     },
 
 
-    _updateActual: function () {
+    _updateActual: function() {
         this._updateAgain = false;
 
         var _canvas = this._canvas;
@@ -3789,7 +4038,7 @@ Seadragon.Drawer.prototype = {
 
             for (var x = tileTL.x; x <= tileBR.x; x++) {
                 for (var y = tileTL.y; y <= tileBR.y; y++) {
-                    tile = this._getTile(level, x, y, currentTime, numTilesX, numTilesY);
+                    var tile = this._getTile(level, x, y, currentTime, numTilesX, numTilesY);
                     var drawTile = drawLevel;
 
                     this._setCoverage(level, x, y, false);
@@ -3816,7 +4065,7 @@ Seadragon.Drawer.prototype = {
                     var sizeC = this._viewport.deltaPixelsFromPoints(boundsSize, true);
 
                     if (!this._tileOverlap) {
-                        sizeC = sizeC.plus(new Seadragon.Point(1, 1));
+                        sizeC = sizeC.plus(new $.Point(1, 1));
                     }
 
                     var positionT = this._viewport.pixelFromPoint(boundsTL, false);
@@ -3836,7 +4085,7 @@ Seadragon.Drawer.prototype = {
 
                         var deltaTime = currentTime - tile.blendStart;
                         var opacity = _min(1, deltaTime / blendTimeMillis);
-
+                        
                         if (alwaysBlend) {
                             opacity *= levelOpacity;
                         }
@@ -3850,7 +4099,8 @@ Seadragon.Drawer.prototype = {
                         } else if (deltaTime < blendTimeMillis) {
                             updateAgain = true;
                         }
-                    } else if (!tile.loading) {
+                    } else if (tile.Loading) {
+                    } else {
                         best = this._compareTiles(best, tile);
                     }
                 }
@@ -3862,7 +4112,7 @@ Seadragon.Drawer.prototype = {
         }
 
         for (var i = _lastDrawn.length - 1; i >= 0; i--) {
-            tile = _lastDrawn[i];
+            var tile = _lastDrawn[i];
 
             if (_useCanvas) {
                 tile.drawCanvas(_context);
@@ -3874,7 +4124,7 @@ Seadragon.Drawer.prototype = {
         }
 
         var numOverlays = this._overlays.length;
-        for (i = 0; i < numOverlays; i++) {
+        for (var i = 0; i < numOverlays; i++) {
             var overlay = this._overlays[i];
             var bounds = overlay.bounds;
 
@@ -3890,30 +4140,19 @@ Seadragon.Drawer.prototype = {
     },
 
 
-    addOverlay: function (elmt, loc, placement) {
-        elmt = Seadragon.Utils.getElement(elmt);
+    addOverlay: function(elmt, loc, placement) {
+        var elmt = $.Utils.getElement(elmt);
 
         if (this._getOverlayIndex(elmt) >= 0) {
             return;     // they're trying to add a duplicate overlay
         }
 
-        this._overlays.push(new Seadragon.Overlay(elmt, loc, placement));
+        this._overlays.push(new $.Overlay(elmt, loc, placement));
         this._updateAgain = true;
     },
 
-	addUpdateOverlay: function (elmt, loc, placement) {
-        elmt = Seadragon.Utils.getElement(elmt);
-
-        if (this._getOverlayIndex(elmt) >= 0) {
-            this.updateOverlay(elmt, loc, placement);     // they're trying to add a duplicate overlay, update it instead.
-        }
-
-        this._overlays.push(new Seadragon.Overlay(elmt, loc, placement));
-        this._updateAgain = true;
-	},
-
-    updateOverlay: function (elmt, loc, placement) {
-        elmt = Seadragon.Utils.getElement(elmt);
+    updateOverlay: function(elmt, loc, placement) {
+        var elmt = $.Utils.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {
@@ -3922,8 +4161,8 @@ Seadragon.Drawer.prototype = {
         }
     },
 
-    removeOverlay: function (elmt) {
-        elmt = Seadragon.Utils.getElement(elmt);
+    removeOverlay: function(elmt) {
+        var elmt = $.Utils.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {
@@ -3933,7 +4172,7 @@ Seadragon.Drawer.prototype = {
         }
     },
 
-    clearOverlays: function () {
+    clearOverlays: function() {
         while (this._overlays.length > 0) {
             this._overlays.pop().destroy();
             this._updateAgain = true;
@@ -3941,21 +4180,21 @@ Seadragon.Drawer.prototype = {
     },
 
 
-    needsUpdate: function () {
+    needsUpdate: function() {
         return this._updateAgain;
     },
 
-    numTilesLoaded: function () {
+    numTilesLoaded: function() {
         return this._tilesLoaded.length;
     },
 
-    reset: function () {
+    reset: function() {
         this._clearTiles();
         this._lastResetTime = new Date().getTime();
         this._updateAgain = true;
     },
 
-    update: function () {
+    update: function() {
         this._profiler.beginUpdate();
         this._midUpdate = true;
         this._updateActual();
@@ -3963,321 +4202,285 @@ Seadragon.Drawer.prototype = {
         this._profiler.endUpdate();
     },
 
-    idle: function () {
+    idle: function() {
     }
-};
+}
 
-/// <reference path="embed/OpenSeadragon.pre.js" />
+$.Viewport = function(containerSize, contentSize, config) {
+	this.zoomPoint = null;
+	this.config = config;
+	this._containerSize = containerSize;
+	this._contentSize = contentSize;
+	this._contentAspect = contentSize.x / contentSize.y;
+	this._contentHeight = contentSize.y / contentSize.x;
+	this._centerSpringX = new $.Spring(0, this.config);
+	this._centerSpringY = new $.Spring(0, this.config);
+	this._zoomSpring = new $.Spring(1, this.config);
+	this._homeBounds = new $.Rect(0, 0, 1, this._contentHeight);
+	this.goHome(true);
+	this.update();
+}
+$.Viewport.prototype = {
+	_getHomeZoom: function() {
+		var aspectFactor = this._contentAspect / this.getAspectRatio();
+		return (aspectFactor >= 1) ? 1 : aspectFactor;
+	},
 
-Seadragon.Viewport = function (containerSize, contentSize, config) {
-    this.zoomPoint = null;
-    this.config = config;
-    this._containerSize = containerSize;
-    this._contentSize = contentSize;
-    this._contentAspect = contentSize.x / contentSize.y;
-    this._contentHeight = contentSize.y / contentSize.x;
-    this._centerSpringX = new Seadragon.Spring(0, this.config);
-    this._centerSpringY = new Seadragon.Spring(0, this.config);
-    this._zoomSpring = new Seadragon.Spring(1, this.config);
-    this._homeBounds = new Seadragon.Rect(0, 0, 1, this._contentHeight);
-    this.goHome(true);
-    this.update();
-};
-Seadragon.Viewport.prototype = {
-    _getHomeZoom: function () {
-        var aspectFactor = this._contentAspect / this.getAspectRatio();
-        return (aspectFactor >= 1) ? 1 : aspectFactor;
-    },
+	_getMinZoom: function() {
+		var homeZoom = this._getHomeZoom();
+		var zoom = this.config.minZoomImageRatio * homeZoom;
 
-    _getMinZoom: function () {
-        var homeZoom = this._getHomeZoom();
-        var zoom = this.config.minZoomImageRatio * homeZoom;
+		return Math.min(zoom, homeZoom);
+	},
 
-        return Math.min(zoom, homeZoom);
-    },
+	_getMaxZoom: function() {
+		var zoom = this._contentSize.x * this.config.maxZoomPixelRatio / this._containerSize.x;
+		return Math.max(zoom, this._getHomeZoom());
+	},
+	getAspectRatio: function() {
+		return this._containerSize.x / this._containerSize.y;
+	},
+	getContainerSize: function() {
+		return new $.Point(this._containerSize.x, this._containerSize.y);
+	},
 
-    _getMaxZoom: function () {
-        var zoom = this._contentSize.x * this.config.maxZoomPixelRatio / this._containerSize.x;
-        return Math.max(zoom, this._getHomeZoom());
-    },
-    getAspectRatio: function () {
-        return this._containerSize.x / this._containerSize.y;
-    },
-    getContainerSize: function () {
-        return new Seadragon.Point(this._containerSize.x, this._containerSize.y);
-    },
+	getBounds: function(current) {
+		var center = this.getCenter(current);
+		var width = 1.0 / this.getZoom(current);
+		var height = width / this.getAspectRatio();
 
-    getBounds: function (current) {
-        var center = this.getCenter(current);
-        var width = 1.0 / this.getZoom(current);
-        var height = width / this.getAspectRatio();
-
-        return new Seadragon.Rect(center.x - width / 2.0, center.y - height / 2.0,
+		return new $.Rect(center.x - width / 2.0, center.y - height / 2.0,
             width, height);
-    },
+	},
 
-    getCenter: function (current) {
-        var centerCurrent = new Seadragon.Point(this._centerSpringX.getCurrent(),
+	getCenter: function(current) {
+		var centerCurrent = new $.Point(this._centerSpringX.getCurrent(),
                 this._centerSpringY.getCurrent());
-        var centerTarget = new Seadragon.Point(this._centerSpringX.getTarget(),
+		var centerTarget = new $.Point(this._centerSpringX.getTarget(),
                 this._centerSpringY.getTarget());
 
-        if (current) {
-            return centerCurrent;
-        } else if (!this.zoomPoint) {
-            return centerTarget;
-        }
+		if (current) {
+			return centerCurrent;
+		} else if (!this.zoomPoint) {
+			return centerTarget;
+		}
 
-        var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+		var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
 
-        var zoom = this.getZoom();
-        var width = 1.0 / zoom;
-        var height = width / this.getAspectRatio();
-        var bounds = new Seadragon.Rect(centerCurrent.x - width / 2.0,
+		var zoom = this.getZoom();
+		var width = 1.0 / zoom;
+		var height = width / this.getAspectRatio();
+		var bounds = new $.Rect(centerCurrent.x - width / 2.0,
                 centerCurrent.y - height / 2.0, width, height);
 
-        var newZoomPixel = this.zoomPoint.minus(bounds.getTopLeft()).times(this._containerSize.x / bounds.width);
-        var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
-        var deltaZoomPoints = deltaZoomPixels.divide(this._containerSize.x * zoom);
+		var newZoomPixel = this.zoomPoint.minus(bounds.getTopLeft()).times(this._containerSize.x / bounds.width);
+		var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+		var deltaZoomPoints = deltaZoomPixels.divide(this._containerSize.x * zoom);
 
-        return centerTarget.plus(deltaZoomPoints);
-    },
+		return centerTarget.plus(deltaZoomPoints);
+	},
 
-    getZoom: function (current) {
-        if (current) {
-            return this._zoomSpring.getCurrent();
-        } else {
-            return this._zoomSpring.getTarget();
-        }
-    },
+	getZoom: function(current) {
+		if (current) {
+			return this._zoomSpring.getCurrent();
+		} else {
+			return this._zoomSpring.getTarget();
+		}
+	},
 
 
-    applyConstraints: function (immediately) {
-        var actualZoom = this.getZoom();
-        var constrainedZoom = Math.max(Math.min(actualZoom, this._getMaxZoom()), this._getMinZoom());
-        if (actualZoom != constrainedZoom) {
-            this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
-        }
+	applyConstraints: function(immediately) {
+		var actualZoom = this.getZoom();
+		var constrainedZoom = Math.max(Math.min(actualZoom, this._getMaxZoom()), this._getMinZoom());
+		if (actualZoom != constrainedZoom) {
+			this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
+		}
 
-        var bounds = this.getBounds();
-        var visibilityRatio = this.config.visibilityRatio;
+		var bounds = this.getBounds();
+		var visibilityRatio = this.config.visibilityRatio;
 
-        var horThres = visibilityRatio * bounds.width;
-        var verThres = visibilityRatio * bounds.height;
+		var horThres = visibilityRatio * bounds.width;
+		var verThres = visibilityRatio * bounds.height;
 
-        var left = bounds.x + bounds.width;
-        var right = 1 - bounds.x;
-        var top = bounds.y + bounds.height;
-        var bottom = this._contentHeight - bounds.y;
+		var left = bounds.x + bounds.width;
+		var right = 1 - bounds.x;
+		var top = bounds.y + bounds.height;
+		var bottom = this._contentHeight - bounds.y;
 
-        var dx = 0;
-        if (!this.config.wrapHorizontal) {
-            if (left < horThres) {
-                dx = horThres - left;
-            } else if (right < horThres) {
-                dx = right - horThres;
-            }
-        }
+		var dx = 0;
+		if (this.config.wrapHorizontal) {
+		} else if (left < horThres) {
+			dx = horThres - left;
+		} else if (right < horThres) {
+			dx = right - horThres;
+		}
 
-        var dy = 0;
-        if (!this.config.wrapVertical) {
-            if (top < verThres) {
-                dy = verThres - top;
-            } else if (bottom < verThres) {
-                dy = bottom - verThres;
-            }
-        }
+		var dy = 0;
+		if (this.config.wrapVertical) {
+		} else if (top < verThres) {
+			dy = verThres - top;
+		} else if (bottom < verThres) {
+			dy = bottom - verThres;
+		}
 
-        if (dx || dy) {
-            bounds.x += dx;
-            bounds.y += dy;
-            this.fitBounds(bounds, immediately);
-        }
-    },
+		if (dx || dy) {
+			bounds.x += dx;
+			bounds.y += dy;
+			this.fitBounds(bounds, immediately);
+		}
+	},
 
-    ensureVisible: function (immediately) {
-        this.applyConstraints(immediately);
-    },
+	ensureVisible: function(immediately) {
+		this.applyConstraints(immediately);
+	},
 
-    fitBounds: function (bounds, immediately) {
-        var aspect = this.getAspectRatio();
-        var center = bounds.getCenter();
+	fitBounds: function(bounds, immediately) {
+		var aspect = this.getAspectRatio();
+		var center = bounds.getCenter();
 
-        var newBounds = new Seadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
-        if (newBounds.getAspectRatio() >= aspect) {
-            newBounds.height = bounds.width / aspect;
-            newBounds.y = center.y - newBounds.height / 2;
-        } else {
-            newBounds.width = bounds.height * aspect;
-            newBounds.x = center.x - newBounds.width / 2;
-        }
+		var newBounds = new $.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
+		if (newBounds.getAspectRatio() >= aspect) {
+			newBounds.height = bounds.width / aspect;
+			newBounds.y = center.y - newBounds.height / 2;
+		} else {
+			newBounds.width = bounds.height * aspect;
+			newBounds.x = center.x - newBounds.width / 2;
+		}
 
-        this.panTo(this.getCenter(true), true);
-        this.zoomTo(this.getZoom(true), null, true);
+		this.panTo(this.getCenter(true), true);
+		this.zoomTo(this.getZoom(true), null, true);
 
-        var oldBounds = this.getBounds();
-        var oldZoom = this.getZoom();
+		var oldBounds = this.getBounds();
+		var oldZoom = this.getZoom();
 
-        var newZoom = 1.0 / newBounds.width;
-        if (newZoom == oldZoom || newBounds.width == oldBounds.width) {
-            this.panTo(center, immediately);
-            return;
-        }
+		var newZoom = 1.0 / newBounds.width;
+		if (newZoom == oldZoom || newBounds.width == oldBounds.width) {
+			this.panTo(center, immediately);
+			return;
+		}
 
-        var refPoint = oldBounds.getTopLeft().times(this._containerSize.x / oldBounds.width).minus(
+		var refPoint = oldBounds.getTopLeft().times(this._containerSize.x / oldBounds.width).minus(
                 newBounds.getTopLeft().times(this._containerSize.x / newBounds.width)).divide(
                 this._containerSize.x / oldBounds.width - this._containerSize.x / newBounds.width);
 
 
-        this.zoomTo(newZoom, refPoint, immediately);
-    },
+		this.zoomTo(newZoom, refPoint, immediately);
+	},
 
-    goHome: function (immediately) {
-        var center = this.getCenter();
+	goHome: function(immediately) {
+		var center = this.getCenter();
 
-        if (this.config.wrapHorizontal) {
-            center.x = (1 + (center.x % 1)) % 1;
-            this._centerSpringX.resetTo(center.x);
-            this._centerSpringX.update();
-        }
+		if (this.config.wrapHorizontal) {
+			center.x = (1 + (center.x % 1)) % 1;
+			this._centerSpringX.resetTo(center.x);
+			this._centerSpringX.update();
+		}
 
-        if (this.config.wrapVertical) {
-            center.y = (this._contentHeight + (center.y % this._contentHeight)) % this._contentHeight;
-            this._centerSpringY.resetTo(center.y);
-            this._centerSpringY.update();
-        }
+		if (this.config.wrapVertical) {
+			center.y = (this._contentHeight + (center.y % this._contentHeight)) % this._contentHeight;
+			this._centerSpringY.resetTo(center.y);
+			this._centerSpringY.update();
+		}
 
-        this.fitBounds(this._homeBounds, immediately);
-    },
+		this.fitBounds(this._homeBounds, immediately);
+	},
 
-    panBy: function (delta, immediately) {
-        var center = new Seadragon.Point(this._centerSpringX.getTarget(),
+	panBy: function(delta, immediately) {
+		var center = new $.Point(this._centerSpringX.getTarget(),
                 this._centerSpringY.getTarget());
-        this.panTo(center.plus(delta), immediately);
-    },
+		this.panTo(center.plus(delta), immediately);
+	},
 
-    panTo: function (center, immediately) {
-        if (immediately) {
-            this._centerSpringX.resetTo(center.x);
-            this._centerSpringY.resetTo(center.y);
-        } else {
-            this._centerSpringX.springTo(center.x);
-            this._centerSpringY.springTo(center.y);
-        }
-    },
+	panTo: function(center, immediately) {
+		if (immediately) {
+			this._centerSpringX.resetTo(center.x);
+			this._centerSpringY.resetTo(center.y);
+		} else {
+			this._centerSpringX.springTo(center.x);
+			this._centerSpringY.springTo(center.y);
+		}
+	},
 
-    zoomBy: function (factor, refPoint, immediately) {
-        this.zoomTo(this._zoomSpring.getTarget() * factor, refPoint, immediately);
-    },
+	zoomBy: function(factor, refPoint, immediately) {
+		this.zoomTo(this._zoomSpring.getTarget() * factor, refPoint, immediately);
+	},
 
-    zoomTo: function (zoom, refPoint, immediately) {
+	zoomTo: function(zoom, refPoint, immediately) {
 
-        if (immediately) {
-            this._zoomSpring.resetTo(zoom);
-        } else {
-            this._zoomSpring.springTo(zoom);
-        }
+		if (immediately) {
+			this._zoomSpring.resetTo(zoom);
+		} else {		
+			this._zoomSpring.springTo(zoom);
+		}
 
-        this.zoomPoint = refPoint instanceof Seadragon.Point ? refPoint : null;
-    },
+		this.zoomPoint = refPoint instanceof $.Point ? refPoint : null;
+	},
 
-    resize: function (newContainerSize, maintain) {
-        var oldBounds = this.getBounds();
-        var newBounds = oldBounds;
-        var widthDeltaFactor = newContainerSize.x / this._containerSize.x;
+	resize: function(newContainerSize, maintain) {
+		var oldBounds = this.getBounds();
+		var newBounds = oldBounds;
+		var widthDeltaFactor = newContainerSize.x / this._containerSize.x;
 
-        this._containerSize = new Seadragon.Point(newContainerSize.x, newContainerSize.y);
+		this._containerSize = new $.Point(newContainerSize.x, newContainerSize.y);
 
-        if (maintain) {
-            newBounds.width = oldBounds.width * widthDeltaFactor;
-            newBounds.height = newBounds.width / this.getAspectRatio();
-        }
+		if (maintain) {
+			newBounds.width = oldBounds.width * widthDeltaFactor;
+			newBounds.height = newBounds.width / this.getAspectRatio();
+		}
 
-        this.fitBounds(newBounds, true);
-    },
+		this.fitBounds(newBounds, true);
+	},
 
-    update: function () {
-        var oldCenterX = this._centerSpringX.getCurrent();
-        var oldCenterY = this._centerSpringY.getCurrent();
-        var oldZoom = this._zoomSpring.getCurrent();
+	update: function() {
+		var oldCenterX = this._centerSpringX.getCurrent();
+		var oldCenterY = this._centerSpringY.getCurrent();
+		var oldZoom = this._zoomSpring.getCurrent();
 
-        if (this.zoomPoint) {
-            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-        }
+		if (this.zoomPoint) {
+			var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+		}
 
-        this._zoomSpring.update();
+		this._zoomSpring.update();
 
-        if (this.zoomPoint && this._zoomSpring.getCurrent() != oldZoom) {
-            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
-            var deltaZoomPoints = this.deltaPointsFromPixels(deltaZoomPixels, true);
+		if (this.zoomPoint && this._zoomSpring.getCurrent() != oldZoom) {
+			var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+			var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+			var deltaZoomPoints = this.deltaPointsFromPixels(deltaZoomPixels, true);
 
-            this._centerSpringX.shiftBy(deltaZoomPoints.x);
-            this._centerSpringY.shiftBy(deltaZoomPoints.y);
-        } else {
-            this.zoomPoint = null;
-        }
+			this._centerSpringX.shiftBy(deltaZoomPoints.x);
+			this._centerSpringY.shiftBy(deltaZoomPoints.y);
+		} else {
+			this.zoomPoint = null;
+		}
 
-        this._centerSpringX.update();
-        this._centerSpringY.update();
+		this._centerSpringX.update();
+		this._centerSpringY.update();
 
-        return this._centerSpringX.getCurrent() != oldCenterX ||
+		return this._centerSpringX.getCurrent() != oldCenterX ||
                 this._centerSpringY.getCurrent() != oldCenterY ||
                 this._zoomSpring.getCurrent() != oldZoom;
-    },
+	},
 
 
-    deltaPixelsFromPoints: function (deltaPoints, current) {
-        return deltaPoints.times(this._containerSize.x * this.getZoom(current));
-    },
+	deltaPixelsFromPoints: function(deltaPoints, current) {
+		return deltaPoints.times(this._containerSize.x * this.getZoom(current));
+	},
 
-    deltaPointsFromPixels: function (deltaPixels, current) {
-        return deltaPixels.divide(this._containerSize.x * this.getZoom(current));
-    },
+	deltaPointsFromPixels: function(deltaPixels, current) {
+		return deltaPixels.divide(this._containerSize.x * this.getZoom(current));
+	},
 
-    pixelFromPoint: function (point, current) {
-        var bounds = this.getBounds(current);
-        return point.minus(bounds.getTopLeft()).times(this._containerSize.x / bounds.width);
-    },
+	pixelFromPoint: function(point, current) {
+		var bounds = this.getBounds(current);
+		return point.minus(bounds.getTopLeft()).times(this._containerSize.x / bounds.width);
+	},
 
-    pointFromPixel: function (pixel, current) {
-        var bounds = this.getBounds(current);
-        return pixel.divide(this._containerSize.x / bounds.width).plus(bounds.getTopLeft());
-    }
-};
+	pointFromPixel: function(pixel, current) {
+		var bounds = this.getBounds(current);
+		return pixel.divide(this._containerSize.x / bounds.width).plus(bounds.getTopLeft());
+	}
+}
 
-/// <reference path="embed/OpenSeadragon.pre.js" />
-
-Seadragon._Debug = function () {
-    ///<summary>Basic javascript debugging class</summary>
-    
-};
-Seadragon._Debug.prototype = {
-    log: function (message, object) {
-        ///<summary>Log a message at INFO level</summary>
-
-        if (typeof(console) !== 'undefined' && console != null) {
-            if (object) {
-                console.log("%s: %o", message, object);
-            } else {
-                console.log("%s", message);
-            }
-        }
-    },
-
-    info: function (message, object) {
-        ///<summary>Log a message at ERROR level</summary>
-        this.log(message, object);
-    },
-
-    fail: function (message, object) {
-        ///<summary>Log a message at FAIL level (e.g. Tile failed to load)</summary>
-        this.log(message, object);
-    },
-
-    error: function (message, object) {
-        ///<summary>Log a message at ERROR level.</summary>
-        this.log(message, object);
-    }
-};
-Seadragon.Debug = new Seadragon._Debug();
+//Start Thatcher - Adding global closure ending
+}( Seadragon ));
+//End Thatcher
