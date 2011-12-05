@@ -1,17 +1,24 @@
-// (c) 2011 Christopher Thatcher
-// (c) 2010 OpenSeadragon, (c) 2010 CodePlex Foundation
-// @NEWBSD@
+/**
+ * (c) 2011 Christopher Thatcher
+ * (c) 2010 OpenSeadragon, (c) 2010 CodePlex Foundation
+ *
+ * OpenSeadragon @VERSION@
+ -------------------------------------------------------------------------------
+ @NEWBSD@
+ -------------------------------------------------------------------------------
+ *
+ **/
 
 
 Seadragon = function(){};
 (function($){
 
 
-var EventHandlerList = function EventHandlerList() {
+$.EventHandlerList = function() {
     this._list = {};
 };
 
-EventHandlerList.prototype = {
+$.EventHandlerList.prototype = {
 
     addHandler: function(id, handler) {
         var events = this._list[ id ];
@@ -44,7 +51,7 @@ EventHandlerList.prototype = {
 };
 
 
-function delegate(object, method) {
+$.delegate = function(object, method) {
     return function() {
         if (arguments === undefined)
             arguments = [];
@@ -53,7 +60,7 @@ function delegate(object, method) {
 };
 
 
-function format(){
+$.format = function(){
     var args = arguments,
         useLocale = false;
     var result = '';
@@ -1117,13 +1124,13 @@ $.NavControl = function(viewer) {
 }
 $.NavControl.prototype = {
     initialize: function() {
-        var beginZoomingInHandler = delegate(this, this._beginZoomingIn);
-        var endZoomingHandler = delegate(this, this._endZooming);
-        var doSingleZoomInHandler = delegate(this, this._doSingleZoomIn);
-        var beginZoomingOutHandler = delegate(this, this._beginZoomingOut);
-        var doSingleZoomOutHandler = delegate(this, this._doSingleZoomOut);
-        var onHomeHandler = delegate(this, this._onHome);
-        var onFullPageHandler = delegate(this, this._onFullPage);
+        var beginZoomingInHandler = $.delegate(this, this._beginZoomingIn);
+        var endZoomingHandler = $.delegate(this, this._endZooming);
+        var doSingleZoomInHandler = $.delegate(this, this._doSingleZoomIn);
+        var beginZoomingOutHandler = $.delegate(this, this._beginZoomingOut);
+        var doSingleZoomOutHandler = $.delegate(this, this._doSingleZoomOut);
+        var onHomeHandler = $.delegate(this, this._onHome);
+        var onFullPageHandler = $.delegate(this, this._onFullPage);
 
         var navImages = this._viewer.config.navImages;
 
@@ -1182,7 +1189,7 @@ $.NavControl.prototype = {
 
         this.elmt = this._group.get_element();
         this.elmt[SIGNAL] = true;   // hack to get our controls to fade
-        this._viewer.add_open(delegate(this, this._lightUp));
+        this._viewer.add_open($.delegate(this, this._lightUp));
     },
 
     get_events: function() {
@@ -1192,7 +1199,7 @@ $.NavControl.prototype = {
         this._events = value;
     },
     _resolveUrl: function(url) {
-        return format("{1}", this._viewer.get_prefixUrl(), url);
+        return $.format("{1}", this._viewer.get_prefixUrl(), url);
     },
     _beginZoomingIn: function() {
         this._lastZoomTime = new Date().getTime();
@@ -1211,7 +1218,7 @@ $.NavControl.prototype = {
         this._zooming = false;
     },
     _scheduleZoom: function() {
-        window.setTimeout(delegate(this, this._doZoom), 10);
+        window.setTimeout($.delegate(this, this._doZoom), 10);
     },
     _doZoom: function() {
         if (this._zooming && this._viewer.viewport) {
@@ -1334,7 +1341,7 @@ $.Viewer = function(element, xmlPath, prefixUrl, controls, overlays, overlayCont
 $.Viewer.prototype = {
     initialize: function () {
 
-        this._events = new EventHandlerList();
+        this._events = new $.EventHandlerList();
 
         this._container = $.Utils.makeNeutralElement("div");
         this._canvas = $.Utils.makeNeutralElement("div");
@@ -1384,10 +1391,10 @@ $.Viewer.prototype = {
         controlsTRStyle.right = controlsBRStyle.right = "0px";
         controlsBLStyle.bottom = controlsBRStyle.bottom = "0px";
 
-        innerTracker.clickHandler = delegate(this, this._onCanvasClick);
-        innerTracker.dragHandler = delegate(this, this._onCanvasDrag);
-        innerTracker.releaseHandler = delegate(this, this._onCanvasRelease);
-        innerTracker.scrollHandler = delegate(this, this._onCanvasScroll);
+        innerTracker.clickHandler = $.delegate(this, this._onCanvasClick);
+        innerTracker.dragHandler = $.delegate(this, this._onCanvasDrag);
+        innerTracker.releaseHandler = $.delegate(this, this._onCanvasRelease);
+        innerTracker.scrollHandler = $.delegate(this, this._onCanvasScroll);
         innerTracker.setTracking(true);     // default state
 
         if (this.get_showNavigationControl()) {
@@ -1400,11 +1407,11 @@ $.Viewer.prototype = {
             this.addControl(this._customControls[i].id, this._customControls[i].anchor);
         }
 
-        outerTracker.enterHandler = delegate(this, this._onContainerEnter);
-        outerTracker.exitHandler = delegate(this, this._onContainerExit);
-        outerTracker.releaseHandler = delegate(this, this._onContainerRelease);
+        outerTracker.enterHandler = $.delegate(this, this._onContainerEnter);
+        outerTracker.exitHandler = $.delegate(this, this._onContainerExit);
+        outerTracker.releaseHandler = $.delegate(this, this._onContainerRelease);
         outerTracker.setTracking(true); // always tracking
-        window.setTimeout(delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
+        window.setTimeout($.delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
 
         this._container.appendChild(this._canvas);
         this._container.appendChild(this._controlsTL);
@@ -1437,10 +1444,10 @@ $.Viewer.prototype = {
 
         this._controlsShouldFade = true;
         this._controlsFadeBeginTime = new Date().getTime() + this._controlsFadeDelay;
-        window.setTimeout(delegate(this, this._scheduleControlsFade), this._controlsFadeDelay);
+        window.setTimeout($.delegate(this, this._scheduleControlsFade), this._controlsFadeDelay);
     },
     _scheduleControlsFade: function () {
-        window.setTimeout(delegate(this, this._updateControlsFade), 20);
+        window.setTimeout($.delegate(this, this._updateControlsFade), 20);
     },
     _updateControlsFade: function () {
         if (this._controlsShouldFade) {
@@ -1580,7 +1587,7 @@ $.Viewer.prototype = {
 
         this._lastOpenStartTime = new Date().getTime();   // to ignore earlier opens
 
-        window.setTimeout(delegate(this, function () {
+        window.setTimeout($.delegate(this, function () {
             if (this._lastOpenStartTime > this._lastOpenEndTime) {
                 this._setMessage($.Strings.getString("Messages.Loading"));
             }
@@ -1646,7 +1653,7 @@ $.Viewer.prototype = {
     },
     _scheduleUpdate: function (updateFunc, prevUpdateTime) {
         if (this._animating) {
-            return window.setTimeout(delegate(this, updateFunc), 1);
+            return window.setTimeout($.delegate(this, updateFunc), 1);
         }
 
         var currentTime = new Date().getTime();
@@ -1654,7 +1661,7 @@ $.Viewer.prototype = {
         var targetTime = prevUpdateTime + 1000 / 60;    // 60 fps ideal
 
         var deltaTime = Math.max(1, targetTime - currentTime);
-        return window.setTimeout(delegate(this, updateFunc), deltaTime);
+        return window.setTimeout($.delegate(this, updateFunc), deltaTime);
     },
     _updateMulti: function () {
         if (!this.source) {
@@ -1958,11 +1965,11 @@ $.Viewer.prototype = {
     openDzi: function (xmlUrl, xmlString) {
         var currentTime = this._beforeOpen();
         $.DziTileSourceHelper.createFromXml(xmlUrl, xmlString,
-                    $.Utils.createCallback(null, delegate(this, this._onOpen), currentTime));
+                    $.Utils.createCallback(null, $.delegate(this, this._onOpen), currentTime));
     },
     openTileSource: function (tileSource) {
         var currentTime = beforeOpen();
-        window.setTimeout(delegate(this, function () {
+        window.setTimeout($.delegate(this, function () {
             onOpen(currentTime, tileSource);
         }), 1);
     },
@@ -2346,11 +2353,11 @@ $.Job.prototype = {
     },
     start: function() {
         this._image = new Image();
-        this._image.onload = delegate(this, this._onloadHandler);
-        this._image.onabort = delegate(this, this._onerrorHandler);
-        this._image.onerror = delegate(this, this._onerrorHandler);
+        this._image.onload = $.delegate(this, this._onloadHandler);
+        this._image.onabort = $.delegate(this, this._onerrorHandler);
+        this._image.onerror = $.delegate(this, this._onerrorHandler);
 
-        this._timeout = window.setTimeout(delegate(this, this._onerrorHandler), this.TIMEOUT);
+        this._timeout = window.setTimeout($.delegate(this, this._onerrorHandler), this.TIMEOUT);
 
         this._image.src = this._src;
     }
@@ -2378,7 +2385,7 @@ $.ImageLoader.prototype = {
             return false;
         }
 
-        var func = $.Utils.createCallback(null, delegate(this, this._onComplete), callback);
+        var func = $.Utils.createCallback(null, $.delegate(this, this._onComplete), callback);
         var job = new $.Job(src, func);
 
         this._downloading++;
@@ -2568,13 +2575,13 @@ $._DziTileSourceHelper.prototype = {
         }
         if (async) {
             if (xmlString) {
-                var handler = delegate(this, this.processXml);
+                var handler = $.delegate(this, this.processXml);
                 window.setTimeout(function() {
                     var source = finish(handler, $.Utils.parseXml(xmlString));
                     callback(source, error);    // call after finish sets error
                 }, 1);
             } else {
-                var handler = delegate(this, this.processResponse);
+                var handler = $.delegate(this, this.processResponse);
                 $.Utils.makeAjaxRequest(xmlUrl, function(xhr) {
                     var source = finish(handler, xhr);
                     callback(source, error);    // call after finish sets error
@@ -2585,9 +2592,9 @@ $._DziTileSourceHelper.prototype = {
         }
 
         if (xmlString) {
-            return finish(delegate(this, this.processXml), $.Utils.parseXml(xmlString));
+            return finish($.delegate(this, this.processXml), $.Utils.parseXml(xmlString));
         } else {
-            return finish(delegate(this, this.processResponse), $.Utils.makeAjaxRequest(xmlUrl));
+            return finish($.delegate(this, this.processResponse), $.Utils.makeAjaxRequest(xmlUrl));
         }
     },
     processResponse: function(xhr, tilesUrl) {
@@ -2709,7 +2716,7 @@ $.Button = function(properties, events) {
 $.Button.prototype = {
     initialize: function(events) {
 
-        this._events = new EventHandlerList();
+        this._events = new $.EventHandlerList();
 
         if (events.onPress != undefined)
             this.add_onPress(events.onPress);
@@ -2759,17 +2766,17 @@ $.Button.prototype = {
             styleGroup.top = styleHover.top = styleDown.top = "";
         }
 
-        this._tracker.enterHandler = delegate(this, this._enterHandler);
-        this._tracker.exitHandler = delegate(this, this._exitHandler);
-        this._tracker.pressHandler = delegate(this, this._pressHandler);
-        this._tracker.releaseHandler = delegate(this, this._releaseHandler);
-        this._tracker.clickHandler = delegate(this, this._clickHandler);
+        this._tracker.enterHandler = $.delegate(this, this._enterHandler);
+        this._tracker.exitHandler = $.delegate(this, this._exitHandler);
+        this._tracker.pressHandler = $.delegate(this, this._pressHandler);
+        this._tracker.releaseHandler = $.delegate(this, this._releaseHandler);
+        this._tracker.clickHandler = $.delegate(this, this._clickHandler);
 
         this._tracker.setTracking(true);
         this._outTo($.ButtonState.REST);
     },
     _scheduleFade: function() {
-        window.setTimeout(delegate(this, this._updateFade), 20);
+        window.setTimeout($.delegate(this, this._updateFade), 20);
     },
     _updateFade: function() {
         if (this._shouldFade) {
@@ -2789,7 +2796,7 @@ $.Button.prototype = {
     _beginFading: function() {
         this._shouldFade = true;
         this._fadeBeginTime = new Date().getTime() + this._fadeDelay;
-        window.setTimeout(delegate(this, this._scheduleFade), this._fadeDelay);
+        window.setTimeout($.delegate(this, this._scheduleFade), this._fadeDelay);
     },
     _stopFading: function() {
         this._shouldFade = false;
@@ -2971,9 +2978,9 @@ $.ButtonGroup.prototype = {
 			this._group.appendChild(buttons[i].get_element());
 		}
 
-		tracker.enterHandler = delegate(this, this._enterHandler);
-		tracker.exitHandler = delegate(this, this._exitHandler);
-		tracker.releaseHandler = delegate(this, this._releaseHandler);
+		tracker.enterHandler = $.delegate(this, this._enterHandler);
+		tracker.exitHandler = $.delegate(this, this._exitHandler);
+		tracker.releaseHandler = $.delegate(this, this._releaseHandler);
 
 		tracker.setTracking(true);
 	},
@@ -3505,7 +3512,7 @@ $.Drawer.prototype = {
 
     _loadTile: function(tile, time) {
         tile.loading = this._imageLoader.loadImage(tile.url,
-                    $.Utils.createCallback(null, delegate(this, this._onTileLoad), tile, time));
+                    $.Utils.createCallback(null, $.delegate(this, this._onTileLoad), tile, time));
     },
 
     _onTileLoad: function(tile, time, image) {
