@@ -1,246 +1,49 @@
+// (c) 2011 Christopher Thatcher
 // (c) 2010 OpenSeadragon, (c) 2010 CodePlex Foundation
-//Start Thatcher - general changes include adding ; where best practice
-//End Thatcher
-
-//Start Thatcher - .add was only used once
-//Array.prototype.add = function(array, item) {
-//    array[array.length] = item;
-//};
-//End Thatcher
-
-//Start Thatcher - .clear is never used in this code base
-//Array.prototype.clear = function(array) {
-//    array.length = 0;
-//};
-//End Thatcher
-
-//Start Thatcher - .clone is only used once 
-//Array.prototype.clone = function(array) {
-//    return array.length === 1 ? [array[0]] : Array.apply(null, array);
-//};
-//SArray = Array();
-//Thatcher
-
-//Start Thatcher - This is silly, Function is defined
-//if (!window.Function) {
-//    window.Function = {};
-//}
-//End Thatcher
-
-//Start Thatcher - moved into Seadragon namespace
-//Function.prototype.delegate = function(object, method) {
-//    return function() {
-//        if (arguments === undefined)
-//            arguments = [];
-//        return method.apply(object, arguments);
-//    };
-//}
-//End Thatcher
-
-//Start Thatcher - This is also silly and has terrible side effects
-//function String() {
-//
-//}
-//End Thatcher
-
-//Start Thatcher - moved into Seadragon namespace
-/*
-String.format = function(format, args) {
-    return String._toFormattedString(false, arguments);
-}
-String._toFormattedString = function(useLocale, args) {
-    var result = '';
-    var format = args[0];
-
-    for (var i = 0; ; ) {
-        var open = format.indexOf('{', i);
-        var close = format.indexOf('}', i);
-        if ((open < 0) && (close < 0)) {
-            result += format.slice(i);
-            break;
-        }
-        if ((close > 0) && ((close < open) || (open < 0))) {
-            if (format.charAt(close + 1) !== '}') {
-                throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
-            }
-            result += format.slice(i, close + 1);
-            i = close + 2;
-            continue;
-        }
-
-        result += format.slice(i, open);
-        i = open + 1;
-
-        if (format.charAt(i) === '{') {
-            result += '{';
-            i++;
-            continue;
-        }
-
-        if (close < 0) throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
+// @NEWBSD@
 
 
-        var brace = format.substring(i, close);
-        var colonIndex = brace.indexOf(':');
-        var argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10) + 1;
-        if (isNaN(argNumber)) throw Error.argument('format', Sys.Res.stringFormatInvalid);
-        var argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
-
-        var arg = args[argNumber];
-        if (typeof (arg) === "undefined" || arg === null) {
-            arg = '';
-        }
-
-        if (arg.toFormattedString) {
-            result += arg.toFormattedString(argFormat);
-        }
-        else if (useLocale && arg.localeFormat) {
-            result += arg.localeFormat(argFormat);
-        }
-        else if (arg.format) {
-            result += arg.format(argFormat);
-        }
-        else
-            result += arg.toString();
-
-        i = close + 1;
-    }
-
-    return result;
-}
-*/
-//End Thatcher
-
-//Start Thatcher - Observer is only used twice and always uses the following
-//               - call "this._observer._getContext(this, true).events;"
-//               - To start I'm just making 'events' a member variable that
-//               - is an instance of EventHandlerList
-/*
-function Observer() { }
-Observer.prototype = {
-    _getContext: function(obj, create) {
-        var ctx = obj._observerContext;
-        if (ctx) return ctx();
-        if (create) {
-            return (obj._observerContext = this._createContext())();
-        }
-        return null;
-    },
-    _createContext: function() {
-        var ctx = {
-            events: new EventHandlerList()
-        };
-        return function() {
-            return ctx;
-        }
-    }
-}
-*/
-//End Thatcher
-
-//Start Thatcher - Adding singular global namespace declaration and closure
 Seadragon = function(){};
 (function($){
-//End Thatcher
+
 
 var EventHandlerList = function EventHandlerList() {
     this._list = {};
 };
 
 EventHandlerList.prototype = {
-    //Start Thatcher - unneccessary indirection, just use addHandler
-    //_addHandler: function(id, handler) {
-        //Start Thatcher
-        //SArray.add(this._getEvent(id, true), handler);
-    //    var events = this._getEvent(id, true);
-    //    events[events.length] = handler;
-        //End Thatcher
-    //},
-    //End Thatcher
-    addHandler: function(id, handler) {
-        //Start Thatcher - unneccessary indirection
-        //this._addHandler(id, handler);
-        //End Thatcher
 
-        //Start Thatcher - removing indirection
-        //var events = this._getEvent(id, true);
+    addHandler: function(id, handler) {
         var events = this._list[ id ];
         if( !events ){
             this._list[ id ] = events = [];
         }
-        //End Thatcher
         events[events.length] = handler;
     },
-    //Start Thatcher - unneccessary indirection, just use _removeHandler
-    //_removeHandler: function(id, handler) {
-    //    var evt = this._getEvent(id);
-    //    if (!evt) return;
-        //Start Thatcher - SArray.remove is not defined anywhere in this code base
-        //               - and is not a natural function of the Array.prototype!
-        //SArray.remove(evt, handler);
-        //End Thatcher
-    //},
-    //EndThatcher
-    //Start Thatcher - _removeHandlers is not used in the entire codebase
-    //_removeHandlers: function(id) {
-    //    if (!id) {
-    //        this._list = {};
-    //    }
-    //    else {
-    //        var evt = this._getEvent(id);
-    //        if (!evt) return;
-    //        evt.length = 0;
-    //    }
-    //},
-    //End Thatcher
+
     removeHandler: function(id, handler) {
         //Start Thatcher - unneccessary indirection.  Also, because events were
         //               - not actually being removed, we need to add the code
         //               - to do the removal ourselves. TODO
-        //this._removeHandler(id, handler);
         var evt = this._list[ id ];
         if (!evt) return;
         //End Thatcher
     },
     getHandler: function(id) {
-        //Start Thatcher - remove indirection
-        //var evt = this._getEvent(id);
-        var evt = this._list[ id ] || [];
-        //End Thatcher
+        var evt = this._list[ id ]; 
         if (!evt || !evt.length) return null;
-        //Start Thatcher - .clone only used once in entire codebase  so just do it
-        //evt = SArray.clone(evt);
         evt = evt.length === 1 ? 
             [evt[0]] : 
             Array.apply( null, evt );
-        //End Thatcher
         return function(source, args) {
             for (var i = 0, l = evt.length; i < l; i++) {
                 evt[i](source, args);
             }
         };
     }
-    //Start Thatcher - removing indirection
-    //,
-    //_getEvent: function(id, create) {
-    //    var e = this._list[id];
-    //    if (!e) {
-    //        if (!create) return null;
-    //        this._list[id] = e = [];
-    //    }
-    //    return e;
-    //}
-    //End Thatcher
 };
 
-//Start Thatcher - Created a global declaration with closure
-//var Seadragon = new function() {
-//
-//}
-//End Thatcher
 
-//Start Thatcher - Moved this function into closure namespace, more importantly 
-//               - avoids polluting built in Function
 function delegate(object, method) {
     return function() {
         if (arguments === undefined)
@@ -248,19 +51,11 @@ function delegate(object, method) {
         return method.apply(object, arguments);
     };
 };
-//End Thatcher
 
-//Start Thatcher - Moved this function into closure namespace, more importantly
-//               - avoids polluting built in String. Also removed indirection.
-//var format = function(format, args) {
-//    return $._toFormattedString(false, arguments);
-//};
-//$._toFormattedString = function(useLocale, args) {
+
 function format(){
-    //Start Thatcher - removeing indirection
     var args = arguments,
         useLocale = false;
-    //End Thatcher
     var result = '';
     var format = args[0];
 
@@ -273,10 +68,7 @@ function format(){
         }
         if ((close > 0) && ((close < open) || (open < 0))) {
             if (format.charAt(close + 1) !== '}') {
-                //Start Thatcher - There is no Sys object or Error.argument
-                //throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
                 throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
-                //End Thatcher
             }
             result += format.slice(i, close + 1);
             i = close + 2;
@@ -292,23 +84,18 @@ function format(){
             continue;
         }
 
-        //Start Thatcher - No Sys object or Error.argument
-        //if (close < 0) throw Error.argument('format', Sys.Res.stringFormatBraceMismatch);
         if (close < 0) {
             throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
         }
-        //End Thatcher
 
 
         var brace = format.substring(i, close);
         var colonIndex = brace.indexOf(':');
         var argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10) + 1;
-        //Start Thatcher - No Sys object or Error,argument
-        //if (isNaN(argNumber)) throw Error.argument('format', Sys.Res.stringFormatInvalid);
+
         if( isNaN( argNumber ) ){
             throw Error('SeadragonError: Invalid Format String\n' + format );
         }
-        //End Thatcher
         var argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
 
         var arg = args[argNumber];
@@ -333,13 +120,8 @@ function format(){
 
     return result;
 };
-//End Thatcher
 
 
-//Start Thatcher - Notes for refactoring Utils
-//  * Use .prototype pattern
-//  * Provide closure
-//End Thatcher
 $.Utils = function() {
 
 
@@ -1344,7 +1126,7 @@ $.NavControl.prototype = {
         var onFullPageHandler = delegate(this, this._onFullPage);
 
         var navImages = this._viewer.config.navImages;
-        //Start Thatcher - reformatted for readability
+
         var zoomIn = new $.Button({ 
             config: this._viewer.config, 
             tooltip: $.Strings.getString("Tooltips.ZoomIn"), 
@@ -1397,16 +1179,12 @@ $.NavControl.prototype = {
             config: this._viewer.config, 
             buttons: [zoomIn, zoomOut, goHome, fullPage] 
         });
-        //End Thatcher
 
         this.elmt = this._group.get_element();
         this.elmt[SIGNAL] = true;   // hack to get our controls to fade
         this._viewer.add_open(delegate(this, this._lightUp));
     },
-    //Start Thatcher - never called internally
-    //dispose: function() {
-    //},
-    //End Thatcher
+
     get_events: function() {
         return this._events;
     },
@@ -1556,10 +1334,7 @@ $.Viewer = function(element, xmlPath, prefixUrl, controls, overlays, overlayCont
 $.Viewer.prototype = {
     initialize: function () {
 
-        //Start Thatcher - Observer pattern is over abstracted
-        //this._observer = new Observer();
         this._events = new EventHandlerList();
-        //End Thatcher
 
         this._container = $.Utils.makeNeutralElement("div");
         this._canvas = $.Utils.makeNeutralElement("div");
@@ -1642,10 +1417,7 @@ $.Viewer.prototype = {
             this.openDzi(this._xmlPath);
     },
     get_events: function get_events() {
-        //Start Thatcher - Removing Observer pattern
-        //return this._observer._getContext(this, true).events;
         return this._events;
-        //End Thatcher
     },
     _raiseEvent: function (eventName, eventArgs) {
         var handler = this.get_events().getHandler(eventName);
@@ -2937,10 +2709,7 @@ $.Button = function(properties, events) {
 $.Button.prototype = {
     initialize: function(events) {
 
-        //Start Thatcher - Observer pattern is over abstracted
-        //this._observer = new Observer();
         this._events = new EventHandlerList();
-        //End Thatcher
 
         if (events.onPress != undefined)
             this.add_onPress(events.onPress);
@@ -2999,10 +2768,6 @@ $.Button.prototype = {
         this._tracker.setTracking(true);
         this._outTo($.ButtonState.REST);
     },
-    //Start Thatcher - never called internally
-    //dispose: function() {
-    //},
-    //End Thatcher
     _scheduleFade: function() {
         window.setTimeout(delegate(this, this._updateFade), 20);
     },
@@ -3096,10 +2861,7 @@ $.Button.prototype = {
         }
     },
     get_events: function get_events() {
-        //Start Thatcher - Removing Observer pattern
-        //return this._observer._getContext(this, true).events;
         return this._events;
-        //End Thatcher
     },
     _raiseEvent: function(eventName, eventArgs) {
         var handler = this.get_events().getHandler(eventName);
@@ -3215,10 +2977,7 @@ $.ButtonGroup.prototype = {
 
 		tracker.setTracking(true);
 	},
-    //Start Thatcher - never called internally
-    //dispose: function() {
-    //},
-    //End Thatcher
+
 	get_buttons: function() {
 		return this._buttons;
 	},
@@ -3477,10 +3236,6 @@ $.Tile = function(level, x, y, bounds, exists, url) {
 }
 $.Tile.prototype = {
     
-    //Start Thatcher - never called internally
-    //dispose: function() {
-    //},
-    //End Thatcher
     toString: function() {
         return this.level + "/" + this.x + "_" + this.y;
     },
@@ -3680,10 +3435,7 @@ $.Drawer = function(source, viewport, elmt) {
 	this._init();
 }
 $.Drawer.prototype = {
-    //Start Thatcher - never called internally
-    //dispose: function() {
-    //},
-    //End Thatcher
+
     _init: function() {
         this._canvas.style.width = "100%";
         this._canvas.style.height = "100%";
@@ -4481,6 +4233,4 @@ $.Viewport.prototype = {
 	}
 }
 
-//Start Thatcher - Adding global closure ending
 }( Seadragon ));
-//End Thatcher
