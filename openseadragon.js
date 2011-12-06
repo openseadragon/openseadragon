@@ -42,13 +42,9 @@
 
 OpenSeadragon       = window.OpenSeadragon || function(){};
 
-//TODO: remove this hack
-if (!window.SIGNAL){
-    window.SIGNAL = "----seadragon----";
-}
-
 (function( $ ){
     
+    $.SIGNAL = "----seadragon----";
 
     $.delegate = function(object, method) {
         return function() {
@@ -57,7 +53,6 @@ if (!window.SIGNAL){
             return method.apply(object, arguments);
         };
     };
-
 
     $.format = function(){
 
@@ -1255,7 +1250,7 @@ $.NavControl.prototype = {
         });
 
         this.elmt = this._group.get_element();
-        this.elmt[SIGNAL] = true;   // hack to get our controls to fade
+        this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
         this._viewer.add_open($.delegate(this, this._lightUp));
     },
 
@@ -1367,7 +1362,7 @@ $.Control.prototype = {
         this.wrapper.style.display = visible ? "inline-block" : "none";
     },
     setOpacity: function(opacity) {
-        if (this.elmt[SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
+        if (this.elmt[$.SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
             $.Utils.setElementOpacity(this.elmt, opacity, true);
         } else {
             $.Utils.setElementOpacity(this.wrapper, opacity, true);

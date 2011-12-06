@@ -40,15 +40,11 @@
  *
  **/
 
-OpenSeadragon       = window.OpenSeadragon || function(){};
-
-//TODO: remove this hack
-if (!window.SIGNAL){
-    window.SIGNAL = "----seadragon----";
-}
+OpenSeadragon = window.OpenSeadragon || function(){};
 
 (function( $ ){
     
+    $.SIGNAL = "----seadragon----";
 
     $.delegate = function(object, method) {
         return function() {
@@ -57,7 +53,6 @@ if (!window.SIGNAL){
             return method.apply(object, arguments);
         };
     };
-
 
     $.format = function(){
 

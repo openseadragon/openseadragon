@@ -79,7 +79,7 @@ $.NavControl.prototype = {
         });
 
         this.elmt = this._group.get_element();
-        this.elmt[SIGNAL] = true;   // hack to get our controls to fade
+        this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
         this._viewer.add_open($.delegate(this, this._lightUp));
     },
 

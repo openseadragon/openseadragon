@@ -32,7 +32,7 @@ $.Control.prototype = {
         this.wrapper.style.display = visible ? "inline-block" : "none";
     },
     setOpacity: function(opacity) {
-        if (this.elmt[SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
+        if (this.elmt[$.SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
             $.Utils.setElementOpacity(this.elmt, opacity, true);
         } else {
             $.Utils.setElementOpacity(this.wrapper, opacity, true);
