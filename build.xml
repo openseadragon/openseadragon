@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Version: $Id: build.xml 495 2011-07-07 20:14:37Z chth $ -->
+<project name="openseadragon" 
+         default="build">
+
+	<tstamp/>
+    
+    <description> 
+    	Build file for Zoomable User Interface HTML5 project OpenSeadragon.
+    </description>
+
+    <!-- BASIC PROJECT PROPERTIES TO HELP TRACK VERSION -->
+    <property file="build.properties" />
+
+    <target name="build">
+        <echo>| OpenSeadragon </echo>
+        <filelist id="openseadragon.javascript" 
+                  dir=".">
+            <file name="src/openseadragon.js" />
+            <file name="src/eventhandlerlist.js" />
+            <file name="src/utils.js" />
+            <file name="src/mousetracker.js" />
+            <file name="src/controlanchor.js" />
+            <file name="src/overlayplacement.js" />
+            <file name="src/navcontrol.js" />
+            <file name="src/control.js" />
+            <file name="src/viewer.js" />
+            <file name="src/strings.js" />
+            <file name="src/point.js" />
+            <file name="src/profiler.js" />
+            <file name="src/job.js" />
+            <file name="src/imageloader.js" />
+            <file name="src/tilesource.js" />
+            <file name="src/dzierror.js" />
+            <file name="src/dzitilesource.js" />
+            <file name="src/button.js" />
+            <file name="src/buttongroup.js" />
+            <file name="src/config.js" />
+            <file name="src/rectangle.js" />
+            <file name="src/displayrectangle.js" />
+            <file name="src/spring.js" />
+            <file name="src/tile.js" />
+            <file name="src/overlay.js" />
+            <file name="src/drawer.js" />
+            <file name="src/viewport.js" />
+        </filelist>
+            
+        <echo>| Building OpenSeadragon Javascript </echo>
+        <concat destFile="openseadragon.js">
+            <filterchain>    
+                <replacetokens>
+                    <token key="VERSION" value="${VERSION}"/>
+                </replacetokens>
+            </filterchain>
+            <filelist refid="openseadragon.javascript" />
+        </concat>
+        
+    </target>
+
+</project>

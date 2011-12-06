@@ -4,9 +4,15 @@ This project is a fork of the OpenSeadragon project at http://openseadragon.code
 
 We are forking it primarily to do heavy clean-up on the code base, simplify the build, and see what happens from there.
 
+== Building from Source
 
+Building from source is easy with 'ant'.  The result is included in the 
+distribution as 'openseadragon.js', the version being recording in the header.
 
-Original license preserved below
+> ant 
+
+== Original license preserved below
+
 -------------------------------------
 License: New BSD License (BSD)
 Copyright (c) 2010, OpenSeadragon
