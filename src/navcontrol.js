@@ -90,7 +90,8 @@ $.NavControl.prototype = {
         this._events = value;
     },
     _resolveUrl: function(url) {
-        return $.format("{1}", this._viewer.get_prefixUrl(), url);
+        var prefix = this._viewer.get_prefixUrl();
+        return prefix ? prefix + url : url;
     },
     _beginZoomingIn: function() {
         this._lastZoomTime = new Date().getTime();

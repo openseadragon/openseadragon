@@ -40,7 +40,7 @@
  *
  **/
 
-OpenSeadragon       = window.OpenSeadragon || function(){};
+OpenSeadragon = window.OpenSeadragon || function(){};
 
 (function( $ ){
     
@@ -52,83 +52,6 @@ OpenSeadragon       = window.OpenSeadragon || function(){};
                 arguments = [];
             return method.apply(object, arguments);
         };
-    };
-
-    $.format = function(){
-
-        var args        = arguments,
-            useLocale   = false,
-            result      = '',
-            format      = args[0],
-            open,
-            close,
-            brace,
-            colonIndex,
-            argNumber,
-            argFormat,
-            arg,
-            i;
-
-        for ( i = 0; ; ) {
-            open = format.indexOf('{', i);
-            close = format.indexOf('}', i);
-            if ((open < 0) && (close < 0)) {
-                result += format.slice(i);
-                break;
-            }
-            if ((close > 0) && ((close < open) || (open < 0))) {
-                if (format.charAt(close + 1) !== '}') {
-                    throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
-                }
-                result += format.slice(i, close + 1);
-                i = close + 2;
-                continue;
-            }
-
-            result += format.slice(i, open);
-            i = open + 1;
-
-            if (format.charAt(i) === '{') {
-                result += '{';
-                i++;
-                continue;
-            }
-
-            if (close < 0) {
-                throw Error('SeadragonError: Formatted String Brace Mismatch. \n' + format );
-            }
-
-
-            brace = format.substring(i, close);
-            colonIndex = brace.indexOf(':');
-            argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10) + 1;
-
-            if( isNaN( argNumber ) ){
-                throw Error('SeadragonError: Invalid Format String\n' + format );
-            }
-            argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
-
-            arg = args[argNumber];
-            if (typeof (arg) === "undefined" || arg === null) {
-                arg = '';
-            }
-
-            if (arg.toFormattedString) {
-                result += arg.toFormattedString(argFormat);
-            }
-            else if (useLocale && arg.localeFormat) {
-                result += arg.localeFormat(argFormat);
-            }
-            else if ( arg.format ) {
-                result += arg.format(argFormat);
-            }
-            else
-                result += arg.toString();
-
-            i = close + 1;
-        }
-
-        return result;
     };
 
 }( OpenSeadragon ));
@@ -1261,7 +1184,8 @@ $.NavControl.prototype = {
         this._events = value;
     },
     _resolveUrl: function(url) {
-        return $.format("{1}", this._viewer.get_prefixUrl(), url);
+        var prefix = this._viewer.get_prefixUrl();
+        return prefix ? prefix + url : url;
     },
     _beginZoomingIn: function() {
         this._lastZoomTime = new Date().getTime();
