@@ -78,7 +78,7 @@ $.NavControl.prototype = {
             buttons: [zoomIn, zoomOut, goHome, fullPage] 
         });
 
-        this.elmt = this._group.get_element();
+        this.elmt = this._group.element;
         this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
         this._viewer.add_open($.delegate(this, this._lightUp));
     },

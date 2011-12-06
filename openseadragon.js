@@ -1172,7 +1172,7 @@ $.NavControl.prototype = {
             buttons: [zoomIn, zoomOut, goHome, fullPage] 
         });
 
-        this.elmt = this._group.get_element();
+        this.elmt = this._group.element;
         this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
         this._viewer.add_open($.delegate(this, this._lightUp));
     },
@@ -3007,76 +3007,75 @@ $.Button.prototype = {
 }( OpenSeadragon ));
 
 (function( $ ){
+/**
+ * OpenSeadragon ButtonGroup
+ *
+ * Manages events on groups of buttons.
+ *    
+ * options {}
+ *      buttons - an array of buttons
+ *      
+ **/
+$.ButtonGroup = function( options ) {
 
-$.ButtonGroup = function(properties) {
+    this.buttons = options.buttons;
+    this.element = options.group || $.Utils.makeNeutralElement("span");
+    this.config  = options.config;
+    this.tracker = new $.MouseTracker(
+        this.element, 
+        this.config.clickTimeThreshold, 
+        this.config.clickDistThreshold
+    );
+    
+    // copy the botton elements
+    var buttons = this.buttons.concat([]),   
+        _this = this,
+        i;
 
-    this._buttons = properties.buttons;
-    this._group = properties.group;
-    this.config = properties.config;
+    this.element.style.display = "inline-block";
+    for ( i = 0; i < buttons.length; i++ ) {
+        this.element.appendChild( buttons[ i ].get_element() );
+    }
 
-    this.initialize();
+
+    this.tracker.enter =  options.enter || function() {
+        var i;
+        for ( i = 0; i < _this.buttons.length; i++) {
+            _this.buttons[ i ].notifyGroupEnter();
+        }
+    };
+
+    this.tracker.exit = options.exit || function() {
+        var i,
+            buttonDownElmt = arguments.length > 2 ? arguments[2] : null;
+        if ( !buttonDownElmt ) {
+            for ( i = 0; i < _this.buttons.length; i++ ) {
+                _this.buttons[ i ].notifyGroupExit();
+            }
+        }
+    };
+
+    this.tracker.release = options.release || function() {
+        var i,
+            insideElmtRelease = arguments.length > 3 ? arguments[3] : null;
+        if ( !insideElmtRelease ) {
+            for ( i = 0; i < _this.buttons.length; i++ ) {
+                _this.buttons[ i ].notifyGroupExit();
+            }
+        }
+    };
+
+    this.tracker.setTracking( true );
 };
 
 $.ButtonGroup.prototype = {
-    initialize: function() {
 
-        this._group = $.Utils.makeNeutralElement("span");
-        var buttons = this._buttons.concat([]);   // copy
-        var tracker = new $.MouseTracker(this._group, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        this._group.style.display = "inline-block";
-
-        for (var i = 0; i < buttons.length; i++) {
-            this._group.appendChild(buttons[i].get_element());
-        }
-
-        tracker.enterHandler = $.delegate(this, this._enterHandler);
-        tracker.exitHandler = $.delegate(this, this._exitHandler);
-        tracker.releaseHandler = $.delegate(this, this._releaseHandler);
-
-        tracker.setTracking(true);
-    },
-
-    get_buttons: function() {
-        return this._buttons;
-    },
-    set_buttons: function(value) {
-        this._buttons = value;
-    },
-    get_element: function() {
-        return this._group;
-    },
-    get_config: function() {
-        return this.config;
-    },
-    set_config: function(value) {
-        this.config = value;
-    },
-    _enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        for (var i = 0; i < this._buttons.length; i++) {
-            this._buttons[i].notifyGroupEnter();
-        }
-    },
-    _exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        if (!buttonDownElmt) {
-            for (var i = 0; i < this._buttons.length; i++) {
-                this._buttons[i].notifyGroupExit();
-            }
-        }
-    },
-    _releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
-
-        if (!insideElmtRelease) {
-            for (var i = 0; i < this._buttons.length; i++) {
-                this._buttons[i].notifyGroupExit();
-            }
-        }
-    },
     emulateEnter: function() {
-        this._enterHandler();
+        this.tracker.enter();
     },
 
     emulateExit: function() {
-        this._exitHandler();
+        this.tracker.exit();
     }
 };
 
