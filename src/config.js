@@ -49,28 +49,28 @@ $.Config = function () {
 
     this.navImages = {
         zoomIn: {
-            REST: '/Scripts/images/zoomin_rest.png',
-            GROUP: '/Scripts/images/zoomin_grouphover.png',
-            HOVER: '/Scripts/images/zoomin_hover.png',
-            DOWN: '/Scripts/images/zoomin_pressed.png'
+            REST: '/images/zoomin_rest.png',
+            GROUP: '/images/zoomin_grouphover.png',
+            HOVER: '/images/zoomin_hover.png',
+            DOWN: '/images/zoomin_pressed.png'
         },
         zoomOut: {
-            REST: '/Scripts/images/zoomout_rest.png',
-            GROUP: '/Scripts/images/zoomout_grouphover.png',
-            HOVER: '/Scripts/images/zoomout_hover.png',
-            DOWN: '/Scripts/images/zoomout_pressed.png'
+            REST: '/images/zoomout_rest.png',
+            GROUP: '/images/zoomout_grouphover.png',
+            HOVER: '/images/zoomout_hover.png',
+            DOWN: '/images/zoomout_pressed.png'
         },
         home: {
-            REST: '/Scripts/images/home_rest.png',
-            GROUP: '/Scripts/images/home_grouphover.png',
-            HOVER: '/Scripts/images/home_hover.png',
-            DOWN: '/Scripts/images/home_pressed.png'
+            REST: '/images/home_rest.png',
+            GROUP: '/images/home_grouphover.png',
+            HOVER: '/images/home_hover.png',
+            DOWN: '/images/home_pressed.png'
         },
         fullpage: {
-            REST: '/Scripts/images/fullpage_rest.png',
-            GROUP: '/Scripts/images/fullpage_grouphover.png',
-            HOVER: '/Scripts/images/fullpage_hover.png',
-            DOWN: '/Scripts/images/fullpage_pressed.png'
+            REST: '/images/fullpage_rest.png',
+            GROUP: '/images/fullpage_grouphover.png',
+            HOVER: '/images/fullpage_hover.png',
+            DOWN: '/images/fullpage_pressed.png'
         }
     }
 };
