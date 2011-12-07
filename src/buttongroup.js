@@ -5,9 +5,14 @@
  *
  * Manages events on groups of buttons.
  *    
- * options {}
- *      buttons - an array of buttons
- *      
+ * options: {
+ *     buttons: Array of buttons * required,
+ *     group:   Element to use as the container,
+ *     config:  Object with Viewer settings ( TODO: is this actually used anywhere? )
+ *     enter:   Function callback for when the mouse enters group
+ *     exit:    Function callback for when mouse leaves the group
+ *     release: Function callback for when mouse is released
+ * }
  **/
 $.ButtonGroup = function( options ) {
 
@@ -71,5 +76,6 @@ $.ButtonGroup.prototype = {
         this.tracker.exit();
     }
 };
+
 
 }( OpenSeadragon ));

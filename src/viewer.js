@@ -1,16 +1,106 @@
 
 (function( $ ){
+/**
+ *  OpenSeadragon Viewer
+ *
+ *  The main point of entry into creating a zoomable image on the page.
+ *
+ *  We have provided an idiomatic javascript constructor which takes
+ *  a single object, but still support the legacy positional arguments.
+ *
+ *  The options below are given in order that they appeared in the constructor
+ *  as arguments and we translate a positional call into an idiomatic call.
+ *
+ *  options:{
+ *      element:    String id of Element to attach to,
+ *      xmlPath:    String xpath ( TODO: not sure! ),
+ *      prefixUrl:  String url used to prepend to paths, eg button images,
+ *      controls:   Array of Seadragon.Controls,
+ *      overlays:   Array of Seadragon.Overlays,
+ *      overlayControls: An Array of ( TODO: not sure! )
+ *  }
+ *
+ *
+ **/    
+$.Viewer = function( options ) {
+
+    var args = arguments;
+
+    if( typeof( options ) != 'object' ){
+        options = {
+            id:                 args[ 0 ],
+            xmlPath:            args.length > 1 ? args[ 1 ] : undefined,
+            prefixUrl:          args.length > 2 ? args[ 2 ] : undefined,
+            controls:           args.length > 3 ? args[ 3 ] : undefined,
+            overlays:           args.length > 4 ? args[ 4 ] : undefined,
+            overlayControls:    args.length > 5 ? args[ 5 ] : undefined,
+            config:             {}
+        };
+    }
     
-$.Viewer = function(element, xmlPath, prefixUrl, controls, overlays, overlayControls) {
+    //Allow the options object to override global defaults
+    $.extend( true, this, { 
+        id:                 options.id,
+        xmlPath:            options.xmlPath         || undefined,
+        prefixUrl:          options.prefixUrl       || '',
+        controls:           options.controls        || [],
+        overlays:           options.overlays        || [],
+        overlayControls:    options.overlayControls || [],
+        config: {
+            debugMode:          true,
+            animationTime:      1.5,
+            blendTime:          0.5,
+            alwaysBlend:        false,
+            autoHideControls:   true,
+            immediateRender:    false,
+            wrapHorizontal:     false,
+            wrapVertical:       false,
+            minZoomImageRatio:  0.8,
+            maxZoomPixelRatio:  2,
+            visibilityRatio:    0.5,
+            springStiffness:    5.0,
+            imageLoaderLimit:   2,
+            clickTimeThreshold: 200,
+            clickDistThreshold: 5,
+            zoomPerClick:       2.0,
+            zoomPerScroll:      1.2,
+            zoomPerSecond:      2.0,
+            showNavigationControl: true,
+            maxImageCacheCount: 100,
+            minPixelRatio:      0.5,
+            mouseNavEnabled:    true,
+            navImages: {
+                zoomIn: {
+                    REST:   '/images/zoomin_rest.png',
+                    GROUP:  '/images/zoomin_grouphover.png',
+                    HOVER:  '/images/zoomin_hover.png',
+                    DOWN:   '/images/zoomin_pressed.png'
+                },
+                zoomOut: {
+                    REST:   '/images/zoomout_rest.png',
+                    GROUP:  '/images/zoomout_grouphover.png',
+                    HOVER:  '/images/zoomout_hover.png',
+                    DOWN:   '/images/zoomout_pressed.png'
+                },
+                home: {
+                    REST:   '/images/home_rest.png',
+                    GROUP:  '/images/home_grouphover.png',
+                    HOVER:  '/images/home_hover.png',
+                    DOWN:   '/images/home_pressed.png'
+                },
+                fullpage: {
+                    REST:   '/images/fullpage_rest.png',
+                    GROUP:  '/images/fullpage_grouphover.png',
+                    HOVER:  '/images/fullpage_hover.png',
+                    DOWN:   '/images/fullpage_pressed.png'
+                }
+            }
+        }
+    }, options );
 
-    this.config = new $.Config();
-    this._prefixUrl = prefixUrl ? prefixUrl : "";
-    this._element = document.getElementById(element);
+    this._element = document.getElementById( options.id );
 
-    this._controls = controls ? controls : [];
     this._customControls = [];
-    this._overlays = overlays ? overlays : [];
-    this._overlayControls = overlayControls ? overlayControls : [];
     this._container = null;
     this._canvas = null;
     this._controlsTL = null;
@@ -28,101 +118,97 @@ $.Viewer = function(element, xmlPath, prefixUrl, controls, overlays, overlayCont
     this._animating = false;
     this._forceRedraw = false;
     this._mouseInside = false;
-    this._xmlPath = xmlPath ? xmlPath : undefined;
 
     this.source = null;
     this.drawer = null;
     this.viewport = null;
     this.profiler = null;
 
-    this.initialize();
+    this._events = new $.EventHandlerList();
+
+    this._container = $.Utils.makeNeutralElement("div");
+    this._canvas = $.Utils.makeNeutralElement("div");
+
+    this._controlsTL = $.Utils.makeNeutralElement("div");
+    this._controlsTR = $.Utils.makeNeutralElement("div");
+    this._controlsBR = $.Utils.makeNeutralElement("div");
+    this._controlsBL = $.Utils.makeNeutralElement("div");
+
+    var innerTracker = new $.MouseTracker(this._canvas, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+    var outerTracker = new $.MouseTracker(this._container, this.config.clickTimeThreshold, this.config.clickDistThreshold);
+
+    this._bodyWidth = document.body.style.width;
+    this._bodyHeight = document.body.style.height;
+    this._bodyOverflow = document.body.style.overflow;
+    this._docOverflow = document.documentElement.style.overflow;
+
+    this._fsBoundsDelta = new $.Point(1, 1);
+
+    var canvasStyle = this._canvas.style;
+    var containerStyle = this._container.style;
+    var controlsTLStyle = this._controlsTL.style;
+    var controlsTRStyle = this._controlsTR.style;
+    var controlsBRStyle = this._controlsBR.style;
+    var controlsBLStyle = this._controlsBL.style;
+
+    containerStyle.width = "100%";
+    containerStyle.height = "100%";
+    containerStyle.position = "relative";
+    containerStyle.left = "0px";
+    containerStyle.top = "0px";
+    containerStyle.textAlign = "left";  // needed to protect against
+
+    canvasStyle.width = "100%";
+    canvasStyle.height = "100%";
+    canvasStyle.overflow = "hidden";
+    canvasStyle.position = "absolute";
+    canvasStyle.top = "0px";
+    canvasStyle.left = "0px";
+
+    controlsTLStyle.position = controlsTRStyle.position =
+                controlsBRStyle.position = controlsBLStyle.position =
+                "absolute";
+
+    controlsTLStyle.top = controlsTRStyle.top = "0px";
+    controlsTLStyle.left = controlsBLStyle.left = "0px";
+    controlsTRStyle.right = controlsBRStyle.right = "0px";
+    controlsBLStyle.bottom = controlsBRStyle.bottom = "0px";
+
+    innerTracker.clickHandler = $.delegate(this, this._onCanvasClick);
+    innerTracker.dragHandler = $.delegate(this, this._onCanvasDrag);
+    innerTracker.releaseHandler = $.delegate(this, this._onCanvasRelease);
+    innerTracker.scrollHandler = $.delegate(this, this._onCanvasScroll);
+    innerTracker.setTracking(true);     // default state
+
+    if (this.get_showNavigationControl()) {
+        navControl = (new $.NavControl(this)).elmt;
+        navControl.style.marginRight = "4px";
+        navControl.style.marginBottom = "4px";
+        this.addControl(navControl, $.ControlAnchor.BOTTOM_RIGHT);
+    }
+    for (var i = 0; i < this._customControls.length; i++) {
+        this.addControl(this._customControls[i].id, this._customControls[i].anchor);
+    }
+
+    outerTracker.enterHandler = $.delegate(this, this._onContainerEnter);
+    outerTracker.exitHandler = $.delegate(this, this._onContainerExit);
+    outerTracker.releaseHandler = $.delegate(this, this._onContainerRelease);
+    outerTracker.setTracking(true); // always tracking
+    window.setTimeout($.delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
+
+    this._container.appendChild(this._canvas);
+    this._container.appendChild(this._controlsTL);
+    this._container.appendChild(this._controlsTR);
+    this._container.appendChild(this._controlsBR);
+    this._container.appendChild(this._controlsBL);
+    this.get_element().appendChild(this._container);
+
+    if (this.xmlPath){
+        this.openDzi( this.xmlPath );
+    }
 };
 
 $.Viewer.prototype = {
-    initialize: function () {
-
-        this._events = new $.EventHandlerList();
-
-        this._container = $.Utils.makeNeutralElement("div");
-        this._canvas = $.Utils.makeNeutralElement("div");
-
-        this._controlsTL = $.Utils.makeNeutralElement("div");
-        this._controlsTR = $.Utils.makeNeutralElement("div");
-        this._controlsBR = $.Utils.makeNeutralElement("div");
-        this._controlsBL = $.Utils.makeNeutralElement("div");
-
-        var innerTracker = new $.MouseTracker(this._canvas, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        var outerTracker = new $.MouseTracker(this._container, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-
-        this._bodyWidth = document.body.style.width;
-        this._bodyHeight = document.body.style.height;
-        this._bodyOverflow = document.body.style.overflow;
-        this._docOverflow = document.documentElement.style.overflow;
-
-        this._fsBoundsDelta = new $.Point(1, 1);
-
-        var canvasStyle = this._canvas.style;
-        var containerStyle = this._container.style;
-        var controlsTLStyle = this._controlsTL.style;
-        var controlsTRStyle = this._controlsTR.style;
-        var controlsBRStyle = this._controlsBR.style;
-        var controlsBLStyle = this._controlsBL.style;
-
-        containerStyle.width = "100%";
-        containerStyle.height = "100%";
-        containerStyle.position = "relative";
-        containerStyle.left = "0px";
-        containerStyle.top = "0px";
-        containerStyle.textAlign = "left";  // needed to protect against
-
-        canvasStyle.width = "100%";
-        canvasStyle.height = "100%";
-        canvasStyle.overflow = "hidden";
-        canvasStyle.position = "absolute";
-        canvasStyle.top = "0px";
-        canvasStyle.left = "0px";
-
-        controlsTLStyle.position = controlsTRStyle.position =
-                    controlsBRStyle.position = controlsBLStyle.position =
-                    "absolute";
-
-        controlsTLStyle.top = controlsTRStyle.top = "0px";
-        controlsTLStyle.left = controlsBLStyle.left = "0px";
-        controlsTRStyle.right = controlsBRStyle.right = "0px";
-        controlsBLStyle.bottom = controlsBRStyle.bottom = "0px";
-
-        innerTracker.clickHandler = $.delegate(this, this._onCanvasClick);
-        innerTracker.dragHandler = $.delegate(this, this._onCanvasDrag);
-        innerTracker.releaseHandler = $.delegate(this, this._onCanvasRelease);
-        innerTracker.scrollHandler = $.delegate(this, this._onCanvasScroll);
-        innerTracker.setTracking(true);     // default state
-
-        if (this.get_showNavigationControl()) {
-            navControl = (new $.NavControl(this)).elmt;
-            navControl.style.marginRight = "4px";
-            navControl.style.marginBottom = "4px";
-            this.addControl(navControl, $.ControlAnchor.BOTTOM_RIGHT);
-        }
-        for (var i = 0; i < this._customControls.length; i++) {
-            this.addControl(this._customControls[i].id, this._customControls[i].anchor);
-        }
-
-        outerTracker.enterHandler = $.delegate(this, this._onContainerEnter);
-        outerTracker.exitHandler = $.delegate(this, this._onContainerExit);
-        outerTracker.releaseHandler = $.delegate(this, this._onContainerRelease);
-        outerTracker.setTracking(true); // always tracking
-        window.setTimeout($.delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
-
-        this._container.appendChild(this._canvas);
-        this._container.appendChild(this._controlsTL);
-        this._container.appendChild(this._controlsTR);
-        this._container.appendChild(this._controlsBR);
-        this._container.appendChild(this._controlsBL);
-        this.get_element().appendChild(this._container);
-
-        if (this._xmlPath)
-            this.openDzi(this._xmlPath);
-    },
     get_events: function get_events() {
         return this._events;
     },
@@ -158,8 +244,8 @@ $.Viewer.prototype = {
             opacity = Math.min(1.0, opacity);
             opacity = Math.max(0.0, opacity);
 
-            for (var i = this._controls.length - 1; i >= 0; i--) {
-                this._controls[i].setOpacity(opacity);
+            for (var i = this.controls.length - 1; i >= 0; i--) {
+                this.controls[ i ].setOpacity(opacity);
             }
 
             if (opacity > 0) {
@@ -209,8 +295,8 @@ $.Viewer.prototype = {
         }
     },
     _getControlIndex: function (elmt) {
-        for (var i = this._controls.length - 1; i >= 0; i--) {
-            if (this._controls[i].elmt == elmt) {
+        for (var i = this.controls.length - 1; i >= 0; i--) {
+            if (this.controls[ i ].elmt == elmt) {
                 return i;
             }
         }
@@ -219,8 +305,8 @@ $.Viewer.prototype = {
     },
     _abortControlsAutoHide: function () {
         this._controlsShouldFade = false;
-        for (var i = this._controls.length - 1; i >= 0; i--) {
-            this._controls[i].setOpacity(1.0);
+        for (var i = this.controls.length - 1; i >= 0; i--) {
+            this.controls[ i ].setOpacity(1.0);
         }
     },
     _onContainerEnter: function (tracker, position, buttonDownElmt, buttonDownAny) {
@@ -340,8 +426,8 @@ $.Viewer.prototype = {
         this._forceRedraw = true;
         this._scheduleUpdate(this._updateMulti);
 
-        for (var i = 0; i < this._overlayControls.length; i++) {
-            var overlay = this._overlayControls[i];
+        for (var i = 0; i < this.overlayControls.length; i++) {
+            var overlay = this.overlayControls[ i ];
             if (overlay.point != null) {
                 this.drawer.addOverlay(overlay.id, new $.Point(overlay.point.X, overlay.point.Y), $.OverlayPlacement.TOP_LEFT);
             }
@@ -423,12 +509,6 @@ $.Viewer.prototype = {
     },
     get_element: function () {
         return this._element;
-    },
-    get_xmlPath: function () {
-        return this._xmlPath;
-    },
-    set_xmlPath: function (value) {
-        this._xmlPath = value;
     },
     get_debugMode: function () {
         return this.config.debugMode;
@@ -568,18 +648,6 @@ $.Viewer.prototype = {
     set_controls: function (value) {
         this._customControls = value;
     },
-    get_overlays: function () {
-        return this._overlayControls;
-    },
-    set_overlays: function (value) {
-        this._overlayControls = value;
-    },
-    get_prefixUrl: function () {
-        return this._prefixUrl;
-    },
-    set_prefixUrl: function (value) {
-        this._prefixUrl = value;
-    },
     add_open: function (handler) {
         this.get_events().addHandler("open", handler);
     },
@@ -655,7 +723,7 @@ $.Viewer.prototype = {
                 break;
         }
 
-        this._controls.push(new $.Control(elmt, anchor, div));
+        this.controls.push(new $.Control(elmt, anchor, div));
 
         elmt.style.display = "inline-block";
     },
@@ -685,18 +753,18 @@ $.Viewer.prototype = {
         var i = this._getControlIndex(elmt);
 
         if (i >= 0) {
-            this._controls[i].destroy();
-            this._controls.splice(i, 1);
+            this.controls[ i ].destroy();
+            this.controls.splice( i, 1 );
         }
     },
     clearControls: function () {
-        while (this._controls.length > 0) {
-            this._controls.pop().destroy();
+        while ( this.controls.length > 0 ) {
+            this.controls.pop().destroy();
         }
     },
     isDashboardEnabled: function () {
-        for (var i = this._controls.length - 1; i >= 0; i--) {
-            if (this._controls[i].isVisible()) {
+        for ( var i = this.controls.length - 1; i >= 0; i-- ) {
+            if (this.controls[ i ].isVisible()) {
                 return true;
             }
         }
@@ -717,8 +785,8 @@ $.Viewer.prototype = {
     },
 
     setDashboardEnabled: function (enabled) {
-        for (var i = this._controls.length - 1; i >= 0; i--) {
-            this._controls[i].setVisible(enabled);
+        for ( var i = this.controls.length - 1; i >= 0; i-- ) {
+            this.controls[ i ].setVisible( enabled );
         }
     },
 
