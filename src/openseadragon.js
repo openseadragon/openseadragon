@@ -55,12 +55,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         '[object Object]':      'object'
     },
     // Save a reference to some core methods
-    toString = Object.prototype.toString,
-    hasOwn = Object.prototype.hasOwnProperty,
-    push = Array.prototype.push,
-    slice = Array.prototype.slice,
-    trim = String.prototype.trim,
-    indexOf = Array.prototype.indexOf;
+    toString    = Object.prototype.toString,
+    hasOwn      = Object.prototype.hasOwnProperty,
+    push        = Array.prototype.push,
+    slice       = Array.prototype.slice,
+    trim        = String.prototype.trim,
+    indexOf     = Array.prototype.indexOf;
 
     return {
         // See test/unit/core.js for details concerning isFunction.

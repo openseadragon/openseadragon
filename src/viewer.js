@@ -24,7 +24,11 @@
  **/    
 $.Viewer = function( options ) {
 
-    var args = arguments;
+    var args = arguments,
+        _this = this,
+        innerTracker,
+        outerTracker,
+        i;
 
     if( typeof( options ) != 'object' ){
         options = {
@@ -41,11 +45,11 @@ $.Viewer = function( options ) {
     //Allow the options object to override global defaults
     $.extend( true, this, { 
         id:                 options.id,
-        xmlPath:            options.xmlPath         || undefined,
-        prefixUrl:          options.prefixUrl       || '',
-        controls:           options.controls        || [],
-        overlays:           options.overlays        || [],
-        overlayControls:    options.overlayControls || [],
+        xmlPath:            null,
+        prefixUrl:          '',
+        controls:           [],
+        overlays:           [],
+        overlayControls:    [],
         config: {
             debugMode:          true,
             animationTime:      1.5,
@@ -95,113 +99,127 @@ $.Viewer = function( options ) {
                     DOWN:   '/images/fullpage_pressed.png'
                 }
             }
-        }
+        },
+
+        //These were referenced but never defined
+        controlsFadeDelay:  2000,
+        controlsFadeLength: 1500,
+
+        //These are originally not part options but declared as members
+        //in initialize.  Its still considered idiomatic to put them here
+        source:     null,
+        drawer:     null,
+        viewport:   null,
+        profiler:   null,
+
+        //This was originally initialized in the constructor and so could never
+        //have anything in it.  now it can because we allow it to be specified
+        //in the options and is only empty by default if not specified. Also
+        //this array was returned from get_controls which I find confusing
+        //since this object has a controls property which is treated in other
+        //functions like clearControls.  I'm removing the accessors.
+        customControls: []
+
     }, options );
 
-    this._element = document.getElementById( options.id );
-
-    this._customControls = [];
-    this._container = null;
-    this._canvas = null;
-    this._controlsTL = null;
-    this._controlsTR = null;
-    this._controlsBR = null;
-    this._controlsBL = null;
-    this._bodyWidth = null;
-    this._bodyHeight = null;
-    this._bodyOverflow = null;
-    this._docOverflow = null;
-    this._fsBoundsDelta = null;
-    this._prevContainerSize = null;
-    this._lastOpenStartTime = 0;
-    this._lastOpenEndTime = 0;
-    this._animating = false;
-    this._forceRedraw = false;
-    this._mouseInside = false;
-
-    this.source = null;
-    this.drawer = null;
-    this.viewport = null;
-    this.profiler = null;
-
-    this._events = new $.EventHandlerList();
-
-    this._container = $.Utils.makeNeutralElement("div");
-    this._canvas = $.Utils.makeNeutralElement("div");
-
-    this._controlsTL = $.Utils.makeNeutralElement("div");
-    this._controlsTR = $.Utils.makeNeutralElement("div");
-    this._controlsBR = $.Utils.makeNeutralElement("div");
-    this._controlsBL = $.Utils.makeNeutralElement("div");
-
-    var innerTracker = new $.MouseTracker(this._canvas, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-    var outerTracker = new $.MouseTracker(this._container, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-
-    this._bodyWidth = document.body.style.width;
-    this._bodyHeight = document.body.style.height;
-    this._bodyOverflow = document.body.style.overflow;
-    this._docOverflow = document.documentElement.style.overflow;
+    this.element        = document.getElementById( options.id );
+    this.container      = $.Utils.makeNeutralElement("div");
+    this.canvas         = $.Utils.makeNeutralElement("div");
+    this.events         = new $.EventHandlerList();
 
     this._fsBoundsDelta = new $.Point(1, 1);
+    this._prevContainerSize = null;
+    this._lastOpenStartTime = 0;
+    this._lastOpenEndTime   = 0;
+    this._animating         = false;
+    this._forceRedraw       = false;
+    this._mouseInside       = false;
 
-    var canvasStyle = this._canvas.style;
-    var containerStyle = this._container.style;
-    var controlsTLStyle = this._controlsTL.style;
-    var controlsTRStyle = this._controlsTR.style;
-    var controlsBRStyle = this._controlsBR.style;
-    var controlsBLStyle = this._controlsBL.style;
+    innerTracker = new $.MouseTracker(
+        this.canvas, 
+        this.config.clickTimeThreshold, 
+        this.config.clickDistThreshold
+    );
+    innerTracker.clickHandler   = $.delegate(this, onCanvasClick);
+    innerTracker.dragHandler    = $.delegate(this, onCanvasDrag);
+    innerTracker.releaseHandler = $.delegate(this, onCanvasRelease);
+    innerTracker.scrollHandler  = $.delegate(this, onCanvasScroll);
+    innerTracker.setTracking( true ); // default state
 
-    containerStyle.width = "100%";
-    containerStyle.height = "100%";
-    containerStyle.position = "relative";
-    containerStyle.left = "0px";
-    containerStyle.top = "0px";
-    containerStyle.textAlign = "left";  // needed to protect against
+    outerTracker = new $.MouseTracker(
+        this.container, 
+        this.config.clickTimeThreshold, 
+        this.config.clickDistThreshold
+    );
+    outerTracker.enterHandler   = $.delegate(this, onContainerEnter);
+    outerTracker.exitHandler    = $.delegate(this, onContainerExit);
+    outerTracker.releaseHandler = $.delegate(this, onContainerRelease);
+    outerTracker.setTracking( true ); // always tracking
 
-    canvasStyle.width = "100%";
-    canvasStyle.height = "100%";
-    canvasStyle.overflow = "hidden";
-    canvasStyle.position = "absolute";
-    canvasStyle.top = "0px";
-    canvasStyle.left = "0px";
+    (function( canvas ){
+        canvas.width    = "100%";
+        canvas.height   = "100%";
+        canvas.overflow = "hidden";
+        canvas.position = "absolute";
+        canvas.top      = "0px";
+        canvas.left     = "0px";
+    }(  this.canvas.style ));
 
-    controlsTLStyle.position = controlsTRStyle.position =
-                controlsBRStyle.position = controlsBLStyle.position =
-                "absolute";
 
-    controlsTLStyle.top = controlsTRStyle.top = "0px";
-    controlsTLStyle.left = controlsBLStyle.left = "0px";
-    controlsTRStyle.right = controlsBRStyle.right = "0px";
-    controlsBLStyle.bottom = controlsBRStyle.bottom = "0px";
+    (function( container ){
+        container.width     = "100%";
+        container.height    = "100%";
+        container.position  = "relative";
+        container.left      = "0px";
+        container.top       = "0px";
+        container.textAlign = "left";  // needed to protect against
+    }( this.container.style ));
 
-    innerTracker.clickHandler = $.delegate(this, this._onCanvasClick);
-    innerTracker.dragHandler = $.delegate(this, this._onCanvasDrag);
-    innerTracker.releaseHandler = $.delegate(this, this._onCanvasRelease);
-    innerTracker.scrollHandler = $.delegate(this, this._onCanvasScroll);
-    innerTracker.setTracking(true);     // default state
+    var layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'],
+        layout;
 
-    if (this.get_showNavigationControl()) {
+    for( i = 0; i < layouts.length; i++ ){
+        layout = layouts[ i ]
+        this.controls[ layout ] = $.Utils.makeNeutralElement("div");
+        this.controls[ layout ].style.position = 'absolute';
+        if ( layout.match( 'left' ) ){
+            this.controls[ layout ].style.left = '0px';
+        }
+        if ( layout.match( 'right' ) ){
+            this.controls[ layout ].style.right = '0px';
+        }
+        if ( layout.match( 'top' ) ){
+            this.controls[ layout ].style.top = '0px';
+        }
+        if ( layout.match( 'bottom' ) ){
+            this.controls[ layout ].style.bottom = '0px';
+        }
+    }
+
+    if ( this.get_showNavigationControl() ) {
         navControl = (new $.NavControl(this)).elmt;
         navControl.style.marginRight = "4px";
         navControl.style.marginBottom = "4px";
         this.addControl(navControl, $.ControlAnchor.BOTTOM_RIGHT);
     }
-    for (var i = 0; i < this._customControls.length; i++) {
-        this.addControl(this._customControls[i].id, this._customControls[i].anchor);
+
+    for ( i = 0; i < this.customControls.length; i++ ) {
+        this.addControl(
+            this.customControls[ i ].id, 
+            this.customControls[ i ].anchor
+        );
     }
 
-    outerTracker.enterHandler = $.delegate(this, this._onContainerEnter);
-    outerTracker.exitHandler = $.delegate(this, this._onContainerExit);
-    outerTracker.releaseHandler = $.delegate(this, this._onContainerRelease);
-    outerTracker.setTracking(true); // always tracking
-    window.setTimeout($.delegate(this, this._beginControlsAutoHide), 1);    // initial fade out
+    this.container.appendChild( this.canvas );
+    this.container.appendChild( this.controls.topleft );
+    this.container.appendChild( this.controls.topright );
+    this.container.appendChild( this.controls.bottomright );
+    this.container.appendChild( this.controls.bottomleft );
+    this.element.appendChild( this.container );
 
-    this._container.appendChild(this._canvas);
-    this._container.appendChild(this._controlsTL);
-    this._container.appendChild(this._controlsTR);
-    this._container.appendChild(this._controlsBR);
-    this._container.appendChild(this._controlsBL);
-    this.get_element().appendChild(this._container);
+    window.setTimeout( function(){
+        beginControlsAutoHide( _this );
+    }, 1 );    // initial fade out
 
     if (this.xmlPath){
         this.openDzi( this.xmlPath );
@@ -209,154 +227,7 @@ $.Viewer = function( options ) {
 };
 
 $.Viewer.prototype = {
-    get_events: function get_events() {
-        return this._events;
-    },
-    _raiseEvent: function (eventName, eventArgs) {
-        var handler = this.get_events().getHandler(eventName);
-
-        if (handler) {
-            if (!eventArgs) {
-                eventArgs = new Object(); // Sys.EventArgs.Empty;
-            }
-
-            handler(this, eventArgs);
-        }
-    },
-    _beginControlsAutoHide: function () {
-        if (!this.config.autoHideControls) {
-            return;
-        }
-
-        this._controlsShouldFade = true;
-        this._controlsFadeBeginTime = new Date().getTime() + this._controlsFadeDelay;
-        window.setTimeout($.delegate(this, this._scheduleControlsFade), this._controlsFadeDelay);
-    },
-    _scheduleControlsFade: function () {
-        window.setTimeout($.delegate(this, this._updateControlsFade), 20);
-    },
-    _updateControlsFade: function () {
-        if (this._controlsShouldFade) {
-            var currentTime = new Date().getTime();
-            var deltaTime = currentTime - this._controlsFadeBeginTime;
-            var opacity = 1.0 - deltaTime / this._controlsFadeLength;
-
-            opacity = Math.min(1.0, opacity);
-            opacity = Math.max(0.0, opacity);
-
-            for (var i = this.controls.length - 1; i >= 0; i--) {
-                this.controls[ i ].setOpacity(opacity);
-            }
-
-            if (opacity > 0) {
-                this._scheduleControlsFade();    // fade again
-            }
-        }
-    },
-    _onCanvasClick: function (tracker, position, quick, shift) {
-        if (this.viewport && quick) {    // ignore clicks where mouse moved         
-            var zoomPerClick = this.config.zoomPerClick;
-            var factor = shift ? 1.0 / zoomPerClick : zoomPerClick;
-            this.viewport.zoomBy(factor, this.viewport.pointFromPixel(position, true));
-            this.viewport.applyConstraints();
-        }
-    },
-    _onCanvasDrag: function (tracker, position, delta, shift) {
-        if (this.viewport) {
-            this.viewport.panBy(this.viewport.deltaPointsFromPixels(delta.negate()));
-        }
-    },
-    _onCanvasRelease: function (tracker, position, insideElmtPress, insideElmtRelease) {
-        if (insideElmtPress && this.viewport) {
-            this.viewport.applyConstraints();
-        }
-    },
-    _onCanvasScroll: function (tracker, position, scroll, shift) {
-        if (this.viewport) {
-            var factor = Math.pow(this.config.zoomPerScroll,scroll);
-            this.viewport.zoomBy(factor, this.viewport.pointFromPixel(position, true));
-            this.viewport.applyConstraints();
-        }
-    },
-    _onContainerExit: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        if (!buttonDownElmt) {
-            this._mouseInside = false;
-            if (!this._animating) {
-                this._beginControlsAutoHide();
-            }
-        }
-    },
-    _onContainerRelease: function (tracker, position, insideElmtPress, insideElmtRelease) {
-        if (!insideElmtRelease) {
-            this._mouseInside = false;
-            if (!this._animating) {
-                this._beginControlsAutoHide();
-            }
-        }
-    },
-    _getControlIndex: function (elmt) {
-        for (var i = this.controls.length - 1; i >= 0; i--) {
-            if (this.controls[ i ].elmt == elmt) {
-                return i;
-            }
-        }
-
-        return -1;
-    },
-    _abortControlsAutoHide: function () {
-        this._controlsShouldFade = false;
-        for (var i = this.controls.length - 1; i >= 0; i--) {
-            this.controls[ i ].setOpacity(1.0);
-        }
-    },
-    _onContainerEnter: function (tracker, position, buttonDownElmt, buttonDownAny) {
-        this._mouseInside = true;
-        this._abortControlsAutoHide();
-    },
-    _updateOnce: function () {
-        if (!this.source) {
-            return;
-        }
-
-        this.profiler.beginUpdate();
-
-        var containerSize = $.Utils.getElementSize(this._container);
-
-        if (!containerSize.equals(this._prevContainerSize)) {
-            this.viewport.resize(containerSize, true); // maintain image position
-            this._prevContainerSize = containerSize;
-            this._raiseEvent("resize", this);
-        }
-
-        var animated = this.viewport.update();
-
-        if (!this._animating && animated) {
-            this._raiseEvent("animationstart", self);
-            this._abortControlsAutoHide();
-        }
-
-        if (animated) {
-            this.drawer.update();
-            this._raiseEvent("animation", self);
-        } else if (this._forceRedraw || this.drawer.needsUpdate()) {
-            this.drawer.update();
-            this._forceRedraw = false;
-        } else {
-            this.drawer.idle();
-        }
-
-        if (this._animating && !animated) {
-            this._raiseEvent("animationfinish", this);
-
-            if (!this._mouseInside) {
-                this._beginControlsAutoHide();
-            }
-        }
-
-        this._animating = animated;
-
-        this.profiler.endUpdate();
-    },
+    
     _onClose: function () {
 
         this.source = null;
@@ -364,7 +235,7 @@ $.Viewer.prototype = {
         this.drawer = null;
         this.profiler = null;
 
-        this._canvas.innerHTML = "";
+        this.canvas.innerHTML = "";
     },
     _beforeOpen: function () {
         if (this.source) {
@@ -381,50 +252,30 @@ $.Viewer.prototype = {
 
         return this._lastOpenStartTime;
     },
-    _setMessage: function (message) {
-        var textNode = document.createTextNode(message);
-
-        this._canvas.innerHTML = "";
-        this._canvas.appendChild($.Utils.makeCenteredNode(textNode));
-
-        var textStyle = textNode.parentNode.style;
-
-        textStyle.color = "white";
-        textStyle.fontFamily = "verdana";
-        textStyle.fontSize = "13px";
-        textStyle.fontSizeAdjust = "none";
-        textStyle.fontStyle = "normal";
-        textStyle.fontStretch = "normal";
-        textStyle.fontVariant = "normal";
-        textStyle.fontWeight = "normal";
-        textStyle.lineHeight = "1em";
-        textStyle.textAlign = "center";
-        textStyle.textDecoration = "none";
-    },
     _onOpen: function (time, _source, error) {
         this._lastOpenEndTime = new Date().getTime();
 
         if (time < this._lastOpenStartTime) {
             $.Debug.log("Ignoring out-of-date open.");
-            this._raiseEvent("ignore");
+            raiseEvent( this, "ignore" );
             return;
         } else if (!_source) {
             this._setMessage(error);
-            this._raiseEvent("error");
+            raiseEvent( this, "error" );
             return;
         }
 
-        this._canvas.innerHTML = "";
-        this._prevContainerSize = $.Utils.getElementSize(this._container);
+        this.canvas.innerHTML = "";
+        this._prevContainerSize = $.Utils.getElementSize( this.container );
 
         this.source = _source;
         this.viewport = new $.Viewport(this._prevContainerSize, this.source.dimensions, this.config);
-        this.drawer = new $.Drawer(this.source, this.viewport, this._canvas);
+        this.drawer = new $.Drawer(this.source, this.viewport, this.canvas);
         this.profiler = new $.Profiler();
 
         this._animating = false;
         this._forceRedraw = true;
-        this._scheduleUpdate(this._updateMulti);
+        scheduleUpdate( this, this._updateMulti );
 
         for (var i = 0; i < this.overlayControls.length; i++) {
             var overlay = this.overlayControls[ i ];
@@ -435,19 +286,51 @@ $.Viewer.prototype = {
                 this.drawer.addOverlay(overlay.id, new $.Rect(overlay.rect.Point.X, overlay.rect.Point.Y, overlay.rect.Width, overlay.rect.Height), overlay.placement);
             }
         }
-        this._raiseEvent("open");
+        raiseEvent( this, "open" );
     },
-    _scheduleUpdate: function (updateFunc, prevUpdateTime) {
-        if (this._animating) {
-            return window.setTimeout($.delegate(this, updateFunc), 1);
+    _updateOnce: function () {
+        if (!this.source) {
+            return;
         }
 
-        var currentTime = new Date().getTime();
-        var prevUpdateTime = prevUpdateTime ? prevUpdateTime : currentTime;
-        var targetTime = prevUpdateTime + 1000 / 60;    // 60 fps ideal
+        this.profiler.beginUpdate();
 
-        var deltaTime = Math.max(1, targetTime - currentTime);
-        return window.setTimeout($.delegate(this, updateFunc), deltaTime);
+        var containerSize = $.Utils.getElementSize( this.container );
+
+        if ( !containerSize.equals( this._prevContainerSize ) ) {
+            this.viewport.resize( containerSize, true) ; // maintain image position
+            this._prevContainerSize = containerSize;
+            raiseEvent( this, "resize", this );
+        }
+
+        var animated = this.viewport.update();
+
+        if ( !this._animating && animated ) {
+            raiseEvent( this, "animationstart", this );
+            abortControlsAutoHide( this );
+        }
+
+        if ( animated ) {
+            this.drawer.update();
+            raiseEvent( this, "animation", this );
+        } else if ( this._forceRedraw || this.drawer.needsUpdate() ) {
+            this.drawer.update();
+            this._forceRedraw = false;
+        } else {
+            this.drawer.idle();
+        }
+
+        if ( this._animating && !animated ) {
+            raiseEvent( this, "animationfinish", this );
+
+            if ( !this._mouseInside ) {
+                beginControlsAutoHide( this );
+            }
+        }
+
+        this._animating = animated;
+
+        this.profiler.endUpdate();
     },
     _updateMulti: function () {
         if (!this.source) {
@@ -457,7 +340,7 @@ $.Viewer.prototype = {
         var beginTime = new Date().getTime();
 
         this._updateOnce();
-        this._scheduleUpdate(arguments.callee, beginTime);
+        scheduleUpdate( this, arguments.callee, beginTime );
     },
     _updateOnce: function () {
         if (!this.source) {
@@ -466,24 +349,24 @@ $.Viewer.prototype = {
 
         this.profiler.beginUpdate();
 
-        var containerSize = $.Utils.getElementSize(this._container);
+        var containerSize = $.Utils.getElementSize( this.container );
 
         if (!containerSize.equals(this._prevContainerSize)) {
             this.viewport.resize(containerSize, true); // maintain image position
             this._prevContainerSize = containerSize;
-            this._raiseEvent("resize");
+            raiseEvent( this, "resize" );
         }
 
         var animated = this.viewport.update();
 
         if (!this._animating && animated) {
-            this._raiseEvent("animationstart");
-            this._abortControlsAutoHide();
+            raiseEvent( this, "animationstart" );
+            abortControlsAutoHide( this );
         }
 
         if (animated) {
             this.drawer.update();
-            this._raiseEvent("animation");
+            raiseEvent( this, "animation" );
         } else if (this._forceRedraw || this.drawer.needsUpdate()) {
             this.drawer.update();
             this._forceRedraw = false;
@@ -492,10 +375,10 @@ $.Viewer.prototype = {
         }
 
         if (this._animating && !animated) {
-            this._raiseEvent("animationfinish");
+            raiseEvent( this, "animationfinish" );
 
             if (!this._mouseInside) {
-                this._beginControlsAutoHide();
+                beginControlsAutoHide( this );
             }
         }
 
@@ -642,89 +525,83 @@ $.Viewer.prototype = {
     set_mouseNavEnabled: function (value) {
         this.config.mouseNavEnabled = value;
     },
-    get_controls: function () {
-        return this._customControls;
-    },
-    set_controls: function (value) {
-        this._customControls = value;
-    },
     add_open: function (handler) {
-        this.get_events().addHandler("open", handler);
+        this.events.addHandler("open", handler);
     },
     remove_open: function (handler) {
-        this.get_events().removeHandler("open", handler);
+        this.events.removeHandler("open", handler);
     },
     add_error: function (handler) {
-        this.get_events().addHandler("error", handler);
+        this.events.addHandler("error", handler);
     },
     remove_error: function (handler) {
-        this.get_events().removeHandler("error", handler);
+        this.events.removeHandler("error", handler);
     },
     add_ignore: function (handler) {
-        this.get_events().addHandler("ignore", handler);
+        this.events.addHandler("ignore", handler);
     },
     remove_ignore: function (handler) {
-        this.get_events().removeHandler("ignore", handler);
+        this.events.removeHandler("ignore", handler);
     },
     add_resize: function (handler) {
-        this.get_events().addHandler("resize", handler);
+        this.events.addHandler("resize", handler);
     },
     remove_resize: function (handler) {
-        this.get_events().removeHandler("resize", handler);
+        this.events.removeHandler("resize", handler);
     },
     add_animationstart: function (handler) {
-        this.get_events().addHandler("animationstart", handler);
+        this.events.addHandler("animationstart", handler);
     },
     remove_animationstart: function (handler) {
-        this.get_events().removeHandler("animationstart", handler);
+        this.events.removeHandler("animationstart", handler);
     },
     add_animation: function (handler) {
-        this.get_events().addHandler("animation", handler);
+        this.events.addHandler("animation", handler);
     },
     remove_animation: function (handler) {
-        this.get_events().removeHandler("animation", handler);
+        this.events.removeHandler("animation", handler);
     },
     add_animationfinish: function (handler) {
-        this.get_events().addHandler("animationfinish", handler);
+        this.events.addHandler("animationfinish", handler);
     },
     remove_animationfinish: function (handler) {
-        this.get_events().removeHandler("animationfinish", handler);
+        this.events.removeHandler("animationfinish", handler);
     },
-    addControl: function (elmt, anchor) {
-        var elmt = $.Utils.getElement(elmt);
+    addControl: function ( elmt, anchor ) {
+        var elmt = $.Utils.getElement( elmt ),
+            div = null;
 
-        if (this._getControlIndex(elmt) >= 0) {
+        if ( getControlIndex( this, elmt ) >= 0 ) {
             return;     // they're trying to add a duplicate control
         }
 
-        var div = null;
-
-        switch (anchor) {
+        switch ( anchor ) {
             case $.ControlAnchor.TOP_RIGHT:
-                div = this._controlsTR;
+                div = this.controls.topright;
                 elmt.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_RIGHT:
-                div = this._controlsBR;
+                div = this.controls.bottomright;
                 elmt.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_LEFT:
-                div = this._controlsBL;
+                div = this.controls.bottomleft;
                 elmt.style.position = "relative";
                 break;
             case $.ControlAnchor.TOP_LEFT:
-                div = this._controlsTL;
+                div = this.controls.topleft;
                 elmt.style.position = "relative";
                 break;
             case $.ControlAnchor.NONE:
             default:
-                div = this._container;
+                div = this.container;
                 elmt.style.position = "absolute";
                 break;
         }
 
-        this.controls.push(new $.Control(elmt, anchor, div));
-
+        this.controls.push(
+            new $.Control( elmt, anchor, div )
+        );
         elmt.style.display = "inline-block";
     },
     isOpen: function () {
@@ -732,8 +609,15 @@ $.Viewer.prototype = {
     },
     openDzi: function (xmlUrl, xmlString) {
         var currentTime = this._beforeOpen();
-        $.DziTileSourceHelper.createFromXml(xmlUrl, xmlString,
-                    $.Utils.createCallback(null, $.delegate(this, this._onOpen), currentTime));
+        $.DziTileSourceHelper.createFromXml(
+            xmlUrl, 
+            xmlString,
+            $.Utils.createCallback(
+                null, 
+                $.delegate(this, this._onOpen), 
+                currentTime
+            )
+        );
     },
     openTileSource: function (tileSource) {
         var currentTime = beforeOpen();
@@ -742,17 +626,16 @@ $.Viewer.prototype = {
         }), 1);
     },
     close: function () {
-        if (!this.source) {
+        if ( !this.source ) {
             return;
         }
 
         this._onClose();
     },
-    removeControl: function (elmt) {
-        var elmt = $.Utils.getElement(elmt);
-        var i = this._getControlIndex(elmt);
-
-        if (i >= 0) {
+    removeControl: function ( elmt ) {
+        var elmt = $.Utils.getElement( elmt ),
+            i    = getControlIndex( this, elmt );
+        if ( i >= 0 ) {
             this.controls[ i ].destroy();
             this.controls.splice( i, 1 );
         }
@@ -763,7 +646,8 @@ $.Viewer.prototype = {
         }
     },
     isDashboardEnabled: function () {
-        for ( var i = this.controls.length - 1; i >= 0; i-- ) {
+        var i;
+        for ( i = this.controls.length - 1; i >= 0; i-- ) {
             if (this.controls[ i ].isVisible()) {
                 return true;
             }
@@ -773,7 +657,7 @@ $.Viewer.prototype = {
     },
 
     isFullPage: function () {
-        return this._container.parentNode == document.body;
+        return this.container.parentNode == document.body;
     },
 
     isMouseNavEnabled: function () {
@@ -781,93 +665,282 @@ $.Viewer.prototype = {
     },
 
     isVisible: function () {
-        return this._container.style.visibility != "hidden";
+        return this.container.style.visibility != "hidden";
     },
 
     setDashboardEnabled: function (enabled) {
-        for ( var i = this.controls.length - 1; i >= 0; i-- ) {
+        var i;
+        for ( i = this.controls.length - 1; i >= 0; i-- ) {
             this.controls[ i ].setVisible( enabled );
         }
     },
 
-    setFullPage: function (fullPage) {
-        if (fullPage == this.isFullPage()) {
+    setFullPage: function( fullPage ) {
+        if ( fullPage == this.isFullPage() ) {
             return;
         }
 
-        var body = document.body;
-        var bodyStyle = body.style;
-        var docStyle = document.documentElement.style;
-        var containerStyle = this._container.style;
-        var canvasStyle = this._canvas.style;
+        var body        = document.body,
+            bodyStyle   = body.style,
+            docStyle    = document.documentElement.style,
+            containerStyle = this.container.style,
+            canvasStyle = this.canvas.style,
+            oldBounds,
+            newBounds;
 
-        if (fullPage) {
-            bodyOverflow = bodyStyle.overflow;
-            docOverflow = docStyle.overflow;
-            bodyStyle.overflow = "hidden";
-            docStyle.overflow = "hidden";
+        if ( fullPage ) {
 
-            bodyWidth = bodyStyle.width;
-            bodyHeight = bodyStyle.height;
-            bodyStyle.width = "100%";
-            bodyStyle.height = "100%";
+            bodyOverflow        = bodyStyle.overflow;
+            docOverflow         = docStyle.overflow;
+            bodyStyle.overflow  = "hidden";
+            docStyle.overflow   = "hidden";
+
+            bodyWidth           = bodyStyle.width;
+            bodyHeight          = bodyStyle.height;
+            bodyStyle.width     = "100%";
+            bodyStyle.height    = "100%";
 
             canvasStyle.backgroundColor = "black";
-            canvasStyle.color = "white";
+            canvasStyle.color           = "white";
 
             containerStyle.position = "fixed";
-            containerStyle.zIndex = "99999999";
+            containerStyle.zIndex   = "99999999";
 
-            body.appendChild(this._container);
+            body.appendChild( this.container );
             this._prevContainerSize = $.Utils.getWindowSize();
 
-            this._onContainerEnter();     // mouse will be inside container now
-        } else {
-            bodyStyle.overflow = bodyOverflow;
-            docStyle.overflow = docOverflow;
+            // mouse will be inside container now
+            onContainerEnter( this );
 
-            bodyStyle.width = bodyWidth;
-            bodyStyle.height = bodyHeight;
+        } else {
+
+            bodyStyle.overflow  = bodyOverflow;
+            docStyle.overflow   = docOverflow;
+
+            bodyStyle.width     = bodyWidth;
+            bodyStyle.height    = bodyHeight;
 
             canvasStyle.backgroundColor = "";
-            canvasStyle.color = "";
+            canvasStyle.color           = "";
 
             containerStyle.position = "relative";
-            containerStyle.zIndex = "";
+            containerStyle.zIndex   = "";
 
-            this.get_element().appendChild(this._container);
-            this._prevContainerSize = $.Utils.getElementSize(this.get_element());
+            this.element.appendChild( this.container );
+            this._prevContainerSize = $.Utils.getElementSize( this.element );
+            
+            // mouse will likely be outside now
+            onContainerExit( this );      
 
-            this._onContainerExit();      // mouse will likely be outside now
         }
-        if (this.viewport) {
-            var oldBounds = this.viewport.getBounds();
-            this.viewport.resize(this._prevContainerSize);
-            var newBounds = this.viewport.getBounds();
 
-            if (fullPage) {
-                this._fsBoundsDelta = new $.Point(newBounds.width / oldBounds.width,
-                        newBounds.height / oldBounds.height);
+        if ( this.viewport ) {
+            oldBounds = this.viewport.getBounds();
+            this.viewport.resize(this._prevContainerSize);
+            newBounds = this.viewport.getBounds();
+
+            if ( fullPage ) {
+                this._fsBoundsDelta = new $.Point(
+                    newBounds.width  / oldBounds.width,
+                    newBounds.height / oldBounds.height
+                );
             } else {
                 this.viewport.update();
-                this.viewport.zoomBy(Math.max(this._fsBoundsDelta.x, this._fsBoundsDelta.y),
-                            null, true);
+                this.viewport.zoomBy(
+                    Math.max( 
+                        this._fsBoundsDelta.x, 
+                        this._fsBoundsDelta.y 
+                    ),
+                    null, 
+                    true
+                );
             }
 
             this._forceRedraw = true;
-            this._raiseEvent("resize", this);
+            raiseEvent( this, "resize", this );
             this._updateOnce();
         }
     },
 
-    setMouseNavEnabled: function (enabled) {
+    setMouseNavEnabled: function( enabled ){
         this._innerTracker.setTracking(enabled);
     },
 
-    setVisible: function (visible) {
-        this._container.style.visibility = visible ? "" : "hidden";
+    setVisible: function( visible ){
+        this.container.style.visibility = visible ? "" : "hidden";
     }
 
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Schedulers provide the general engine for animation
+///////////////////////////////////////////////////////////////////////////////
+
+function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
+    var currentTime,
+        prevUpdateTime,
+        targetTime,
+        deltaTime;
+
+    if (this._animating) {
+        return window.setTimeout(
+            $.delegate(viewer, updateFunc), 
+            1
+        );
+    }
+
+    currentTime     = +new Date();
+    prevUpdateTime  = prevUpdateTime ? prevUpdateTime : currentTime;
+    targetTime      = prevUpdateTime + 1000 / 60;    // 60 fps ideal
+    deltaTime       = Math.max(1, targetTime - currentTime);
+    
+    return window.setTimeout($.delegate(viewer, updateFunc), deltaTime);
+};
+
+//provides a sequence in the fade animation
+function scheduleControlsFade( viewer ) {
+    window.setTimeout( function(){
+        updateControlsFade( viewer );
+    }, 20);
+};
+
+//initiates an animation to hide the controls
+function beginControlsAutoHide( viewer ) {
+    if ( !viewer.config.autoHideControls ) {
+        return;
+    }
+    viewer.controlsShouldFade = true;
+    viewer.controlsFadeBeginTime = 
+        new Date().getTime() + 
+        viewer.controlsFadeDelay;
+
+    window.setTimeout( function(){
+        scheduleControlsFade( viewer );
+    }, viewer.controlsFadeDelay );
+};
+
+
+//determines if fade animation is done or continues the animation
+function updateControlsFade( viewer ) {
+    var currentTime,
+        deltaTime,
+        opacity,
+        i;
+    if ( viewer.controlsShouldFade ) {
+        currentTime = new Date().getTime();
+        deltaTime = currentTime - viewer.controlsFadeBeginTime;
+        opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
+
+        opacity = Math.min( 1.0, opacity );
+        opacity = Math.max( 0.0, opacity );
+
+        for ( i = this.controls.length - 1; i >= 0; i--) {
+            this.controls[ i ].setOpacity( opacity );
+        }
+
+        if ( opacity > 0 ) {
+            // fade again
+            scheduleControlsFade( viewer ); 
+        }
+    }
+};
+
+//stop the fade animation on the controls and show them
+function abortControlsAutoHide( viewer ) {
+    var i;
+    viewer.controlsShouldFade = false;
+    for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
+        viewer.controls[ i ].setOpacity( 1.0 );
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Event engine is simple, look up event handler and call.
+///////////////////////////////////////////////////////////////////////////////
+function raiseEvent( viewer, eventName, eventArgs) {
+    var  handler = viewer.events.getHandler( eventName );
+    if ( handler ) {
+        if (!eventArgs) {
+            eventArgs = new Object();
+        }
+        handler( viewer, eventArgs );
+    }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Default view event handlers.
+///////////////////////////////////////////////////////////////////////////////
+function onCanvasClick(tracker, position, quick, shift) {
+    var zoomPreClick,
+        factor;
+    if (this.viewport && quick) {    // ignore clicks where mouse moved         
+        zoomPerClick = this.config.zoomPerClick;
+        factor = shift ? 1.0 / zoomPerClick : zoomPerClick;
+        this.viewport.zoomBy(factor, this.viewport.pointFromPixel(position, true));
+        this.viewport.applyConstraints();
+    }
+};
+
+function onCanvasDrag(tracker, position, delta, shift) {
+    if (this.viewport) {
+        this.viewport.panBy(this.viewport.deltaPointsFromPixels(delta.negate()));
+    }
+};
+
+function onCanvasRelease(tracker, position, insideElmtPress, insideElmtRelease) {
+    if (insideElmtPress && this.viewport) {
+        this.viewport.applyConstraints();
+    }
+};
+
+function onCanvasScroll(tracker, position, scroll, shift) {
+    var factor;
+    if (this.viewport) {
+        factor = Math.pow(this.config.zoomPerScroll, scroll);
+        this.viewport.zoomBy(factor, this.viewport.pointFromPixel(position, true));
+        this.viewport.applyConstraints();
+    }
+};
+
+function onContainerExit(tracker, position, buttonDownElmt, buttonDownAny) {
+    if (!buttonDownElmt) {
+        this._mouseInside = false;
+        if (!this._animating) {
+            beginControlsAutoHide( this );
+        }
+    }
+};
+
+function onContainerRelease(tracker, position, insideElmtPress, insideElmtRelease) {
+    if (!insideElmtRelease) {
+        this._mouseInside = false;
+        if (!this._animating) {
+            beginControlsAutoHide( this );
+        }
+    }
+};
+
+function onContainerEnter(tracker, position, buttonDownElmt, buttonDownAny) {
+    this._mouseInside = true;
+    abortControlsAutoHide( this );
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Default view event handlers.
+///////////////////////////////////////////////////////////////////////////////
+function getControlIndex( viewer, elmt ) {
+    for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
+        if ( viewer.controls[ i ].elmt == elmt ) {
+            return i;
+        }
+    }
+    return -1;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Page update routines ( aka Views - for future reference )
+///////////////////////////////////////////////////////////////////////////////
 
 }( OpenSeadragon ));
