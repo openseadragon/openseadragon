@@ -1728,50 +1728,6 @@ $.Viewer.prototype = {
         }
         raiseEvent( this, "open" );
     },
-    _updateOnce: function () {
-        if (!this.source) {
-            return;
-        }
-
-        this.profiler.beginUpdate();
-
-        var containerSize = $.Utils.getElementSize( this.container );
-
-        if ( !containerSize.equals( this._prevContainerSize ) ) {
-            this.viewport.resize( containerSize, true) ; // maintain image position
-            this._prevContainerSize = containerSize;
-            raiseEvent( this, "resize", this );
-        }
-
-        var animated = this.viewport.update();
-
-        if ( !this._animating && animated ) {
-            raiseEvent( this, "animationstart", this );
-            abortControlsAutoHide( this );
-        }
-
-        if ( animated ) {
-            this.drawer.update();
-            raiseEvent( this, "animation", this );
-        } else if ( this._forceRedraw || this.drawer.needsUpdate() ) {
-            this.drawer.update();
-            this._forceRedraw = false;
-        } else {
-            this.drawer.idle();
-        }
-
-        if ( this._animating && !animated ) {
-            raiseEvent( this, "animationfinish", this );
-
-            if ( !this._mouseInside ) {
-                beginControlsAutoHide( this );
-            }
-        }
-
-        this._animating = animated;
-
-        this.profiler.endUpdate();
-    },
     _updateMulti: function () {
         if (!this.source) {
             return;
