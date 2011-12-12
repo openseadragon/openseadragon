@@ -666,7 +666,7 @@ $.Viewer.prototype = {
             this._prevContainerSize = $.Utils.getWindowSize();
 
             // mouse will be inside container now
-            onContainerEnter( this );
+            $.delegate( this, onContainerEnter )();    
 
         } else {
 
@@ -686,7 +686,7 @@ $.Viewer.prototype = {
             this._prevContainerSize = $.Utils.getElementSize( this.element );
             
             // mouse will likely be outside now
-            onContainerExit( this );      
+            $.delegate( this, onContainerExit )();      
 
         }
 
@@ -790,8 +790,8 @@ function updateControlsFade( viewer ) {
         opacity = Math.min( 1.0, opacity );
         opacity = Math.max( 0.0, opacity );
 
-        for ( i = this.controls.length - 1; i >= 0; i--) {
-            this.controls[ i ].setOpacity( opacity );
+        for ( i = viewer.controls.length - 1; i >= 0; i--) {
+            viewer.controls[ i ].setOpacity( opacity );
         }
 
         if ( opacity > 0 ) {

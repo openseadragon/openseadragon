@@ -5,9 +5,12 @@
 
 	<tstamp/>
     
-    <description> 
+    <description>
     	Build file for Zoomable User Interface HTML5 project OpenSeadragon.
     </description>
+
+    <!-- YOU CAN OVERRIDE PROPERTIES PER YOUR NEED IN local.properties -->
+    <property file="local.properties" />
 
     <!-- BASIC PROJECT PROPERTIES TO HELP TRACK VERSION -->
     <property file="build.properties" />
@@ -54,6 +57,8 @@
             </filterchain>
             <filelist refid="openseadragon.javascript" />
         </concat>
+
+        <copy todir='${WWW}' file='openseadragon.js' />
         
     </target>
 

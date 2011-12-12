@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.0
+ * OpenSeadragon 0.8.08
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -196,6 +196,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         // Return the modified object
         return target;
     };
+
+    $.Debug = window.console ? window.console : function(){};
 
 }( OpenSeadragon ));
 
@@ -2106,7 +2108,7 @@ $.Viewer.prototype = {
             this._prevContainerSize = $.Utils.getWindowSize();
 
             // mouse will be inside container now
-            onContainerEnter( this );
+            $.delegate( this, onContainerEnter )();    
 
         } else {
 
@@ -2126,7 +2128,7 @@ $.Viewer.prototype = {
             this._prevContainerSize = $.Utils.getElementSize( this.element );
             
             // mouse will likely be outside now
-            onContainerExit( this );      
+            $.delegate( this, onContainerExit )();      
 
         }
 
@@ -2230,8 +2232,8 @@ function updateControlsFade( viewer ) {
         opacity = Math.min( 1.0, opacity );
         opacity = Math.max( 0.0, opacity );
 
-        for ( i = this.controls.length - 1; i >= 0; i--) {
-            this.controls[ i ].setOpacity( opacity );
+        for ( i = viewer.controls.length - 1; i >= 0; i--) {
+            viewer.controls[ i ].setOpacity( opacity );
         }
 
         if ( opacity > 0 ) {

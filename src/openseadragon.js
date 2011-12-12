@@ -197,4 +197,6 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         return target;
     };
 
+    $.Debug = window.console ? window.console : function(){};
+
 }( OpenSeadragon ));
