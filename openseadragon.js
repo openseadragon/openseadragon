@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.08
+ * OpenSeadragon 0.8.09
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -1468,8 +1468,6 @@ $.Viewer = function( options ) {
 
     var args = arguments,
         _this = this,
-        innerTracker,
-        outerTracker,
         i;
 
     if( typeof( options ) != 'object' ){
@@ -1577,26 +1575,26 @@ $.Viewer = function( options ) {
     this._forceRedraw       = false;
     this._mouseInside       = false;
 
-    innerTracker = new $.MouseTracker(
+    this.innerTracker = new $.MouseTracker(
         this.canvas, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    innerTracker.clickHandler   = $.delegate(this, onCanvasClick);
-    innerTracker.dragHandler    = $.delegate(this, onCanvasDrag);
-    innerTracker.releaseHandler = $.delegate(this, onCanvasRelease);
-    innerTracker.scrollHandler  = $.delegate(this, onCanvasScroll);
-    innerTracker.setTracking( true ); // default state
+    this.innerTracker.clickHandler   = $.delegate(this, onCanvasClick);
+    this.innerTracker.dragHandler    = $.delegate(this, onCanvasDrag);
+    this.innerTracker.releaseHandler = $.delegate(this, onCanvasRelease);
+    this.innerTracker.scrollHandler  = $.delegate(this, onCanvasScroll);
+    this.innerTracker.setTracking( true ); // default state
 
-    outerTracker = new $.MouseTracker(
+    this.outerTracker = new $.MouseTracker(
         this.container, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    outerTracker.enterHandler   = $.delegate(this, onContainerEnter);
-    outerTracker.exitHandler    = $.delegate(this, onContainerExit);
-    outerTracker.releaseHandler = $.delegate(this, onContainerRelease);
-    outerTracker.setTracking( true ); // always tracking
+    this.outerTracker.enterHandler   = $.delegate(this, onContainerEnter);
+    this.outerTracker.exitHandler    = $.delegate(this, onContainerExit);
+    this.outerTracker.releaseHandler = $.delegate(this, onContainerRelease);
+    this.outerTracker.setTracking( true ); // always tracking
 
     (function( canvas ){
         canvas.width    = "100%";
@@ -2059,7 +2057,7 @@ $.Viewer.prototype = {
     },
 
     isMouseNavEnabled: function () {
-        return this._innerTracker.isTracking();
+        return this.innerTracker.isTracking();
     },
 
     isVisible: function () {
@@ -2161,7 +2159,7 @@ $.Viewer.prototype = {
     },
 
     setMouseNavEnabled: function( enabled ){
-        this._innerTracker.setTracking(enabled);
+        this.innerTracker.setTracking( enabled );
     },
 
     setVisible: function( visible ){

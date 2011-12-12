@@ -26,8 +26,6 @@ $.Viewer = function( options ) {
 
     var args = arguments,
         _this = this,
-        innerTracker,
-        outerTracker,
         i;
 
     if( typeof( options ) != 'object' ){
@@ -135,26 +133,26 @@ $.Viewer = function( options ) {
     this._forceRedraw       = false;
     this._mouseInside       = false;
 
-    innerTracker = new $.MouseTracker(
+    this.innerTracker = new $.MouseTracker(
         this.canvas, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    innerTracker.clickHandler   = $.delegate(this, onCanvasClick);
-    innerTracker.dragHandler    = $.delegate(this, onCanvasDrag);
-    innerTracker.releaseHandler = $.delegate(this, onCanvasRelease);
-    innerTracker.scrollHandler  = $.delegate(this, onCanvasScroll);
-    innerTracker.setTracking( true ); // default state
+    this.innerTracker.clickHandler   = $.delegate(this, onCanvasClick);
+    this.innerTracker.dragHandler    = $.delegate(this, onCanvasDrag);
+    this.innerTracker.releaseHandler = $.delegate(this, onCanvasRelease);
+    this.innerTracker.scrollHandler  = $.delegate(this, onCanvasScroll);
+    this.innerTracker.setTracking( true ); // default state
 
-    outerTracker = new $.MouseTracker(
+    this.outerTracker = new $.MouseTracker(
         this.container, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    outerTracker.enterHandler   = $.delegate(this, onContainerEnter);
-    outerTracker.exitHandler    = $.delegate(this, onContainerExit);
-    outerTracker.releaseHandler = $.delegate(this, onContainerRelease);
-    outerTracker.setTracking( true ); // always tracking
+    this.outerTracker.enterHandler   = $.delegate(this, onContainerEnter);
+    this.outerTracker.exitHandler    = $.delegate(this, onContainerExit);
+    this.outerTracker.releaseHandler = $.delegate(this, onContainerRelease);
+    this.outerTracker.setTracking( true ); // always tracking
 
     (function( canvas ){
         canvas.width    = "100%";
@@ -196,7 +194,7 @@ $.Viewer = function( options ) {
         }
     }
 
-    if ( this.get_showNavigationControl() ) {
+    if ( this.config.showNavigationControl ) {
         navControl = (new $.NavControl(this)).elmt;
         navControl.style.marginRight = "4px";
         navControl.style.marginBottom = "4px";
@@ -346,141 +344,6 @@ $.Viewer.prototype = {
     getNavControl: function () {
         return this._navControl;
     },
-    get_element: function () {
-        return this._element;
-    },
-    get_debugMode: function () {
-        return this.config.debugMode;
-    },
-    set_debugMode: function (value) {
-        this.config.debugMode = value;
-    },
-    get_animationTime: function () {
-        return this.config.animationTime;
-    },
-    set_animationTime: function (value) {
-        this.config.animationTime = value;
-    },
-    get_blendTime: function () {
-        return this.config.blendTime;
-    },
-    set_blendTime: function (value) {
-        this.config.blendTime = value;
-    },
-    get_alwaysBlend: function () {
-        return this.config.alwaysBlend;
-    },
-    set_alwaysBlend: function (value) {
-        this.config.alwaysBlend = value;
-    },
-    get_autoHideControls: function () {
-        return this.config.autoHideControls;
-    },
-    set_autoHideControls: function (value) {
-        this.config.autoHideControls = value;
-    },
-    get_immediateRender: function () {
-        return this.config.immediateRender;
-    },
-    set_immediateRender: function (value) {
-        this.config.immediateRender = value;
-    },
-    get_wrapHorizontal: function () {
-        return this.config.wrapHorizontal;
-    },
-    set_wrapHorizontal: function (value) {
-        this.config.wrapHorizontal = value;
-    },
-    get_wrapVertical: function () {
-        return this.config.wrapVertical;
-    },
-    set_wrapVertical: function (value) {
-        this.config.wrapVertical = value;
-    },
-    get_minZoomImageRatio: function () {
-        return this.config.minZoomImageRatio;
-    },
-    set_minZoomImageRatio: function (value) {
-        this.config.minZoomImageRatio = value;
-    },
-    get_maxZoomPixelRatio: function () {
-        return this.config.maxZoomPixelRatio;
-    },
-    set_maxZoomPixelRatio: function (value) {
-        this.config.maxZoomPixelRatio = value;
-    },
-    get_visibilityRatio: function () {
-        return this.config.visibilityRatio;
-    },
-    set_visibilityRatio: function (value) {
-        this.config.visibilityRatio = value;
-    },
-    get_springStiffness: function () {
-        return this.config.springStiffness;
-    },
-    set_springStiffness: function (value) {
-        this.config.springStiffness = value;
-    },
-    get_imageLoaderLimit: function () {
-        return this.config.imageLoaderLimit;
-    },
-    set_imageLoaderLimit: function (value) {
-        this.config.imageLoaderLimit = value;
-    },
-    get_clickTimeThreshold: function () {
-        return this.config.clickTimeThreshold;
-    },
-    set_clickTimeThreshold: function (value) {
-        this.config.clickTimeThreshold = value;
-    },
-    get_clickDistThreshold: function () {
-        return this.config.clickDistThreshold;
-    },
-    set_clickDistThreshold: function (value) {
-        this.config.clickDistThreshold = value;
-    },
-    get_zoomPerClick: function () {
-        return this.config.zoomPerClick;
-    },
-    set_zoomPerClick: function (value) {
-        this.config.zoomPerClick = value;
-    },
-    get_zoomPerSecond: function () {
-        return this.config.zoomPerSecond;
-    },
-    set_zoomPerSecond: function (value) {
-        this.config.zoomPerSecond = value;
-    },
-    get_zoomPerScroll: function () {
-        return this.config.zoomPerScroll;
-    },
-    set_zoomPerScroll: function (value) {
-        this.config.zoomPerScroll = value;
-    },
-    get_maxImageCacheCount: function () {
-        return this.config.maxImageCacheCount;
-    },
-    set_maxImageCacheCount: function (value) {
-        this.config.maxImageCacheCount = value;
-    },
-    get_showNavigationControl: function () {
-        return this.config.showNavigationControl;
-    },
-    set_showNavigationControl: function (value) {
-        this.config.showNavigationControl = value;
-    },
-    get_minPixelRatio: function () {
-        return this.config.minPixelRatio;
-    },
-    set_minPixelRatio: function (value) {
-        this.config.minPixelRatio = value;
-    },
-    get_mouseNavEnabled: function () {
-        return this.config.mouseNavEnabled;
-    },
-    set_mouseNavEnabled: function (value) {
-        this.config.mouseNavEnabled = value;
-    },
     add_open: function (handler) {
         this.events.addHandler("open", handler);
     },
@@ -617,7 +480,7 @@ $.Viewer.prototype = {
     },
 
     isMouseNavEnabled: function () {
-        return this._innerTracker.isTracking();
+        return this.innerTracker.isTracking();
     },
 
     isVisible: function () {
@@ -719,7 +582,7 @@ $.Viewer.prototype = {
     },
 
     setMouseNavEnabled: function( enabled ){
-        this._innerTracker.setTracking(enabled);
+        this.innerTracker.setTracking( enabled );
     },
 
     setVisible: function( visible ){
