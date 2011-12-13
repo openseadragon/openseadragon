@@ -61,6 +61,4 @@ $.Strings = {
 
 };
 
-$.Strings = $.Strings;
-
 }( OpenSeadragon ));
