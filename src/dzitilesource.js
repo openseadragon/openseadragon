@@ -13,63 +13,61 @@ $.DziTileSource = function(width, height, tileSize, tileOverlap, tilesUrl, fileF
     this.initialize();
 };
 
-$.DziTileSource.prototype = new $.TileSource();
+$.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 
-$.DziTileSource.prototype.constructor = $.DziTileSource;
+    initialize: function() {
+        if (!this.displayRects) {
+            return;
+        }
 
-$.DziTileSource.prototype.initialize = function() {
-    if (!this.displayRects) {
-        return;
-    }
-
-    for (var i = this.displayRects.length - 1; i >= 0; i--) {
-        var rect = this.displayRects[i];
-        for (var level = rect.minLevel; level <= rect.maxLevel; level++) {
-            if (!this._levelRects[level]) {
-                this._levelRects[level] = [];
+        for (var i = this.displayRects.length - 1; i >= 0; i--) {
+            var rect = this.displayRects[i];
+            for (var level = rect.minLevel; level <= rect.maxLevel; level++) {
+                if (!this._levelRects[level]) {
+                    this._levelRects[level] = [];
+                }
+                this._levelRects[level].push(rect);
             }
-            this._levelRects[level].push(rect);
         }
-    }
-};
+    },
 
-$.DziTileSource.prototype.getTileUrl = function(level, x, y) {
-    return [this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat].join('');
-};
+    getTileUrl: function(level, x, y) {
+        return [this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat].join('');
+    },
 
-$.DziTileSource.prototype.tileExists = function(level, x, y) {
-    var rects = this._levelRects[level];
+    tileExists: function(level, x, y) {
+        var rects = this._levelRects[level];
 
-    if (!rects || !rects.length) {
-        return true;
-    }
-
-    for (var i = rects.length - 1; i >= 0; i--) {
-        var rect = rects[i];
-
-        if (level < rect.minLevel || level > rect.maxLevel) {
-            continue;
-        }
-
-        var scale = this.getLevelScale(level);
-        var xMin = rect.x * scale;
-        var yMin = rect.y * scale;
-        var xMax = xMin + rect.width * scale;
-        var yMax = yMin + rect.height * scale;
-
-        xMin = Math.floor(xMin / this.tileSize);
-        yMin = Math.floor(yMin / this.tileSize);
-        xMax = Math.ceil(xMax / this.tileSize);
-        yMax = Math.ceil(yMax / this.tileSize);
-
-        if (xMin <= x && x < xMax && yMin <= y && y < yMax) {
+        if (!rects || !rects.length) {
             return true;
         }
+
+        for (var i = rects.length - 1; i >= 0; i--) {
+            var rect = rects[i];
+
+            if (level < rect.minLevel || level > rect.maxLevel) {
+                continue;
+            }
+
+            var scale = this.getLevelScale(level);
+            var xMin = rect.x * scale;
+            var yMin = rect.y * scale;
+            var xMax = xMin + rect.width * scale;
+            var yMax = yMin + rect.height * scale;
+
+            xMin = Math.floor(xMin / this.tileSize);
+            yMin = Math.floor(yMin / this.tileSize);
+            xMax = Math.ceil(xMax / this.tileSize);
+            yMax = Math.ceil(yMax / this.tileSize);
+
+            if (xMin <= x && x < xMax && yMin <= y && y < yMax) {
+                return true;
+            }
+        }
+
+        return false;
     }
-
-    return false;
-};
-
+});
 
 $.DziTileSourceHelper = {
     createFromXml: function(xmlUrl, xmlString, callback) {
