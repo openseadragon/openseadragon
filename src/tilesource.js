@@ -57,14 +57,18 @@ $.TileSource.prototype = {
         return new $.Rect(px * scale, py * scale, sx * scale, sy * scale);
     },
 
-    getTileUrl: function(level, x, y) {
+    getTileUrl: function( level, x, y ) {
         throw new Error("Method not implemented.");
     },
 
-    tileExists: function(level, x, y) {
-        var numTiles = this.getNumTiles(level);
-        return level >= this.minLevel && level <= this.maxLevel &&
-                x >= 0 && y >= 0 && x < numTiles.x && y < numTiles.y;
+    tileExists: function( level, x, y ) {
+        var numTiles = this.getNumTiles( level );
+        return  level >= this.minLevel && 
+                level <= this.maxLevel &&
+                x >= 0 && 
+                y >= 0 && 
+                x < numTiles.x && 
+                y < numTiles.y;
     }
 };
 

@@ -194,11 +194,12 @@ $.Viewer = function( options ) {
         }
     }
 
+    this.navControl = null;
     if ( this.config.showNavigationControl ) {
-        navControl = (new $.NavControl(this)).elmt;
-        navControl.style.marginRight = "4px";
-        navControl.style.marginBottom = "4px";
-        this.addControl(navControl, $.ControlAnchor.BOTTOM_RIGHT);
+        this.navControl = (new $.NavControl(this)).elmt;
+        this.navControl.style.marginRight = "4px";
+        this.navControl.style.marginBottom = "4px";
+        this.addControl(this.navControl, $.ControlAnchor.BOTTOM_RIGHT);
     }
 
     for ( i = 0; i < this.customControls.length; i++ ) {
@@ -281,9 +282,6 @@ $.Viewer.prototype = {
         this.profiler.endUpdate();
     },
 
-    getNavControl: function () {
-        return this._navControl;
-    },
     add_open: function (handler) {
         this.events.addHandler("open", handler);
     },
