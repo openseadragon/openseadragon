@@ -2652,11 +2652,8 @@ $.DziTileSource.prototype.tileExists = function(level, x, y) {
     return false;
 };
 
-$._DziTileSourceHelper = function() {
 
-};
-
-$._DziTileSourceHelper.prototype = {
+$.DziTileSourceHelper = {
     createFromXml: function(xmlUrl, xmlString, callback) {
         var async = typeof (callback) == "function";
         var error = null;
@@ -2802,7 +2799,6 @@ $._DziTileSourceHelper.prototype = {
     }
 };
 
-$.DziTileSourceHelper = new $._DziTileSourceHelper();
 
 }( OpenSeadragon ));
 
