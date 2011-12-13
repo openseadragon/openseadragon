@@ -3558,18 +3558,16 @@ $.Drawer = function(source, viewport, elmt) {
     this.elmt = this._container;
 
 
-    this._init();
+    
+    this._canvas.style.width = "100%";
+    this._canvas.style.height = "100%";
+    this._canvas.style.position = "absolute";
+    this._container.style.textAlign = "left";    // explicit left-align
+    this._container.appendChild(this._canvas);
 };
 
 $.Drawer.prototype = {
 
-    _init: function() {
-        this._canvas.style.width = "100%";
-        this._canvas.style.height = "100%";
-        this._canvas.style.position = "absolute";
-        this._container.style.textAlign = "left";    // explicit left-align
-        this._container.appendChild(this._canvas);
-    },
     _compareTiles: function(prevBest, tile) {
         if (!prevBest) {
             return tile;
