@@ -1200,26 +1200,6 @@ $.Utils = new $.Utils();
 
 (function( $ ){
     
-
-    $.ControlAnchor = function() {
-        throw Error.invalidOperation();
-    };
-
-    $.ControlAnchor = {
-        NONE: 0,
-        TOP_LEFT: 1,
-        TOP_RIGHT: 2,
-        BOTTOM_RIGHT: 3,
-        BOTTOM_LEFT: 4
-    };
-    
-    $.ControlAnchor = $.ControlAnchor;
-
-}( OpenSeadragon ));
-
-
-(function( $ ){
-    
 $.NavControl = function(viewer) {
     this._group = null;
     this._zooming = false;    // whether we should be continuously zooming
@@ -1381,6 +1361,14 @@ $.NavControl.prototype = {
 (function( $ ){
     
 
+$.ControlAnchor = {
+    NONE: 0,
+    TOP_LEFT: 1,
+    TOP_RIGHT: 2,
+    BOTTOM_RIGHT: 3,
+    BOTTOM_LEFT: 4
+};
+
 $.Control = function (elmt, anchor, container) {
     this.elmt = elmt;
     this.anchor = anchor;
@@ -1388,11 +1376,14 @@ $.Control = function (elmt, anchor, container) {
     this.wrapper = $.Utils.makeNeutralElement("span");
     this.wrapper.style.display = "inline-block";
     this.wrapper.appendChild(this.elmt);
+
     if (this.anchor == $.ControlAnchor.NONE) {
-        this.wrapper.style.width = this.wrapper.style.height = "100%";    // IE6 fix
+        // IE6 fix
+        this.wrapper.style.width = this.wrapper.style.height = "100%";    
     }
 
-    if (this.anchor == $.ControlAnchor.TOP_RIGHT || this.anchor == $.ControlAnchor.BOTTOM_RIGHT) {
+    if ( this.anchor == $.ControlAnchor.TOP_RIGHT || 
+         this.anchor == $.ControlAnchor.BOTTOM_RIGHT ) {
         this.container.insertBefore(this.wrapper, this.container.firstChild);
     } else {
         this.container.appendChild(this.wrapper);
