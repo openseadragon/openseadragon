@@ -2592,16 +2592,8 @@ $.DziTileSource = function(width, height, tileSize, tileOverlap, tilesUrl, fileF
 
     this.fileFormat = fileFormat;
     this.displayRects = displayRects;
-    this.initialize();
-};
-
-$.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
-
-    initialize: function() {
-        if (!this.displayRects) {
-            return;
-        }
-
+    
+    if ( this.displayRects ) {
         for (var i = this.displayRects.length - 1; i >= 0; i--) {
             var rect = this.displayRects[i];
             for (var level = rect.minLevel; level <= rect.maxLevel; level++) {
@@ -2611,7 +2603,11 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
                 this._levelRects[level].push(rect);
             }
         }
-    },
+    }
+
+};
+
+$.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 
     getTileUrl: function(level, x, y) {
         return [this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat].join('');
