@@ -2260,8 +2260,6 @@ $.Strings = {
 
 };
 
-$.Strings = $.Strings;
-
 }( OpenSeadragon ));
 
 (function( $ ){
@@ -3187,8 +3185,6 @@ $.ButtonGroup.prototype = {
 
 
 }( OpenSeadragon ));
-
-
 
 (function( $ ){
     
