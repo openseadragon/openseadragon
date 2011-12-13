@@ -1668,66 +1668,6 @@ $.Viewer = function( options ) {
 
 $.Viewer.prototype = {
     
-    _onClose: function () {
-
-        this.source = null;
-        this.viewport = null;
-        this.drawer = null;
-        this.profiler = null;
-
-        this.canvas.innerHTML = "";
-    },
-    _beforeOpen: function () {
-        if (this.source) {
-            this._onClose();
-        }
-
-        this._lastOpenStartTime = new Date().getTime();   // to ignore earlier opens
-
-        window.setTimeout($.delegate(this, function () {
-            if (this._lastOpenStartTime > this._lastOpenEndTime) {
-                this._setMessage($.Strings.getString("Messages.Loading"));
-            }
-        }), 2000);
-
-        return this._lastOpenStartTime;
-    },
-    _onOpen: function (time, _source, error) {
-        this._lastOpenEndTime = new Date().getTime();
-
-        if (time < this._lastOpenStartTime) {
-            $.Debug.log("Ignoring out-of-date open.");
-            raiseEvent( this, "ignore" );
-            return;
-        } else if (!_source) {
-            this._setMessage(error);
-            raiseEvent( this, "error" );
-            return;
-        }
-
-        this.canvas.innerHTML = "";
-        this._prevContainerSize = $.Utils.getElementSize( this.container );
-
-        this.source = _source;
-        this.viewport = new $.Viewport(this._prevContainerSize, this.source.dimensions, this.config);
-        this.drawer = new $.Drawer(this.source, this.viewport, this.canvas);
-        this.profiler = new $.Profiler();
-
-        this._animating = false;
-        this._forceRedraw = true;
-        scheduleUpdate( this, this._updateMulti );
-
-        for (var i = 0; i < this.overlayControls.length; i++) {
-            var overlay = this.overlayControls[ i ];
-            if (overlay.point != null) {
-                this.drawer.addOverlay(overlay.id, new $.Point(overlay.point.X, overlay.point.Y), $.OverlayPlacement.TOP_LEFT);
-            }
-            else {
-                this.drawer.addOverlay(overlay.id, new $.Rect(overlay.rect.Point.X, overlay.rect.Point.Y, overlay.rect.Width, overlay.rect.Height), overlay.placement);
-            }
-        }
-        raiseEvent( this, "open" );
-    },
     _updateMulti: function () {
         if (!this.source) {
             return;
@@ -1739,7 +1679,7 @@ $.Viewer.prototype = {
         scheduleUpdate( this, arguments.callee, beginTime );
     },
     _updateOnce: function () {
-        if (!this.source) {
+        if ( !this.source ) {
             return;
         }
 
@@ -1869,29 +1809,100 @@ $.Viewer.prototype = {
         return !!this.source;
     },
     openDzi: function (xmlUrl, xmlString) {
-        var currentTime = this._beforeOpen();
+        var _this = this;
         $.DziTileSourceHelper.createFromXml(
             xmlUrl, 
             xmlString,
-            $.Utils.createCallback(
-                null, 
-                $.delegate(this, this._onOpen), 
-                currentTime
-            )
+            function( source ){
+               _this.open( source );
+            }
         );
     },
-    openTileSource: function (tileSource) {
-        var currentTime = beforeOpen();
-        window.setTimeout($.delegate(this, function () {
-            onOpen(currentTime, tileSource);
-        }), 1);
+    openTileSource: function ( tileSource ) {
+        var _this = this;
+        window.setTimeout( function () {
+            _this.open( tileSource );
+        }, 1);
     },
-    close: function () {
-        if ( !this.source ) {
+    open: function( source ) {
+        var _this = this;
+
+        if ( this.source ) {
+            this.close();
+        }
+
+        this._lastOpenStartTime = new Date().getTime();   // to ignore earlier opens
+
+        window.setTimeout( function () {
+            if ( _this._lastOpenStartTime > _this._lastOpenEndTime ) {
+                _this._setMessage( $.Strings.getString( "Messages.Loading" ) );
+            }
+        }, 2000);
+
+        this._lastOpenEndTime = new Date().getTime();
+
+        if ( this._lastOpenStartTime < viewer._lastOpenStartTime ) {
+            $.Debug.log( "Ignoring out-of-date open." );
+            raiseEvent( this, "ignore" );
             return;
         }
 
-        this._onClose();
+        this.canvas.innerHTML = "";
+        this._prevContainerSize = $.Utils.getElementSize( this.container );
+
+        if( source ){
+            this.source = source;
+        }
+        this.viewport = new $.Viewport( 
+            this._prevContainerSize, 
+            this.source.dimensions, 
+            this.config
+        );
+        this.drawer = new $.Drawer(
+            this.source, 
+            this.viewport, 
+            this.canvas
+        );
+        this.profiler = new $.Profiler();
+
+        this._animating = false;
+        this._forceRedraw = true;
+        scheduleUpdate( this, this._updateMulti );
+
+        for ( var i = 0; i < this.overlayControls.length; i++ ) {
+            var overlay = this.overlayControls[ i ];
+            if (overlay.point != null) {
+                this.drawer.addOverlay(
+                    overlay.id, 
+                    new $.Point( 
+                        overlay.point.X, 
+                        overlay.point.Y 
+                    ), 
+                    $.OverlayPlacement.TOP_LEFT
+                );
+            } else {
+                this.drawer.addOverlay(
+                    overlay.id, 
+                    new $.Rect(
+                        overlay.rect.Point.X, 
+                        overlay.rect.Point.Y, 
+                        overlay.rect.Width, 
+                        overlay.rect.Height
+                    ), 
+                    overlay.placement
+                );
+            }
+        }
+        raiseEvent( this, "open" );
+    },
+    close: function () {
+        
+        this.source = null;
+        this.viewport = null;
+        this.drawer = null;
+        this.profiler = null;
+
+        this.canvas.innerHTML = "";
     },
     removeControl: function ( elmt ) {
         var elmt = $.Utils.getElement( elmt ),
@@ -2188,7 +2199,7 @@ function onContainerEnter(tracker, position, buttonDownElmt, buttonDownAny) {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Default view event handlers.
+// Utility methods
 ///////////////////////////////////////////////////////////////////////////////
 function getControlIndex( viewer, elmt ) {
     for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
@@ -2203,6 +2214,9 @@ function getControlIndex( viewer, elmt ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Page update routines ( aka Views - for future reference )
 ///////////////////////////////////////////////////////////////////////////////
+
+
+
 
 }( OpenSeadragon ));
 
