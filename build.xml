@@ -32,7 +32,6 @@
             <file name="src/job.js" />
             <file name="src/imageloader.js" />
             <file name="src/tilesource.js" />
-            <file name="src/dzierror.js" />
             <file name="src/dzitilesource.js" />
             <file name="src/button.js" />
             <file name="src/buttongroup.js" />

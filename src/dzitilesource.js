@@ -87,7 +87,7 @@ $._DziTileSourceHelper.prototype = {
                 }, 1);
                 return null;
             }
-            throw new $.DziError(error);
+            throw new Error(error);
         }
 
         var urlParts = xmlUrl.split('/');
@@ -104,12 +104,9 @@ $._DziTileSourceHelper.prototype = {
                 return func(obj, tilesUrl);
             } catch (e) {
                 if (async) {
-                    //Start Thatcher - Throwable doesnt have getError
-                    //error = this.getError(e).message;
                     return null;
-                    //End Thatcher
                 } else {
-                    throw this.getError(e);
+                    throw e;
                 }
             }
         }
@@ -139,11 +136,11 @@ $._DziTileSourceHelper.prototype = {
     },
     processResponse: function(xhr, tilesUrl) {
         if (!xhr) {
-            throw new $.DziError($.Strings.getString("Errors.Security"));
+            throw new Error($.Strings.getString("Errors.Security"));
         } else if (xhr.status !== 200 && xhr.status !== 0) {
             var status = xhr.status;
             var statusText = (status == 404) ? "Not Found" : xhr.statusText;
-            throw new $.DziError($.Strings.getString("Errors.Status", status, statusText));
+            throw new Error($.Strings.getString("Errors.Status", status, statusText));
         }
 
         var doc = null;
@@ -159,7 +156,7 @@ $._DziTileSourceHelper.prototype = {
 
     processXml: function(xmlDoc, tilesUrl) {
         if (!xmlDoc || !xmlDoc.documentElement) {
-            throw new $.DziError($.Strings.getString("Errors.Xml"));
+            throw new Error($.Strings.getString("Errors.Xml"));
         }
 
         var root = xmlDoc.documentElement;
@@ -170,22 +167,22 @@ $._DziTileSourceHelper.prototype = {
                 return this.processDzi(root, tilesUrl);
             } catch (e) {
                 var defMsg = $.Strings.getString("Errors.Dzi");
-                throw (e instanceof $.DziError) ? e : new $.DziError(defMsg);
+                throw (e instanceof Error) ? e : new Error(defMsg);
             }
         } else if (rootName == "Collection") {
-            throw new $.DziError($.Strings.getString("Errors.Dzc"));
+            throw new Error($.Strings.getString("Errors.Dzc"));
         } else if (rootName == "Error") {
             return this.processError(root);
         }
 
-        throw new $.DziError($.Strings.getString("Errors.Dzi"));
+        throw new Error($.Strings.getString("Errors.Dzi"));
     },
 
     processDzi: function(imageNode, tilesUrl) {
         var fileFormat = imageNode.getAttribute("Format");
 
         if (!$.Utils.imageFormatSupported(fileFormat)) {
-            throw new $.DziError($.Strings.getString("Errors.ImageFormat",
+            throw new Error($.Strings.getString("Errors.ImageFormat",
                     fileFormat.toUpperCase()));
         }
 
@@ -219,14 +216,7 @@ $._DziTileSourceHelper.prototype = {
         var messageNode = errorNode.getElementsByTagName("Message")[0];
         var message = messageNode.firstChild.nodeValue;
 
-        throw new $.DziError(message);
-    },
-    getError: function(e) {
-        if (!(e instanceof DziError)) {
-            $.Debug.error(e.name + " while creating DZI from XML: " + e.message);
-            e = new $.DziError($.Strings.getString("Errors.Unknown"));
-        }
-
+        throw new Error(message);
     }
 };
 
