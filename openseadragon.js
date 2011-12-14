@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.10
+ * OpenSeadragon 0.8.11
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -1225,8 +1225,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.zoomIn.REST), 
             srcGroup: this._resolveUrl(navImages.zoomIn.GROUP), 
             srcHover: this._resolveUrl(navImages.zoomIn.HOVER), 
-            srcDown: this._resolveUrl(navImages.zoomIn.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.zoomIn.DOWN),
             onPress: beginZoomingInHandler, 
             onRelease: endZoomingHandler, 
             onClick: doSingleZoomInHandler, 
@@ -1239,8 +1238,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.zoomOut.REST), 
             srcGroup: this._resolveUrl(navImages.zoomOut.GROUP), 
             srcHover: this._resolveUrl(navImages.zoomOut.HOVER), 
-            srcDown: this._resolveUrl(navImages.zoomOut.DOWN) 
-        }, { 
+            srcDown: this._resolveUrl(navImages.zoomOut.DOWN),
             onPress: beginZoomingOutHandler, 
             onRelease: endZoomingHandler, 
             onClick: doSingleZoomOutHandler, 
@@ -1253,8 +1251,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.home.REST), 
             srcGroup: this._resolveUrl(navImages.home.GROUP), 
             srcHover: this._resolveUrl(navImages.home.HOVER), 
-            srcDown: this._resolveUrl(navImages.home.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.home.DOWN),
             onRelease: onHomeHandler 
         });
         var fullPage = new $.Button({ 
@@ -1263,8 +1260,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.fullpage.REST), 
             srcGroup: this._resolveUrl(navImages.fullpage.GROUP), 
             srcHover: this._resolveUrl(navImages.fullpage.HOVER), 
-            srcDown: this._resolveUrl(navImages.fullpage.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.fullpage.DOWN),
             onRelease: onFullPageHandler 
         });
         this._group = new $.ButtonGroup({ 
@@ -2809,81 +2805,81 @@ $.ButtonState = {
     DOWN:   3
 };
 
-$.Button = function( properties, events ) {
+$.Button = function( options ) {
 
-    this._tooltip   = properties.tooltip;
-    this._srcRest   = properties.srcRest;
-    this._srcGroup  = properties.srcGroup;
-    this._srcHover  = properties.srcHover;
-    this._srcDown   = properties.srcDown;
-    this._button    = properties.button;
-    this.config     = properties.config;
+    this._tooltip   = options.tooltip;
+    this._srcRest   = options.srcRest;
+    this._srcGroup  = options.srcGroup;
+    this._srcHover  = options.srcHover;
+    this._srcDown   = options.srcDown;
+    this._button    = options.button;
+    this.config     = options.config;
+    
+    this._events = new $.EventHandlerList();
 
-    this.initialize( events );
+    if ( options.onPress != undefined )
+        this.add_onPress( options.onPress );
+    if ( options.onRelease != undefined )
+        this.add_onRelease( options.onRelease );
+    if ( options.onClick != undefined )
+        this.add_onClick( options.onClick );
+    if ( options.onEnter != undefined )
+        this.add_onEnter( options.onEnter );
+    if ( options.onExit != undefined )
+        this.add_onExit( options.onExit );
+
+    this._button = $.Utils.makeNeutralElement("span");
+    this._currentState = $.ButtonState.GROUP;
+    this._tracker = new $.MouseTracker(
+        this._button, 
+        this.config.clickTimeThreshold, 
+        this.config.clickDistThreshold
+    );
+    this._imgRest = $.Utils.makeTransparentImage(this._srcRest);
+    this._imgGroup = $.Utils.makeTransparentImage(this._srcGroup);
+    this._imgHover = $.Utils.makeTransparentImage(this._srcHover);
+    this._imgDown = $.Utils.makeTransparentImage(this._srcDown);
+
+    this._fadeDelay = 0;      // begin fading immediately
+    this._fadeLength = 2000;  // fade over a period of 2 seconds
+    this._fadeBeginTime = null;
+    this._shouldFade = false;
+
+    this._button.style.display = "inline-block";
+    this._button.style.position = "relative";
+    this._button.title = this._tooltip;
+
+    this._button.appendChild(this._imgRest);
+    this._button.appendChild(this._imgGroup);
+    this._button.appendChild(this._imgHover);
+    this._button.appendChild(this._imgDown);
+
+    var styleRest = this._imgRest.style;
+    var styleGroup = this._imgGroup.style;
+    var styleHover = this._imgHover.style;
+    var styleDown = this._imgDown.style;
+
+    styleGroup.position = styleHover.position = styleDown.position = "absolute";
+    styleGroup.top = styleHover.top = styleDown.top = "0px";
+    styleGroup.left = styleHover.left = styleDown.left = "0px";
+    styleHover.visibility = styleDown.visibility = "hidden";
+
+    if ($.Utils.getBrowser() == $.Browser.FIREFOX &&
+                $.Utils.getBrowserVersion() < 3) {
+        styleGroup.top = styleHover.top = styleDown.top = "";
+    }
+
+    this._tracker.enterHandler = $.delegate(this, this._enterHandler);
+    this._tracker.exitHandler = $.delegate(this, this._exitHandler);
+    this._tracker.pressHandler = $.delegate(this, this._pressHandler);
+    this._tracker.releaseHandler = $.delegate(this, this._releaseHandler);
+    this._tracker.clickHandler = $.delegate(this, this._clickHandler);
+
+    this._tracker.setTracking( true );
+    this._outTo( $.ButtonState.REST );
 };
 
 $.Button.prototype = {
-    initialize: function( events ) {
-
-        this._events = new $.EventHandlerList();
-
-        if (events.onPress != undefined)
-            this.add_onPress(events.onPress);
-        if (events.onRelease != undefined)
-            this.add_onRelease(events.onRelease);
-        if (events.onClick != undefined)
-            this.add_onClick(events.onClick);
-        if (events.onEnter != undefined)
-            this.add_onEnter(events.onEnter);
-        if (events.onExit != undefined)
-            this.add_onExit(events.onExit);
-
-        this._button = $.Utils.makeNeutralElement("span");
-        this._currentState = $.ButtonState.GROUP;
-        this._tracker = new $.MouseTracker(this._button, this.config.clickTimeThreshold, this.config.clickDistThreshold);
-        this._imgRest = $.Utils.makeTransparentImage(this._srcRest);
-        this._imgGroup = $.Utils.makeTransparentImage(this._srcGroup);
-        this._imgHover = $.Utils.makeTransparentImage(this._srcHover);
-        this._imgDown = $.Utils.makeTransparentImage(this._srcDown);
-
-        this._fadeDelay = 0;      // begin fading immediately
-        this._fadeLength = 2000;  // fade over a period of 2 seconds
-        this._fadeBeginTime = null;
-        this._shouldFade = false;
-
-        this._button.style.display = "inline-block";
-        this._button.style.position = "relative";
-        this._button.title = this._tooltip;
-
-        this._button.appendChild(this._imgRest);
-        this._button.appendChild(this._imgGroup);
-        this._button.appendChild(this._imgHover);
-        this._button.appendChild(this._imgDown);
-
-        var styleRest = this._imgRest.style;
-        var styleGroup = this._imgGroup.style;
-        var styleHover = this._imgHover.style;
-        var styleDown = this._imgDown.style;
-
-        styleGroup.position = styleHover.position = styleDown.position = "absolute";
-        styleGroup.top = styleHover.top = styleDown.top = "0px";
-        styleGroup.left = styleHover.left = styleDown.left = "0px";
-        styleHover.visibility = styleDown.visibility = "hidden";
-
-        if ($.Utils.getBrowser() == $.Browser.FIREFOX &&
-                    $.Utils.getBrowserVersion() < 3) {
-            styleGroup.top = styleHover.top = styleDown.top = "";
-        }
-
-        this._tracker.enterHandler = $.delegate(this, this._enterHandler);
-        this._tracker.exitHandler = $.delegate(this, this._exitHandler);
-        this._tracker.pressHandler = $.delegate(this, this._pressHandler);
-        this._tracker.releaseHandler = $.delegate(this, this._releaseHandler);
-        this._tracker.clickHandler = $.delegate(this, this._clickHandler);
-
-        this._tracker.setTracking(true);
-        this._outTo($.ButtonState.REST);
-    },
     _scheduleFade: function() {
         window.setTimeout($.delegate(this, this._updateFade), 20);
     },

@@ -31,8 +31,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.zoomIn.REST), 
             srcGroup: this._resolveUrl(navImages.zoomIn.GROUP), 
             srcHover: this._resolveUrl(navImages.zoomIn.HOVER), 
-            srcDown: this._resolveUrl(navImages.zoomIn.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.zoomIn.DOWN),
             onPress: beginZoomingInHandler, 
             onRelease: endZoomingHandler, 
             onClick: doSingleZoomInHandler, 
@@ -45,8 +44,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.zoomOut.REST), 
             srcGroup: this._resolveUrl(navImages.zoomOut.GROUP), 
             srcHover: this._resolveUrl(navImages.zoomOut.HOVER), 
-            srcDown: this._resolveUrl(navImages.zoomOut.DOWN) 
-        }, { 
+            srcDown: this._resolveUrl(navImages.zoomOut.DOWN),
             onPress: beginZoomingOutHandler, 
             onRelease: endZoomingHandler, 
             onClick: doSingleZoomOutHandler, 
@@ -59,8 +57,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.home.REST), 
             srcGroup: this._resolveUrl(navImages.home.GROUP), 
             srcHover: this._resolveUrl(navImages.home.HOVER), 
-            srcDown: this._resolveUrl(navImages.home.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.home.DOWN),
             onRelease: onHomeHandler 
         });
         var fullPage = new $.Button({ 
@@ -69,8 +66,7 @@ $.NavControl.prototype = {
             srcRest: this._resolveUrl(navImages.fullpage.REST), 
             srcGroup: this._resolveUrl(navImages.fullpage.GROUP), 
             srcHover: this._resolveUrl(navImages.fullpage.HOVER), 
-            srcDown: this._resolveUrl(navImages.fullpage.DOWN) 
-        },{ 
+            srcDown: this._resolveUrl(navImages.fullpage.DOWN),
             onRelease: onFullPageHandler 
         });
         this._group = new $.ButtonGroup({ 
