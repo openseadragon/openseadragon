@@ -2818,15 +2818,15 @@ $.Button = function( options ) {
     this._events = new $.EventHandlerList();
 
     if ( options.onPress != undefined )
-        this.add_onPress( options.onPress );
+        this._events.addHandler("onPress", options.onPress );
     if ( options.onRelease != undefined )
-        this.add_onRelease( options.onRelease );
+        this._events.addHandler("onRelease", options.onRelease );
     if ( options.onClick != undefined )
-        this.add_onClick( options.onClick );
+        this._events.addHandler("onClick", options.onClick );
     if ( options.onEnter != undefined )
-        this.add_onEnter( options.onEnter );
+        this._events.addHandler("onEnter", options.onEnter );
     if ( options.onExit != undefined )
-        this.add_onExit( options.onExit );
+        this._events.addHandler("onExit", options.onExit );
 
     this._button = $.Utils.makeNeutralElement("span");
     this._currentState = $.ButtonState.GROUP;
@@ -3024,36 +3024,6 @@ $.Button.prototype = {
     },
     set_srcDown: function(value) {
         this._srcDown = value;
-    },
-    add_onPress: function(handler) {
-        this.get_events().addHandler("onPress", handler);
-    },
-    remove_onPress: function(handler) {
-        this.get_events().removeHandler("onPress", handler);
-    },
-    add_onClick: function(handler) {
-        this.get_events().addHandler("onClick", handler);
-    },
-    remove_onClick: function(handler) {
-        this.get_events().removeHandler("onClick", handler);
-    },
-    add_onEnter: function(handler) {
-        this.get_events().addHandler("onEnter", handler);
-    },
-    remove_onEnter: function(handler) {
-        this.get_events().removeHandler("onEnter", handler);
-    },
-    add_onRelease: function(handler) {
-        this.get_events().addHandler("onRelease", handler);
-    },
-    remove_onRelease: function(handler) {
-        this.get_events().removeHandler("onRelease", handler);
-    },
-    add_onExit: function(handler) {
-        this.get_events().addHandler("onExit", handler);
-    },
-    remove_onExit: function(handler) {
-        this.get_events().removeHandler("onExit", handler);
     },
     notifyGroupEnter: function() {
         this._inTo($.ButtonState.GROUP);
