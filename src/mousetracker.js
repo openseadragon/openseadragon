@@ -1,65 +1,19 @@
 
 (function( $ ){
 
+    //Ensures we dont break existing instances of mousetracker if we are dumb
+    //enough to load openseadragon.js onto the page twice.  I don't know how
+    //useful this pattern is, but if we decide to use it we should use it 
+    //everywhere
     if ($.MouseTracker) {
         return;
     }
 
-
-    var isIE = $.Utils.getBrowser() == $.Browser.IE;
-
-
-    var buttonDownAny = false;
-
-    var ieCapturingAny = false;
-    var ieTrackersActive = {};      // dictionary from hash to MouseTracker
-    var ieTrackersCapturing = [];   // list of trackers interested in capture
-
-
-    function getMouseAbsolute(event) {
-        return $.Utils.getMousePosition(event);
-    }
-
-    function getMouseRelative(event, elmt) {
-        var mouse = $.Utils.getMousePosition(event);
-        var offset = $.Utils.getElementPosition(elmt);
-
-        return mouse.minus(offset);
-    }
-
-    /**
-    * Returns true if elmtB is a child node of elmtA, or if they're equal.
-    */
-    function isChild(elmtA, elmtB) {
-        var body = document.body;
-        while (elmtB && elmtA != elmtB && body != elmtB) {
-            try {
-                elmtB = elmtB.parentNode;
-            } catch (e) {
-                return false;
-            }
-        }
-        return elmtA == elmtB;
-    }
-
-    function onGlobalMouseDown() {
-        buttonDownAny = true;
-    }
-
-    function onGlobalMouseUp() {
-        buttonDownAny = false;
-    }
-
-
-    (function () {
-        if (isIE) {
-            $.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
-            $.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
-        } else {
-            $.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
-            $.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
-        }
-    })();
+    var isIE                = $.Utils.getBrowser() == $.Browser.IE,
+        buttonDownAny       = false,
+        ieCapturingAny      = false,
+        ieTrackersActive    = {},   // dictionary from hash to MouseTracker
+        ieTrackersCapturing = [];   // list of trackers interested in capture
 
 
     $.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
@@ -68,34 +22,55 @@
         //               -       of Viewers has less memory impact.  Also use 
         //               -       prototype pattern instead of Singleton pattern.
         //End Thatcher
-        var self = this;
-        var ieSelf = null;
+        var self    = this,
+            ieSelf  = null,
 
-        var hash = Math.random();     // a unique hash for this tracker
-        var elmt = $.Utils.getElement(elmt);
+            hash = Math.random(), // a unique hash for this tracker
+            elmt = $.Utils.getElement(elmt),
 
-        var tracking = false;
-        var capturing = false;
-        var buttonDownElmt = false;
-        var insideElmt = false;
+            tracking        = false,
+            capturing       = false,
+            buttonDownElmt  = false,
+            insideElmt      = false,
 
-        var lastPoint = null;           // position of last mouse down/move
-        var lastMouseDownTime = null;   // time of last mouse down
-        var lastMouseDownPoint = null;  // position of last mouse down
-        var clickTimeThreshold = clickTimeThreshold;
-        var clickDistThreshold = clickDistThreshold;
+            lastPoint           = null, // position of last mouse down/move
+            lastMouseDownTime   = null, // time of last mouse down
+            lastMouseDownPoint  = null, // position of last mouse down
+            clickTimeThreshold  = clickTimeThreshold,
+            clickDistThreshold  = clickDistThreshold;
 
 
-        this.target = elmt;
-        this.enterHandler = null;       // function(tracker, position, buttonDownElmt, buttonDownAny)
-        this.exitHandler = null;        // function(tracker, position, buttonDownElmt, buttonDownAny)
-        this.pressHandler = null;       // function(tracker, position)
+        this.target         = elmt;
+        this.enterHandler   = null;     // function(tracker, position, buttonDownElmt, buttonDownAny)
+        this.exitHandler    = null;     // function(tracker, position, buttonDownElmt, buttonDownAny)
+        this.pressHandler   = null;     // function(tracker, position)
         this.releaseHandler = null;     // function(tracker, position, insideElmtPress, insideElmtRelease)
-        this.scrollHandler = null;      // function(tracker, position, scroll, shift)
-        this.clickHandler = null;       // function(tracker, position, quick, shift)
-        this.dragHandler = null;        // function(tracker, position, delta, shift)
+        this.scrollHandler  = null;     // function(tracker, position, scroll, shift)
+        this.clickHandler   = null;     // function(tracker, position, quick, shift)
+        this.dragHandler    = null;     // function(tracker, position, delta, shift)
+
+        (function () {
+            ieSelf = {
+                hasMouse: hasMouse,
+                onMouseOver: onMouseOver,
+                onMouseOut: onMouseOut,
+                onMouseUp: onMouseUp,
+                onMouseMove: onMouseMove
+            };
+        })();
 
 
+        this.isTracking = function () {
+            return tracking;
+        };
+
+        this.setTracking = function (track) {
+            if (track) {
+                startTracking();
+            } else {
+                stopTracking();
+            }
+        };
 
         function startTracking() {
             if (!tracking) {
@@ -425,31 +400,51 @@
             $.Utils.stopEvent(event);
         }
 
-
-        (function () {
-            ieSelf = {
-                hasMouse: hasMouse,
-                onMouseOver: onMouseOver,
-                onMouseOut: onMouseOut,
-                onMouseUp: onMouseUp,
-                onMouseMove: onMouseMove
-            };
-        })();
-
-
-        this.isTracking = function () {
-            return tracking;
-        };
-
-        this.setTracking = function (track) {
-            if (track) {
-                startTracking();
-            } else {
-                stopTracking();
-            }
-        };
-
     };
 
+    function getMouseAbsolute( event ) {
+        return $.Utils.getMousePosition(event);
+    }
+
+    function getMouseRelative( event, elmt ) {
+        var mouse = $.Utils.getMousePosition(event);
+        var offset = $.Utils.getElementPosition(elmt);
+
+        return mouse.minus(offset);
+    }
+
+    /**
+    * Returns true if elmtB is a child node of elmtA, or if they're equal.
+    */
+    function isChild( elmtA, elmtB ) {
+        var body = document.body;
+        while (elmtB && elmtA != elmtB && body != elmtB) {
+            try {
+                elmtB = elmtB.parentNode;
+            } catch (e) {
+                return false;
+            }
+        }
+        return elmtA == elmtB;
+    }
+
+    function onGlobalMouseDown() {
+        buttonDownAny = true;
+    }
+
+    function onGlobalMouseUp() {
+        buttonDownAny = false;
+    }
+
+
+    (function () {
+        if (isIE) {
+            $.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
+            $.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
+        } else {
+            $.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
+            $.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
+        }
+    })();
     
 }( OpenSeadragon ));
