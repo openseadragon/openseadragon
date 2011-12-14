@@ -10,6 +10,8 @@ $.ButtonState = {
 
 $.Button = function( options ) {
 
+    $.EventHandler.call( this );
+
     this._tooltip   = options.tooltip;
     this._srcRest   = options.srcRest;
     this._srcGroup  = options.srcGroup;
@@ -17,19 +19,22 @@ $.Button = function( options ) {
     this._srcDown   = options.srcDown;
     this._button    = options.button;
     this.config     = options.config;
-    
-    this._events = new $.EventHandlerList();
 
-    if ( options.onPress != undefined )
-        this._events.addHandler("onPress", options.onPress );
-    if ( options.onRelease != undefined )
-        this._events.addHandler("onRelease", options.onRelease );
-    if ( options.onClick != undefined )
-        this._events.addHandler("onClick", options.onClick );
-    if ( options.onEnter != undefined )
-        this._events.addHandler("onEnter", options.onEnter );
-    if ( options.onExit != undefined )
-        this._events.addHandler("onExit", options.onExit );
+    if ( options.onPress != undefined ){
+        this.addHandler("onPress", options.onPress );
+    }
+    if ( options.onRelease != undefined ){
+        this.addHandler("onRelease", options.onRelease );
+    }
+    if ( options.onClick != undefined ){
+        this.addHandler("onClick", options.onClick );
+    }
+    if ( options.onEnter != undefined ){
+        this.addHandler("onEnter", options.onEnter );
+    }
+    if ( options.onExit != undefined ){
+        this.addHandler("onExit", options.onExit );
+    }
 
     this._button = $.Utils.makeNeutralElement("span");
     this._currentState = $.ButtonState.GROUP;
@@ -67,8 +72,8 @@ $.Button = function( options ) {
     styleGroup.left = styleHover.left = styleDown.left = "0px";
     styleHover.visibility = styleDown.visibility = "hidden";
 
-    if ($.Utils.getBrowser() == $.Browser.FIREFOX &&
-                $.Utils.getBrowserVersion() < 3) {
+    if ( $.Utils.getBrowser() == $.Browser.FIREFOX 
+         && $.Utils.getBrowserVersion() < 3 ){
         styleGroup.top = styleHover.top = styleDown.top = "";
     }
 
@@ -82,7 +87,7 @@ $.Button = function( options ) {
     this._outTo( $.ButtonState.REST );
 };
 
-$.Button.prototype = {
+$.extend( $.Button.prototype, $.EventHandler.prototype, {
     _scheduleFade: function() {
         window.setTimeout($.delegate(this, this._updateFade), 20);
     },
@@ -175,11 +180,8 @@ $.Button.prototype = {
             this._raiseEvent("onClick", this);
         }
     },
-    get_events: function get_events() {
-        return this._events;
-    },
     _raiseEvent: function(eventName, eventArgs) {
-        var handler = this.get_events().getHandler(eventName);
+        var handler = this.getHandler(eventName);
 
         if (handler) {
             if (!eventArgs) {
@@ -234,6 +236,6 @@ $.Button.prototype = {
     notifyGroupExit: function() {
         this._outTo($.ButtonState.REST);
     }
-};
+});
 
 }( OpenSeadragon ));

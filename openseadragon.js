@@ -204,16 +204,16 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 (function($){
 
 
-    $.EventHandlerList = function() {
-        this._list = {};
+    $.EventHandler = function() {
+        this.events = {};
     };
 
-    $.EventHandlerList.prototype = {
+    $.EventHandler.prototype = {
 
         addHandler: function(id, handler) {
-            var events = this._list[ id ];
+            var events = this.events[ id ];
             if( !events ){
-                this._list[ id ] = events = [];
+                this.events[ id ] = events = [];
             }
             events[events.length] = handler;
         },
@@ -222,12 +222,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             //Start Thatcher - unneccessary indirection.  Also, because events were
             //               - not actually being removed, we need to add the code
             //               - to do the removal ourselves. TODO
-            var evt = this._list[ id ];
+            var evt = this.events[ id ];
             if (!evt) return;
             //End Thatcher
         },
+        
         getHandler: function(id) {
-            var evt = this._list[ id ]; 
+            var evt = this.events[ id ]; 
             if (!evt || !evt.length) return null;
             evt = evt.length === 1 ? 
                 [evt[0]] : 
@@ -1270,14 +1271,7 @@ $.NavControl.prototype = {
 
         this.elmt = this._group.element;
         this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
-        this._viewer.add_open($.delegate(this, this._lightUp));
-    },
-
-    get_events: function() {
-        return this._events;
-    },
-    set_events: function(value) {
-        this._events = value;
+        this._viewer.addHandler('open', $.delegate(this, this._lightUp));
     },
     _resolveUrl: function(url) {
         var prefix = this._viewer.prefixUrl;
@@ -1432,6 +1426,8 @@ $.Viewer = function( options ) {
         _this = this,
         i;
 
+    $.EventHandler.call( this );
+
     if( typeof( options ) != 'object' ){
         options = {
             id:                 args[ 0 ],
@@ -1527,7 +1523,6 @@ $.Viewer = function( options ) {
     this.element        = document.getElementById( options.id );
     this.container      = $.Utils.makeNeutralElement("div");
     this.canvas         = $.Utils.makeNeutralElement("div");
-    this.events         = new $.EventHandlerList();
 
     this._fsBoundsDelta = new $.Point(1, 1);
     this._prevContainerSize = null;
@@ -1629,7 +1624,7 @@ $.Viewer = function( options ) {
     }
 };
 
-$.Viewer.prototype = {
+$.extend($.Viewer.prototype, $.EventHandler.prototype, {
     
     _updateMulti: function () {
         if (!this.source) {
@@ -1641,6 +1636,7 @@ $.Viewer.prototype = {
         this._updateOnce();
         scheduleUpdate( this, arguments.callee, beginTime );
     },
+
     _updateOnce: function () {
         if ( !this.source ) {
             return;
@@ -1686,48 +1682,6 @@ $.Viewer.prototype = {
         this.profiler.endUpdate();
     },
 
-    add_open: function (handler) {
-        this.events.addHandler("open", handler);
-    },
-    remove_open: function (handler) {
-        this.events.removeHandler("open", handler);
-    },
-    add_error: function (handler) {
-        this.events.addHandler("error", handler);
-    },
-    remove_error: function (handler) {
-        this.events.removeHandler("error", handler);
-    },
-    add_ignore: function (handler) {
-        this.events.addHandler("ignore", handler);
-    },
-    remove_ignore: function (handler) {
-        this.events.removeHandler("ignore", handler);
-    },
-    add_resize: function (handler) {
-        this.events.addHandler("resize", handler);
-    },
-    remove_resize: function (handler) {
-        this.events.removeHandler("resize", handler);
-    },
-    add_animationstart: function (handler) {
-        this.events.addHandler("animationstart", handler);
-    },
-    remove_animationstart: function (handler) {
-        this.events.removeHandler("animationstart", handler);
-    },
-    add_animation: function (handler) {
-        this.events.addHandler("animation", handler);
-    },
-    remove_animation: function (handler) {
-        this.events.removeHandler("animation", handler);
-    },
-    add_animationfinish: function (handler) {
-        this.events.addHandler("animationfinish", handler);
-    },
-    remove_animationfinish: function (handler) {
-        this.events.removeHandler("animationfinish", handler);
-    },
     addControl: function ( elmt, anchor ) {
         var elmt = $.Utils.getElement( elmt ),
             div = null;
@@ -2002,7 +1956,7 @@ $.Viewer.prototype = {
         this.container.style.visibility = visible ? "" : "hidden";
     }
 
-};
+});
 
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
@@ -2088,9 +2042,10 @@ function abortControlsAutoHide( viewer ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Event engine is simple, look up event handler and call.
+//  TODO: add the to EventHandler and call it trigger to align with jQuery
 ///////////////////////////////////////////////////////////////////////////////
 function raiseEvent( viewer, eventName, eventArgs) {
-    var  handler = viewer.events.getHandler( eventName );
+    var  handler = viewer.getHandler( eventName );
     if ( handler ) {
         if (!eventArgs) {
             eventArgs = new Object();
@@ -2807,6 +2762,8 @@ $.ButtonState = {
 
 $.Button = function( options ) {
 
+    $.EventHandler.call( this );
+
     this._tooltip   = options.tooltip;
     this._srcRest   = options.srcRest;
     this._srcGroup  = options.srcGroup;
@@ -2814,19 +2771,22 @@ $.Button = function( options ) {
     this._srcDown   = options.srcDown;
     this._button    = options.button;
     this.config     = options.config;
-    
-    this._events = new $.EventHandlerList();
 
-    if ( options.onPress != undefined )
-        this._events.addHandler("onPress", options.onPress );
-    if ( options.onRelease != undefined )
-        this._events.addHandler("onRelease", options.onRelease );
-    if ( options.onClick != undefined )
-        this._events.addHandler("onClick", options.onClick );
-    if ( options.onEnter != undefined )
-        this._events.addHandler("onEnter", options.onEnter );
-    if ( options.onExit != undefined )
-        this._events.addHandler("onExit", options.onExit );
+    if ( options.onPress != undefined ){
+        this.addHandler("onPress", options.onPress );
+    }
+    if ( options.onRelease != undefined ){
+        this.addHandler("onRelease", options.onRelease );
+    }
+    if ( options.onClick != undefined ){
+        this.addHandler("onClick", options.onClick );
+    }
+    if ( options.onEnter != undefined ){
+        this.addHandler("onEnter", options.onEnter );
+    }
+    if ( options.onExit != undefined ){
+        this.addHandler("onExit", options.onExit );
+    }
 
     this._button = $.Utils.makeNeutralElement("span");
     this._currentState = $.ButtonState.GROUP;
@@ -2864,8 +2824,8 @@ $.Button = function( options ) {
     styleGroup.left = styleHover.left = styleDown.left = "0px";
     styleHover.visibility = styleDown.visibility = "hidden";
 
-    if ($.Utils.getBrowser() == $.Browser.FIREFOX &&
-                $.Utils.getBrowserVersion() < 3) {
+    if ( $.Utils.getBrowser() == $.Browser.FIREFOX 
+         && $.Utils.getBrowserVersion() < 3 ){
         styleGroup.top = styleHover.top = styleDown.top = "";
     }
 
@@ -2879,7 +2839,7 @@ $.Button = function( options ) {
     this._outTo( $.ButtonState.REST );
 };
 
-$.Button.prototype = {
+$.extend( $.Button.prototype, $.EventHandler.prototype, {
     _scheduleFade: function() {
         window.setTimeout($.delegate(this, this._updateFade), 20);
     },
@@ -2972,11 +2932,8 @@ $.Button.prototype = {
             this._raiseEvent("onClick", this);
         }
     },
-    get_events: function get_events() {
-        return this._events;
-    },
     _raiseEvent: function(eventName, eventArgs) {
-        var handler = this.get_events().getHandler(eventName);
+        var handler = this.getHandler(eventName);
 
         if (handler) {
             if (!eventArgs) {
@@ -3031,7 +2988,7 @@ $.Button.prototype = {
     notifyGroupExit: function() {
         this._outTo($.ButtonState.REST);
     }
-};
+});
 
 }( OpenSeadragon ));
 

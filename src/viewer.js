@@ -28,6 +28,8 @@ $.Viewer = function( options ) {
         _this = this,
         i;
 
+    $.EventHandler.call( this );
+
     if( typeof( options ) != 'object' ){
         options = {
             id:                 args[ 0 ],
@@ -123,7 +125,6 @@ $.Viewer = function( options ) {
     this.element        = document.getElementById( options.id );
     this.container      = $.Utils.makeNeutralElement("div");
     this.canvas         = $.Utils.makeNeutralElement("div");
-    this.events         = new $.EventHandlerList();
 
     this._fsBoundsDelta = new $.Point(1, 1);
     this._prevContainerSize = null;
@@ -225,7 +226,7 @@ $.Viewer = function( options ) {
     }
 };
 
-$.Viewer.prototype = {
+$.extend($.Viewer.prototype, $.EventHandler.prototype, {
     
     _updateMulti: function () {
         if (!this.source) {
@@ -237,6 +238,7 @@ $.Viewer.prototype = {
         this._updateOnce();
         scheduleUpdate( this, arguments.callee, beginTime );
     },
+
     _updateOnce: function () {
         if ( !this.source ) {
             return;
@@ -282,48 +284,6 @@ $.Viewer.prototype = {
         this.profiler.endUpdate();
     },
 
-    add_open: function (handler) {
-        this.events.addHandler("open", handler);
-    },
-    remove_open: function (handler) {
-        this.events.removeHandler("open", handler);
-    },
-    add_error: function (handler) {
-        this.events.addHandler("error", handler);
-    },
-    remove_error: function (handler) {
-        this.events.removeHandler("error", handler);
-    },
-    add_ignore: function (handler) {
-        this.events.addHandler("ignore", handler);
-    },
-    remove_ignore: function (handler) {
-        this.events.removeHandler("ignore", handler);
-    },
-    add_resize: function (handler) {
-        this.events.addHandler("resize", handler);
-    },
-    remove_resize: function (handler) {
-        this.events.removeHandler("resize", handler);
-    },
-    add_animationstart: function (handler) {
-        this.events.addHandler("animationstart", handler);
-    },
-    remove_animationstart: function (handler) {
-        this.events.removeHandler("animationstart", handler);
-    },
-    add_animation: function (handler) {
-        this.events.addHandler("animation", handler);
-    },
-    remove_animation: function (handler) {
-        this.events.removeHandler("animation", handler);
-    },
-    add_animationfinish: function (handler) {
-        this.events.addHandler("animationfinish", handler);
-    },
-    remove_animationfinish: function (handler) {
-        this.events.removeHandler("animationfinish", handler);
-    },
     addControl: function ( elmt, anchor ) {
         var elmt = $.Utils.getElement( elmt ),
             div = null;
@@ -598,7 +558,7 @@ $.Viewer.prototype = {
         this.container.style.visibility = visible ? "" : "hidden";
     }
 
-};
+});
 
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
@@ -684,9 +644,10 @@ function abortControlsAutoHide( viewer ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Event engine is simple, look up event handler and call.
+//  TODO: add the to EventHandler and call it trigger to align with jQuery
 ///////////////////////////////////////////////////////////////////////////////
 function raiseEvent( viewer, eventName, eventArgs) {
-    var  handler = viewer.events.getHandler( eventName );
+    var  handler = viewer.getHandler( eventName );
     if ( handler ) {
         if (!eventArgs) {
             eventArgs = new Object();

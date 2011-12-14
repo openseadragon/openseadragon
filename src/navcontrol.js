@@ -76,14 +76,7 @@ $.NavControl.prototype = {
 
         this.elmt = this._group.element;
         this.elmt[$.SIGNAL] = true;   // hack to get our controls to fade
-        this._viewer.add_open($.delegate(this, this._lightUp));
-    },
-
-    get_events: function() {
-        return this._events;
-    },
-    set_events: function(value) {
-        this._events = value;
+        this._viewer.addHandler('open', $.delegate(this, this._lightUp));
     },
     _resolveUrl: function(url) {
         var prefix = this._viewer.prefixUrl;
