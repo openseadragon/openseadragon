@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.11
+ * OpenSeadragon 0.8.12
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -243,6 +243,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 }( OpenSeadragon ));
 
+/**
+ *
+ * TODO: all of utils should be moved to the object literal namespace 
+ * OpenSeadragon for less indirection.  If it's useful, it's useful
+ * without the name 'utils'.
+ *
+ **/
 
 OpenSeadragon.Utils = OpenSeadragon.Utils  || function(){};
 
@@ -2769,7 +2776,10 @@ $.Button = function( options ) {
     this._srcGroup  = options.srcGroup;
     this._srcHover  = options.srcHover;
     this._srcDown   = options.srcDown;
-    this._button    = options.button;
+    //TODO: make button elements accessible by making them a-tags
+    //      maybe even consider basing them on the element and adding
+    //      methods jquery-style.
+    this.element    = options.element || $.Utils.makeNeutralElement("span");
     this.config     = options.config;
 
     if ( options.onPress != undefined ){
@@ -2788,10 +2798,9 @@ $.Button = function( options ) {
         this.addHandler("onExit", options.onExit );
     }
 
-    this._button = $.Utils.makeNeutralElement("span");
     this._currentState = $.ButtonState.GROUP;
     this._tracker = new $.MouseTracker(
-        this._button, 
+        this.element, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
@@ -2805,14 +2814,14 @@ $.Button = function( options ) {
     this._fadeBeginTime = null;
     this._shouldFade = false;
 
-    this._button.style.display = "inline-block";
-    this._button.style.position = "relative";
-    this._button.title = this._tooltip;
+    this.element.style.display = "inline-block";
+    this.element.style.position = "relative";
+    this.element.title = this._tooltip;
 
-    this._button.appendChild(this._imgRest);
-    this._button.appendChild(this._imgGroup);
-    this._button.appendChild(this._imgHover);
-    this._button.appendChild(this._imgDown);
+    this.element.appendChild(this._imgRest);
+    this.element.appendChild(this._imgGroup);
+    this.element.appendChild(this._imgHover);
+    this.element.appendChild(this._imgDown);
 
     var styleRest = this._imgRest.style;
     var styleGroup = this._imgGroup.style;
@@ -2944,7 +2953,7 @@ $.extend( $.Button.prototype, $.EventHandler.prototype, {
         }
     },
     get_element: function() {
-        return this._button;
+        return this.element;
     },
     get_tooltip: function() {
         return this._tooltip;
@@ -3025,7 +3034,7 @@ $.ButtonGroup = function( options ) {
 
     this.element.style.display = "inline-block";
     for ( i = 0; i < buttons.length; i++ ) {
-        this.element.appendChild( buttons[ i ].get_element() );
+        this.element.appendChild( buttons[ i ].element );
     }
 
 
@@ -4032,10 +4041,14 @@ $.Viewport.prototype = {
     },
 
     getCenter: function(current) {
-        var centerCurrent = new $.Point(this._centerSpringX.getCurrent(),
-                this._centerSpringY.getCurrent());
-        var centerTarget = new $.Point(this._centerSpringX.getTarget(),
-                this._centerSpringY.getTarget());
+        var centerCurrent = new $.Point(
+            this._centerSpringX.getCurrent(),
+            this._centerSpringY.getCurrent()
+        );
+        var centerTarget = new $.Point(
+            this._centerSpringX.getTarget(),
+            this._centerSpringY.getTarget()
+        );
 
         if (current) {
             return centerCurrent;

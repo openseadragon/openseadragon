@@ -1,4 +1,11 @@
 
+/**
+ *
+ * TODO: all of utils should be moved to the object literal namespace 
+ * OpenSeadragon for less indirection.  If it's useful, it's useful
+ * without the name 'utils'.
+ *
+ **/
 
 OpenSeadragon.Utils = OpenSeadragon.Utils  || function(){};
 

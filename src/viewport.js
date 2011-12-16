@@ -50,10 +50,14 @@ $.Viewport.prototype = {
     },
 
     getCenter: function(current) {
-        var centerCurrent = new $.Point(this._centerSpringX.getCurrent(),
-                this._centerSpringY.getCurrent());
-        var centerTarget = new $.Point(this._centerSpringX.getTarget(),
-                this._centerSpringY.getTarget());
+        var centerCurrent = new $.Point(
+            this._centerSpringX.getCurrent(),
+            this._centerSpringY.getCurrent()
+        );
+        var centerTarget = new $.Point(
+            this._centerSpringX.getTarget(),
+            this._centerSpringY.getTarget()
+        );
 
         if (current) {
             return centerCurrent;

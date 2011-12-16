@@ -32,7 +32,7 @@ $.ButtonGroup = function( options ) {
 
     this.element.style.display = "inline-block";
     for ( i = 0; i < buttons.length; i++ ) {
-        this.element.appendChild( buttons[ i ].get_element() );
+        this.element.appendChild( buttons[ i ].element );
     }
 
 

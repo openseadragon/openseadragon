@@ -17,7 +17,10 @@ $.Button = function( options ) {
     this._srcGroup  = options.srcGroup;
     this._srcHover  = options.srcHover;
     this._srcDown   = options.srcDown;
-    this._button    = options.button;
+    //TODO: make button elements accessible by making them a-tags
+    //      maybe even consider basing them on the element and adding
+    //      methods jquery-style.
+    this.element    = options.element || $.Utils.makeNeutralElement("span");
     this.config     = options.config;
 
     if ( options.onPress != undefined ){
@@ -36,10 +39,9 @@ $.Button = function( options ) {
         this.addHandler("onExit", options.onExit );
     }
 
-    this._button = $.Utils.makeNeutralElement("span");
     this._currentState = $.ButtonState.GROUP;
     this._tracker = new $.MouseTracker(
-        this._button, 
+        this.element, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
@@ -53,14 +55,14 @@ $.Button = function( options ) {
     this._fadeBeginTime = null;
     this._shouldFade = false;
 
-    this._button.style.display = "inline-block";
-    this._button.style.position = "relative";
-    this._button.title = this._tooltip;
+    this.element.style.display = "inline-block";
+    this.element.style.position = "relative";
+    this.element.title = this._tooltip;
 
-    this._button.appendChild(this._imgRest);
-    this._button.appendChild(this._imgGroup);
-    this._button.appendChild(this._imgHover);
-    this._button.appendChild(this._imgDown);
+    this.element.appendChild(this._imgRest);
+    this.element.appendChild(this._imgGroup);
+    this.element.appendChild(this._imgHover);
+    this.element.appendChild(this._imgDown);
 
     var styleRest = this._imgRest.style;
     var styleGroup = this._imgGroup.style;
@@ -192,7 +194,7 @@ $.extend( $.Button.prototype, $.EventHandler.prototype, {
         }
     },
     get_element: function() {
-        return this._button;
+        return this.element;
     },
     get_tooltip: function() {
         return this._tooltip;
