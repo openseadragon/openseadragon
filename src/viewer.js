@@ -248,33 +248,33 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
         var containerSize = $.Utils.getElementSize( this.container );
 
-        if (!containerSize.equals(this._prevContainerSize)) {
-            this.viewport.resize(containerSize, true); // maintain image position
+        if ( !containerSize.equals( this._prevContainerSize ) ) {
+            this.viewport.resize( containerSize, true ); // maintain image position
             this._prevContainerSize = containerSize;
-            raiseEvent( this, "resize" );
+            this.raiseEvent( "resize" );
         }
 
         var animated = this.viewport.update();
 
-        if (!this._animating && animated) {
-            raiseEvent( this, "animationstart" );
+        if ( !this._animating && animated ) {
+            this.raiseEvent( "animationstart" );
             abortControlsAutoHide( this );
         }
 
-        if (animated) {
+        if ( animated ) {
             this.drawer.update();
-            raiseEvent( this, "animation" );
-        } else if (this._forceRedraw || this.drawer.needsUpdate()) {
+            this.raiseEvent( "animation" );
+        } else if ( this._forceRedraw || this.drawer.needsUpdate() ) {
             this.drawer.update();
             this._forceRedraw = false;
         } else {
             this.drawer.idle();
         }
 
-        if (this._animating && !animated) {
-            raiseEvent( this, "animationfinish" );
+        if ( this._animating && !animated ) {
+            this.raiseEvent( "animationfinish" );
 
-            if (!this._mouseInside) {
+            if ( !this._mouseInside ) {
                 beginControlsAutoHide( this );
             }
         }
@@ -359,7 +359,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
         if ( this._lastOpenStartTime < viewer._lastOpenStartTime ) {
             $.Debug.log( "Ignoring out-of-date open." );
-            raiseEvent( this, "ignore" );
+            this.raiseEvent( "ignore" );
             return;
         }
 
@@ -409,7 +409,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
                 );
             }
         }
-        raiseEvent( this, "open" );
+        this.raiseEvent( "open" );
     },
     close: function () {
         
@@ -545,7 +545,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             }
 
             this._forceRedraw = true;
-            raiseEvent( this, "resize", this );
+            this.raiseEvent( "resize", this );
             this._updateOnce();
         }
     },
@@ -639,20 +639,6 @@ function abortControlsAutoHide( viewer ) {
     viewer.controlsShouldFade = false;
     for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
-    }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Event engine is simple, look up event handler and call.
-//  TODO: add the to EventHandler and call it trigger to align with jQuery
-///////////////////////////////////////////////////////////////////////////////
-function raiseEvent( viewer, eventName, eventArgs) {
-    var  handler = viewer.getHandler( eventName );
-    if ( handler ) {
-        if (!eventArgs) {
-            eventArgs = new Object();
-        }
-        handler( viewer, eventArgs );
     }
 };
 

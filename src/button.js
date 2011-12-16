@@ -12,11 +12,11 @@ $.Button = function( options ) {
 
     $.EventHandler.call( this );
 
-    this._tooltip   = options.tooltip;
-    this._srcRest   = options.srcRest;
-    this._srcGroup  = options.srcGroup;
-    this._srcHover  = options.srcHover;
-    this._srcDown   = options.srcDown;
+    this.tooltip   = options.tooltip;
+    this.srcRest   = options.srcRest;
+    this.srcGroup  = options.srcGroup;
+    this.srcHover  = options.srcHover;
+    this.srcDown   = options.srcDown;
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
@@ -39,205 +39,190 @@ $.Button = function( options ) {
         this.addHandler("onExit", options.onExit );
     }
 
-    this._currentState = $.ButtonState.GROUP;
-    this._tracker = new $.MouseTracker(
+    this.currentState = $.ButtonState.GROUP;
+    this.tracker = new $.MouseTracker(
         this.element, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this._imgRest = $.Utils.makeTransparentImage(this._srcRest);
-    this._imgGroup = $.Utils.makeTransparentImage(this._srcGroup);
-    this._imgHover = $.Utils.makeTransparentImage(this._srcHover);
-    this._imgDown = $.Utils.makeTransparentImage(this._srcDown);
+    this.imgRest    = $.Utils.makeTransparentImage( this.srcRest );
+    this.imgGroup   = $.Utils.makeTransparentImage( this.srcGroup );
+    this.imgHover   = $.Utils.makeTransparentImage( this.srcHover );
+    this.imgDown    = $.Utils.makeTransparentImage( this.srcDown );
 
-    this._fadeDelay = 0;      // begin fading immediately
-    this._fadeLength = 2000;  // fade over a period of 2 seconds
-    this._fadeBeginTime = null;
-    this._shouldFade = false;
+    this.fadeDelay      = 0;      // begin fading immediately
+    this.fadeLength     = 2000;   // fade over a period of 2 seconds
+    this.fadeBeginTime  = null;
+    this.shouldFade     = false;
 
-    this.element.style.display = "inline-block";
+    this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
-    this.element.title = this._tooltip;
+    this.element.title          = this.tooltip;
 
-    this.element.appendChild(this._imgRest);
-    this.element.appendChild(this._imgGroup);
-    this.element.appendChild(this._imgHover);
-    this.element.appendChild(this._imgDown);
+    this.element.appendChild( this.imgRest );
+    this.element.appendChild( this.imgGroup );
+    this.element.appendChild( this.imgHover );
+    this.element.appendChild( this.imgDown );
 
-    var styleRest = this._imgRest.style;
-    var styleGroup = this._imgGroup.style;
-    var styleHover = this._imgHover.style;
-    var styleDown = this._imgDown.style;
+    var styleRest   = this.imgRest.style;
+    var styleGroup  = this.imgGroup.style;
+    var styleHover  = this.imgHover.style;
+    var styleDown   = this.imgDown.style;
 
-    styleGroup.position = styleHover.position = styleDown.position = "absolute";
-    styleGroup.top = styleHover.top = styleDown.top = "0px";
-    styleGroup.left = styleHover.left = styleDown.left = "0px";
-    styleHover.visibility = styleDown.visibility = "hidden";
+    styleGroup.position = 
+        styleHover.position = 
+        styleDown.position = 
+            "absolute";
+
+    styleGroup.top = 
+        styleHover.top = 
+        styleDown.top = 
+            "0px";
+
+    styleGroup.left = 
+        styleHover.left = 
+        styleDown.left = 
+            "0px";
+
+    styleHover.visibility = 
+        styleDown.visibility = 
+            "hidden";
 
     if ( $.Utils.getBrowser() == $.Browser.FIREFOX 
          && $.Utils.getBrowserVersion() < 3 ){
-        styleGroup.top = styleHover.top = styleDown.top = "";
+
+        styleGroup.top = 
+            styleHover.top = 
+            styleDown.top = "";
     }
 
-    this._tracker.enterHandler = $.delegate(this, this._enterHandler);
-    this._tracker.exitHandler = $.delegate(this, this._exitHandler);
-    this._tracker.pressHandler = $.delegate(this, this._pressHandler);
-    this._tracker.releaseHandler = $.delegate(this, this._releaseHandler);
-    this._tracker.clickHandler = $.delegate(this, this._clickHandler);
+    this.tracker.enterHandler   = $.delegate( this, this._enterHandler );
+    this.tracker.exitHandler    = $.delegate( this, this._exitHandler );
+    this.tracker.pressHandler   = $.delegate( this, this._pressHandler );
+    this.tracker.releaseHandler = $.delegate( this, this._releaseHandler );
+    this.tracker.clickHandler   = $.delegate( this, this._clickHandler );
 
-    this._tracker.setTracking( true );
-    this._outTo( $.ButtonState.REST );
+    this.tracker.setTracking( true );
+    outTo( this, $.ButtonState.REST );
 };
 
 $.extend( $.Button.prototype, $.EventHandler.prototype, {
-    _scheduleFade: function() {
-        window.setTimeout($.delegate(this, this._updateFade), 20);
-    },
-    _updateFade: function() {
-        if (this._shouldFade) {
-            var currentTime = new Date().getTime();
-            var deltaTime = currentTime - this._fadeBeginTime;
-            var opacity = 1.0 - deltaTime / this._fadeLength;
-
-            opacity = Math.min(1.0, opacity);
-            opacity = Math.max(0.0, opacity);
-
-            $.Utils.setElementOpacity(this._imgGroup, opacity, true);
-            if (opacity > 0) {
-                this._scheduleFade();    // fade again
-            }
-        }
-    },
-    _beginFading: function() {
-        this._shouldFade = true;
-        this._fadeBeginTime = new Date().getTime() + this._fadeDelay;
-        window.setTimeout($.delegate(this, this._scheduleFade), this._fadeDelay);
-    },
-    _stopFading: function() {
-        this._shouldFade = false;
-        $.Utils.setElementOpacity(this._imgGroup, 1.0, true);
-    },
-    _inTo: function(newState) {
-        if (newState >= $.ButtonState.GROUP && this._currentState == $.ButtonState.REST) {
-            this._stopFading();
-            this._currentState = $.ButtonState.GROUP;
-        }
-
-        if (newState >= $.ButtonState.HOVER && this._currentState == $.ButtonState.GROUP) {
-            this._imgHover.style.visibility = "";
-            this._currentState = $.ButtonState.HOVER;
-        }
-
-        if (newState >= $.ButtonState.DOWN && this._currentState == $.ButtonState.HOVER) {
-            this._imgDown.style.visibility = "";
-            this._currentState = $.ButtonState.DOWN;
-        }
-    },
-    _outTo: function(newState) {
-        if (newState <= $.ButtonState.HOVER && this._currentState == $.ButtonState.DOWN) {
-            this._imgDown.style.visibility = "hidden";
-            this._currentState = $.ButtonState.HOVER;
-        }
-
-        if (newState <= $.ButtonState.GROUP && this._currentState == $.ButtonState.HOVER) {
-            this._imgHover.style.visibility = "hidden";
-            this._currentState = $.ButtonState.GROUP;
-        }
-
-        if (this._newState <= $.ButtonState.REST && this._currentState == $.ButtonState.GROUP) {
-            this._beginFading();
-            this._currentState = $.ButtonState.REST;
-        }
-    },
     _enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        if (buttonDownElmt) {
-            this._inTo($.ButtonState.DOWN);
-            this._raiseEvent("onEnter", this);
-        } else if (!buttonDownAny) {
-            this._inTo($.ButtonState.HOVER);
+        if ( buttonDownElmt ) {
+            inTo( this, $.ButtonState.DOWN );
+            this.raiseEvent( "onEnter", this );
+        } else if ( !buttonDownAny ) {
+            inTo( this, $.ButtonState.HOVER );
         }
     },
     _exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        this._outTo($.ButtonState.GROUP);
-        if (buttonDownElmt) {
-            this._raiseEvent("onExit", this);
+        outTo( this, $.ButtonState.GROUP );
+        if ( buttonDownElmt ) {
+            this.raiseEvent( "onExit", this );
         }
     },
     _pressHandler: function(tracker, position) {
-        this._inTo($.ButtonState.DOWN);
-        this._raiseEvent("onPress", this);
+        inTo( this, $.ButtonState.DOWN );
+        this.raiseEvent( "onPress", this );
     },
     _releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
-        if (insideElmtPress && insideElmtRelease) {
-            this._outTo($.ButtonState.HOVER);
-            this._raiseEvent("onRelease", this);
-        } else if (insideElmtPress) {
-            this._outTo($.ButtonState.GROUP);
+        if ( insideElmtPress && insideElmtRelease ) {
+            outTo( this, $.ButtonState.HOVER );
+            this.raiseEvent( "onRelease", this );
+        } else if ( insideElmtPress ) {
+            outTo( this, $.ButtonState.GROUP );
         } else {
-            this._inTo($.ButtonState.HOVER);
+            inTo( this, $.ButtonState.HOVER );
         }
     },
     _clickHandler: function(tracker, position, quick, shift) {
-        if (quick) {
-            this._raiseEvent("onClick", this);
+        if ( quick ) {
+            this.raiseEvent("onClick", this);
         }
-    },
-    _raiseEvent: function(eventName, eventArgs) {
-        var handler = this.getHandler(eventName);
-
-        if (handler) {
-            if (!eventArgs) {
-                eventArgs = new Object(); // Sys.EventArgs.Empty;
-            }
-
-            handler(this, eventArgs);
-        }
-    },
-    get_element: function() {
-        return this.element;
-    },
-    get_tooltip: function() {
-        return this._tooltip;
-    },
-    set_tooltip: function(value) {
-        this._tooltip = value;
-    },
-    get_config: function() {
-        return this.config;
-    },
-    set_config: function(value) {
-        this.config = value;
-    },
-    get_srcRest: function() {
-        return this._srcRest;
-    },
-    set_srcRest: function(value) {
-        this._srcRest = value;
-    },
-    get_srcGroup: function() {
-        return this._srcGroup;
-    },
-    set_srcGroup: function(value) {
-        this._srcGroup = value;
-    },
-    get_srcHover: function() {
-        return this._srcHover;
-    },
-    set_srcHover: function(value) {
-        this._srcHover = value;
-    },
-    get_srcDown: function() {
-        return this._srcDown;
-    },
-    set_srcDown: function(value) {
-        this._srcDown = value;
     },
     notifyGroupEnter: function() {
-        this._inTo($.ButtonState.GROUP);
+        inTo( this, $.ButtonState.GROUP );
     },
     notifyGroupExit: function() {
-        this._outTo($.ButtonState.REST);
+        outTo( this, $.ButtonState.REST );
     }
 });
+
+
+function scheduleFade( button ) {
+    window.setTimeout(function(){
+        updateFade( button );
+    }, 20 );
+};
+
+function updateFade( button ) {
+    var currentTime,
+        deltaTime,
+        opacity;
+
+    if ( button.shouldFade ) {
+        currentTime = +new Date();
+        deltaTime   = currentTime - this.fadeBeginTime;
+        opacity     = 1.0 - deltaTime / this.fadeLength;
+        opacity     = Math.min( 1.0, opacity );
+        opacity     = Math.max( 0.0, opacity );
+
+        $.Utils.setElementOpacity( button.imgGroup, opacity, true );
+        if ( opacity > 0 ) {
+            // fade again
+            scheduleFade( button );
+        }
+    }
+};
+
+function beginFading( button ) {
+    button.shouldFade = true;
+    button.fadeBeginTime = new Date().getTime() + button.fadeDelay;
+    window.setTimeout(function(){ 
+        scheduleFade( button );
+    }, button.fadeDelay );
+};
+
+function stopFading( button ) {
+    button.shouldFade = false;
+    $.Utils.setElementOpacity( button.imgGroup, 1.0, true );
+};
+
+function inTo( button, newState ) {
+    if ( newState >= $.ButtonState.GROUP && button.currentState == $.ButtonState.REST ) {
+        stopFading( button );
+        button.currentState = $.ButtonState.GROUP;
+    }
+
+    if ( newState >= $.ButtonState.HOVER && button.currentState == $.ButtonState.GROUP ) {
+        button.imgHover.style.visibility = "";
+        button.currentState = $.ButtonState.HOVER;
+    }
+
+    if ( newState >= $.ButtonState.DOWN && button.currentState == $.ButtonState.HOVER ) {
+        button.imgDown.style.visibility = "";
+        button.currentState = $.ButtonState.DOWN;
+    }
+};
+
+
+function outTo( button, newState ) {
+    if ( newState <= $.ButtonState.HOVER && button.currentState == $.ButtonState.DOWN ) {
+        button.imgDown.style.visibility = "hidden";
+        button.currentState = $.ButtonState.HOVER;
+    }
+
+    if ( newState <= $.ButtonState.GROUP && button.currentState == $.ButtonState.HOVER ) {
+        this.imgHover.style.visibility = "hidden";
+        this.currentState = $.ButtonState.GROUP;
+    }
+
+    if ( button.newState <= $.ButtonState.REST && button.currentState == $.ButtonState.GROUP ) {
+        button.beginFading();
+        button.currentState = $.ButtonState.REST;
+    }
+};
+
+
 
 }( OpenSeadragon ));
