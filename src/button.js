@@ -10,6 +10,8 @@ $.ButtonState = {
 
 $.Button = function( options ) {
 
+    var _this = this;
+
     $.EventHandler.call( this );
 
     this.tooltip   = options.tooltip;
@@ -96,50 +98,48 @@ $.Button = function( options ) {
             styleDown.top = "";
     }
 
-    this.tracker.enterHandler   = $.delegate( this, this._enterHandler );
-    this.tracker.exitHandler    = $.delegate( this, this._exitHandler );
-    this.tracker.pressHandler   = $.delegate( this, this._pressHandler );
-    this.tracker.releaseHandler = $.delegate( this, this._releaseHandler );
-    this.tracker.clickHandler   = $.delegate( this, this._clickHandler );
+    //TODO - refactor mousetracer next to avoid this extension
+    $.extend( this.tracker, {
+        enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+            if ( buttonDownElmt ) {
+                inTo( _this, $.ButtonState.DOWN );
+                _this.raiseEvent( "onEnter", _this );
+            } else if ( !buttonDownAny ) {
+                inTo( _this, $.ButtonState.HOVER );
+            }
+        },
+        exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+            outTo( _this, $.ButtonState.GROUP );
+            if ( buttonDownElmt ) {
+                _this.raiseEvent( "onExit", _this );
+            }
+        },
+        pressHandler: function(tracker, position) {
+            inTo( _this, $.ButtonState.DOWN );
+            this.raiseEvent( "onPress", _this );
+        },
+        releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
+            if ( insideElmtPress && insideElmtRelease ) {
+                outTo( _this, $.ButtonState.HOVER );
+                this.raiseEvent( "onRelease", _this );
+            } else if ( insideElmtPress ) {
+                outTo( _this, $.ButtonState.GROUP );
+            } else {
+                inTo( _this, $.ButtonState.HOVER );
+            }
+        },
+        clickHandler: function(tracker, position, quick, shift) {
+            if ( quick ) {
+                _this.raiseEvent("onClick", _this);
+            }
+        }
+    });
 
     this.tracker.setTracking( true );
     outTo( this, $.ButtonState.REST );
 };
 
 $.extend( $.Button.prototype, $.EventHandler.prototype, {
-    _enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        if ( buttonDownElmt ) {
-            inTo( this, $.ButtonState.DOWN );
-            this.raiseEvent( "onEnter", this );
-        } else if ( !buttonDownAny ) {
-            inTo( this, $.ButtonState.HOVER );
-        }
-    },
-    _exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
-        outTo( this, $.ButtonState.GROUP );
-        if ( buttonDownElmt ) {
-            this.raiseEvent( "onExit", this );
-        }
-    },
-    _pressHandler: function(tracker, position) {
-        inTo( this, $.ButtonState.DOWN );
-        this.raiseEvent( "onPress", this );
-    },
-    _releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
-        if ( insideElmtPress && insideElmtRelease ) {
-            outTo( this, $.ButtonState.HOVER );
-            this.raiseEvent( "onRelease", this );
-        } else if ( insideElmtPress ) {
-            outTo( this, $.ButtonState.GROUP );
-        } else {
-            inTo( this, $.ButtonState.HOVER );
-        }
-    },
-    _clickHandler: function(tracker, position, quick, shift) {
-        if ( quick ) {
-            this.raiseEvent("onClick", this);
-        }
-    },
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
     },

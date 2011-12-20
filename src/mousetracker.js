@@ -18,7 +18,7 @@
 
     $.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
         //Start Thatcher - TODO: remove local function definitions in favor of 
-        //               -       a global closre for MouseTracker so the number
+        //               -       a global closure for MouseTracker so the number
         //               -       of Viewers has less memory impact.  Also use 
         //               -       prototype pattern instead of Singleton pattern.
         //End Thatcher
