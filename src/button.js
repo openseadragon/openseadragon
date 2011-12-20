@@ -116,12 +116,12 @@ $.Button = function( options ) {
         },
         pressHandler: function(tracker, position) {
             inTo( _this, $.ButtonState.DOWN );
-            this.raiseEvent( "onPress", _this );
+            _this.raiseEvent( "onPress", _this );
         },
         releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
             if ( insideElmtPress && insideElmtRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
-                this.raiseEvent( "onRelease", _this );
+                _this.raiseEvent( "onRelease", _this );
             } else if ( insideElmtPress ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -213,8 +213,8 @@ function outTo( button, newState ) {
     }
 
     if ( newState <= $.ButtonState.GROUP && button.currentState == $.ButtonState.HOVER ) {
-        this.imgHover.style.visibility = "hidden";
-        this.currentState = $.ButtonState.GROUP;
+        button.imgHover.style.visibility = "hidden";
+        button.currentState = $.ButtonState.GROUP;
     }
 
     if ( button.newState <= $.ButtonState.REST && button.currentState == $.ButtonState.GROUP ) {
