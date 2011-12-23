@@ -300,19 +300,6 @@ $.Viewer = function( options ) {
 };
 
 $.extend($.Viewer.prototype, $.EventHandler.prototype, {
-    
-    _updateMulti: function () {
-        if (!this.source) {
-            return;
-        }
-
-        var beginTime = new Date().getTime();
-
-        updateOnce( viewer );
-        scheduleUpdate( this, arguments.callee, beginTime );
-    },
-
-
 
     addControl: function ( elmt, anchor ) {
         var elmt = $.Utils.getElement( elmt ),
@@ -351,9 +338,11 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
         );
         elmt.style.display = "inline-block";
     },
+
     isOpen: function () {
         return !!this.source;
     },
+
     openDzi: function (xmlUrl, xmlString) {
         var _this = this;
         $.DziTileSourceHelper.createFromXml(
@@ -364,12 +353,14 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             }
         );
     },
+
     openTileSource: function ( tileSource ) {
         var _this = this;
         window.setTimeout( function () {
             _this.open( tileSource );
-        }, 1);
+        }, 1 );
     },
+
     open: function( source ) {
         var _this = this;
 
@@ -413,7 +404,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
         this._animating = false;
         this._forceRedraw = true;
-        scheduleUpdate( this, this._updateMulti );
+        scheduleUpdate( this, updateMulti );
 
         for ( var i = 0; i < this.overlayControls.length; i++ ) {
             var overlay = this.overlayControls[ i ];
@@ -596,15 +587,13 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
 function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
     var currentTime,
-        prevUpdateTime,
         targetTime,
         deltaTime;
 
     if (this._animating) {
-        return window.setTimeout(
-            $.delegate(viewer, updateFunc), 
-            1
-        );
+        return window.setTimeout( function(){
+            updateFunc( viewer );
+        }, 1 );
     }
 
     currentTime     = +new Date();
@@ -612,7 +601,9 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
     targetTime      = prevUpdateTime + 1000 / 60;    // 60 fps ideal
     deltaTime       = Math.max(1, targetTime - currentTime);
     
-    return window.setTimeout($.delegate(viewer, updateFunc), deltaTime);
+    return window.setTimeout( function(){
+        updateFunc( viewer );
+    }, deltaTime );
 };
 
 //provides a sequence in the fade animation
@@ -747,6 +738,18 @@ function getControlIndex( viewer, elmt ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Page update routines ( aka Views - for future reference )
 ///////////////////////////////////////////////////////////////////////////////
+
+function updateMulti( viewer ) {
+    if (!viewer.source) {
+        return;
+    }
+
+    var beginTime = new Date().getTime();
+
+    updateOnce( viewer );
+    scheduleUpdate( viewer, arguments.callee, beginTime );
+};
+
 function updateOnce( viewer ) {
     if ( !viewer.source ) {
         return;
