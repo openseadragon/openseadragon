@@ -126,7 +126,7 @@ $.Viewer = function( options ) {
     this.container      = $.Utils.makeNeutralElement("div");
     this.canvas         = $.Utils.makeNeutralElement("div");
 
-    this._fsBoundsDelta = new $.Point(1, 1);
+    this._fsBoundsDelta     = new $.Point( 1, 1 );
     this._prevContainerSize = null;
     this._lastOpenStartTime = 0;
     this._lastOpenEndTime   = 0;
@@ -195,9 +195,82 @@ $.Viewer = function( options ) {
         }
     }
 
-    this.navControl = null;
+    //////////////////////////////////////////////////////////////////////////
+    // Navigation Controls
+    //////////////////////////////////////////////////////////////////////////
+    this._group = null;
+    this._zooming = false;    // whether we should be continuously zooming
+    this._zoomFactor = null;  // how much we should be continuously zooming by
+    this._lastZoomTime = null;
+
+    this.elmt = null;
+    
+    var beginZoomingInHandler   = $.delegate(this, beginZoomingIn);
+    var endZoomingHandler       = $.delegate(this, endZooming);
+    var doSingleZoomInHandler   = $.delegate(this, doSingleZoomIn);
+    var beginZoomingOutHandler  = $.delegate(this, beginZoomingOut);
+    var doSingleZoomOutHandler  = $.delegate(this, doSingleZoomOut);
+    var onHomeHandler           = $.delegate(this, onHome);
+    var onFullPageHandler       = $.delegate(this, onFullPage);
+
+    var navImages = this.config.navImages;
+
+    var zoomIn = new $.Button({ 
+        config:     this.config, 
+        tooltip:    $.Strings.getString("Tooltips.ZoomIn"), 
+        srcRest:    resolveUrl(this.urlPrefix, navImages.zoomIn.REST), 
+        srcGroup:   resolveUrl(this.urlPrefix, navImages.zoomIn.GROUP), 
+        srcHover:   resolveUrl(this.urlPrefix, navImages.zoomIn.HOVER), 
+        srcDown:    resolveUrl(this.urlPrefix, navImages.zoomIn.DOWN),
+        onPress:    beginZoomingInHandler, 
+        onRelease:  endZoomingHandler, 
+        onClick:    doSingleZoomInHandler, 
+        onEnter:    beginZoomingInHandler, 
+        onExit:     endZoomingHandler 
+    });
+
+    var zoomOut = new $.Button({ 
+        config:     this.config, 
+        tooltip:    $.Strings.getString("Tooltips.ZoomOut"), 
+        srcRest:    resolveUrl(this.urlPrefix, navImages.zoomOut.REST), 
+        srcGroup:   resolveUrl(this.urlPrefix, navImages.zoomOut.GROUP), 
+        srcHover:   resolveUrl(this.urlPrefix, navImages.zoomOut.HOVER), 
+        srcDown:    resolveUrl(this.urlPrefix, navImages.zoomOut.DOWN),
+        onPress:    beginZoomingOutHandler, 
+        onRelease:  endZoomingHandler, 
+        onClick:    doSingleZoomOutHandler, 
+        onEnter:    beginZoomingOutHandler, 
+        onExit:     endZoomingHandler 
+    });
+    var goHome = new $.Button({ 
+        config:     this.config, 
+        tooltip:    $.Strings.getString("Tooltips.Home"), 
+        srcRest:    resolveUrl(this.urlPrefix, navImages.home.REST), 
+        srcGroup:   resolveUrl(this.urlPrefix, navImages.home.GROUP), 
+        srcHover:   resolveUrl(this.urlPrefix, navImages.home.HOVER), 
+        srcDown:    resolveUrl(this.urlPrefix, navImages.home.DOWN),
+        onRelease:  onHomeHandler 
+    });
+    var fullPage = new $.Button({ 
+        config:     this.config, 
+        tooltip:    $.Strings.getString("Tooltips.FullPage"), 
+        srcRest:    resolveUrl(this.urlPrefix, navImages.fullpage.REST), 
+        srcGroup:   resolveUrl(this.urlPrefix, navImages.fullpage.GROUP), 
+        srcHover:   resolveUrl(this.urlPrefix, navImages.fullpage.HOVER), 
+        srcDown:    resolveUrl(this.urlPrefix, navImages.fullpage.DOWN),
+        onRelease:  onFullPageHandler 
+    });
+
+    this._group = new $.ButtonGroup({ 
+        config:     this.config, 
+        buttons:    [ zoomIn, zoomOut, goHome, fullPage ] 
+    });
+
+    this.navControl  = this._group.element;
+    this.navControl[ $.SIGNAL ] = true;   // hack to get our controls to fade
+    this.addHandler( 'open', $.delegate( this, lightUp ) );
+
     if ( this.config.showNavigationControl ) {
-        this.navControl = (new $.NavControl(this)).elmt;
         this.navControl.style.marginRight = "4px";
         this.navControl.style.marginBottom = "4px";
         this.addControl(this.navControl, $.ControlAnchor.BOTTOM_RIGHT);
@@ -719,6 +792,88 @@ function getControlIndex( viewer, elmt ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 
+///////////////////////////////////////////////////////////////////////////////
+// Navigation Controls
+///////////////////////////////////////////////////////////////////////////////
 
+function resolveUrl( prefix, url ) {
+    return prefix ? prefix + url : url;
+};
+
+
+function beginZoomingIn() {
+    this._lastZoomTime = +new Date();
+    this._zoomFactor = this.config.zoomPerSecond;
+    this._zooming = true;
+    scheduleZoom( this );
+}
+
+function beginZoomingOut() {
+    this._lastZoomTime = +new Date();
+    this._zoomFactor = 1.0 / this.config.zoomPerSecond;
+    this._zooming = true;
+    scheduleZoom( this );
+}
+
+function endZooming() {
+    this._zooming = false;
+}
+
+function scheduleZoom( viewer ) {
+    window.setTimeout($.delegate(viewer, doZoom), 10);
+}
+
+function doZoom() {
+    if (this._zooming && this.viewport) {
+        var currentTime = +new Date();
+        var deltaTime = currentTime - this._lastZoomTime;
+        var adjustedFactor = Math.pow(this._zoomFactor, deltaTime / 1000);
+
+        this.viewport.zoomBy(adjustedFactor);
+        this.viewport.applyConstraints();
+        this._lastZoomTime = currentTime;
+        scheduleZoom( this );
+    }
+};
+
+function doSingleZoomIn() {
+    if (this.viewport) {
+        this._zooming = false;
+        this.viewport.zoomBy( 
+            this.config.zoomPerClick / 1.0 
+        );
+        this.viewport.applyConstraints();
+    }
+};
+
+function doSingleZoomOut() {
+    if (this.viewport) {
+        this._zooming = false;
+        this.viewport.zoomBy(
+            1.0 / this.config.zoomPerClick
+        );
+        this.viewport.applyConstraints();
+    }
+};
+
+function lightUp() {
+    this._group.emulateEnter();
+    this._group.emulateExit();
+};
+
+function onHome() {
+    if (this.viewport) {
+        this.viewport.goHome();
+    }
+};
+
+function onFullPage() {
+    this.setFullPage( !this.isFullPage() );
+    this._group.emulateExit();  // correct for no mouseout event on change
+
+    if (this.viewport) {
+        this.viewport.applyConstraints();
+    }
+};
 
 }( OpenSeadragon ));
