@@ -1593,54 +1593,11 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
         var beginTime = new Date().getTime();
 
-        this._updateOnce();
+        updateOnce( viewer );
         scheduleUpdate( this, arguments.callee, beginTime );
     },
 
-    _updateOnce: function () {
-        if ( !this.source ) {
-            return;
-        }
 
-        this.profiler.beginUpdate();
-
-        var containerSize = $.Utils.getElementSize( this.container );
-
-        if ( !containerSize.equals( this._prevContainerSize ) ) {
-            this.viewport.resize( containerSize, true ); // maintain image position
-            this._prevContainerSize = containerSize;
-            this.raiseEvent( "resize" );
-        }
-
-        var animated = this.viewport.update();
-
-        if ( !this._animating && animated ) {
-            this.raiseEvent( "animationstart" );
-            abortControlsAutoHide( this );
-        }
-
-        if ( animated ) {
-            this.drawer.update();
-            this.raiseEvent( "animation" );
-        } else if ( this._forceRedraw || this.drawer.needsUpdate() ) {
-            this.drawer.update();
-            this._forceRedraw = false;
-        } else {
-            this.drawer.idle();
-        }
-
-        if ( this._animating && !animated ) {
-            this.raiseEvent( "animationfinish" );
-
-            if ( !this._mouseInside ) {
-                beginControlsAutoHide( this );
-            }
-        }
-
-        this._animating = animated;
-
-        this.profiler.endUpdate();
-    },
 
     addControl: function ( elmt, anchor ) {
         var elmt = $.Utils.getElement( elmt ),
@@ -1904,7 +1861,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
             this._forceRedraw = true;
             this.raiseEvent( "resize", this );
-            this._updateOnce();
+            updateOnce( this );
         }
     },
 
@@ -2075,7 +2032,50 @@ function getControlIndex( viewer, elmt ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Page update routines ( aka Views - for future reference )
 ///////////////////////////////////////////////////////////////////////////////
+function updateOnce( viewer ) {
+    if ( !viewer.source ) {
+        return;
+    }
 
+    viewer.profiler.beginUpdate();
+
+    var containerSize = $.Utils.getElementSize( viewer.container );
+
+    if ( !containerSize.equals( viewer._prevContainerSize ) ) {
+        viewer.viewport.resize( containerSize, true ); // maintain image position
+        viewer._prevContainerSize = containerSize;
+        viewer.raiseEvent( "resize" );
+    }
+
+    var animated = viewer.viewport.update();
+
+    if ( !viewer._animating && animated ) {
+        viewer.raiseEvent( "animationstart" );
+        abortControlsAutoHide( viewer );
+    }
+
+    if ( animated ) {
+        viewer.drawer.update();
+        viewer.raiseEvent( "animation" );
+    } else if ( viewer._forceRedraw || viewer.drawer.needsUpdate() ) {
+        viewer.drawer.update();
+        viewer._forceRedraw = false;
+    } else {
+        viewer.drawer.idle();
+    }
+
+    if ( viewer._animating && !animated ) {
+        viewer.raiseEvent( "animationfinish" );
+
+        if ( !viewer._mouseInside ) {
+            beginControlsAutoHide( viewer );
+        }
+    }
+
+    viewer._animating = animated;
+
+    viewer.profiler.endUpdate();
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Navigation Controls
