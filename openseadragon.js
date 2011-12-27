@@ -2418,14 +2418,6 @@ $.Job.prototype = {
     }
 };
 
-function onload( job ){
-    finish( job, true );
-};
-
-function onerror( job ){
-    finish( job, false )
-};
-
 function finish( job, success ){
     var image    = job.image,
         callback = job.callback;
