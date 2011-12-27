@@ -1221,17 +1221,6 @@ $.Utils = new $.Utils();
 
 (function( $ ){
     
-$.NavControl = function( viewer ) {
-};
-
-$.NavControl.prototype = {
-
-};
-
-}( OpenSeadragon ));
-
-(function( $ ){
-    
 
 $.ControlAnchor = {
     NONE: 0,
