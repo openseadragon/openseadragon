@@ -2052,9 +2052,7 @@ function updateOnce( viewer ) {
     } else if ( viewer._forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
         viewer._forceRedraw = false;
-    } else {
-        viewer.drawer.idle();
-    }
+    } 
 
     if ( viewer._animating && !animated ) {
         viewer.raiseEvent( "animationfinish" );
@@ -3900,9 +3898,6 @@ $.Drawer.prototype = {
         this._updateActual();
         this._midUpdate = false;
         this._profiler.endUpdate();
-    },
-
-    idle: function() {
     },
 
     loadImage: function(src, callback) {

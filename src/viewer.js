@@ -778,9 +778,7 @@ function updateOnce( viewer ) {
     } else if ( viewer._forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
         viewer._forceRedraw = false;
-    } else {
-        viewer.drawer.idle();
-    }
+    } 
 
     if ( viewer._animating && !animated ) {
         viewer.raiseEvent( "animationfinish" );

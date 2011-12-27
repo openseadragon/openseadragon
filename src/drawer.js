@@ -583,9 +583,6 @@ $.Drawer.prototype = {
         this._profiler.endUpdate();
     },
 
-    idle: function() {
-    },
-
     loadImage: function(src, callback) {
         var _this = this,
             loading = false,
