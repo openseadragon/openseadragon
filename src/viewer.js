@@ -63,7 +63,7 @@ $.Viewer = function( options ) {
             maxZoomPixelRatio:  2,
             visibilityRatio:    0.5,
             springStiffness:    5.0,
-            imageLoaderLimit:   2,
+            imageLoaderLimit:   0,
             clickTimeThreshold: 200,
             clickDistThreshold: 5,
             zoomPerClick:       2.0,

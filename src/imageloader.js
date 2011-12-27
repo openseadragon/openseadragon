@@ -1,5 +1,8 @@
 
 (function( $ ){
+
+    //TODO: make TIMEOUT configurable
+    var TIMEOUT = 5000;
     
 $.ImageLoader = function( imageLoaderLimit ) {
     this.downloading = 0;
@@ -8,29 +11,65 @@ $.ImageLoader = function( imageLoaderLimit ) {
 
 $.ImageLoader.prototype = {
     loadImage: function(src, callback) {
-        var _this = this;
-        if (this.downloading >= this.imageLoaderLimit) {
-            return false;
+        var _this = this,
+            loading = false,
+            image,
+            jobid,
+            complete;
+
+        if ( !this.imageLoaderLimit || this.downloading < this.imageLoaderLimit ) {
+            
+            this.downloading++;
+
+            image = new Image();
+
+            complete = function( imagesrc ){
+                _this.downloading--;
+                if (typeof ( callback ) == "function") {
+                    try {
+                        callback( image );
+                    } catch ( e ) {
+                        $.Debug.error(
+                            e.name + " while executing " + src +" callback: " + e.message, 
+                            e
+                        );
+                    }
+                }
+            };
+
+            image.onload = function(){
+                finish( image, complete, true );
+            };
+
+            image.onabort = image.onerror = function(){
+                finish( image, complete, false );
+            };
+
+            jobid = window.setTimeout( function(){
+                finish( image, complete, false, jobid );
+            }, TIMEOUT );
+
+            loading   = true;
+            image.src = src;
         }
 
-        var job = new $.Job(src, function(src, image){
-            
-            _this.downloading--;
-            if (typeof (callback) == "function") {
-                try {
-                    callback(image);
-                } catch (e) {
-                    $.Debug.error(e.name + " while executing " + src +
-                                " callback: " + e.message, e);
-                }
-            }
-        });
-
-        this.downloading++;
-        job.start();
-
-        return true;
+        return loading;
     }
+};
+
+function finish( image, callback, successful, jobid ){
+
+    image.onload = null;
+    image.onabort = null;
+    image.onerror = null;
+
+    if ( jobid ) {
+        window.clearTimeout( jobid );
+    }
+    window.setTimeout( function() {
+        callback( image.src, successful ? image : null);
+    }, 1 );
+
 };
 
 }( OpenSeadragon ));
