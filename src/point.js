@@ -1,7 +1,7 @@
 
 (function( $ ){
 
-$.Point=$.Point = function(x, y) {
+$.Point = function(x, y) {
     this.x = typeof (x) == "number" ? x : 0;
     this.y = typeof (y) == "number" ? y : 0;
 };
