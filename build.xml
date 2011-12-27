@@ -28,7 +28,6 @@
             <file name="src/strings.js" />
             <file name="src/point.js" />
             <file name="src/profiler.js" />
-            <file name="src/imageloader.js" />
             <file name="src/tilesource.js" />
             <file name="src/dzitilesource.js" />
             <file name="src/button.js" />

@@ -4,6 +4,9 @@
 var QUOTA = 100;    // the max number of images we should keep in memory
 var MIN_PIXEL_RATIO = 0.5;  // the most shrunk a tile should be
 
+//TODO: make TIMEOUT configurable
+var TIMEOUT = 5000;
+
 var browser = $.Utils.getBrowser();
 var browserVer = $.Utils.getBrowserVersion();
 
@@ -25,7 +28,9 @@ $.Drawer = function(source, viewport, elmt) {
     this._source = source;
     this.config = this._viewport.config;
 
-    this._imageLoader = new $.ImageLoader(this.config.imageLoaderLimit);
+    this.downloading = 0;
+    this.imageLoaderLimit = this.config.imageLoaderLimit;
+
     this._profiler = new $.Profiler();
 
     this._minLevel = source.minLevel;
@@ -121,8 +126,15 @@ $.Drawer.prototype = {
     },
 
     _loadTile: function(tile, time) {
-        tile.loading = this._imageLoader.loadImage(tile.url,
-                    $.Utils.createCallback(null, $.delegate(this, this._onTileLoad), tile, time));
+        tile.loading = this.loadImage(
+            tile.url,
+            $.Utils.createCallback(
+                null, 
+                $.delegate(this, this._onTileLoad), 
+                tile, 
+                time
+            )
+        );
     },
 
     _onTileLoad: function(tile, time, image) {
@@ -572,7 +584,68 @@ $.Drawer.prototype = {
     },
 
     idle: function() {
+    },
+
+    loadImage: function(src, callback) {
+        var _this = this,
+            loading = false,
+            image,
+            jobid,
+            complete;
+
+        if ( !this.imageLoaderLimit || this.downloading < this.imageLoaderLimit ) {
+            
+            this.downloading++;
+
+            image = new Image();
+
+            complete = function( imagesrc ){
+                _this.downloading--;
+                if (typeof ( callback ) == "function") {
+                    try {
+                        callback( image );
+                    } catch ( e ) {
+                        $.Debug.error(
+                            e.name + " while executing " + src +" callback: " + e.message, 
+                            e
+                        );
+                    }
+                }
+            };
+
+            image.onload = function(){
+                finishLoadingImage( image, complete, true );
+            };
+
+            image.onabort = image.onerror = function(){
+                finishLoadingImage( image, complete, false );
+            };
+
+            jobid = window.setTimeout( function(){
+                finishLoadingImage( image, complete, false, jobid );
+            }, TIMEOUT );
+
+            loading   = true;
+            image.src = src;
+        }
+
+        return loading;
     }
+};
+
+function finishLoadingImage( image, callback, successful, jobid ){
+
+    image.onload = null;
+    image.onabort = null;
+    image.onerror = null;
+
+    if ( jobid ) {
+        window.clearTimeout( jobid );
+    }
+    window.setTimeout( function() {
+        callback( image.src, successful ? image : null);
+    }, 1 );
+
 };
 
 }( OpenSeadragon ));
