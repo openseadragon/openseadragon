@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.15
+ * OpenSeadragon 0.8.16
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
