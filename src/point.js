@@ -8,38 +8,53 @@ $.Point = function(x, y) {
 
 $.Point.prototype = {
 
-    plus: function(point) {
-        return new $.Point(this.x + point.x, this.y + point.y);
+    plus: function( point ) {
+        return new $.Point(
+            this.x + point.x, 
+            this.y + point.y
+        );
     },
 
-    minus: function(point) {
-        return new $.Point(this.x - point.x, this.y - point.y);
+    minus: function( point ) {
+        return new $.Point(
+            this.x - point.x, 
+            this.y - point.y
+        );
     },
 
-    times: function(factor) {
-        return new $.Point(this.x * factor, this.y * factor);
+    times: function( factor ) {
+        return new $.Point(
+            this.x * factor, 
+            this.y * factor
+        );
     },
 
-    divide: function(factor) {
-        return new $.Point(this.x / factor, this.y / factor);
+    divide: function( factor ) {
+        return new $.Point(
+            this.x / factor, 
+            this.y / factor
+        );
     },
 
     negate: function() {
-        return new $.Point(-this.x, -this.y);
+        return new $.Point( -this.x, -this.y );
     },
 
-    distanceTo: function(point) {
-        return Math.sqrt(Math.pow(this.x - point.x, 2) +
-                        Math.pow(this.y - point.y, 2));
+    distanceTo: function( point ) {
+        return Math.sqrt(
+            Math.pow( this.x - point.x, 2 ) +
+            Math.pow( this.y - point.y, 2 )
+        );
     },
 
-    apply: function(func) {
-        return new $.Point(func(this.x), func(this.y));
+    apply: function( func ) {
+        return new $.Point( func(this.x), func(this.y) );
     },
 
-    equals: function(point) {
-        return (point instanceof $.Point) &&
-                (this.x === point.x) && (this.y === point.y);
+    equals: function( point ) {
+        return  ( point instanceof $.Point ) &&
+                ( this.x === point.x ) && 
+                ( this.y === point.y );
     },
 
     toString: function() {

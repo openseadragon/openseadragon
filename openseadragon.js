@@ -2029,7 +2029,7 @@ function updateOnce( viewer ) {
         return;
     }
 
-    viewer.profiler.beginUpdate();
+    //viewer.profiler.beginUpdate();
 
     var containerSize = $.Utils.getElementSize( viewer.container );
 
@@ -2064,7 +2064,7 @@ function updateOnce( viewer ) {
 
     viewer._animating = animated;
 
-    viewer.profiler.endUpdate();
+    //viewer.profiler.endUpdate();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2226,38 +2226,53 @@ $.Point = function(x, y) {
 
 $.Point.prototype = {
 
-    plus: function(point) {
-        return new $.Point(this.x + point.x, this.y + point.y);
+    plus: function( point ) {
+        return new $.Point(
+            this.x + point.x, 
+            this.y + point.y
+        );
     },
 
-    minus: function(point) {
-        return new $.Point(this.x - point.x, this.y - point.y);
+    minus: function( point ) {
+        return new $.Point(
+            this.x - point.x, 
+            this.y - point.y
+        );
     },
 
-    times: function(factor) {
-        return new $.Point(this.x * factor, this.y * factor);
+    times: function( factor ) {
+        return new $.Point(
+            this.x * factor, 
+            this.y * factor
+        );
     },
 
-    divide: function(factor) {
-        return new $.Point(this.x / factor, this.y / factor);
+    divide: function( factor ) {
+        return new $.Point(
+            this.x / factor, 
+            this.y / factor
+        );
     },
 
     negate: function() {
-        return new $.Point(-this.x, -this.y);
+        return new $.Point( -this.x, -this.y );
     },
 
-    distanceTo: function(point) {
-        return Math.sqrt(Math.pow(this.x - point.x, 2) +
-                        Math.pow(this.y - point.y, 2));
+    distanceTo: function( point ) {
+        return Math.sqrt(
+            Math.pow( this.x - point.x, 2 ) +
+            Math.pow( this.y - point.y, 2 )
+        );
     },
 
-    apply: function(func) {
-        return new $.Point(func(this.x), func(this.y));
+    apply: function( func ) {
+        return new $.Point( func(this.x), func(this.y) );
     },
 
-    equals: function(point) {
-        return (point instanceof $.Point) &&
-                (this.x === point.x) && (this.y === point.y);
+    equals: function( point ) {
+        return  ( point instanceof $.Point ) &&
+                ( this.x === point.x ) && 
+                ( this.y === point.y );
     },
 
     toString: function() {
@@ -2271,117 +2286,82 @@ $.Point.prototype = {
 
 $.Profiler = function() {
 
-    this._midUpdate = false;
-    this._numUpdates = 0;
+    this.midUpdate = false;
+    this.numUpdates = 0;
 
-    this._lastBeginTime = null;
-    this._lastEndTime = null;
+    this.lastBeginTime = null;
+    this.lastEndTime = null;
 
-    this._minUpdateTime = Infinity;
-    this._avgUpdateTime = 0;
-    this._maxUpdateTime = 0;
+    this.minUpdateTime = Infinity;
+    this.avgUpdateTime = 0;
+    this.maxUpdateTime = 0;
 
-    this._minIdleTime = Infinity;
-    this._avgIdleTime = 0;
-    this._maxIdleTime = 0;
+    this.minIdleTime = Infinity;
+    this.avgIdleTime = 0;
+    this.maxIdleTime = 0;
 };
 
 $.Profiler.prototype = {
 
-    getAvgUpdateTime: function() {
-        return this._avgUpdateTime;
-    },
-
-    getMinUpdateTime: function() {
-        return this._minUpdateTime;
-    },
-
-    getMaxUpdateTime: function() {
-        return this._maxUpdateTime;
-    },
-
-
-    getAvgIdleTime: function() {
-        return this._avgIdleTime;
-    },
-
-    getMinIdleTime: function() {
-        return this._minIdleTime;
-    },
-
-    getMaxIdleTime: function() {
-        return this._maxIdleTime;
-    },
-
-
-    isMidUpdate: function() {
-        return this._midUpdate;
-    },
-
-    getNumUpdates: function() {
-        return this._numUpdates;
-    },
-
-
     beginUpdate: function() {
-        if (this._midUpdate) {
+        if (this.midUpdate) {
             this.endUpdate();
         }
 
-        this._midUpdate = true;
-        this._lastBeginTime = new Date().getTime();
+        this.midUpdate = true;
+        this.lastBeginTime = new Date().getTime();
 
-        if (this._numUpdates < 1) {
+        if (this.numUpdates < 1) {
             return;     // this is the first update
         }
 
-        var time = this._lastBeginTime - this._lastEndTime;
+        var time = this.lastBeginTime - this.lastEndTime;
 
-        this._avgIdleTime = (this._avgIdleTime * (this._numUpdates - 1) + time) / this._numUpdates;
+        this.avgIdleTime = (this.avgIdleTime * (this.numUpdates - 1) + time) / this.numUpdates;
 
-        if (time < this._minIdleTime) {
-            this._minIdleTime = time;
+        if (time < this.minIdleTime) {
+            this.minIdleTime = time;
         }
-        if (time > this._maxIdleTime) {
-            this._maxIdleTime = time;
+        if (time > this.maxIdleTime) {
+            this.maxIdleTime = time;
         }
     },
 
     endUpdate: function() {
-        if (!this._midUpdate) {
+        if (!this.midUpdate) {
             return;
         }
 
-        this._lastEndTime = new Date().getTime();
-        this._midUpdate = false;
+        this.lastEndTime = new Date().getTime();
+        this.midUpdate = false;
 
-        var time = this._lastEndTime - this._lastBeginTime;
+        var time = this.lastEndTime - this.lastBeginTime;
 
-        this._numUpdates++;
-        this._avgUpdateTime = (this._avgUpdateTime * (this._numUpdates - 1) + time) / this._numUpdates;
+        this.numUpdates++;
+        this.avgUpdateTime = (this.avgUpdateTime * (this.numUpdates - 1) + time) / this.numUpdates;
 
-        if (time < this._minUpdateTime) {
-            this._minUpdateTime = time;
+        if (time < this.minUpdateTime) {
+            this.minUpdateTime = time;
         }
-        if (time > this._maxUpdateTime) {
-            this._maxUpdateTime = time;
+        if (time > this.maxUpdateTime) {
+            this.maxUpdateTime = time;
         }
     },
 
     clearProfile: function() {
-        this._midUpdate = false;
-        this._numUpdates = 0;
+        this.midUpdate = false;
+        this.numUpdates = 0;
 
-        this._lastBeginTime = null;
-        this._lastEndTime = null;
+        this.lastBeginTime = null;
+        this.lastEndTime = null;
 
-        this._minUpdateTime = Infinity;
-        this._avgUpdateTime = 0;
-        this._maxUpdateTime = 0;
+        this.minUpdateTime = Infinity;
+        this.avgUpdateTime = 0;
+        this.maxUpdateTime = 0;
 
-        this._minIdleTime = Infinity;
-        this._avgIdleTime = 0;
-        this._maxIdleTime = 0;
+        this.minIdleTime = Infinity;
+        this.avgIdleTime = 0;
+        this.maxIdleTime = 0;
     }
 };
 
@@ -3194,7 +3174,6 @@ $.Tile.prototype = {
 }( OpenSeadragon ));
 
 (function( $ ){
-    
 
     $.OverlayPlacement = {
         CENTER: 0,
@@ -3208,15 +3187,26 @@ $.Tile.prototype = {
         LEFT: 8
     };
 
-    $.Overlay = function(elmt, loc, placement) {
+    $.Overlay = function(elmt, location, placement) {
         this.elmt       = elmt;
-        this.scales     = (loc instanceof $.Rect);
-        this.bounds     = new $.Rect(loc.x, loc.y, loc.width, loc.height);
-        this.position   = new $.Point(loc.x, loc.y);
-        this.size       = new $.Point(loc.width, loc.height);
+        this.scales     = location instanceof $.Rect;
+        this.bounds     = new $.Rect(
+            location.x, 
+            location.y,
+            location.width, 
+            location.height)
+        ;
+        this.position   = new $.Point(
+            location.x, 
+            location.y
+        );
+        this.size       = new $.Point(
+            location.width, 
+            location.height
+        );
         this.style      = elmt.style;
         // rects are always top-left
-        this.placement  = loc instanceof $.Point ? 
+        this.placement  = location instanceof $.Point ? 
             placement : 
             $.OverlayPlacement.TOP_LEFT;    
     };
@@ -3275,41 +3265,45 @@ $.Tile.prototype = {
                 style.height = "";
             }
         },
-        drawHTML: function(container) {
-            var elmt = this.elmt;
-            var style = this.style;
-            var scales = this.scales;
+        drawHTML: function( container ) {
+            var elmt    = this.elmt,
+                style   = this.style,
+                scales  = this.scales,
+                position,
+                size;
 
-            if (elmt.parentNode != container) {
-                container.appendChild(elmt);
+            if ( elmt.parentNode != container ) {
+                container.appendChild( elmt );
             }
 
-            if (!scales) {
-                this.size = $.Utils.getElementSize(elmt);
+            if ( !scales ) {
+                this.size = $.Utils.getElementSize( elmt );
             }
 
-            var position = this.position;
-            var size = this.size;
+            position = this.position;
+            size     = this.size;
 
-            this.adjust(position, size);
+            this.adjust( position, size );
 
-            position = position.apply(Math.floor);
-            size = size.apply(Math.ceil);
+            position = position.apply( Math.floor );
+            size     = size.apply( Math.ceil );
 
-            style.left = position.x + "px";
-            style.top = position.y + "px";
+            style.left     = position.x + "px";
+            style.top      = position.y + "px";
             style.position = "absolute";
 
-            if (scales) {
-                style.width = size.x + "px";
+            if ( scales ) {
+                style.width  = size.x + "px";
                 style.height = size.y + "px";
             }
         },
-        update: function(loc, placement) {
-            this.scales = (loc instanceof $.Rect);
-            this.bounds = new $.Rect(loc.x, loc.y, loc.width, loc.height);
-            this.placement = loc instanceof $.Point ?
-                    placement : $.OverlayPlacement.TOP_LEFT;    // rects are always top-left
+        update: function( loc, placement ) {
+            this.scales     = ( loc instanceof $.Rect );
+            this.bounds     = new $.Rect(loc.x, loc.y, loc.width, loc.height);
+            // rects are always top-left
+            this.placement  = loc instanceof $.Point ?
+                    placement : 
+                    $.OverlayPlacement.TOP_LEFT;    
         }
 
     };
@@ -3893,11 +3887,11 @@ $.Drawer.prototype = {
     },
 
     update: function() {
-        this._profiler.beginUpdate();
+        //this._profiler.beginUpdate();
         this._midUpdate = true;
         this._updateActual();
         this._midUpdate = false;
-        this._profiler.endUpdate();
+        //this._profiler.endUpdate();
     },
 
     loadImage: function(src, callback) {

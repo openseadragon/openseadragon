@@ -755,7 +755,7 @@ function updateOnce( viewer ) {
         return;
     }
 
-    viewer.profiler.beginUpdate();
+    //viewer.profiler.beginUpdate();
 
     var containerSize = $.Utils.getElementSize( viewer.container );
 
@@ -790,7 +790,7 @@ function updateOnce( viewer ) {
 
     viewer._animating = animated;
 
-    viewer.profiler.endUpdate();
+    //viewer.profiler.endUpdate();
 };
 
 ///////////////////////////////////////////////////////////////////////////////

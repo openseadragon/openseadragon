@@ -576,11 +576,11 @@ $.Drawer.prototype = {
     },
 
     update: function() {
-        this._profiler.beginUpdate();
+        //this._profiler.beginUpdate();
         this._midUpdate = true;
         this._updateActual();
         this._midUpdate = false;
-        this._profiler.endUpdate();
+        //this._profiler.endUpdate();
     },
 
     loadImage: function(src, callback) {

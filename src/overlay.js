@@ -1,6 +1,5 @@
 
 (function( $ ){
-    
 
     $.OverlayPlacement = {
         CENTER: 0,
@@ -14,15 +13,26 @@
         LEFT: 8
     };
 
-    $.Overlay = function(elmt, loc, placement) {
+    $.Overlay = function(elmt, location, placement) {
         this.elmt       = elmt;
-        this.scales     = (loc instanceof $.Rect);
-        this.bounds     = new $.Rect(loc.x, loc.y, loc.width, loc.height);
-        this.position   = new $.Point(loc.x, loc.y);
-        this.size       = new $.Point(loc.width, loc.height);
+        this.scales     = location instanceof $.Rect;
+        this.bounds     = new $.Rect(
+            location.x, 
+            location.y,
+            location.width, 
+            location.height)
+        ;
+        this.position   = new $.Point(
+            location.x, 
+            location.y
+        );
+        this.size       = new $.Point(
+            location.width, 
+            location.height
+        );
         this.style      = elmt.style;
         // rects are always top-left
-        this.placement  = loc instanceof $.Point ? 
+        this.placement  = location instanceof $.Point ? 
             placement : 
             $.OverlayPlacement.TOP_LEFT;    
     };
@@ -81,41 +91,45 @@
                 style.height = "";
             }
         },
-        drawHTML: function(container) {
-            var elmt = this.elmt;
-            var style = this.style;
-            var scales = this.scales;
+        drawHTML: function( container ) {
+            var elmt    = this.elmt,
+                style   = this.style,
+                scales  = this.scales,
+                position,
+                size;
 
-            if (elmt.parentNode != container) {
-                container.appendChild(elmt);
+            if ( elmt.parentNode != container ) {
+                container.appendChild( elmt );
             }
 
-            if (!scales) {
-                this.size = $.Utils.getElementSize(elmt);
+            if ( !scales ) {
+                this.size = $.Utils.getElementSize( elmt );
             }
 
-            var position = this.position;
-            var size = this.size;
+            position = this.position;
+            size     = this.size;
 
-            this.adjust(position, size);
+            this.adjust( position, size );
 
-            position = position.apply(Math.floor);
-            size = size.apply(Math.ceil);
+            position = position.apply( Math.floor );
+            size     = size.apply( Math.ceil );
 
-            style.left = position.x + "px";
-            style.top = position.y + "px";
+            style.left     = position.x + "px";
+            style.top      = position.y + "px";
             style.position = "absolute";
 
-            if (scales) {
-                style.width = size.x + "px";
+            if ( scales ) {
+                style.width  = size.x + "px";
                 style.height = size.y + "px";
             }
         },
-        update: function(loc, placement) {
-            this.scales = (loc instanceof $.Rect);
-            this.bounds = new $.Rect(loc.x, loc.y, loc.width, loc.height);
-            this.placement = loc instanceof $.Point ?
-                    placement : $.OverlayPlacement.TOP_LEFT;    // rects are always top-left
+        update: function( loc, placement ) {
+            this.scales     = ( loc instanceof $.Rect );
+            this.bounds     = new $.Rect(loc.x, loc.y, loc.width, loc.height);
+            // rects are always top-left
+            this.placement  = loc instanceof $.Point ?
+                    placement : 
+                    $.OverlayPlacement.TOP_LEFT;    
         }
 
     };
