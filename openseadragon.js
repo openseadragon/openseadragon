@@ -2968,11 +2968,11 @@ $.ButtonGroup.prototype = {
 
 (function( $ ){
     
-$.Rect = function(x, y, width, height) {
-    this.x = typeof (x) == "number" ? x : 0;
-    this.y = typeof (y) == "number" ? y : 0;
-    this.width = typeof (width) == "number" ? width : 0;
-    this.height = typeof (height) == "number" ? height : 0;
+$.Rect = function( x, y, width, height ) {
+    this.x = typeof ( x ) == "number" ? x : 0;
+    this.y = typeof ( y ) == "number" ? y : 0;
+    this.width  = typeof ( width )  == "number" ? width : 0;
+    this.height = typeof ( height ) == "number" ? height : 0;
 };
 
 $.Rect.prototype = {
@@ -2981,31 +2981,43 @@ $.Rect.prototype = {
     },
 
     getTopLeft: function() {
-    return new $.Point(this.x, this.y);
+        return new $.Point( this.x, this.y );
     },
 
     getBottomRight: function() {
-    return new $.Point(this.x + this.width, this.y + this.height);
+        return new $.Point(
+            this.x + this.width, 
+            this.y + this.height
+        );
     },
 
     getCenter: function() {
-    return new $.Point(this.x + this.width / 2.0,
-                        this.y + this.height / 2.0);
+        return new $.Point(
+            this.x + this.width / 2.0,
+            this.y + this.height / 2.0
+        );
     },
 
     getSize: function() {
-    return new $.Point(this.width, this.height);
+        return new $.Point( this.width, this.height );
     },
 
     equals: function(other) {
-        return (other instanceof $.Rect) &&
-                (this.x === other.x) && (this.y === other.y) &&
-                (this.width === other.width) && (this.height === other.height);
+        return 
+            ( other instanceof $.Rect ) &&
+            ( this.x === other.x ) && 
+            ( this.y === other.y ) &&
+            ( this.width === other.width ) && 
+            ( this.height === other.height );
     },
 
     toString: function() {
-        return "[" + this.x + "," + this.y + "," + this.width + "x" +
-                this.height + "]";
+        return "[" + 
+            this.x + "," + 
+            this.y + "," + 
+            this.width + "x" +
+            this.height + 
+        "]";
     }
 };
 
@@ -3026,11 +3038,31 @@ $.DisplayRect.prototype.constructor = $.DisplayRect;
 
 (function( $ ){
     
-$.Spring = function(initialValue, config) {
-    this._currentValue = typeof (initialValue) == "number" ? initialValue : 0;
+$.Spring = function( options ) {
+    var args = arguments;
+
+    if( typeof( options ) != 'object' ){
+        //allows backward compatible use of ( initialValue, config ) as 
+        //constructor parameters
+        options = {
+            initial: args.length && typeof ( args[ 0 ] ) == "number" ? 
+                args[ 0 ] : 
+                0,
+            springStiffness: args.length > 1 ? 
+                args[ 1 ].springStiffness : 
+                5.0,
+            animationTime: args.length > 1 ? 
+                args[ 1 ].animationTime : 
+                1.5,
+        };
+    }
+
+    $.extend( true, this, options );
+
+
+    this._currentValue = typeof ( this.initial ) == "number" ? this.initial : 0;
     this._startValue = this._currentValue;
     this._targetValue = this._currentValue;
-    this.config = config;
 
     this._currentTime = new Date().getTime(); // always work in milliseconds
     this._startTime = this._currentTime;
@@ -3038,10 +3070,6 @@ $.Spring = function(initialValue, config) {
 };
 
 $.Spring.prototype = {
-    _transform: function(x) {
-        var s = this.config.springStiffness;
-        return (1.0 - Math.exp(-x * s)) / (1.0 - Math.exp(-s));
-    },
     getCurrent: function() {
         return this._currentValue;
     },
@@ -3061,7 +3089,7 @@ $.Spring.prototype = {
         this._startValue = this._currentValue;
         this._startTime = this._currentTime;
         this._targetValue = target;
-        this._targetTime = this._startTime + 1000 * this.config.animationTime;
+        this._targetTime = this._startTime + 1000 * this.animationTime;
     },
 
     shiftBy: function(delta) {
@@ -3073,9 +3101,15 @@ $.Spring.prototype = {
         this._currentTime = new Date().getTime();
         this._currentValue = (this._currentTime >= this._targetTime) ? this._targetValue :
                 this._startValue + (this._targetValue - this._startValue) *
-                this._transform((this._currentTime - this._startTime) / (this._targetTime - this._startTime));
+                transform( this.springStiffness, (this._currentTime - this._startTime) / (this._targetTime - this._startTime));
     }
 }
+
+
+function transform( stiffness, x ) {
+    return ( 1.0 - Math.exp( stiffness * -x ) ) / 
+        ( 1.0 - Math.exp( -stiffness ) );
+};
 
 }( OpenSeadragon ));
 
