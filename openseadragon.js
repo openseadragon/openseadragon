@@ -3060,18 +3060,23 @@ $.Spring = function( options ) {
     $.extend( true, this, options);
 
 
-    this.currentValue = typeof ( this.initial ) == "number" ? this.initial : 0;
-    this.startValue = this.currentValue;
-    this.targetValue = this.currentValue;
+    this.current = {
+        point: typeof ( this.initial ) == "number" ? 
+            this.initial : 
+            0,
+        time:  new Date().getTime() // always work in milliseconds
+    }
 
-    this.currentTime = new Date().getTime(); // always work in milliseconds
-    this.startTime = this.currentTime;
-    this.targetTime = this.currentTime;
+    this.startValue     = this.current.point;
+    this.startTime      = this.current.time;
+
+    this.targetValue    = this.current.point;
+    this.targetTime     = this.current.time;
 };
 
 $.Spring.prototype = {
     getCurrent: function() {
-        return this.currentValue;
+        return this.current.point;
     },
 
     getTarget: function() {
@@ -3080,14 +3085,14 @@ $.Spring.prototype = {
 
     resetTo: function(target) {
         this.targetValue = target;
-        this.targetTime = this.currentTime;
+        this.targetTime = this.current.time;
         this.startValue = this.targetValue;
         this.startTime = this.targetTime;
     },
 
     springTo: function(target) {
-        this.startValue = this.currentValue;
-        this.startTime = this.currentTime;
+        this.startValue = this.current.point;
+        this.startTime = this.current.time;
         this.targetValue = target;
         this.targetTime = this.startTime + 1000 * this.animationTime;
     },
@@ -3098,14 +3103,14 @@ $.Spring.prototype = {
     },
 
     update: function() {
-        this.currentTime = new Date().getTime();
-        this.currentValue = (this.currentTime >= this.targetTime) ? 
+        this.current.time = new Date().getTime();
+        this.current.point = (this.current.time >= this.targetTime) ? 
             this.targetValue :
             this.startValue + 
                 (this.targetValue - this.startValue) *
                 transform( 
                     this.springStiffness, 
-                    (this.currentTime - this.startTime) / 
+                    (this.current.time - this.startTime) / 
                     (this.targetTime - this.startTime)
                 );
     }
