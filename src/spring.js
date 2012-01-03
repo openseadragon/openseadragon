@@ -62,9 +62,15 @@ $.Spring.prototype = {
 
     update: function() {
         this.currentTime = new Date().getTime();
-        this.currentValue = (this.currentTime >= this.targetTime) ? this.targetValue :
-                this.startValue + (this.targetValue - this.startValue) *
-                transform( this.springStiffness, (this.currentTime - this.startTime) / (this.targetTime - this.startTime));
+        this.currentValue = (this.currentTime >= this.targetTime) ? 
+            this.targetValue :
+            this.startValue + 
+                (this.targetValue - this.startValue) *
+                transform( 
+                    this.springStiffness, 
+                    (this.currentTime - this.startTime) / 
+                    (this.targetTime - this.startTime)
+                );
     }
 }
 

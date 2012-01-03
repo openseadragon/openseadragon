@@ -3057,51 +3057,57 @@ $.Spring = function( options ) {
         };
     }
 
-    $.extend( true, this, options );
+    $.extend( true, this, options);
 
 
-    this._currentValue = typeof ( this.initial ) == "number" ? this.initial : 0;
-    this._startValue = this._currentValue;
-    this._targetValue = this._currentValue;
+    this.currentValue = typeof ( this.initial ) == "number" ? this.initial : 0;
+    this.startValue = this.currentValue;
+    this.targetValue = this.currentValue;
 
-    this._currentTime = new Date().getTime(); // always work in milliseconds
-    this._startTime = this._currentTime;
-    this._targetTime = this._currentTime;
+    this.currentTime = new Date().getTime(); // always work in milliseconds
+    this.startTime = this.currentTime;
+    this.targetTime = this.currentTime;
 };
 
 $.Spring.prototype = {
     getCurrent: function() {
-        return this._currentValue;
+        return this.currentValue;
     },
 
     getTarget: function() {
-        return this._targetValue;
+        return this.targetValue;
     },
 
     resetTo: function(target) {
-        this._targetValue = target;
-        this._targetTime = this._currentTime;
-        this._startValue = this._targetValue;
-        this._startTime = this._targetTime;
+        this.targetValue = target;
+        this.targetTime = this.currentTime;
+        this.startValue = this.targetValue;
+        this.startTime = this.targetTime;
     },
 
     springTo: function(target) {
-        this._startValue = this._currentValue;
-        this._startTime = this._currentTime;
-        this._targetValue = target;
-        this._targetTime = this._startTime + 1000 * this.animationTime;
+        this.startValue = this.currentValue;
+        this.startTime = this.currentTime;
+        this.targetValue = target;
+        this.targetTime = this.startTime + 1000 * this.animationTime;
     },
 
     shiftBy: function(delta) {
-        this._startValue += delta;
-        this._targetValue += delta;
+        this.startValue += delta;
+        this.targetValue += delta;
     },
 
     update: function() {
-        this._currentTime = new Date().getTime();
-        this._currentValue = (this._currentTime >= this._targetTime) ? this._targetValue :
-                this._startValue + (this._targetValue - this._startValue) *
-                transform( this.springStiffness, (this._currentTime - this._startTime) / (this._targetTime - this._startTime));
+        this.currentTime = new Date().getTime();
+        this.currentValue = (this.currentTime >= this.targetTime) ? 
+            this.targetValue :
+            this.startValue + 
+                (this.targetValue - this.startValue) *
+                transform( 
+                    this.springStiffness, 
+                    (this.currentTime - this.startTime) / 
+                    (this.targetTime - this.startTime)
+                );
     }
 }
 
