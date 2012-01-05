@@ -4003,8 +4003,10 @@ function finishLoadingImage( image, callback, successful, jobid ){
 (function( $ ){
     
 $.Viewport = function(containerSize, contentSize, config) {
-    this.zoomPoint = null;
+    //TODO: this.config is something that should go away but currently the 
+    //      Drawer references the viewport.config
     this.config = config;
+    this.zoomPoint = null;
     this.containerSize = containerSize;
     this.contentSize   = contentSize;
     this.contentAspect = contentSize.x / contentSize.y;
@@ -4029,8 +4031,8 @@ $.Viewport = function(containerSize, contentSize, config) {
     this.visibilityRatio   = config.visibilityRatio;
     this.wrapHorizontal    = config.wrapHorizontal;
     this.wrapVertical      = config.wrapVertical;
-    this.homeBounds = new $.Rect(0, 0, 1, this.contentHeight);
-    this.goHome(true);
+    this.homeBounds = new $.Rect( 0, 0, 1, this.contentHeight );
+    this.goHome( true );
     this.update();
 };
 
@@ -4061,7 +4063,7 @@ $.Viewport.prototype = {
         return new $.Point(this.containerSize.x, this.containerSize.y);
     },
 
-    getBounds: function(current) {
+    getBounds: function( current ) {
         var center = this.getCenter(current),
             width  = 1.0 / this.getZoom(current),
             height = width / this.getAspectRatio();
@@ -4074,7 +4076,7 @@ $.Viewport.prototype = {
         );
     },
 
-    getCenter: function(current) {
+    getCenter: function( current ) {
         var centerCurrent = new $.Point(
                 this.centerSpringX.current.value,
                 this.centerSpringY.current.value
@@ -4121,8 +4123,8 @@ $.Viewport.prototype = {
         return centerTarget.plus( deltaZoomPoints );
     },
 
-    getZoom: function(current) {
-        if (current) {
+    getZoom: function( current ) {
+        if ( current ) {
             return this.zoomSpring.current.value;
         } else {
             return this.zoomSpring.target.value;
@@ -4130,52 +4132,64 @@ $.Viewport.prototype = {
     },
 
 
-    applyConstraints: function(immediately) {
-        var actualZoom = this.getZoom();
-        var constrainedZoom = Math.max(Math.min(actualZoom, this.getMaxZoom()), this.getMinZoom());
-        if (actualZoom != constrainedZoom) {
-            this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
+    applyConstraints: function( immediately ) {
+        var actualZoom = this.getZoom(),
+            constrainedZoom = Math.max(
+                Math.min( actualZoom, this.getMaxZoom() ), 
+                this.getMinZoom()
+            ),
+            bounds,
+            horizontalThreshold,
+            verticalThreshold,
+            left,
+            right,
+            top,
+            bottom,
+            dx = 0,
+            dy = 0;
+
+        if ( actualZoom != constrainedZoom ) {
+            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
         }
 
-        var bounds = this.getBounds();
-        var visibilityRatio = this.visibilityRatio;
+        bounds = this.getBounds();
 
-        var horThres = visibilityRatio * bounds.width;
-        var verThres = visibilityRatio * bounds.height;
+        horizontalThreshold = this.visibilityRatio * bounds.width;
+        verticalThreshold   = this.visibilityRatio * bounds.height;
 
-        var left = bounds.x + bounds.width;
-        var right = 1 - bounds.x;
-        var top = bounds.y + bounds.height;
-        var bottom = this.contentHeight - bounds.y;
+        left   = bounds.x + bounds.width;
+        right  = 1 - bounds.x;
+        top    = bounds.y + bounds.height;
+        bottom = this.contentHeight - bounds.y;
 
-        var dx = 0;
         if ( this.wrapHorizontal ) {
-        } else if (left < horThres) {
-            dx = horThres - left;
-        } else if (right < horThres) {
-            dx = right - horThres;
+            //do nothing
+        } else if ( left < horizontalThreshold ) {
+            dx = horizontalThreshold - left;
+        } else if ( right < horizontalThreshold ) {
+            dx = right - horizontalThreshold;
         }
 
-        var dy = 0;
         if ( this.wrapVertical ) {
-        } else if (top < verThres) {
-            dy = verThres - top;
-        } else if (bottom < verThres) {
-            dy = bottom - verThres;
+            //do nothing
+        } else if ( top < verticalThreshold ) {
+            dy = verticalThreshold - top;
+        } else if ( bottom < verticalThreshold ) {
+            dy = bottom - verticalThreshold;
         }
 
-        if (dx || dy) {
+        if ( dx || dy ) {
             bounds.x += dx;
             bounds.y += dy;
-            this.fitBounds(bounds, immediately);
+            this.fitBounds( bounds, immediately );
         }
     },
 
-    ensureVisible: function(immediately) {
-        this.applyConstraints(immediately);
+    ensureVisible: function( immediately ) {
+        this.applyConstraints( immediately );
     },
 
-    fitBounds: function(bounds, immediately) {
+    fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
             newBounds = new $.Rect(
@@ -4187,14 +4201,14 @@ $.Viewport.prototype = {
             oldBounds,
             oldZoom,
             newZoom,
-            refPoint;
+            referencePoint;
 
         if (newBounds.getAspectRatio() >= aspect) {
             newBounds.height = bounds.width / aspect;
-            newBounds.y = center.y - newBounds.height / 2;
+            newBounds.y      = center.y - newBounds.height / 2;
         } else {
             newBounds.width = bounds.height * aspect;
-            newBounds.x = center.x - newBounds.width / 2;
+            newBounds.x     = center.x - newBounds.width / 2;
         }
 
         this.panTo(this.getCenter(true), true);
@@ -4208,7 +4222,7 @@ $.Viewport.prototype = {
             return;
         }
 
-        refPoint = oldBounds.getTopLeft().times( 
+        referencePoint = oldBounds.getTopLeft().times( 
             this.containerSize.x / oldBounds.width 
         ).minus(
             newBounds.getTopLeft().times( 
@@ -4220,7 +4234,7 @@ $.Viewport.prototype = {
         );
 
 
-        this.zoomTo( newZoom, refPoint, immediately );
+        this.zoomTo( newZoom, referencePoint, immediately );
     },
 
     goHome: function(immediately) {
