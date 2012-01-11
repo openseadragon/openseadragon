@@ -66,7 +66,7 @@ $.Drawer = function(source, viewport, elmt) {
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     this.canvas.style.position = "absolute";
-    
+
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild(this.canvas);
@@ -74,21 +74,6 @@ $.Drawer = function(source, viewport, elmt) {
 
 $.Drawer.prototype = {
 
-    _compareTiles: function(prevBest, tile) {
-        if (!prevBest) {
-            return tile;
-        }
-
-        if (tile.visibility > prevBest.visibility) {
-            return tile;
-        } else if (tile.visibility == prevBest.visibility) {
-            if (tile.distance < prevBest.distance) {
-                return tile;
-            }
-        }
-
-        return prevBest;
-    },
     _getNumTiles: function(level) {
         if (!this.cacheNumTiles[level]) {
             this.cacheNumTiles[level] = this.source.getNumTiles(level);
