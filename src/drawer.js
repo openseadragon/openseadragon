@@ -74,14 +74,6 @@ $.Drawer = function(source, viewport, elmt) {
 
 $.Drawer.prototype = {
 
-    _getNumTiles: function(level) {
-        if (!this.cacheNumTiles[level]) {
-            this.cacheNumTiles[level] = this.source.getNumTiles(level);
-        }
-
-        return this.cacheNumTiles[level];
-    },
-
     _getPixelRatio: function(level) {
         if (!this.cachePixelRatios[level]) {
             this.cachePixelRatios[level] = this.source.getPixelRatio(level);
@@ -400,7 +392,7 @@ $.Drawer.prototype = {
 
             var tileTL = this.source.getTileAtPoint(level, viewportTL);
             var tileBR = this.source.getTileAtPoint(level, viewportBR);
-            var numTiles = this._getNumTiles(level);
+            var numTiles = numberOfTiles( this, level );
             var numTilesX = numTiles.x;
             var numTilesY = numTiles.y;
             if (!wrapHorizontal) {
@@ -636,6 +628,15 @@ function finishLoadingImage( image, callback, successful, jobid ){
         callback( image.src, successful ? image : null);
     }, 1 );
 
+};
+
+function numberOfTiles( drawer, level ){
+    
+    if ( !drawer.cacheNumTiles[ level ] ) {
+        drawer.cacheNumTiles[ level ] = drawer.source.getNumTiles( level );
+    }
+
+    return drawer.cacheNumTiles[ level ];
 };
 
 }( OpenSeadragon ));
