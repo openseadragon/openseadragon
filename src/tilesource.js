@@ -6,7 +6,10 @@ $.TileSource = function(width, height, tileSize, tileOverlap, minLevel, maxLevel
     this.dimensions = new $.Point(width, height);
     this.minLevel = minLevel ? minLevel : 0;
     this.maxLevel = maxLevel ? maxLevel :
-            Math.ceil(Math.log(Math.max(width, height)) / Math.log(2));
+        Math.ceil( 
+            Math.log( Math.max( width, height ) ) / 
+            Math.log( 2 ) 
+        );
     this.tileSize = tileSize ? tileSize : 0;
     this.tileOverlap = tileOverlap ? tileOverlap : 0;
 };

@@ -22,7 +22,7 @@ $.Button = function( options ) {
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
-    this.element    = options.element || $.Utils.makeNeutralElement("span");
+    this.element    = options.element || $.makeNeutralElement("span");
     this.config     = options.config;
 
     if ( options.onPress != undefined ){
@@ -47,10 +47,10 @@ $.Button = function( options ) {
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this.imgRest    = $.Utils.makeTransparentImage( this.srcRest );
-    this.imgGroup   = $.Utils.makeTransparentImage( this.srcGroup );
-    this.imgHover   = $.Utils.makeTransparentImage( this.srcHover );
-    this.imgDown    = $.Utils.makeTransparentImage( this.srcDown );
+    this.imgRest    = $.makeTransparentImage( this.srcRest );
+    this.imgGroup   = $.makeTransparentImage( this.srcGroup );
+    this.imgHover   = $.makeTransparentImage( this.srcHover );
+    this.imgDown    = $.makeTransparentImage( this.srcDown );
 
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds
@@ -90,8 +90,8 @@ $.Button = function( options ) {
         styleDown.visibility = 
             "hidden";
 
-    if ( $.Utils.getBrowser() == $.Browser.FIREFOX 
-         && $.Utils.getBrowserVersion() < 3 ){
+    if ( $.Browser.vendor == $.BROWSERS.FIREFOX 
+         && $.Browser.version < 3 ){
 
         styleGroup.top = 
             styleHover.top = 
@@ -167,7 +167,7 @@ function updateFade( button ) {
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
 
-        $.Utils.setElementOpacity( button.imgGroup, opacity, true );
+        $.setElementOpacity( button.imgGroup, opacity, true );
         if ( opacity > 0 ) {
             // fade again
             scheduleFade( button );
@@ -185,7 +185,7 @@ function beginFading( button ) {
 
 function stopFading( button ) {
     button.shouldFade = false;
-    $.Utils.setElementOpacity( button.imgGroup, 1.0, true );
+    $.setElementOpacity( button.imgGroup, 1.0, true );
 };
 
 function inTo( button, newState ) {

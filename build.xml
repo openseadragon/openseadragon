@@ -21,7 +21,6 @@
                   dir=".">
             <file name="src/openseadragon.js" />
             <file name="src/eventhandler.js" />
-            <file name="src/utils.js" />
             <file name="src/mousetracker.js" />
             <file name="src/control.js" />
             <file name="src/viewer.js" />

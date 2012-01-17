@@ -123,8 +123,8 @@ $.Viewer = function( options ) {
     }, options );
 
     this.element        = document.getElementById( options.id );
-    this.container      = $.Utils.makeNeutralElement("div");
-    this.canvas         = $.Utils.makeNeutralElement("div");
+    this.container      = $.makeNeutralElement("div");
+    this.canvas         = $.makeNeutralElement("div");
 
     this._fsBoundsDelta     = new $.Point( 1, 1 );
     this._prevContainerSize = null;
@@ -179,7 +179,7 @@ $.Viewer = function( options ) {
 
     for( i = 0; i < layouts.length; i++ ){
         layout = layouts[ i ]
-        this.controls[ layout ] = $.Utils.makeNeutralElement("div");
+        this.controls[ layout ] = $.makeNeutralElement("div");
         this.controls[ layout ].style.position = 'absolute';
         if ( layout.match( 'left' ) ){
             this.controls[ layout ].style.left = '0px';
@@ -302,7 +302,7 @@ $.Viewer = function( options ) {
 $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
     addControl: function ( elmt, anchor ) {
-        var elmt = $.Utils.getElement( elmt ),
+        var elmt = $.getElement( elmt ),
             div = null;
 
         if ( getControlIndex( this, elmt ) >= 0 ) {
@@ -385,7 +385,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
         }
 
         this.canvas.innerHTML = "";
-        this._prevContainerSize = $.Utils.getElementSize( this.container );
+        this._prevContainerSize = $.getElementSize( this.container );
 
         if( source ){
             this.source = source;
@@ -442,7 +442,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
         this.canvas.innerHTML = "";
     },
     removeControl: function ( elmt ) {
-        var elmt = $.Utils.getElement( elmt ),
+        var elmt = $.getElement( elmt ),
             i    = getControlIndex( this, elmt );
         if ( i >= 0 ) {
             this.controls[ i ].destroy();
@@ -516,7 +516,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.zIndex   = "99999999";
 
             body.appendChild( this.container );
-            this._prevContainerSize = $.Utils.getWindowSize();
+            this._prevContainerSize = $.getWindowSize();
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
@@ -536,7 +536,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.zIndex   = "";
 
             this.element.appendChild( this.container );
-            this._prevContainerSize = $.Utils.getElementSize( this.element );
+            this._prevContainerSize = $.getElementSize( this.element );
             
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();      
@@ -757,7 +757,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    var containerSize = $.Utils.getElementSize( viewer.container );
+    var containerSize = $.getElementSize( viewer.container );
 
     if ( !containerSize.equals( viewer._prevContainerSize ) ) {
         viewer.viewport.resize( containerSize, true ); // maintain image position

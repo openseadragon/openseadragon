@@ -105,12 +105,12 @@ $.DziTileSourceHelper = {
             if (xmlString) {
                 var handler = $.delegate(this, this.processXml);
                 window.setTimeout(function() {
-                    var source = finish(handler, $.Utils.parseXml(xmlString));
+                    var source = finish(handler, $.parseXml(xmlString));
                     callback(source, error);    // call after finish sets error
                 }, 1);
             } else {
                 var handler = $.delegate(this, this.processResponse);
-                $.Utils.makeAjaxRequest(xmlUrl, function(xhr) {
+                $.makeAjaxRequest(xmlUrl, function(xhr) {
                     var source = finish(handler, xhr);
                     callback(source, error);    // call after finish sets error
                 });
@@ -120,9 +120,9 @@ $.DziTileSourceHelper = {
         }
 
         if (xmlString) {
-            return finish($.delegate(this, this.processXml), $.Utils.parseXml(xmlString));
+            return finish($.delegate(this, this.processXml), $.parseXml(xmlString));
         } else {
-            return finish($.delegate(this, this.processResponse), $.Utils.makeAjaxRequest(xmlUrl));
+            return finish($.delegate(this, this.processResponse), $.makeAjaxRequest(xmlUrl));
         }
     },
     processResponse: function(xhr, tilesUrl) {
@@ -139,7 +139,7 @@ $.DziTileSourceHelper = {
         if (xhr.responseXML && xhr.responseXML.documentElement) {
             doc = xhr.responseXML;
         } else if (xhr.responseText) {
-            doc = $.Utils.parseXml(xhr.responseText);
+            doc = $.parseXml(xhr.responseText);
         }
 
         return this.processXml(doc, tilesUrl);
@@ -172,7 +172,7 @@ $.DziTileSourceHelper = {
     processDzi: function(imageNode, tilesUrl) {
         var fileFormat = imageNode.getAttribute("Format");
 
-        if (!$.Utils.imageFormatSupported(fileFormat)) {
+        if (!$.imageFormatSupported(fileFormat)) {
             throw new Error($.Strings.getString("Errors.ImageFormat",
                     fileFormat.toUpperCase()));
         }

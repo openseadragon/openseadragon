@@ -44,7 +44,7 @@ $.Tile.prototype = {
         }
 
         if ( !this.elmt ) {
-            this.elmt       = $.Utils.makeNeutralElement("img");
+            this.elmt       = $.makeNeutralElement("img");
             this.elmt.src   = this.url;
             this.style      = this.elmt.style;
 
@@ -65,7 +65,7 @@ $.Tile.prototype = {
         this.elmt.style.width   = size.x + "px";
         this.elmt.style.height  = size.y + "px";
 
-        $.Utils.setElementOpacity( this.elmt, this.opacity );
+        $.setElementOpacity( this.elmt, this.opacity );
 
     },
 
@@ -79,21 +79,21 @@ $.Tile.prototype = {
             return;
         }
 
-        var position = this.position;
-        var size = this.size;
+        var position = this.position,
+            size     = this.size;
 
         context.globalAlpha = this.opacity;
         context.drawImage(this.image, position.x, position.y, size.x, size.y);
     },
-    
+
     unload: function() {
-        if (this.elmt && this.elmt.parentNode) {
-            this.elmt.parentNode.removeChild(this.elmt);
+        if ( this.elmt && this.elmt.parentNode ) {
+            this.elmt.parentNode.removeChild( this.elmt );
         }
 
-        this.elmt = null;
-        this.image = null;
-        this.loaded = false;
+        this.elmt    = null;
+        this.image   = null;
+        this.loaded  = false;
         this.loading = false;
     }
 };

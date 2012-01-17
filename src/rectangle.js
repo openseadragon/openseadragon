@@ -35,7 +35,7 @@ $.Rect.prototype = {
         return new $.Point( this.width, this.height );
     },
 
-    equals: function(other) {
+    equals: function( other ) {
         return 
             ( other instanceof $.Rect ) &&
             ( this.x === other.x ) && 

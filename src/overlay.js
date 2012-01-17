@@ -103,7 +103,7 @@
             }
 
             if ( !scales ) {
-                this.size = $.Utils.getElementSize( elmt );
+                this.size = $.getElementSize( elmt );
             }
 
             position = this.position;

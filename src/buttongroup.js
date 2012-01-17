@@ -17,7 +17,7 @@
 $.ButtonGroup = function( options ) {
 
     this.buttons = options.buttons;
-    this.element = options.group || $.Utils.makeNeutralElement("span");
+    this.element = options.group || $.makeNeutralElement("span");
     this.config  = options.config;
     this.tracker = new $.MouseTracker(
         this.element, 

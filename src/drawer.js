@@ -8,14 +8,14 @@ var // the max number of images we should keep in memory
     //TODO: make TIMEOUT configurable
     TIMEOUT             = 5000,
 
-    BROWSER             = $.Utils.getBrowser(),
-    BROWSER_VERSION     = $.Utils.getBrowserVersion(),
+    BROWSER             = $.Browser.vendor,
+    BROWSER_VERSION     = $.Browser.version,
 
     SUBPIXEL_RENDERING = (
-        ( BROWSER == $.Browser.FIREFOX ) ||
-        ( BROWSER == $.Browser.OPERA )   ||
-        ( BROWSER == $.Browser.SAFARI && BROWSER_VERSION >= 4 ) ||
-        ( BROWSER == $.Browser.CHROME && BROWSER_VERSION >= 2 )
+        ( BROWSER == $.BROWSERS.FIREFOX ) ||
+        ( BROWSER == $.BROWSERS.OPERA )   ||
+        ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
+        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
     ),
 
     USE_CANVAS =
@@ -24,8 +24,8 @@ var // the max number of images we should keep in memory
 
 $.Drawer = function(source, viewport, elmt) {
 
-    this.container  = $.Utils.getElement(elmt);
-    this.canvas     = $.Utils.makeNeutralElement(USE_CANVAS ? "canvas" : "div");
+    this.container  = $.getElement( elmt );
+    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
     this.context    = USE_CANVAS ? this.canvas.getContext("2d") : null;
     this.viewport   = viewport;
     this.source     = source;
@@ -74,7 +74,7 @@ $.Drawer = function(source, viewport, elmt) {
 
 $.Drawer.prototype = {
 
-    _getPixelRatio: function(level) {
+    getPixelRatio: function(level) {
         if (!this.cachePixelRatios[level]) {
             this.cachePixelRatios[level] = this.source.getPixelRatio(level);
         }
@@ -114,7 +114,7 @@ $.Drawer.prototype = {
     _loadTile: function(tile, time) {
         tile.loading = this.loadImage(
             tile.url,
-            $.Utils.createCallback(
+            $.createCallback(
                 null, 
                 $.delegate(this, this._onTileLoad), 
                 tile, 
@@ -507,7 +507,7 @@ $.Drawer.prototype = {
 
 
     addOverlay: function(elmt, loc, placement) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
 
         if (this._getOverlayIndex(elmt) >= 0) {
             return;     // they're trying to add a duplicate overlay
@@ -518,7 +518,7 @@ $.Drawer.prototype = {
     },
 
     updateOverlay: function(elmt, loc, placement) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {
@@ -528,7 +528,7 @@ $.Drawer.prototype = {
     },
 
     removeOverlay: function(elmt) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {

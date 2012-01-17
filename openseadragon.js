@@ -3,7 +3,7 @@
  * (c) 2010 OpenSeadragon
  * (c) 2010 CodePlex Foundation
  *
- * OpenSeadragon 0.8.18
+ * OpenSeadragon 0.8.19
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -197,8 +197,557 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         return target;
     };
 
+    //The following functions are originally from the Openseadragon Utils 
+    //module but have been moved to Openseadragon to avoid the Utils anti-
+    //pattern.  Not all of the code is A-grade compared to equivalent functions
+    // from libraries like jquery, but until we need better we'll leave those
+    //orignally developed by the project.
+    $.BROWSERS = {
+        UNKNOWN:    0,
+        IE:         1,
+        FIREFOX:    2,
+        SAFARI:     3,
+        CHROME:     4,
+        OPERA:      5
+    };
+
+    $.Browser = {
+        vendor:     $.BROWSERS.UNKNOWN,
+        version:    0,
+        alpha:      true
+    };
+
+    var ACTIVEX = [
+            "Msxml2.XMLHTTP", 
+            "Msxml3.XMLHTTP", 
+            "Microsoft.XMLHTTP"
+        ],  
+        FILEFORMATS = {
+            "bmp":  false,
+            "jpeg": true,
+            "jpg":  true,
+            "png":  true,
+            "tif":  false,
+            "wdp":  false
+        },
+        URLPARAMS = {};
+
+    (function() {
+
+        var app = navigator.appName,
+            ver = navigator.appVersion,
+            ua  = navigator.userAgent;
+
+        switch( navigator.appName ){
+            case "Microsoft Internet Explorer":
+                if( !!window.attachEvent && 
+                    !!window.ActiveXObject ) {
+
+                    $.Browser.vendor = $.BROWSERS.IE;
+                    $.Browser.version = parseFloat(
+                        ua.substring( 
+                            ua.indexOf( "MSIE" ) + 5, 
+                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
+                        );
+                }
+                break;
+            case "Netscape":
+                if( !!window.addEventListener ){
+                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.FIREFOX;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
+                        );
+                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
+                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
+                            $.BROWSERS.CHROME : 
+                            $.BROWSERS.SAFARI;
+                        $.Browser.version = parseFloat(
+                            ua.substring( 
+                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
+                                ua.indexOf( "Safari" )
+                            )
+                        );
+                    }
+                }
+                break;
+            case "Opera":
+                $.Browser.vendor = $.BROWSERS.OPERA;
+                $.Browser.version = parseFloat( ver );
+                break;
+        }
+
+
+        var query = window.location.search.substring( 1 ),    // ignore '?'
+            parts = query.split('&'),
+            part,
+            sep,
+            i;
+
+        for ( i = 0; i < parts.length; i++ ) {
+            part = parts[ i ];
+            sep  = part.indexOf( '=' );
+
+            if ( sep > 0 ) {
+                URLPARAMS[ part.substring( 0, sep ) ] =
+                    decodeURIComponent( part.substring( sep + 1 ) );
+            }
+        }
+
+        //determine if this browser supports 
+        $.Browser.alpha = !( 
+            $.Browser.vendor == $.BROWSERS.IE || (
+                $.Browser.vendor == $.BROWSERS.CHROME && 
+                $.Browser.version < 2
+            )
+        );
+
+    })();
+
+    //TODO: $.Debug is often used inside a try/catch block which generally
+    //      prevents allows errors to occur without detection until a debugger
+    //      is attached.  Although I've been guilty of the same anti-pattern
+    //      I eventually was convinced that errors should naturally propogate in
+    //      all but the most special cases.
     $.Debug = window.console ? window.console : function(){};
 
+
+    $.extend( $, {
+
+        getElement: function( element ) {
+            if (typeof ( element ) == "string") {
+                element = document.getElementById( element );
+            }
+            return element;
+        },
+        
+        getOffsetParent: function( element, isFixed ) {
+            if ( isFixed && element != document.body ) {
+                return document.body;
+            } else {
+                return element.offsetParent;
+            }
+        },
+
+        getElementPosition: function( element ) {
+            var element = $.getElement( element );
+
+            var isFixed = $.getElementStyle( element ).position == "fixed",
+                offsetParent = $.getOffsetParent( element, isFixed ),
+                result  = new $.Point();
+
+            while ( offsetParent ) {
+
+                result.x += element.offsetLeft;
+                result.y += element.offsetTop;
+
+                if ( isFixed ) {
+                    result = result.plus( $.getPageScroll() );
+                }
+
+                element = offsetParent;
+                isFixed = $.getElementStyle( element ).position == "fixed";
+                offsetParent = $.getOffsetParent( element, isFixed );
+            }
+
+            return result;
+        },
+
+        getElementSize: function( element ) {
+            var element = $.getElement( element );
+
+            return new $.Point(
+                element.clientWidth, 
+                element.clientHeight
+            );
+        },
+
+        getElementStyle: function( element ) {
+            var element = $.getElement( element );
+
+            if ( element.currentStyle ) {
+                return element.currentStyle;
+            } else if ( window.getComputedStyle ) {
+                return window.getComputedStyle( element, "" );
+            } else {
+                throw new Error( "Unknown element style, no known technique." );
+            }
+        },
+
+        getEvent: function( event ) {
+            return event ? event : window.event;
+        },
+
+        getMousePosition: function( event ) {
+            var event = $.getEvent( event );
+
+            var result = new $.Point();
+
+            if ( typeof( event.pageX ) == "number" ) {
+                result.x = event.pageX;
+                result.y = event.pageY;
+            } else if ( typeof( event.clientX ) == "number" ) {
+
+                result.x = 
+                    event.clientX + 
+                    document.body.scrollLeft + 
+                    document.documentElement.scrollLeft;
+                result.y = 
+                    event.clientY + 
+                    document.body.scrollTop + 
+                    document.documentElement.scrollTop;
+            } else {
+                throw new Error(
+                    "Unknown event mouse position, no known technique."
+                );
+            }
+            
+            return result;
+        },
+
+        getPageScroll: function() {
+            var result  = new $.Point(),
+                docElmt = document.documentElement || {},
+                body    = document.body || {};
+
+            if ( typeof( window.pageXOffset ) == "number" ) {
+                result.x = window.pageXOffset;
+                result.y = window.pageYOffset;
+            } else if ( body.scrollLeft || body.scrollTop ) {
+                result.x = body.scrollLeft;
+                result.y = body.scrollTop;
+            } else if ( docElmt.scrollLeft || docElmt.scrollTop ) {
+                result.x = docElmt.scrollLeft;
+                result.y = docElmt.scrollTop;
+            }
+
+            return result;
+        },
+
+        getWindowSize: function() {
+            var result  = new $.Point(),
+                docElmt = document.documentElement || {},
+                body    = document.body || {};
+
+            if ( typeof( window.innerWidth ) == 'number' ) {
+                result.x = window.innerWidth;
+                result.y = window.innerHeight;
+            } else if ( docElmt.clientWidth || docElmt.clientHeight ) {
+                result.x = docElmt.clientWidth;
+                result.y = docElmt.clientHeight;
+            } else if ( body.clientWidth || body.clientHeight ) {
+                result.x = body.clientWidth;
+                result.y = body.clientHeight;
+            } else {
+                throw new Error("Unknown window size, no known technique.");
+            }
+
+            return result;
+        },
+
+        imageFormatSupported: function( extension ) {
+            var extension = extension ? extension : "";
+            return !!FILEFORMATS[ extension.toLowerCase() ];
+        },
+
+        makeCenteredNode: function( element ) {
+            var element = $.getElement( element );
+
+            var div      = $.makeNeutralElement( "div" ),
+                html     = [],
+                innerDiv,
+                innerDivs;
+
+            //TODO: I dont understand the use of # inside the style attributes
+            //      below.  Invetigate the results of the constructed html in
+            //      the browser and clean up the mark-up to make this clearer.
+            html.push('<div style="display:table; height:100%; width:100%;');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('#position:relative; overflow:hidden; text-align:left;">');
+            html.push('<div style="#position:absolute; #top:50%; width:100%; ');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('display:table-cell; vertical-align:middle;">');
+            html.push('<div style="#position:relative; #top:-50%; width:100%; ');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('text-align:center;"></div></div></div>');
+
+            div.innerHTML = html.join( '' );
+            div           = div.firstChild;
+
+            innerDiv    = div;
+            innerDivs   = div.getElementsByTagName( "div" );
+            while ( innerDivs.length > 0 ) {
+                innerDiv  = innerDivs[ 0 ];
+                innerDivs = innerDiv.getElementsByTagName( "div" );
+            }
+
+            innerDiv.appendChild( element );
+
+            return div;
+        },
+
+        makeNeutralElement: function( tagName ) {
+            var element = document.createElement( tagName ),
+                style   = element.style;
+
+            style.background = "transparent none";
+            style.border     = "none";
+            style.margin     = "0px";
+            style.padding    = "0px";
+            style.position   = "static";
+
+            return element;
+        },
+
+        makeTransparentImage: function( src ) {
+            var img     = $.makeNeutralElement( "img" ),
+                element = null;
+
+            if ( $.Browser.vendor == $.BROWSERS.IE && 
+                 $.Browser.version < 7 ) {
+
+                element = $.makeNeutralElement("span");
+                element.style.display = "inline-block";
+
+                img.onload = function() {
+                    element.style.width  = element.style.width || img.width + "px";
+                    element.style.height = element.style.height || img.height + "px";
+
+                    img.onload = null;
+                    img = null;     // to prevent memory leaks in IE
+                };
+
+                img.src = src;
+                element.style.filter =
+                    "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
+                    src + 
+                    "', sizingMethod='scale')";
+
+            } else {
+
+                element = img;
+                element.src = src;
+
+            }
+
+            return element;
+        },
+
+        setElementOpacity: function( element, opacity, usesAlpha ) {
+            var element = $.getElement( element );
+
+            var previousFilter,
+                ieOpacity,
+                ieFilter;
+
+            if ( usesAlpha && !$.Browser.alpha ) {
+                opacity = Math.round( opacity );
+            }
+
+            if ( opacity < 1 ) {
+                element.style.opacity = opacity;
+            } else {
+                element.style.opacity = "";
+            }
+
+            if ( opacity == 1 ) {
+                prevFilter = element.style.filter || "";
+                element.style.filter = prevFilter.replace(/alpha\(.*?\)/g, "");
+                return;
+            }
+
+            ieOpacity = Math.round( 100 * opacity );
+            ieFilter  = " alpha(opacity=" + ieOpacity + ") ";
+
+            //TODO: find out why this uses a try/catch instead of a predetermined
+            //      routine or at least an if/elseif/else
+            try {
+                if ( element.filters && element.filters.alpha ) {
+                    element.filters.alpha.opacity = ieOpacity;
+                } else {
+                    element.style.filter += ieFilter;
+                }
+            } catch ( e ) {
+                element.style.filter += ieFilter;
+            }
+        },
+
+        addEvent: function( element, eventName, handler, useCapture ) {
+            var element = $.getElement( element );
+
+            //TODO: Why do this if/else on every method call instead of just
+            //      defining this function once based on the same logic
+            if ( element.addEventListener ) {
+                element.addEventListener( eventName, handler, useCapture );
+            } else if ( element.attachEvent ) {
+                element.attachEvent( "on" + eventName, handler );
+                if ( useCapture && element.setCapture ) {
+                    element.setCapture();
+                }
+            } else {
+                throw new Error(
+                    "Unable to attach event handler, no known technique."
+                );
+            }
+        },
+
+        removeEvent: function( element, eventName, handler, useCapture ) {
+            var element = $.getElement( element );
+
+            //TODO: Why do this if/else on every method call instead of just
+            //      defining this function once based on the same logic
+            if ( element.removeEventListener ) {
+                element.removeEventListener( eventName, handler, useCapture );
+            } else if ( element.detachEvent ) {
+                element.detachEvent("on" + eventName, handler);
+                if ( useCapture && element.releaseCapture ) {
+                    element.releaseCapture();
+                }
+            } else {
+                throw new Error(
+                    "Unable to detach event handler, no known technique."
+                );
+            }
+        },
+
+        cancelEvent: function( event ) {
+            var event = $.getEvent( event );
+
+            if ( event.preventDefault ) {
+                event.preventDefault();     // W3C for preventing default
+            }
+
+            event.cancel = true;            // legacy for preventing default
+            event.returnValue = false;      // IE for preventing default
+        },
+
+        stopEvent: function( event ) {
+            var event = $.getEvent( event );
+
+            if ( event.stopPropagation ) {
+                event.stopPropagation();    // W3C for stopping propagation
+            }
+
+            event.cancelBubble = true;      // IE for stopping propagation
+        },
+
+        createCallback: function( object, method ) {
+            //TODO: This pattern is painful to use and debug.  It's much cleaner
+            //      to use pinning plus anonymous functions.  Get rid of this
+            //      pattern!
+            var initialArgs = [],
+                i;
+            for ( i = 2; i < arguments.length; i++ ) {
+                initialArgs.push( arguments[ i ] );
+            }
+
+            return function() {
+                var args = initialArgs.concat( [] ),
+                    i;
+                for ( i = 0; i < arguments.length; i++ ) {
+                    args.push( arguments[ i ] );
+                }
+
+                return method.apply( object, args );
+            };
+        },
+
+        getUrlParameter: function( key ) {
+            var value = URLPARAMS[ key ];
+            return value ? value : null;
+        },
+
+        makeAjaxRequest: function( url, callback ) {
+            var async   = typeof( callback ) == "function",
+                request = null,
+                actual,
+                i;
+
+            if ( async ) {
+                actual = callback;
+                callback = function() {
+                    window.setTimeout(
+                        $.createCallback( null, actual, request ), 
+                        1
+                    );
+                };
+            }
+
+            if ( window.ActiveXObject ) {
+                //TODO: very bad...Why check every time using try/catch when
+                //      we could determine once at startup which activeX object
+                //      was supported.  This will have significant impact on 
+                //      performance for IE Browsers
+                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                    try {
+                        request = new ActiveXObject( ACTIVEX[ i ] );
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            } else if ( window.XMLHttpRequest ) {
+                request = new XMLHttpRequest();
+            }
+
+            if ( !request ) {
+                throw new Error( "Browser doesn't support XMLHttpRequest." );
+            }
+
+
+            if ( async ) {
+                request.onreadystatechange = function() {
+                    if ( request.readyState == 4) {
+                        request.onreadystatechange = new function() { };
+                        callback();
+                    }
+                };
+            }
+
+            try {
+                request.open( "GET", url, async );
+                request.send( null );
+            } catch (e) {
+                $.Debug.log(e.name + " while making AJAX request: " + e.message);
+
+                request.onreadystatechange = null;
+                request = null;
+
+                if ( async ) {
+                    callback();
+                }
+            }
+
+            return async ? null : request;
+        },
+
+        parseXml: function( string ) {
+            //TODO: yet another example where we can determine the correct
+            //      implementation once at start-up instead of everytime we use
+            //      the function.
+            var xmlDoc = null,
+                parser;
+
+            if ( window.ActiveXObject ) {
+
+                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                xmlDoc.async = false;
+                xmlDoc.loadXML( string );
+
+            } else if ( window.DOMParser ) {
+
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString( string, "text/xml" );
+                
+            } else {
+                throw new Error( "Browser doesn't support XML DOM." );
+            }
+
+            return xmlDoc;
+        }
+    });
+
+    
 }( OpenSeadragon ));
 
 (function($){
@@ -261,514 +810,6 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 }( OpenSeadragon ));
 
-/**
- *
- * TODO: all of utils should be moved to the object literal namespace 
- * OpenSeadragon for less indirection.  If it's useful, it's useful
- * without the name 'utils'.
- *
- **/
-
-OpenSeadragon.Utils = OpenSeadragon.Utils  || function(){};
-
-(function( $ ){
-
-$.Utils = function() {
-
-
-    var Browser = {
-        UNKNOWN: 0,
-        IE: 1,
-        FIREFOX: 2,
-        SAFARI: 3,
-        CHROME: 4,
-        OPERA: 5
-    };
-
-    $.Browser = Browser;
-
-
-    var self = this;
-
-    var arrActiveX = ["Msxml2.XMLHTTP", "Msxml3.XMLHTTP", "Microsoft.XMLHTTP"];
-    var fileFormats = {
-        "bmp": false,
-        "jpeg": true,
-        "jpg": true,
-        "png": true,
-        "tif": false,
-        "wdp": false
-    };
-
-    var browser = Browser.UNKNOWN;
-    var browserVersion = 0;
-    var badAlphaBrowser = false;    // updated in constructor
-
-    var urlParams = {};
-
-
-    (function() {
-
-
-        var app = navigator.appName;
-        var ver = navigator.appVersion;
-        var ua = navigator.userAgent;
-
-        if (app == "Microsoft Internet Explorer" &&
-                !!window.attachEvent && !!window.ActiveXObject) {
-
-            var ieOffset = ua.indexOf("MSIE");
-            browser = Browser.IE;
-            browserVersion = parseFloat(
-                    ua.substring(ieOffset + 5, ua.indexOf(";", ieOffset)));
-
-        } else if (app == "Netscape" && !!window.addEventListener) {
-
-            var ffOffset = ua.indexOf("Firefox");
-            var saOffset = ua.indexOf("Safari");
-            var chOffset = ua.indexOf("Chrome");
-
-            if (ffOffset >= 0) {
-                browser = Browser.FIREFOX;
-                browserVersion = parseFloat(ua.substring(ffOffset + 8));
-            } else if (saOffset >= 0) {
-                var slash = ua.substring(0, saOffset).lastIndexOf("/");
-                browser = (chOffset >= 0) ? Browser.CHROME : Browser.SAFARI;
-                browserVersion = parseFloat(ua.substring(slash + 1, saOffset));
-            }
-
-        } else if (app == "Opera" && !!window.opera && !!window.attachEvent) {
-
-            browser = Browser.OPERA;
-            browserVersion = parseFloat(ver);
-
-        }
-
-
-        var query = window.location.search.substring(1);    // ignore '?'
-        var parts = query.split('&');
-
-        for (var i = 0; i < parts.length; i++) {
-            var part = parts[i];
-            var sep = part.indexOf('=');
-
-            if (sep > 0) {
-                urlParams[part.substring(0, sep)] =
-                        decodeURIComponent(part.substring(sep + 1));
-            }
-        }
-
-
-        badAlphaBrowser = (browser == Browser.IE ||
-                (browser == Browser.CHROME && browserVersion < 2));
-
-    })();
-
-
-    function getOffsetParent(elmt, isFixed) {
-        if (isFixed && elmt != document.body) {
-            return document.body;
-        } else {
-            return elmt.offsetParent;
-        }
-    }
-
-
-    this.getBrowser = function() {
-        return browser;
-    };
-
-    this.getBrowserVersion = function() {
-        return browserVersion;
-    };
-
-    this.getElement = function(elmt) {
-        if (typeof (elmt) == "string") {
-            elmt = document.getElementById(elmt);
-        }
-        return elmt;
-    };
-
-    this.getElementPosition = function(elmt) {
-        var elmt = self.getElement(elmt);
-        var result = new $.Point();
-
-
-        var isFixed = self.getElementStyle(elmt).position == "fixed";
-        var offsetParent = getOffsetParent(elmt, isFixed);
-
-        while (offsetParent) {
-            result.x += elmt.offsetLeft;
-            result.y += elmt.offsetTop;
-
-            if (isFixed) {
-                result = result.plus(self.getPageScroll());
-            }
-
-            elmt = offsetParent;
-            isFixed = self.getElementStyle(elmt).position == "fixed";
-            offsetParent = getOffsetParent(elmt, isFixed);
-        }
-
-        return result;
-    };
-
-    this.getElementSize = function(elmt) {
-        var elmt = self.getElement(elmt);
-        return new $.Point(elmt.clientWidth, elmt.clientHeight);
-    };
-
-    this.getElementStyle = function(elmt) {
-        var elmt = self.getElement(elmt);
-
-        if (elmt.currentStyle) {
-            return elmt.currentStyle;
-        } else if (window.getComputedStyle) {
-            return window.getComputedStyle(elmt, "");
-        } else {
-            $.Debug.fail("Unknown element style, no known technique.");
-        }
-    };
-
-    this.getEvent = function(event) {
-        return event ? event : window.event;
-    };
-
-    this.getMousePosition = function(event) {
-        var event = self.getEvent(event);
-        var result = new $.Point();
-
-
-        if (typeof (event.pageX) == "number") {
-            result.x = event.pageX;
-            result.y = event.pageY;
-        } else if (typeof (event.clientX) == "number") {
-            result.x = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-            result.y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-        } else {
-            $.Debug.fail("Unknown event mouse position, no known technique.");
-        }
-
-        return result;
-    };
-
-    this.getPageScroll = function() {
-        var result = new $.Point();
-        var docElmt = document.documentElement || {};
-        var body = document.body || {};
-
-
-        if (typeof (window.pageXOffset) == "number") {
-            result.x = window.pageXOffset;
-            result.y = window.pageYOffset;
-        } else if (body.scrollLeft || body.scrollTop) {
-            result.x = body.scrollLeft;
-            result.y = body.scrollTop;
-        } else if (docElmt.scrollLeft || docElmt.scrollTop) {
-            result.x = docElmt.scrollLeft;
-            result.y = docElmt.scrollTop;
-        }
-
-
-        return result;
-    };
-
-    this.getWindowSize = function() {
-        var result = new $.Point();
-        var docElmt = document.documentElement || {};
-        var body = document.body || {};
-
-
-
-        if (typeof (window.innerWidth) == 'number') {
-            result.x = window.innerWidth;
-            result.y = window.innerHeight;
-        } else if (docElmt.clientWidth || docElmt.clientHeight) {
-            result.x = docElmt.clientWidth;
-            result.y = docElmt.clientHeight;
-        } else if (body.clientWidth || body.clientHeight) {
-            result.x = body.clientWidth;
-            result.y = body.clientHeight;
-        } else {
-            $.Debug.fail("Unknown window size, no known technique.");
-        }
-
-        return result;
-    };
-
-    this.imageFormatSupported = function(ext) {
-        var ext = ext ? ext : "";
-        return !!fileFormats[ext.toLowerCase()];
-    };
-
-    this.makeCenteredNode = function(elmt) {
-        var elmt = $.Utils.getElement(elmt);
-        var div = self.makeNeutralElement("div");
-        var html = [];
-
-        html.push('<div style="display:table; height:100%; width:100%;');
-        html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-        html.push('#position:relative; overflow:hidden; text-align:left;">');
-        html.push('<div style="#position:absolute; #top:50%; width:100%; ');
-        html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-        html.push('display:table-cell; vertical-align:middle;">');
-        html.push('<div style="#position:relative; #top:-50%; width:100%; ');
-        html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-        html.push('text-align:center;"></div></div></div>');
-
-        div.innerHTML = html.join('');
-        div = div.firstChild;
-
-        var innerDiv = div;
-        var innerDivs = div.getElementsByTagName("div");
-        while (innerDivs.length > 0) {
-            innerDiv = innerDivs[0];
-            innerDivs = innerDiv.getElementsByTagName("div");
-        }
-
-        innerDiv.appendChild(elmt);
-
-        return div;
-    };
-
-    this.makeNeutralElement = function(tagName) {
-        var elmt = document.createElement(tagName);
-        var style = elmt.style;
-
-        style.background = "transparent none";
-        style.border = "none";
-        style.margin = "0px";
-        style.padding = "0px";
-        style.position = "static";
-
-        return elmt;
-    };
-
-    this.makeTransparentImage = function(src) {
-        var img = self.makeNeutralElement("img");
-        var elmt = null;
-
-        if (browser == Browser.IE && browserVersion < 7) {
-            elmt = self.makeNeutralElement("span");
-            elmt.style.display = "inline-block";
-
-            img.onload = function() {
-                elmt.style.width = elmt.style.width || img.width + "px";
-                elmt.style.height = elmt.style.height || img.height + "px";
-
-                img.onload = null;
-                img = null;     // to prevent memory leaks in IE
-            };
-
-            img.src = src;
-            elmt.style.filter =
-                    "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
-                    src + "', sizingMethod='scale')";
-        } else {
-            elmt = img;
-            elmt.src = src;
-        }
-
-        return elmt;
-    };
-
-    this.setElementOpacity = function(elmt, opacity, usesAlpha) {
-        var elmt = self.getElement(elmt);
-
-        if (usesAlpha && badAlphaBrowser) {
-            opacity = Math.round(opacity);
-        }
-
-        if (opacity < 1) {
-            elmt.style.opacity = opacity;
-        } else {
-            elmt.style.opacity = "";
-        }
-
-        if (opacity == 1) {
-            var prevFilter = elmt.style.filter || "";
-            elmt.style.filter = prevFilter.replace(/alpha\(.*?\)/g, "");
-            return;
-        }
-
-        var ieOpacity = Math.round(100 * opacity);
-        var ieFilter = " alpha(opacity=" + ieOpacity + ") ";
-
-        try {
-            if (elmt.filters && elmt.filters.alpha) {
-                elmt.filters.alpha.opacity = ieOpacity;
-            } else {
-                elmt.style.filter += ieFilter;
-            }
-        } catch (e) {
-            elmt.style.filter += ieFilter;
-        }
-    };
-
-    this.addEvent = function(elmt, eventName, handler, useCapture) {
-        var elmt = self.getElement(elmt);
-
-
-        if (elmt.addEventListener) {
-            elmt.addEventListener(eventName, handler, useCapture);
-        } else if (elmt.attachEvent) {
-            elmt.attachEvent("on" + eventName, handler);
-            if (useCapture && elmt.setCapture) {
-                elmt.setCapture();
-            }
-        } else {
-            $.Debug.fail("Unable to attach event handler, no known technique.");
-        }
-    };
-
-    this.removeEvent = function(elmt, eventName, handler, useCapture) {
-        var elmt = self.getElement(elmt);
-
-
-        if (elmt.removeEventListener) {
-            elmt.removeEventListener(eventName, handler, useCapture);
-        } else if (elmt.detachEvent) {
-            elmt.detachEvent("on" + eventName, handler);
-            if (useCapture && elmt.releaseCapture) {
-                elmt.releaseCapture();
-            }
-        } else {
-            $.Debug.fail("Unable to detach event handler, no known technique.");
-        }
-    };
-
-    this.cancelEvent = function(event) {
-        var event = self.getEvent(event);
-
-
-        if (event.preventDefault) {
-            event.preventDefault();     // W3C for preventing default
-        }
-
-        event.cancel = true;            // legacy for preventing default
-        event.returnValue = false;      // IE for preventing default
-    };
-
-    this.stopEvent = function(event) {
-        var event = self.getEvent(event);
-
-
-        if (event.stopPropagation) {
-            event.stopPropagation();    // W3C for stopping propagation
-        }
-
-        event.cancelBubble = true;      // IE for stopping propagation
-    };
-
-    this.createCallback = function(object, method) {
-        var initialArgs = [];
-        for (var i = 2; i < arguments.length; i++) {
-            initialArgs.push(arguments[i]);
-        }
-
-        return function() {
-            var args = initialArgs.concat([]);
-            for (var i = 0; i < arguments.length; i++) {
-                args.push(arguments[i]);
-            }
-
-            return method.apply(object, args);
-        };
-    };
-
-    this.getUrlParameter = function(key) {
-        var value = urlParams[key];
-        return value ? value : null;
-    };
-
-    this.makeAjaxRequest = function(url, callback) {
-        var async = typeof (callback) == "function";
-        var req = null;
-
-        if (async) {
-            var actual = callback;
-            var callback = function() {
-                window.setTimeout($.Utils.createCallback(null, actual, req), 1);
-            };
-        }
-
-        if (window.ActiveXObject) {
-            for (var i = 0; i < arrActiveX.length; i++) {
-                try {
-                    req = new ActiveXObject(arrActiveX[i]);
-                    break;
-                } catch (e) {
-                    continue;
-                }
-            }
-        } else if (window.XMLHttpRequest) {
-            req = new XMLHttpRequest();
-        }
-
-        if (!req) {
-            $.Debug.fail("Browser doesn't support XMLHttpRequest.");
-        }
-
-
-        if (async) {
-            req.onreadystatechange = function() {
-                if (req.readyState == 4) {
-                    req.onreadystatechange = new function() { };
-                    callback();
-                }
-            };
-        }
-
-        try {
-            req.open("GET", url, async);
-            req.send(null);
-        } catch (e) {
-            $.Debug.log(e.name + " while making AJAX request: " + e.message);
-
-            req.onreadystatechange = null;
-            req = null;
-
-            if (async) {
-                callback();
-            }
-        }
-
-        return async ? null : req;
-    };
-
-    this.parseXml = function(string) {
-        var xmlDoc = null;
-
-        if (window.ActiveXObject) {
-            try {
-                xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-                xmlDoc.async = false;
-                xmlDoc.loadXML(string);
-            } catch (e) {
-                $.Debug.log(e.name + " while parsing XML (ActiveX): " + e.message);
-            }
-        } else if (window.DOMParser) {
-            try {
-                var parser = new DOMParser();
-                xmlDoc = parser.parseFromString(string, "text/xml");
-            } catch (e) {
-                $.Debug.log(e.name + " while parsing XML (DOMParser): " + e.message);
-            }
-        } else {
-            $.Debug.fail("Browser doesn't support XML DOM.");
-        }
-
-        return xmlDoc;
-    };
-
-};
-
-//Start Thatcher - Remove Singleton pattern in favor of object literals
-//  TODO
-$.Utils = new $.Utils();
-//End Thatcher
-
-}( OpenSeadragon ));
 (function( $ ){
 
     //Ensures we dont break existing instances of mousetracker if we are dumb
@@ -779,7 +820,7 @@ $.Utils = new $.Utils();
         return;
     }
 
-    var isIE                = $.Utils.getBrowser() == $.Browser.IE,
+    var isIE                = $.Browser.vendor == $.BROWSERS.IE,
         buttonDownAny       = false,
         ieCapturingAny      = false,
         ieTrackersActive    = {},   // dictionary from hash to MouseTracker
@@ -796,7 +837,7 @@ $.Utils = new $.Utils();
             ieSelf  = null,
 
             hash = Math.random(), // a unique hash for this tracker
-            elmt = $.Utils.getElement(elmt),
+            elmt = $.getElement(elmt),
 
             tracking        = false,
             capturing       = false,
@@ -844,13 +885,13 @@ $.Utils = new $.Utils();
 
         function startTracking() {
             if (!tracking) {
-                $.Utils.addEvent(elmt, "mouseover", onMouseOver, false);
-                $.Utils.addEvent(elmt, "mouseout", onMouseOut, false);
-                $.Utils.addEvent(elmt, "mousedown", onMouseDown, false);
-                $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
-                $.Utils.addEvent(elmt, "click", onMouseClick, false);
-                $.Utils.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                $.Utils.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
+                $.addEvent(elmt, "mouseover", onMouseOver, false);
+                $.addEvent(elmt, "mouseout", onMouseOut, false);
+                $.addEvent(elmt, "mousedown", onMouseDown, false);
+                $.addEvent(elmt, "mouseup", onMouseUp, false);
+                $.addEvent(elmt, "click", onMouseClick, false);
+                $.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
 
                 tracking = true;
                 ieTrackersActive[hash] = ieSelf;
@@ -859,13 +900,13 @@ $.Utils = new $.Utils();
 
         function stopTracking() {
             if (tracking) {
-                $.Utils.removeEvent(elmt, "mouseover", onMouseOver, false);
-                $.Utils.removeEvent(elmt, "mouseout", onMouseOut, false);
-                $.Utils.removeEvent(elmt, "mousedown", onMouseDown, false);
-                $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                $.Utils.removeEvent(elmt, "click", onMouseClick, false);
-                $.Utils.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                $.Utils.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
+                $.removeEvent(elmt, "mouseover", onMouseOver, false);
+                $.removeEvent(elmt, "mouseout", onMouseOut, false);
+                $.removeEvent(elmt, "mousedown", onMouseDown, false);
+                $.removeEvent(elmt, "mouseup", onMouseUp, false);
+                $.removeEvent(elmt, "click", onMouseClick, false);
+                $.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
 
                 releaseMouse();
                 tracking = false;
@@ -876,12 +917,12 @@ $.Utils = new $.Utils();
         function captureMouse() {
             if (!capturing) {
                 if (isIE) {
-                    $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                    $.Utils.addEvent(elmt, "mouseup", onMouseUpIE, true);
-                    $.Utils.addEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.removeEvent(elmt, "mouseup", onMouseUp, false);
+                    $.addEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.addEvent(elmt, "mousemove", onMouseMoveIE, true);
                 } else {
-                    $.Utils.addEvent(window, "mouseup", onMouseUpWindow, true);
-                    $.Utils.addEvent(window, "mousemove", onMouseMove, true);
+                    $.addEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.addEvent(window, "mousemove", onMouseMove, true);
                 }
 
                 capturing = true;
@@ -891,12 +932,12 @@ $.Utils = new $.Utils();
         function releaseMouse() {
             if (capturing) {
                 if (isIE) {
-                    $.Utils.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
-                    $.Utils.removeEvent(elmt, "mouseup", onMouseUpIE, true);
-                    $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
+                    $.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.removeEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.addEvent(elmt, "mouseup", onMouseUp, false);
                 } else {
-                    $.Utils.removeEvent(window, "mousemove", onMouseMove, true);
-                    $.Utils.removeEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.removeEvent(window, "mousemove", onMouseMove, true);
+                    $.removeEvent(window, "mouseup", onMouseUpWindow, true);
                 }
 
                 capturing = false;
@@ -919,7 +960,7 @@ $.Utils = new $.Utils();
 
 
         function onMouseOver(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOver", event);
@@ -945,7 +986,7 @@ $.Utils = new $.Utils();
         }
 
         function onMouseOut(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOut", event);
@@ -971,7 +1012,7 @@ $.Utils = new $.Utils();
         }
 
         function onMouseDown(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -993,7 +1034,7 @@ $.Utils = new $.Utils();
             }
 
             if (self.pressHandler || self.dragHandler) {
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
 
             if (!isIE || !ieCapturingAny) {
@@ -1006,7 +1047,7 @@ $.Utils = new $.Utils();
         }
 
         function onMouseUp(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
             var insideElmtPress = buttonDownElmt;
             var insideElmtRelease = insideElmt;
 
@@ -1040,7 +1081,7 @@ $.Utils = new $.Utils();
         * mouseup on the event that this event was meant for.
         */
         function onMouseUpIE(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -1058,7 +1099,7 @@ $.Utils = new $.Utils();
             event.srcElement.fireEvent("on" + event.type,
                     document.createEventObject(event));
 
-            $.Utils.stopEvent(event);
+            $.stopEvent(event);
         }
 
         /**
@@ -1079,7 +1120,7 @@ $.Utils = new $.Utils();
         function onMouseClick(event) {
 
             if (self.clickHandler) {
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
@@ -1108,12 +1149,12 @@ $.Utils = new $.Utils();
                             " while executing scroll handler: " + e.message, e);
                 }
 
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
         function handleMouseClick(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -1137,7 +1178,7 @@ $.Utils = new $.Utils();
         }
 
         function onMouseMove(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
             var point = getMouseAbsolute(event);
             var delta = point.minus(lastPoint);
 
@@ -1145,14 +1186,22 @@ $.Utils = new $.Utils();
 
             if (typeof (self.dragHandler) == "function") {
                 try {
-                    self.dragHandler(self, getMouseRelative(event, elmt),
-                            delta, event.shiftKey);
+                    self.dragHandler(
+                        self, 
+                        getMouseRelative( event, elmt ),
+                        delta, 
+                        event.shiftKey
+                    );
                 } catch (e) {
-                    $.Debug.error(e.name +
-                            " while executing drag handler: " + e.message, e);
+                    $.Debug.error(
+                        e.name +
+                        " while executing drag handler: " 
+                        + e.message, 
+                        e
+                    );
                 }
 
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
@@ -1167,18 +1216,18 @@ $.Utils = new $.Utils();
                 ieTrackersCapturing[i].onMouseMove(event);
             }
 
-            $.Utils.stopEvent(event);
+            $.stopEvent(event);
         }
 
     };
 
     function getMouseAbsolute( event ) {
-        return $.Utils.getMousePosition(event);
+        return $.getMousePosition(event);
     }
 
     function getMouseRelative( event, elmt ) {
-        var mouse = $.Utils.getMousePosition(event);
-        var offset = $.Utils.getElementPosition(elmt);
+        var mouse = $.getMousePosition(event);
+        var offset = $.getElementPosition(elmt);
 
         return mouse.minus(offset);
     }
@@ -1209,11 +1258,11 @@ $.Utils = new $.Utils();
 
     (function () {
         if (isIE) {
-            $.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
-            $.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
+            $.addEvent(document, "mousedown", onGlobalMouseDown, false);
+            $.addEvent(document, "mouseup", onGlobalMouseUp, false);
         } else {
-            $.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
-            $.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
+            $.addEvent(window, "mousedown", onGlobalMouseDown, true);
+            $.addEvent(window, "mouseup", onGlobalMouseUp, true);
         }
     })();
     
@@ -1234,7 +1283,7 @@ $.Control = function (elmt, anchor, container) {
     this.elmt = elmt;
     this.anchor = anchor;
     this.container = container;
-    this.wrapper = $.Utils.makeNeutralElement("span");
+    this.wrapper = $.makeNeutralElement("span");
     this.wrapper.style.display = "inline-block";
     this.wrapper.appendChild(this.elmt);
 
@@ -1263,10 +1312,10 @@ $.Control.prototype = {
         this.wrapper.style.display = visible ? "inline-block" : "none";
     },
     setOpacity: function(opacity) {
-        if (this.elmt[$.SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
-            $.Utils.setElementOpacity(this.elmt, opacity, true);
+        if (this.elmt[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
+            $.setElementOpacity(this.elmt, opacity, true);
         } else {
-            $.Utils.setElementOpacity(this.wrapper, opacity, true);
+            $.setElementOpacity(this.wrapper, opacity, true);
         }
     }
 };
@@ -1397,8 +1446,8 @@ $.Viewer = function( options ) {
     }, options );
 
     this.element        = document.getElementById( options.id );
-    this.container      = $.Utils.makeNeutralElement("div");
-    this.canvas         = $.Utils.makeNeutralElement("div");
+    this.container      = $.makeNeutralElement("div");
+    this.canvas         = $.makeNeutralElement("div");
 
     this._fsBoundsDelta     = new $.Point( 1, 1 );
     this._prevContainerSize = null;
@@ -1453,7 +1502,7 @@ $.Viewer = function( options ) {
 
     for( i = 0; i < layouts.length; i++ ){
         layout = layouts[ i ]
-        this.controls[ layout ] = $.Utils.makeNeutralElement("div");
+        this.controls[ layout ] = $.makeNeutralElement("div");
         this.controls[ layout ].style.position = 'absolute';
         if ( layout.match( 'left' ) ){
             this.controls[ layout ].style.left = '0px';
@@ -1576,7 +1625,7 @@ $.Viewer = function( options ) {
 $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
     addControl: function ( elmt, anchor ) {
-        var elmt = $.Utils.getElement( elmt ),
+        var elmt = $.getElement( elmt ),
             div = null;
 
         if ( getControlIndex( this, elmt ) >= 0 ) {
@@ -1659,7 +1708,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
         }
 
         this.canvas.innerHTML = "";
-        this._prevContainerSize = $.Utils.getElementSize( this.container );
+        this._prevContainerSize = $.getElementSize( this.container );
 
         if( source ){
             this.source = source;
@@ -1716,7 +1765,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
         this.canvas.innerHTML = "";
     },
     removeControl: function ( elmt ) {
-        var elmt = $.Utils.getElement( elmt ),
+        var elmt = $.getElement( elmt ),
             i    = getControlIndex( this, elmt );
         if ( i >= 0 ) {
             this.controls[ i ].destroy();
@@ -1790,7 +1839,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.zIndex   = "99999999";
 
             body.appendChild( this.container );
-            this._prevContainerSize = $.Utils.getWindowSize();
+            this._prevContainerSize = $.getWindowSize();
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
@@ -1810,7 +1859,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.zIndex   = "";
 
             this.element.appendChild( this.container );
-            this._prevContainerSize = $.Utils.getElementSize( this.element );
+            this._prevContainerSize = $.getElementSize( this.element );
             
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();      
@@ -2031,7 +2080,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    var containerSize = $.Utils.getElementSize( viewer.container );
+    var containerSize = $.getElementSize( viewer.container );
 
     if ( !containerSize.equals( viewer._prevContainerSize ) ) {
         viewer.viewport.resize( containerSize, true ); // maintain image position
@@ -2386,7 +2435,10 @@ $.TileSource = function(width, height, tileSize, tileOverlap, minLevel, maxLevel
     this.dimensions = new $.Point(width, height);
     this.minLevel = minLevel ? minLevel : 0;
     this.maxLevel = maxLevel ? maxLevel :
-            Math.ceil(Math.log(Math.max(width, height)) / Math.log(2));
+        Math.ceil( 
+            Math.log( Math.max( width, height ) ) / 
+            Math.log( 2 ) 
+        );
     this.tileSize = tileSize ? tileSize : 0;
     this.tileOverlap = tileOverlap ? tileOverlap : 0;
 };
@@ -2560,12 +2612,12 @@ $.DziTileSourceHelper = {
             if (xmlString) {
                 var handler = $.delegate(this, this.processXml);
                 window.setTimeout(function() {
-                    var source = finish(handler, $.Utils.parseXml(xmlString));
+                    var source = finish(handler, $.parseXml(xmlString));
                     callback(source, error);    // call after finish sets error
                 }, 1);
             } else {
                 var handler = $.delegate(this, this.processResponse);
-                $.Utils.makeAjaxRequest(xmlUrl, function(xhr) {
+                $.makeAjaxRequest(xmlUrl, function(xhr) {
                     var source = finish(handler, xhr);
                     callback(source, error);    // call after finish sets error
                 });
@@ -2575,9 +2627,9 @@ $.DziTileSourceHelper = {
         }
 
         if (xmlString) {
-            return finish($.delegate(this, this.processXml), $.Utils.parseXml(xmlString));
+            return finish($.delegate(this, this.processXml), $.parseXml(xmlString));
         } else {
-            return finish($.delegate(this, this.processResponse), $.Utils.makeAjaxRequest(xmlUrl));
+            return finish($.delegate(this, this.processResponse), $.makeAjaxRequest(xmlUrl));
         }
     },
     processResponse: function(xhr, tilesUrl) {
@@ -2594,7 +2646,7 @@ $.DziTileSourceHelper = {
         if (xhr.responseXML && xhr.responseXML.documentElement) {
             doc = xhr.responseXML;
         } else if (xhr.responseText) {
-            doc = $.Utils.parseXml(xhr.responseText);
+            doc = $.parseXml(xhr.responseText);
         }
 
         return this.processXml(doc, tilesUrl);
@@ -2627,7 +2679,7 @@ $.DziTileSourceHelper = {
     processDzi: function(imageNode, tilesUrl) {
         var fileFormat = imageNode.getAttribute("Format");
 
-        if (!$.Utils.imageFormatSupported(fileFormat)) {
+        if (!$.imageFormatSupported(fileFormat)) {
             throw new Error($.Strings.getString("Errors.ImageFormat",
                     fileFormat.toUpperCase()));
         }
@@ -2692,7 +2744,7 @@ $.Button = function( options ) {
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
-    this.element    = options.element || $.Utils.makeNeutralElement("span");
+    this.element    = options.element || $.makeNeutralElement("span");
     this.config     = options.config;
 
     if ( options.onPress != undefined ){
@@ -2717,10 +2769,10 @@ $.Button = function( options ) {
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this.imgRest    = $.Utils.makeTransparentImage( this.srcRest );
-    this.imgGroup   = $.Utils.makeTransparentImage( this.srcGroup );
-    this.imgHover   = $.Utils.makeTransparentImage( this.srcHover );
-    this.imgDown    = $.Utils.makeTransparentImage( this.srcDown );
+    this.imgRest    = $.makeTransparentImage( this.srcRest );
+    this.imgGroup   = $.makeTransparentImage( this.srcGroup );
+    this.imgHover   = $.makeTransparentImage( this.srcHover );
+    this.imgDown    = $.makeTransparentImage( this.srcDown );
 
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds
@@ -2760,8 +2812,8 @@ $.Button = function( options ) {
         styleDown.visibility = 
             "hidden";
 
-    if ( $.Utils.getBrowser() == $.Browser.FIREFOX 
-         && $.Utils.getBrowserVersion() < 3 ){
+    if ( $.Browser.vendor == $.BROWSERS.FIREFOX 
+         && $.Browser.version < 3 ){
 
         styleGroup.top = 
             styleHover.top = 
@@ -2837,7 +2889,7 @@ function updateFade( button ) {
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
 
-        $.Utils.setElementOpacity( button.imgGroup, opacity, true );
+        $.setElementOpacity( button.imgGroup, opacity, true );
         if ( opacity > 0 ) {
             // fade again
             scheduleFade( button );
@@ -2855,7 +2907,7 @@ function beginFading( button ) {
 
 function stopFading( button ) {
     button.shouldFade = false;
-    $.Utils.setElementOpacity( button.imgGroup, 1.0, true );
+    $.setElementOpacity( button.imgGroup, 1.0, true );
 };
 
 function inTo( button, newState ) {
@@ -2915,7 +2967,7 @@ function outTo( button, newState ) {
 $.ButtonGroup = function( options ) {
 
     this.buttons = options.buttons;
-    this.element = options.group || $.Utils.makeNeutralElement("span");
+    this.element = options.group || $.makeNeutralElement("span");
     this.config  = options.config;
     this.tracker = new $.MouseTracker(
         this.element, 
@@ -3014,7 +3066,7 @@ $.Rect.prototype = {
         return new $.Point( this.width, this.height );
     },
 
-    equals: function(other) {
+    equals: function( other ) {
         return 
             ( other instanceof $.Rect ) &&
             ( this.x === other.x ) && 
@@ -3037,8 +3089,8 @@ $.Rect.prototype = {
 
 (function( $ ){
 
-$.DisplayRect = function(x, y, width, height, minLevel, maxLevel) {
-    $.Rect.apply(this, [x, y, width, height]);
+$.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
+    $.Rect.apply( this, [ x, y, width, height ] );
 
     this.minLevel = minLevel;
     this.maxLevel = maxLevel;
@@ -3178,7 +3230,7 @@ $.Tile.prototype = {
         }
 
         if ( !this.elmt ) {
-            this.elmt       = $.Utils.makeNeutralElement("img");
+            this.elmt       = $.makeNeutralElement("img");
             this.elmt.src   = this.url;
             this.style      = this.elmt.style;
 
@@ -3199,7 +3251,7 @@ $.Tile.prototype = {
         this.elmt.style.width   = size.x + "px";
         this.elmt.style.height  = size.y + "px";
 
-        $.Utils.setElementOpacity( this.elmt, this.opacity );
+        $.setElementOpacity( this.elmt, this.opacity );
 
     },
 
@@ -3213,21 +3265,21 @@ $.Tile.prototype = {
             return;
         }
 
-        var position = this.position;
-        var size = this.size;
+        var position = this.position,
+            size     = this.size;
 
         context.globalAlpha = this.opacity;
         context.drawImage(this.image, position.x, position.y, size.x, size.y);
     },
-    
+
     unload: function() {
-        if (this.elmt && this.elmt.parentNode) {
-            this.elmt.parentNode.removeChild(this.elmt);
+        if ( this.elmt && this.elmt.parentNode ) {
+            this.elmt.parentNode.removeChild( this.elmt );
         }
 
-        this.elmt = null;
-        this.image = null;
-        this.loaded = false;
+        this.elmt    = null;
+        this.image   = null;
+        this.loaded  = false;
         this.loading = false;
     }
 };
@@ -3338,7 +3390,7 @@ $.Tile.prototype = {
             }
 
             if ( !scales ) {
-                this.size = $.Utils.getElementSize( elmt );
+                this.size = $.getElementSize( elmt );
             }
 
             position = this.position;
@@ -3380,14 +3432,14 @@ var // the max number of images we should keep in memory
     //TODO: make TIMEOUT configurable
     TIMEOUT             = 5000,
 
-    BROWSER             = $.Utils.getBrowser(),
-    BROWSER_VERSION     = $.Utils.getBrowserVersion(),
+    BROWSER             = $.Browser.vendor,
+    BROWSER_VERSION     = $.Browser.version,
 
     SUBPIXEL_RENDERING = (
-        ( BROWSER == $.Browser.FIREFOX ) ||
-        ( BROWSER == $.Browser.OPERA )   ||
-        ( BROWSER == $.Browser.SAFARI && BROWSER_VERSION >= 4 ) ||
-        ( BROWSER == $.Browser.CHROME && BROWSER_VERSION >= 2 )
+        ( BROWSER == $.BROWSERS.FIREFOX ) ||
+        ( BROWSER == $.BROWSERS.OPERA )   ||
+        ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
+        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
     ),
 
     USE_CANVAS =
@@ -3396,8 +3448,8 @@ var // the max number of images we should keep in memory
 
 $.Drawer = function(source, viewport, elmt) {
 
-    this.container  = $.Utils.getElement(elmt);
-    this.canvas     = $.Utils.makeNeutralElement(USE_CANVAS ? "canvas" : "div");
+    this.container  = $.getElement( elmt );
+    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
     this.context    = USE_CANVAS ? this.canvas.getContext("2d") : null;
     this.viewport   = viewport;
     this.source     = source;
@@ -3446,7 +3498,7 @@ $.Drawer = function(source, viewport, elmt) {
 
 $.Drawer.prototype = {
 
-    _getPixelRatio: function(level) {
+    getPixelRatio: function(level) {
         if (!this.cachePixelRatios[level]) {
             this.cachePixelRatios[level] = this.source.getPixelRatio(level);
         }
@@ -3486,7 +3538,7 @@ $.Drawer.prototype = {
     _loadTile: function(tile, time) {
         tile.loading = this.loadImage(
             tile.url,
-            $.Utils.createCallback(
+            $.createCallback(
                 null, 
                 $.delegate(this, this._onTileLoad), 
                 tile, 
@@ -3879,7 +3931,7 @@ $.Drawer.prototype = {
 
 
     addOverlay: function(elmt, loc, placement) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
 
         if (this._getOverlayIndex(elmt) >= 0) {
             return;     // they're trying to add a duplicate overlay
@@ -3890,7 +3942,7 @@ $.Drawer.prototype = {
     },
 
     updateOverlay: function(elmt, loc, placement) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {
@@ -3900,7 +3952,7 @@ $.Drawer.prototype = {
     },
 
     removeOverlay: function(elmt) {
-        var elmt = $.Utils.getElement(elmt);
+        var elmt = $.getElement(elmt);
         var i = this._getOverlayIndex(elmt);
 
         if (i >= 0) {
@@ -4063,8 +4115,10 @@ $.Viewport.prototype = {
     },
 
     getMaxZoom: function() {
-        var zoom = this.contentSize.x * 
-            this.maxZoomPixelRatio / this.containerSize.x;
+        var zoom = 
+            this.contentSize.x * 
+            this.maxZoomPixelRatio / 
+            this.containerSize.x;
         return Math.max(zoom, this.getHomeZoom());
     },
 
@@ -4309,7 +4363,7 @@ $.Viewport.prototype = {
         this.containerSize = new $.Point(newContainerSize.x, newContainerSize.y);
 
         if (maintain) {
-            newBounds.width = oldBounds.width * widthDeltaFactor;
+            newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
 

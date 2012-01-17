@@ -197,6 +197,555 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         return target;
     };
 
+    //The following functions are originally from the Openseadragon Utils 
+    //module but have been moved to Openseadragon to avoid the Utils anti-
+    //pattern.  Not all of the code is A-grade compared to equivalent functions
+    // from libraries like jquery, but until we need better we'll leave those
+    //orignally developed by the project.
+    $.BROWSERS = {
+        UNKNOWN:    0,
+        IE:         1,
+        FIREFOX:    2,
+        SAFARI:     3,
+        CHROME:     4,
+        OPERA:      5
+    };
+
+    $.Browser = {
+        vendor:     $.BROWSERS.UNKNOWN,
+        version:    0,
+        alpha:      true
+    };
+
+    var ACTIVEX = [
+            "Msxml2.XMLHTTP", 
+            "Msxml3.XMLHTTP", 
+            "Microsoft.XMLHTTP"
+        ],  
+        FILEFORMATS = {
+            "bmp":  false,
+            "jpeg": true,
+            "jpg":  true,
+            "png":  true,
+            "tif":  false,
+            "wdp":  false
+        },
+        URLPARAMS = {};
+
+    (function() {
+
+        var app = navigator.appName,
+            ver = navigator.appVersion,
+            ua  = navigator.userAgent;
+
+        switch( navigator.appName ){
+            case "Microsoft Internet Explorer":
+                if( !!window.attachEvent && 
+                    !!window.ActiveXObject ) {
+
+                    $.Browser.vendor = $.BROWSERS.IE;
+                    $.Browser.version = parseFloat(
+                        ua.substring( 
+                            ua.indexOf( "MSIE" ) + 5, 
+                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
+                        );
+                }
+                break;
+            case "Netscape":
+                if( !!window.addEventListener ){
+                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.FIREFOX;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
+                        );
+                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
+                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
+                            $.BROWSERS.CHROME : 
+                            $.BROWSERS.SAFARI;
+                        $.Browser.version = parseFloat(
+                            ua.substring( 
+                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
+                                ua.indexOf( "Safari" )
+                            )
+                        );
+                    }
+                }
+                break;
+            case "Opera":
+                $.Browser.vendor = $.BROWSERS.OPERA;
+                $.Browser.version = parseFloat( ver );
+                break;
+        }
+
+
+        var query = window.location.search.substring( 1 ),    // ignore '?'
+            parts = query.split('&'),
+            part,
+            sep,
+            i;
+
+        for ( i = 0; i < parts.length; i++ ) {
+            part = parts[ i ];
+            sep  = part.indexOf( '=' );
+
+            if ( sep > 0 ) {
+                URLPARAMS[ part.substring( 0, sep ) ] =
+                    decodeURIComponent( part.substring( sep + 1 ) );
+            }
+        }
+
+        //determine if this browser supports 
+        $.Browser.alpha = !( 
+            $.Browser.vendor == $.BROWSERS.IE || (
+                $.Browser.vendor == $.BROWSERS.CHROME && 
+                $.Browser.version < 2
+            )
+        );
+
+    })();
+
+    //TODO: $.Debug is often used inside a try/catch block which generally
+    //      prevents allows errors to occur without detection until a debugger
+    //      is attached.  Although I've been guilty of the same anti-pattern
+    //      I eventually was convinced that errors should naturally propogate in
+    //      all but the most special cases.
     $.Debug = window.console ? window.console : function(){};
 
+
+    $.extend( $, {
+
+        getElement: function( element ) {
+            if (typeof ( element ) == "string") {
+                element = document.getElementById( element );
+            }
+            return element;
+        },
+        
+        getOffsetParent: function( element, isFixed ) {
+            if ( isFixed && element != document.body ) {
+                return document.body;
+            } else {
+                return element.offsetParent;
+            }
+        },
+
+        getElementPosition: function( element ) {
+            var element = $.getElement( element );
+
+            var isFixed = $.getElementStyle( element ).position == "fixed",
+                offsetParent = $.getOffsetParent( element, isFixed ),
+                result  = new $.Point();
+
+            while ( offsetParent ) {
+
+                result.x += element.offsetLeft;
+                result.y += element.offsetTop;
+
+                if ( isFixed ) {
+                    result = result.plus( $.getPageScroll() );
+                }
+
+                element = offsetParent;
+                isFixed = $.getElementStyle( element ).position == "fixed";
+                offsetParent = $.getOffsetParent( element, isFixed );
+            }
+
+            return result;
+        },
+
+        getElementSize: function( element ) {
+            var element = $.getElement( element );
+
+            return new $.Point(
+                element.clientWidth, 
+                element.clientHeight
+            );
+        },
+
+        getElementStyle: function( element ) {
+            var element = $.getElement( element );
+
+            if ( element.currentStyle ) {
+                return element.currentStyle;
+            } else if ( window.getComputedStyle ) {
+                return window.getComputedStyle( element, "" );
+            } else {
+                throw new Error( "Unknown element style, no known technique." );
+            }
+        },
+
+        getEvent: function( event ) {
+            return event ? event : window.event;
+        },
+
+        getMousePosition: function( event ) {
+            var event = $.getEvent( event );
+
+            var result = new $.Point();
+
+            if ( typeof( event.pageX ) == "number" ) {
+                result.x = event.pageX;
+                result.y = event.pageY;
+            } else if ( typeof( event.clientX ) == "number" ) {
+
+                result.x = 
+                    event.clientX + 
+                    document.body.scrollLeft + 
+                    document.documentElement.scrollLeft;
+                result.y = 
+                    event.clientY + 
+                    document.body.scrollTop + 
+                    document.documentElement.scrollTop;
+            } else {
+                throw new Error(
+                    "Unknown event mouse position, no known technique."
+                );
+            }
+            
+            return result;
+        },
+
+        getPageScroll: function() {
+            var result  = new $.Point(),
+                docElmt = document.documentElement || {},
+                body    = document.body || {};
+
+            if ( typeof( window.pageXOffset ) == "number" ) {
+                result.x = window.pageXOffset;
+                result.y = window.pageYOffset;
+            } else if ( body.scrollLeft || body.scrollTop ) {
+                result.x = body.scrollLeft;
+                result.y = body.scrollTop;
+            } else if ( docElmt.scrollLeft || docElmt.scrollTop ) {
+                result.x = docElmt.scrollLeft;
+                result.y = docElmt.scrollTop;
+            }
+
+            return result;
+        },
+
+        getWindowSize: function() {
+            var result  = new $.Point(),
+                docElmt = document.documentElement || {},
+                body    = document.body || {};
+
+            if ( typeof( window.innerWidth ) == 'number' ) {
+                result.x = window.innerWidth;
+                result.y = window.innerHeight;
+            } else if ( docElmt.clientWidth || docElmt.clientHeight ) {
+                result.x = docElmt.clientWidth;
+                result.y = docElmt.clientHeight;
+            } else if ( body.clientWidth || body.clientHeight ) {
+                result.x = body.clientWidth;
+                result.y = body.clientHeight;
+            } else {
+                throw new Error("Unknown window size, no known technique.");
+            }
+
+            return result;
+        },
+
+        imageFormatSupported: function( extension ) {
+            var extension = extension ? extension : "";
+            return !!FILEFORMATS[ extension.toLowerCase() ];
+        },
+
+        makeCenteredNode: function( element ) {
+            var element = $.getElement( element );
+
+            var div      = $.makeNeutralElement( "div" ),
+                html     = [],
+                innerDiv,
+                innerDivs;
+
+            //TODO: I dont understand the use of # inside the style attributes
+            //      below.  Invetigate the results of the constructed html in
+            //      the browser and clean up the mark-up to make this clearer.
+            html.push('<div style="display:table; height:100%; width:100%;');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('#position:relative; overflow:hidden; text-align:left;">');
+            html.push('<div style="#position:absolute; #top:50%; width:100%; ');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('display:table-cell; vertical-align:middle;">');
+            html.push('<div style="#position:relative; #top:-50%; width:100%; ');
+            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
+            html.push('text-align:center;"></div></div></div>');
+
+            div.innerHTML = html.join( '' );
+            div           = div.firstChild;
+
+            innerDiv    = div;
+            innerDivs   = div.getElementsByTagName( "div" );
+            while ( innerDivs.length > 0 ) {
+                innerDiv  = innerDivs[ 0 ];
+                innerDivs = innerDiv.getElementsByTagName( "div" );
+            }
+
+            innerDiv.appendChild( element );
+
+            return div;
+        },
+
+        makeNeutralElement: function( tagName ) {
+            var element = document.createElement( tagName ),
+                style   = element.style;
+
+            style.background = "transparent none";
+            style.border     = "none";
+            style.margin     = "0px";
+            style.padding    = "0px";
+            style.position   = "static";
+
+            return element;
+        },
+
+        makeTransparentImage: function( src ) {
+            var img     = $.makeNeutralElement( "img" ),
+                element = null;
+
+            if ( $.Browser.vendor == $.BROWSERS.IE && 
+                 $.Browser.version < 7 ) {
+
+                element = $.makeNeutralElement("span");
+                element.style.display = "inline-block";
+
+                img.onload = function() {
+                    element.style.width  = element.style.width || img.width + "px";
+                    element.style.height = element.style.height || img.height + "px";
+
+                    img.onload = null;
+                    img = null;     // to prevent memory leaks in IE
+                };
+
+                img.src = src;
+                element.style.filter =
+                    "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
+                    src + 
+                    "', sizingMethod='scale')";
+
+            } else {
+
+                element = img;
+                element.src = src;
+
+            }
+
+            return element;
+        },
+
+        setElementOpacity: function( element, opacity, usesAlpha ) {
+            var element = $.getElement( element );
+
+            var previousFilter,
+                ieOpacity,
+                ieFilter;
+
+            if ( usesAlpha && !$.Browser.alpha ) {
+                opacity = Math.round( opacity );
+            }
+
+            if ( opacity < 1 ) {
+                element.style.opacity = opacity;
+            } else {
+                element.style.opacity = "";
+            }
+
+            if ( opacity == 1 ) {
+                prevFilter = element.style.filter || "";
+                element.style.filter = prevFilter.replace(/alpha\(.*?\)/g, "");
+                return;
+            }
+
+            ieOpacity = Math.round( 100 * opacity );
+            ieFilter  = " alpha(opacity=" + ieOpacity + ") ";
+
+            //TODO: find out why this uses a try/catch instead of a predetermined
+            //      routine or at least an if/elseif/else
+            try {
+                if ( element.filters && element.filters.alpha ) {
+                    element.filters.alpha.opacity = ieOpacity;
+                } else {
+                    element.style.filter += ieFilter;
+                }
+            } catch ( e ) {
+                element.style.filter += ieFilter;
+            }
+        },
+
+        addEvent: function( element, eventName, handler, useCapture ) {
+            var element = $.getElement( element );
+
+            //TODO: Why do this if/else on every method call instead of just
+            //      defining this function once based on the same logic
+            if ( element.addEventListener ) {
+                element.addEventListener( eventName, handler, useCapture );
+            } else if ( element.attachEvent ) {
+                element.attachEvent( "on" + eventName, handler );
+                if ( useCapture && element.setCapture ) {
+                    element.setCapture();
+                }
+            } else {
+                throw new Error(
+                    "Unable to attach event handler, no known technique."
+                );
+            }
+        },
+
+        removeEvent: function( element, eventName, handler, useCapture ) {
+            var element = $.getElement( element );
+
+            //TODO: Why do this if/else on every method call instead of just
+            //      defining this function once based on the same logic
+            if ( element.removeEventListener ) {
+                element.removeEventListener( eventName, handler, useCapture );
+            } else if ( element.detachEvent ) {
+                element.detachEvent("on" + eventName, handler);
+                if ( useCapture && element.releaseCapture ) {
+                    element.releaseCapture();
+                }
+            } else {
+                throw new Error(
+                    "Unable to detach event handler, no known technique."
+                );
+            }
+        },
+
+        cancelEvent: function( event ) {
+            var event = $.getEvent( event );
+
+            if ( event.preventDefault ) {
+                event.preventDefault();     // W3C for preventing default
+            }
+
+            event.cancel = true;            // legacy for preventing default
+            event.returnValue = false;      // IE for preventing default
+        },
+
+        stopEvent: function( event ) {
+            var event = $.getEvent( event );
+
+            if ( event.stopPropagation ) {
+                event.stopPropagation();    // W3C for stopping propagation
+            }
+
+            event.cancelBubble = true;      // IE for stopping propagation
+        },
+
+        createCallback: function( object, method ) {
+            //TODO: This pattern is painful to use and debug.  It's much cleaner
+            //      to use pinning plus anonymous functions.  Get rid of this
+            //      pattern!
+            var initialArgs = [],
+                i;
+            for ( i = 2; i < arguments.length; i++ ) {
+                initialArgs.push( arguments[ i ] );
+            }
+
+            return function() {
+                var args = initialArgs.concat( [] ),
+                    i;
+                for ( i = 0; i < arguments.length; i++ ) {
+                    args.push( arguments[ i ] );
+                }
+
+                return method.apply( object, args );
+            };
+        },
+
+        getUrlParameter: function( key ) {
+            var value = URLPARAMS[ key ];
+            return value ? value : null;
+        },
+
+        makeAjaxRequest: function( url, callback ) {
+            var async   = typeof( callback ) == "function",
+                request = null,
+                actual,
+                i;
+
+            if ( async ) {
+                actual = callback;
+                callback = function() {
+                    window.setTimeout(
+                        $.createCallback( null, actual, request ), 
+                        1
+                    );
+                };
+            }
+
+            if ( window.ActiveXObject ) {
+                //TODO: very bad...Why check every time using try/catch when
+                //      we could determine once at startup which activeX object
+                //      was supported.  This will have significant impact on 
+                //      performance for IE Browsers
+                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                    try {
+                        request = new ActiveXObject( ACTIVEX[ i ] );
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            } else if ( window.XMLHttpRequest ) {
+                request = new XMLHttpRequest();
+            }
+
+            if ( !request ) {
+                throw new Error( "Browser doesn't support XMLHttpRequest." );
+            }
+
+
+            if ( async ) {
+                request.onreadystatechange = function() {
+                    if ( request.readyState == 4) {
+                        request.onreadystatechange = new function() { };
+                        callback();
+                    }
+                };
+            }
+
+            try {
+                request.open( "GET", url, async );
+                request.send( null );
+            } catch (e) {
+                $.Debug.log(e.name + " while making AJAX request: " + e.message);
+
+                request.onreadystatechange = null;
+                request = null;
+
+                if ( async ) {
+                    callback();
+                }
+            }
+
+            return async ? null : request;
+        },
+
+        parseXml: function( string ) {
+            //TODO: yet another example where we can determine the correct
+            //      implementation once at start-up instead of everytime we use
+            //      the function.
+            var xmlDoc = null,
+                parser;
+
+            if ( window.ActiveXObject ) {
+
+                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                xmlDoc.async = false;
+                xmlDoc.loadXML( string );
+
+            } else if ( window.DOMParser ) {
+
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString( string, "text/xml" );
+                
+            } else {
+                throw new Error( "Browser doesn't support XML DOM." );
+            }
+
+            return xmlDoc;
+        }
+    });
+
+    
 }( OpenSeadragon ));

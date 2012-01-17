@@ -14,7 +14,7 @@ $.Control = function (elmt, anchor, container) {
     this.elmt = elmt;
     this.anchor = anchor;
     this.container = container;
-    this.wrapper = $.Utils.makeNeutralElement("span");
+    this.wrapper = $.makeNeutralElement("span");
     this.wrapper.style.display = "inline-block";
     this.wrapper.appendChild(this.elmt);
 
@@ -43,10 +43,10 @@ $.Control.prototype = {
         this.wrapper.style.display = visible ? "inline-block" : "none";
     },
     setOpacity: function(opacity) {
-        if (this.elmt[$.SIGNAL] && $.Utils.getBrowser() == $.Browser.IE) {
-            $.Utils.setElementOpacity(this.elmt, opacity, true);
+        if (this.elmt[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
+            $.setElementOpacity(this.elmt, opacity, true);
         } else {
-            $.Utils.setElementOpacity(this.wrapper, opacity, true);
+            $.setElementOpacity(this.wrapper, opacity, true);
         }
     }
 };

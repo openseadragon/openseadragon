@@ -49,8 +49,10 @@ $.Viewport.prototype = {
     },
 
     getMaxZoom: function() {
-        var zoom = this.contentSize.x * 
-            this.maxZoomPixelRatio / this.containerSize.x;
+        var zoom = 
+            this.contentSize.x * 
+            this.maxZoomPixelRatio / 
+            this.containerSize.x;
         return Math.max(zoom, this.getHomeZoom());
     },
 
@@ -295,7 +297,7 @@ $.Viewport.prototype = {
         this.containerSize = new $.Point(newContainerSize.x, newContainerSize.y);
 
         if (maintain) {
-            newBounds.width = oldBounds.width * widthDeltaFactor;
+            newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
 

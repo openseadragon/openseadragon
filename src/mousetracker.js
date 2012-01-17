@@ -9,7 +9,7 @@
         return;
     }
 
-    var isIE                = $.Utils.getBrowser() == $.Browser.IE,
+    var isIE                = $.Browser.vendor == $.BROWSERS.IE,
         buttonDownAny       = false,
         ieCapturingAny      = false,
         ieTrackersActive    = {},   // dictionary from hash to MouseTracker
@@ -26,7 +26,7 @@
             ieSelf  = null,
 
             hash = Math.random(), // a unique hash for this tracker
-            elmt = $.Utils.getElement(elmt),
+            elmt = $.getElement(elmt),
 
             tracking        = false,
             capturing       = false,
@@ -74,13 +74,13 @@
 
         function startTracking() {
             if (!tracking) {
-                $.Utils.addEvent(elmt, "mouseover", onMouseOver, false);
-                $.Utils.addEvent(elmt, "mouseout", onMouseOut, false);
-                $.Utils.addEvent(elmt, "mousedown", onMouseDown, false);
-                $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
-                $.Utils.addEvent(elmt, "click", onMouseClick, false);
-                $.Utils.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                $.Utils.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
+                $.addEvent(elmt, "mouseover", onMouseOver, false);
+                $.addEvent(elmt, "mouseout", onMouseOut, false);
+                $.addEvent(elmt, "mousedown", onMouseDown, false);
+                $.addEvent(elmt, "mouseup", onMouseUp, false);
+                $.addEvent(elmt, "click", onMouseClick, false);
+                $.addEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.addEvent(elmt, "mousewheel", onMouseWheelSpin, false); // Firefox
 
                 tracking = true;
                 ieTrackersActive[hash] = ieSelf;
@@ -89,13 +89,13 @@
 
         function stopTracking() {
             if (tracking) {
-                $.Utils.removeEvent(elmt, "mouseover", onMouseOver, false);
-                $.Utils.removeEvent(elmt, "mouseout", onMouseOut, false);
-                $.Utils.removeEvent(elmt, "mousedown", onMouseDown, false);
-                $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                $.Utils.removeEvent(elmt, "click", onMouseClick, false);
-                $.Utils.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
-                $.Utils.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
+                $.removeEvent(elmt, "mouseover", onMouseOver, false);
+                $.removeEvent(elmt, "mouseout", onMouseOut, false);
+                $.removeEvent(elmt, "mousedown", onMouseDown, false);
+                $.removeEvent(elmt, "mouseup", onMouseUp, false);
+                $.removeEvent(elmt, "click", onMouseClick, false);
+                $.removeEvent(elmt, "DOMMouseScroll", onMouseWheelSpin, false);
+                $.removeEvent(elmt, "mousewheel", onMouseWheelSpin, false);
 
                 releaseMouse();
                 tracking = false;
@@ -106,12 +106,12 @@
         function captureMouse() {
             if (!capturing) {
                 if (isIE) {
-                    $.Utils.removeEvent(elmt, "mouseup", onMouseUp, false);
-                    $.Utils.addEvent(elmt, "mouseup", onMouseUpIE, true);
-                    $.Utils.addEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.removeEvent(elmt, "mouseup", onMouseUp, false);
+                    $.addEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.addEvent(elmt, "mousemove", onMouseMoveIE, true);
                 } else {
-                    $.Utils.addEvent(window, "mouseup", onMouseUpWindow, true);
-                    $.Utils.addEvent(window, "mousemove", onMouseMove, true);
+                    $.addEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.addEvent(window, "mousemove", onMouseMove, true);
                 }
 
                 capturing = true;
@@ -121,12 +121,12 @@
         function releaseMouse() {
             if (capturing) {
                 if (isIE) {
-                    $.Utils.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
-                    $.Utils.removeEvent(elmt, "mouseup", onMouseUpIE, true);
-                    $.Utils.addEvent(elmt, "mouseup", onMouseUp, false);
+                    $.removeEvent(elmt, "mousemove", onMouseMoveIE, true);
+                    $.removeEvent(elmt, "mouseup", onMouseUpIE, true);
+                    $.addEvent(elmt, "mouseup", onMouseUp, false);
                 } else {
-                    $.Utils.removeEvent(window, "mousemove", onMouseMove, true);
-                    $.Utils.removeEvent(window, "mouseup", onMouseUpWindow, true);
+                    $.removeEvent(window, "mousemove", onMouseMove, true);
+                    $.removeEvent(window, "mouseup", onMouseUpWindow, true);
                 }
 
                 capturing = false;
@@ -149,7 +149,7 @@
 
 
         function onMouseOver(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOver", event);
@@ -175,7 +175,7 @@
         }
 
         function onMouseOut(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (isIE && capturing && !isChild(event.srcElement, elmt)) {
                 triggerOthers("onMouseOut", event);
@@ -201,7 +201,7 @@
         }
 
         function onMouseDown(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -223,7 +223,7 @@
             }
 
             if (self.pressHandler || self.dragHandler) {
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
 
             if (!isIE || !ieCapturingAny) {
@@ -236,7 +236,7 @@
         }
 
         function onMouseUp(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
             var insideElmtPress = buttonDownElmt;
             var insideElmtRelease = insideElmt;
 
@@ -270,7 +270,7 @@
         * mouseup on the event that this event was meant for.
         */
         function onMouseUpIE(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -288,7 +288,7 @@
             event.srcElement.fireEvent("on" + event.type,
                     document.createEventObject(event));
 
-            $.Utils.stopEvent(event);
+            $.stopEvent(event);
         }
 
         /**
@@ -309,7 +309,7 @@
         function onMouseClick(event) {
 
             if (self.clickHandler) {
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
@@ -338,12 +338,12 @@
                             " while executing scroll handler: " + e.message, e);
                 }
 
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
         function handleMouseClick(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
 
             if (event.button == 2) {
                 return;
@@ -367,7 +367,7 @@
         }
 
         function onMouseMove(event) {
-            var event = $.Utils.getEvent(event);
+            var event = $.getEvent(event);
             var point = getMouseAbsolute(event);
             var delta = point.minus(lastPoint);
 
@@ -375,14 +375,22 @@
 
             if (typeof (self.dragHandler) == "function") {
                 try {
-                    self.dragHandler(self, getMouseRelative(event, elmt),
-                            delta, event.shiftKey);
+                    self.dragHandler(
+                        self, 
+                        getMouseRelative( event, elmt ),
+                        delta, 
+                        event.shiftKey
+                    );
                 } catch (e) {
-                    $.Debug.error(e.name +
-                            " while executing drag handler: " + e.message, e);
+                    $.Debug.error(
+                        e.name +
+                        " while executing drag handler: " 
+                        + e.message, 
+                        e
+                    );
                 }
 
-                $.Utils.cancelEvent(event);
+                $.cancelEvent(event);
             }
         }
 
@@ -397,18 +405,18 @@
                 ieTrackersCapturing[i].onMouseMove(event);
             }
 
-            $.Utils.stopEvent(event);
+            $.stopEvent(event);
         }
 
     };
 
     function getMouseAbsolute( event ) {
-        return $.Utils.getMousePosition(event);
+        return $.getMousePosition(event);
     }
 
     function getMouseRelative( event, elmt ) {
-        var mouse = $.Utils.getMousePosition(event);
-        var offset = $.Utils.getElementPosition(elmt);
+        var mouse = $.getMousePosition(event);
+        var offset = $.getElementPosition(elmt);
 
         return mouse.minus(offset);
     }
@@ -439,11 +447,11 @@
 
     (function () {
         if (isIE) {
-            $.Utils.addEvent(document, "mousedown", onGlobalMouseDown, false);
-            $.Utils.addEvent(document, "mouseup", onGlobalMouseUp, false);
+            $.addEvent(document, "mousedown", onGlobalMouseDown, false);
+            $.addEvent(document, "mouseup", onGlobalMouseUp, false);
         } else {
-            $.Utils.addEvent(window, "mousedown", onGlobalMouseDown, true);
-            $.Utils.addEvent(window, "mouseup", onGlobalMouseUp, true);
+            $.addEvent(window, "mousedown", onGlobalMouseDown, true);
+            $.addEvent(window, "mouseup", onGlobalMouseUp, true);
         }
     })();
     
