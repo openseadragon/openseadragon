@@ -305,7 +305,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     })();
 
     //TODO: $.Debug is often used inside a try/catch block which generally
-    //      prevents allows errors to occur without detection until a debugger
+    //      prevents allowings errors to occur with detection until a debugger
     //      is attached.  Although I've been guilty of the same anti-pattern
     //      I eventually was convinced that errors should naturally propogate in
     //      all but the most special cases.
@@ -401,7 +401,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     "Unknown event mouse position, no known technique."
                 );
             }
-            
+
             return result;
         },
 
