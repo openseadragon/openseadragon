@@ -314,8 +314,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
     $.extend( $, {
 
-        getElement: function( element ) {
-            if (typeof ( element ) == "string") {
+        getElement: function( element ) { 
+            if ( typeof ( element ) == "string") {
                 element = document.getElementById( element );
             }
             return element;
@@ -330,11 +330,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         getElementPosition: function( element ) {
-            var element = $.getElement( element );
+            var result = new $.Point(),
+                isFixed,
+                offsetParent;
 
-            var isFixed = $.getElementStyle( element ).position == "fixed",
-                offsetParent = $.getOffsetParent( element, isFixed ),
-                result  = new $.Point();
+            element      = $.getElement( element );
+            isFixed      = $.getElementStyle( element ).position == "fixed";
+            offsetParent = $.getOffsetParent( element, isFixed );
 
             while ( offsetParent ) {
 
@@ -354,7 +356,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         getElementSize: function( element ) {
-            var element = $.getElement( element );
+            element = $.getElement( element );
 
             return new $.Point(
                 element.clientWidth, 
@@ -363,7 +365,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         getElementStyle: function( element ) {
-            var element = $.getElement( element );
+            element = $.getElement( element );
 
             if ( element.currentStyle ) {
                 return element.currentStyle;
@@ -379,15 +381,14 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         getMousePosition: function( event ) {
-            var event = $.getEvent( event );
-
             var result = new $.Point();
+
+            event = $.getEvent( event );
 
             if ( typeof( event.pageX ) == "number" ) {
                 result.x = event.pageX;
                 result.y = event.pageY;
             } else if ( typeof( event.clientX ) == "number" ) {
-
                 result.x = 
                     event.clientX + 
                     document.body.scrollLeft + 
@@ -446,17 +447,18 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         imageFormatSupported: function( extension ) {
-            var extension = extension ? extension : "";
+            extension = extension ? extension : "";
             return !!FILEFORMATS[ extension.toLowerCase() ];
         },
 
         makeCenteredNode: function( element ) {
-            var element = $.getElement( element );
 
             var div      = $.makeNeutralElement( "div" ),
                 html     = [],
                 innerDiv,
                 innerDivs;
+
+            element = $.getElement( element );
 
             //TODO: I dont understand the use of # inside the style attributes
             //      below.  Invetigate the results of the constructed html in
@@ -534,11 +536,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         setElementOpacity: function( element, opacity, usesAlpha ) {
-            var element = $.getElement( element );
 
             var previousFilter,
                 ieOpacity,
                 ieFilter;
+
+            element = $.getElement( element );
 
             if ( usesAlpha && !$.Browser.alpha ) {
                 opacity = Math.round( opacity );
@@ -573,7 +576,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         addEvent: function( element, eventName, handler, useCapture ) {
-            var element = $.getElement( element );
+            element = $.getElement( element );
 
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
@@ -592,7 +595,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         removeEvent: function( element, eventName, handler, useCapture ) {
-            var element = $.getElement( element );
+            element = $.getElement( element );
 
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
@@ -611,7 +614,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         cancelEvent: function( event ) {
-            var event = $.getEvent( event );
+            event = $.getEvent( event );
 
             if ( event.preventDefault ) {
                 event.preventDefault();     // W3C for preventing default
@@ -622,7 +625,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         stopEvent: function( event ) {
-            var event = $.getEvent( event );
+            event = $.getEvent( event );
 
             if ( event.stopPropagation ) {
                 event.stopPropagation();    // W3C for stopping propagation
