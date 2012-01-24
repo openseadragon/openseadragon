@@ -711,7 +711,11 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 request.open( "GET", url, async );
                 request.send( null );
             } catch (e) {
-                $.Debug.log(e.name + " while making AJAX request: " + e.message);
+                $.Debug.log(
+                    "%s while making AJAX request: %s",
+                    e.name, 
+                    e.message
+                );
 
                 request.onreadystatechange = null;
                 request = null;

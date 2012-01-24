@@ -22,27 +22,28 @@ $.Button = function( options ) {
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
-    this.element    = options.element || $.makeNeutralElement("span");
+    this.element    = options.element || $.makeNeutralElement( "a" );
+    this.element.href = '#';
     this.config     = options.config;
 
-    if ( options.onPress != undefined ){
-        this.addHandler("onPress", options.onPress );
+    if ( options.onPress ){
+        this.addHandler( "onPress", options.onPress );
     }
-    if ( options.onRelease != undefined ){
-        this.addHandler("onRelease", options.onRelease );
+    if ( options.onRelease ){
+        this.addHandler( "onRelease", options.onRelease );
     }
-    if ( options.onClick != undefined ){
-        this.addHandler("onClick", options.onClick );
+    if ( options.onClick ){
+        this.addHandler( "onClick", options.onClick );
     }
-    if ( options.onEnter != undefined ){
-        this.addHandler("onEnter", options.onEnter );
+    if ( options.onEnter ){
+        this.addHandler( "onEnter", options.onEnter );
     }
-    if ( options.onExit != undefined ){
-        this.addHandler("onExit", options.onExit );
+    if ( options.onExit ){
+        this.addHandler( "onExit", options.onExit );
     }
 
     this.currentState = $.ButtonState.GROUP;
-    this.tracker = new $.MouseTracker(
+    this.tracker    = new $.MouseTracker(
         this.element, 
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
@@ -66,10 +67,10 @@ $.Button = function( options ) {
     this.element.appendChild( this.imgHover );
     this.element.appendChild( this.imgDown );
 
-    var styleRest   = this.imgRest.style;
-    var styleGroup  = this.imgGroup.style;
-    var styleHover  = this.imgHover.style;
-    var styleDown   = this.imgDown.style;
+    var styleRest   = this.imgRest.style,
+        styleGroup  = this.imgGroup.style,
+        styleHover  = this.imgHover.style,
+        styleDown   = this.imgDown.style;
 
     styleGroup.position = 
         styleHover.position = 
@@ -100,7 +101,7 @@ $.Button = function( options ) {
 
     //TODO - refactor mousetracer next to avoid this extension
     $.extend( this.tracker, {
-        enterHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+        enterHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
             if ( buttonDownElmt ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "onEnter", _this );
@@ -108,17 +109,17 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
-        exitHandler: function(tracker, position, buttonDownElmt, buttonDownAny) {
+        exitHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElmt ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
-        pressHandler: function(tracker, position) {
+        pressHandler: function( tracker, position ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
-        releaseHandler: function(tracker, position, insideElmtPress, insideElmtRelease) {
+        releaseHandler: function( tracker, position, insideElmtPress, insideElmtRelease ) {
             if ( insideElmtPress && insideElmtRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
@@ -128,7 +129,7 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
-        clickHandler: function(tracker, position, quick, shift) {
+        clickHandler: function( tracker, position, quick, shift ) {
             if ( quick ) {
                 _this.raiseEvent("onClick", _this);
             }
@@ -140,12 +141,15 @@ $.Button = function( options ) {
 };
 
 $.extend( $.Button.prototype, $.EventHandler.prototype, {
+
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
     },
+
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
     }
+
 });
 
 
@@ -178,7 +182,7 @@ function updateFade( button ) {
 function beginFading( button ) {
     button.shouldFade = true;
     button.fadeBeginTime = new Date().getTime() + button.fadeDelay;
-    window.setTimeout(function(){ 
+    window.setTimeout( function(){ 
         scheduleFade( button );
     }, button.fadeDelay );
 };
@@ -189,17 +193,20 @@ function stopFading( button ) {
 };
 
 function inTo( button, newState ) {
-    if ( newState >= $.ButtonState.GROUP && button.currentState == $.ButtonState.REST ) {
+    if ( newState >= $.ButtonState.GROUP && 
+         button.currentState == $.ButtonState.REST ) {
         stopFading( button );
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( newState >= $.ButtonState.HOVER && button.currentState == $.ButtonState.GROUP ) {
+    if ( newState >= $.ButtonState.HOVER && 
+         button.currentState == $.ButtonState.GROUP ) {
         button.imgHover.style.visibility = "";
         button.currentState = $.ButtonState.HOVER;
     }
 
-    if ( newState >= $.ButtonState.DOWN && button.currentState == $.ButtonState.HOVER ) {
+    if ( newState >= $.ButtonState.DOWN && 
+         button.currentState == $.ButtonState.HOVER ) {
         button.imgDown.style.visibility = "";
         button.currentState = $.ButtonState.DOWN;
     }
@@ -207,17 +214,20 @@ function inTo( button, newState ) {
 
 
 function outTo( button, newState ) {
-    if ( newState <= $.ButtonState.HOVER && button.currentState == $.ButtonState.DOWN ) {
+    if ( newState <= $.ButtonState.HOVER && 
+         button.currentState == $.ButtonState.DOWN ) {
         button.imgDown.style.visibility = "hidden";
         button.currentState = $.ButtonState.HOVER;
     }
 
-    if ( newState <= $.ButtonState.GROUP && button.currentState == $.ButtonState.HOVER ) {
+    if ( newState <= $.ButtonState.GROUP && 
+         button.currentState == $.ButtonState.HOVER ) {
         button.imgHover.style.visibility = "hidden";
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( button.newState <= $.ButtonState.REST && button.currentState == $.ButtonState.GROUP ) {
+    if ( button.newState <= $.ButtonState.REST && 
+         button.currentState == $.ButtonState.GROUP ) {
         button.beginFading();
         button.currentState = $.ButtonState.REST;
     }

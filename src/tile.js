@@ -34,11 +34,13 @@ $.Tile.prototype = {
 
     drawHTML: function( container ) {
 
+        var position = this.position.apply( Math.floor ),
+            size     = this.size.apply( Math.ceil );
+
         if ( !this.loaded ) {
-            $.Debug.error(
-                "Attempting to draw tile " + 
-                this.toString() +
-                " when it's not yet loaded."
+            $.Debug.warn(
+                "Attempting to draw tile %s when it's not yet loaded.",
+                this.toString()
             );
             return;
         }
@@ -51,9 +53,6 @@ $.Tile.prototype = {
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
-
-        var position = this.position.apply( Math.floor );
-        var size     = this.size.apply( Math.ceil );
 
 
         if ( this.elmt.parentNode != container ) {
@@ -70,17 +69,17 @@ $.Tile.prototype = {
     },
 
     drawCanvas: function(context) {
-        if (!this.loaded) {
-            $.Debug.error(
-                "Attempting to draw tile " + 
-                this.toString() +
-                " when it's not yet loaded."
-            );
-            return;
-        }
 
         var position = this.position,
             size     = this.size;
+
+        if (!this.loaded) {
+            $.Debug.warn(
+                "Attempting to draw tile %s when it's not yet loaded.",
+                this.toString()
+            );
+            return;
+        }
 
         context.globalAlpha = this.opacity;
         context.drawImage(this.image, position.x, position.y, size.x, size.y);

@@ -26,7 +26,7 @@ $.Drawer = function(source, viewport, elmt) {
 
     this.container  = $.getElement( elmt );
     this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
-    this.context    = USE_CANVAS ? this.canvas.getContext("2d") : null;
+    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
     this.viewport   = viewport;
     this.source     = source;
     this.config     = this.viewport.config;
@@ -34,7 +34,7 @@ $.Drawer = function(source, viewport, elmt) {
     this.downloading        = 0;
     this.imageLoaderLimit   = this.config.imageLoaderLimit;
 
-    this.profiler    = new $.Profiler();
+    //this.profiler    = new $.Profiler();
 
     this.minLevel    = source.minLevel;
     this.maxLevel    = source.maxLevel;
@@ -136,7 +136,7 @@ $.Drawer.prototype = {
         );
     },
 
-    _onTileLoad: function(tile, time, image) {
+    _onTileLoad: function( tile, time, image ) {
         var insertionIndex,
             cutoff,
             worstTile,
@@ -151,14 +151,14 @@ $.Drawer.prototype = {
         tile.loading = false;
 
         if ( this.midUpdate ) {
-            $.Debug.error( "Tile load callback in middle of drawing routine." );
+            $.Debug.warn( "Tile load callback in middle of drawing routine." );
             return;
         } else if ( !image ) {
-            $.Debug.log( "Tile " + tile + " failed to load: " + tile.url );
+            $.Debug.log( "Tile %s failed to load: %s", tile, tile.url );
             tile.exists = false;
             return;
         } else if ( time < this.lastResetTime ) {
-            $.Debug.log( "Ignoring tile " + tile + " loaded before reset: " + tile.url );
+            $.Debug.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
             return;
         }
 
@@ -277,8 +277,9 @@ $.Drawer.prototype = {
     */
     _setCoverage: function( level, x, y, covers ) {
         if ( !this.coverage[ level ] ) {
-            $.Debug.error(
-                "Setting coverage for a tile before its level's coverage has been reset: " + level
+            $.Debug.warn(
+                "Setting coverage for a tile before its level's coverage has been reset: %s", 
+                level
             );
             return;
         }
@@ -403,7 +404,14 @@ $.Drawer.prototype = {
         for ( level = highestLevel; level >= lowestLevel; level-- ) {
 
             //TODO
-            best = this._drawLevel( level, lowestLevel, viewportTL, viewportBR, currentTime, best );
+            best = this._drawLevel( 
+                level, 
+                lowestLevel, 
+                viewportTL, 
+                viewportBR, 
+                currentTime, 
+                best 
+            );
 
             //TODO
             if ( this._providesCoverage( level ) ) {
@@ -491,8 +499,8 @@ $.Drawer.prototype = {
 
         for ( x = tileTL.x; x <= tileBR.x; x++ ) {
             for ( y = tileTL.y; y <= tileBR.y; y++ ) {
-                drawTile = drawLevel;
-                tile     = this._getTile( 
+
+                tile = this._getTile( 
                     level, 
                     x, y, 
                     currentTime, 
@@ -506,6 +514,7 @@ $.Drawer.prototype = {
                     continue;
                 }
 
+                drawTile = drawLevel;
                 if ( haveDrawn && !drawTile ) {
                     if ( this._isCovered( level, x, y ) ) {
                         this._setCoverage( level, x, y, true );
@@ -722,7 +731,10 @@ $.Drawer.prototype = {
                         callback( image );
                     } catch ( e ) {
                         $.Debug.error(
-                            e.name + " while executing " + src +" callback: " + e.message, 
+                            "%s while executing %s callback: %s", 
+                            e.name,
+                            src,
+                            e.message,
                             e
                         );
                     }

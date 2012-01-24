@@ -1,35 +1,48 @@
 
 (function( $ ){
     
-$.Viewport = function(containerSize, contentSize, config) {
+$.Viewport = function( options ) {
+
+    var options;
+
+    if(  arguments.length && arguments[ 0 ] instanceof $.Point ){
+        options = {
+            containerSize:      arguments[ 0 ],
+            contentSize:        arguments[ 1 ],
+            config:             arguments[ 2 ]
+        };
+    } else {
+        options = arguments[ 0 ];
+    }
+
     //TODO: this.config is something that should go away but currently the 
     //      Drawer references the viewport.config
-    this.config = config;
-    this.zoomPoint = null;
-    this.containerSize = containerSize;
-    this.contentSize   = contentSize;
-    this.contentAspect = contentSize.x / contentSize.y;
-    this.contentHeight = contentSize.y / contentSize.x;
+    this.config        = options.config;
+    this.zoomPoint     = null;
+    this.containerSize = options.containerSize;
+    this.contentSize   = options.contentSize;
+    this.contentAspect = this.contentSize.x / this.contentSize.y;
+    this.contentHeight = this.contentSize.y / this.contentSize.x;
     this.centerSpringX = new $.Spring({
         initial: 0, 
-        springStiffness: config.springStiffness,
-        animationTime:   config.animationTime
+        springStiffness: this.config.springStiffness,
+        animationTime:   this.config.animationTime
     });
     this.centerSpringY = new $.Spring({
         initial: 0, 
-        springStiffness: config.springStiffness,
-        animationTime:   config.animationTime
+        springStiffness: this.config.springStiffness,
+        animationTime:   this.config.animationTime
     });
     this.zoomSpring = new $.Spring({
         initial: 1, 
-        springStiffness: config.springStiffness,
-        animationTime:   config.animationTime
+        springStiffness: this.config.springStiffness,
+        animationTime:   this.config.animationTime
     });
-    this.minZoomImageRatio = config.minZoomImageRatio;
-    this.maxZoomPixelRatio = config.maxZoomPixelRatio;
-    this.visibilityRatio   = config.visibilityRatio;
-    this.wrapHorizontal    = config.wrapHorizontal;
-    this.wrapVertical      = config.wrapVertical;
+    this.minZoomImageRatio = this.config.minZoomImageRatio;
+    this.maxZoomPixelRatio = this.config.maxZoomPixelRatio;
+    this.visibilityRatio   = this.config.visibilityRatio;
+    this.wrapHorizontal    = this.config.wrapHorizontal;
+    this.wrapVertical      = this.config.wrapVertical;
     this.homeBounds = new $.Rect( 0, 0, 1, this.contentHeight );
     this.goHome( true );
     this.update();

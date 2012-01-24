@@ -17,7 +17,7 @@
 $.ButtonGroup = function( options ) {
 
     this.buttons = options.buttons;
-    this.element = options.group || $.makeNeutralElement("span");
+    this.element = options.group || $.makeNeutralElement( "span" );
     this.config  = options.config;
     this.tracker = new $.MouseTracker(
         this.element, 
@@ -38,14 +38,14 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.enter =  options.enter || function() {
         var i;
-        for ( i = 0; i < _this.buttons.length; i++) {
+        for ( i = 0; i < _this.buttons.length; i++ ) {
             _this.buttons[ i ].notifyGroupEnter();
         }
     };
 
     this.tracker.exit = options.exit || function() {
         var i,
-            buttonDownElmt = arguments.length > 2 ? arguments[2] : null;
+            buttonDownElmt = arguments.length > 2 ? arguments[ 2 ] : null;
         if ( !buttonDownElmt ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();
@@ -55,7 +55,7 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.release = options.release || function() {
         var i,
-            insideElmtRelease = arguments.length > 3 ? arguments[3] : null;
+            insideElmtRelease = arguments.length > 3 ? arguments[ 3 ] : null;
         if ( !insideElmtRelease ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();

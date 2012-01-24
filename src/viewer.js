@@ -198,26 +198,28 @@ $.Viewer = function( options ) {
     //////////////////////////////////////////////////////////////////////////
     // Navigation Controls
     //////////////////////////////////////////////////////////////////////////
-    this._group = null;
-    this._zooming = false;    // whether we should be continuously zooming
-    this._zoomFactor = null;  // how much we should be continuously zooming by
-    this._lastZoomTime = null;
+    this._group         = null; 
+    // whether we should be continuously zooming
+    this._zooming       = false;
+    // how much we should be continuously zooming by
+    this._zoomFactor    = null;  
+    this._lastZoomTime  = null;
 
     this.elmt = null;
     
-    var beginZoomingInHandler   = $.delegate(this, beginZoomingIn);
-    var endZoomingHandler       = $.delegate(this, endZooming);
-    var doSingleZoomInHandler   = $.delegate(this, doSingleZoomIn);
-    var beginZoomingOutHandler  = $.delegate(this, beginZoomingOut);
-    var doSingleZoomOutHandler  = $.delegate(this, doSingleZoomOut);
-    var onHomeHandler           = $.delegate(this, onHome);
-    var onFullPageHandler       = $.delegate(this, onFullPage);
+    var beginZoomingInHandler   = $.delegate(this, beginZoomingIn),
+        endZoomingHandler       = $.delegate(this, endZooming),
+        doSingleZoomInHandler   = $.delegate(this, doSingleZoomIn),
+        beginZoomingOutHandler  = $.delegate(this, beginZoomingOut),
+        doSingleZoomOutHandler  = $.delegate(this, doSingleZoomOut),
+        onHomeHandler           = $.delegate(this, onHome),
+        onFullPageHandler       = $.delegate(this, onFullPage);
 
     var navImages = this.config.navImages;
 
     var zoomIn = new $.Button({ 
         config:     this.config, 
-        tooltip:    $.Strings.getString("Tooltips.ZoomIn"), 
+        tooltip:    $.getString("Tooltips.ZoomIn"), 
         srcRest:    resolveUrl(this.urlPrefix, navImages.zoomIn.REST), 
         srcGroup:   resolveUrl(this.urlPrefix, navImages.zoomIn.GROUP), 
         srcHover:   resolveUrl(this.urlPrefix, navImages.zoomIn.HOVER), 
@@ -231,7 +233,7 @@ $.Viewer = function( options ) {
 
     var zoomOut = new $.Button({ 
         config:     this.config, 
-        tooltip:    $.Strings.getString("Tooltips.ZoomOut"), 
+        tooltip:    $.getString("Tooltips.ZoomOut"), 
         srcRest:    resolveUrl(this.urlPrefix, navImages.zoomOut.REST), 
         srcGroup:   resolveUrl(this.urlPrefix, navImages.zoomOut.GROUP), 
         srcHover:   resolveUrl(this.urlPrefix, navImages.zoomOut.HOVER), 
@@ -244,7 +246,7 @@ $.Viewer = function( options ) {
     });
     var goHome = new $.Button({ 
         config:     this.config, 
-        tooltip:    $.Strings.getString("Tooltips.Home"), 
+        tooltip:    $.getString("Tooltips.Home"), 
         srcRest:    resolveUrl(this.urlPrefix, navImages.home.REST), 
         srcGroup:   resolveUrl(this.urlPrefix, navImages.home.GROUP), 
         srcHover:   resolveUrl(this.urlPrefix, navImages.home.HOVER), 
@@ -253,7 +255,7 @@ $.Viewer = function( options ) {
     });
     var fullPage = new $.Button({ 
         config:     this.config, 
-        tooltip:    $.Strings.getString("Tooltips.FullPage"), 
+        tooltip:    $.getString("Tooltips.FullPage"), 
         srcRest:    resolveUrl(this.urlPrefix, navImages.fullpage.REST), 
         srcGroup:   resolveUrl(this.urlPrefix, navImages.fullpage.GROUP), 
         srcHover:   resolveUrl(this.urlPrefix, navImages.fullpage.HOVER), 
@@ -372,7 +374,7 @@ $.extend($.Viewer.prototype, $.EventHandler.prototype, {
 
         window.setTimeout( function () {
             if ( _this._lastOpenStartTime > _this._lastOpenEndTime ) {
-                _this._setMessage( $.Strings.getString( "Messages.Loading" ) );
+                _this._setMessage( $.getString( "Messages.Loading" ) );
             }
         }, 2000);
 

@@ -37,8 +37,8 @@
                 Array.apply( null, events );
             return function( source, args ) {
                 var i, 
-                    l = events.length;
-                for ( i = 0; i < l; i++ ) {
+                    length = events.length;
+                for ( i = 0; i < length; i++ ) {
                     events[ i ]( source, args );
                 }
             };

@@ -4,9 +4,7 @@
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look 
 //      into existing patterns for i18n in javascript but i think that mimicking
 //      pythons gettext might be a reasonable approach.
-
-$.Strings = {
-
+var I18N = {
     Errors: {
         Failure:    "Sorry, but Seadragon Ajax can't run on your browser!\n" +
                     "Please try using IE 7 or Firefox 3.\n",
@@ -30,12 +28,15 @@ $.Strings = {
         Home:       "Go home",
         ZoomIn:     "Zoom in",
         ZoomOut:    "Zoom out"
-    },
+    }
+};
+
+$.extend( $, {
 
     getString: function( prop ) {
         
         var props   = prop.split('.'),
-            string  = $.Strings,
+            string  = I18N,
             args    = arguments,
             i;
 
@@ -71,6 +72,6 @@ $.Strings = {
         container[ props[ i ] ] = value;
     }
 
-};
+});
 
 }( OpenSeadragon ));

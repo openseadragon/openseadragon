@@ -1,9 +1,9 @@
 
 (function( $ ){
 
-$.Point = function(x, y) {
-    this.x = typeof (x) == "number" ? x : 0;
-    this.y = typeof (y) == "number" ? y : 0;
+$.Point = function( x, y ) {
+    this.x = typeof ( x ) == "number" ? x : 0;
+    this.y = typeof ( y ) == "number" ? y : 0;
 };
 
 $.Point.prototype = {
@@ -48,13 +48,17 @@ $.Point.prototype = {
     },
 
     apply: function( func ) {
-        return new $.Point( func(this.x), func(this.y) );
+        return new $.Point( func( this.x ), func( this.y ) );
     },
 
     equals: function( point ) {
-        return  ( point instanceof $.Point ) &&
-                ( this.x === point.x ) && 
-                ( this.y === point.y );
+        return ( 
+            point instanceof $.Point 
+        ) && ( 
+            this.x === point.x 
+        ) && ( 
+            this.y === point.y 
+        );
     },
 
     toString: function() {

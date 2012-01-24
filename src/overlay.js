@@ -2,26 +2,26 @@
 (function( $ ){
 
     $.OverlayPlacement = {
-        CENTER: 0,
-        TOP_LEFT: 1,
-        TOP: 2,
-        TOP_RIGHT: 3,
-        RIGHT: 4,
+        CENTER:       0,
+        TOP_LEFT:     1,
+        TOP:          2,
+        TOP_RIGHT:    3,
+        RIGHT:        4,
         BOTTOM_RIGHT: 5,
-        BOTTOM: 6,
-        BOTTOM_LEFT: 7,
-        LEFT: 8
+        BOTTOM:       6,
+        BOTTOM_LEFT:  7,
+        LEFT:         8
     };
 
-    $.Overlay = function(elmt, location, placement) {
+    $.Overlay = function( elmt, location, placement ) {
         this.elmt       = elmt;
         this.scales     = location instanceof $.Rect;
         this.bounds     = new $.Rect(
             location.x, 
             location.y,
             location.width, 
-            location.height)
-        ;
+            location.height
+        );
         this.position   = new $.Point(
             location.x, 
             location.y
@@ -39,8 +39,8 @@
 
     $.Overlay.prototype = {
 
-        adjust: function(position, size) {
-            switch (this.placement) {
+        adjust: function( position, size ) {
+            switch ( this.placement ) {
                 case $.OverlayPlacement.TOP_LEFT:
                     break;
                 case $.OverlayPlacement.TOP:
@@ -74,36 +74,38 @@
                     break;
             }
         },
-        destroy: function() {
-            var elmt = this.elmt;
-            var style = this.style;
 
-            if (elmt.parentNode) {
-                elmt.parentNode.removeChild(elmt);
+        destroy: function() {
+            var element = this.elmt,
+                style   = this.style;
+
+            if ( element.parentNode ) {
+                element.parentNode.removeChild( element );
             }
 
             style.top = "";
             style.left = "";
             style.position = "";
 
-            if (this.scales) {
+            if ( this.scales ) {
                 style.width = "";
                 style.height = "";
             }
         },
+
         drawHTML: function( container ) {
-            var elmt    = this.elmt,
+            var element = this.elmt,
                 style   = this.style,
                 scales  = this.scales,
                 position,
                 size;
 
-            if ( elmt.parentNode != container ) {
-                container.appendChild( elmt );
+            if ( element.parentNode != container ) {
+                container.appendChild( element );
             }
 
             if ( !scales ) {
-                this.size = $.getElementSize( elmt );
+                this.size = $.getElementSize( element );
             }
 
             position = this.position;
@@ -123,13 +125,19 @@
                 style.height = size.y + "px";
             }
         },
-        update: function( loc, placement ) {
-            this.scales     = ( loc instanceof $.Rect );
-            this.bounds     = new $.Rect(loc.x, loc.y, loc.width, loc.height);
+
+        update: function( location, placement ) {
+            this.scales     = location instanceof $.Rect;
+            this.bounds     = new $.Rect( 
+                location.x, 
+                location.y, 
+                location.width, 
+                location.height
+            );
             // rects are always top-left
-            this.placement  = loc instanceof $.Point ?
-                    placement : 
-                    $.OverlayPlacement.TOP_LEFT;    
+            this.placement  = location instanceof $.Point ?
+                placement : 
+                $.OverlayPlacement.TOP_LEFT;    
         }
 
     };

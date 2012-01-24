@@ -7,7 +7,7 @@ $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
     this.minLevel = minLevel;
     this.maxLevel = maxLevel;
 }
-$.DisplayRect.prototype = new $.Rect();
-$.DisplayRect.prototype.constructor = $.DisplayRect;
+
+$.extend( $.DisplayRect.prototype, $.Rect.prototype );
 
 }( OpenSeadragon ));
