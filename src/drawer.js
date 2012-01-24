@@ -1,8 +1,8 @@
 
 (function( $ ){
     
-var // the max number of images we should keep in memory
-    QUOTA               = 100,
+    // the max number of images we should keep in memory
+var QUOTA               = 100,
     // the most shrunk a tile should be
     MIN_PIXEL_RATIO     = 0.5,
     //TODO: make TIMEOUT configurable
@@ -18,8 +18,7 @@ var // the max number of images we should keep in memory
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
     ),
 
-    USE_CANVAS =
-        $.isFunction( document.createElement("canvas").getContext ) &&
+    USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
         SUBPIXEL_RENDERING;
 
 $.Drawer = function(source, viewport, elmt) {
