@@ -1,0 +1,20 @@
+{! Link.base = ""; /* all generated links will be relative to this */ !}
+{+subtemplate("subtemplates/head.tmpl", {subtitle: "Class Index"})+}
+{+subtemplate("subtemplates/menu.tmpl")+}
+<div class="content">
+	<div class="innerContent">
+		<article>
+			<h1 class="classTitle"><span>Class Index</span></h1>
+			
+			<ul id="ClassList2">
+				<for each="thisClass" in="data">
+					<li>
+						<h2 class="classname">{+(new Link().toSymbol(thisClass.alias))+}</h2>
+						<p>{+resolveLinks(summarize(thisClass.classDesc))+}</p>
+					</li>
+				</for>
+			</ul>
+		</article>
+	</div>
+</div>
+{+subtemplate("subtemplates/foot.tmpl")+}

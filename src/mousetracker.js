@@ -15,7 +15,9 @@
         ieTrackersActive    = {},   // dictionary from hash to MouseTracker
         ieTrackersCapturing = [];   // list of trackers interested in capture
 
-
+    /**
+     * @class
+     */
     $.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
         //Start Thatcher - TODO: remove local function definitions in favor of 
         //               -       a global closure for MouseTracker so the number
@@ -168,7 +170,7 @@
                     self.enterHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing enter handler: " + e.message, e);
                 }
             }
@@ -194,7 +196,7 @@
                     self.exitHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing exit handler: " + e.message, e);
                 }
             }
@@ -217,7 +219,7 @@
                 try {
                     self.pressHandler(self, getMouseRelative(event, elmt));
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing press handler: " + e.message, e);
                 }
             }
@@ -251,7 +253,7 @@
                     self.releaseHandler(self, getMouseRelative(event, elmt),
                             insideElmtPress, insideElmtRelease);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing release handler: " + e.message, e);
                 }
             }
@@ -334,7 +336,7 @@
                 try {
                     self.scrollHandler(self, getMouseRelative(event, elmt), nDelta, event.shiftKey);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing scroll handler: " + e.message, e);
                 }
 
@@ -360,7 +362,7 @@
                     self.clickHandler(self, getMouseRelative(event, elmt),
                             quick, event.shiftKey);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing click handler: " + e.message, e);
                 }
             }
@@ -382,7 +384,7 @@
                         event.shiftKey
                     );
                 } catch (e) {
-                    $.Debug.error(
+                    $.console.error(
                         e.name +
                         " while executing drag handler: " 
                         + e.message, 
@@ -422,6 +424,7 @@
     }
 
     /**
+    * @private
     * Returns true if elmtB is a child node of elmtA, or if they're equal.
     */
     function isChild( elmtA, elmtB ) {

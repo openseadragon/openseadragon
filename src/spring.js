@@ -1,6 +1,9 @@
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Spring = function( options ) {
     var args = arguments;
 

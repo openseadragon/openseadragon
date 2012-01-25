@@ -1,7 +1,7 @@
 
 (function( $ ){
 /**
- * OpenSeadragon ButtonGroup
+ * @class
  *
  * Manages events on groups of buttons.
  *    

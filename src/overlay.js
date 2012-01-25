@@ -1,6 +1,12 @@
 
 (function( $ ){
 
+    /**
+     * An enumeration of positions that an overlay may be assigned relative
+     * to the viewport including CENTER, TOP_LEFT (default), TOP, TOP_RIGHT,
+     * RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, and LEFT.
+     * @static
+     */
     $.OverlayPlacement = {
         CENTER:       0,
         TOP_LEFT:     1,
@@ -13,6 +19,9 @@
         LEFT:         8
     };
 
+    /**
+     * @class
+     */
     $.Overlay = function( elmt, location, placement ) {
         this.elmt       = elmt;
         this.scales     = location instanceof $.Rect;

@@ -1,6 +1,9 @@
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Rect = function( x, y, width, height ) {
     this.x = typeof ( x ) == "number" ? x : 0;
     this.y = typeof ( y ) == "number" ? y : 0;

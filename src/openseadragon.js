@@ -1,9 +1,26 @@
 /**
- * (c) 2011 Christopher Thatcher
- * (c) 2010 OpenSeadragon
- * (c) 2010 CodePlex Foundation
+ * @version  OpenSeadragon @VERSION@
  *
- * OpenSeadragon @VERSION@
+ * @fileOverview 
+ * <h2>
+ * <strong>
+ * OpenSeadragon - Javascript Deep Zooming
+ * </strong>
+ * </h2> 
+ * <p>
+ * OpenSeadragon is provides an html interface for creating 
+ * deep zoom user interfaces.  The simplest examples include deep 
+ * zoom for large resolution images, and complex examples include
+ * zoomable map interfaces driven by SVG files.
+ * </p>
+ * 
+ * @author <br/>(c) 2011 Christopher Thatcher 
+ * @author <br/>(c) 2010 OpenSeadragon Team 
+ * @author <br/>(c) 2010 CodePlex Foundation 
+ * 
+ * <p>
+ * <strong>Original license preserved below: </strong><br/>
+ * <pre>
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -37,11 +54,21 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  * 
  * ----------------------------------------------------------------------------
- *
+ * </pre>
+ * </p>
  **/
 
+ /** 
+  * The root namespace for OpenSeadragon.  All utility methods and classes
+  * are defined on or below this namespace. The OpenSeadragon namespace will
+  * only be defined once even if mutliple versions are loaded on the page in 
+  * succession.
+  * @namespace 
+  * @name OpenSeadragon
+  * @exports $ as OpenSeadragon
+  */
 OpenSeadragon = window.OpenSeadragon || (function(){
-    
+
     //Taken from jquery 1.6.1
     // [[Class]] -> type pairs
     var class2type = {
@@ -120,36 +147,52 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 }());
 
-(function( $ ){
-    
+(function( $ ){    
+
+    /**
+     * @static
+     * @ignore
+     */
     $.SIGNAL = "----seadragon----";
 
-    $.delegate = function(object, method) {
+    /**
+     * Invokes the the method as if it where a method belonging to the object.
+     * @param {Object} object 
+     * @param {Function} method
+     */
+    $.delegate = function( object, method ) {
         return function() {
-            if (arguments === undefined)
+            if ( arguments === undefined )
                 arguments = [];
-            return method.apply(object, arguments);
+            return method.apply( object, arguments );
         };
     };
-
-    //Taken from jQuery 1.6.1:
+    
+    /**
+     * Taken from jQuery 1.6.1, see the jQuery documentation
+     */
     $.extend = function() {
-        var options, name, src, copy, copyIsArray, clone,
-            target = arguments[0] || {},
-            i = 1,
-            length = arguments.length,
-            deep = false;
+        var options, 
+            name, 
+            src, 
+            copy, 
+            copyIsArray, 
+            clone,
+            target  = arguments[ 0 ] || {},
+            length  = arguments.length,
+            deep    = false,
+            i       = 1;
 
         // Handle a deep copy situation
         if ( typeof target === "boolean" ) {
-            deep = target;
-            target = arguments[1] || {};
+            deep    = target;
+            target  = arguments[ 1 ] || {};
             // skip the boolean and the target
             i = 2;
         }
 
         // Handle case when target is a string or something (possible in deep copy)
-        if ( typeof target !== "object" && !OpenSeadragon.isFunction(target) ) {
+        if ( typeof target !== "object" && !OpenSeadragon.isFunction( target ) ) {
             target = {};
         }
 
@@ -161,7 +204,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
         for ( ; i < length; i++ ) {
             // Only deal with non-null/undefined values
-            if ( (options = arguments[ i ]) != null ) {
+            if ( ( options = arguments[ i ] ) != null ) {
                 // Extend the base object
                 for ( name in options ) {
                     src = target[ name ];
@@ -173,13 +216,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     }
 
                     // Recurse if we're merging plain objects or arrays
-                    if ( deep && copy && ( OpenSeadragon.isPlainObject(copy) || (copyIsArray = OpenSeadragon.isArray(copy)) ) ) {
+                    if ( deep && copy && ( OpenSeadragon.isPlainObject( copy ) || ( copyIsArray = OpenSeadragon.isArray( copy ) ) ) ) {
                         if ( copyIsArray ) {
                             copyIsArray = false;
-                            clone = src && OpenSeadragon.isArray(src) ? src : [];
+                            clone = src && OpenSeadragon.isArray( src ) ? src : [];
 
                         } else {
-                            clone = src && OpenSeadragon.isPlainObject(src) ? src : {};
+                            clone = src && OpenSeadragon.isPlainObject( src ) ? src : {};
                         }
 
                         // Never move original objects, clone them
@@ -198,10 +241,16 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     };
 
     //The following functions are originally from the Openseadragon Utils 
-    //module but have been moved to Openseadragon to avoid the Utils anti-
+    //module but have been moved to Openseadragon to avoid the 'Utils' anti-
     //pattern.  Not all of the code is A-grade compared to equivalent functions
     // from libraries like jquery, but until we need better we'll leave those
     //orignally developed by the project.
+    
+    /**
+     * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
+     * SAFARI, CHROME, and OPERA.
+     * @static
+     */
     $.BROWSERS = {
         UNKNOWN:    0,
         IE:         1,
@@ -211,6 +260,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         OPERA:      5
     };
 
+    /**
+     * The current browser vendor, version, and related information regarding
+     * detected features.  Features include <br/>
+     *  <strong>'alpha'</strong> - Does the browser support image alpha 
+     *  transparency.<br/>
+     * @static
+     */
     $.Browser = {
         vendor:     $.BROWSERS.UNKNOWN,
         version:    0,
@@ -233,7 +289,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         URLPARAMS = {};
 
     (function() {
-
+        //A small auto-executing routine to determine the browser vendor, 
+        //version and supporting feature sets.
         var app = navigator.appName,
             ver = navigator.appVersion,
             ua  = navigator.userAgent;
@@ -277,8 +334,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 break;
         }
 
-
-        var query = window.location.search.substring( 1 ),    // ignore '?'
+            // ignore '?' portion of query string
+        var query = window.location.search.substring( 1 ),
             parts = query.split('&'),
             part,
             sep,
@@ -294,7 +351,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         }
 
-        //determine if this browser supports 
+        //determine if this browser supports image alpha transparency
         $.Browser.alpha = !( 
             $.Browser.vendor == $.BROWSERS.IE || (
                 $.Browser.vendor == $.BROWSERS.CHROME && 
@@ -304,16 +361,28 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
     })();
 
-    //TODO: $.Debug is often used inside a try/catch block which generally
+    //TODO: $.console is often used inside a try/catch block which generally
     //      prevents allowings errors to occur with detection until a debugger
     //      is attached.  Although I've been guilty of the same anti-pattern
     //      I eventually was convinced that errors should naturally propogate in
     //      all but the most special cases.
-    $.Debug = window.console ? window.console : function(){};
+    /**
+     * A convenient alias for console when available, and a simple null 
+     * function when console is unavailable.
+     * @static
+     */
+    $.console = window.console ? window.console : function(){};
 
 
     $.extend( $, {
 
+        /**
+         * Returns a DOM Element for the given id or element.
+         * @function
+         * @name OpenSeadragon.getElement
+         * @param {String|Element} element Accepts an id or element.
+         * @returns {Element} The element with the given id, null, or the element itself.
+         */
         getElement: function( element ) { 
             if ( typeof ( element ) == "string") {
                 element = document.getElementById( element );
@@ -321,6 +390,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
         
+        /**
+         * @function
+         * @name OpenSeadragon.getOffsetParent
+         * @param {Element} element 
+         * @param {Boolean} [isFixed]
+         * @returns {Element}
+         */
         getOffsetParent: function( element, isFixed ) {
             if ( isFixed && element != document.body ) {
                 return document.body;
@@ -329,6 +405,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementPosition
+         * @param {Element|String} element
+         * @returns {Point}
+         */
         getElementPosition: function( element ) {
             var result = new $.Point(),
                 isFixed,
@@ -355,6 +437,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementSize
+         * @param {Element|String} element
+         * @returns {Point}
+         */
         getElementSize: function( element ) {
             element = $.getElement( element );
 
@@ -364,6 +452,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             );
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementStyle
+         * @param {Element|String} element
+         * @returns {CSSStyle}
+         */
         getElementStyle: function( element ) {
             element = $.getElement( element );
 
@@ -376,10 +470,22 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getEvent
+         * @param {Event} [event]
+         * @returns {Event}
+         */
         getEvent: function( event ) {
             return event ? event : window.event;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getMousePosition
+         * @param {Event} [event]
+         * @returns {Point}
+         */
         getMousePosition: function( event ) {
             var result = new $.Point();
 
@@ -406,6 +512,11 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getPageScroll
+         * @returns {Point}
+         */
         getPageScroll: function() {
             var result  = new $.Point(),
                 docElmt = document.documentElement || {},
@@ -425,6 +536,11 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getWindowSize
+         * @returns {Point}
+         */
         getWindowSize: function() {
             var result  = new $.Point(),
                 docElmt = document.documentElement || {},
@@ -446,11 +562,23 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.imageFormatSupported
+         * @param {String} [extension]
+         * @returns {Boolean}
+         */
         imageFormatSupported: function( extension ) {
             extension = extension ? extension : "";
             return !!FILEFORMATS[ extension.toLowerCase() ];
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeCenteredNode
+         * @param {Element|String} element
+         * @returns {Element}
+         */
         makeCenteredNode: function( element ) {
 
             var div      = $.makeNeutralElement( "div" ),
@@ -488,6 +616,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return div;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeNeutralElement
+         * @param {String} tagName
+         * @returns {Element}
+         */
         makeNeutralElement: function( tagName ) {
             var element = document.createElement( tagName ),
                 style   = element.style;
@@ -501,6 +635,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeTransparentImage
+         * @param {String} src
+         * @returns {Element}
+         */
         makeTransparentImage: function( src ) {
             var img     = $.makeNeutralElement( "img" ),
                 element = null;
@@ -535,6 +675,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.setElementOpacity
+         * @param {Element|String} element
+         * @param {Number} opacity
+         * @param {Boolean} [usesAlpha]
+         */
         setElementOpacity: function( element, opacity, usesAlpha ) {
 
             var previousFilter,
@@ -575,6 +722,15 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.addEvent
+         * @param {Element|String} element
+         * @param {String} eventName
+         * @param {Function} handler
+         * @param {Boolean} [useCapture]
+         * @throws {Error}
+         */
         addEvent: function( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
 
@@ -594,6 +750,15 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.removeEvent
+         * @param {Element|String} element
+         * @param {String} eventName
+         * @param {Function} handler
+         * @param {Boolean} [useCapture]
+         * @throws {Error}
+         */
         removeEvent: function( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
 
@@ -613,17 +778,29 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.cancelEvent
+         * @param {Event} [event]
+         */
         cancelEvent: function( event ) {
             event = $.getEvent( event );
 
             if ( event.preventDefault ) {
-                event.preventDefault();     // W3C for preventing default
+                // W3C for preventing default
+                event.preventDefault();
             }
-
-            event.cancel = true;            // legacy for preventing default
-            event.returnValue = false;      // IE for preventing default
+            // legacy for preventing default
+            event.cancel = true;
+            // IE for preventing default
+            event.returnValue = false;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.stopEvent
+         * @param {Event} [event]
+         */
         stopEvent: function( event ) {
             event = $.getEvent( event );
 
@@ -634,6 +811,14 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             event.cancelBubble = true;      // IE for stopping propagation
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.createCallback
+         * @param {Object} object
+         * @param {Function} method
+         * @param [args] any additional arguments are passed as arguments to the created callback
+         * @returns {Function}
+         */
         createCallback: function( object, method ) {
             //TODO: This pattern is painful to use and debug.  It's much cleaner
             //      to use pinning plus anonymous functions.  Get rid of this
@@ -655,11 +840,23 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             };
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getUrlParameter
+         * @param {String} key
+         * @returns {String} The value of the url parameter or null if no param matches.
+         */
         getUrlParameter: function( key ) {
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeAjaxRequest
+         * @param {String} url
+         * @param {Function} [callback]
+         */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
                 request = null,
@@ -699,6 +896,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 
             if ( async ) {
+                /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
                         request.onreadystatechange = new function() { };
@@ -728,6 +926,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return async ? null : request;
         },
 
+        /**
+         * Parses an XML string into a DOM Document.
+         * @function
+         * @name OpenSeadragon.parseXml
+         * @param {String} string
+         * @returns {Document}
+         */
         parseXml: function( string ) {
             //TODO: yet another example where we can determine the correct
             //      implementation once at start-up instead of everytime we use

@@ -1,7 +1,7 @@
 
 (function( $ ){
 /**
- *  OpenSeadragon Viewer
+ *  @class
  *
  *  The main point of entry into creating a zoomable image on the page.
  *
@@ -387,7 +387,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this._lastOpenEndTime = +new Date();
 
         if ( this._lastOpenStartTime < viewer._lastOpenStartTime ) {
-            $.Debug.log( "Ignoring out-of-date open." );
+            $.console.log( "Ignoring out-of-date open." );
             this.raiseEvent( "ignore" );
             return;
         }
@@ -408,7 +408,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             this.viewport, 
             this.canvas
         );
-        this.profiler = new $.Profiler();
+
+        //this.profiler = new $.Profiler();
 
         this._animating = false;
         this._forceRedraw = true;
@@ -451,7 +452,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.source     = null;
         this.viewport   = null;
         this.drawer     = null;
-        this.profiler   = null;
+        //this.profiler   = null;
         this.canvas.innerHTML = "";
     },
 

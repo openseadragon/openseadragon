@@ -1,7 +1,9 @@
 
 (function( $ ){
     
-
+/**
+ * @class
+ */
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
@@ -75,6 +77,9 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     }
 });
 
+/**
+ * @static
+ */
 $.DziTileSourceHelper = {
 
     createFromXml: function( xmlUrl, xmlString, callback ) {

@@ -1,6 +1,9 @@
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Tile = function(level, x, y, bounds, exists, url) {
     this.level   = level;
     this.x       = x;
@@ -38,7 +41,7 @@ $.Tile.prototype = {
             size     = this.size.apply( Math.ceil );
 
         if ( !this.loaded ) {
-            $.Debug.warn(
+            $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
@@ -74,7 +77,7 @@ $.Tile.prototype = {
             size     = this.size;
 
         if (!this.loaded) {
-            $.Debug.warn(
+            $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );

@@ -1,0 +1,43 @@
+<div class="index">
+	<div class="menu">
+		<div class="indexLinks">
+			{+new Link().toFile(JSDOC.opt.D.index=="files"?"allclasses.html":"index.html").withText("Classes")+}
+			{+new Link().toFile(JSDOC.opt.D.index=="files"?"index.html":"files.html").withText("Files")+}
+		</div>
+	
+		<h2 class="heading1">Classes</h2>
+		
+		<input type="text" name="classFilter" class="classFilter" id="ClassFilter" placeholder="Filter"></input>
+		
+		<nav>
+			<ul class="classList" id="ClassList">
+				<for each="thisClass" in="publish.classes">
+					<li>{!
+						var classLink = new Link().toClass(thisClass.alias) + "";
+						output += wordwrapNamespace(classLink);
+					!}</li>
+				</for>
+			</ul>
+		</nav>
+	</div>
+	<div class="fineprint" style="clear:both">
+		<footer>
+			<if test="JSDOC.opt.D.copyright">&copy;{+JSDOC.opt.D.copyright+}<br /></if>
+			Documentation generator: <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> {+JSDOC.VERSION+}<br />
+			Template: <a href="{+publish.conf.templateLink+}" target="_blank">{+publish.conf.templateName+}</a> {+publish.conf.templateVersion+}<br />
+			Generated on:
+			{!
+				var date = new Date();
+				var minutes = date.getMinutes() +"";
+				if (minutes.length == 1) {
+					minutes = '0'+ minutes;
+				}
+				var timeHuman = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate() + " " + date.getHours() + ":" + minutes;
+				var timeData = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+				output += "<time datetime='"+ timeData +"' pubdate>" + timeHuman +"</time>";
+			!}
+		</footer>
+	</div>
+</div>
+
+<div class="index indexStatic"></div>

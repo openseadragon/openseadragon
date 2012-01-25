@@ -1,0 +1,41 @@
+{! Link.base = ""; /* all generated links will be relative to this */ !}
+{+subtemplate("subtemplates/head.tmpl", {subtitle: "File Index"})+}
+{+subtemplate("subtemplates/menu.tmpl")+}
+<div class="content">
+	<div class="innerContent">
+		<article>
+			<h1 class="classTitle"><span>File Index</span></h1>
+			
+			<ul class="fileList" id="FileList">
+				<for each="item" in="data">
+					<li>
+						<h2 class="filename">{+new Link().toSrc(item.alias).withText(item.name)+}</h2>
+						
+						<if test="item.desc">{+resolveLinks(item.desc)+}</if>
+						
+						<dl class="detailList">
+							<if test="item.author">
+								<dt class="heading">Author:</dt>
+								<dd>{+item.author+}</dd>
+							</if>
+							
+							<if test="item.version">
+								<dt class="heading">Version:</dt>
+								<dd>{+item.version+}</dd>
+							</if>
+							
+							{! var locations = item.comment.getTag('location').map(function($){return $.toString().replace(/(^\$ ?| ?\$$)/g, '').replace(/^HeadURL: https:/g, 'http:');}) !}
+							<if test="locations.length">
+								<dt class="heading">Location:</dt>
+								<for each="location" in="locations">
+									<dd><a href="{+location+}">{+location+}</a></dd>
+								</for>
+							</if>
+						</dl>
+					</li>
+				</for>
+			</ul>
+		</article>
+	</div>
+</div>
+{+subtemplate("subtemplates/foot.tmpl")+}

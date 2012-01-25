@@ -1,6 +1,10 @@
 
 (function( $ ){
-    
+
+
+/**
+ * @class
+ */
 $.Viewport = function( options ) {
 
     var options;
@@ -49,16 +53,19 @@ $.Viewport = function( options ) {
 };
 
 $.Viewport.prototype = {
+
     getHomeZoom: function() {
         var aspectFactor = this.contentAspect / this.getAspectRatio();
-        return (aspectFactor >= 1) ? 1 : aspectFactor;
+        return ( aspectFactor >= 1 ) ? 
+            1 : 
+            aspectFactor;
     },
 
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom()
             zoom = this.minZoomImageRatio * homeZoom;
 
-        return Math.min(zoom, homeZoom);
+        return Math.min( zoom, homeZoom );
     },
 
     getMaxZoom: function() {
@@ -66,7 +73,7 @@ $.Viewport.prototype = {
             this.contentSize.x * 
             this.maxZoomPixelRatio / 
             this.containerSize.x;
-        return Math.max(zoom, this.getHomeZoom());
+        return Math.max( zoom, this.getHomeZoom() );
     },
 
     getAspectRatio: function() {
@@ -74,12 +81,15 @@ $.Viewport.prototype = {
     },
 
     getContainerSize: function() {
-        return new $.Point(this.containerSize.x, this.containerSize.y);
+        return new $.Point(
+            this.containerSize.x, 
+            this.containerSize.y
+        );
     },
 
     getBounds: function( current ) {
-        var center = this.getCenter(current),
-            width  = 1.0 / this.getZoom(current),
+        var center = this.getCenter( current ),
+            width  = 1.0 / this.getZoom( current ),
             height = width / this.getAspectRatio();
 
         return new $.Rect(
@@ -108,9 +118,9 @@ $.Viewport.prototype = {
             deltaZoomPixels,
             deltaZoomPoints;
 
-        if (current) {
+        if ( current ) {
             return centerCurrent;
-        } else if (!this.zoomPoint) {
+        } else if ( !this.zoomPoint ) {
             return centerTarget;
         }
 
@@ -203,6 +213,9 @@ $.Viewport.prototype = {
         this.applyConstraints( immediately );
     },
 
+    /**
+     * 
+     */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
@@ -217,7 +230,7 @@ $.Viewport.prototype = {
             newZoom,
             referencePoint;
 
-        if (newBounds.getAspectRatio() >= aspect) {
+        if ( newBounds.getAspectRatio() >= aspect ) {
             newBounds.height = bounds.width / aspect;
             newBounds.y      = center.y - newBounds.height / 2;
         } else {
@@ -225,13 +238,13 @@ $.Viewport.prototype = {
             newBounds.x     = center.x - newBounds.width / 2;
         }
 
-        this.panTo(this.getCenter(true), true);
-        this.zoomTo(this.getZoom(true), null, true);
+        this.panTo( this.getCenter( true ), true );
+        this.zoomTo( this.getZoom( true ), null, true );
 
         oldBounds = this.getBounds();
         oldZoom   = this.getZoom();
         newZoom   = 1.0 / newBounds.width;
-        if (newZoom == oldZoom || newBounds.width == oldBounds.width) {
+        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
             this.panTo( center, immediately );
             return;
         }
@@ -251,25 +264,27 @@ $.Viewport.prototype = {
         this.zoomTo( newZoom, referencePoint, immediately );
     },
 
-    goHome: function(immediately) {
+    goHome: function( immediately ) {
         var center = this.getCenter();
 
         if ( this.wrapHorizontal ) {
-            center.x = (1 + (center.x % 1)) % 1;
-            this.centerSpringX.resetTo(center.x);
+            center.x = ( 1 + ( center.x % 1 ) ) % 1;
+            this.centerSpringX.resetTo( center.x );
             this.centerSpringX.update();
         }
 
         if ( this.wrapVertical ) {
-            center.y = (this.contentHeight + (center.y % this.contentHeight)) % this.contentHeight;
-            this.centerSpringY.resetTo(center.y);
+            center.y = (
+                this.contentHeight + ( center.y % this.contentHeight )
+            ) % this.contentHeight;
+            this.centerSpringY.resetTo( center.y );
             this.centerSpringY.update();
         }
 
-        this.fitBounds(this.homeBounds, immediately);
+        this.fitBounds( this.homeBounds, immediately );
     },
 
-    panBy: function(delta, immediately) {
+    panBy: function( delta, immediately ) {
         var center = new $.Point(
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
@@ -277,44 +292,49 @@ $.Viewport.prototype = {
         this.panTo( center.plus( delta ), immediately );
     },
 
-    panTo: function(center, immediately) {
-        if (immediately) {
-            this.centerSpringX.resetTo(center.x);
-            this.centerSpringY.resetTo(center.y);
+    panTo: function( center, immediately ) {
+        if ( immediately ) {
+            this.centerSpringX.resetTo( center.x );
+            this.centerSpringY.resetTo( center.y );
         } else {
-            this.centerSpringX.springTo(center.x);
-            this.centerSpringY.springTo(center.y);
+            this.centerSpringX.springTo( center.x );
+            this.centerSpringY.springTo( center.y );
         }
     },
 
-    zoomBy: function(factor, refPoint, immediately) {
-        this.zoomTo(this.zoomSpring.target.value * factor, refPoint, immediately);
+    zoomBy: function( factor, refPoint, immediately ) {
+        this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
-    zoomTo: function(zoom, refPoint, immediately) {
+    zoomTo: function( zoom, refPoint, immediately ) {
 
-        if (immediately) {
-            this.zoomSpring.resetTo(zoom);
+        if ( immediately ) {
+            this.zoomSpring.resetTo( zoom );
         } else {        
-            this.zoomSpring.springTo(zoom);
+            this.zoomSpring.springTo( zoom );
         }
 
-        this.zoomPoint = refPoint instanceof $.Point ? refPoint : null;
+        this.zoomPoint = refPoint instanceof $.Point ? 
+            refPoint : 
+            null;
     },
 
-    resize: function(newContainerSize, maintain) {
+    resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
             widthDeltaFactor = newContainerSize.x / this.containerSize.x;
 
-        this.containerSize = new $.Point(newContainerSize.x, newContainerSize.y);
+        this.containerSize = new $.Point(
+            newContainerSize.x, 
+            newContainerSize.y
+        );
 
         if (maintain) {
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
 
-        this.fitBounds(newBounds, true);
+        this.fitBounds( newBounds, true );
     },
 
     update: function() {
@@ -327,14 +347,14 @@ $.Viewport.prototype = {
             deltaZoomPoints;
 
         if (this.zoomPoint) {
-            oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            oldZoomPixel = this.pixelFromPoint( this.zoomPoint, true );
         }
 
         this.zoomSpring.update();
 
         if (this.zoomPoint && this.zoomSpring.current.value != oldZoom) {
             newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
-            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel);
+            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
             deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
 
             this.centerSpringX.shiftBy( deltaZoomPoints.x );
@@ -352,19 +372,19 @@ $.Viewport.prototype = {
     },
 
 
-    deltaPixelsFromPoints: function(deltaPoints, current) {
+    deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
-    deltaPointsFromPixels: function(deltaPixels, current) {
+    deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
-    pixelFromPoint: function(point, current) {
+    pixelFromPoint: function( point, current ) {
         var bounds = this.getBounds( current );
         return point.minus(
             bounds.getTopLeft()
@@ -373,7 +393,7 @@ $.Viewport.prototype = {
         );
     },
 
-    pointFromPixel: function(pixel, current) {
+    pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
         return pixel.divide(
             this.containerSize.x / bounds.width

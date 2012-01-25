@@ -1,6 +1,9 @@
 
 (function( $ ){
 
+/**
+ * @class
+ */
 $.Profiler = function() {
 
     this.midUpdate = false;

@@ -1,9 +1,26 @@
 /**
- * (c) 2011 Christopher Thatcher
- * (c) 2010 OpenSeadragon
- * (c) 2010 CodePlex Foundation
+ * @version  OpenSeadragon 0.8.24
  *
- * OpenSeadragon 0.8.23
+ * @fileOverview 
+ * <h2>
+ * <strong>
+ * OpenSeadragon - Javascript Deep Zooming
+ * </strong>
+ * </h2> 
+ * <p>
+ * OpenSeadragon is provides an html interface for creating 
+ * deep zoom user interfaces.  The simplest examples include deep 
+ * zoom for large resolution images, and complex examples include
+ * zoomable map interfaces driven by SVG files.
+ * </p>
+ * 
+ * @author <br/>(c) 2011 Christopher Thatcher 
+ * @author <br/>(c) 2010 OpenSeadragon Team 
+ * @author <br/>(c) 2010 CodePlex Foundation 
+ * 
+ * <p>
+ * <strong>Original license preserved below: </strong><br/>
+ * <pre>
  * ----------------------------------------------------------------------------
  * 
  *  License: New BSD License (BSD)
@@ -37,11 +54,21 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  * 
  * ----------------------------------------------------------------------------
- *
+ * </pre>
+ * </p>
  **/
 
+ /** 
+  * The root namespace for OpenSeadragon.  All utility methods and classes
+  * are defined on or below this namespace. The OpenSeadragon namespace will
+  * only be defined once even if mutliple versions are loaded on the page in 
+  * succession.
+  * @namespace 
+  * @name OpenSeadragon
+  * @exports $ as OpenSeadragon
+  */
 OpenSeadragon = window.OpenSeadragon || (function(){
-    
+
     //Taken from jquery 1.6.1
     // [[Class]] -> type pairs
     var class2type = {
@@ -120,36 +147,52 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 }());
 
-(function( $ ){
-    
+(function( $ ){    
+
+    /**
+     * @static
+     * @ignore
+     */
     $.SIGNAL = "----seadragon----";
 
-    $.delegate = function(object, method) {
+    /**
+     * Invokes the the method as if it where a method belonging to the object.
+     * @param {Object} object 
+     * @param {Function} method
+     */
+    $.delegate = function( object, method ) {
         return function() {
-            if (arguments === undefined)
+            if ( arguments === undefined )
                 arguments = [];
-            return method.apply(object, arguments);
+            return method.apply( object, arguments );
         };
     };
-
-    //Taken from jQuery 1.6.1:
+    
+    /**
+     * Taken from jQuery 1.6.1, see the jQuery documentation
+     */
     $.extend = function() {
-        var options, name, src, copy, copyIsArray, clone,
-            target = arguments[0] || {},
-            i = 1,
-            length = arguments.length,
-            deep = false;
+        var options, 
+            name, 
+            src, 
+            copy, 
+            copyIsArray, 
+            clone,
+            target  = arguments[ 0 ] || {},
+            length  = arguments.length,
+            deep    = false,
+            i       = 1;
 
         // Handle a deep copy situation
         if ( typeof target === "boolean" ) {
-            deep = target;
-            target = arguments[1] || {};
+            deep    = target;
+            target  = arguments[ 1 ] || {};
             // skip the boolean and the target
             i = 2;
         }
 
         // Handle case when target is a string or something (possible in deep copy)
-        if ( typeof target !== "object" && !OpenSeadragon.isFunction(target) ) {
+        if ( typeof target !== "object" && !OpenSeadragon.isFunction( target ) ) {
             target = {};
         }
 
@@ -161,7 +204,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
         for ( ; i < length; i++ ) {
             // Only deal with non-null/undefined values
-            if ( (options = arguments[ i ]) != null ) {
+            if ( ( options = arguments[ i ] ) != null ) {
                 // Extend the base object
                 for ( name in options ) {
                     src = target[ name ];
@@ -173,13 +216,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     }
 
                     // Recurse if we're merging plain objects or arrays
-                    if ( deep && copy && ( OpenSeadragon.isPlainObject(copy) || (copyIsArray = OpenSeadragon.isArray(copy)) ) ) {
+                    if ( deep && copy && ( OpenSeadragon.isPlainObject( copy ) || ( copyIsArray = OpenSeadragon.isArray( copy ) ) ) ) {
                         if ( copyIsArray ) {
                             copyIsArray = false;
-                            clone = src && OpenSeadragon.isArray(src) ? src : [];
+                            clone = src && OpenSeadragon.isArray( src ) ? src : [];
 
                         } else {
-                            clone = src && OpenSeadragon.isPlainObject(src) ? src : {};
+                            clone = src && OpenSeadragon.isPlainObject( src ) ? src : {};
                         }
 
                         // Never move original objects, clone them
@@ -198,10 +241,16 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     };
 
     //The following functions are originally from the Openseadragon Utils 
-    //module but have been moved to Openseadragon to avoid the Utils anti-
+    //module but have been moved to Openseadragon to avoid the 'Utils' anti-
     //pattern.  Not all of the code is A-grade compared to equivalent functions
     // from libraries like jquery, but until we need better we'll leave those
     //orignally developed by the project.
+    
+    /**
+     * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
+     * SAFARI, CHROME, and OPERA.
+     * @static
+     */
     $.BROWSERS = {
         UNKNOWN:    0,
         IE:         1,
@@ -211,6 +260,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         OPERA:      5
     };
 
+    /**
+     * The current browser vendor, version, and related information regarding
+     * detected features.  Features include <br/>
+     *  <strong>'alpha'</strong> - Does the browser support image alpha 
+     *  transparency.<br/>
+     * @static
+     */
     $.Browser = {
         vendor:     $.BROWSERS.UNKNOWN,
         version:    0,
@@ -233,7 +289,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         URLPARAMS = {};
 
     (function() {
-
+        //A small auto-executing routine to determine the browser vendor, 
+        //version and supporting feature sets.
         var app = navigator.appName,
             ver = navigator.appVersion,
             ua  = navigator.userAgent;
@@ -277,8 +334,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 break;
         }
 
-
-        var query = window.location.search.substring( 1 ),    // ignore '?'
+            // ignore '?' portion of query string
+        var query = window.location.search.substring( 1 ),
             parts = query.split('&'),
             part,
             sep,
@@ -294,7 +351,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         }
 
-        //determine if this browser supports 
+        //determine if this browser supports image alpha transparency
         $.Browser.alpha = !( 
             $.Browser.vendor == $.BROWSERS.IE || (
                 $.Browser.vendor == $.BROWSERS.CHROME && 
@@ -304,16 +361,28 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
     })();
 
-    //TODO: $.Debug is often used inside a try/catch block which generally
+    //TODO: $.console is often used inside a try/catch block which generally
     //      prevents allowings errors to occur with detection until a debugger
     //      is attached.  Although I've been guilty of the same anti-pattern
     //      I eventually was convinced that errors should naturally propogate in
     //      all but the most special cases.
-    $.Debug = window.console ? window.console : function(){};
+    /**
+     * A convenient alias for console when available, and a simple null 
+     * function when console is unavailable.
+     * @static
+     */
+    $.console = window.console ? window.console : function(){};
 
 
     $.extend( $, {
 
+        /**
+         * Returns a DOM Element for the given id or element.
+         * @function
+         * @name OpenSeadragon.getElement
+         * @param {String|Element} element Accepts an id or element.
+         * @returns {Element} The element with the given id, null, or the element itself.
+         */
         getElement: function( element ) { 
             if ( typeof ( element ) == "string") {
                 element = document.getElementById( element );
@@ -321,6 +390,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
         
+        /**
+         * @function
+         * @name OpenSeadragon.getOffsetParent
+         * @param {Element} element 
+         * @param {Boolean} [isFixed]
+         * @returns {Element}
+         */
         getOffsetParent: function( element, isFixed ) {
             if ( isFixed && element != document.body ) {
                 return document.body;
@@ -329,6 +405,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementPosition
+         * @param {Element|String} element
+         * @returns {Point}
+         */
         getElementPosition: function( element ) {
             var result = new $.Point(),
                 isFixed,
@@ -355,6 +437,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementSize
+         * @param {Element|String} element
+         * @returns {Point}
+         */
         getElementSize: function( element ) {
             element = $.getElement( element );
 
@@ -364,6 +452,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             );
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getElementStyle
+         * @param {Element|String} element
+         * @returns {CSSStyle}
+         */
         getElementStyle: function( element ) {
             element = $.getElement( element );
 
@@ -376,10 +470,22 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getEvent
+         * @param {Event} [event]
+         * @returns {Event}
+         */
         getEvent: function( event ) {
             return event ? event : window.event;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getMousePosition
+         * @param {Event} [event]
+         * @returns {Point}
+         */
         getMousePosition: function( event ) {
             var result = new $.Point();
 
@@ -406,6 +512,11 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getPageScroll
+         * @returns {Point}
+         */
         getPageScroll: function() {
             var result  = new $.Point(),
                 docElmt = document.documentElement || {},
@@ -425,6 +536,11 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getWindowSize
+         * @returns {Point}
+         */
         getWindowSize: function() {
             var result  = new $.Point(),
                 docElmt = document.documentElement || {},
@@ -446,11 +562,23 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.imageFormatSupported
+         * @param {String} [extension]
+         * @returns {Boolean}
+         */
         imageFormatSupported: function( extension ) {
             extension = extension ? extension : "";
             return !!FILEFORMATS[ extension.toLowerCase() ];
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeCenteredNode
+         * @param {Element|String} element
+         * @returns {Element}
+         */
         makeCenteredNode: function( element ) {
 
             var div      = $.makeNeutralElement( "div" ),
@@ -488,6 +616,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return div;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeNeutralElement
+         * @param {String} tagName
+         * @returns {Element}
+         */
         makeNeutralElement: function( tagName ) {
             var element = document.createElement( tagName ),
                 style   = element.style;
@@ -501,6 +635,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeTransparentImage
+         * @param {String} src
+         * @returns {Element}
+         */
         makeTransparentImage: function( src ) {
             var img     = $.makeNeutralElement( "img" ),
                 element = null;
@@ -535,6 +675,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return element;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.setElementOpacity
+         * @param {Element|String} element
+         * @param {Number} opacity
+         * @param {Boolean} [usesAlpha]
+         */
         setElementOpacity: function( element, opacity, usesAlpha ) {
 
             var previousFilter,
@@ -575,6 +722,15 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.addEvent
+         * @param {Element|String} element
+         * @param {String} eventName
+         * @param {Function} handler
+         * @param {Boolean} [useCapture]
+         * @throws {Error}
+         */
         addEvent: function( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
 
@@ -594,6 +750,15 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.removeEvent
+         * @param {Element|String} element
+         * @param {String} eventName
+         * @param {Function} handler
+         * @param {Boolean} [useCapture]
+         * @throws {Error}
+         */
         removeEvent: function( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
 
@@ -613,17 +778,29 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.cancelEvent
+         * @param {Event} [event]
+         */
         cancelEvent: function( event ) {
             event = $.getEvent( event );
 
             if ( event.preventDefault ) {
-                event.preventDefault();     // W3C for preventing default
+                // W3C for preventing default
+                event.preventDefault();
             }
-
-            event.cancel = true;            // legacy for preventing default
-            event.returnValue = false;      // IE for preventing default
+            // legacy for preventing default
+            event.cancel = true;
+            // IE for preventing default
+            event.returnValue = false;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.stopEvent
+         * @param {Event} [event]
+         */
         stopEvent: function( event ) {
             event = $.getEvent( event );
 
@@ -634,6 +811,14 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             event.cancelBubble = true;      // IE for stopping propagation
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.createCallback
+         * @param {Object} object
+         * @param {Function} method
+         * @param [args] any additional arguments are passed as arguments to the created callback
+         * @returns {Function}
+         */
         createCallback: function( object, method ) {
             //TODO: This pattern is painful to use and debug.  It's much cleaner
             //      to use pinning plus anonymous functions.  Get rid of this
@@ -655,11 +840,23 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             };
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.getUrlParameter
+         * @param {String} key
+         * @returns {String} The value of the url parameter or null if no param matches.
+         */
         getUrlParameter: function( key ) {
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
 
+        /**
+         * @function
+         * @name OpenSeadragon.makeAjaxRequest
+         * @param {String} url
+         * @param {Function} [callback]
+         */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
                 request = null,
@@ -699,6 +896,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 
             if ( async ) {
+                /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
                         request.onreadystatechange = new function() { };
@@ -728,6 +926,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return async ? null : request;
         },
 
+        /**
+         * Parses an XML string into a DOM Document.
+         * @function
+         * @name OpenSeadragon.parseXml
+         * @param {String} string
+         * @returns {Document}
+         */
         parseXml: function( string ) {
             //TODO: yet another example where we can determine the correct
             //      implementation once at start-up instead of everytime we use
@@ -759,61 +964,63 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 (function($){
 
+/**
+ * @class
+ */
+$.EventHandler = function() {
+    this.events = {};
+};
 
-    $.EventHandler = function() {
-        this.events = {};
-    };
+$.EventHandler.prototype = {
 
-    $.EventHandler.prototype = {
-
-        addHandler: function( id, handler ) {
-            var events = this.events[ id ];
-            if( !events ){
-                this.events[ id ] = events = [];
-            }
-            events[ events.length ] = handler;
-        },
-
-        removeHandler: function( id, handler ) {
-            //Start Thatcher - unneccessary indirection.  Also, because events were
-            //               - not actually being removed, we need to add the code
-            //               - to do the removal ourselves. TODO
-            var events = this.events[ id ];
-            if ( !events ){ 
-                return; 
-            }
-            //End Thatcher
-        },
-
-        getHandler: function( id ) {
-            var events = this.events[ id ]; 
-            if ( !events || !events.length ){ 
-                return null; 
-            }
-            events = events.length === 1 ? 
-                [ events[ 0 ] ] : 
-                Array.apply( null, events );
-            return function( source, args ) {
-                var i, 
-                    length = events.length;
-                for ( i = 0; i < length; i++ ) {
-                    events[ i ]( source, args );
-                }
-            };
-        },
-
-        raiseEvent: function( eventName, eventArgs ) {
-            var handler = this.getHandler( eventName );
-
-            if ( handler ) {
-                if ( !eventArgs ) {
-                    eventArgs = new Object();
-                }
-
-                handler( this, eventArgs );
-            }
+    addHandler: function( id, handler ) {
+        var events = this.events[ id ];
+        if( !events ){
+            this.events[ id ] = events = [];
         }
-    };
+        events[ events.length ] = handler;
+    },
+
+    removeHandler: function( id, handler ) {
+        //Start Thatcher - unneccessary indirection.  Also, because events were
+        //               - not actually being removed, we need to add the code
+        //               - to do the removal ourselves. TODO
+        var events = this.events[ id ];
+        if ( !events ){ 
+            return; 
+        }
+        //End Thatcher
+    },
+
+    getHandler: function( id ) {
+        var events = this.events[ id ]; 
+        if ( !events || !events.length ){ 
+            return null; 
+        }
+        events = events.length === 1 ? 
+            [ events[ 0 ] ] : 
+            Array.apply( null, events );
+        return function( source, args ) {
+            var i, 
+                length = events.length;
+            for ( i = 0; i < length; i++ ) {
+                events[ i ]( source, args );
+            }
+        };
+    },
+
+    raiseEvent: function( eventName, eventArgs ) {
+        var handler = this.getHandler( eventName );
+
+        if ( handler ) {
+            if ( !eventArgs ) {
+                eventArgs = new Object();
+            }
+
+            handler( this, eventArgs );
+        }
+    }
+};
 
 }( OpenSeadragon ));
 
@@ -833,7 +1040,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         ieTrackersActive    = {},   // dictionary from hash to MouseTracker
         ieTrackersCapturing = [];   // list of trackers interested in capture
 
-
+    /**
+     * @class
+     */
     $.MouseTracker = function (elmt, clickTimeThreshold, clickDistThreshold) {
         //Start Thatcher - TODO: remove local function definitions in favor of 
         //               -       a global closure for MouseTracker so the number
@@ -986,7 +1195,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     self.enterHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing enter handler: " + e.message, e);
                 }
             }
@@ -1012,7 +1221,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     self.exitHandler(self, getMouseRelative(event, elmt),
                             buttonDownElmt, buttonDownAny);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing exit handler: " + e.message, e);
                 }
             }
@@ -1035,7 +1244,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 try {
                     self.pressHandler(self, getMouseRelative(event, elmt));
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing press handler: " + e.message, e);
                 }
             }
@@ -1069,7 +1278,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     self.releaseHandler(self, getMouseRelative(event, elmt),
                             insideElmtPress, insideElmtRelease);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing release handler: " + e.message, e);
                 }
             }
@@ -1152,7 +1361,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 try {
                     self.scrollHandler(self, getMouseRelative(event, elmt), nDelta, event.shiftKey);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing scroll handler: " + e.message, e);
                 }
 
@@ -1178,7 +1387,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                     self.clickHandler(self, getMouseRelative(event, elmt),
                             quick, event.shiftKey);
                 } catch (e) {
-                    $.Debug.error(e.name +
+                    $.console.error(e.name +
                             " while executing click handler: " + e.message, e);
                 }
             }
@@ -1200,7 +1409,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                         event.shiftKey
                     );
                 } catch (e) {
-                    $.Debug.error(
+                    $.console.error(
                         e.name +
                         " while executing drag handler: " 
                         + e.message, 
@@ -1240,6 +1449,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     }
 
     /**
+    * @private
     * Returns true if elmtB is a child node of elmtA, or if they're equal.
     */
     function isChild( elmtA, elmtB ) {
@@ -1277,7 +1487,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
 (function( $ ){
     
-
+/**
+ * An enumeration of supported locations where controls can be anchored,
+ * including NONE, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, and BOTTOM_LEFT.
+ * The anchoring is always relative to the container
+ * @static
+ */
 $.ControlAnchor = {
     NONE: 0,
     TOP_LEFT: 1,
@@ -1286,6 +1501,24 @@ $.ControlAnchor = {
     BOTTOM_LEFT: 4
 };
 
+/**
+ * A Control represents any interface element which is meant to allow the user 
+ * to interact with the zoomable interface. Any control can be anchored to any 
+ * element.
+ * @class
+ * @param {Element} elmt - the contol element to be anchored in the container.
+ * @param {OpenSeadragon.ControlAnchor} anchor - the location to anchor at.
+ * @param {Element} container - the element to control will be anchored too.
+ * 
+ * @property {Element} elmt - the element providing the user interface with 
+ *  some type of control. Eg a zoom-in button
+ * @property {OpenSeadragon.ControlAnchor} anchor - the position of the control 
+ *  relative to the container.
+ * @property {Element} container - the element within with the control is 
+ *  positioned.
+ * @property {Element} wrapper - a nuetral element surrounding the control 
+ *  element.
+ */
 $.Control = function ( elmt, anchor, container ) {
     this.elmt       = elmt;
     this.anchor     = anchor;
@@ -1312,21 +1545,40 @@ $.Control = function ( elmt, anchor, container ) {
 
 $.Control.prototype = {
 
+    /**
+     * Removes the control from the container.
+     * @function
+     */
     destroy: function() {
         this.wrapper.removeChild( this.elmt );
         this.container.removeChild( this.wrapper );
     },
 
+    /**
+     * Determines if the control is currently visible.
+     * @function
+     * @return {Boolean} true if currenly visible, false otherwise.
+     */
     isVisible: function() {
         return this.wrapper.style.display != "none";
     },
 
+    /**
+     * Toggles the visibility of the control.
+     * @function
+     * @param {Boolean} visible - true to make visible, false to hide.
+     */
     setVisible: function( visible ) {
         this.wrapper.style.display = visible ? 
             "inline-block" : 
             "none";
     },
 
+    /**
+     * Sets the opacity level for the control.
+     * @function
+     * @param {Number} opactiy - a value between 1 and 0 inclusively.
+     */
     setOpacity: function( opacity ) {
         if ( this.elmt[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
             $.setElementOpacity( this.elmt, opacity, true );
@@ -1340,7 +1592,7 @@ $.Control.prototype = {
 
 (function( $ ){
 /**
- *  OpenSeadragon Viewer
+ *  @class
  *
  *  The main point of entry into creating a zoomable image on the page.
  *
@@ -1726,7 +1978,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this._lastOpenEndTime = +new Date();
 
         if ( this._lastOpenStartTime < viewer._lastOpenStartTime ) {
-            $.Debug.log( "Ignoring out-of-date open." );
+            $.console.log( "Ignoring out-of-date open." );
             this.raiseEvent( "ignore" );
             return;
         }
@@ -1747,7 +1999,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             this.viewport, 
             this.canvas
         );
-        this.profiler = new $.Profiler();
+
+        //this.profiler = new $.Profiler();
 
         this._animating = false;
         this._forceRedraw = true;
@@ -1790,7 +2043,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.source     = null;
         this.viewport   = null;
         this.drawer     = null;
-        this.profiler   = null;
+        //this.profiler   = null;
         this.canvas.innerHTML = "";
     },
 
@@ -2337,6 +2590,9 @@ $.extend( $, {
 
 (function( $ ){
 
+/**
+ * @class
+ */
 $.Point = function( x, y ) {
     this.x = typeof ( x ) == "number" ? x : 0;
     this.y = typeof ( y ) == "number" ? y : 0;
@@ -2406,91 +2662,10 @@ $.Point.prototype = {
 
 (function( $ ){
 
-$.Profiler = function() {
 
-    this.midUpdate = false;
-    this.numUpdates = 0;
-
-    this.lastBeginTime = null;
-    this.lastEndTime = null;
-
-    this.minUpdateTime = Infinity;
-    this.avgUpdateTime = 0;
-    this.maxUpdateTime = 0;
-
-    this.minIdleTime = Infinity;
-    this.avgIdleTime = 0;
-    this.maxIdleTime = 0;
-};
-
-$.Profiler.prototype = {
-
-    beginUpdate: function() {
-        if (this.midUpdate) {
-            this.endUpdate();
-        }
-
-        this.midUpdate = true;
-        this.lastBeginTime = new Date().getTime();
-
-        if (this.numUpdates < 1) {
-            return;     // this is the first update
-        }
-
-        var time = this.lastBeginTime - this.lastEndTime;
-
-        this.avgIdleTime = (this.avgIdleTime * (this.numUpdates - 1) + time) / this.numUpdates;
-
-        if (time < this.minIdleTime) {
-            this.minIdleTime = time;
-        }
-        if (time > this.maxIdleTime) {
-            this.maxIdleTime = time;
-        }
-    },
-
-    endUpdate: function() {
-        if (!this.midUpdate) {
-            return;
-        }
-
-        this.lastEndTime = new Date().getTime();
-        this.midUpdate = false;
-
-        var time = this.lastEndTime - this.lastBeginTime;
-
-        this.numUpdates++;
-        this.avgUpdateTime = (this.avgUpdateTime * (this.numUpdates - 1) + time) / this.numUpdates;
-
-        if (time < this.minUpdateTime) {
-            this.minUpdateTime = time;
-        }
-        if (time > this.maxUpdateTime) {
-            this.maxUpdateTime = time;
-        }
-    },
-
-    clearProfile: function() {
-        this.midUpdate = false;
-        this.numUpdates = 0;
-
-        this.lastBeginTime = null;
-        this.lastEndTime = null;
-
-        this.minUpdateTime = Infinity;
-        this.avgUpdateTime = 0;
-        this.maxUpdateTime = 0;
-
-        this.minIdleTime = Infinity;
-        this.avgIdleTime = 0;
-        this.maxIdleTime = 0;
-    }
-};
-
-}( OpenSeadragon ));
-
-(function( $ ){
-
+/**
+ * @class
+ */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     this.aspectRatio = width / height;
     this.dimensions  = new $.Point( width, height );
@@ -2567,7 +2742,9 @@ $.TileSource.prototype = {
 
 (function( $ ){
     
-
+/**
+ * @class
+ */
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
@@ -2641,6 +2818,9 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     }
 });
 
+/**
+ * @static
+ */
 $.DziTileSourceHelper = {
 
     createFromXml: function( xmlUrl, xmlString, callback ) {
@@ -2821,8 +3001,13 @@ $.DziTileSourceHelper = {
 
 }( OpenSeadragon ));
 
+
 (function( $ ){
 
+/**
+ * An enumeration of button states including, REST, GROUP, HOVER, and DOWN
+ * @static
+ */
 $.ButtonState = {
     REST:   0,
     GROUP:  1,
@@ -2830,6 +3015,18 @@ $.ButtonState = {
     DOWN:   3
 };
 
+/**
+ * Manages events, hover states for individual buttons, tool-tips, as well 
+ * as fading the bottons out when the user has not interacted with them
+ * for a specified period.
+ * @class
+ * @param {Object} options
+ * @param {String} options.tooltip
+ * @param {String} options.srcRest URL of image to use in 'rest' state
+ * @param {String} options.srcGroup URL of image to use in 'up' state
+ * @param {String} options.srcHover URL of image to use in 'hover' state
+ * @param {String} options.srcDown URL of image to use in 'domn' state
+ */
 $.Button = function( options ) {
 
     var _this = this;
@@ -3061,7 +3258,7 @@ function outTo( button, newState ) {
 
 (function( $ ){
 /**
- * OpenSeadragon ButtonGroup
+ * @class
  *
  * Manages events on groups of buttons.
  *    
@@ -3142,6 +3339,9 @@ $.ButtonGroup.prototype = {
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Rect = function( x, y, width, height ) {
     this.x = typeof ( x ) == "number" ? x : 0;
     this.y = typeof ( y ) == "number" ? y : 0;
@@ -3199,6 +3399,9 @@ $.Rect.prototype = {
 
 (function( $ ){
 
+/**
+ * @class
+ */
 $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
     $.Rect.apply( this, [ x, y, width, height ] );
 
@@ -3212,6 +3415,9 @@ $.extend( $.DisplayRect.prototype, $.Rect.prototype );
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Spring = function( options ) {
     var args = arguments;
 
@@ -3297,6 +3503,9 @@ function transform( stiffness, x ) {
 
 (function( $ ){
     
+/**
+ * @class
+ */
 $.Tile = function(level, x, y, bounds, exists, url) {
     this.level   = level;
     this.x       = x;
@@ -3334,7 +3543,7 @@ $.Tile.prototype = {
             size     = this.size.apply( Math.ceil );
 
         if ( !this.loaded ) {
-            $.Debug.warn(
+            $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
@@ -3370,7 +3579,7 @@ $.Tile.prototype = {
             size     = this.size;
 
         if (!this.loaded) {
-            $.Debug.warn(
+            $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
@@ -3397,6 +3606,12 @@ $.Tile.prototype = {
 
 (function( $ ){
 
+    /**
+     * An enumeration of positions that an overlay may be assigned relative
+     * to the viewport including CENTER, TOP_LEFT (default), TOP, TOP_RIGHT,
+     * RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, and LEFT.
+     * @static
+     */
     $.OverlayPlacement = {
         CENTER:       0,
         TOP_LEFT:     1,
@@ -3409,6 +3624,9 @@ $.Tile.prototype = {
         LEFT:         8
     };
 
+    /**
+     * @class
+     */
     $.Overlay = function( elmt, location, placement ) {
         this.elmt       = elmt;
         this.scales     = location instanceof $.Rect;
@@ -3562,6 +3780,9 @@ var QUOTA               = 100,
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
         SUBPIXEL_RENDERING;
 
+/**
+ * @class
+ */
 $.Drawer = function(source, viewport, elmt) {
 
     this.container  = $.getElement( elmt );
@@ -4328,7 +4549,11 @@ function numberOfTiles( drawer, level ){
 }( OpenSeadragon ));
 
 (function( $ ){
-    
+
+
+/**
+ * @class
+ */
 $.Viewport = function( options ) {
 
     var options;
@@ -4377,16 +4602,19 @@ $.Viewport = function( options ) {
 };
 
 $.Viewport.prototype = {
+
     getHomeZoom: function() {
         var aspectFactor = this.contentAspect / this.getAspectRatio();
-        return (aspectFactor >= 1) ? 1 : aspectFactor;
+        return ( aspectFactor >= 1 ) ? 
+            1 : 
+            aspectFactor;
     },
 
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom()
             zoom = this.minZoomImageRatio * homeZoom;
 
-        return Math.min(zoom, homeZoom);
+        return Math.min( zoom, homeZoom );
     },
 
     getMaxZoom: function() {
@@ -4394,7 +4622,7 @@ $.Viewport.prototype = {
             this.contentSize.x * 
             this.maxZoomPixelRatio / 
             this.containerSize.x;
-        return Math.max(zoom, this.getHomeZoom());
+        return Math.max( zoom, this.getHomeZoom() );
     },
 
     getAspectRatio: function() {
@@ -4402,12 +4630,15 @@ $.Viewport.prototype = {
     },
 
     getContainerSize: function() {
-        return new $.Point(this.containerSize.x, this.containerSize.y);
+        return new $.Point(
+            this.containerSize.x, 
+            this.containerSize.y
+        );
     },
 
     getBounds: function( current ) {
-        var center = this.getCenter(current),
-            width  = 1.0 / this.getZoom(current),
+        var center = this.getCenter( current ),
+            width  = 1.0 / this.getZoom( current ),
             height = width / this.getAspectRatio();
 
         return new $.Rect(
@@ -4436,9 +4667,9 @@ $.Viewport.prototype = {
             deltaZoomPixels,
             deltaZoomPoints;
 
-        if (current) {
+        if ( current ) {
             return centerCurrent;
-        } else if (!this.zoomPoint) {
+        } else if ( !this.zoomPoint ) {
             return centerTarget;
         }
 
@@ -4531,6 +4762,9 @@ $.Viewport.prototype = {
         this.applyConstraints( immediately );
     },
 
+    /**
+     * 
+     */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
@@ -4545,7 +4779,7 @@ $.Viewport.prototype = {
             newZoom,
             referencePoint;
 
-        if (newBounds.getAspectRatio() >= aspect) {
+        if ( newBounds.getAspectRatio() >= aspect ) {
             newBounds.height = bounds.width / aspect;
             newBounds.y      = center.y - newBounds.height / 2;
         } else {
@@ -4553,13 +4787,13 @@ $.Viewport.prototype = {
             newBounds.x     = center.x - newBounds.width / 2;
         }
 
-        this.panTo(this.getCenter(true), true);
-        this.zoomTo(this.getZoom(true), null, true);
+        this.panTo( this.getCenter( true ), true );
+        this.zoomTo( this.getZoom( true ), null, true );
 
         oldBounds = this.getBounds();
         oldZoom   = this.getZoom();
         newZoom   = 1.0 / newBounds.width;
-        if (newZoom == oldZoom || newBounds.width == oldBounds.width) {
+        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
             this.panTo( center, immediately );
             return;
         }
@@ -4579,25 +4813,27 @@ $.Viewport.prototype = {
         this.zoomTo( newZoom, referencePoint, immediately );
     },
 
-    goHome: function(immediately) {
+    goHome: function( immediately ) {
         var center = this.getCenter();
 
         if ( this.wrapHorizontal ) {
-            center.x = (1 + (center.x % 1)) % 1;
-            this.centerSpringX.resetTo(center.x);
+            center.x = ( 1 + ( center.x % 1 ) ) % 1;
+            this.centerSpringX.resetTo( center.x );
             this.centerSpringX.update();
         }
 
         if ( this.wrapVertical ) {
-            center.y = (this.contentHeight + (center.y % this.contentHeight)) % this.contentHeight;
-            this.centerSpringY.resetTo(center.y);
+            center.y = (
+                this.contentHeight + ( center.y % this.contentHeight )
+            ) % this.contentHeight;
+            this.centerSpringY.resetTo( center.y );
             this.centerSpringY.update();
         }
 
-        this.fitBounds(this.homeBounds, immediately);
+        this.fitBounds( this.homeBounds, immediately );
     },
 
-    panBy: function(delta, immediately) {
+    panBy: function( delta, immediately ) {
         var center = new $.Point(
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
@@ -4605,44 +4841,49 @@ $.Viewport.prototype = {
         this.panTo( center.plus( delta ), immediately );
     },
 
-    panTo: function(center, immediately) {
-        if (immediately) {
-            this.centerSpringX.resetTo(center.x);
-            this.centerSpringY.resetTo(center.y);
+    panTo: function( center, immediately ) {
+        if ( immediately ) {
+            this.centerSpringX.resetTo( center.x );
+            this.centerSpringY.resetTo( center.y );
         } else {
-            this.centerSpringX.springTo(center.x);
-            this.centerSpringY.springTo(center.y);
+            this.centerSpringX.springTo( center.x );
+            this.centerSpringY.springTo( center.y );
         }
     },
 
-    zoomBy: function(factor, refPoint, immediately) {
-        this.zoomTo(this.zoomSpring.target.value * factor, refPoint, immediately);
+    zoomBy: function( factor, refPoint, immediately ) {
+        this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
-    zoomTo: function(zoom, refPoint, immediately) {
+    zoomTo: function( zoom, refPoint, immediately ) {
 
-        if (immediately) {
-            this.zoomSpring.resetTo(zoom);
+        if ( immediately ) {
+            this.zoomSpring.resetTo( zoom );
         } else {        
-            this.zoomSpring.springTo(zoom);
+            this.zoomSpring.springTo( zoom );
         }
 
-        this.zoomPoint = refPoint instanceof $.Point ? refPoint : null;
+        this.zoomPoint = refPoint instanceof $.Point ? 
+            refPoint : 
+            null;
     },
 
-    resize: function(newContainerSize, maintain) {
+    resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
             widthDeltaFactor = newContainerSize.x / this.containerSize.x;
 
-        this.containerSize = new $.Point(newContainerSize.x, newContainerSize.y);
+        this.containerSize = new $.Point(
+            newContainerSize.x, 
+            newContainerSize.y
+        );
 
         if (maintain) {
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
 
-        this.fitBounds(newBounds, true);
+        this.fitBounds( newBounds, true );
     },
 
     update: function() {
@@ -4655,14 +4896,14 @@ $.Viewport.prototype = {
             deltaZoomPoints;
 
         if (this.zoomPoint) {
-            oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            oldZoomPixel = this.pixelFromPoint( this.zoomPoint, true );
         }
 
         this.zoomSpring.update();
 
         if (this.zoomPoint && this.zoomSpring.current.value != oldZoom) {
             newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
-            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel);
+            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
             deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
 
             this.centerSpringX.shiftBy( deltaZoomPoints.x );
@@ -4680,19 +4921,19 @@ $.Viewport.prototype = {
     },
 
 
-    deltaPixelsFromPoints: function(deltaPoints, current) {
+    deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
-    deltaPointsFromPixels: function(deltaPixels, current) {
+    deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
-    pixelFromPoint: function(point, current) {
+    pixelFromPoint: function( point, current ) {
         var bounds = this.getBounds( current );
         return point.minus(
             bounds.getTopLeft()
@@ -4701,7 +4942,7 @@ $.Viewport.prototype = {
         );
     },
 
-    pointFromPixel: function(pixel, current) {
+    pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
         return pixel.divide(
             this.containerSize.x / bounds.width

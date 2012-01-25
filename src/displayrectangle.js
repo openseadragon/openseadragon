@@ -1,6 +1,9 @@
 
 (function( $ ){
 
+/**
+ * @class
+ */
 $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
     $.Rect.apply( this, [ x, y, width, height ] );
 

@@ -1,6 +1,11 @@
 
+
 (function( $ ){
 
+/**
+ * An enumeration of button states including, REST, GROUP, HOVER, and DOWN
+ * @static
+ */
 $.ButtonState = {
     REST:   0,
     GROUP:  1,
@@ -8,6 +13,18 @@ $.ButtonState = {
     DOWN:   3
 };
 
+/**
+ * Manages events, hover states for individual buttons, tool-tips, as well 
+ * as fading the bottons out when the user has not interacted with them
+ * for a specified period.
+ * @class
+ * @param {Object} options
+ * @param {String} options.tooltip
+ * @param {String} options.srcRest URL of image to use in 'rest' state
+ * @param {String} options.srcGroup URL of image to use in 'up' state
+ * @param {String} options.srcHover URL of image to use in 'hover' state
+ * @param {String} options.srcDown URL of image to use in 'domn' state
+ */
 $.Button = function( options ) {
 
     var _this = this;

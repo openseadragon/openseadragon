@@ -1,6 +1,10 @@
 
 (function( $ ){
 
+
+/**
+ * @class
+ */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     this.aspectRatio = width / height;
     this.dimensions  = new $.Point( width, height );

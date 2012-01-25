@@ -21,6 +21,9 @@ var QUOTA               = 100,
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
         SUBPIXEL_RENDERING;
 
+/**
+ * @class
+ */
 $.Drawer = function(source, viewport, elmt) {
 
     this.container  = $.getElement( elmt );
