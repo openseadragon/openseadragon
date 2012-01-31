@@ -23,633 +23,65 @@ var QUOTA               = 100,
 
 /**
  * @class
+ * @param {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
+ * @param {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
+ * @param {Element} element - Reference to Viewer 'canvas'.
+ * @property {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
+ * @property {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
+ * @property {Element} container -Reference to Viewer 'canvas'.
+ * @property {Element|Canvas} canvas
+ * @property {CanvasContext} context
+ * @property {Object} config - Reference to Viewer config.
+ * @property {Number} downloading - How many images are currently being loaded in parallel.
+ * @property {Number} normHeight - Ratio of zoomable image height to width.
+ * @property {Object} tilesMatrix A '3d' dictionary [level][x][y] --> Tile.
+ * @property {Array} tilesLoaded An unordered list of Tiles with loaded images.
+ * @property {Object} coverage '3d' dictionary [level][x][y] --> Boolean.
+ * @property {Array} overlays An unordered list of Overlays added.
+ * @property {Array} lastDrawn An unordered list of Tiles drawn last frame.
+ * @property {Number} lastResetTime
+ * @property {Boolean} midUpdate Is the drawer currently updating the viewport.
+ * @property {Boolean} updateAgain Does the drawer need to update the viewort again.
+ * @property {Element} elmt DEPRECATED Alias for container.
  */
-$.Drawer = function(source, viewport, elmt) {
+$.Drawer = function( source, viewport, element ) {
 
-    this.container  = $.getElement( elmt );
-    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
-    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
     this.viewport   = viewport;
     this.source     = source;
+    this.container  = $.getElement( element );
+    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
+    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
     this.config     = this.viewport.config;
+    this.normHeight = source.dimensions.y / source.dimensions.x;
 
     this.downloading        = 0;
-    this.imageLoaderLimit   = this.config.imageLoaderLimit;
-
-    //this.profiler    = new $.Profiler();
-
-    this.minLevel    = source.minLevel;
-    this.maxLevel    = source.maxLevel;
-    this.tileSize    = source.tileSize;
-    this.tileOverlap = source.tileOverlap;
-    this.normHeight  = source.dimensions.y / source.dimensions.x;
-    
-    // 1d dictionary [level] --> Point
-    this.cacheNumTiles      = {};
-    // 1d dictionary [level] --> Point
-    this.cachePixelRatios   = {};
-    // 3d dictionary [level][x][y] --> Tile
     this.tilesMatrix        = {};
-    // unordered list of Tiles with loaded images
     this.tilesLoaded        = [];
-    // 3d dictionary [level][x][y] --> Boolean
     this.coverage           = {};
-    
-    // unordered list of Overlays added
     this.overlays           = [];
-    // unordered list of Tiles drawn last frame
     this.lastDrawn          = [];
     this.lastResetTime      = 0;
     this.midUpdate          = false;
     this.updateAgain        = true;
-
-    this.elmt = this.container;
+    this.elmt               = this.container;
     
-    this.canvas.style.width = "100%";
-    this.canvas.style.height = "100%";
-    this.canvas.style.position = "absolute";
-
+    this.canvas.style.width     = "100%";
+    this.canvas.style.height    = "100%";
+    this.canvas.style.position  = "absolute";
+    
     // explicit left-align
     this.container.style.textAlign = "left";
-    this.container.appendChild(this.canvas);
+    this.container.appendChild( this.canvas );
+
+    //this.profiler    = new $.Profiler();
 };
 
 $.Drawer.prototype = {
 
-    getPixelRatio: function( level ) {
-        if ( !this.cachePixelRatios[ level ] ) {
-            this.cachePixelRatios[ level ] = this.source.getPixelRatio( level );
-        }
-
-        return this.cachePixelRatios[ level ];
-    },
-
-
-    _getTile: function( level, x, y, time, numTilesX, numTilesY ) {
-        var xMod,
-            yMod,
-            bounds,
-            exists,
-            url,
-            tile;
-
-        if ( !this.tilesMatrix[ level ] ) {
-            this.tilesMatrix[ level ] = {};
-        }
-        if ( !this.tilesMatrix[ level ][ x ] ) {
-            this.tilesMatrix[ level ][ x ] = {};
-        }
-
-        if ( !this.tilesMatrix[ level ][ x ][ y ] ) {
-            xMod    = ( numTilesX + ( x % numTilesX ) ) % numTilesX;
-            yMod    = ( numTilesY + ( y % numTilesY ) ) % numTilesY;
-            bounds  = this.source.getTileBounds( level, xMod, yMod );
-            exists  = this.source.tileExists( level, xMod, yMod );
-            url     = this.source.getTileUrl( level, xMod, yMod );
-
-            bounds.x += 1.0 * ( x - xMod ) / numTilesX;
-            bounds.y += this.normHeight * ( y - yMod ) / numTilesY;
-
-            this.tilesMatrix[ level ][ x ][ y ] = new $.Tile(
-                level, 
-                x, 
-                y, 
-                bounds, 
-                exists, 
-                url
-            );
-        }
-
-        tile = this.tilesMatrix[ level ][ x ][ y ];
-        tile.lastTouchTime = time;
-
-        return tile;
-    },
-
-    _loadTile: function( tile, time ) {
-        tile.loading = this.loadImage(
-            tile.url,
-            $.createCallback(
-                null, 
-                $.delegate( this, this._onTileLoad ), 
-                tile, 
-                time
-            )
-        );
-    },
-
-    _onTileLoad: function( tile, time, image ) {
-        var insertionIndex,
-            cutoff,
-            worstTile,
-            worstTime,
-            worstLevel,
-            worstTileIndex,
-            prevTile,
-            prevTime,
-            prevLevel,
-            i;
-
-        tile.loading = false;
-
-        if ( this.midUpdate ) {
-            $.Debug.warn( "Tile load callback in middle of drawing routine." );
-            return;
-        } else if ( !image ) {
-            $.Debug.log( "Tile %s failed to load: %s", tile, tile.url );
-            tile.exists = false;
-            return;
-        } else if ( time < this.lastResetTime ) {
-            $.Debug.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
-            return;
-        }
-
-        tile.loaded = true;
-        tile.image  = image;
-
-        insertionIndex = this.tilesLoaded.length;
-
-        if ( this.tilesLoaded.length >= QUOTA ) {
-            cutoff = Math.ceil( Math.log( this.tileSize ) / Math.log( 2 ) );
-
-            worstTile       = null;
-            worstTileIndex  = -1;
-
-            for ( i = this.tilesLoaded.length - 1; i >= 0; i-- ) {
-                prevTile = this.tilesLoaded[ i ];
-
-                if ( prevTile.level <= this.cutoff || prevTile.beingDrawn ) {
-                    continue;
-                } else if ( !worstTile ) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
-                    continue;
-                }
-
-                prevTime    = prevTile.lastTouchTime;
-                worstTime   = worstTile.lastTouchTime;
-                prevLevel   = prevTile.level;
-                worstLevel  = worstTile.level;
-
-                if ( prevTime < worstTime || 
-                   ( prevTime == worstTime && prevLevel > worstLevel ) ) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
-                }
-            }
-
-            if ( worstTile && worstTileIndex >= 0 ) {
-                worstTile.unload();
-                insertionIndex = worstTileIndex;
-            }
-        }
-
-        this.tilesLoaded[ insertionIndex ] = tile;
-        this.updateAgain = true;
-    },
-
-    _clearTiles: function() {
-        this.tilesMatrix = {};
-        this.tilesLoaded = [];
-    },
-
-
-
-    /**
-    * Returns true if the given tile provides coverage to lower-level tiles of
-    * lower resolution representing the same content. If neither x nor y is
-    * given, returns true if the entire visible level provides coverage.
-    * 
-    * Note that out-of-bounds tiles provide coverage in this sense, since
-    * there's no content that they would need to cover. Tiles at non-existent
-    * levels that are within the image bounds, however, do not.
-    */
-    _providesCoverage: function( level, x, y ) {
-        var rows,
-            cols,
-            i, j;
-
-        if ( !this.coverage[ level ] ) {
-            return false;
-        }
-
-        if ( x === undefined || y === undefined ) {
-            rows = this.coverage[ level ];
-            for ( i in rows ) {
-                if ( rows.hasOwnProperty( i ) ) {
-                    cols = rows[ i ];
-                    for ( j in cols ) {
-                        if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        return (
-            this.coverage[ level ][ x] === undefined ||
-            this.coverage[ level ][ x ][ y ] === undefined ||
-            this.coverage[ level ][ x ][ y ] === true
-        );
-    },
-
-    /**
-    * Returns true if the given tile is completely covered by higher-level
-    * tiles of higher resolution representing the same content. If neither x
-    * nor y is given, returns true if the entire visible level is covered.
-    */
-    _isCovered: function( level, x, y ) {
-        if ( x === undefined || y === undefined ) {
-            return this._providesCoverage( level + 1 );
-        } else {
-            return (
-                this._providesCoverage( level + 1, 2 * x, 2 * y ) &&
-                this._providesCoverage( level + 1, 2 * x, 2 * y + 1 ) &&
-                this._providesCoverage( level + 1, 2 * x + 1, 2 * y ) &&
-                this._providesCoverage( level + 1, 2 * x + 1, 2 * y + 1 )
-            );
-        }
-    },
-
-    /**
-    * Sets whether the given tile provides coverage or not.
-    */
-    _setCoverage: function( level, x, y, covers ) {
-        if ( !this.coverage[ level ] ) {
-            $.Debug.warn(
-                "Setting coverage for a tile before its level's coverage has been reset: %s", 
-                level
-            );
-            return;
-        }
-
-        if ( !this.coverage[ level ][ x ] ) {
-            this.coverage[ level ][ x ] = {};
-        }
-
-        this.coverage[ level ][ x ][ y ] = covers;
-    },
-
-    /**
-    * Resets coverage information for the given level. This should be called
-    * after every draw routine. Note that at the beginning of the next draw
-    * routine, coverage for every visible tile should be explicitly set. 
-    */
-    _resetCoverage: function( level ) {
-        this.coverage[ level ] = {};
-    },
-
-
-    _compareTiles: function( prevBest, tile ) {
-        if ( !prevBest ) {
-            return tile;
-        }
-
-        if ( tile.visibility > prevBest.visibility ) {
-            return tile;
-        } else if ( tile.visibility == prevBest.visibility ) {
-            if ( tile.distance < prevBest.distance ) {
-                return tile;
-            }
-        }
-
-        return prevBest;
-    },
-
-
-    _getOverlayIndex: function( elmt ) {
-        var i;
-        for ( i = this.overlays.length - 1; i >= 0; i-- ) {
-            if ( this.overlays[ i ].elmt == elmt ) {
-                return i;
-            }
-        }
-
-        return -1;
-    },
-
-
-    _updateActual: function() {
-        this.updateAgain = false;
-
-        var tile,
-            level,
-            viewportSize    = this.viewport.getContainerSize(),
-            viewportWidth   = viewportSize.x,
-            viewportHeight  = viewportSize.y,
-            viewportBounds  = this.viewport.getBounds( true ),
-            viewportTL      = viewportBounds.getTopLeft(),
-            viewportBR      = viewportBounds.getBottomRight(),
-            haveDrawn       = false,
-            best            = null,
-            currentTime     = new Date().getTime(),
-            zeroRatioC      = this.viewport.deltaPixelsFromPoints( 
-                this.source.getPixelRatio( 0 ), 
-                true
-            ).x,
-            lowestLevel     = Math.max(
-                this.minLevel, 
-                Math.floor( 
-                    Math.log( this.config.minZoomImageRatio ) / 
-                    Math.log( 2 )
-                )
-            ),
-            highestLevel    = Math.min(
-                this.maxLevel,
-                Math.floor( 
-                    Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
-                    Math.log( 2 )
-                )
-            );
-
-        //TODO
-        while ( this.lastDrawn.length > 0 ) {
-            tile = this.lastDrawn.pop();
-            tile.beingDrawn = false;
-        }
-
-        //TODO
-        this.canvas.innerHTML   = "";
-        if ( USE_CANVAS ) {
-            this.canvas.width   = viewportWidth;
-            this.canvas.height  = viewportHeight;
-            this.context.clearRect( 0, 0, viewportWidth, viewportHeight );
-        }
-
-        //TODO
-        if  ( !this.config.wrapHorizontal && 
-            ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
-            return;
-        } else if 
-            ( !this.config.wrapVertical &&
-            ( viewportBR.y < 0 || viewportTL.y > this.normHeight ) ) {
-            return;
-        }
-
-        //TODO
-        if ( !this.config.wrapHorizontal ) {
-            viewportTL.x = Math.max( viewportTL.x, 0 );
-            viewportBR.x = Math.min( viewportBR.x, 1 );
-        }
-        if ( !this.config.wrapVertical ) {
-            viewportTL.y = Math.max( viewportTL.y, 0 );
-            viewportBR.y = Math.min( viewportBR.y, this.normHeight );
-        }
-
-        //TODO
-        lowestLevel = Math.min( lowestLevel, highestLevel );
-
-        //TODO
-        for ( level = highestLevel; level >= lowestLevel; level-- ) {
-
-            //TODO
-            best = this._drawLevel( 
-                level, 
-                lowestLevel, 
-                viewportTL, 
-                viewportBR, 
-                currentTime, 
-                best 
-            );
-
-            //TODO
-            if ( this._providesCoverage( level ) ) {
-                break;
-            }
-        }
-
-        //TODO
-        this._drawTiles();
-        this._drawOverlays();
-
-        //TODO
-        if ( best ) {
-            this._loadTile( best, currentTime );
-            // because we haven't finished drawing, so
-            this.updateAgain = true; 
-        }
-    },
-
-    _drawLevel: function( level, lowestLevel, viewportTL, viewportBR, currentTime, best ){
-        var x, y,
-            levelOpacity,
-            levelVisibility,
-            drawTile,
-            tile,
-            tileTL,
-            tileBR,
-            numTiles,
-            numTilesX,
-            numTilesY,
-            renderPixelRatioC,
-            renderPixelRatioT,
-            levelOpacity,
-            levelVisibility,
-            haveDrawn       = false,
-            drawLevel       = false,
-            viewportCenter  = this.viewport.pixelFromPoint( this.viewport.getCenter() ),
-            zeroRatioT      = this.viewport.deltaPixelsFromPoints( 
-                this.source.getPixelRatio( 0 ), 
-                false
-            ).x,
-            optimalRatio    = this.config.immediateRender ? 
-                1 : 
-                zeroRatioT;
-
-        //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = this.viewport.deltaPixelsFromPoints(
-            this.source.getPixelRatio( level ), 
-            true
-        ).x;
-
-        if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
-             ( level == lowestLevel ) ) {
-            drawLevel = true;
-            haveDrawn = true;
-        } else if ( !haveDrawn ) {
-            return best;
-        }
-
-        //OK, a new drawing so do your calculations
-        tileTL    = this.source.getTileAtPoint( level, viewportTL );
-        tileBR    = this.source.getTileAtPoint( level, viewportBR );
-        numTiles  = numberOfTiles( this, level );
-        numTilesX = numTiles.x;
-        numTilesY = numTiles.y;
-
-        renderPixelRatioT = this.viewport.deltaPixelsFromPoints(
-            this.source.getPixelRatio( level ), 
-            false
-        ).x;
-
-        levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
-        levelVisibility = optimalRatio / Math.abs( 
-            optimalRatio - renderPixelRatioT 
-        );
-
-        this._resetCoverage( level );
-
-        if ( !this.config.wrapHorizontal ) {
-            tileBR.x = Math.min( tileBR.x, numTilesX - 1 );
-        }
-        if ( !this.config.wrapVertical ) {
-            tileBR.y = Math.min( tileBR.y, numTilesY - 1 );
-        }
-
-        for ( x = tileTL.x; x <= tileBR.x; x++ ) {
-            for ( y = tileTL.y; y <= tileBR.y; y++ ) {
-
-                tile = this._getTile( 
-                    level, 
-                    x, y, 
-                    currentTime, 
-                    numTilesX, 
-                    numTilesY 
-                );
-
-                this._setCoverage( level, x, y, false );
-
-                if ( !tile.exists ) {
-                    continue;
-                }
-
-                drawTile = drawLevel;
-                if ( haveDrawn && !drawTile ) {
-                    if ( this._isCovered( level, x, y ) ) {
-                        this._setCoverage( level, x, y, true );
-                    } else {
-                        drawTile = true;
-                    }
-                }
-
-                if ( !drawTile ) {
-                    continue;
-                }
-
-                this._positionTile( 
-                    tile, 
-                    viewportCenter, 
-                    levelVisibility 
-                );
-
-                if ( tile.loaded ) {
-                    
-                    updateAgain = this._blendTile(
-                        tile, 
-                        x, y,
-                        level,
-                        levelOpacity, 
-                        currentTime 
-                    );
-
-                } else if ( tile.Loading ) {
-                    //TODO: .Loading is never defined... did they mean .loading?
-                    //      but they didnt do anything so what is this block if
-                    //      if it does nothing.
-                } else {
-                    best = this._compareTiles( best, tile );
-                }
-            }
-        }
-        return best;
-    },
-
-    _positionTile: function( tile, viewportCenter, levelVisibility ){
-        var boundsTL     = tile.bounds.getTopLeft(),
-            boundsSize   = tile.bounds.getSize(),
-            positionC    = this.viewport.pixelFromPoint( boundsTL, true ),
-            sizeC        = this.viewport.deltaPixelsFromPoints( boundsSize, true ),
-            positionT    = this.viewport.pixelFromPoint( boundsTL, false ),
-            sizeT        = this.viewport.deltaPixelsFromPoints( boundsSize, false ),
-            tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
-            tileDistance = viewportCenter.distanceTo( tileCenter );
-
-        if ( !this.tileOverlap ) {
-            sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-        }
-
-        tile.position   = positionC;
-        tile.size       = sizeC;
-        tile.distance   = tileDistance;
-        tile.visibility = levelVisibility;
-    },
-
-    _blendTile: function( tile, x, y, level, levelOpacity, currentTime ){
-        var blendTimeMillis = 1000 * this.config.blendTime,
-            deltaTime,
-            opacity;
-
-        if ( !tile.blendStart ) {
-            tile.blendStart = currentTime;
-        }
-
-        deltaTime   = currentTime - tile.blendStart;
-        opacity     = Math.min( 1, deltaTime / blendTimeMillis );
-        
-        if ( this.config.alwaysBlend ) {
-            opacity *= levelOpacity;
-        }
-
-        tile.opacity = opacity;
-
-        this.lastDrawn.push( tile );
-
-        if ( opacity == 1 ) {
-            this._setCoverage( level, x, y, true );
-        } else if ( deltaTime < blendTimeMillis ) {
-            return true;
-        }
-
-        return false;
-    },
-
-    _drawTiles: function(){
-        var i, 
-            tile;
-
-        for ( i = this.lastDrawn.length - 1; i >= 0; i-- ) {
-            tile = this.lastDrawn[ i ];
-
-            if ( USE_CANVAS ) {
-                tile.drawCanvas( this.context );
-            } else {
-                tile.drawHTML( this.canvas );
-            }
-
-            tile.beingDrawn = true;
-        }
-    },
-
-    _drawOverlays: function(){
-        var i,
-            length = this.overlays.length;
-        for ( i = 0; i < length; i++ ) {
-            this._drawOverlay( this.overlays[ i ] );
-        }
-    },
-
-    _drawOverlay: function( overlay ){
-        
-        var bounds  = overlay.bounds;
-
-        overlay.position = this.viewport.pixelFromPoint(
-            bounds.getTopLeft(), 
-            true
-        );
-        overlay.size     = this.viewport.deltaPixelsFromPoints(
-            bounds.getSize(), 
-            true
-        );
-        overlay.drawHTML( this.container );
-    },
-
     addOverlay: function( element, location, placement ) {
         element = $.getElement( element );
 
-        if ( this._getOverlayIndex( element ) >= 0 ) {
+        if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
             return;     
         }
@@ -662,7 +94,7 @@ $.Drawer.prototype = {
         var i;
 
         element = $.getElement( element );
-        i = this._getOverlayIndex( element );
+        i = getOverlayIndex( this.overlays, element );
 
         if ( i >= 0 ) {
             this.overlays[ i ].update( location, placement );
@@ -674,7 +106,7 @@ $.Drawer.prototype = {
         var i;
 
         element = $.getElement( element );
-        i = this._getOverlayIndex( element );
+        i = getOverlayIndex( this.overlays, element );
 
         if ( i >= 0 ) {
             this.overlays[ i ].destroy();
@@ -700,27 +132,28 @@ $.Drawer.prototype = {
     },
 
     reset: function() {
-        this._clearTiles();
-        this.lastResetTime = new Date().getTime();
+        clearTiles( this );
+        this.lastResetTime = +new Date();
         this.updateAgain = true;
     },
 
     update: function() {
         //this.profiler.beginUpdate();
         this.midUpdate = true;
-        this._updateActual();
+        updateViewport( this );
         this.midUpdate = false;
         //this.profiler.endUpdate();
     },
 
-    loadImage: function(src, callback) {
+    loadImage: function( src, callback ) {
         var _this = this,
             loading = false,
             image,
             jobid,
             complete;
 
-        if ( !this.imageLoaderLimit || this.downloading < this.imageLoaderLimit ) {
+        if ( !this.config.imageLoaderLimit || 
+              this.downloading < this.config.imageLoaderLimit ) {
             
             this.downloading++;
 
@@ -732,7 +165,7 @@ $.Drawer.prototype = {
                     try {
                         callback( image );
                     } catch ( e ) {
-                        $.Debug.error(
+                        $.console.error(
                             "%s while executing %s callback: %s", 
                             e.name,
                             src,
@@ -763,6 +196,567 @@ $.Drawer.prototype = {
     }
 };
 
+/**
+ * @private
+ * @inner
+ * Pretty much every other line in this needs to be documented so its clear
+ * how each piece of this routine contributes to the drawing process.  That's
+ * why there are so many TODO's inside this function.
+ */
+function updateViewport( drawer ) {
+    drawer.updateAgain = false;
+
+    var tile,
+        level,
+        best            = null,
+        haveDrawn       = false,
+        currentTime     = +new Date(),
+        viewportSize    = drawer.viewport.getContainerSize(),
+        viewportBounds  = drawer.viewport.getBounds( true ),
+        viewportTL      = viewportBounds.getTopLeft(),
+        viewportBR      = viewportBounds.getBottomRight(),
+        zeroRatioC      = drawer.viewport.deltaPixelsFromPoints( 
+            drawer.source.getPixelRatio( 0 ), 
+            true
+        ).x,
+        lowestLevel     = Math.max(
+            drawer.source.minLevel, 
+            Math.floor( 
+                Math.log( drawer.config.minZoomImageRatio ) / 
+                Math.log( 2 )
+            )
+        ),
+        highestLevel    = Math.min(
+            drawer.source.maxLevel,
+            Math.floor( 
+                Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
+                Math.log( 2 )
+            )
+        );
+
+    //TODO
+    while ( drawer.lastDrawn.length > 0 ) {
+        tile = drawer.lastDrawn.pop();
+        tile.beingDrawn = false;
+    }
+
+    //TODO
+    drawer.canvas.innerHTML   = "";
+    if ( USE_CANVAS ) {
+        drawer.canvas.width   = viewportSize.x;
+        drawer.canvas.height  = viewportSize.y;
+        drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
+    }
+
+    //TODO
+    if  ( !drawer.config.wrapHorizontal && 
+        ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
+        return;
+    } else if 
+        ( !drawer.config.wrapVertical &&
+        ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
+        return;
+    }
+
+    //TODO
+    if ( !drawer.config.wrapHorizontal ) {
+        viewportTL.x = Math.max( viewportTL.x, 0 );
+        viewportBR.x = Math.min( viewportBR.x, 1 );
+    }
+    if ( !drawer.config.wrapVertical ) {
+        viewportTL.y = Math.max( viewportTL.y, 0 );
+        viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
+    }
+
+    //TODO
+    lowestLevel = Math.min( lowestLevel, highestLevel );
+
+    //TODO
+    for ( level = highestLevel; level >= lowestLevel; level-- ) {
+
+        //TODO
+        best = updateLevel(
+            drawer, 
+            level, 
+            lowestLevel, 
+            viewportTL, 
+            viewportBR, 
+            currentTime, 
+            best 
+        );
+
+        //TODO
+        if (  providesCoverage( drawer.coverage, level ) ) {
+            break;
+        }
+    }
+
+    //TODO
+    drawTiles( drawer, drawer.lastDrawn );
+    drawOverlays( drawer.viewport, drawer.overlays, drawer.container );
+
+    //TODO
+    if ( best ) {
+        loadTile( drawer, best, currentTime );
+        // because we haven't finished drawing, so
+        drawer.updateAgain = true; 
+    }
+};
+
+
+function updateLevel( drawer, level, lowestLevel, viewportTL, viewportBR, currentTime, best ){
+    var x, y,
+        tileTL,
+        tileBR,
+        numberOfTiles,
+        levelOpacity,
+        levelVisibility,
+        renderPixelRatioC,
+        renderPixelRatioT,
+        haveDrawn       = false,
+        drawLevel       = false,
+        viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() ),
+        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
+            drawer.source.getPixelRatio( 0 ), 
+            false
+        ).x,
+        optimalRatio    = drawer.config.immediateRender ? 
+            1 : 
+            zeroRatioT;
+
+    //Avoid calculations for draw if we have already drawn this
+    renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
+        drawer.source.getPixelRatio( level ), 
+        true
+    ).x;
+
+    if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
+         ( level == lowestLevel ) ) {
+        drawLevel = true;
+        haveDrawn = true;
+    } else if ( !haveDrawn ) {
+        return best;
+    }
+
+    //OK, a new drawing so do your calculations
+    tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
+    tileBR    = drawer.source.getTileAtPoint( level, viewportBR );
+    numberOfTiles  = drawer.source.getNumTiles( level );
+
+    renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
+        drawer.source.getPixelRatio( level ), 
+        false
+    ).x;
+
+    levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
+    levelVisibility = optimalRatio / Math.abs( 
+        optimalRatio - renderPixelRatioT 
+    );
+
+    resetCoverage( drawer.coverage, level );
+
+    if ( !drawer.config.wrapHorizontal ) {
+        tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
+    }
+    if ( !drawer.config.wrapVertical ) {
+        tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
+    }
+
+    for ( x = tileTL.x; x <= tileBR.x; x++ ) {
+        for ( y = tileTL.y; y <= tileBR.y; y++ ) {
+
+            best = updateTile( 
+                drawer,
+                drawLevel,
+                haveDrawn,
+                x, y,
+                level,
+                levelOpacity,
+                levelVisibility,
+                viewportCenter,
+                numberOfTiles,
+                currentTime,
+                best
+            );
+
+        }
+    }
+    return best;
+};
+
+function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
+    
+    var tile = getTile( 
+            x, y, 
+            level, 
+            drawer.source,
+            drawer.tilesMatrix,
+            currentTime, 
+            numberOfTiles, 
+            drawer.normHeight 
+        ),
+        drawTile = drawLevel;
+
+    setCoverage( drawer.coverage, level, x, y, false );
+
+    if ( !tile.exists ) {
+        return best;
+    }
+
+    if ( haveDrawn && !drawTile ) {
+        if ( isCovered( drawer.coverage, level, x, y ) ) {
+            setCoverage( drawer.coverage, level, x, y, true );
+        } else {
+            drawTile = true;
+        }
+    }
+
+    if ( !drawTile ) {
+        return best;
+    }
+
+    positionTile( 
+        tile, 
+        drawer.source.tileOverlap,
+        drawer.viewport,
+        viewportCenter, 
+        levelVisibility 
+    );
+
+    if ( tile.loaded ) {
+        
+        drawer.updateAgain = blendTile(
+            drawer,
+            tile, 
+            x, y,
+            level,
+            levelOpacity, 
+            currentTime 
+        );
+
+    } else if ( tile.Loading ) {
+        //TODO: .Loading is never defined... did they mean .loading?
+        //      but they didnt do anything so what is this block if
+        //      if it does nothing?
+    } else {
+        best = compareTiles( best, tile );
+    }
+
+    return best;
+};
+
+function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeight ) {
+    var xMod,
+        yMod,
+        bounds,
+        exists,
+        url,
+        tile;
+
+    if ( !tilesMatrix[ level ] ) {
+        tilesMatrix[ level ] = {};
+    }
+    if ( !tilesMatrix[ level ][ x ] ) {
+        tilesMatrix[ level ][ x ] = {};
+    }
+
+    if ( !tilesMatrix[ level ][ x ][ y ] ) {
+        xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+        yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+        bounds  = tileSource.getTileBounds( level, xMod, yMod );
+        exists  = tileSource.tileExists( level, xMod, yMod );
+        url     = tileSource.getTileUrl( level, xMod, yMod );
+
+        bounds.x += 1.0 * ( x - xMod ) / numTiles.x;
+        bounds.y += normHeight * ( y - yMod ) / numTiles.y;
+
+        tilesMatrix[ level ][ x ][ y ] = new $.Tile(
+            level, 
+            x, 
+            y, 
+            bounds, 
+            exists, 
+            url
+        );
+    }
+
+    tile = tilesMatrix[ level ][ x ][ y ];
+    tile.lastTouchTime = time;
+
+    return tile;
+};
+
+
+function loadTile( drawer, tile, time ) {
+    tile.loading = drawer.loadImage(
+        tile.url,
+        function( image ){
+            onTileLoad( drawer, tile, time, image );
+        }
+    );
+};
+
+function onTileLoad( drawer, tile, time, image ) {
+    var insertionIndex,
+        cutoff,
+        worstTile,
+        worstTime,
+        worstLevel,
+        worstTileIndex,
+        prevTile,
+        prevTime,
+        prevLevel,
+        i;
+
+    tile.loading = false;
+
+    if ( drawer.midUpdate ) {
+        $.console.warn( "Tile load callback in middle of drawing routine." );
+        return;
+    } else if ( !image ) {
+        $.console.log( "Tile %s failed to load: %s", tile, tile.url );
+        tile.exists = false;
+        return;
+    } else if ( time < drawer.lastResetTime ) {
+        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        return;
+    }
+
+    tile.loaded = true;
+    tile.image  = image;
+
+    insertionIndex = drawer.tilesLoaded.length;
+
+    if ( drawer.tilesLoaded.length >= QUOTA ) {
+        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
+
+        worstTile       = null;
+        worstTileIndex  = -1;
+
+        for ( i = drawer.tilesLoaded.length - 1; i >= 0; i-- ) {
+            prevTile = drawer.tilesLoaded[ i ];
+
+            if ( prevTile.level <= drawer.cutoff || prevTile.beingDrawn ) {
+                continue;
+            } else if ( !worstTile ) {
+                worstTile       = prevTile;
+                worstTileIndex  = i;
+                continue;
+            }
+
+            prevTime    = prevTile.lastTouchTime;
+            worstTime   = worstTile.lastTouchTime;
+            prevLevel   = prevTile.level;
+            worstLevel  = worstTile.level;
+
+            if ( prevTime < worstTime || 
+               ( prevTime == worstTime && prevLevel > worstLevel ) ) {
+                worstTile       = prevTile;
+                worstTileIndex  = i;
+            }
+        }
+
+        if ( worstTile && worstTileIndex >= 0 ) {
+            worstTile.unload();
+            insertionIndex = worstTileIndex;
+        }
+    }
+
+    drawer.tilesLoaded[ insertionIndex ] = tile;
+    drawer.updateAgain = true;
+};
+
+
+function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
+    var boundsTL     = tile.bounds.getTopLeft(),
+        boundsSize   = tile.bounds.getSize(),
+        positionC    = viewport.pixelFromPoint( boundsTL, true ),
+        positionT    = viewport.pixelFromPoint( boundsTL, false ),
+        sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),
+        sizeT        = viewport.deltaPixelsFromPoints( boundsSize, false ),
+        tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
+        tileDistance = viewportCenter.distanceTo( tileCenter );
+
+    if ( !overlap ) {
+        sizeC = sizeC.plus( new $.Point( 1, 1 ) );
+    }
+
+    tile.position   = positionC;
+    tile.size       = sizeC;
+    tile.distance   = tileDistance;
+    tile.visibility = levelVisibility;
+};
+
+
+function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
+    var blendTimeMillis = 1000 * drawer.config.blendTime,
+        deltaTime,
+        opacity;
+
+    if ( !tile.blendStart ) {
+        tile.blendStart = currentTime;
+    }
+
+    deltaTime   = currentTime - tile.blendStart;
+    opacity     = Math.min( 1, deltaTime / blendTimeMillis );
+    
+    if ( drawer.config.alwaysBlend ) {
+        opacity *= levelOpacity;
+    }
+
+    tile.opacity = opacity;
+
+    drawer.lastDrawn.push( tile );
+
+    if ( opacity == 1 ) {
+        setCoverage( drawer.coverage, level, x, y, true );
+    } else if ( deltaTime < blendTimeMillis ) {
+        return true;
+    }
+
+    return false;
+};
+
+
+function clearTiles( drawer ) {
+    drawer.tilesMatrix = {};
+    drawer.tilesLoaded = [];
+};
+
+/**
+ * @private
+ * @inner
+ * Returns true if the given tile provides coverage to lower-level tiles of
+ * lower resolution representing the same content. If neither x nor y is
+ * given, returns true if the entire visible level provides coverage.
+ * 
+ * Note that out-of-bounds tiles provide coverage in this sense, since
+ * there's no content that they would need to cover. Tiles at non-existent
+ * levels that are within the image bounds, however, do not.
+ */
+function providesCoverage( coverage, level, x, y ) {
+    var rows,
+        cols,
+        i, j;
+
+    if ( !coverage[ level ] ) {
+        return false;
+    }
+
+    if ( x === undefined || y === undefined ) {
+        rows = coverage[ level ];
+        for ( i in rows ) {
+            if ( rows.hasOwnProperty( i ) ) {
+                cols = rows[ i ];
+                for ( j in cols ) {
+                    if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    return (
+        coverage[ level ][ x] === undefined ||
+        coverage[ level ][ x ][ y ] === undefined ||
+        coverage[ level ][ x ][ y ] === true
+    );
+};
+
+/**
+ * @private
+ * @inner
+ * Returns true if the given tile is completely covered by higher-level
+ * tiles of higher resolution representing the same content. If neither x
+ * nor y is given, returns true if the entire visible level is covered.
+ */
+function isCovered( coverage, level, x, y ) {
+    if ( x === undefined || y === undefined ) {
+        return providesCoverage( coverage, level + 1 );
+    } else {
+        return (
+             providesCoverage( coverage, level + 1, 2 * x, 2 * y ) &&
+             providesCoverage( coverage, level + 1, 2 * x, 2 * y + 1 ) &&
+             providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y ) &&
+             providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
+        );
+    }
+};
+
+/**
+ * @private
+ * @inner
+ * Sets whether the given tile provides coverage or not.
+ */
+function setCoverage( coverage, level, x, y, covers ) {
+    if ( !coverage[ level ] ) {
+        $.console.warn(
+            "Setting coverage for a tile before its level's coverage has been reset: %s", 
+            level
+        );
+        return;
+    }
+
+    if ( !coverage[ level ][ x ] ) {
+        coverage[ level ][ x ] = {};
+    }
+
+    coverage[ level ][ x ][ y ] = covers;
+};
+
+/**
+ * @private
+ * @inner
+ * Resets coverage information for the given level. This should be called
+ * after every draw routine. Note that at the beginning of the next draw
+ * routine, coverage for every visible tile should be explicitly set. 
+ */
+function resetCoverage( coverage, level ) {
+    coverage[ level ] = {};
+};
+
+/**
+ * @private
+ * @inner
+ * Determines the 'z-index' of the given overlay.  Overlays are ordered in
+ * a z-index based on the order they are added to the Drawer.
+ */
+function getOverlayIndex( overlays, element ) {
+    var i;
+    for ( i = overlays.length - 1; i >= 0; i-- ) {
+        if ( overlays[ i ].elmt == element ) {
+            return i;
+        }
+    }
+
+    return -1;
+};
+
+/**
+ * @private
+ * @inner
+ * Determines whether the 'last best' tile for the area is better than the 
+ * tile in question.
+ */
+function compareTiles( previousBest, tile ) {
+    if ( !previousBest ) {
+        return tile;
+    }
+
+    if ( tile.visibility > previousBest.visibility ) {
+        return tile;
+    } else if ( tile.visibility == previousBest.visibility ) {
+        if ( tile.distance < previousBest.distance ) {
+            return tile;
+        }
+    }
+
+    return previousBest;
+};
+
 function finishLoadingImage( image, callback, successful, jobid ){
 
     image.onload = null;
@@ -778,13 +772,45 @@ function finishLoadingImage( image, callback, successful, jobid ){
 
 };
 
-function numberOfTiles( drawer, level ){
-    
-    if ( !drawer.cacheNumTiles[ level ] ) {
-        drawer.cacheNumTiles[ level ] = drawer.source.getNumTiles( level );
-    }
 
-    return drawer.cacheNumTiles[ level ];
+function drawOverlays( viewport, overlays, container ){
+    var i,
+        length = overlays.length;
+    for ( i = 0; i < length; i++ ) {
+        drawOverlay( viewport, overlays[ i ], container );
+    }
+};
+
+function drawOverlay( viewport, overlay, container ){
+
+    overlay.position = viewport.pixelFromPoint(
+        overlay.bounds.getTopLeft(), 
+        true
+    );
+    overlay.size     = viewport.deltaPixelsFromPoints(
+        overlay.bounds.getSize(), 
+        true
+    );
+    overlay.drawHTML( container );
+};
+
+function drawTiles( drawer, lastDrawn ){
+    var i, 
+        tile;
+
+    for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
+        tile = lastDrawn[ i ];
+
+        //TODO: get rid of this if by determining the tile draw method once up
+        //      front and defining the appropriate 'draw' function
+        if ( USE_CANVAS ) {
+            tile.drawCanvas( drawer.context );
+        } else {
+            tile.drawHTML( drawer.canvas );
+        }
+
+        tile.beingDrawn = true;
+    }
 };
 
 }( OpenSeadragon ));

@@ -3,7 +3,18 @@
     
 /**
  * @class
- */
+ * @extends OpenSeadragon.TileSource
+ * @param {Number} width
+ * @param {Number} height
+ * @param {Number} tileSize
+ * @param {Number} tileOverlap
+ * @param {String} tilesUrl
+ * @param {String} fileFormat
+ * @param {OpenSeadragon.DisplayRect[]} displayRects
+ * @property {String} tilesUrl
+ * @property {String} fileFormat
+ * @property {OpenSeadragon.DisplayRect[]} displayRects
+ */ 
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
@@ -31,11 +42,25 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
 };
 
 $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
-
+    
+    /**
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.getTileUrl
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     getTileUrl: function( level, x, y ) {
         return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat ].join( '' );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.tileExists
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     tileExists: function( level, x, y ) {
         var rects = this._levelRects[ level ],
             rect,
@@ -77,185 +102,6 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     }
 });
 
-/**
- * @static
- */
-$.DziTileSourceHelper = {
-
-    createFromXml: function( xmlUrl, xmlString, callback ) {
-        var async = typeof (callback) == "function",
-            error = null,
-            urlParts,
-            filename,
-            lastDot,
-            tilesUrl,
-            handler;
-
-        if ( !xmlUrl ) {
-            this.error = $.getString( "Errors.Empty" );
-            if ( async ) {
-                window.setTimeout( function() {
-                    callback( null, error );
-                }, 1 );
-                return null;
-            }
-            throw new Error( error );
-        }
-
-        urlParts = xmlUrl.split( '/' );
-        filename = urlParts[ urlParts.length - 1 ];
-        lastDot  = filename.lastIndexOf( '.' );
-
-        if ( lastDot > -1 ) {
-            urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
-        }
-
-        tilesUrl = urlParts.join( '/' ) + "_files/";
-
-        function finish( func, obj ) {
-            try {
-                return func( obj, tilesUrl );
-            } catch ( e ) {
-                if ( async ) {
-                    return null;
-                } else {
-                    throw e;
-                }
-            }
-        }
-
-        if ( async ) {
-            if ( xmlString ) {
-                handler = $.delegate( this, this.processXml );
-                window.setTimeout( function() {
-                    var source = finish( handler, $.parseXml( xmlString ) );
-                    // call after finish sets error
-                    callback( source, error );    
-                }, 1);
-            } else {
-                handler = $.delegate( this, this.processResponse );
-                $.makeAjaxRequest( xmlUrl, function( xhr ) {
-                    var source = finish( handler, xhr );
-                    // call after finish sets error
-                    callback( source, error );
-                });
-            }
-
-            return null;
-        }
-
-        if ( xmlString ) {
-            return finish( 
-                $.delegate( this, this.processXml ), 
-                $.parseXml( xmlString ) 
-            );
-        } else {
-            return finish( 
-                $.delegate( this, this.processResponse ), 
-                $.makeAjaxRequest( xmlUrl )
-            );
-        }
-    },
-    processResponse: function( xhr, tilesUrl ) {
-        var status,
-            statusText,
-            doc = null;
-
-        if ( !xhr ) {
-            throw new Error( $.getString( "Errors.Security" ) );
-        } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
-            status     = xhr.status;
-            statusText = ( status == 404 ) ? 
-                "Not Found" : 
-                xhr.statusText;
-            throw new Error( $.getString( "Errors.Status", status, statusText ) );
-        }
-
-        if ( xhr.responseXML && xhr.responseXML.documentElement ) {
-            doc = xhr.responseXML;
-        } else if ( xhr.responseText ) {
-            doc = $.parseXml( xhr.responseText );
-        }
-
-        return this.processXml( doc, tilesUrl );
-    },
-
-    processXml: function( xmlDoc, tilesUrl ) {
-
-        if ( !xmlDoc || !xmlDoc.documentElement ) {
-            throw new Error( $.getString( "Errors.Xml" ) );
-        }
-
-        var root     = xmlDoc.documentElement,
-            rootName = root.tagName;
-
-        if ( rootName == "Image" ) {
-            try {
-                return this.processDzi( root, tilesUrl );
-            } catch ( e ) {
-                throw (e instanceof Error) ? 
-                    e : 
-                    new Error( $.getString("Errors.Dzi") );
-            }
-        } else if ( rootName == "Collection" ) {
-            throw new Error( $.getString( "Errors.Dzc" ) );
-        } else if ( rootName == "Error" ) {
-            return this.processError( root );
-        }
-
-        throw new Error( $.getString( "Errors.Dzi" ) );
-    },
-
-    processDzi: function( imageNode, tilesUrl ) {
-        var fileFormat    = imageNode.getAttribute( "Format" ),
-            sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
-            dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
-            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
-            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
-            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
-            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
-            dispRects     = [],
-            dispRectNode,
-            rectNode,
-            i;
-
-        if ( !$.imageFormatSupported( fileFormat ) ) {
-            throw new Error(
-                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
-            );
-        }
-
-        for ( i = 0; i < dispRectNodes.length; i++ ) {
-            dispRectNode = dispRectNodes[ i ];
-            rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
-
-            dispRects.push( new $.DisplayRect(
-                parseInt( rectNode.getAttribute( "X" ) ),
-                parseInt( rectNode.getAttribute( "Y" ) ),
-                parseInt( rectNode.getAttribute( "Width" ) ),
-                parseInt( rectNode.getAttribute( "Height" ) ),
-                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
-            ));
-        }
-        return new $.DziTileSource(
-            width, 
-            height, 
-            tileSize, 
-            tileOverlap,
-            tilesUrl, 
-            fileFormat, 
-            dispRects
-        );
-    },
-
-    processError: function( errorNode ) {
-        var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
-            message     = messageNode.firstChild.nodeValue;
-
-        throw new Error(message);
-    }
-};
 
 
 }( OpenSeadragon ));

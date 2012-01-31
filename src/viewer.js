@@ -1,25 +1,26 @@
 
 (function( $ ){
 /**
- *  @class
  *
- *  The main point of entry into creating a zoomable image on the page.
+ * The main point of entry into creating a zoomable image on the page.
  *
- *  We have provided an idiomatic javascript constructor which takes
- *  a single object, but still support the legacy positional arguments.
+ * We have provided an idiomatic javascript constructor which takes
+ * a single object, but still support the legacy positional arguments.
  *
- *  The options below are given in order that they appeared in the constructor
- *  as arguments and we translate a positional call into an idiomatic call.
+ * The options below are given in order that they appeared in the constructor
+ * as arguments and we translate a positional call into an idiomatic call.
  *
- *  options:{
- *      element:    String id of Element to attach to,
- *      xmlPath:    String xpath ( TODO: not sure! ),
- *      prefixUrl:  String url used to prepend to paths, eg button images,
- *      controls:   Array of Seadragon.Controls,
- *      overlays:   Array of Seadragon.Overlays,
- *      overlayControls: An Array of ( TODO: not sure! )
- *  }
- *
+ * @class
+ * @extends OpenSeadragon.EventHandler
+ * @param {Object} options
+ * @param {String} options.element Id of Element to attach to,
+ * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
+ * @param {String} options.prefixUrl  Url used to prepend to paths, eg button 
+ *  images, etc.
+ * @param {Seadragon.Controls[]} options.controls Array of Seadragon.Controls,
+ * @param {Seadragon.Overlays[]} options.overlays Array of Seadragon.Overlays,
+ * @param {Seadragon.Controls[]} options.overlayControls An Array of ( TODO: 
+ *  not sure! )
  *
  **/    
 $.Viewer = function( options ) {
@@ -306,6 +307,10 @@ $.Viewer = function( options ) {
 
 $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.addControl
+     */
     addControl: function ( elmt, anchor ) {
         var elmt = $.getElement( elmt ),
             div = null;
@@ -344,21 +349,36 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         elmt.style.display = "inline-block";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isOpen
+     */
     isOpen: function () {
         return !!this.source;
     },
 
-    openDzi: function ( xmlUrl, xmlString ) {
+    /**
+     * If the string is xml is simply parsed and opened, otherwise the string 
+     * is treated as an URL and an xml document is requested via ajax, parsed 
+     * and then opened in the viewer.
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.openDzi
+     * @param {String} dzi and xml string or the url to a DZI xml document.
+     */
+    openDzi: function ( dzi ) {
         var _this = this;
-        $.DziTileSourceHelper.createFromXml(
-            xmlUrl, 
-            xmlString,
+        $.createFromDZI(
+            dzi,
             function( source ){
                _this.open( source );
             }
         );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.openTileSource
+     */
     openTileSource: function ( tileSource ) {
         var _this = this;
         window.setTimeout( function () {
@@ -366,6 +386,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }, 1 );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.open
+     */
     open: function( source ) {
         var _this = this,
             overlay,
@@ -448,6 +472,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.raiseEvent( "open" );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.close
+     */
     close: function () {
         this.source     = null;
         this.viewport   = null;
@@ -456,6 +484,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.canvas.innerHTML = "";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.removeControl
+     */
     removeControl: function ( elmt ) {
         
         var elmt = $.getElement( elmt ),
@@ -467,12 +499,20 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.clearControls
+     */
     clearControls: function () {
         while ( this.controls.length > 0 ) {
             this.controls.pop().destroy();
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
+     */
     isDashboardEnabled: function () {
         var i;
         
@@ -485,18 +525,34 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         return false;
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isFullPage
+     */
     isFullPage: function () {
         return this.container.parentNode == document.body;
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isMouseNavEnabled
+     */
     isMouseNavEnabled: function () {
         return this.innerTracker.isTracking();
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isVisible
+     */
     isVisible: function () {
         return this.container.style.visibility != "hidden";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
+     */
     setDashboardEnabled: function( enabled ) {
         var i;
         for ( i = this.controls.length - 1; i >= 0; i-- ) {
@@ -504,6 +560,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setFullPage
+     */
     setFullPage: function( fullPage ) {
 
         var body            = document.body,
@@ -592,10 +652,18 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
+     */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setVisible
+     */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
     }

@@ -1,18 +1,25 @@
 
 (function( $ ){
 /**
- * @class
- *
  * Manages events on groups of buttons.
- *    
- * options: {
- *     buttons: Array of buttons * required,
- *     group:   Element to use as the container,
- *     config:  Object with Viewer settings ( TODO: is this actually used anywhere? )
- *     enter:   Function callback for when the mouse enters group
- *     exit:    Function callback for when mouse leaves the group
- *     release: Function callback for when mouse is released
- * }
+ * @class
+ * @param {Object} options - a dictionary of settings applied against the entire 
+ * group of buttons
+ * @param {Array}    options.buttons Array of buttons
+ * @param {Element}  [options.group]   Element to use as the container,
+ * @param {Object}   options.config  Object with Viewer settings ( TODO: is 
+ *  this actually used anywhere? )
+ * @param {Function} [options.enter]   Function callback for when the mouse 
+ *  enters group
+ * @param {Function} [options.exit]    Function callback for when mouse leaves 
+ *  the group
+ * @param {Function} [options.release] Function callback for when mouse is 
+ *  released
+ * @property {Array} buttons - An array containing the buttons themselves.
+ * @property {Element} element - The shared container for the buttons.
+ * @property {Object} config - Configurable settings for the group of buttons.
+ * @property {OpenSeadragon.MouseTracker} tracker - Tracks mouse events accross
+ *  the group of buttons.
  **/
 $.ButtonGroup = function( options ) {
 
@@ -68,10 +75,22 @@ $.ButtonGroup = function( options ) {
 
 $.ButtonGroup.prototype = {
 
+    /**
+     * TODO: Figure out why this is used on the public API and if a more useful
+     * api can be created.
+     * @function
+     * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
+     */
     emulateEnter: function() {
         this.tracker.enter();
     },
 
+    /**
+     * TODO: Figure out why this is used on the public API and if a more useful
+     * api can be created.
+     * @function
+     * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
+     */
     emulateExit: function() {
         this.tracker.exit();
     }

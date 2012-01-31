@@ -389,27 +389,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
             return element;
         },
-        
-        /**
-         * @function
-         * @name OpenSeadragon.getOffsetParent
-         * @param {Element} element 
-         * @param {Boolean} [isFixed]
-         * @returns {Element}
-         */
-        getOffsetParent: function( element, isFixed ) {
-            if ( isFixed && element != document.body ) {
-                return document.body;
-            } else {
-                return element.offsetParent;
-            }
-        },
 
         /**
+         * Determines the position of the upper-left corner of the element.
          * @function
          * @name OpenSeadragon.getElementPosition
-         * @param {Element|String} element
-         * @returns {Point}
+         * @param {Element|String} element - the elemenet we want the position for.
+         * @returns {Point} - the position of the upper left corner of the element. 
          */
         getElementPosition: function( element ) {
             var result = new $.Point(),
@@ -418,7 +404,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             element      = $.getElement( element );
             isFixed      = $.getElementStyle( element ).position == "fixed";
-            offsetParent = $.getOffsetParent( element, isFixed );
+            offsetParent = getOffsetParent( element, isFixed );
 
             while ( offsetParent ) {
 
@@ -431,13 +417,14 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
                 element = offsetParent;
                 isFixed = $.getElementStyle( element ).position == "fixed";
-                offsetParent = $.getOffsetParent( element, isFixed );
+                offsetParent = getOffsetParent( element, isFixed );
             }
 
             return result;
         },
 
         /**
+         * Determines the height and width of the given element.
          * @function
          * @name OpenSeadragon.getElementSize
          * @param {Element|String} element
@@ -453,6 +440,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Returns the CSSStyle object for the given element.
          * @function
          * @name OpenSeadragon.getElementStyle
          * @param {Element|String} element
@@ -471,6 +459,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Gets the latest event, really only useful internally since its 
+         * specific to IE behavior.  TODO: Deprecate this from the api and
+         * use it internally.
          * @function
          * @name OpenSeadragon.getEvent
          * @param {Event} [event]
@@ -481,6 +472,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Gets the position of the mouse on the screen for a given event.
          * @function
          * @name OpenSeadragon.getMousePosition
          * @param {Event} [event]
@@ -513,6 +505,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Determines the pages current scroll position.
          * @function
          * @name OpenSeadragon.getPageScroll
          * @returns {Point}
@@ -537,6 +530,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Determines the size of the browsers window.
          * @function
          * @name OpenSeadragon.getWindowSize
          * @returns {Point}
@@ -562,18 +556,10 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
-        /**
-         * @function
-         * @name OpenSeadragon.imageFormatSupported
-         * @param {String} [extension]
-         * @returns {Boolean}
-         */
-        imageFormatSupported: function( extension ) {
-            extension = extension ? extension : "";
-            return !!FILEFORMATS[ extension.toLowerCase() ];
-        },
 
         /**
+         * Wraps the given element in a nest of divs so that the element can
+         * be easily centered.
          * @function
          * @name OpenSeadragon.makeCenteredNode
          * @param {Element|String} element
@@ -617,6 +603,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Creates an easily positionable element of the given type that therefor
+         * serves as an excellent container element.
          * @function
          * @name OpenSeadragon.makeNeutralElement
          * @param {String} tagName
@@ -636,6 +624,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Ensures an image is loaded correctly to support alpha transparency.
+         * Generally only IE has issues doing this correctly for formats like 
+         * png.
          * @function
          * @name OpenSeadragon.makeTransparentImage
          * @param {String} src
@@ -676,6 +667,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Sets the opacity of the specified element.
          * @function
          * @name OpenSeadragon.setElementOpacity
          * @param {Element|String} element
@@ -723,6 +715,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Adds an event listener for the given element, eventName and handler.
          * @function
          * @name OpenSeadragon.addEvent
          * @param {Element|String} element
@@ -751,6 +744,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Remove a given event listener for the given element, event type and 
+         * handler.
          * @function
          * @name OpenSeadragon.removeEvent
          * @param {Element|String} element
@@ -779,6 +774,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Cancels the default browser behavior had the event propagated all
+         * the way up the DOM to the window object.
          * @function
          * @name OpenSeadragon.cancelEvent
          * @param {Event} [event]
@@ -797,6 +794,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Stops the propagation of the event up the DOM.
          * @function
          * @name OpenSeadragon.stopEvent
          * @param {Event} [event]
@@ -812,11 +810,18 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Similar to OpenSeadragon.delegate, but it does not immediately call 
+         * the method on the object, returning a function which can be called
+         * repeatedly to delegate the method. It also allows additonal arguments
+         * to be passed during construction which will be added during each
+         * invocation, and each invocation can add additional arguments as well.
+         * 
          * @function
          * @name OpenSeadragon.createCallback
          * @param {Object} object
          * @param {Function} method
-         * @param [args] any additional arguments are passed as arguments to the created callback
+         * @param [args] any additional arguments are passed as arguments to the 
+         *  created callback
          * @returns {Function}
          */
         createCallback: function( object, method ) {
@@ -841,6 +846,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Retreives the value of a url parameter from the window.location string.
          * @function
          * @name OpenSeadragon.getUrlParameter
          * @param {String} key
@@ -852,10 +858,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Makes an AJAX request.
          * @function
          * @name OpenSeadragon.makeAjaxRequest
-         * @param {String} url
-         * @param {Function} [callback]
+         * @param {String} url - the url to request 
+         * @param {Function} [callback] - a function to call when complete
+         * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
@@ -909,7 +917,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 request.open( "GET", url, async );
                 request.send( null );
             } catch (e) {
-                $.Debug.log(
+                $.console.log(
                     "%s while making AJAX request: %s",
                     e.name, 
                     e.message
@@ -926,38 +934,274 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return async ? null : request;
         },
 
+
         /**
-         * Parses an XML string into a DOM Document.
+         * Loads a Deep Zoom Image description from a url or XML string and
+         * provides a callback hook for the resulting Document
          * @function
-         * @name OpenSeadragon.parseXml
-         * @param {String} string
-         * @returns {Document}
+         * @name OpenSeadragon.createFromDZI
+         * @param {String} xmlUrl
+         * @param {String} xmlString
+         * @param {Function} callback
          */
-        parseXml: function( string ) {
-            //TODO: yet another example where we can determine the correct
-            //      implementation once at start-up instead of everytime we use
-            //      the function.
-            var xmlDoc = null,
-                parser;
+        createFromDZI: function( dzi, callback ) {
+            var async       = typeof ( callback ) == "function",
+                xmlUrl      = dzi.substring(0,1) != '<' ? dzi : null,
+                xmlString   = xmlUrl ? null : dzi,
+                error       = null,
+                urlParts,
+                filename,
+                lastDot,
+                tilesUrl;
 
-            if ( window.ActiveXObject ) {
 
-                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                xmlDoc.async = false;
-                xmlDoc.loadXML( string );
+            if( xmlUrl ){
+                urlParts = xmlUrl.split( '/' );
+                filename = urlParts[ urlParts.length - 1 ];
+                lastDot  = filename.lastIndexOf( '.' );
 
-            } else if ( window.DOMParser ) {
+                if ( lastDot > -1 ) {
+                    urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
+                }
 
-                parser = new DOMParser();
-                xmlDoc = parser.parseFromString( string, "text/xml" );
-                
-            } else {
-                throw new Error( "Browser doesn't support XML DOM." );
+                tilesUrl = urlParts.join( '/' ) + "_files/";
             }
 
-            return xmlDoc;
+            function finish( func, obj ) {
+                try {
+                    return func( obj, tilesUrl );
+                } catch ( e ) {
+                    if ( async ) {
+                        return null;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            if ( async ) {
+                if ( xmlString ) {
+                    window.setTimeout( function() {
+                        var source = finish( processDZIXml, parseXml( xmlString ) );
+                        // call after finish sets error
+                        callback( source, error );    
+                    }, 1);
+                } else {
+                    $.makeAjaxRequest( xmlUrl, function( xhr ) {
+                        var source = finish( processDZIResponse, xhr );
+                        // call after finish sets error
+                        callback( source, error );
+                    });
+                }
+
+                return null;
+            }
+
+            if ( xmlString ) {
+                return finish( 
+                    processDZIXml,
+                    parseXml( xmlString ) 
+                );
+            } else {
+                return finish( 
+                    processDZIResponse, 
+                    $.makeAjaxRequest( xmlUrl )
+                );
+            }
         }
+
     });
 
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Element} element 
+     * @param {Boolean} [isFixed]
+     * @returns {Element}
+     */
+    function getOffsetParent( element, isFixed ) {
+        if ( isFixed && element != document.body ) {
+            return document.body;
+        } else {
+            return element.offsetParent;
+        }
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {XMLHttpRequest} xhr
+     * @param {String} tilesUrl
+     */
+    function processDZIResponse( xhr, tilesUrl ) {
+        var status,
+            statusText,
+            doc = null;
+
+        if ( !xhr ) {
+            throw new Error( $.getString( "Errors.Security" ) );
+        } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
+            status     = xhr.status;
+            statusText = ( status == 404 ) ? 
+                "Not Found" : 
+                xhr.statusText;
+            throw new Error( $.getString( "Errors.Status", status, statusText ) );
+        }
+
+        if ( xhr.responseXML && xhr.responseXML.documentElement ) {
+            doc = xhr.responseXML;
+        } else if ( xhr.responseText ) {
+            doc = parseXml( xhr.responseText );
+        }
+
+        return processDZIXml( doc, tilesUrl );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Document} xmlDoc
+     * @param {String} tilesUrl
+     */
+    function processDZIXml( xmlDoc, tilesUrl ) {
+
+        if ( !xmlDoc || !xmlDoc.documentElement ) {
+            throw new Error( $.getString( "Errors.Xml" ) );
+        }
+
+        var root     = xmlDoc.documentElement,
+            rootName = root.tagName;
+
+        if ( rootName == "Image" ) {
+            try {
+                return processDZI( root, tilesUrl );
+            } catch ( e ) {
+                throw (e instanceof Error) ? 
+                    e : 
+                    new Error( $.getString("Errors.Dzi") );
+            }
+        } else if ( rootName == "Collection" ) {
+            throw new Error( $.getString( "Errors.Dzc" ) );
+        } else if ( rootName == "Error" ) {
+            return processDZIError( root );
+        }
+
+        throw new Error( $.getString( "Errors.Dzi" ) );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Element} imageNode
+     * @param {String} tilesUrl
+     */
+    function processDZI( imageNode, tilesUrl ) {
+        var fileFormat    = imageNode.getAttribute( "Format" ),
+            sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
+            dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
+            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
+            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
+            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
+            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
+            dispRects     = [],
+            dispRectNode,
+            rectNode,
+            i;
+
+        if ( !imageFormatSupported( fileFormat ) ) {
+            throw new Error(
+                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
+            );
+        }
+
+        for ( i = 0; i < dispRectNodes.length; i++ ) {
+            dispRectNode = dispRectNodes[ i ];
+            rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
+
+            dispRects.push( new $.DisplayRect(
+                parseInt( rectNode.getAttribute( "X" ) ),
+                parseInt( rectNode.getAttribute( "Y" ) ),
+                parseInt( rectNode.getAttribute( "Width" ) ),
+                parseInt( rectNode.getAttribute( "Height" ) ),
+                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+            ));
+        }
+        return new $.DziTileSource(
+            width, 
+            height, 
+            tileSize, 
+            tileOverlap,
+            tilesUrl, 
+            fileFormat, 
+            dispRects
+        );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Document} errorNode
+     * @throws {Error}
+     */
+    function processDZIError( errorNode ) {
+        var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
+            message     = messageNode.firstChild.nodeValue;
+
+        throw new Error(message);
+    };
+
+    /**
+     * Reports whether the image format is supported for tiling in this
+     * version.
+     * @private
+     * @inner
+     * @function
+     * @param {String} [extension]
+     * @returns {Boolean}
+     */
+    function imageFormatSupported( extension ) {
+        extension = extension ? extension : "";
+        return !!FILEFORMATS[ extension.toLowerCase() ];
+    };
+
+    /**
+     * Parses an XML string into a DOM Document.
+     * @private
+     * @inner
+     * @function
+     * @name OpenSeadragon.parseXml
+     * @param {String} string
+     * @returns {Document}
+     */
+    function parseXml( string ) {
+        //TODO: yet another example where we can determine the correct
+        //      implementation once at start-up instead of everytime we use
+        //      the function.
+        var xmlDoc = null,
+            parser;
+
+        if ( window.ActiveXObject ) {
+
+            xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+            xmlDoc.async = false;
+            xmlDoc.loadXML( string );
+
+        } else if ( window.DOMParser ) {
+
+            parser = new DOMParser();
+            xmlDoc = parser.parseFromString( string, "text/xml" );
+            
+        } else {
+            throw new Error( "Browser doesn't support XML DOM." );
+        }
+
+        return xmlDoc;
+    };
     
 }( OpenSeadragon ));

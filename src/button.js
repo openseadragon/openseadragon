@@ -18,12 +18,34 @@ $.ButtonState = {
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
  * @class
+ * @extends OpenSeadragon.EventHandler
  * @param {Object} options
- * @param {String} options.tooltip
+ * @param {String} options.tooltip Provides context help for the button we the
+ *  user hovers over it.
  * @param {String} options.srcRest URL of image to use in 'rest' state
  * @param {String} options.srcGroup URL of image to use in 'up' state
  * @param {String} options.srcHover URL of image to use in 'hover' state
  * @param {String} options.srcDown URL of image to use in 'domn' state
+ * @param {Element} [options.element] Element to use as a container for the 
+ *  button.
+ * @property {String} tooltip Provides context help for the button we the
+ *  user hovers over it.
+ * @property {String} srcRest URL of image to use in 'rest' state
+ * @property {String} srcGroup URL of image to use in 'up' state
+ * @property {String} srcHover URL of image to use in 'hover' state
+ * @property {String} srcDown URL of image to use in 'domn' state
+ * @property {Object} config Configurable settings for this button.
+ * @property {Element} [element] Element to use as a container for the 
+ *  button.
+ * @property {Number} fadeDelay How long to wait before fading
+ * @property {Number} fadeLength How long should it take to fade the button.
+ * @property {Number} fadeBeginTime When the button last began to fade.
+ * @property {Boolean} shouldFade Whether this button should fade after user 
+ *  stops interacting with the viewport.
+    this.fadeDelay      = 0;      // begin fading immediately
+    this.fadeLength     = 2000;   // fade over a period of 2 seconds
+    this.fadeBeginTime  = null;
+    this.shouldFade     = false;
  */
 $.Button = function( options ) {
 
@@ -36,6 +58,7 @@ $.Button = function( options ) {
     this.srcGroup  = options.srcGroup;
     this.srcHover  = options.srcHover;
     this.srcDown   = options.srcDown;
+
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
@@ -159,10 +182,22 @@ $.Button = function( options ) {
 
 $.extend( $.Button.prototype, $.EventHandler.prototype, {
 
+    /**
+     * TODO: Determine what this function is intended to do and if it's actually
+     * useful as an API point.
+     * @function
+     * @name OpenSeadragon.Button.prototype.notifyGroupEnter
+     */
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
     },
 
+    /**
+     * TODO: Determine what this function is intended to do and if it's actually
+     * useful as an API point.
+     * @function
+     * @name OpenSeadragon.Button.prototype.notifyGroupExit
+     */
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
     }

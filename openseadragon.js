@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.8.24
+ * @version  OpenSeadragon 0.8.26
  *
  * @fileOverview 
  * <h2>
@@ -389,27 +389,13 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
             return element;
         },
-        
-        /**
-         * @function
-         * @name OpenSeadragon.getOffsetParent
-         * @param {Element} element 
-         * @param {Boolean} [isFixed]
-         * @returns {Element}
-         */
-        getOffsetParent: function( element, isFixed ) {
-            if ( isFixed && element != document.body ) {
-                return document.body;
-            } else {
-                return element.offsetParent;
-            }
-        },
 
         /**
+         * Determines the position of the upper-left corner of the element.
          * @function
          * @name OpenSeadragon.getElementPosition
-         * @param {Element|String} element
-         * @returns {Point}
+         * @param {Element|String} element - the elemenet we want the position for.
+         * @returns {Point} - the position of the upper left corner of the element. 
          */
         getElementPosition: function( element ) {
             var result = new $.Point(),
@@ -418,7 +404,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             element      = $.getElement( element );
             isFixed      = $.getElementStyle( element ).position == "fixed";
-            offsetParent = $.getOffsetParent( element, isFixed );
+            offsetParent = getOffsetParent( element, isFixed );
 
             while ( offsetParent ) {
 
@@ -431,13 +417,14 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
                 element = offsetParent;
                 isFixed = $.getElementStyle( element ).position == "fixed";
-                offsetParent = $.getOffsetParent( element, isFixed );
+                offsetParent = getOffsetParent( element, isFixed );
             }
 
             return result;
         },
 
         /**
+         * Determines the height and width of the given element.
          * @function
          * @name OpenSeadragon.getElementSize
          * @param {Element|String} element
@@ -453,6 +440,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Returns the CSSStyle object for the given element.
          * @function
          * @name OpenSeadragon.getElementStyle
          * @param {Element|String} element
@@ -471,6 +459,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Gets the latest event, really only useful internally since its 
+         * specific to IE behavior.  TODO: Deprecate this from the api and
+         * use it internally.
          * @function
          * @name OpenSeadragon.getEvent
          * @param {Event} [event]
@@ -481,6 +472,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Gets the position of the mouse on the screen for a given event.
          * @function
          * @name OpenSeadragon.getMousePosition
          * @param {Event} [event]
@@ -513,6 +505,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Determines the pages current scroll position.
          * @function
          * @name OpenSeadragon.getPageScroll
          * @returns {Point}
@@ -537,6 +530,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Determines the size of the browsers window.
          * @function
          * @name OpenSeadragon.getWindowSize
          * @returns {Point}
@@ -562,18 +556,10 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
-        /**
-         * @function
-         * @name OpenSeadragon.imageFormatSupported
-         * @param {String} [extension]
-         * @returns {Boolean}
-         */
-        imageFormatSupported: function( extension ) {
-            extension = extension ? extension : "";
-            return !!FILEFORMATS[ extension.toLowerCase() ];
-        },
 
         /**
+         * Wraps the given element in a nest of divs so that the element can
+         * be easily centered.
          * @function
          * @name OpenSeadragon.makeCenteredNode
          * @param {Element|String} element
@@ -617,6 +603,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Creates an easily positionable element of the given type that therefor
+         * serves as an excellent container element.
          * @function
          * @name OpenSeadragon.makeNeutralElement
          * @param {String} tagName
@@ -636,6 +624,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Ensures an image is loaded correctly to support alpha transparency.
+         * Generally only IE has issues doing this correctly for formats like 
+         * png.
          * @function
          * @name OpenSeadragon.makeTransparentImage
          * @param {String} src
@@ -676,6 +667,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Sets the opacity of the specified element.
          * @function
          * @name OpenSeadragon.setElementOpacity
          * @param {Element|String} element
@@ -723,6 +715,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Adds an event listener for the given element, eventName and handler.
          * @function
          * @name OpenSeadragon.addEvent
          * @param {Element|String} element
@@ -751,6 +744,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Remove a given event listener for the given element, event type and 
+         * handler.
          * @function
          * @name OpenSeadragon.removeEvent
          * @param {Element|String} element
@@ -779,6 +774,8 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Cancels the default browser behavior had the event propagated all
+         * the way up the DOM to the window object.
          * @function
          * @name OpenSeadragon.cancelEvent
          * @param {Event} [event]
@@ -797,6 +794,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Stops the propagation of the event up the DOM.
          * @function
          * @name OpenSeadragon.stopEvent
          * @param {Event} [event]
@@ -812,11 +810,18 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Similar to OpenSeadragon.delegate, but it does not immediately call 
+         * the method on the object, returning a function which can be called
+         * repeatedly to delegate the method. It also allows additonal arguments
+         * to be passed during construction which will be added during each
+         * invocation, and each invocation can add additional arguments as well.
+         * 
          * @function
          * @name OpenSeadragon.createCallback
          * @param {Object} object
          * @param {Function} method
-         * @param [args] any additional arguments are passed as arguments to the created callback
+         * @param [args] any additional arguments are passed as arguments to the 
+         *  created callback
          * @returns {Function}
          */
         createCallback: function( object, method ) {
@@ -841,6 +846,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Retreives the value of a url parameter from the window.location string.
          * @function
          * @name OpenSeadragon.getUrlParameter
          * @param {String} key
@@ -852,10 +858,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         },
 
         /**
+         * Makes an AJAX request.
          * @function
          * @name OpenSeadragon.makeAjaxRequest
-         * @param {String} url
-         * @param {Function} [callback]
+         * @param {String} url - the url to request 
+         * @param {Function} [callback] - a function to call when complete
+         * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
@@ -909,7 +917,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 request.open( "GET", url, async );
                 request.send( null );
             } catch (e) {
-                $.Debug.log(
+                $.console.log(
                     "%s while making AJAX request: %s",
                     e.name, 
                     e.message
@@ -926,39 +934,275 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return async ? null : request;
         },
 
+
         /**
-         * Parses an XML string into a DOM Document.
+         * Loads a Deep Zoom Image description from a url or XML string and
+         * provides a callback hook for the resulting Document
          * @function
-         * @name OpenSeadragon.parseXml
-         * @param {String} string
-         * @returns {Document}
+         * @name OpenSeadragon.createFromDZI
+         * @param {String} xmlUrl
+         * @param {String} xmlString
+         * @param {Function} callback
          */
-        parseXml: function( string ) {
-            //TODO: yet another example where we can determine the correct
-            //      implementation once at start-up instead of everytime we use
-            //      the function.
-            var xmlDoc = null,
-                parser;
+        createFromDZI: function( dzi, callback ) {
+            var async       = typeof ( callback ) == "function",
+                xmlUrl      = dzi.substring(0,1) != '<' ? dzi : null,
+                xmlString   = xmlUrl ? null : dzi,
+                error       = null,
+                urlParts,
+                filename,
+                lastDot,
+                tilesUrl;
 
-            if ( window.ActiveXObject ) {
 
-                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                xmlDoc.async = false;
-                xmlDoc.loadXML( string );
+            if( xmlUrl ){
+                urlParts = xmlUrl.split( '/' );
+                filename = urlParts[ urlParts.length - 1 ];
+                lastDot  = filename.lastIndexOf( '.' );
 
-            } else if ( window.DOMParser ) {
+                if ( lastDot > -1 ) {
+                    urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
+                }
 
-                parser = new DOMParser();
-                xmlDoc = parser.parseFromString( string, "text/xml" );
-                
-            } else {
-                throw new Error( "Browser doesn't support XML DOM." );
+                tilesUrl = urlParts.join( '/' ) + "_files/";
             }
 
-            return xmlDoc;
+            function finish( func, obj ) {
+                try {
+                    return func( obj, tilesUrl );
+                } catch ( e ) {
+                    if ( async ) {
+                        return null;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            if ( async ) {
+                if ( xmlString ) {
+                    window.setTimeout( function() {
+                        var source = finish( processDZIXml, parseXml( xmlString ) );
+                        // call after finish sets error
+                        callback( source, error );    
+                    }, 1);
+                } else {
+                    $.makeAjaxRequest( xmlUrl, function( xhr ) {
+                        var source = finish( processDZIResponse, xhr );
+                        // call after finish sets error
+                        callback( source, error );
+                    });
+                }
+
+                return null;
+            }
+
+            if ( xmlString ) {
+                return finish( 
+                    processDZIXml,
+                    parseXml( xmlString ) 
+                );
+            } else {
+                return finish( 
+                    processDZIResponse, 
+                    $.makeAjaxRequest( xmlUrl )
+                );
+            }
         }
+
     });
 
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Element} element 
+     * @param {Boolean} [isFixed]
+     * @returns {Element}
+     */
+    function getOffsetParent( element, isFixed ) {
+        if ( isFixed && element != document.body ) {
+            return document.body;
+        } else {
+            return element.offsetParent;
+        }
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {XMLHttpRequest} xhr
+     * @param {String} tilesUrl
+     */
+    function processDZIResponse( xhr, tilesUrl ) {
+        var status,
+            statusText,
+            doc = null;
+
+        if ( !xhr ) {
+            throw new Error( $.getString( "Errors.Security" ) );
+        } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
+            status     = xhr.status;
+            statusText = ( status == 404 ) ? 
+                "Not Found" : 
+                xhr.statusText;
+            throw new Error( $.getString( "Errors.Status", status, statusText ) );
+        }
+
+        if ( xhr.responseXML && xhr.responseXML.documentElement ) {
+            doc = xhr.responseXML;
+        } else if ( xhr.responseText ) {
+            doc = parseXml( xhr.responseText );
+        }
+
+        return processDZIXml( doc, tilesUrl );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Document} xmlDoc
+     * @param {String} tilesUrl
+     */
+    function processDZIXml( xmlDoc, tilesUrl ) {
+
+        if ( !xmlDoc || !xmlDoc.documentElement ) {
+            throw new Error( $.getString( "Errors.Xml" ) );
+        }
+
+        var root     = xmlDoc.documentElement,
+            rootName = root.tagName;
+
+        if ( rootName == "Image" ) {
+            try {
+                return processDZI( root, tilesUrl );
+            } catch ( e ) {
+                throw (e instanceof Error) ? 
+                    e : 
+                    new Error( $.getString("Errors.Dzi") );
+            }
+        } else if ( rootName == "Collection" ) {
+            throw new Error( $.getString( "Errors.Dzc" ) );
+        } else if ( rootName == "Error" ) {
+            return processDZIError( root );
+        }
+
+        throw new Error( $.getString( "Errors.Dzi" ) );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Element} imageNode
+     * @param {String} tilesUrl
+     */
+    function processDZI( imageNode, tilesUrl ) {
+        var fileFormat    = imageNode.getAttribute( "Format" ),
+            sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
+            dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
+            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
+            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
+            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
+            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
+            dispRects     = [],
+            dispRectNode,
+            rectNode,
+            i;
+
+        if ( !imageFormatSupported( fileFormat ) ) {
+            throw new Error(
+                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
+            );
+        }
+
+        for ( i = 0; i < dispRectNodes.length; i++ ) {
+            dispRectNode = dispRectNodes[ i ];
+            rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
+
+            dispRects.push( new $.DisplayRect(
+                parseInt( rectNode.getAttribute( "X" ) ),
+                parseInt( rectNode.getAttribute( "Y" ) ),
+                parseInt( rectNode.getAttribute( "Width" ) ),
+                parseInt( rectNode.getAttribute( "Height" ) ),
+                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+            ));
+        }
+        return new $.DziTileSource(
+            width, 
+            height, 
+            tileSize, 
+            tileOverlap,
+            tilesUrl, 
+            fileFormat, 
+            dispRects
+        );
+    };
+
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Document} errorNode
+     * @throws {Error}
+     */
+    function processDZIError( errorNode ) {
+        var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
+            message     = messageNode.firstChild.nodeValue;
+
+        throw new Error(message);
+    };
+
+    /**
+     * Reports whether the image format is supported for tiling in this
+     * version.
+     * @private
+     * @inner
+     * @function
+     * @param {String} [extension]
+     * @returns {Boolean}
+     */
+    function imageFormatSupported( extension ) {
+        extension = extension ? extension : "";
+        return !!FILEFORMATS[ extension.toLowerCase() ];
+    };
+
+    /**
+     * Parses an XML string into a DOM Document.
+     * @private
+     * @inner
+     * @function
+     * @name OpenSeadragon.parseXml
+     * @param {String} string
+     * @returns {Document}
+     */
+    function parseXml( string ) {
+        //TODO: yet another example where we can determine the correct
+        //      implementation once at start-up instead of everytime we use
+        //      the function.
+        var xmlDoc = null,
+            parser;
+
+        if ( window.ActiveXObject ) {
+
+            xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+            xmlDoc.async = false;
+            xmlDoc.loadXML( string );
+
+        } else if ( window.DOMParser ) {
+
+            parser = new DOMParser();
+            xmlDoc = parser.parseFromString( string, "text/xml" );
+            
+        } else {
+            throw new Error( "Browser doesn't support XML DOM." );
+        }
+
+        return xmlDoc;
+    };
     
 }( OpenSeadragon ));
 
@@ -1592,25 +1836,26 @@ $.Control.prototype = {
 
 (function( $ ){
 /**
- *  @class
  *
- *  The main point of entry into creating a zoomable image on the page.
+ * The main point of entry into creating a zoomable image on the page.
  *
- *  We have provided an idiomatic javascript constructor which takes
- *  a single object, but still support the legacy positional arguments.
+ * We have provided an idiomatic javascript constructor which takes
+ * a single object, but still support the legacy positional arguments.
  *
- *  The options below are given in order that they appeared in the constructor
- *  as arguments and we translate a positional call into an idiomatic call.
+ * The options below are given in order that they appeared in the constructor
+ * as arguments and we translate a positional call into an idiomatic call.
  *
- *  options:{
- *      element:    String id of Element to attach to,
- *      xmlPath:    String xpath ( TODO: not sure! ),
- *      prefixUrl:  String url used to prepend to paths, eg button images,
- *      controls:   Array of Seadragon.Controls,
- *      overlays:   Array of Seadragon.Overlays,
- *      overlayControls: An Array of ( TODO: not sure! )
- *  }
- *
+ * @class
+ * @extends OpenSeadragon.EventHandler
+ * @param {Object} options
+ * @param {String} options.element Id of Element to attach to,
+ * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
+ * @param {String} options.prefixUrl  Url used to prepend to paths, eg button 
+ *  images, etc.
+ * @param {Seadragon.Controls[]} options.controls Array of Seadragon.Controls,
+ * @param {Seadragon.Overlays[]} options.overlays Array of Seadragon.Overlays,
+ * @param {Seadragon.Controls[]} options.overlayControls An Array of ( TODO: 
+ *  not sure! )
  *
  **/    
 $.Viewer = function( options ) {
@@ -1897,6 +2142,10 @@ $.Viewer = function( options ) {
 
 $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.addControl
+     */
     addControl: function ( elmt, anchor ) {
         var elmt = $.getElement( elmt ),
             div = null;
@@ -1935,21 +2184,36 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         elmt.style.display = "inline-block";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isOpen
+     */
     isOpen: function () {
         return !!this.source;
     },
 
-    openDzi: function ( xmlUrl, xmlString ) {
+    /**
+     * If the string is xml is simply parsed and opened, otherwise the string 
+     * is treated as an URL and an xml document is requested via ajax, parsed 
+     * and then opened in the viewer.
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.openDzi
+     * @param {String} dzi and xml string or the url to a DZI xml document.
+     */
+    openDzi: function ( dzi ) {
         var _this = this;
-        $.DziTileSourceHelper.createFromXml(
-            xmlUrl, 
-            xmlString,
+        $.createFromDZI(
+            dzi,
             function( source ){
                _this.open( source );
             }
         );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.openTileSource
+     */
     openTileSource: function ( tileSource ) {
         var _this = this;
         window.setTimeout( function () {
@@ -1957,6 +2221,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }, 1 );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.open
+     */
     open: function( source ) {
         var _this = this,
             overlay,
@@ -2039,6 +2307,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.raiseEvent( "open" );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.close
+     */
     close: function () {
         this.source     = null;
         this.viewport   = null;
@@ -2047,6 +2319,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.canvas.innerHTML = "";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.removeControl
+     */
     removeControl: function ( elmt ) {
         
         var elmt = $.getElement( elmt ),
@@ -2058,12 +2334,20 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.clearControls
+     */
     clearControls: function () {
         while ( this.controls.length > 0 ) {
             this.controls.pop().destroy();
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
+     */
     isDashboardEnabled: function () {
         var i;
         
@@ -2076,18 +2360,34 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         return false;
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isFullPage
+     */
     isFullPage: function () {
         return this.container.parentNode == document.body;
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isMouseNavEnabled
+     */
     isMouseNavEnabled: function () {
         return this.innerTracker.isTracking();
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isVisible
+     */
     isVisible: function () {
         return this.container.style.visibility != "hidden";
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
+     */
     setDashboardEnabled: function( enabled ) {
         var i;
         for ( i = this.controls.length - 1; i >= 0; i-- ) {
@@ -2095,6 +2395,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setFullPage
+     */
     setFullPage: function( fullPage ) {
 
         var body            = document.body,
@@ -2183,10 +2487,18 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
+     */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setVisible
+     */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
     }
@@ -2591,7 +2903,14 @@ $.extend( $, {
 (function( $ ){
 
 /**
+ * A Point is really used as a 2-dimensional vector, equally useful for 
+ * representing a point on a plane, or the height and width of a plane
+ * not requiring any other frame of reference.
  * @class
+ * @param {Number} [x] The vector component 'x'. Defaults to the origin at 0.
+ * @param {Number} [y] The vector component 'y'. Defaults to the origin at 0.
+ * @property {Number} [x] The vector component 'x'. 
+ * @property {Number} [y] The vector component 'y'.
  */
 $.Point = function( x, y ) {
     this.x = typeof ( x ) == "number" ? x : 0;
@@ -2600,6 +2919,13 @@ $.Point = function( x, y ) {
 
 $.Point.prototype = {
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     plus: function( point ) {
         return new $.Point(
             this.x + point.x, 
@@ -2607,6 +2933,13 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     minus: function( point ) {
         return new $.Point(
             this.x - point.x, 
@@ -2614,6 +2947,13 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     times: function( factor ) {
         return new $.Point(
             this.x * factor, 
@@ -2621,6 +2961,13 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     divide: function( factor ) {
         return new $.Point(
             this.x / factor, 
@@ -2628,10 +2975,24 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     negate: function() {
         return new $.Point( -this.x, -this.y );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     distanceTo: function( point ) {
         return Math.sqrt(
             Math.pow( this.x - point.x, 2 ) +
@@ -2639,10 +3000,24 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     apply: function( func ) {
         return new $.Point( func( this.x ), func( this.y ) );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     equals: function( point ) {
         return ( 
             point instanceof $.Point 
@@ -2653,6 +3028,13 @@ $.Point.prototype = {
         );
     },
 
+    /**
+     * Add another Point to this point and return a new Point.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to add vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     *  vector components
+     */
     toString: function() {
         return "(" + this.x + "," + this.y + ")";
     }
@@ -2665,6 +3047,18 @@ $.Point.prototype = {
 
 /**
  * @class
+ * @param {Number} width
+ * @param {Number} height
+ * @param {Number} tileSize
+ * @param {Number} tileOverlap
+ * @param {Number} minLevel
+ * @param {Number} maxLevel
+ * @property {Number} aspectRatio
+ * @property {Number} dimensions
+ * @property {Number} tileSize
+ * @property {Number} tileOverlap
+ * @property {Number} minLevel
+ * @property {Number} maxLevel
  */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     this.aspectRatio = width / height;
@@ -2681,10 +3075,18 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
 $.TileSource.prototype = {
     
+    /**
+     * @function
+     * @param {Number} level
+     */
     getLevelScale: function( level ) {
         return 1 / ( 1 << ( this.maxLevel - level ) );
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     */
     getNumTiles: function( level ) {
         var scale = this.getLevelScale( level ),
             x = Math.ceil( scale * this.dimensions.x / this.tileSize ),
@@ -2693,6 +3095,10 @@ $.TileSource.prototype = {
         return new $.Point( x, y );
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     */
     getPixelRatio: function( level ) {
         var imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) ),
             rx = 1.0 / imageSizeScaled.x,
@@ -2701,6 +3107,11 @@ $.TileSource.prototype = {
         return new $.Point(rx, ry);
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     * @param {OpenSeadragon.Point} point
+     */
     getTileAtPoint: function( level, point ) {
         var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level ) ),
             tx = Math.floor( pixel.x / this.tileSize ),
@@ -2709,6 +3120,12 @@ $.TileSource.prototype = {
         return new $.Point( tx, ty );
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     getTileBounds: function( level, x, y ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
             px = ( x === 0 ) ? 0 : this.tileSize * x - this.tileOverlap,
@@ -2723,10 +3140,27 @@ $.TileSource.prototype = {
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
     },
 
+    /**
+     * This method is not implemented by this class other than to throw an Error
+     * announcing you have to implement it.  Because of the variety of tile 
+     * server technologies, and various specifications for building image
+     * pyramids, this method is here to allow easy integration.
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @throws {Error}
+     */
     getTileUrl: function( level, x, y ) {
         throw new Error( "Method not implemented." );
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     tileExists: function( level, x, y ) {
         var numTiles = this.getNumTiles( level );
         return  level >= this.minLevel && 
@@ -2744,7 +3178,18 @@ $.TileSource.prototype = {
     
 /**
  * @class
- */
+ * @extends OpenSeadragon.TileSource
+ * @param {Number} width
+ * @param {Number} height
+ * @param {Number} tileSize
+ * @param {Number} tileOverlap
+ * @param {String} tilesUrl
+ * @param {String} fileFormat
+ * @param {OpenSeadragon.DisplayRect[]} displayRects
+ * @property {String} tilesUrl
+ * @property {String} fileFormat
+ * @property {OpenSeadragon.DisplayRect[]} displayRects
+ */ 
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
@@ -2772,11 +3217,25 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
 };
 
 $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
-
+    
+    /**
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.getTileUrl
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     getTileUrl: function( level, x, y ) {
         return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat ].join( '' );
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.tileExists
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
     tileExists: function( level, x, y ) {
         var rects = this._levelRects[ level ],
             rect,
@@ -2818,185 +3277,6 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     }
 });
 
-/**
- * @static
- */
-$.DziTileSourceHelper = {
-
-    createFromXml: function( xmlUrl, xmlString, callback ) {
-        var async = typeof (callback) == "function",
-            error = null,
-            urlParts,
-            filename,
-            lastDot,
-            tilesUrl,
-            handler;
-
-        if ( !xmlUrl ) {
-            this.error = $.getString( "Errors.Empty" );
-            if ( async ) {
-                window.setTimeout( function() {
-                    callback( null, error );
-                }, 1 );
-                return null;
-            }
-            throw new Error( error );
-        }
-
-        urlParts = xmlUrl.split( '/' );
-        filename = urlParts[ urlParts.length - 1 ];
-        lastDot  = filename.lastIndexOf( '.' );
-
-        if ( lastDot > -1 ) {
-            urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
-        }
-
-        tilesUrl = urlParts.join( '/' ) + "_files/";
-
-        function finish( func, obj ) {
-            try {
-                return func( obj, tilesUrl );
-            } catch ( e ) {
-                if ( async ) {
-                    return null;
-                } else {
-                    throw e;
-                }
-            }
-        }
-
-        if ( async ) {
-            if ( xmlString ) {
-                handler = $.delegate( this, this.processXml );
-                window.setTimeout( function() {
-                    var source = finish( handler, $.parseXml( xmlString ) );
-                    // call after finish sets error
-                    callback( source, error );    
-                }, 1);
-            } else {
-                handler = $.delegate( this, this.processResponse );
-                $.makeAjaxRequest( xmlUrl, function( xhr ) {
-                    var source = finish( handler, xhr );
-                    // call after finish sets error
-                    callback( source, error );
-                });
-            }
-
-            return null;
-        }
-
-        if ( xmlString ) {
-            return finish( 
-                $.delegate( this, this.processXml ), 
-                $.parseXml( xmlString ) 
-            );
-        } else {
-            return finish( 
-                $.delegate( this, this.processResponse ), 
-                $.makeAjaxRequest( xmlUrl )
-            );
-        }
-    },
-    processResponse: function( xhr, tilesUrl ) {
-        var status,
-            statusText,
-            doc = null;
-
-        if ( !xhr ) {
-            throw new Error( $.getString( "Errors.Security" ) );
-        } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
-            status     = xhr.status;
-            statusText = ( status == 404 ) ? 
-                "Not Found" : 
-                xhr.statusText;
-            throw new Error( $.getString( "Errors.Status", status, statusText ) );
-        }
-
-        if ( xhr.responseXML && xhr.responseXML.documentElement ) {
-            doc = xhr.responseXML;
-        } else if ( xhr.responseText ) {
-            doc = $.parseXml( xhr.responseText );
-        }
-
-        return this.processXml( doc, tilesUrl );
-    },
-
-    processXml: function( xmlDoc, tilesUrl ) {
-
-        if ( !xmlDoc || !xmlDoc.documentElement ) {
-            throw new Error( $.getString( "Errors.Xml" ) );
-        }
-
-        var root     = xmlDoc.documentElement,
-            rootName = root.tagName;
-
-        if ( rootName == "Image" ) {
-            try {
-                return this.processDzi( root, tilesUrl );
-            } catch ( e ) {
-                throw (e instanceof Error) ? 
-                    e : 
-                    new Error( $.getString("Errors.Dzi") );
-            }
-        } else if ( rootName == "Collection" ) {
-            throw new Error( $.getString( "Errors.Dzc" ) );
-        } else if ( rootName == "Error" ) {
-            return this.processError( root );
-        }
-
-        throw new Error( $.getString( "Errors.Dzi" ) );
-    },
-
-    processDzi: function( imageNode, tilesUrl ) {
-        var fileFormat    = imageNode.getAttribute( "Format" ),
-            sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
-            dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
-            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
-            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
-            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
-            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
-            dispRects     = [],
-            dispRectNode,
-            rectNode,
-            i;
-
-        if ( !$.imageFormatSupported( fileFormat ) ) {
-            throw new Error(
-                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
-            );
-        }
-
-        for ( i = 0; i < dispRectNodes.length; i++ ) {
-            dispRectNode = dispRectNodes[ i ];
-            rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
-
-            dispRects.push( new $.DisplayRect(
-                parseInt( rectNode.getAttribute( "X" ) ),
-                parseInt( rectNode.getAttribute( "Y" ) ),
-                parseInt( rectNode.getAttribute( "Width" ) ),
-                parseInt( rectNode.getAttribute( "Height" ) ),
-                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
-            ));
-        }
-        return new $.DziTileSource(
-            width, 
-            height, 
-            tileSize, 
-            tileOverlap,
-            tilesUrl, 
-            fileFormat, 
-            dispRects
-        );
-    },
-
-    processError: function( errorNode ) {
-        var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
-            message     = messageNode.firstChild.nodeValue;
-
-        throw new Error(message);
-    }
-};
 
 
 }( OpenSeadragon ));
@@ -3020,12 +3300,34 @@ $.ButtonState = {
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
  * @class
+ * @extends OpenSeadragon.EventHandler
  * @param {Object} options
- * @param {String} options.tooltip
+ * @param {String} options.tooltip Provides context help for the button we the
+ *  user hovers over it.
  * @param {String} options.srcRest URL of image to use in 'rest' state
  * @param {String} options.srcGroup URL of image to use in 'up' state
  * @param {String} options.srcHover URL of image to use in 'hover' state
  * @param {String} options.srcDown URL of image to use in 'domn' state
+ * @param {Element} [options.element] Element to use as a container for the 
+ *  button.
+ * @property {String} tooltip Provides context help for the button we the
+ *  user hovers over it.
+ * @property {String} srcRest URL of image to use in 'rest' state
+ * @property {String} srcGroup URL of image to use in 'up' state
+ * @property {String} srcHover URL of image to use in 'hover' state
+ * @property {String} srcDown URL of image to use in 'domn' state
+ * @property {Object} config Configurable settings for this button.
+ * @property {Element} [element] Element to use as a container for the 
+ *  button.
+ * @property {Number} fadeDelay How long to wait before fading
+ * @property {Number} fadeLength How long should it take to fade the button.
+ * @property {Number} fadeBeginTime When the button last began to fade.
+ * @property {Boolean} shouldFade Whether this button should fade after user 
+ *  stops interacting with the viewport.
+    this.fadeDelay      = 0;      // begin fading immediately
+    this.fadeLength     = 2000;   // fade over a period of 2 seconds
+    this.fadeBeginTime  = null;
+    this.shouldFade     = false;
  */
 $.Button = function( options ) {
 
@@ -3038,6 +3340,7 @@ $.Button = function( options ) {
     this.srcGroup  = options.srcGroup;
     this.srcHover  = options.srcHover;
     this.srcDown   = options.srcDown;
+
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
@@ -3161,10 +3464,22 @@ $.Button = function( options ) {
 
 $.extend( $.Button.prototype, $.EventHandler.prototype, {
 
+    /**
+     * TODO: Determine what this function is intended to do and if it's actually
+     * useful as an API point.
+     * @function
+     * @name OpenSeadragon.Button.prototype.notifyGroupEnter
+     */
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
     },
 
+    /**
+     * TODO: Determine what this function is intended to do and if it's actually
+     * useful as an API point.
+     * @function
+     * @name OpenSeadragon.Button.prototype.notifyGroupExit
+     */
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
     }
@@ -3258,18 +3573,25 @@ function outTo( button, newState ) {
 
 (function( $ ){
 /**
- * @class
- *
  * Manages events on groups of buttons.
- *    
- * options: {
- *     buttons: Array of buttons * required,
- *     group:   Element to use as the container,
- *     config:  Object with Viewer settings ( TODO: is this actually used anywhere? )
- *     enter:   Function callback for when the mouse enters group
- *     exit:    Function callback for when mouse leaves the group
- *     release: Function callback for when mouse is released
- * }
+ * @class
+ * @param {Object} options - a dictionary of settings applied against the entire 
+ * group of buttons
+ * @param {Array}    options.buttons Array of buttons
+ * @param {Element}  [options.group]   Element to use as the container,
+ * @param {Object}   options.config  Object with Viewer settings ( TODO: is 
+ *  this actually used anywhere? )
+ * @param {Function} [options.enter]   Function callback for when the mouse 
+ *  enters group
+ * @param {Function} [options.exit]    Function callback for when mouse leaves 
+ *  the group
+ * @param {Function} [options.release] Function callback for when mouse is 
+ *  released
+ * @property {Array} buttons - An array containing the buttons themselves.
+ * @property {Element} element - The shared container for the buttons.
+ * @property {Object} config - Configurable settings for the group of buttons.
+ * @property {OpenSeadragon.MouseTracker} tracker - Tracks mouse events accross
+ *  the group of buttons.
  **/
 $.ButtonGroup = function( options ) {
 
@@ -3325,10 +3647,22 @@ $.ButtonGroup = function( options ) {
 
 $.ButtonGroup.prototype = {
 
+    /**
+     * TODO: Figure out why this is used on the public API and if a more useful
+     * api can be created.
+     * @function
+     * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
+     */
     emulateEnter: function() {
         this.tracker.enter();
     },
 
+    /**
+     * TODO: Figure out why this is used on the public API and if a more useful
+     * api can be created.
+     * @function
+     * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
+     */
     emulateExit: function() {
         this.tracker.exit();
     }
@@ -3340,7 +3674,20 @@ $.ButtonGroup.prototype = {
 (function( $ ){
     
 /**
+ * A Rectangle really represents a 2x2 matrix where each row represents a
+ * 2 dimensional vector component, the first is (x,y) and the second is 
+ * (width, height).  The latter component implies the equation of a simple 
+ * plane.
+ *
  * @class
+ * @param {Number} x The vector component 'x'.
+ * @param {Number} y The vector component 'y'.
+ * @param {Number} width The vector component 'height'.
+ * @param {Number} height The vector component 'width'.
+ * @property {Number} x The vector component 'x'.
+ * @property {Number} y The vector component 'y'.
+ * @property {Number} width The vector component 'width'.
+ * @property {Number} height The vector component 'height'.
  */
 $.Rect = function( x, y, width, height ) {
     this.x = typeof ( x ) == "number" ? x : 0;
@@ -3350,14 +3697,34 @@ $.Rect = function( x, y, width, height ) {
 };
 
 $.Rect.prototype = {
+
+    /**
+     * The aspect ratio is simply the ratio of width to height.
+     * @function
+     * @returns {Number} The ratio of width to height.
+     */
     getAspectRatio: function() {
         return this.width / this.height;
     },
 
+    /**
+     * Provides the coordinates of the upper-left corner of the rectanglea s a
+     * point.
+     * @function
+     * @returns {OpenSeadragon.Point} The coordinate of the upper-left corner of
+     *  the rectangle.
+     */
     getTopLeft: function() {
         return new $.Point( this.x, this.y );
     },
 
+    /**
+     * Provides the coordinates of the bottom-right corner of the rectangle as a
+     * point.
+     * @function
+     * @returns {OpenSeadragon.Point} The coordinate of the bottom-right corner of
+     *  the rectangle.
+     */
     getBottomRight: function() {
         return new $.Point(
             this.x + this.width, 
@@ -3365,6 +3732,12 @@ $.Rect.prototype = {
         );
     },
 
+    /**
+     * Computes the center of the rectangle.
+     * @function
+     * @returns {OpenSeadragon.Point} The center of the rectangle as represnted 
+     *  as represented by a 2-dimensional vector (x,y)
+     */
     getCenter: function() {
         return new $.Point(
             this.x + this.width / 2.0,
@@ -3372,19 +3745,36 @@ $.Rect.prototype = {
         );
     },
 
+    /**
+     * Returns the width and height component as a vector OpenSeadragon.Point
+     * @function
+     * @returns {OpenSeadragon.Point} The 2 dimensional vector represnting the
+     *  the width and height of the rectangle.
+     */
     getSize: function() {
         return new $.Point( this.width, this.height );
     },
 
+    /**
+     * Determines if two Rectanlges have equivalent components.  
+     * @function
+     * @param {OpenSeadragon.Rect} rectangle The Rectangle to compare to.
+     * @return {Boolean} 'true' if all components are equal, otherwise 'false'.
+     */
     equals: function( other ) {
-        return 
-            ( other instanceof $.Rect ) &&
+        return ( other instanceof $.Rect ) &&
             ( this.x === other.x ) && 
             ( this.y === other.y ) &&
             ( this.width === other.width ) && 
             ( this.height === other.height );
     },
 
+    /**
+     * Provides a string representation of the retangle which is useful for 
+     * debugging.
+     * @function
+     * @returns {String} A string representation of the rectangle.
+     */
     toString: function() {
         return "[" + 
             this.x + "," + 
@@ -3395,12 +3785,25 @@ $.Rect.prototype = {
     }
 };
 
+
 }( OpenSeadragon ));
 
 (function( $ ){
 
 /**
+ * A display rectanlge is very similar to the OpenSeadragon.Rect but adds two
+ * fields, 'minLevel' and 'maxLevel' which denote the supported zoom levels
+ * for this rectangle.
  * @class
+ * @extends OpenSeadragon.Rect
+ * @param {Number} x The vector component 'x'.
+ * @param {Number} y The vector component 'y'.
+ * @param {Number} width The vector component 'height'.
+ * @param {Number} height The vector component 'width'.
+ * @param {Number} minLevel The lowest zoom level supported.
+ * @param {Number} maxLevel The highest zoom level supported.
+ * @property {Number} minLevel The lowest zoom level supported.
+ * @property {Number} maxLevel The highest zoom level supported.
  */
 $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
     $.Rect.apply( this, [ x, y, width, height ] );
@@ -3505,38 +3908,79 @@ function transform( stiffness, x ) {
     
 /**
  * @class
+ * @param {Number} level The zoom level this tile belongs to.
+ * @param {Number} x The vector component 'x'.
+ * @param {Number} y The vector component 'y'.
+ * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ *  coordinates
+ * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ *  this tile failed to load?
+ * @param {String} url The URL of this tile's image.
+ *
+ * @property {Number} level The zoom level this tile belongs to.
+ * @property {Number} x The vector component 'x'.
+ * @property {Number} y The vector component 'y'.
+ * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ *  coordinates
+ * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ *  this tile failed to load?
+ * @property {String} url The URL of this tile's image.
+ * @property {Boolean} loaded Is this tile loaded?
+ * @property {Boolean} loading Is this tile loading
+ * @property {Element} elmt The HTML element for this tile
+ * @property {Image} image The Image object for this tile
+ * @property {String} style The alias of this.elmt.style.
+ * @property {String} position This tile's position on screen, in pixels.
+ * @property {String} size This tile's size on screen, in pixels
+ * @property {String} blendStart The start time of this tile's blending
+ * @property {String} opacity The current opacity this tile should be.
+ * @property {String} distance The distance of this tile to the viewport center
+ * @property {String} visibility The visibility score of this tile.
+ * @property {Boolean} beingDrawn Whether this tile is currently being drawn
+ * @property {Number} lastTouchTime Timestamp the tile was last touched.
  */
 $.Tile = function(level, x, y, bounds, exists, url) {
     this.level   = level;
     this.x       = x;
     this.y       = y;
-    this.bounds  = bounds;  // where this tile fits, in normalized coordinates
-    this.exists  = exists;  // part of sparse image? tile hasn't failed to load?
-    this.loaded  = false;   // is this tile loaded?
-    this.loading = false;   // or is this tile loading?
+    this.bounds  = bounds;
+    this.exists  = exists;
+    this.url     = url;
+    this.loaded  = false;
+    this.loading = false;
 
-    this.elmt    = null;    // the HTML element for this tile
-    this.image   = null;    // the Image object for this tile
-    this.url     = url;     // the URL of this tile's image
+    this.elmt    = null;
+    this.image   = null;
 
-    this.style      = null; // alias of this.elmt.style
-    this.position   = null; // this tile's position on screen, in pixels
-    this.size       = null; // this tile's size on screen, in pixels
-    this.blendStart = null; // the start time of this tile's blending
-    this.opacity    = null; // the current opacity this tile should be
-    this.distance   = null; // the distance of this tile to the viewport center
-    this.visibility = null; // the visibility score of this tile
+    this.style      = null;
+    this.position   = null;
+    this.size       = null;
+    this.blendStart = null;
+    this.opacity    = null;
+    this.distance   = null;
+    this.visibility = null;
 
-    this.beingDrawn     = false; // whether this tile is currently being drawn
-    this.lastTouchTime  = 0;     // the time that tile was last touched
+    this.beingDrawn     = false;
+    this.lastTouchTime  = 0;
 };
 
 $.Tile.prototype = {
     
+    /**
+     * Provides a string representation of this tiles level and (x,y) 
+     * components.
+     * @function
+     * @returns {String}
+     */
     toString: function() {
         return this.level + "/" + this.x + "_" + this.y;
     },
 
+    /**
+     * Renders the tile in an html container.
+     * @function
+     * @param {Element} container
+     */
     drawHTML: function( container ) {
 
         var position = this.position.apply( Math.floor ),
@@ -3573,12 +4017,17 @@ $.Tile.prototype = {
 
     },
 
-    drawCanvas: function(context) {
+    /**
+     * Renders the tile in a canvas-based context.
+     * @function
+     * @param {Canvas} context
+     */
+    drawCanvas: function( context ) {
 
         var position = this.position,
             size     = this.size;
 
-        if (!this.loaded) {
+        if ( !this.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -3587,9 +4036,13 @@ $.Tile.prototype = {
         }
 
         context.globalAlpha = this.opacity;
-        context.drawImage(this.image, position.x, position.y, size.x, size.y);
+        context.drawImage( this.image, position.x, position.y, size.x, size.y );
     },
 
+    /**
+     * Removes tile from it's contianer.
+     * @function
+     */
     unload: function() {
         if ( this.elmt && this.elmt.parentNode ) {
             this.elmt.parentNode.removeChild( this.elmt );
@@ -3782,633 +4235,65 @@ var QUOTA               = 100,
 
 /**
  * @class
+ * @param {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
+ * @param {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
+ * @param {Element} element - Reference to Viewer 'canvas'.
+ * @property {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
+ * @property {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
+ * @property {Element} container -Reference to Viewer 'canvas'.
+ * @property {Element|Canvas} canvas
+ * @property {CanvasContext} context
+ * @property {Object} config - Reference to Viewer config.
+ * @property {Number} downloading - How many images are currently being loaded in parallel.
+ * @property {Number} normHeight - Ratio of zoomable image height to width.
+ * @property {Object} tilesMatrix A '3d' dictionary [level][x][y] --> Tile.
+ * @property {Array} tilesLoaded An unordered list of Tiles with loaded images.
+ * @property {Object} coverage '3d' dictionary [level][x][y] --> Boolean.
+ * @property {Array} overlays An unordered list of Overlays added.
+ * @property {Array} lastDrawn An unordered list of Tiles drawn last frame.
+ * @property {Number} lastResetTime
+ * @property {Boolean} midUpdate Is the drawer currently updating the viewport.
+ * @property {Boolean} updateAgain Does the drawer need to update the viewort again.
+ * @property {Element} elmt DEPRECATED Alias for container.
  */
-$.Drawer = function(source, viewport, elmt) {
+$.Drawer = function( source, viewport, element ) {
 
-    this.container  = $.getElement( elmt );
-    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
-    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
     this.viewport   = viewport;
     this.source     = source;
+    this.container  = $.getElement( element );
+    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
+    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
     this.config     = this.viewport.config;
+    this.normHeight = source.dimensions.y / source.dimensions.x;
 
     this.downloading        = 0;
-    this.imageLoaderLimit   = this.config.imageLoaderLimit;
-
-    //this.profiler    = new $.Profiler();
-
-    this.minLevel    = source.minLevel;
-    this.maxLevel    = source.maxLevel;
-    this.tileSize    = source.tileSize;
-    this.tileOverlap = source.tileOverlap;
-    this.normHeight  = source.dimensions.y / source.dimensions.x;
-    
-    // 1d dictionary [level] --> Point
-    this.cacheNumTiles      = {};
-    // 1d dictionary [level] --> Point
-    this.cachePixelRatios   = {};
-    // 3d dictionary [level][x][y] --> Tile
     this.tilesMatrix        = {};
-    // unordered list of Tiles with loaded images
     this.tilesLoaded        = [];
-    // 3d dictionary [level][x][y] --> Boolean
     this.coverage           = {};
-    
-    // unordered list of Overlays added
     this.overlays           = [];
-    // unordered list of Tiles drawn last frame
     this.lastDrawn          = [];
     this.lastResetTime      = 0;
     this.midUpdate          = false;
     this.updateAgain        = true;
-
-    this.elmt = this.container;
+    this.elmt               = this.container;
     
-    this.canvas.style.width = "100%";
-    this.canvas.style.height = "100%";
-    this.canvas.style.position = "absolute";
-
+    this.canvas.style.width     = "100%";
+    this.canvas.style.height    = "100%";
+    this.canvas.style.position  = "absolute";
+    
     // explicit left-align
     this.container.style.textAlign = "left";
-    this.container.appendChild(this.canvas);
+    this.container.appendChild( this.canvas );
+
+    //this.profiler    = new $.Profiler();
 };
 
 $.Drawer.prototype = {
 
-    getPixelRatio: function( level ) {
-        if ( !this.cachePixelRatios[ level ] ) {
-            this.cachePixelRatios[ level ] = this.source.getPixelRatio( level );
-        }
-
-        return this.cachePixelRatios[ level ];
-    },
-
-
-    _getTile: function( level, x, y, time, numTilesX, numTilesY ) {
-        var xMod,
-            yMod,
-            bounds,
-            exists,
-            url,
-            tile;
-
-        if ( !this.tilesMatrix[ level ] ) {
-            this.tilesMatrix[ level ] = {};
-        }
-        if ( !this.tilesMatrix[ level ][ x ] ) {
-            this.tilesMatrix[ level ][ x ] = {};
-        }
-
-        if ( !this.tilesMatrix[ level ][ x ][ y ] ) {
-            xMod    = ( numTilesX + ( x % numTilesX ) ) % numTilesX;
-            yMod    = ( numTilesY + ( y % numTilesY ) ) % numTilesY;
-            bounds  = this.source.getTileBounds( level, xMod, yMod );
-            exists  = this.source.tileExists( level, xMod, yMod );
-            url     = this.source.getTileUrl( level, xMod, yMod );
-
-            bounds.x += 1.0 * ( x - xMod ) / numTilesX;
-            bounds.y += this.normHeight * ( y - yMod ) / numTilesY;
-
-            this.tilesMatrix[ level ][ x ][ y ] = new $.Tile(
-                level, 
-                x, 
-                y, 
-                bounds, 
-                exists, 
-                url
-            );
-        }
-
-        tile = this.tilesMatrix[ level ][ x ][ y ];
-        tile.lastTouchTime = time;
-
-        return tile;
-    },
-
-    _loadTile: function( tile, time ) {
-        tile.loading = this.loadImage(
-            tile.url,
-            $.createCallback(
-                null, 
-                $.delegate( this, this._onTileLoad ), 
-                tile, 
-                time
-            )
-        );
-    },
-
-    _onTileLoad: function( tile, time, image ) {
-        var insertionIndex,
-            cutoff,
-            worstTile,
-            worstTime,
-            worstLevel,
-            worstTileIndex,
-            prevTile,
-            prevTime,
-            prevLevel,
-            i;
-
-        tile.loading = false;
-
-        if ( this.midUpdate ) {
-            $.Debug.warn( "Tile load callback in middle of drawing routine." );
-            return;
-        } else if ( !image ) {
-            $.Debug.log( "Tile %s failed to load: %s", tile, tile.url );
-            tile.exists = false;
-            return;
-        } else if ( time < this.lastResetTime ) {
-            $.Debug.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
-            return;
-        }
-
-        tile.loaded = true;
-        tile.image  = image;
-
-        insertionIndex = this.tilesLoaded.length;
-
-        if ( this.tilesLoaded.length >= QUOTA ) {
-            cutoff = Math.ceil( Math.log( this.tileSize ) / Math.log( 2 ) );
-
-            worstTile       = null;
-            worstTileIndex  = -1;
-
-            for ( i = this.tilesLoaded.length - 1; i >= 0; i-- ) {
-                prevTile = this.tilesLoaded[ i ];
-
-                if ( prevTile.level <= this.cutoff || prevTile.beingDrawn ) {
-                    continue;
-                } else if ( !worstTile ) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
-                    continue;
-                }
-
-                prevTime    = prevTile.lastTouchTime;
-                worstTime   = worstTile.lastTouchTime;
-                prevLevel   = prevTile.level;
-                worstLevel  = worstTile.level;
-
-                if ( prevTime < worstTime || 
-                   ( prevTime == worstTime && prevLevel > worstLevel ) ) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
-                }
-            }
-
-            if ( worstTile && worstTileIndex >= 0 ) {
-                worstTile.unload();
-                insertionIndex = worstTileIndex;
-            }
-        }
-
-        this.tilesLoaded[ insertionIndex ] = tile;
-        this.updateAgain = true;
-    },
-
-    _clearTiles: function() {
-        this.tilesMatrix = {};
-        this.tilesLoaded = [];
-    },
-
-
-
-    /**
-    * Returns true if the given tile provides coverage to lower-level tiles of
-    * lower resolution representing the same content. If neither x nor y is
-    * given, returns true if the entire visible level provides coverage.
-    * 
-    * Note that out-of-bounds tiles provide coverage in this sense, since
-    * there's no content that they would need to cover. Tiles at non-existent
-    * levels that are within the image bounds, however, do not.
-    */
-    _providesCoverage: function( level, x, y ) {
-        var rows,
-            cols,
-            i, j;
-
-        if ( !this.coverage[ level ] ) {
-            return false;
-        }
-
-        if ( x === undefined || y === undefined ) {
-            rows = this.coverage[ level ];
-            for ( i in rows ) {
-                if ( rows.hasOwnProperty( i ) ) {
-                    cols = rows[ i ];
-                    for ( j in cols ) {
-                        if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        return (
-            this.coverage[ level ][ x] === undefined ||
-            this.coverage[ level ][ x ][ y ] === undefined ||
-            this.coverage[ level ][ x ][ y ] === true
-        );
-    },
-
-    /**
-    * Returns true if the given tile is completely covered by higher-level
-    * tiles of higher resolution representing the same content. If neither x
-    * nor y is given, returns true if the entire visible level is covered.
-    */
-    _isCovered: function( level, x, y ) {
-        if ( x === undefined || y === undefined ) {
-            return this._providesCoverage( level + 1 );
-        } else {
-            return (
-                this._providesCoverage( level + 1, 2 * x, 2 * y ) &&
-                this._providesCoverage( level + 1, 2 * x, 2 * y + 1 ) &&
-                this._providesCoverage( level + 1, 2 * x + 1, 2 * y ) &&
-                this._providesCoverage( level + 1, 2 * x + 1, 2 * y + 1 )
-            );
-        }
-    },
-
-    /**
-    * Sets whether the given tile provides coverage or not.
-    */
-    _setCoverage: function( level, x, y, covers ) {
-        if ( !this.coverage[ level ] ) {
-            $.Debug.warn(
-                "Setting coverage for a tile before its level's coverage has been reset: %s", 
-                level
-            );
-            return;
-        }
-
-        if ( !this.coverage[ level ][ x ] ) {
-            this.coverage[ level ][ x ] = {};
-        }
-
-        this.coverage[ level ][ x ][ y ] = covers;
-    },
-
-    /**
-    * Resets coverage information for the given level. This should be called
-    * after every draw routine. Note that at the beginning of the next draw
-    * routine, coverage for every visible tile should be explicitly set. 
-    */
-    _resetCoverage: function( level ) {
-        this.coverage[ level ] = {};
-    },
-
-
-    _compareTiles: function( prevBest, tile ) {
-        if ( !prevBest ) {
-            return tile;
-        }
-
-        if ( tile.visibility > prevBest.visibility ) {
-            return tile;
-        } else if ( tile.visibility == prevBest.visibility ) {
-            if ( tile.distance < prevBest.distance ) {
-                return tile;
-            }
-        }
-
-        return prevBest;
-    },
-
-
-    _getOverlayIndex: function( elmt ) {
-        var i;
-        for ( i = this.overlays.length - 1; i >= 0; i-- ) {
-            if ( this.overlays[ i ].elmt == elmt ) {
-                return i;
-            }
-        }
-
-        return -1;
-    },
-
-
-    _updateActual: function() {
-        this.updateAgain = false;
-
-        var tile,
-            level,
-            viewportSize    = this.viewport.getContainerSize(),
-            viewportWidth   = viewportSize.x,
-            viewportHeight  = viewportSize.y,
-            viewportBounds  = this.viewport.getBounds( true ),
-            viewportTL      = viewportBounds.getTopLeft(),
-            viewportBR      = viewportBounds.getBottomRight(),
-            haveDrawn       = false,
-            best            = null,
-            currentTime     = new Date().getTime(),
-            zeroRatioC      = this.viewport.deltaPixelsFromPoints( 
-                this.source.getPixelRatio( 0 ), 
-                true
-            ).x,
-            lowestLevel     = Math.max(
-                this.minLevel, 
-                Math.floor( 
-                    Math.log( this.config.minZoomImageRatio ) / 
-                    Math.log( 2 )
-                )
-            ),
-            highestLevel    = Math.min(
-                this.maxLevel,
-                Math.floor( 
-                    Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
-                    Math.log( 2 )
-                )
-            );
-
-        //TODO
-        while ( this.lastDrawn.length > 0 ) {
-            tile = this.lastDrawn.pop();
-            tile.beingDrawn = false;
-        }
-
-        //TODO
-        this.canvas.innerHTML   = "";
-        if ( USE_CANVAS ) {
-            this.canvas.width   = viewportWidth;
-            this.canvas.height  = viewportHeight;
-            this.context.clearRect( 0, 0, viewportWidth, viewportHeight );
-        }
-
-        //TODO
-        if  ( !this.config.wrapHorizontal && 
-            ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
-            return;
-        } else if 
-            ( !this.config.wrapVertical &&
-            ( viewportBR.y < 0 || viewportTL.y > this.normHeight ) ) {
-            return;
-        }
-
-        //TODO
-        if ( !this.config.wrapHorizontal ) {
-            viewportTL.x = Math.max( viewportTL.x, 0 );
-            viewportBR.x = Math.min( viewportBR.x, 1 );
-        }
-        if ( !this.config.wrapVertical ) {
-            viewportTL.y = Math.max( viewportTL.y, 0 );
-            viewportBR.y = Math.min( viewportBR.y, this.normHeight );
-        }
-
-        //TODO
-        lowestLevel = Math.min( lowestLevel, highestLevel );
-
-        //TODO
-        for ( level = highestLevel; level >= lowestLevel; level-- ) {
-
-            //TODO
-            best = this._drawLevel( 
-                level, 
-                lowestLevel, 
-                viewportTL, 
-                viewportBR, 
-                currentTime, 
-                best 
-            );
-
-            //TODO
-            if ( this._providesCoverage( level ) ) {
-                break;
-            }
-        }
-
-        //TODO
-        this._drawTiles();
-        this._drawOverlays();
-
-        //TODO
-        if ( best ) {
-            this._loadTile( best, currentTime );
-            // because we haven't finished drawing, so
-            this.updateAgain = true; 
-        }
-    },
-
-    _drawLevel: function( level, lowestLevel, viewportTL, viewportBR, currentTime, best ){
-        var x, y,
-            levelOpacity,
-            levelVisibility,
-            drawTile,
-            tile,
-            tileTL,
-            tileBR,
-            numTiles,
-            numTilesX,
-            numTilesY,
-            renderPixelRatioC,
-            renderPixelRatioT,
-            levelOpacity,
-            levelVisibility,
-            haveDrawn       = false,
-            drawLevel       = false,
-            viewportCenter  = this.viewport.pixelFromPoint( this.viewport.getCenter() ),
-            zeroRatioT      = this.viewport.deltaPixelsFromPoints( 
-                this.source.getPixelRatio( 0 ), 
-                false
-            ).x,
-            optimalRatio    = this.config.immediateRender ? 
-                1 : 
-                zeroRatioT;
-
-        //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = this.viewport.deltaPixelsFromPoints(
-            this.source.getPixelRatio( level ), 
-            true
-        ).x;
-
-        if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
-             ( level == lowestLevel ) ) {
-            drawLevel = true;
-            haveDrawn = true;
-        } else if ( !haveDrawn ) {
-            return best;
-        }
-
-        //OK, a new drawing so do your calculations
-        tileTL    = this.source.getTileAtPoint( level, viewportTL );
-        tileBR    = this.source.getTileAtPoint( level, viewportBR );
-        numTiles  = numberOfTiles( this, level );
-        numTilesX = numTiles.x;
-        numTilesY = numTiles.y;
-
-        renderPixelRatioT = this.viewport.deltaPixelsFromPoints(
-            this.source.getPixelRatio( level ), 
-            false
-        ).x;
-
-        levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
-        levelVisibility = optimalRatio / Math.abs( 
-            optimalRatio - renderPixelRatioT 
-        );
-
-        this._resetCoverage( level );
-
-        if ( !this.config.wrapHorizontal ) {
-            tileBR.x = Math.min( tileBR.x, numTilesX - 1 );
-        }
-        if ( !this.config.wrapVertical ) {
-            tileBR.y = Math.min( tileBR.y, numTilesY - 1 );
-        }
-
-        for ( x = tileTL.x; x <= tileBR.x; x++ ) {
-            for ( y = tileTL.y; y <= tileBR.y; y++ ) {
-
-                tile = this._getTile( 
-                    level, 
-                    x, y, 
-                    currentTime, 
-                    numTilesX, 
-                    numTilesY 
-                );
-
-                this._setCoverage( level, x, y, false );
-
-                if ( !tile.exists ) {
-                    continue;
-                }
-
-                drawTile = drawLevel;
-                if ( haveDrawn && !drawTile ) {
-                    if ( this._isCovered( level, x, y ) ) {
-                        this._setCoverage( level, x, y, true );
-                    } else {
-                        drawTile = true;
-                    }
-                }
-
-                if ( !drawTile ) {
-                    continue;
-                }
-
-                this._positionTile( 
-                    tile, 
-                    viewportCenter, 
-                    levelVisibility 
-                );
-
-                if ( tile.loaded ) {
-                    
-                    updateAgain = this._blendTile(
-                        tile, 
-                        x, y,
-                        level,
-                        levelOpacity, 
-                        currentTime 
-                    );
-
-                } else if ( tile.Loading ) {
-                    //TODO: .Loading is never defined... did they mean .loading?
-                    //      but they didnt do anything so what is this block if
-                    //      if it does nothing.
-                } else {
-                    best = this._compareTiles( best, tile );
-                }
-            }
-        }
-        return best;
-    },
-
-    _positionTile: function( tile, viewportCenter, levelVisibility ){
-        var boundsTL     = tile.bounds.getTopLeft(),
-            boundsSize   = tile.bounds.getSize(),
-            positionC    = this.viewport.pixelFromPoint( boundsTL, true ),
-            sizeC        = this.viewport.deltaPixelsFromPoints( boundsSize, true ),
-            positionT    = this.viewport.pixelFromPoint( boundsTL, false ),
-            sizeT        = this.viewport.deltaPixelsFromPoints( boundsSize, false ),
-            tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
-            tileDistance = viewportCenter.distanceTo( tileCenter );
-
-        if ( !this.tileOverlap ) {
-            sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-        }
-
-        tile.position   = positionC;
-        tile.size       = sizeC;
-        tile.distance   = tileDistance;
-        tile.visibility = levelVisibility;
-    },
-
-    _blendTile: function( tile, x, y, level, levelOpacity, currentTime ){
-        var blendTimeMillis = 1000 * this.config.blendTime,
-            deltaTime,
-            opacity;
-
-        if ( !tile.blendStart ) {
-            tile.blendStart = currentTime;
-        }
-
-        deltaTime   = currentTime - tile.blendStart;
-        opacity     = Math.min( 1, deltaTime / blendTimeMillis );
-        
-        if ( this.config.alwaysBlend ) {
-            opacity *= levelOpacity;
-        }
-
-        tile.opacity = opacity;
-
-        this.lastDrawn.push( tile );
-
-        if ( opacity == 1 ) {
-            this._setCoverage( level, x, y, true );
-        } else if ( deltaTime < blendTimeMillis ) {
-            return true;
-        }
-
-        return false;
-    },
-
-    _drawTiles: function(){
-        var i, 
-            tile;
-
-        for ( i = this.lastDrawn.length - 1; i >= 0; i-- ) {
-            tile = this.lastDrawn[ i ];
-
-            if ( USE_CANVAS ) {
-                tile.drawCanvas( this.context );
-            } else {
-                tile.drawHTML( this.canvas );
-            }
-
-            tile.beingDrawn = true;
-        }
-    },
-
-    _drawOverlays: function(){
-        var i,
-            length = this.overlays.length;
-        for ( i = 0; i < length; i++ ) {
-            this._drawOverlay( this.overlays[ i ] );
-        }
-    },
-
-    _drawOverlay: function( overlay ){
-        
-        var bounds  = overlay.bounds;
-
-        overlay.position = this.viewport.pixelFromPoint(
-            bounds.getTopLeft(), 
-            true
-        );
-        overlay.size     = this.viewport.deltaPixelsFromPoints(
-            bounds.getSize(), 
-            true
-        );
-        overlay.drawHTML( this.container );
-    },
-
     addOverlay: function( element, location, placement ) {
         element = $.getElement( element );
 
-        if ( this._getOverlayIndex( element ) >= 0 ) {
+        if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
             return;     
         }
@@ -4421,7 +4306,7 @@ $.Drawer.prototype = {
         var i;
 
         element = $.getElement( element );
-        i = this._getOverlayIndex( element );
+        i = getOverlayIndex( this.overlays, element );
 
         if ( i >= 0 ) {
             this.overlays[ i ].update( location, placement );
@@ -4433,7 +4318,7 @@ $.Drawer.prototype = {
         var i;
 
         element = $.getElement( element );
-        i = this._getOverlayIndex( element );
+        i = getOverlayIndex( this.overlays, element );
 
         if ( i >= 0 ) {
             this.overlays[ i ].destroy();
@@ -4459,27 +4344,28 @@ $.Drawer.prototype = {
     },
 
     reset: function() {
-        this._clearTiles();
-        this.lastResetTime = new Date().getTime();
+        clearTiles( this );
+        this.lastResetTime = +new Date();
         this.updateAgain = true;
     },
 
     update: function() {
         //this.profiler.beginUpdate();
         this.midUpdate = true;
-        this._updateActual();
+        updateViewport( this );
         this.midUpdate = false;
         //this.profiler.endUpdate();
     },
 
-    loadImage: function(src, callback) {
+    loadImage: function( src, callback ) {
         var _this = this,
             loading = false,
             image,
             jobid,
             complete;
 
-        if ( !this.imageLoaderLimit || this.downloading < this.imageLoaderLimit ) {
+        if ( !this.config.imageLoaderLimit || 
+              this.downloading < this.config.imageLoaderLimit ) {
             
             this.downloading++;
 
@@ -4491,7 +4377,7 @@ $.Drawer.prototype = {
                     try {
                         callback( image );
                     } catch ( e ) {
-                        $.Debug.error(
+                        $.console.error(
                             "%s while executing %s callback: %s", 
                             e.name,
                             src,
@@ -4522,6 +4408,567 @@ $.Drawer.prototype = {
     }
 };
 
+/**
+ * @private
+ * @inner
+ * Pretty much every other line in this needs to be documented so its clear
+ * how each piece of this routine contributes to the drawing process.  That's
+ * why there are so many TODO's inside this function.
+ */
+function updateViewport( drawer ) {
+    drawer.updateAgain = false;
+
+    var tile,
+        level,
+        best            = null,
+        haveDrawn       = false,
+        currentTime     = +new Date(),
+        viewportSize    = drawer.viewport.getContainerSize(),
+        viewportBounds  = drawer.viewport.getBounds( true ),
+        viewportTL      = viewportBounds.getTopLeft(),
+        viewportBR      = viewportBounds.getBottomRight(),
+        zeroRatioC      = drawer.viewport.deltaPixelsFromPoints( 
+            drawer.source.getPixelRatio( 0 ), 
+            true
+        ).x,
+        lowestLevel     = Math.max(
+            drawer.source.minLevel, 
+            Math.floor( 
+                Math.log( drawer.config.minZoomImageRatio ) / 
+                Math.log( 2 )
+            )
+        ),
+        highestLevel    = Math.min(
+            drawer.source.maxLevel,
+            Math.floor( 
+                Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
+                Math.log( 2 )
+            )
+        );
+
+    //TODO
+    while ( drawer.lastDrawn.length > 0 ) {
+        tile = drawer.lastDrawn.pop();
+        tile.beingDrawn = false;
+    }
+
+    //TODO
+    drawer.canvas.innerHTML   = "";
+    if ( USE_CANVAS ) {
+        drawer.canvas.width   = viewportSize.x;
+        drawer.canvas.height  = viewportSize.y;
+        drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
+    }
+
+    //TODO
+    if  ( !drawer.config.wrapHorizontal && 
+        ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
+        return;
+    } else if 
+        ( !drawer.config.wrapVertical &&
+        ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
+        return;
+    }
+
+    //TODO
+    if ( !drawer.config.wrapHorizontal ) {
+        viewportTL.x = Math.max( viewportTL.x, 0 );
+        viewportBR.x = Math.min( viewportBR.x, 1 );
+    }
+    if ( !drawer.config.wrapVertical ) {
+        viewportTL.y = Math.max( viewportTL.y, 0 );
+        viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
+    }
+
+    //TODO
+    lowestLevel = Math.min( lowestLevel, highestLevel );
+
+    //TODO
+    for ( level = highestLevel; level >= lowestLevel; level-- ) {
+
+        //TODO
+        best = updateLevel(
+            drawer, 
+            level, 
+            lowestLevel, 
+            viewportTL, 
+            viewportBR, 
+            currentTime, 
+            best 
+        );
+
+        //TODO
+        if (  providesCoverage( drawer.coverage, level ) ) {
+            break;
+        }
+    }
+
+    //TODO
+    drawTiles( drawer, drawer.lastDrawn );
+    drawOverlays( drawer.viewport, drawer.overlays, drawer.container );
+
+    //TODO
+    if ( best ) {
+        loadTile( drawer, best, currentTime );
+        // because we haven't finished drawing, so
+        drawer.updateAgain = true; 
+    }
+};
+
+
+function updateLevel( drawer, level, lowestLevel, viewportTL, viewportBR, currentTime, best ){
+    var x, y,
+        tileTL,
+        tileBR,
+        numberOfTiles,
+        levelOpacity,
+        levelVisibility,
+        renderPixelRatioC,
+        renderPixelRatioT,
+        haveDrawn       = false,
+        drawLevel       = false,
+        viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() ),
+        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
+            drawer.source.getPixelRatio( 0 ), 
+            false
+        ).x,
+        optimalRatio    = drawer.config.immediateRender ? 
+            1 : 
+            zeroRatioT;
+
+    //Avoid calculations for draw if we have already drawn this
+    renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
+        drawer.source.getPixelRatio( level ), 
+        true
+    ).x;
+
+    if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
+         ( level == lowestLevel ) ) {
+        drawLevel = true;
+        haveDrawn = true;
+    } else if ( !haveDrawn ) {
+        return best;
+    }
+
+    //OK, a new drawing so do your calculations
+    tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
+    tileBR    = drawer.source.getTileAtPoint( level, viewportBR );
+    numberOfTiles  = drawer.source.getNumTiles( level );
+
+    renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
+        drawer.source.getPixelRatio( level ), 
+        false
+    ).x;
+
+    levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
+    levelVisibility = optimalRatio / Math.abs( 
+        optimalRatio - renderPixelRatioT 
+    );
+
+    resetCoverage( drawer.coverage, level );
+
+    if ( !drawer.config.wrapHorizontal ) {
+        tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
+    }
+    if ( !drawer.config.wrapVertical ) {
+        tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
+    }
+
+    for ( x = tileTL.x; x <= tileBR.x; x++ ) {
+        for ( y = tileTL.y; y <= tileBR.y; y++ ) {
+
+            best = updateTile( 
+                drawer,
+                drawLevel,
+                haveDrawn,
+                x, y,
+                level,
+                levelOpacity,
+                levelVisibility,
+                viewportCenter,
+                numberOfTiles,
+                currentTime,
+                best
+            );
+
+        }
+    }
+    return best;
+};
+
+function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
+    
+    var tile = getTile( 
+            x, y, 
+            level, 
+            drawer.source,
+            drawer.tilesMatrix,
+            currentTime, 
+            numberOfTiles, 
+            drawer.normHeight 
+        ),
+        drawTile = drawLevel;
+
+    setCoverage( drawer.coverage, level, x, y, false );
+
+    if ( !tile.exists ) {
+        return best;
+    }
+
+    if ( haveDrawn && !drawTile ) {
+        if ( isCovered( drawer.coverage, level, x, y ) ) {
+            setCoverage( drawer.coverage, level, x, y, true );
+        } else {
+            drawTile = true;
+        }
+    }
+
+    if ( !drawTile ) {
+        return best;
+    }
+
+    positionTile( 
+        tile, 
+        drawer.source.tileOverlap,
+        drawer.viewport,
+        viewportCenter, 
+        levelVisibility 
+    );
+
+    if ( tile.loaded ) {
+        
+        drawer.updateAgain = blendTile(
+            drawer,
+            tile, 
+            x, y,
+            level,
+            levelOpacity, 
+            currentTime 
+        );
+
+    } else if ( tile.Loading ) {
+        //TODO: .Loading is never defined... did they mean .loading?
+        //      but they didnt do anything so what is this block if
+        //      if it does nothing?
+    } else {
+        best = compareTiles( best, tile );
+    }
+
+    return best;
+};
+
+function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeight ) {
+    var xMod,
+        yMod,
+        bounds,
+        exists,
+        url,
+        tile;
+
+    if ( !tilesMatrix[ level ] ) {
+        tilesMatrix[ level ] = {};
+    }
+    if ( !tilesMatrix[ level ][ x ] ) {
+        tilesMatrix[ level ][ x ] = {};
+    }
+
+    if ( !tilesMatrix[ level ][ x ][ y ] ) {
+        xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+        yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+        bounds  = tileSource.getTileBounds( level, xMod, yMod );
+        exists  = tileSource.tileExists( level, xMod, yMod );
+        url     = tileSource.getTileUrl( level, xMod, yMod );
+
+        bounds.x += 1.0 * ( x - xMod ) / numTiles.x;
+        bounds.y += normHeight * ( y - yMod ) / numTiles.y;
+
+        tilesMatrix[ level ][ x ][ y ] = new $.Tile(
+            level, 
+            x, 
+            y, 
+            bounds, 
+            exists, 
+            url
+        );
+    }
+
+    tile = tilesMatrix[ level ][ x ][ y ];
+    tile.lastTouchTime = time;
+
+    return tile;
+};
+
+
+function loadTile( drawer, tile, time ) {
+    tile.loading = drawer.loadImage(
+        tile.url,
+        function( image ){
+            onTileLoad( drawer, tile, time, image );
+        }
+    );
+};
+
+function onTileLoad( drawer, tile, time, image ) {
+    var insertionIndex,
+        cutoff,
+        worstTile,
+        worstTime,
+        worstLevel,
+        worstTileIndex,
+        prevTile,
+        prevTime,
+        prevLevel,
+        i;
+
+    tile.loading = false;
+
+    if ( drawer.midUpdate ) {
+        $.console.warn( "Tile load callback in middle of drawing routine." );
+        return;
+    } else if ( !image ) {
+        $.console.log( "Tile %s failed to load: %s", tile, tile.url );
+        tile.exists = false;
+        return;
+    } else if ( time < drawer.lastResetTime ) {
+        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        return;
+    }
+
+    tile.loaded = true;
+    tile.image  = image;
+
+    insertionIndex = drawer.tilesLoaded.length;
+
+    if ( drawer.tilesLoaded.length >= QUOTA ) {
+        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
+
+        worstTile       = null;
+        worstTileIndex  = -1;
+
+        for ( i = drawer.tilesLoaded.length - 1; i >= 0; i-- ) {
+            prevTile = drawer.tilesLoaded[ i ];
+
+            if ( prevTile.level <= drawer.cutoff || prevTile.beingDrawn ) {
+                continue;
+            } else if ( !worstTile ) {
+                worstTile       = prevTile;
+                worstTileIndex  = i;
+                continue;
+            }
+
+            prevTime    = prevTile.lastTouchTime;
+            worstTime   = worstTile.lastTouchTime;
+            prevLevel   = prevTile.level;
+            worstLevel  = worstTile.level;
+
+            if ( prevTime < worstTime || 
+               ( prevTime == worstTime && prevLevel > worstLevel ) ) {
+                worstTile       = prevTile;
+                worstTileIndex  = i;
+            }
+        }
+
+        if ( worstTile && worstTileIndex >= 0 ) {
+            worstTile.unload();
+            insertionIndex = worstTileIndex;
+        }
+    }
+
+    drawer.tilesLoaded[ insertionIndex ] = tile;
+    drawer.updateAgain = true;
+};
+
+
+function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
+    var boundsTL     = tile.bounds.getTopLeft(),
+        boundsSize   = tile.bounds.getSize(),
+        positionC    = viewport.pixelFromPoint( boundsTL, true ),
+        positionT    = viewport.pixelFromPoint( boundsTL, false ),
+        sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),
+        sizeT        = viewport.deltaPixelsFromPoints( boundsSize, false ),
+        tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
+        tileDistance = viewportCenter.distanceTo( tileCenter );
+
+    if ( !overlap ) {
+        sizeC = sizeC.plus( new $.Point( 1, 1 ) );
+    }
+
+    tile.position   = positionC;
+    tile.size       = sizeC;
+    tile.distance   = tileDistance;
+    tile.visibility = levelVisibility;
+};
+
+
+function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
+    var blendTimeMillis = 1000 * drawer.config.blendTime,
+        deltaTime,
+        opacity;
+
+    if ( !tile.blendStart ) {
+        tile.blendStart = currentTime;
+    }
+
+    deltaTime   = currentTime - tile.blendStart;
+    opacity     = Math.min( 1, deltaTime / blendTimeMillis );
+    
+    if ( drawer.config.alwaysBlend ) {
+        opacity *= levelOpacity;
+    }
+
+    tile.opacity = opacity;
+
+    drawer.lastDrawn.push( tile );
+
+    if ( opacity == 1 ) {
+        setCoverage( drawer.coverage, level, x, y, true );
+    } else if ( deltaTime < blendTimeMillis ) {
+        return true;
+    }
+
+    return false;
+};
+
+
+function clearTiles( drawer ) {
+    drawer.tilesMatrix = {};
+    drawer.tilesLoaded = [];
+};
+
+/**
+ * @private
+ * @inner
+ * Returns true if the given tile provides coverage to lower-level tiles of
+ * lower resolution representing the same content. If neither x nor y is
+ * given, returns true if the entire visible level provides coverage.
+ * 
+ * Note that out-of-bounds tiles provide coverage in this sense, since
+ * there's no content that they would need to cover. Tiles at non-existent
+ * levels that are within the image bounds, however, do not.
+ */
+function providesCoverage( coverage, level, x, y ) {
+    var rows,
+        cols,
+        i, j;
+
+    if ( !coverage[ level ] ) {
+        return false;
+    }
+
+    if ( x === undefined || y === undefined ) {
+        rows = coverage[ level ];
+        for ( i in rows ) {
+            if ( rows.hasOwnProperty( i ) ) {
+                cols = rows[ i ];
+                for ( j in cols ) {
+                    if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    return (
+        coverage[ level ][ x] === undefined ||
+        coverage[ level ][ x ][ y ] === undefined ||
+        coverage[ level ][ x ][ y ] === true
+    );
+};
+
+/**
+ * @private
+ * @inner
+ * Returns true if the given tile is completely covered by higher-level
+ * tiles of higher resolution representing the same content. If neither x
+ * nor y is given, returns true if the entire visible level is covered.
+ */
+function isCovered( coverage, level, x, y ) {
+    if ( x === undefined || y === undefined ) {
+        return providesCoverage( coverage, level + 1 );
+    } else {
+        return (
+             providesCoverage( coverage, level + 1, 2 * x, 2 * y ) &&
+             providesCoverage( coverage, level + 1, 2 * x, 2 * y + 1 ) &&
+             providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y ) &&
+             providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
+        );
+    }
+};
+
+/**
+ * @private
+ * @inner
+ * Sets whether the given tile provides coverage or not.
+ */
+function setCoverage( coverage, level, x, y, covers ) {
+    if ( !coverage[ level ] ) {
+        $.console.warn(
+            "Setting coverage for a tile before its level's coverage has been reset: %s", 
+            level
+        );
+        return;
+    }
+
+    if ( !coverage[ level ][ x ] ) {
+        coverage[ level ][ x ] = {};
+    }
+
+    coverage[ level ][ x ][ y ] = covers;
+};
+
+/**
+ * @private
+ * @inner
+ * Resets coverage information for the given level. This should be called
+ * after every draw routine. Note that at the beginning of the next draw
+ * routine, coverage for every visible tile should be explicitly set. 
+ */
+function resetCoverage( coverage, level ) {
+    coverage[ level ] = {};
+};
+
+/**
+ * @private
+ * @inner
+ * Determines the 'z-index' of the given overlay.  Overlays are ordered in
+ * a z-index based on the order they are added to the Drawer.
+ */
+function getOverlayIndex( overlays, element ) {
+    var i;
+    for ( i = overlays.length - 1; i >= 0; i-- ) {
+        if ( overlays[ i ].elmt == element ) {
+            return i;
+        }
+    }
+
+    return -1;
+};
+
+/**
+ * @private
+ * @inner
+ * Determines whether the 'last best' tile for the area is better than the 
+ * tile in question.
+ */
+function compareTiles( previousBest, tile ) {
+    if ( !previousBest ) {
+        return tile;
+    }
+
+    if ( tile.visibility > previousBest.visibility ) {
+        return tile;
+    } else if ( tile.visibility == previousBest.visibility ) {
+        if ( tile.distance < previousBest.distance ) {
+            return tile;
+        }
+    }
+
+    return previousBest;
+};
+
 function finishLoadingImage( image, callback, successful, jobid ){
 
     image.onload = null;
@@ -4537,13 +4984,45 @@ function finishLoadingImage( image, callback, successful, jobid ){
 
 };
 
-function numberOfTiles( drawer, level ){
-    
-    if ( !drawer.cacheNumTiles[ level ] ) {
-        drawer.cacheNumTiles[ level ] = drawer.source.getNumTiles( level );
-    }
 
-    return drawer.cacheNumTiles[ level ];
+function drawOverlays( viewport, overlays, container ){
+    var i,
+        length = overlays.length;
+    for ( i = 0; i < length; i++ ) {
+        drawOverlay( viewport, overlays[ i ], container );
+    }
+};
+
+function drawOverlay( viewport, overlay, container ){
+
+    overlay.position = viewport.pixelFromPoint(
+        overlay.bounds.getTopLeft(), 
+        true
+    );
+    overlay.size     = viewport.deltaPixelsFromPoints(
+        overlay.bounds.getSize(), 
+        true
+    );
+    overlay.drawHTML( container );
+};
+
+function drawTiles( drawer, lastDrawn ){
+    var i, 
+        tile;
+
+    for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
+        tile = lastDrawn[ i ];
+
+        //TODO: get rid of this if by determining the tile draw method once up
+        //      front and defining the appropriate 'draw' function
+        if ( USE_CANVAS ) {
+            tile.drawCanvas( drawer.context );
+        } else {
+            tile.drawHTML( drawer.canvas );
+        }
+
+        tile.beingDrawn = true;
+    }
 };
 
 }( OpenSeadragon ));

@@ -3,38 +3,79 @@
     
 /**
  * @class
+ * @param {Number} level The zoom level this tile belongs to.
+ * @param {Number} x The vector component 'x'.
+ * @param {Number} y The vector component 'y'.
+ * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ *  coordinates
+ * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ *  this tile failed to load?
+ * @param {String} url The URL of this tile's image.
+ *
+ * @property {Number} level The zoom level this tile belongs to.
+ * @property {Number} x The vector component 'x'.
+ * @property {Number} y The vector component 'y'.
+ * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ *  coordinates
+ * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ *  this tile failed to load?
+ * @property {String} url The URL of this tile's image.
+ * @property {Boolean} loaded Is this tile loaded?
+ * @property {Boolean} loading Is this tile loading
+ * @property {Element} elmt The HTML element for this tile
+ * @property {Image} image The Image object for this tile
+ * @property {String} style The alias of this.elmt.style.
+ * @property {String} position This tile's position on screen, in pixels.
+ * @property {String} size This tile's size on screen, in pixels
+ * @property {String} blendStart The start time of this tile's blending
+ * @property {String} opacity The current opacity this tile should be.
+ * @property {String} distance The distance of this tile to the viewport center
+ * @property {String} visibility The visibility score of this tile.
+ * @property {Boolean} beingDrawn Whether this tile is currently being drawn
+ * @property {Number} lastTouchTime Timestamp the tile was last touched.
  */
 $.Tile = function(level, x, y, bounds, exists, url) {
     this.level   = level;
     this.x       = x;
     this.y       = y;
-    this.bounds  = bounds;  // where this tile fits, in normalized coordinates
-    this.exists  = exists;  // part of sparse image? tile hasn't failed to load?
-    this.loaded  = false;   // is this tile loaded?
-    this.loading = false;   // or is this tile loading?
+    this.bounds  = bounds;
+    this.exists  = exists;
+    this.url     = url;
+    this.loaded  = false;
+    this.loading = false;
 
-    this.elmt    = null;    // the HTML element for this tile
-    this.image   = null;    // the Image object for this tile
-    this.url     = url;     // the URL of this tile's image
+    this.elmt    = null;
+    this.image   = null;
 
-    this.style      = null; // alias of this.elmt.style
-    this.position   = null; // this tile's position on screen, in pixels
-    this.size       = null; // this tile's size on screen, in pixels
-    this.blendStart = null; // the start time of this tile's blending
-    this.opacity    = null; // the current opacity this tile should be
-    this.distance   = null; // the distance of this tile to the viewport center
-    this.visibility = null; // the visibility score of this tile
+    this.style      = null;
+    this.position   = null;
+    this.size       = null;
+    this.blendStart = null;
+    this.opacity    = null;
+    this.distance   = null;
+    this.visibility = null;
 
-    this.beingDrawn     = false; // whether this tile is currently being drawn
-    this.lastTouchTime  = 0;     // the time that tile was last touched
+    this.beingDrawn     = false;
+    this.lastTouchTime  = 0;
 };
 
 $.Tile.prototype = {
     
+    /**
+     * Provides a string representation of this tiles level and (x,y) 
+     * components.
+     * @function
+     * @returns {String}
+     */
     toString: function() {
         return this.level + "/" + this.x + "_" + this.y;
     },
 
+    /**
+     * Renders the tile in an html container.
+     * @function
+     * @param {Element} container
+     */
     drawHTML: function( container ) {
 
         var position = this.position.apply( Math.floor ),
@@ -71,12 +112,17 @@ $.Tile.prototype = {
 
     },
 
-    drawCanvas: function(context) {
+    /**
+     * Renders the tile in a canvas-based context.
+     * @function
+     * @param {Canvas} context
+     */
+    drawCanvas: function( context ) {
 
         var position = this.position,
             size     = this.size;
 
-        if (!this.loaded) {
+        if ( !this.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -85,9 +131,13 @@ $.Tile.prototype = {
         }
 
         context.globalAlpha = this.opacity;
-        context.drawImage(this.image, position.x, position.y, size.x, size.y);
+        context.drawImage( this.image, position.x, position.y, size.x, size.y );
     },
 
+    /**
+     * Removes tile from it's contianer.
+     * @function
+     */
     unload: function() {
         if ( this.elmt && this.elmt.parentNode ) {
             this.elmt.parentNode.removeChild( this.elmt );
