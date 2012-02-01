@@ -211,8 +211,6 @@ $.Viewer = function( options ) {
     // how much we should be continuously zooming by
     this._zoomFactor    = null;  
     this._lastZoomTime  = null;
-
-    this.elmt = null;
     
     var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
         endZoomingHandler       = $.delegate( this, endZooming ),
@@ -311,42 +309,42 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @function
      * @name OpenSeadragon.Viewer.prototype.addControl
      */
-    addControl: function ( elmt, anchor ) {
-        var elmt = $.getElement( elmt ),
+    addControl: function ( element, anchor ) {
+        var element = $.getElement( element ),
             div = null;
 
-        if ( getControlIndex( this, elmt ) >= 0 ) {
+        if ( getControlIndex( this, element ) >= 0 ) {
             return;     // they're trying to add a duplicate control
         }
 
         switch ( anchor ) {
             case $.ControlAnchor.TOP_RIGHT:
                 div = this.controls.topright;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_RIGHT:
                 div = this.controls.bottomright;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_LEFT:
                 div = this.controls.bottomleft;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.TOP_LEFT:
                 div = this.controls.topleft;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.NONE:
             default:
                 div = this.container;
-                elmt.style.position = "absolute";
+                element.style.position = "absolute";
                 break;
         }
 
         this.controls.push(
-            new $.Control( elmt, anchor, div )
+            new $.Control( element, anchor, div )
         );
-        elmt.style.display = "inline-block";
+        element.style.display = "inline-block";
     },
 
     /**
@@ -488,10 +486,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @function
      * @name OpenSeadragon.Viewer.prototype.removeControl
      */
-    removeControl: function ( elmt ) {
+    removeControl: function ( element ) {
         
-        var elmt = $.getElement( elmt ),
-            i    = getControlIndex( this, elmt );
+        var element = $.getElement( element ),
+            i    = getControlIndex( this, element );
         
         if ( i >= 0 ) {
             this.controls[ i ].destroy();
@@ -781,8 +779,8 @@ function onCanvasDrag( tracker, position, delta, shift ) {
     }
 };
 
-function onCanvasRelease( tracker, position, insideElmtPress, insideElmtRelease ) {
-    if ( insideElmtPress && this.viewport ) {
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
+    if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
 };
@@ -799,8 +797,8 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     }
 };
 
-function onContainerExit( tracker, position, buttonDownElmt, buttonDownAny ) {
-    if ( !buttonDownElmt ) {
+function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
+    if ( !buttonDownElement ) {
         this._mouseInside = false;
         if ( !this._animating ) {
             beginControlsAutoHide( this );
@@ -808,8 +806,8 @@ function onContainerExit( tracker, position, buttonDownElmt, buttonDownAny ) {
     }
 };
 
-function onContainerRelease( tracker, position, insideElmtPress, insideElmtRelease ) {
-    if ( !insideElmtRelease ) {
+function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
+    if ( !insideElementRelease ) {
         this._mouseInside = false;
         if ( !this._animating ) {
             beginControlsAutoHide( this );
@@ -817,7 +815,7 @@ function onContainerRelease( tracker, position, insideElmtPress, insideElmtRelea
     }
 };
 
-function onContainerEnter( tracker, position, buttonDownElmt, buttonDownAny ) {
+function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     this._mouseInside = true;
     abortControlsAutoHide( this );
 };
@@ -825,9 +823,9 @@ function onContainerEnter( tracker, position, buttonDownElmt, buttonDownAny ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Utility methods
 ///////////////////////////////////////////////////////////////////////////////
-function getControlIndex( viewer, elmt ) {
+function getControlIndex( viewer, element ) {
     for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
-        if ( viewer.controls[ i ].elmt == elmt ) {
+        if ( viewer.controls[ i ].element == element ) {
             return i;
         }
     }

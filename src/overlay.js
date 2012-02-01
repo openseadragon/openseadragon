@@ -20,6 +20,7 @@
     };
 
     /**
+     * An Overlay provides a 
      * @class
      */
     $.Overlay = function( elmt, location, placement ) {

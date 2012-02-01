@@ -141,17 +141,17 @@ $.Button = function( options ) {
 
     //TODO - refactor mousetracer next to avoid this extension
     $.extend( this.tracker, {
-        enterHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
-            if ( buttonDownElmt ) {
+        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "onEnter", _this );
             } else if ( !buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
-        exitHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
+        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
-            if ( buttonDownElmt ) {
+            if ( buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
@@ -159,11 +159,11 @@ $.Button = function( options ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
-        releaseHandler: function( tracker, position, insideElmtPress, insideElmtRelease ) {
-            if ( insideElmtPress && insideElmtRelease ) {
+        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
+            if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
-            } else if ( insideElmtPress ) {
+            } else if ( insideElementPress ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
                 inTo( _this, $.ButtonState.HOVER );

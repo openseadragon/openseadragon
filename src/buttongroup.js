@@ -52,8 +52,8 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.exit = options.exit || function() {
         var i,
-            buttonDownElmt = arguments.length > 2 ? arguments[ 2 ] : null;
-        if ( !buttonDownElmt ) {
+            buttonDownElement = arguments.length > 2 ? arguments[ 2 ] : null;
+        if ( !buttonDownElement ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();
             }
@@ -62,8 +62,8 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.release = options.release || function() {
         var i,
-            insideElmtRelease = arguments.length > 3 ? arguments[ 3 ] : null;
-        if ( !insideElmtRelease ) {
+            insideElementRelease = arguments.length > 3 ? arguments[ 3 ] : null;
+        if ( !insideElementRelease ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();
             }

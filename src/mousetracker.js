@@ -294,12 +294,14 @@
         }
 
         /**
-        * Only triggered in W3C browsers by elements within which the mouse was
-        * initially pressed, since they are now listening to the window for
-        * mouseup during the capture phase. We shouldn't handle the mouseup
-        * here if the mouse is still inside this element, since the regular
-        * mouseup handler will still fire.
-        */
+         * @private
+         * @inner
+         * Only triggered in W3C browsers by elements within which the mouse was
+         * initially pressed, since they are now listening to the window for
+         * mouseup during the capture phase. We shouldn't handle the mouseup
+         * here if the mouse is still inside this element, since the regular
+         * mouseup handler will still fire.
+         */
         function onMouseUpWindow(event) {
             if (!insideElmt) {
                 onMouseUp(event);
@@ -308,6 +310,10 @@
             releaseMouse();
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseClick(event) {
 
             if (self.clickHandler) {
@@ -315,6 +321,10 @@
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseWheelSpin(event) {
             var nDelta = 0;
             if (!event) { // For IE, access the global (window) event object
@@ -344,6 +354,10 @@
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function handleMouseClick(event) {
             var event = $.getEvent(event);
 
@@ -368,6 +382,10 @@
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseMove(event) {
             var event = $.getEvent(event);
             var point = getMouseAbsolute(event);
@@ -394,28 +412,38 @@
 
                 $.cancelEvent(event);
             }
-        }
+        };
 
         /**
-        * Only triggered once by the deepest element that initially received
-        * the mouse down event. Since no other element has captured the mouse,
-        * we want to trigger the elements that initially received the mouse
-        * down event (including this one).
-        */
+         * @private
+         * @inner
+         * Only triggered once by the deepest element that initially received
+         * the mouse down event. Since no other element has captured the mouse,
+         * we want to trigger the elements that initially received the mouse
+         * down event (including this one).
+         */
         function onMouseMoveIE(event) {
             for (var i = 0; i < ieTrackersCapturing.length; i++) {
                 ieTrackersCapturing[i].onMouseMove(event);
             }
 
             $.stopEvent(event);
-        }
+        };
 
     };
 
+    /**
+    * @private
+    * @inner
+    */
     function getMouseAbsolute( event ) {
         return $.getMousePosition(event);
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function getMouseRelative( event, elmt ) {
         var mouse = $.getMousePosition(event);
         var offset = $.getElementPosition(elmt);
@@ -425,6 +453,7 @@
 
     /**
     * @private
+    * @inner
     * Returns true if elmtB is a child node of elmtA, or if they're equal.
     */
     function isChild( elmtA, elmtB ) {
@@ -439,10 +468,18 @@
         return elmtA == elmtB;
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function onGlobalMouseDown() {
         buttonDownAny = true;
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function onGlobalMouseUp() {
         buttonDownAny = false;
     }

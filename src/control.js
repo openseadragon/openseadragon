@@ -20,11 +20,11 @@ $.ControlAnchor = {
  * to interact with the zoomable interface. Any control can be anchored to any 
  * element.
  * @class
- * @param {Element} elmt - the contol element to be anchored in the container.
+ * @param {Element} element - the contol element to be anchored in the container.
  * @param {OpenSeadragon.ControlAnchor} anchor - the location to anchor at.
  * @param {Element} container - the element to control will be anchored too.
  * 
- * @property {Element} elmt - the element providing the user interface with 
+ * @property {Element} element - the element providing the user interface with 
  *  some type of control. Eg a zoom-in button
  * @property {OpenSeadragon.ControlAnchor} anchor - the position of the control 
  *  relative to the container.
@@ -33,13 +33,13 @@ $.ControlAnchor = {
  * @property {Element} wrapper - a nuetral element surrounding the control 
  *  element.
  */
-$.Control = function ( elmt, anchor, container ) {
-    this.elmt       = elmt;
+$.Control = function ( element, anchor, container ) {
+    this.element    = element;
     this.anchor     = anchor;
     this.container  = container;
     this.wrapper    = $.makeNeutralElement( "span" );
     this.wrapper.style.display = "inline-block";
-    this.wrapper.appendChild( this.elmt );
+    this.wrapper.appendChild( this.element );
 
     if ( this.anchor == $.ControlAnchor.NONE ) {
         // IE6 fix
@@ -64,7 +64,7 @@ $.Control.prototype = {
      * @function
      */
     destroy: function() {
-        this.wrapper.removeChild( this.elmt );
+        this.wrapper.removeChild( this.element );
         this.container.removeChild( this.wrapper );
     },
 
@@ -94,8 +94,8 @@ $.Control.prototype = {
      * @param {Number} opactiy - a value between 1 and 0 inclusively.
      */
     setOpacity: function( opacity ) {
-        if ( this.elmt[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
-            $.setElementOpacity( this.elmt, opacity, true );
+        if ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
+            $.setElementOpacity( this.element, opacity, true );
         } else {
             $.setElementOpacity( this.wrapper, opacity, true );
         }

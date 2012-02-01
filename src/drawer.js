@@ -28,21 +28,21 @@ var QUOTA               = 100,
  * @param {Element} element - Reference to Viewer 'canvas'.
  * @property {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
  * @property {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
- * @property {Element} container -Reference to Viewer 'canvas'.
- * @property {Element|Canvas} canvas
- * @property {CanvasContext} context
+ * @property {Element} container - Reference to Viewer 'canvas'.
+ * @property {Element|Canvas} canvas - TODO
+ * @property {CanvasContext} context - TODO
  * @property {Object} config - Reference to Viewer config.
  * @property {Number} downloading - How many images are currently being loaded in parallel.
  * @property {Number} normHeight - Ratio of zoomable image height to width.
- * @property {Object} tilesMatrix A '3d' dictionary [level][x][y] --> Tile.
- * @property {Array} tilesLoaded An unordered list of Tiles with loaded images.
- * @property {Object} coverage '3d' dictionary [level][x][y] --> Boolean.
- * @property {Array} overlays An unordered list of Overlays added.
- * @property {Array} lastDrawn An unordered list of Tiles drawn last frame.
- * @property {Number} lastResetTime
- * @property {Boolean} midUpdate Is the drawer currently updating the viewport.
- * @property {Boolean} updateAgain Does the drawer need to update the viewort again.
- * @property {Element} elmt DEPRECATED Alias for container.
+ * @property {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
+ * @property {Array} tilesLoaded - An unordered list of Tiles with loaded images.
+ * @property {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @property {Array} overlays - An unordered list of Overlays added.
+ * @property {Array} lastDrawn - An unordered list of Tiles drawn last frame.
+ * @property {Number} lastResetTime - Last time for which the drawer was reset.
+ * @property {Boolean} midUpdate - Is the drawer currently updating the viewport?
+ * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
+ * @property {Element} elmt - DEPRECATED Alias for container.
  */
 $.Drawer = function( source, viewport, element ) {
 
@@ -78,6 +78,19 @@ $.Drawer = function( source, viewport, element ) {
 
 $.Drawer.prototype = {
 
+    /**
+     * Adds an html element as an overlay to the current viewport.  Useful for
+     * highlighting words or areas of interest on an image or other zoomable
+     * interface.
+     * @method
+     * @param {Element|String} element - A reference to an element or an id for
+     *      the element which will overlayed.
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
+     *      viewport which the location coordinates will be treated as relative 
+     *      to. 
+     */
     addOverlay: function( element, location, placement ) {
         element = $.getElement( element );
 
@@ -90,6 +103,16 @@ $.Drawer.prototype = {
         this.updateAgain = true;
     },
 
+    /**
+     * Updates the overlay represented by the reference to the element or  
+     * element id moving it to the new location, relative to the new placement.
+     * @method
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
+     *      viewport which the location coordinates will be treated as relative 
+     *      to. 
+     */
     updateOverlay: function( element, location, placement ) {
         var i;
 
@@ -102,6 +125,13 @@ $.Drawer.prototype = {
         }
     },
 
+    /**
+     * Removes and overlay identified by the reference element or element id 
+     *      and schedules and update.
+     * @method
+     * @param {Element|String} element - A reference to the element or an 
+     *      element id which represent the ovelay content to be removed.
+     */
     removeOverlay: function( element ) {
         var i;
 
@@ -115,6 +145,11 @@ $.Drawer.prototype = {
         }
     },
 
+    /**
+     * Removes all currently configured Overlays from this Drawer and schedules
+     *      and update.
+     * @method
+     */
     clearOverlays: function() {
         while ( this.overlays.length > 0 ) {
             this.overlays.pop().destroy();
@@ -123,20 +158,42 @@ $.Drawer.prototype = {
     },
 
 
+    /**
+     * Returns whether the Drawer is scheduled for an update at the 
+     *      soonest possible opportunity.
+     * @method
+     * @returns {Boolean} - Whether the Drawer is scheduled for an update at the 
+     *      soonest possible opportunity.
+     */
     needsUpdate: function() {
         return this.updateAgain;
     },
 
+    /**
+     * Returns the total number of tiles that have been loaded by this Drawer.
+     * @method
+     * @returns {Number} - The total number of tiles that have been loaded by 
+     *      this Drawer.
+     */
     numTilesLoaded: function() {
         return this.tilesLoaded.length;
     },
 
+    /**
+     * Clears all tiles and triggers an update on the next call to 
+     * Drawer.prototype.update().
+     * @method
+     */
     reset: function() {
         clearTiles( this );
         this.lastResetTime = +new Date();
         this.updateAgain = true;
     },
 
+    /**
+     * Forces the Drawer to update.
+     * @method
+     */
     update: function() {
         //this.profiler.beginUpdate();
         this.midUpdate = true;
@@ -145,6 +202,23 @@ $.Drawer.prototype = {
         //this.profiler.endUpdate();
     },
 
+    /**
+     * Used internally to load images when required.  May also be used to 
+     * preload a set of images so the browser will have them available in 
+     * the local cache to optimize user experience in certain cases. Because
+     * the number of parallel image loads is configurable, if too many images
+     * are currently being loaded, the request will be ignored.  Since by 
+     * default viewer.config.imageLoaderLimit is 0, the native browser parallel 
+     * image loading policy will be used.
+     * @method
+     * @param {String} src - The url of the image to load.
+     * @param {Function} callback - The function that will be called with the
+     *      Image object as the only parameter, whether on 'load' or on 'abort'.
+     *      For now this means the callback is expected to distinguish between
+     *      error and success conditions by inspecting the Image object.
+     * @return {Boolean} loading - Wheter the request was submitted or ignored 
+     *      based on viewer.config.imageLoaderLimit.
+     */
     loadImage: function( src, callback ) {
         var _this = this,
             loading = false,

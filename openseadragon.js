@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.8.26
+ * @version  OpenSeadragon 0.8.27
  *
  * @fileOverview 
  * <h2>
@@ -1563,12 +1563,14 @@ $.EventHandler.prototype = {
         }
 
         /**
-        * Only triggered in W3C browsers by elements within which the mouse was
-        * initially pressed, since they are now listening to the window for
-        * mouseup during the capture phase. We shouldn't handle the mouseup
-        * here if the mouse is still inside this element, since the regular
-        * mouseup handler will still fire.
-        */
+         * @private
+         * @inner
+         * Only triggered in W3C browsers by elements within which the mouse was
+         * initially pressed, since they are now listening to the window for
+         * mouseup during the capture phase. We shouldn't handle the mouseup
+         * here if the mouse is still inside this element, since the regular
+         * mouseup handler will still fire.
+         */
         function onMouseUpWindow(event) {
             if (!insideElmt) {
                 onMouseUp(event);
@@ -1577,6 +1579,10 @@ $.EventHandler.prototype = {
             releaseMouse();
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseClick(event) {
 
             if (self.clickHandler) {
@@ -1584,6 +1590,10 @@ $.EventHandler.prototype = {
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseWheelSpin(event) {
             var nDelta = 0;
             if (!event) { // For IE, access the global (window) event object
@@ -1613,6 +1623,10 @@ $.EventHandler.prototype = {
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function handleMouseClick(event) {
             var event = $.getEvent(event);
 
@@ -1637,6 +1651,10 @@ $.EventHandler.prototype = {
             }
         }
 
+        /**
+         * @private
+         * @inner
+         */
         function onMouseMove(event) {
             var event = $.getEvent(event);
             var point = getMouseAbsolute(event);
@@ -1663,28 +1681,38 @@ $.EventHandler.prototype = {
 
                 $.cancelEvent(event);
             }
-        }
+        };
 
         /**
-        * Only triggered once by the deepest element that initially received
-        * the mouse down event. Since no other element has captured the mouse,
-        * we want to trigger the elements that initially received the mouse
-        * down event (including this one).
-        */
+         * @private
+         * @inner
+         * Only triggered once by the deepest element that initially received
+         * the mouse down event. Since no other element has captured the mouse,
+         * we want to trigger the elements that initially received the mouse
+         * down event (including this one).
+         */
         function onMouseMoveIE(event) {
             for (var i = 0; i < ieTrackersCapturing.length; i++) {
                 ieTrackersCapturing[i].onMouseMove(event);
             }
 
             $.stopEvent(event);
-        }
+        };
 
     };
 
+    /**
+    * @private
+    * @inner
+    */
     function getMouseAbsolute( event ) {
         return $.getMousePosition(event);
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function getMouseRelative( event, elmt ) {
         var mouse = $.getMousePosition(event);
         var offset = $.getElementPosition(elmt);
@@ -1694,6 +1722,7 @@ $.EventHandler.prototype = {
 
     /**
     * @private
+    * @inner
     * Returns true if elmtB is a child node of elmtA, or if they're equal.
     */
     function isChild( elmtA, elmtB ) {
@@ -1708,10 +1737,18 @@ $.EventHandler.prototype = {
         return elmtA == elmtB;
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function onGlobalMouseDown() {
         buttonDownAny = true;
     }
 
+    /**
+    * @private
+    * @inner
+    */
     function onGlobalMouseUp() {
         buttonDownAny = false;
     }
@@ -1750,11 +1787,11 @@ $.ControlAnchor = {
  * to interact with the zoomable interface. Any control can be anchored to any 
  * element.
  * @class
- * @param {Element} elmt - the contol element to be anchored in the container.
+ * @param {Element} element - the contol element to be anchored in the container.
  * @param {OpenSeadragon.ControlAnchor} anchor - the location to anchor at.
  * @param {Element} container - the element to control will be anchored too.
  * 
- * @property {Element} elmt - the element providing the user interface with 
+ * @property {Element} element - the element providing the user interface with 
  *  some type of control. Eg a zoom-in button
  * @property {OpenSeadragon.ControlAnchor} anchor - the position of the control 
  *  relative to the container.
@@ -1763,13 +1800,13 @@ $.ControlAnchor = {
  * @property {Element} wrapper - a nuetral element surrounding the control 
  *  element.
  */
-$.Control = function ( elmt, anchor, container ) {
-    this.elmt       = elmt;
+$.Control = function ( element, anchor, container ) {
+    this.element    = element;
     this.anchor     = anchor;
     this.container  = container;
     this.wrapper    = $.makeNeutralElement( "span" );
     this.wrapper.style.display = "inline-block";
-    this.wrapper.appendChild( this.elmt );
+    this.wrapper.appendChild( this.element );
 
     if ( this.anchor == $.ControlAnchor.NONE ) {
         // IE6 fix
@@ -1794,7 +1831,7 @@ $.Control.prototype = {
      * @function
      */
     destroy: function() {
-        this.wrapper.removeChild( this.elmt );
+        this.wrapper.removeChild( this.element );
         this.container.removeChild( this.wrapper );
     },
 
@@ -1824,8 +1861,8 @@ $.Control.prototype = {
      * @param {Number} opactiy - a value between 1 and 0 inclusively.
      */
     setOpacity: function( opacity ) {
-        if ( this.elmt[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
-            $.setElementOpacity( this.elmt, opacity, true );
+        if ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
+            $.setElementOpacity( this.element, opacity, true );
         } else {
             $.setElementOpacity( this.wrapper, opacity, true );
         }
@@ -2046,8 +2083,6 @@ $.Viewer = function( options ) {
     // how much we should be continuously zooming by
     this._zoomFactor    = null;  
     this._lastZoomTime  = null;
-
-    this.elmt = null;
     
     var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
         endZoomingHandler       = $.delegate( this, endZooming ),
@@ -2146,42 +2181,42 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @function
      * @name OpenSeadragon.Viewer.prototype.addControl
      */
-    addControl: function ( elmt, anchor ) {
-        var elmt = $.getElement( elmt ),
+    addControl: function ( element, anchor ) {
+        var element = $.getElement( element ),
             div = null;
 
-        if ( getControlIndex( this, elmt ) >= 0 ) {
+        if ( getControlIndex( this, element ) >= 0 ) {
             return;     // they're trying to add a duplicate control
         }
 
         switch ( anchor ) {
             case $.ControlAnchor.TOP_RIGHT:
                 div = this.controls.topright;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_RIGHT:
                 div = this.controls.bottomright;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.BOTTOM_LEFT:
                 div = this.controls.bottomleft;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.TOP_LEFT:
                 div = this.controls.topleft;
-                elmt.style.position = "relative";
+                element.style.position = "relative";
                 break;
             case $.ControlAnchor.NONE:
             default:
                 div = this.container;
-                elmt.style.position = "absolute";
+                element.style.position = "absolute";
                 break;
         }
 
         this.controls.push(
-            new $.Control( elmt, anchor, div )
+            new $.Control( element, anchor, div )
         );
-        elmt.style.display = "inline-block";
+        element.style.display = "inline-block";
     },
 
     /**
@@ -2323,10 +2358,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @function
      * @name OpenSeadragon.Viewer.prototype.removeControl
      */
-    removeControl: function ( elmt ) {
+    removeControl: function ( element ) {
         
-        var elmt = $.getElement( elmt ),
-            i    = getControlIndex( this, elmt );
+        var element = $.getElement( element ),
+            i    = getControlIndex( this, element );
         
         if ( i >= 0 ) {
             this.controls[ i ].destroy();
@@ -2616,8 +2651,8 @@ function onCanvasDrag( tracker, position, delta, shift ) {
     }
 };
 
-function onCanvasRelease( tracker, position, insideElmtPress, insideElmtRelease ) {
-    if ( insideElmtPress && this.viewport ) {
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
+    if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
 };
@@ -2634,8 +2669,8 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     }
 };
 
-function onContainerExit( tracker, position, buttonDownElmt, buttonDownAny ) {
-    if ( !buttonDownElmt ) {
+function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
+    if ( !buttonDownElement ) {
         this._mouseInside = false;
         if ( !this._animating ) {
             beginControlsAutoHide( this );
@@ -2643,8 +2678,8 @@ function onContainerExit( tracker, position, buttonDownElmt, buttonDownAny ) {
     }
 };
 
-function onContainerRelease( tracker, position, insideElmtPress, insideElmtRelease ) {
-    if ( !insideElmtRelease ) {
+function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
+    if ( !insideElementRelease ) {
         this._mouseInside = false;
         if ( !this._animating ) {
             beginControlsAutoHide( this );
@@ -2652,7 +2687,7 @@ function onContainerRelease( tracker, position, insideElmtPress, insideElmtRelea
     }
 };
 
-function onContainerEnter( tracker, position, buttonDownElmt, buttonDownAny ) {
+function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     this._mouseInside = true;
     abortControlsAutoHide( this );
 };
@@ -2660,9 +2695,9 @@ function onContainerEnter( tracker, position, buttonDownElmt, buttonDownAny ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Utility methods
 ///////////////////////////////////////////////////////////////////////////////
-function getControlIndex( viewer, elmt ) {
+function getControlIndex( viewer, element ) {
     for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
-        if ( viewer.controls[ i ].elmt == elmt ) {
+        if ( viewer.controls[ i ].element == element ) {
             return i;
         }
     }
@@ -3423,17 +3458,17 @@ $.Button = function( options ) {
 
     //TODO - refactor mousetracer next to avoid this extension
     $.extend( this.tracker, {
-        enterHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
-            if ( buttonDownElmt ) {
+        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "onEnter", _this );
             } else if ( !buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
-        exitHandler: function( tracker, position, buttonDownElmt, buttonDownAny ) {
+        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
-            if ( buttonDownElmt ) {
+            if ( buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
@@ -3441,11 +3476,11 @@ $.Button = function( options ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
-        releaseHandler: function( tracker, position, insideElmtPress, insideElmtRelease ) {
-            if ( insideElmtPress && insideElmtRelease ) {
+        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
+            if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
-            } else if ( insideElmtPress ) {
+            } else if ( insideElementPress ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
                 inTo( _this, $.ButtonState.HOVER );
@@ -3624,8 +3659,8 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.exit = options.exit || function() {
         var i,
-            buttonDownElmt = arguments.length > 2 ? arguments[ 2 ] : null;
-        if ( !buttonDownElmt ) {
+            buttonDownElement = arguments.length > 2 ? arguments[ 2 ] : null;
+        if ( !buttonDownElement ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();
             }
@@ -3634,8 +3669,8 @@ $.ButtonGroup = function( options ) {
 
     this.tracker.release = options.release || function() {
         var i,
-            insideElmtRelease = arguments.length > 3 ? arguments[ 3 ] : null;
-        if ( !insideElmtRelease ) {
+            insideElementRelease = arguments.length > 3 ? arguments[ 3 ] : null;
+        if ( !insideElementRelease ) {
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupExit();
             }
@@ -4078,6 +4113,7 @@ $.Tile.prototype = {
     };
 
     /**
+     * An Overlay provides a 
      * @class
      */
     $.Overlay = function( elmt, location, placement ) {
@@ -4240,21 +4276,21 @@ var QUOTA               = 100,
  * @param {Element} element - Reference to Viewer 'canvas'.
  * @property {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
  * @property {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
- * @property {Element} container -Reference to Viewer 'canvas'.
- * @property {Element|Canvas} canvas
- * @property {CanvasContext} context
+ * @property {Element} container - Reference to Viewer 'canvas'.
+ * @property {Element|Canvas} canvas - TODO
+ * @property {CanvasContext} context - TODO
  * @property {Object} config - Reference to Viewer config.
  * @property {Number} downloading - How many images are currently being loaded in parallel.
  * @property {Number} normHeight - Ratio of zoomable image height to width.
- * @property {Object} tilesMatrix A '3d' dictionary [level][x][y] --> Tile.
- * @property {Array} tilesLoaded An unordered list of Tiles with loaded images.
- * @property {Object} coverage '3d' dictionary [level][x][y] --> Boolean.
- * @property {Array} overlays An unordered list of Overlays added.
- * @property {Array} lastDrawn An unordered list of Tiles drawn last frame.
- * @property {Number} lastResetTime
- * @property {Boolean} midUpdate Is the drawer currently updating the viewport.
- * @property {Boolean} updateAgain Does the drawer need to update the viewort again.
- * @property {Element} elmt DEPRECATED Alias for container.
+ * @property {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
+ * @property {Array} tilesLoaded - An unordered list of Tiles with loaded images.
+ * @property {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @property {Array} overlays - An unordered list of Overlays added.
+ * @property {Array} lastDrawn - An unordered list of Tiles drawn last frame.
+ * @property {Number} lastResetTime - Last time for which the drawer was reset.
+ * @property {Boolean} midUpdate - Is the drawer currently updating the viewport?
+ * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
+ * @property {Element} elmt - DEPRECATED Alias for container.
  */
 $.Drawer = function( source, viewport, element ) {
 
@@ -4290,6 +4326,19 @@ $.Drawer = function( source, viewport, element ) {
 
 $.Drawer.prototype = {
 
+    /**
+     * Adds an html element as an overlay to the current viewport.  Useful for
+     * highlighting words or areas of interest on an image or other zoomable
+     * interface.
+     * @method
+     * @param {Element|String} element - A reference to an element or an id for
+     *      the element which will overlayed.
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
+     *      viewport which the location coordinates will be treated as relative 
+     *      to. 
+     */
     addOverlay: function( element, location, placement ) {
         element = $.getElement( element );
 
@@ -4302,6 +4351,16 @@ $.Drawer.prototype = {
         this.updateAgain = true;
     },
 
+    /**
+     * Updates the overlay represented by the reference to the element or  
+     * element id moving it to the new location, relative to the new placement.
+     * @method
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
+     *      viewport which the location coordinates will be treated as relative 
+     *      to. 
+     */
     updateOverlay: function( element, location, placement ) {
         var i;
 
@@ -4314,6 +4373,13 @@ $.Drawer.prototype = {
         }
     },
 
+    /**
+     * Removes and overlay identified by the reference element or element id 
+     *      and schedules and update.
+     * @method
+     * @param {Element|String} element - A reference to the element or an 
+     *      element id which represent the ovelay content to be removed.
+     */
     removeOverlay: function( element ) {
         var i;
 
@@ -4327,6 +4393,11 @@ $.Drawer.prototype = {
         }
     },
 
+    /**
+     * Removes all currently configured Overlays from this Drawer and schedules
+     *      and update.
+     * @method
+     */
     clearOverlays: function() {
         while ( this.overlays.length > 0 ) {
             this.overlays.pop().destroy();
@@ -4335,20 +4406,42 @@ $.Drawer.prototype = {
     },
 
 
+    /**
+     * Returns whether the Drawer is scheduled for an update at the 
+     *      soonest possible opportunity.
+     * @method
+     * @returns {Boolean} - Whether the Drawer is scheduled for an update at the 
+     *      soonest possible opportunity.
+     */
     needsUpdate: function() {
         return this.updateAgain;
     },
 
+    /**
+     * Returns the total number of tiles that have been loaded by this Drawer.
+     * @method
+     * @returns {Number} - The total number of tiles that have been loaded by 
+     *      this Drawer.
+     */
     numTilesLoaded: function() {
         return this.tilesLoaded.length;
     },
 
+    /**
+     * Clears all tiles and triggers an update on the next call to 
+     * Drawer.prototype.update().
+     * @method
+     */
     reset: function() {
         clearTiles( this );
         this.lastResetTime = +new Date();
         this.updateAgain = true;
     },
 
+    /**
+     * Forces the Drawer to update.
+     * @method
+     */
     update: function() {
         //this.profiler.beginUpdate();
         this.midUpdate = true;
@@ -4357,6 +4450,23 @@ $.Drawer.prototype = {
         //this.profiler.endUpdate();
     },
 
+    /**
+     * Used internally to load images when required.  May also be used to 
+     * preload a set of images so the browser will have them available in 
+     * the local cache to optimize user experience in certain cases. Because
+     * the number of parallel image loads is configurable, if too many images
+     * are currently being loaded, the request will be ignored.  Since by 
+     * default viewer.config.imageLoaderLimit is 0, the native browser parallel 
+     * image loading policy will be used.
+     * @method
+     * @param {String} src - The url of the image to load.
+     * @param {Function} callback - The function that will be called with the
+     *      Image object as the only parameter, whether on 'load' or on 'abort'.
+     *      For now this means the callback is expected to distinguish between
+     *      error and success conditions by inspecting the Image object.
+     * @return {Boolean} loading - Wheter the request was submitted or ignored 
+     *      based on viewer.config.imageLoaderLimit.
+     */
     loadImage: function( src, callback ) {
         var _this = this,
             loading = false,
