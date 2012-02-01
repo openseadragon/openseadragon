@@ -22,9 +22,9 @@
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
  * @property {Boolean} loading Is this tile loading
- * @property {Element} elmt The HTML element for this tile
+ * @property {Element} element The HTML element for this tile
  * @property {Image} image The Image object for this tile
- * @property {String} style The alias of this.elmt.style.
+ * @property {String} style The alias of this.element.style.
  * @property {String} position This tile's position on screen, in pixels.
  * @property {String} size This tile's size on screen, in pixels
  * @property {String} blendStart The start time of this tile's blending
@@ -44,7 +44,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.loaded  = false;
     this.loading = false;
 
-    this.elmt    = null;
+    this.element    = null;
     this.image   = null;
 
     this.style      = null;
@@ -89,26 +89,26 @@ $.Tile.prototype = {
             return;
         }
 
-        if ( !this.elmt ) {
-            this.elmt       = $.makeNeutralElement("img");
-            this.elmt.src   = this.url;
-            this.style      = this.elmt.style;
+        if ( !this.element ) {
+            this.element       = $.makeNeutralElement("img");
+            this.element.src   = this.url;
+            this.style      = this.element.style;
 
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
 
 
-        if ( this.elmt.parentNode != container ) {
-            container.appendChild( this.elmt );
+        if ( this.element.parentNode != container ) {
+            container.appendChild( this.element );
         }
 
-        this.elmt.style.left    = position.x + "px";
-        this.elmt.style.top     = position.y + "px";
-        this.elmt.style.width   = size.x + "px";
-        this.elmt.style.height  = size.y + "px";
+        this.element.style.left    = position.x + "px";
+        this.element.style.top     = position.y + "px";
+        this.element.style.width   = size.x + "px";
+        this.element.style.height  = size.y + "px";
 
-        $.setElementOpacity( this.elmt, this.opacity );
+        $.setElementOpacity( this.element, this.opacity );
 
     },
 
@@ -139,11 +139,11 @@ $.Tile.prototype = {
      * @function
      */
     unload: function() {
-        if ( this.elmt && this.elmt.parentNode ) {
-            this.elmt.parentNode.removeChild( this.elmt );
+        if ( this.element && this.element.parentNode ) {
+            this.element.parentNode.removeChild( this.element );
         }
 
-        this.elmt    = null;
+        this.element    = null;
         this.image   = null;
         this.loaded  = false;
         this.loading = false;

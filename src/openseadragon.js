@@ -512,7 +512,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
          */
         getPageScroll: function() {
             var result  = new $.Point(),
-                docElmt = document.documentElement || {},
+                docElement = document.documentElement || {},
                 body    = document.body || {};
 
             if ( typeof( window.pageXOffset ) == "number" ) {
@@ -521,9 +521,9 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             } else if ( body.scrollLeft || body.scrollTop ) {
                 result.x = body.scrollLeft;
                 result.y = body.scrollTop;
-            } else if ( docElmt.scrollLeft || docElmt.scrollTop ) {
-                result.x = docElmt.scrollLeft;
-                result.y = docElmt.scrollTop;
+            } else if ( docElement.scrollLeft || docElement.scrollTop ) {
+                result.x = docElement.scrollLeft;
+                result.y = docElement.scrollTop;
             }
 
             return result;
@@ -537,15 +537,15 @@ OpenSeadragon = window.OpenSeadragon || (function(){
          */
         getWindowSize: function() {
             var result  = new $.Point(),
-                docElmt = document.documentElement || {},
+                docElement = document.documentElement || {},
                 body    = document.body || {};
 
             if ( typeof( window.innerWidth ) == 'number' ) {
                 result.x = window.innerWidth;
                 result.y = window.innerHeight;
-            } else if ( docElmt.clientWidth || docElmt.clientHeight ) {
-                result.x = docElmt.clientWidth;
-                result.y = docElmt.clientHeight;
+            } else if ( docElement.clientWidth || docElement.clientHeight ) {
+                result.x = docElement.clientWidth;
+                result.y = docElement.clientHeight;
             } else if ( body.clientWidth || body.clientHeight ) {
                 result.x = body.clientWidth;
                 result.y = body.clientHeight;

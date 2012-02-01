@@ -23,8 +23,8 @@
      * An Overlay provides a 
      * @class
      */
-    $.Overlay = function( elmt, location, placement ) {
-        this.elmt       = elmt;
+    $.Overlay = function( element, location, placement ) {
+        this.element       = element;
         this.scales     = location instanceof $.Rect;
         this.bounds     = new $.Rect(
             location.x, 
@@ -40,7 +40,7 @@
             location.width, 
             location.height
         );
-        this.style      = elmt.style;
+        this.style      = element.style;
         // rects are always top-left
         this.placement  = location instanceof $.Point ? 
             placement : 
@@ -86,7 +86,7 @@
         },
 
         destroy: function() {
-            var element = this.elmt,
+            var element = this.element,
                 style   = this.style;
 
             if ( element.parentNode ) {
@@ -104,7 +104,7 @@
         },
 
         drawHTML: function( container ) {
-            var element = this.elmt,
+            var element = this.element,
                 style   = this.style,
                 scales  = this.scales,
                 position,

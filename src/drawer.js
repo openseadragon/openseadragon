@@ -42,7 +42,7 @@ var QUOTA               = 100,
  * @property {Number} lastResetTime - Last time for which the drawer was reset.
  * @property {Boolean} midUpdate - Is the drawer currently updating the viewport?
  * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
- * @property {Element} elmt - DEPRECATED Alias for container.
+ * @property {Element} element - DEPRECATED Alias for container.
  */
 $.Drawer = function( source, viewport, element ) {
 
@@ -63,7 +63,7 @@ $.Drawer = function( source, viewport, element ) {
     this.lastResetTime      = 0;
     this.midUpdate          = false;
     this.updateAgain        = true;
-    this.elmt               = this.container;
+    this.element               = this.container;
     
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
@@ -801,7 +801,7 @@ function resetCoverage( coverage, level ) {
 function getOverlayIndex( overlays, element ) {
     var i;
     for ( i = overlays.length - 1; i >= 0; i-- ) {
-        if ( overlays[ i ].elmt == element ) {
+        if ( overlays[ i ].element == element ) {
             return i;
         }
     }
