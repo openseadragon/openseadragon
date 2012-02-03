@@ -141,26 +141,24 @@ $.Viewer = function( options ) {
     this._forceRedraw       = false;
     this._mouseInside       = false;
 
-    this.innerTracker = new $.MouseTracker(
-        this.canvas, 
-        this.config.clickTimeThreshold, 
-        this.config.clickDistThreshold
-    );
-    this.innerTracker.clickHandler   = $.delegate( this, onCanvasClick );
-    this.innerTracker.dragHandler    = $.delegate( this, onCanvasDrag );
-    this.innerTracker.releaseHandler = $.delegate( this, onCanvasRelease );
-    this.innerTracker.scrollHandler  = $.delegate( this, onCanvasScroll );
-    this.innerTracker.setTracking( true ); // default state
+    this.innerTracker = new $.MouseTracker({
+        element:            this.canvas, 
+        clickTimeThreshold: this.config.clickTimeThreshold, 
+        clickDistThreshold: this.config.clickDistThreshold,
+        clickHandler:       $.delegate( this, onCanvasClick ),
+        dragHandler:        $.delegate( this, onCanvasDrag ),
+        releaseHandler:     $.delegate( this, onCanvasRelease ),
+        scrollHandler:      $.delegate( this, onCanvasScroll )
+    }).setTracking( true ); // default state
 
-    this.outerTracker = new $.MouseTracker(
-        this.container, 
-        this.config.clickTimeThreshold, 
-        this.config.clickDistThreshold
-    );
-    this.outerTracker.enterHandler   = $.delegate( this, onContainerEnter );
-    this.outerTracker.exitHandler    = $.delegate( this, onContainerExit );
-    this.outerTracker.releaseHandler = $.delegate( this, onContainerRelease );
-    this.outerTracker.setTracking( true ); // always tracking
+    this.outerTracker = new $.MouseTracker({
+        element:            this.container, 
+        clickTimeThreshold: this.config.clickTimeThreshold, 
+        clickDistThreshold: this.config.clickDistThreshold,
+        enterHandler:       $.delegate( this, onContainerEnter ),
+        exitHandler:        $.delegate( this, onContainerExit ),
+        releaseHandler:     $.delegate( this, onContainerRelease )
+    }).setTracking( true ); // always tracking
 
     (function( canvas ){
         canvas.width    = "100%";
