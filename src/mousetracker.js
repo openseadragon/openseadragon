@@ -605,7 +605,6 @@
         var touchA,
             touchB;
 
-        window.location.hash = event.touches[ 0 ].target.tagName;
         if( event.touches.length == 1 &&
             event.targetTouches.length == 1 && 
             event.changedTouches.length == 1 ){

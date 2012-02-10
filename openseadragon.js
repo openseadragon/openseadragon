@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.01
+ * @version  OpenSeadragon 0.9.02
  *
  * @fileOverview 
  * <h2>
@@ -1883,7 +1883,6 @@ $.EventHandler.prototype = {
         var touchA,
             touchB;
 
-        window.location.hash = event.touches[ 0 ].target.tagName;
         if( event.touches.length == 1 &&
             event.targetTouches.length == 1 && 
             event.changedTouches.length == 1 ){
