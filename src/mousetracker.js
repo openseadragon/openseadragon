@@ -84,7 +84,7 @@
 
         //Store private properties in a scope sealed hash map
         var _this = this;
-        
+
         /**
          * @private
          * @property {Boolean} tracking
@@ -104,24 +104,28 @@
          *      Position of last mouse down
          */
         THIS[ this.hash ] = {
-            "mouseover":      function( event ){ onMouseOver( _this, event ); },
-            "mouseout":       function( event ){ onMouseOut( _this, event ); },
-            "mousedown":      function( event ){ onMouseDown( _this, event ); },
-            "mouseup":        function( event ){ onMouseUp( _this, event ); },
-            "click":          function( event ){ onMouseClick( _this, event ); },
-            "DOMMouseScroll": function( event ){ onMouseWheelSpin( _this, event ); },
-            "mousewheel":     function( event ){ onMouseWheelSpin( _this, event ); },
-            "mouseupie":      function( event ){ onMouseUpIE( _this, event ); },
-            "mousemoveie":    function( event ){ onMouseMoveIE( _this, event ); },
-            "mouseupwindow":  function( event ){ onMouseUpWindow( _this, event ); },
-            "mousemove":      function( event ){ onMouseMove( _this, event ); },
-            tracking           : false,
-            capturing          : false,
-            buttonDown         : false,
-            insideElement      : false,
-            lastPoint          : null,
-            lastMouseDownTime  : null,
-            lastMouseDownPoint : null
+            "mouseover":        function( event ){ onMouseOver( _this, event ); },
+            "mouseout":         function( event ){ onMouseOut( _this, event ); },
+            "mousedown":        function( event ){ onMouseDown( _this, event ); },
+            "mouseup":          function( event ){ onMouseUp( _this, event ); },
+            "click":            function( event ){ onMouseClick( _this, event ); },
+            "DOMMouseScroll":   function( event ){ onMouseWheelSpin( _this, event ); },
+            "mousewheel":       function( event ){ onMouseWheelSpin( _this, event ); },
+            "mouseupie":        function( event ){ onMouseUpIE( _this, event ); },
+            "mousemoveie":      function( event ){ onMouseMoveIE( _this, event ); },
+            "mouseupwindow":    function( event ){ onMouseUpWindow( _this, event ); },
+            "mousemove":        function( event ){ onMouseMove( _this, event ); },
+            "touchstart":       function( event ){ onTouchStart( _this, event ); },
+            "touchmove":        function( event ){ onTouchMove( _this, event ); },
+            "touchend":         function( event ){ onTouchEnd( _this, event ); },
+            tracking:           false,
+            capturing:          false,
+            buttonDown:         false,
+            insideElement:      false,
+            lastPoint:          null,
+            lastMouseDownTime:  null,
+            lastMouseDownPoint: null,
+            lastPinchDelta:     0
         };
 
     };
@@ -270,8 +274,10 @@
      */
     function startTracking( tracker ) {
         var events = [
-                "mouseover", "mouseout", "mousedown", "mouseup", "click",
-                "DOMMouseScroll", "mousewheel"
+                "mouseover", "mouseout", "mousedown", "mouseup", 
+                "click",
+                "DOMMouseScroll", "mousewheel", 
+                "touchstart", "touchmove", "touchend"
             ], 
             delegate = THIS[ tracker.hash ],
             event, 
@@ -299,8 +305,10 @@
      */
     function stopTracking( tracker ) {
         var events = [
-                "mouseover", "mouseout", "mousedown", "mouseup", "click",
-                "DOMMouseScroll", "mousewheel"
+                "mouseover", "mouseout", "mousedown", "mouseup", 
+                "click",
+                "DOMMouseScroll", "mousewheel", 
+                "touchstart", "touchmove", "touchend"
             ],
             delegate = THIS[ tracker.hash ],
             event, 
@@ -424,6 +432,7 @@
         }
     };
 
+
     /**
      * @private
      * @inner
@@ -437,11 +446,13 @@
         }
     };
 
+
     /**
      * @private
      * @inner
      */
     function onMouseOver( tracker, event ) {
+
         var event = $.getEvent( event ),
             delegate = THIS[ tracker.hash ];
 
@@ -485,6 +496,7 @@
             }
         }
     };
+
 
     /**
      * @private
@@ -534,6 +546,7 @@
             }
         }
     };
+
 
     /**
      * @private
@@ -588,6 +601,38 @@
      * @private
      * @inner
      */
+    function onTouchStart( tracker, event ) {
+        var touchA,
+            touchB;
+
+        window.location.hash = event.touches[ 0 ].target.tagName;
+        if( event.touches.length == 1 &&
+            event.targetTouches.length == 1 && 
+            event.changedTouches.length == 1 ){
+            
+            THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];  
+            onMouseOver( tracker, event.changedTouches[ 0 ] );
+            onMouseDown( tracker, event.touches[ 0 ] );
+        }
+
+        if( event.touches.length == 2 ){
+            
+            touchA = getMouseAbsolute( event.touches[ 0 ] );
+            touchB = getMouseAbsolute( event.touches[ 1 ] );
+            THIS[ tracker.hash ].lastPinchDelta = 
+                Math.abs( touchA.x - touchB.x ) +
+                Math.abs( touchA.y - touchB.y );
+            //$.console.debug("pinch start : "+THIS[ tracker.hash ].lastPinchDelta);
+        }
+
+        event.preventDefault();
+    };
+
+
+    /**
+     * @private
+     * @inner
+     */
     function onMouseUp( tracker, event ) {
         var event = $.getEvent( event ),
             delegate = THIS[ tracker.hash ],
@@ -625,6 +670,29 @@
         }
     };
 
+
+    /**
+     * @private
+     * @inner
+     */
+    function onTouchEnd( tracker, event ) {
+
+        if( event.touches.length == 0 &&
+            event.targetTouches.length == 0 && 
+            event.changedTouches.length == 1 ){
+
+            THIS[ tracker.hash ].lastTouch = null;
+            onMouseUp( tracker, event.changedTouches[ 0 ] );
+            onMouseOut( tracker, event.changedTouches[ 0 ] );
+        }
+        if( event.touches.length + event.changedTouches.length == 2 ){
+            THIS[ tracker.hash ].lastPinchDelta = null;
+            //$.console.debug("pinch end");
+        }
+        event.preventDefault();
+    };
+
+
     /**
      * Only triggered once by the deepest element that initially received
      * the mouse down event. We want to make sure THIS event doesn't bubble.
@@ -661,6 +729,7 @@
         $.stopEvent( event );
     };
 
+
     /**
      * Only triggered in W3C browsers by elements within which the mouse was
      * initially pressed, since they are now listening to the window for
@@ -677,6 +746,7 @@
         releaseMouse( tracker );
     };
 
+
     /**
      * @private
      * @inner
@@ -686,6 +756,7 @@
             $.cancelEvent( event );
         }
     };
+
 
     /**
      * @private
@@ -706,7 +777,9 @@
         } else if (event.detail) { // Mozilla FireFox
             nDelta = -event.detail;
         }
-
+        //The nDelta variable is gated to provide smooth z-index scrolling
+        //since the mouse wheel allows for substantial deltas meant for rapid
+        //y-index scrolling.
         nDelta = nDelta > 0 ? 1 : -1;
 
         if ( tracker.scrollHandler ) {
@@ -729,6 +802,7 @@
             $.cancelEvent( event );
         }
     };
+
 
     /**
      * @private
@@ -767,6 +841,7 @@
         }
     };
 
+
     /**
      * @private
      * @inner
@@ -798,6 +873,50 @@
 
             $.cancelEvent( event );
         }
+    };
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onTouchMove( tracker, event ) {
+        var touchA,
+            touchB,
+            pinchDelta;
+
+        if( event.touches.length === 1 &&
+            event.targetTouches.length === 1 && 
+            event.changedTouches.length === 1 && 
+            THIS[ tracker.hash ].lastTouch === event.touches[ 0 ]){
+
+            onMouseMove( tracker, event.touches[ 0 ] );
+
+        } else if (  event.touches.length === 2 ){
+
+            touchA = getMouseAbsolute( event.touches[ 0 ] );
+            touchB = getMouseAbsolute( event.touches[ 1 ] );
+            pinchDelta =
+                Math.abs( touchA.x - touchB.x ) +
+                Math.abs( touchA.y - touchB.y );
+            
+            //TODO: make the 75px pinch threshold configurable
+            if( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ){
+                //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
+
+                onMouseWheelSpin( tracker, {
+                    shift: false,
+                    pageX: ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
+                    pageY: ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2,
+                    detail:( 
+                        THIS[ tracker.hash ].lastPinchDelta > pinchDelta 
+                    ) ? 1 : -1
+                });
+
+                THIS[ tracker.hash ].lastPinchDelta = pinchDelta;
+            }
+        }
+        event.preventDefault();
     };
 
     /**

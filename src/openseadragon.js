@@ -371,9 +371,18 @@ OpenSeadragon = window.OpenSeadragon || (function(){
      * function when console is unavailable.
      * @static
      */
-    $.console = window.console ? window.console : function(){};
+    var nullfunction = function( msg ){
+            //document.location.hash = msg;
+        };
 
-
+    $.console = window.console || {
+        log:    nullfunction,
+        debug:  nullfunction,
+        info:   nullfunction,
+        warn:   nullfunction,
+        error:  nullfunction
+    };
+        
     $.extend( $, {
 
         /**
@@ -384,7 +393,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
          * @returns {Element} The element with the given id, null, or the element itself.
          */
         getElement: function( element ) { 
-            if ( typeof ( element ) == "string") {
+            if ( typeof ( element ) == "string" ) {
                 element = document.getElementById( element );
             }
             return element;

@@ -132,6 +132,7 @@ $.Viewer = function( options ) {
     this.bodyHeight     = document.body.style.height;
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
+    this.previousBody   = [];
 
     this._fsBoundsDelta     = new $.Point( 1, 1 );
     this._prevContainerSize = null;
@@ -557,8 +558,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     },
 
     /**
+     * Toggle full page mode.
      * @function
      * @name OpenSeadragon.Viewer.prototype.setFullPage
+     * @param {Boolean} fullPage
+     *      If true, enter full page mode.  If false, exit full page mode.
      */
     setFullPage: function( fullPage ) {
 
@@ -568,8 +572,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle  = this.container.style,
             canvasStyle     = this.canvas.style,
             oldBounds,
-            newBounds;
+            newBounds,
+            nodes,
+            i;
         
+        //dont bother modifying the DOM if we are already in full page mode.
         if ( fullPage == this.isFullPage() ) {
             return;
         }
@@ -592,11 +599,23 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.position = "fixed";
             containerStyle.zIndex   = "99999999";
 
+            //when entering full screen on the ipad it wasnt sufficient to leave
+            //the body intact as only only the top half of the screen would 
+            //respond to touch events on the canvas, while the bottom half treated
+            //them as touch events on the document body.  Thus we remove and store
+            //the bodies elements and replace them when we leave full screen.
+            this.previousBody = [];
+            nodes = document.body.childNodes.length;
+            for ( i = 0; i < nodes; i ++ ){
+                this.previousBody.push( document.body.childNodes[ 0 ] );
+                document.body.removeChild( document.body.childNodes[ 0 ] );
+            }
             body.appendChild( this.container );
             this._prevContainerSize = $.getWindowSize();
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
+
 
         } else {
             
@@ -612,6 +631,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.position = "relative";
             containerStyle.zIndex   = "";
 
+            document.body.removeChild( this.container );
+            nodes = this.previousBody.length;
+            for ( i = 0; i < nodes; i++ ){
+                document.body.appendChild( this.previousBody.shift() );
+            }
             this.element.appendChild( this.container );
             this._prevContainerSize = $.getElementSize( this.element );
             
