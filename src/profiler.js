@@ -2,7 +2,19 @@
 (function( $ ){
 
 /**
+ * A utility class useful for developers to establish baseline performance 
+ * metrics of rendering routines.
  * @class
+ * @property {Boolean} midUpdate
+ * @property {Number} numUpdates
+ * @property {Number} lastBeginTime
+ * @property {Number} lastEndTime
+ * @property {Number} minUpdateTime
+ * @property {Number} avgUpdateTime
+ * @property {Number} maxUpdateTime
+ * @property {Number} minIdleTime
+ * @property {Number} avgIdleTime
+ * @property {Number} maxIdleTime
  */
 $.Profiler = function() {
 
@@ -23,6 +35,9 @@ $.Profiler = function() {
 
 $.Profiler.prototype = {
 
+    /**
+     * @function
+     */
     beginUpdate: function() {
         if (this.midUpdate) {
             this.endUpdate();
@@ -47,6 +62,9 @@ $.Profiler.prototype = {
         }
     },
 
+    /**
+     * @function
+     */
     endUpdate: function() {
         if (!this.midUpdate) {
             return;
@@ -68,6 +86,9 @@ $.Profiler.prototype = {
         }
     },
 
+    /**
+     * @function
+     */
     clearProfile: function() {
         this.midUpdate = false;
         this.numUpdates = 0;

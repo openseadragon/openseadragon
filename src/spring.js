@@ -3,6 +3,19 @@
     
 /**
  * @class
+ * @param {Object} options - Spring configuration settings.
+ * @param {Number} options.initial - Initial value of spring, default to 0 so 
+ *  spring is not in motion initally by default.
+ * @param {Number} options.springStiffness - Spring stiffness.
+ * @param {Number} options.animationTime - Animation duration per spring.
+ * 
+ * @property {Number} initial - Initial value of spring, default to 0 so 
+ *  spring is not in motion initally by default.
+ * @property {Number} springStiffness - Spring stiffness.
+ * @property {Number} animationTime - Animation duration per spring.
+ * @property {Object} current 
+ * @property {Number} start
+ * @property {Number} target
  */
 $.Spring = function( options ) {
     var args = arguments;
@@ -46,6 +59,10 @@ $.Spring = function( options ) {
 
 $.Spring.prototype = {
 
+    /**
+     * @function
+     * @param {Number} target
+     */
     resetTo: function( target ) {
         this.target.value = target;
         this.target.time  = this.current.time;
@@ -53,6 +70,10 @@ $.Spring.prototype = {
         this.start.time   = this.target.time;
     },
 
+    /**
+     * @function
+     * @param {Number} target
+     */
     springTo: function( target ) {
         this.start.value  = this.current.value;
         this.start.time   = this.current.time;
@@ -60,11 +81,18 @@ $.Spring.prototype = {
         this.target.time  = this.start.time + 1000 * this.animationTime;
     },
 
+    /**
+     * @function
+     * @param {Number} delta
+     */
     shiftBy: function( delta ) {
         this.start.value  += delta;
         this.target.value += delta;
     },
 
+    /**
+     * @function
+     */
     update: function() {
         this.current.time  = new Date().getTime();
         this.current.value = (this.current.time >= this.target.time) ? 
@@ -79,7 +107,9 @@ $.Spring.prototype = {
     }
 }
 
-
+/**
+ * @private
+ */
 function transform( stiffness, x ) {
     return ( 1.0 - Math.exp( stiffness * -x ) ) / 
         ( 1.0 - Math.exp( -stiffness ) );

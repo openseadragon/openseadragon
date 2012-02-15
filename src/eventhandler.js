@@ -2,6 +2,7 @@
 (function($){
 
 /**
+ * For use by classes which want to support custom, non-browser events.
  * @class
  */
 $.EventHandler = function() {
@@ -10,27 +11,44 @@ $.EventHandler = function() {
 
 $.EventHandler.prototype = {
 
-    addHandler: function( id, handler ) {
-        var events = this.events[ id ];
+    /**
+     * Add an event handler for a given event.
+     * @function
+     * @param {String} eventName - Name of event to register.
+     * @param {Function} handler - Function to call when event is triggered.
+     */
+    addHandler: function( eventName, handler ) {
+        var events = this.events[ eventName ];
         if( !events ){
-            this.events[ id ] = events = [];
+            this.events[ eventName ] = events = [];
         }
         events[ events.length ] = handler;
     },
 
-    removeHandler: function( id, handler ) {
+    /**
+     * Remove a specific event handler for a given event.
+     * @function
+     * @param {String} eventName - Name of event for which the handler is to be removed.
+     * @param {Function} handler - Function to be removed.
+     */
+    removeHandler: function( eventName, handler ) {
         //Start Thatcher - unneccessary indirection.  Also, because events were
         //               - not actually being removed, we need to add the code
         //               - to do the removal ourselves. TODO
-        var events = this.events[ id ];
+        var events = this.events[ eventName ];
         if ( !events ){ 
             return; 
         }
         //End Thatcher
     },
 
-    getHandler: function( id ) {
-        var events = this.events[ id ]; 
+    /**
+     * Retrive the list of all handlers registered for a given event.
+     * @function
+     * @param {String} eventName - Name of event to get handlers for.
+     */
+    getHandler: function( eventName ) {
+        var events = this.events[ eventName ]; 
         if ( !events || !events.length ){ 
             return null; 
         }
@@ -46,6 +64,12 @@ $.EventHandler.prototype = {
         };
     },
 
+    /**
+     * Trigger an event, optionally passing additional information.
+     * @function
+     * @param {String} eventName - Name of event to register.
+     * @param {Function} handler - Function to call when event is triggered.
+     */
     raiseEvent: function( eventName, eventArgs ) {
         var handler = this.getHandler( eventName );
 

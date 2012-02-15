@@ -49,6 +49,11 @@
 
     $.Overlay.prototype = {
 
+        /**
+         * @function
+         * @param {OpenSeadragon.OverlayPlacement} position
+         * @param {OpenSeadragon.Point} size
+         */
         adjust: function( position, size ) {
             switch ( this.placement ) {
                 case $.OverlayPlacement.TOP_LEFT:
@@ -85,6 +90,9 @@
             }
         },
 
+        /**
+         * @function
+         */
         destroy: function() {
             var element = this.element,
                 style   = this.style;
@@ -103,6 +111,10 @@
             }
         },
 
+        /**
+         * @function
+         * @param {Element} container
+         */
         drawHTML: function( container ) {
             var element = this.element,
                 style   = this.style,
@@ -136,6 +148,11 @@
             }
         },
 
+        /**
+         * @function
+         * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location
+         * @param {OpenSeadragon.OverlayPlacement} position
+         */
         update: function( location, placement ) {
             this.scales     = location instanceof $.Rect;
             this.bounds     = new $.Rect( 

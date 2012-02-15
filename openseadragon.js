@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.02
+ * @version  OpenSeadragon 0.9.03
  *
  * @fileOverview 
  * <h2>
@@ -370,6 +370,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
      * A convenient alias for console when available, and a simple null 
      * function when console is unavailable.
      * @static
+     * @private
      */
     var nullfunction = function( msg ){
             //document.location.hash = msg;
@@ -1218,6 +1219,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 (function($){
 
 /**
+ * For use by classes which want to support custom, non-browser events.
  * @class
  */
 $.EventHandler = function() {
@@ -1226,27 +1228,44 @@ $.EventHandler = function() {
 
 $.EventHandler.prototype = {
 
-    addHandler: function( id, handler ) {
-        var events = this.events[ id ];
+    /**
+     * Add an event handler for a given event.
+     * @function
+     * @param {String} eventName - Name of event to register.
+     * @param {Function} handler - Function to call when event is triggered.
+     */
+    addHandler: function( eventName, handler ) {
+        var events = this.events[ eventName ];
         if( !events ){
-            this.events[ id ] = events = [];
+            this.events[ eventName ] = events = [];
         }
         events[ events.length ] = handler;
     },
 
-    removeHandler: function( id, handler ) {
+    /**
+     * Remove a specific event handler for a given event.
+     * @function
+     * @param {String} eventName - Name of event for which the handler is to be removed.
+     * @param {Function} handler - Function to be removed.
+     */
+    removeHandler: function( eventName, handler ) {
         //Start Thatcher - unneccessary indirection.  Also, because events were
         //               - not actually being removed, we need to add the code
         //               - to do the removal ourselves. TODO
-        var events = this.events[ id ];
+        var events = this.events[ eventName ];
         if ( !events ){ 
             return; 
         }
         //End Thatcher
     },
 
-    getHandler: function( id ) {
-        var events = this.events[ id ]; 
+    /**
+     * Retrive the list of all handlers registered for a given event.
+     * @function
+     * @param {String} eventName - Name of event to get handlers for.
+     */
+    getHandler: function( eventName ) {
+        var events = this.events[ eventName ]; 
         if ( !events || !events.length ){ 
             return null; 
         }
@@ -1262,6 +1281,12 @@ $.EventHandler.prototype = {
         };
     },
 
+    /**
+     * Trigger an event, optionally passing additional information.
+     * @function
+     * @param {String} eventName - Name of event to register.
+     * @param {Function} handler - Function to call when event is triggered.
+     */
     raiseEvent: function( eventName, eventArgs ) {
         var handler = this.getHandler( eventName );
 
@@ -3427,6 +3452,11 @@ var I18N = {
 
 $.extend( $, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.getString
+     * @param {String} property
+     */
     getString: function( prop ) {
         
         var props   = prop.split('.'),
@@ -3450,6 +3480,12 @@ $.extend( $, {
         });
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.setString
+     * @param {String} property
+     * @param {*} value
+     */
     setString: function( prop, value ) {
 
         var props     = prop.split('.'),
@@ -4390,6 +4426,19 @@ $.extend( $.DisplayRect.prototype, $.Rect.prototype );
     
 /**
  * @class
+ * @param {Object} options - Spring configuration settings.
+ * @param {Number} options.initial - Initial value of spring, default to 0 so 
+ *  spring is not in motion initally by default.
+ * @param {Number} options.springStiffness - Spring stiffness.
+ * @param {Number} options.animationTime - Animation duration per spring.
+ * 
+ * @property {Number} initial - Initial value of spring, default to 0 so 
+ *  spring is not in motion initally by default.
+ * @property {Number} springStiffness - Spring stiffness.
+ * @property {Number} animationTime - Animation duration per spring.
+ * @property {Object} current 
+ * @property {Number} start
+ * @property {Number} target
  */
 $.Spring = function( options ) {
     var args = arguments;
@@ -4433,6 +4482,10 @@ $.Spring = function( options ) {
 
 $.Spring.prototype = {
 
+    /**
+     * @function
+     * @param {Number} target
+     */
     resetTo: function( target ) {
         this.target.value = target;
         this.target.time  = this.current.time;
@@ -4440,6 +4493,10 @@ $.Spring.prototype = {
         this.start.time   = this.target.time;
     },
 
+    /**
+     * @function
+     * @param {Number} target
+     */
     springTo: function( target ) {
         this.start.value  = this.current.value;
         this.start.time   = this.current.time;
@@ -4447,11 +4504,18 @@ $.Spring.prototype = {
         this.target.time  = this.start.time + 1000 * this.animationTime;
     },
 
+    /**
+     * @function
+     * @param {Number} delta
+     */
     shiftBy: function( delta ) {
         this.start.value  += delta;
         this.target.value += delta;
     },
 
+    /**
+     * @function
+     */
     update: function() {
         this.current.time  = new Date().getTime();
         this.current.value = (this.current.time >= this.target.time) ? 
@@ -4466,7 +4530,9 @@ $.Spring.prototype = {
     }
 }
 
-
+/**
+ * @private
+ */
 function transform( stiffness, x ) {
     return ( 1.0 - Math.exp( stiffness * -x ) ) / 
         ( 1.0 - Math.exp( -stiffness ) );
@@ -4677,6 +4743,11 @@ $.Tile.prototype = {
 
     $.Overlay.prototype = {
 
+        /**
+         * @function
+         * @param {OpenSeadragon.OverlayPlacement} position
+         * @param {OpenSeadragon.Point} size
+         */
         adjust: function( position, size ) {
             switch ( this.placement ) {
                 case $.OverlayPlacement.TOP_LEFT:
@@ -4713,6 +4784,9 @@ $.Tile.prototype = {
             }
         },
 
+        /**
+         * @function
+         */
         destroy: function() {
             var element = this.element,
                 style   = this.style;
@@ -4731,6 +4805,10 @@ $.Tile.prototype = {
             }
         },
 
+        /**
+         * @function
+         * @param {Element} container
+         */
         drawHTML: function( container ) {
             var element = this.element,
                 style   = this.style,
@@ -4764,6 +4842,11 @@ $.Tile.prototype = {
             }
         },
 
+        /**
+         * @function
+         * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location
+         * @param {OpenSeadragon.OverlayPlacement} position
+         */
         update: function( location, placement ) {
             this.scales     = location instanceof $.Rect;
             this.bounds     = new $.Rect( 
@@ -5727,6 +5810,9 @@ $.Viewport = function( options ) {
 
 $.Viewport.prototype = {
 
+    /**
+     * @function
+     */
     getHomeZoom: function() {
         var aspectFactor = this.contentAspect / this.getAspectRatio();
         return ( aspectFactor >= 1 ) ? 
@@ -5734,6 +5820,9 @@ $.Viewport.prototype = {
             aspectFactor;
     },
 
+    /**
+     * @function
+     */
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom()
             zoom = this.minZoomImageRatio * homeZoom;
@@ -5741,6 +5830,9 @@ $.Viewport.prototype = {
         return Math.min( zoom, homeZoom );
     },
 
+    /**
+     * @function
+     */
     getMaxZoom: function() {
         var zoom = 
             this.contentSize.x * 
@@ -5749,10 +5841,16 @@ $.Viewport.prototype = {
         return Math.max( zoom, this.getHomeZoom() );
     },
 
+    /**
+     * @function
+     */
     getAspectRatio: function() {
         return this.containerSize.x / this.containerSize.y;
     },
 
+    /**
+     * @function
+     */
     getContainerSize: function() {
         return new $.Point(
             this.containerSize.x, 
@@ -5760,6 +5858,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     getBounds: function( current ) {
         var center = this.getCenter( current ),
             width  = 1.0 / this.getZoom( current ),
@@ -5773,6 +5874,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     getCenter: function( current ) {
         var centerCurrent = new $.Point(
                 this.centerSpringX.current.value,
@@ -5820,6 +5924,9 @@ $.Viewport.prototype = {
         return centerTarget.plus( deltaZoomPoints );
     },
 
+    /**
+     * @function
+     */
     getZoom: function( current ) {
         if ( current ) {
             return this.zoomSpring.current.value;
@@ -5829,6 +5936,9 @@ $.Viewport.prototype = {
     },
 
 
+    /**
+     * @function
+     */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
             constrainedZoom = Math.max(
@@ -5882,12 +5992,18 @@ $.Viewport.prototype = {
         }
     },
 
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
     ensureVisible: function( immediately ) {
         this.applyConstraints( immediately );
     },
 
     /**
-     * 
+     * @function
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
      */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
@@ -5937,6 +6053,10 @@ $.Viewport.prototype = {
         this.zoomTo( newZoom, referencePoint, immediately );
     },
 
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
     goHome: function( immediately ) {
         var center = this.getCenter();
 
@@ -5957,6 +6077,11 @@ $.Viewport.prototype = {
         this.fitBounds( this.homeBounds, immediately );
     },
 
+    /**
+     * @function
+     * @param {OpenSeadragon.Point} delta
+     * @param {Boolean} immediately
+     */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
             this.centerSpringX.target.value,
@@ -5965,6 +6090,11 @@ $.Viewport.prototype = {
         this.panTo( center.plus( delta ), immediately );
     },
 
+    /**
+     * @function
+     * @param {OpenSeadragon.Point} center
+     * @param {Boolean} immediately
+     */
     panTo: function( center, immediately ) {
         if ( immediately ) {
             this.centerSpringX.resetTo( center.x );
@@ -5975,10 +6105,16 @@ $.Viewport.prototype = {
         }
     },
 
+    /**
+     * @function
+     */
     zoomBy: function( factor, refPoint, immediately ) {
         this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
+    /**
+     * @function
+     */
     zoomTo: function( zoom, refPoint, immediately ) {
 
         if ( immediately ) {
@@ -5992,6 +6128,9 @@ $.Viewport.prototype = {
             null;
     },
 
+    /**
+     * @function
+     */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
@@ -6010,6 +6149,9 @@ $.Viewport.prototype = {
         this.fitBounds( newBounds, true );
     },
 
+    /**
+     * @function
+     */
     update: function() {
         var oldCenterX = this.centerSpringX.current.value,
             oldCenterY = this.centerSpringY.current.value,
@@ -6045,18 +6187,27 @@ $.Viewport.prototype = {
     },
 
 
+    /**
+     * @function
+     */
     deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
+    /**
+     * @function
+     */
     deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
+    /**
+     * @function
+     */
     pixelFromPoint: function( point, current ) {
         var bounds = this.getBounds( current );
         return point.minus(
@@ -6066,6 +6217,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
         return pixel.divide(

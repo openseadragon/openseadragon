@@ -33,6 +33,11 @@ var I18N = {
 
 $.extend( $, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.getString
+     * @param {String} property
+     */
     getString: function( prop ) {
         
         var props   = prop.split('.'),
@@ -56,6 +61,12 @@ $.extend( $, {
         });
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.setString
+     * @param {String} property
+     * @param {*} value
+     */
     setString: function( prop, value ) {
 
         var props     = prop.split('.'),

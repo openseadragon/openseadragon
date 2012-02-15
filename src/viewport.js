@@ -54,6 +54,9 @@ $.Viewport = function( options ) {
 
 $.Viewport.prototype = {
 
+    /**
+     * @function
+     */
     getHomeZoom: function() {
         var aspectFactor = this.contentAspect / this.getAspectRatio();
         return ( aspectFactor >= 1 ) ? 
@@ -61,6 +64,9 @@ $.Viewport.prototype = {
             aspectFactor;
     },
 
+    /**
+     * @function
+     */
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom()
             zoom = this.minZoomImageRatio * homeZoom;
@@ -68,6 +74,9 @@ $.Viewport.prototype = {
         return Math.min( zoom, homeZoom );
     },
 
+    /**
+     * @function
+     */
     getMaxZoom: function() {
         var zoom = 
             this.contentSize.x * 
@@ -76,10 +85,16 @@ $.Viewport.prototype = {
         return Math.max( zoom, this.getHomeZoom() );
     },
 
+    /**
+     * @function
+     */
     getAspectRatio: function() {
         return this.containerSize.x / this.containerSize.y;
     },
 
+    /**
+     * @function
+     */
     getContainerSize: function() {
         return new $.Point(
             this.containerSize.x, 
@@ -87,6 +102,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     getBounds: function( current ) {
         var center = this.getCenter( current ),
             width  = 1.0 / this.getZoom( current ),
@@ -100,6 +118,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     getCenter: function( current ) {
         var centerCurrent = new $.Point(
                 this.centerSpringX.current.value,
@@ -147,6 +168,9 @@ $.Viewport.prototype = {
         return centerTarget.plus( deltaZoomPoints );
     },
 
+    /**
+     * @function
+     */
     getZoom: function( current ) {
         if ( current ) {
             return this.zoomSpring.current.value;
@@ -156,6 +180,9 @@ $.Viewport.prototype = {
     },
 
 
+    /**
+     * @function
+     */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
             constrainedZoom = Math.max(
@@ -209,12 +236,18 @@ $.Viewport.prototype = {
         }
     },
 
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
     ensureVisible: function( immediately ) {
         this.applyConstraints( immediately );
     },
 
     /**
-     * 
+     * @function
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
      */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
@@ -264,6 +297,10 @@ $.Viewport.prototype = {
         this.zoomTo( newZoom, referencePoint, immediately );
     },
 
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
     goHome: function( immediately ) {
         var center = this.getCenter();
 
@@ -284,6 +321,11 @@ $.Viewport.prototype = {
         this.fitBounds( this.homeBounds, immediately );
     },
 
+    /**
+     * @function
+     * @param {OpenSeadragon.Point} delta
+     * @param {Boolean} immediately
+     */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
             this.centerSpringX.target.value,
@@ -292,6 +334,11 @@ $.Viewport.prototype = {
         this.panTo( center.plus( delta ), immediately );
     },
 
+    /**
+     * @function
+     * @param {OpenSeadragon.Point} center
+     * @param {Boolean} immediately
+     */
     panTo: function( center, immediately ) {
         if ( immediately ) {
             this.centerSpringX.resetTo( center.x );
@@ -302,10 +349,16 @@ $.Viewport.prototype = {
         }
     },
 
+    /**
+     * @function
+     */
     zoomBy: function( factor, refPoint, immediately ) {
         this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
+    /**
+     * @function
+     */
     zoomTo: function( zoom, refPoint, immediately ) {
 
         if ( immediately ) {
@@ -319,6 +372,9 @@ $.Viewport.prototype = {
             null;
     },
 
+    /**
+     * @function
+     */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
@@ -337,6 +393,9 @@ $.Viewport.prototype = {
         this.fitBounds( newBounds, true );
     },
 
+    /**
+     * @function
+     */
     update: function() {
         var oldCenterX = this.centerSpringX.current.value,
             oldCenterY = this.centerSpringY.current.value,
@@ -372,18 +431,27 @@ $.Viewport.prototype = {
     },
 
 
+    /**
+     * @function
+     */
     deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
+    /**
+     * @function
+     */
     deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
             this.containerSize.x * this.getZoom( current )
         );
     },
 
+    /**
+     * @function
+     */
     pixelFromPoint: function( point, current ) {
         var bounds = this.getBounds( current );
         return point.minus(
@@ -393,6 +461,9 @@ $.Viewport.prototype = {
         );
     },
 
+    /**
+     * @function
+     */
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
         return pixel.divide(

@@ -370,6 +370,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
      * A convenient alias for console when available, and a simple null 
      * function when console is unavailable.
      * @static
+     * @private
      */
     var nullfunction = function( msg ){
             //document.location.hash = msg;
