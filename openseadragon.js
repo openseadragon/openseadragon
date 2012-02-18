@@ -2759,6 +2759,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.isOpen
+     * @return {Boolean}
      */
     isOpen: function () {
         return !!this.source;
@@ -2771,6 +2772,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi and xml string or the url to a DZI xml document.
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     openDzi: function ( dzi ) {
         var _this = this;
@@ -2780,22 +2782,26 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
                _this.open( source );
             }
         );
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     openTileSource: function ( tileSource ) {
         var _this = this;
         window.setTimeout( function () {
             _this.open( tileSource );
         }, 1 );
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.open
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     open: function( source ) {
         var _this = this,
@@ -2877,11 +2883,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             }
         }
         this.raiseEvent( "open" );
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.close
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function () {
         this.source     = null;
@@ -2889,11 +2897,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         this.drawer     = null;
         //this.profiler   = null;
         this.canvas.innerHTML = "";
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.removeControl
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     removeControl: function ( element ) {
         
@@ -2904,21 +2914,26 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             this.controls[ i ].destroy();
             this.controls.splice( i, 1 );
         }
+
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.clearControls
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     clearControls: function () {
         while ( this.controls.length > 0 ) {
             this.controls.pop().destroy();
         }
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
+     * @return {Boolean}
      */
     isDashboardEnabled: function () {
         var i;
@@ -2935,6 +2950,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.isFullPage
+     * @return {Boolean}
      */
     isFullPage: function () {
         return this.container.parentNode == document.body;
@@ -2943,6 +2959,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.isMouseNavEnabled
+     * @return {Boolean}
      */
     isMouseNavEnabled: function () {
         return this.innerTracker.isTracking();
@@ -2951,6 +2968,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.isVisible
+     * @return {Boolean}
      */
     isVisible: function () {
         return this.container.style.visibility != "hidden";
@@ -2959,12 +2977,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     setDashboardEnabled: function( enabled ) {
         var i;
         for ( i = this.controls.length - 1; i >= 0; i-- ) {
             this.controls[ i ].setVisible( enabled );
         }
+        return this;
     },
 
     /**
@@ -2973,6 +2993,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @name OpenSeadragon.Viewer.prototype.setFullPage
      * @param {Boolean} fullPage
      *      If true, enter full page mode.  If false, exit full page mode.
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     setFullPage: function( fullPage ) {
 
@@ -3080,22 +3101,27 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             this.raiseEvent( "resize", this );
             updateOnce( this );
         }
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
+        return this;
     },
 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.setVisible
+     * @return {OpenSeadragon.Viewer} Chainable.
      */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
+        return this;
     }
 
 });
@@ -3976,10 +4002,10 @@ $.Button = function( options ) {
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this.imgRest    = $.makeTransparentImage( this.srcRest );
-    this.imgGroup   = $.makeTransparentImage( this.srcGroup );
-    this.imgHover   = $.makeTransparentImage( this.srcHover );
-    this.imgDown    = $.makeTransparentImage( this.srcDown );
+    this.imgRest    = $.makeTransparentImage( this.config.prefixURL + this.srcRest );
+    this.imgGroup   = $.makeTransparentImage( this.config.prefixURL + this.srcGroup );
+    this.imgHover   = $.makeTransparentImage( this.config.prefixURL + this.srcHover );
+    this.imgDown    = $.makeTransparentImage( this.config.prefixURL + this.srcDown );
 
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds

@@ -88,10 +88,10 @@ $.Button = function( options ) {
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this.imgRest    = $.makeTransparentImage( this.srcRest );
-    this.imgGroup   = $.makeTransparentImage( this.srcGroup );
-    this.imgHover   = $.makeTransparentImage( this.srcHover );
-    this.imgDown    = $.makeTransparentImage( this.srcDown );
+    this.imgRest    = $.makeTransparentImage( this.config.prefixURL + this.srcRest );
+    this.imgGroup   = $.makeTransparentImage( this.config.prefixURL + this.srcGroup );
+    this.imgHover   = $.makeTransparentImage( this.config.prefixURL + this.srcHover );
+    this.imgDown    = $.makeTransparentImage( this.config.prefixURL + this.srcDown );
 
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds
