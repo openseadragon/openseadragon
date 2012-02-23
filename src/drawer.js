@@ -225,7 +225,7 @@ $.Drawer.prototype = {
             image,
             jobid,
             complete;
-
+        
         if ( !this.config.imageLoaderLimit || 
               this.downloading < this.config.imageLoaderLimit ) {
             
@@ -278,6 +278,7 @@ $.Drawer.prototype = {
  * why there are so many TODO's inside this function.
  */
 function updateViewport( drawer ) {
+    
     drawer.updateAgain = false;
 
     var tile,
@@ -306,7 +307,13 @@ function updateViewport( drawer ) {
                 Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
                 Math.log( 2 )
             )
-        );
+        ),
+        renderPixelRatioC,
+        renderPixelRatioT,
+        zeroRatioT,
+        optimalRatio,
+        levelOpacity,
+        levelVisibility;
 
     //TODO
     while ( drawer.lastDrawn.length > 0 ) {
@@ -348,11 +355,47 @@ function updateViewport( drawer ) {
     //TODO
     for ( level = highestLevel; level >= lowestLevel; level-- ) {
 
+        //Avoid calculations for draw if we have already drawn this
+        renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
+            drawer.source.getPixelRatio( level ), 
+            true
+        ).x;
+
+        if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
+             ( level == lowestLevel ) ) {
+            drawLevel = true;
+            haveDrawn = true;
+        } else if ( !haveDrawn ) {
+            continue;
+        }
+
+        renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
+            drawer.source.getPixelRatio( level ), 
+            false
+        ).x;
+
+        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
+            drawer.source.getPixelRatio( 0 ), 
+            false
+        ).x;
+        
+        optimalRatio    = drawer.config.immediateRender ? 
+            1 : 
+            zeroRatioT;
+
+        levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
+        
+        levelVisibility = optimalRatio / Math.abs( 
+            optimalRatio - renderPixelRatioT 
+        );
+
         //TODO
         best = updateLevel(
             drawer, 
+            haveDrawn,
             level, 
-            lowestLevel, 
+            levelOpacity,
+            levelVisibility,
             viewportTL, 
             viewportBR, 
             currentTime, 
@@ -378,54 +421,19 @@ function updateViewport( drawer ) {
 };
 
 
-function updateLevel( drawer, level, lowestLevel, viewportTL, viewportBR, currentTime, best ){
+function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
+    
     var x, y,
         tileTL,
         tileBR,
         numberOfTiles,
-        levelOpacity,
-        levelVisibility,
-        renderPixelRatioC,
-        renderPixelRatioT,
-        haveDrawn       = false,
-        drawLevel       = false,
-        viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() ),
-        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
-            drawer.source.getPixelRatio( 0 ), 
-            false
-        ).x,
-        optimalRatio    = drawer.config.immediateRender ? 
-            1 : 
-            zeroRatioT;
+        viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() );
 
-    //Avoid calculations for draw if we have already drawn this
-    renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
-        drawer.source.getPixelRatio( level ), 
-        true
-    ).x;
-
-    if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
-         ( level == lowestLevel ) ) {
-        drawLevel = true;
-        haveDrawn = true;
-    } else if ( !haveDrawn ) {
-        return best;
-    }
 
     //OK, a new drawing so do your calculations
     tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
     tileBR    = drawer.source.getTileAtPoint( level, viewportBR );
     numberOfTiles  = drawer.source.getNumTiles( level );
-
-    renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
-        drawer.source.getPixelRatio( level ), 
-        false
-    ).x;
-
-    levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
-    levelVisibility = optimalRatio / Math.abs( 
-        optimalRatio - renderPixelRatioT 
-    );
 
     resetCoverage( drawer.coverage, level );
 
