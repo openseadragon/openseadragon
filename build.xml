@@ -29,6 +29,7 @@
             <!--file name="src/profiler.js" /-->
             <file name="src/tilesource.js" />
             <file name="src/dzitilesource.js" />
+            <file name="src/legacytilesource.js" />
             <file name="src/button.js" />
             <file name="src/buttongroup.js" />
             <file name="src/rectangle.js" />
