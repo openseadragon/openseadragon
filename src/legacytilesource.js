@@ -23,7 +23,7 @@
  * @property {Number} maxLevel
  * @property {Array} files
  */ 
-$.LegacyTileSource = function( files, viewer ) {
+$.LegacyTileSource = function( files ) {
     var width   = files[ files.length - 1 ].width,
         height  = files[ files.length - 1 ].height;
 

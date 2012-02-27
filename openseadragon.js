@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.12
+ * @version  OpenSeadragon 0.9.13
  *
  * @fileOverview 
  * <h2>
@@ -2410,6 +2410,10 @@ $.Control.prototype = {
 }( OpenSeadragon ));
 
 (function( $ ){
+     
+// dictionary from hash to private properties
+var THIS = {};   
+
 /**
  *
  * The main point of entry into creating a zoomable image on the page.
@@ -2457,6 +2461,8 @@ $.Viewer = function( options ) {
     $.extend( true, this, { 
         id:                 options.id,
         xmlPath:            null,
+        dzis:               null, 
+        images:             null, 
         prefixUrl:          '',
         controls:           [],
         overlays:           [],
@@ -2538,19 +2544,25 @@ $.Viewer = function( options ) {
     this.canvas         = $.makeNeutralElement( "div" );
 
     //Used for toggling between fullscreen and default container size
+    //TODO: these can be closure private and shared across Viewer
+    //      instances.
     this.bodyWidth      = document.body.style.width;
     this.bodyHeight     = document.body.style.height;
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
     this.previousBody   = [];
 
-    this._fsBoundsDelta     = new $.Point( 1, 1 );
-    this._prevContainerSize = null;
-    this._lastOpenStartTime = 0;
-    this._lastOpenEndTime   = 0;
-    this._animating         = false;
-    this._forceRedraw       = false;
-    this._mouseInside       = false;
+    this.hash           = Math.random(); 
+
+    THIS[ this.hash ] = {
+        "fsBoundsDelta":     new $.Point( 1, 1 ),
+        "prevContainerSize": null,
+        "lastOpenStartTime": 0,
+        "lastOpenEndTime":   0,
+        "animating":         false,
+        "forceRedraw":       false,
+        "mouseInside":       false
+    };
 
     this.innerTracker = new $.MouseTracker({
         element:            this.canvas, 
@@ -2614,13 +2626,15 @@ $.Viewer = function( options ) {
     //////////////////////////////////////////////////////////////////////////
     // Navigation Controls
     //////////////////////////////////////////////////////////////////////////
-    this._group         = null; 
-    // whether we should be continuously zooming
-    this._zooming       = false;
-    // how much we should be continuously zooming by
-    this._zoomFactor    = null;  
-    this._lastZoomTime  = null;
-    
+    $.extend( THIS[ this.hash ], {
+        "group":        null,
+        // whether we should be continuously zooming
+        "zooming":      false,
+        // how much we should be continuously zooming by
+        "zoomFactor":   null,  
+        "lastZoomTime": null
+    });
+
     var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
         endZoomingHandler       = $.delegate( this, endZooming ),
         doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
@@ -2686,7 +2700,7 @@ $.Viewer = function( options ) {
     if ( this.config.showNavigationControl ) {
         this.navControl.style.marginRight = "4px";
         this.navControl.style.marginBottom = "4px";
-        this.addControl(this.navControl, $.ControlAnchor.BOTTOM_RIGHT);
+        this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
     }
 
     for ( i = 0; i < this.customControls.length; i++ ) {
@@ -2707,8 +2721,47 @@ $.Viewer = function( options ) {
         beginControlsAutoHide( _this );
     }, 1 );    // initial fade out
 
-    if ( this.xmlPath ){
+    var initialTileSource,
+        customTileSource;
+
+    if ( this.xmlPath  ){
+        //Deprecated option.  Now it is preferred to use the tileSources option
         this.openDzi( this.xmlPath );
+    } else if ( this.tileSources  ){
+        //tileSource is a complex option...
+        //It can be a string, object, function, or an array of any of these.
+        //A string implies a DZI
+        //An object implies a simple image
+        //A function implies a custom tile source callback
+        //An array implies a sequence of tile sources which can be any of the
+        //above
+        if( $.isArray( this.tileSources ) ){
+            if( $.isPlainObject( this.tileSources[ 0 ] ) ){
+                //This is a non-sequenced legacy tile source
+                initialTileSource = this.tileSources;
+            } else {
+                //Sequenced tile source
+                initialTileSource = this.tileSources[ 0 ];
+            }
+        } else {
+            initialTileSource = this.tileSources
+        }
+
+        if ( $.type( initialTileSource ) == 'string ') {
+            //Standard DZI format
+            this.openDzi( initialTileSource );
+        } else if ( $.isArray( initialTileSource ) ){
+            //Legacy image pyramid
+            this.open( new $.LegacyTileSource( initialTileSource ) );
+        } else if ( $.isFunction( initialTileSource ) ){
+            //Custom tile source
+            customTileSource = new TileSource();
+            customTileSource.getTileUrl = initialTileSource;
+            this.open( customTileSource );
+        }
+
+
+
     }
 };
 
@@ -2813,23 +2866,23 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
         
         // to ignore earlier opens
-        this._lastOpenStartTime = +new Date();
+        THIS[ this.hash ].lastOpenStartTime = +new Date();
 
         window.setTimeout( function () {
-            if ( _this._lastOpenStartTime > _this._lastOpenEndTime ) {
-                _this._setMessage( $.getString( "Messages.Loading" ) );
+            if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
+                THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
             }
         }, 2000);
 
-        this._lastOpenEndTime = +new Date();
+        THIS[ this.hash ].lastOpenEndTime = +new Date();
         this.canvas.innerHTML = "";
-        this._prevContainerSize = $.getElementSize( this.container );
+        THIS[ this.hash ].prevContainerSize = $.getElementSize( this.container );
 
         if( source ){
             this.source = source;
         }
         this.viewport = new $.Viewport( 
-            this._prevContainerSize, 
+            THIS[ this.hash ].prevContainerSize, 
             this.source.dimensions, 
             this.config
         );
@@ -2841,8 +2894,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
 
         //this.profiler = new $.Profiler();
 
-        this._animating = false;
-        this._forceRedraw = true;
+        THIS[ this.hash ].animating = false;
+        THIS[ this.hash ].forceRedraw = true;
         scheduleUpdate( this, updateMulti );
 
         for ( i = 0; i < this.overlayControls.length; i++ ) {
@@ -3035,7 +3088,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
                 document.body.removeChild( document.body.childNodes[ 0 ] );
             }
             body.appendChild( this.container );
-            this._prevContainerSize = $.getWindowSize();
+            THIS[ this.hash ].prevContainerSize = $.getWindowSize();
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
@@ -3061,7 +3114,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
                 document.body.appendChild( this.previousBody.shift() );
             }
             this.element.appendChild( this.container );
-            this._prevContainerSize = $.getElementSize( this.element );
+            THIS[ this.hash ].prevContainerSize = $.getElementSize( this.element );
             
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();      
@@ -3070,11 +3123,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
 
         if ( this.viewport ) {
             oldBounds = this.viewport.getBounds();
-            this.viewport.resize( this._prevContainerSize );
+            this.viewport.resize( THIS[ this.hash ].prevContainerSize );
             newBounds = this.viewport.getBounds();
 
             if ( fullPage ) {
-                this._fsBoundsDelta = new $.Point(
+                THIS[ this.hash ].fsBoundsDelta = new $.Point(
                     newBounds.width  / oldBounds.width,
                     newBounds.height / oldBounds.height
                 );
@@ -3082,15 +3135,15 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
                 this.viewport.update();
                 this.viewport.zoomBy(
                     Math.max( 
-                        this._fsBoundsDelta.x, 
-                        this._fsBoundsDelta.y 
+                        THIS[ this.hash ].fsBoundsDelta.x, 
+                        THIS[ this.hash ].fsBoundsDelta.y 
                     ),
                     null, 
                     true
                 );
             }
 
-            this._forceRedraw = true;
+            THIS[ this.hash ].forceRedraw = true;
             this.raiseEvent( "resize", this );
             updateOnce( this );
         }
@@ -3128,7 +3181,7 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
         targetTime,
         deltaTime;
 
-    if ( this._animating ) {
+    if ( THIS[ viewer.hash ].animating ) {
         return window.setTimeout( function(){
             updateFunc( viewer );
         }, 1 );
@@ -3250,8 +3303,8 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
 
 function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
     if ( !buttonDownElement ) {
-        this._mouseInside = false;
-        if ( !this._animating ) {
+        THIS[ this.hash ].mouseInside = false;
+        if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
@@ -3259,15 +3312,15 @@ function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) 
 
 function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( !insideElementRelease ) {
-        this._mouseInside = false;
-        if ( !this._animating ) {
+        THIS[ this.hash ].mouseInside = false;
+        if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
 };
 
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
-    this._mouseInside = true;
+    THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
 };
 
@@ -3313,15 +3366,15 @@ function updateOnce( viewer ) {
     //viewer.profiler.beginUpdate();
 
     containerSize = $.getElementSize( viewer.container );
-    if ( !containerSize.equals( viewer._prevContainerSize ) ) {
+    if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
         // maintain image position
         viewer.viewport.resize( containerSize, true ); 
-        viewer._prevContainerSize = containerSize;
+        THIS[ viewer.hash ].prevContainerSize = containerSize;
         viewer.raiseEvent( "resize" );
     }
 
     animated = viewer.viewport.update();
-    if ( !viewer._animating && animated ) {
+    if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animationstart" );
         abortControlsAutoHide( viewer );
     }
@@ -3329,20 +3382,20 @@ function updateOnce( viewer ) {
     if ( animated ) {
         viewer.drawer.update();
         viewer.raiseEvent( "animation" );
-    } else if ( viewer._forceRedraw || viewer.drawer.needsUpdate() ) {
+    } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
-        viewer._forceRedraw = false;
+        THIS[ viewer.hash ].forceRedraw = false;
     } 
 
-    if ( viewer._animating && !animated ) {
+    if ( THIS[ viewer.hash ].animating && !animated ) {
         viewer.raiseEvent( "animationfinish" );
 
-        if ( !viewer._mouseInside ) {
+        if ( !THIS[ viewer.hash ].mouseInside ) {
             beginControlsAutoHide( viewer );
         }
     }
 
-    viewer._animating = animated;
+    THIS[ viewer.hash ].animating = animated;
 
     //viewer.profiler.endUpdate();
 };
@@ -3357,21 +3410,21 @@ function resolveUrl( prefix, url ) {
 
 
 function beginZoomingIn() {
-    this._lastZoomTime = +new Date();
-    this._zoomFactor = this.config.zoomPerSecond;
-    this._zooming = true;
+    THIS[ this.hash ].lastZoomTime = +new Date();
+    THIS[ this.hash ].zoomFactor = this.config.zoomPerSecond;
+    THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
 }
 
 function beginZoomingOut() {
-    this._lastZoomTime = +new Date();
-    this._zoomFactor = 1.0 / this.config.zoomPerSecond;
-    this._zooming = true;
+    THIS[ this.hash ].lastZoomTime = +new Date();
+    THIS[ this.hash ].zoomFactor = 1.0 / this.config.zoomPerSecond;
+    THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
 }
 
 function endZooming() {
-    this._zooming = false;
+    THIS[ this.hash ].zooming = false;
 }
 
 function scheduleZoom( viewer ) {
@@ -3383,21 +3436,21 @@ function doZoom() {
         deltaTime,
         adjustFactor;
 
-    if ( this._zooming && this.viewport) {
+    if ( THIS[ this.hash ].zooming && this.viewport) {
         currentTime     = +new Date();
-        deltaTime       = currentTime - this._lastZoomTime;
-        adjustedFactor  = Math.pow( this._zoomFactor, deltaTime / 1000 );
+        deltaTime       = currentTime - THIS[ this.hash ].lastZoomTime;
+        adjustedFactor  = Math.pow( THIS[ this.hash ].zoomFactor, deltaTime / 1000 );
 
         this.viewport.zoomBy( adjustedFactor );
         this.viewport.applyConstraints();
-        this._lastZoomTime = currentTime;
+        THIS[ this.hash ].lastZoomTime = currentTime;
         scheduleZoom( this );
     }
 };
 
 function doSingleZoomIn() {
     if ( this.viewport ) {
-        this._zooming = false;
+        THIS[ this.hash ].zooming = false;
         this.viewport.zoomBy( 
             this.config.zoomPerClick / 1.0 
         );
@@ -3407,7 +3460,7 @@ function doSingleZoomIn() {
 
 function doSingleZoomOut() {
     if ( this.viewport ) {
-        this._zooming = false;
+        THIS[ this.hash ].zooming = false;
         this.viewport.zoomBy(
             1.0 / this.config.zoomPerClick
         );
@@ -3930,7 +3983,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
  * @property {Number} maxLevel
  * @property {Array} files
  */ 
-$.LegacyTileSource = function( files, viewer ) {
+$.LegacyTileSource = function( files ) {
     var width   = files[ files.length - 1 ].width,
         height  = files[ files.length - 1 ].height;
 
