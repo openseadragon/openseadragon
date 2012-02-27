@@ -7,7 +7,6 @@
  */
 $.Viewport = function( options ) {
 
-    var options;
 
     if(  arguments.length && arguments[ 0 ] instanceof $.Point ){
         options = {
@@ -15,8 +14,6 @@ $.Viewport = function( options ) {
             contentSize:        arguments[ 1 ],
             config:             arguments[ 2 ]
         };
-    } else {
-        options = arguments[ 0 ];
     }
 
     //TODO: this.config is something that should go away but currently the 
@@ -37,7 +34,7 @@ $.Viewport = function( options ) {
         springStiffness: this.config.springStiffness,
         animationTime:   this.config.animationTime
     });
-    this.zoomSpring = new $.Spring({
+    this.zoomSpring    = new $.Spring({
         initial: 1, 
         springStiffness: this.config.springStiffness,
         animationTime:   this.config.animationTime
@@ -47,7 +44,8 @@ $.Viewport = function( options ) {
     this.visibilityRatio   = this.config.visibilityRatio;
     this.wrapHorizontal    = this.config.wrapHorizontal;
     this.wrapVertical      = this.config.wrapVertical;
-    this.homeBounds = new $.Rect( 0, 0, 1, this.contentHeight );
+    this.homeBounds        = new $.Rect( 0, 0, 1, this.contentHeight );
+
     this.goHome( true );
     this.update();
 };

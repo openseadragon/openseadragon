@@ -35,7 +35,7 @@ $.Viewer = function( options ) {
 
     $.EventHandler.call( this );
 
-    if( typeof( options ) != 'object' ){
+    if( !$.isPlainObject( options ) ){
         options = {
             id:                 args[ 0 ],
             xmlPath:            args.length > 1 ? args[ 1 ] : undefined,
@@ -52,60 +52,11 @@ $.Viewer = function( options ) {
         id:                 options.id,
         xmlPath:            null,
         tileSources:        null, 
-        prefixUrl:          '',
+        prefixUrl:          null,
         controls:           [],
         overlays:           [],
         overlayControls:    [],
-        config: {
-            debugMode:          true,
-            animationTime:      1.5,
-            blendTime:          0.5,
-            alwaysBlend:        false,
-            autoHideControls:   true,
-            immediateRender:    false,
-            wrapHorizontal:     false,
-            wrapVertical:       false,
-            minZoomImageRatio:  0.8,
-            maxZoomPixelRatio:  2,
-            visibilityRatio:    0.5,
-            springStiffness:    5.0,
-            imageLoaderLimit:   0,
-            clickTimeThreshold: 200,
-            clickDistThreshold: 5,
-            zoomPerClick:       2.0,
-            zoomPerScroll:      1.2,
-            zoomPerSecond:      2.0,
-            showNavigationControl: true,
-            maxImageCacheCount: 100,
-            minPixelRatio:      0.5,
-            mouseNavEnabled:    true,
-            navImages: {
-                zoomIn: {
-                    REST:   '/images/zoomin_rest.png',
-                    GROUP:  '/images/zoomin_grouphover.png',
-                    HOVER:  '/images/zoomin_hover.png',
-                    DOWN:   '/images/zoomin_pressed.png'
-                },
-                zoomOut: {
-                    REST:   '/images/zoomout_rest.png',
-                    GROUP:  '/images/zoomout_grouphover.png',
-                    HOVER:  '/images/zoomout_hover.png',
-                    DOWN:   '/images/zoomout_pressed.png'
-                },
-                home: {
-                    REST:   '/images/home_rest.png',
-                    GROUP:  '/images/home_grouphover.png',
-                    HOVER:  '/images/home_hover.png',
-                    DOWN:   '/images/home_pressed.png'
-                },
-                fullpage: {
-                    REST:   '/images/fullpage_rest.png',
-                    GROUP:  '/images/fullpage_grouphover.png',
-                    HOVER:  '/images/fullpage_hover.png',
-                    DOWN:   '/images/fullpage_pressed.png'
-                }
-            }
-        },
+        config:             $.DEFAULT_SETTINGS,
 
         //These were referenced but never defined
         controlsFadeDelay:  2000,
@@ -233,12 +184,13 @@ $.Viewer = function( options ) {
         onFullPageHandler       = $.delegate( this, onFullPage ),
         navImages               = this.config.navImages,
         zoomIn = new $.Button({ 
-            config:     this.config, 
+            clickTimeThreshold: this.config.clickTimeThreshold,
+            clickDistThreshold: this.config.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomIn" ), 
-            srcRest:    resolveUrl( this.urlPrefix, navImages.zoomIn.REST ),
-            srcGroup:   resolveUrl( this.urlPrefix, navImages.zoomIn.GROUP ),
-            srcHover:   resolveUrl( this.urlPrefix, navImages.zoomIn.HOVER ),
-            srcDown:    resolveUrl( this.urlPrefix, navImages.zoomIn.DOWN ),
+            srcRest:    resolveUrl( this.config.prefixUrl, navImages.zoomIn.REST ),
+            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.zoomIn.GROUP ),
+            srcHover:   resolveUrl( this.config.prefixUrl, navImages.zoomIn.HOVER ),
+            srcDown:    resolveUrl( this.config.prefixUrl, navImages.zoomIn.DOWN ),
             onPress:    beginZoomingInHandler,
             onRelease:  endZoomingHandler,
             onClick:    doSingleZoomInHandler,
@@ -246,12 +198,13 @@ $.Viewer = function( options ) {
             onExit:     endZoomingHandler
         }),
         zoomOut = new $.Button({ 
-            config:     this.config, 
+            clickTimeThreshold: this.config.clickTimeThreshold,
+            clickDistThreshold: this.config.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomOut" ), 
-            srcRest:    resolveUrl( this.urlPrefix, navImages.zoomOut.REST ), 
-            srcGroup:   resolveUrl( this.urlPrefix, navImages.zoomOut.GROUP ), 
-            srcHover:   resolveUrl( this.urlPrefix, navImages.zoomOut.HOVER ), 
-            srcDown:    resolveUrl( this.urlPrefix, navImages.zoomOut.DOWN ),
+            srcRest:    resolveUrl( this.config.prefixUrl, navImages.zoomOut.REST ), 
+            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.zoomOut.GROUP ), 
+            srcHover:   resolveUrl( this.config.prefixUrl, navImages.zoomOut.HOVER ), 
+            srcDown:    resolveUrl( this.config.prefixUrl, navImages.zoomOut.DOWN ),
             onPress:    beginZoomingOutHandler, 
             onRelease:  endZoomingHandler, 
             onClick:    doSingleZoomOutHandler, 
@@ -259,21 +212,23 @@ $.Viewer = function( options ) {
             onExit:     endZoomingHandler 
         }),
         goHome = new $.Button({ 
-            config:     this.config, 
+            clickTimeThreshold: this.config.clickTimeThreshold,
+            clickDistThreshold: this.config.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.Home" ), 
-            srcRest:    resolveUrl( this.urlPrefix, navImages.home.REST ), 
-            srcGroup:   resolveUrl( this.urlPrefix, navImages.home.GROUP ), 
-            srcHover:   resolveUrl( this.urlPrefix, navImages.home.HOVER ), 
-            srcDown:    resolveUrl( this.urlPrefix, navImages.home.DOWN ),
+            srcRest:    resolveUrl( this.config.prefixUrl, navImages.home.REST ), 
+            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.home.GROUP ), 
+            srcHover:   resolveUrl( this.config.prefixUrl, navImages.home.HOVER ), 
+            srcDown:    resolveUrl( this.config.prefixUrl, navImages.home.DOWN ),
             onRelease:  onHomeHandler 
         }),
         fullPage = new $.Button({ 
-            config:     this.config, 
+            clickTimeThreshold: this.config.clickTimeThreshold,
+            clickDistThreshold: this.config.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.FullPage" ),
-            srcRest:    resolveUrl( this.urlPrefix, navImages.fullpage.REST ),
-            srcGroup:   resolveUrl( this.urlPrefix, navImages.fullpage.GROUP ),
-            srcHover:   resolveUrl( this.urlPrefix, navImages.fullpage.HOVER ),
-            srcDown:    resolveUrl( this.urlPrefix, navImages.fullpage.DOWN ),
+            srcRest:    resolveUrl( this.config.prefixUrl, navImages.fullpage.REST ),
+            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.fullpage.GROUP ),
+            srcHover:   resolveUrl( this.config.prefixUrl, navImages.fullpage.HOVER ),
+            srcDown:    resolveUrl( this.config.prefixUrl, navImages.fullpage.DOWN ),
             onRelease:  onFullPageHandler 
         });
 
@@ -472,11 +427,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         if( source ){
             this.source = source;
         }
-        this.viewport = new $.Viewport( 
-            THIS[ this.hash ].prevContainerSize, 
-            this.source.dimensions, 
-            this.config
-        );
+        
+        this.viewport = new $.Viewport({
+            containerSize:  THIS[ this.hash ].prevContainerSize, 
+            contentSize:    this.source.dimensions, 
+            config:         this.config
+        });
+
         this.drawer = new $.Drawer(
             this.source, 
             this.viewport, 

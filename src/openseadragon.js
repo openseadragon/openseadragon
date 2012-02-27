@@ -90,6 +90,58 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     indexOf     = Array.prototype.indexOf;
 
     return {
+
+        DEFAULT_SETTINGS: {
+            debugMode:          true,
+            animationTime:      1.5,
+            blendTime:          0.5,
+            alwaysBlend:        false,
+            autoHideControls:   true,
+            immediateRender:    false,
+            wrapHorizontal:     false,
+            wrapVertical:       false,
+            minZoomImageRatio:  0.8,
+            maxZoomPixelRatio:  2,
+            visibilityRatio:    0.5,
+            springStiffness:    5.0,
+            imageLoaderLimit:   0,
+            clickTimeThreshold: 200,
+            clickDistThreshold: 5,
+            zoomPerClick:       2.0,
+            zoomPerScroll:      1.2,
+            zoomPerSecond:      2.0,
+            showNavigationControl: true,
+            maxImageCacheCount: 100,
+            minPixelRatio:      0.5,
+            mouseNavEnabled:    true,
+            navImages: {
+                zoomIn: {
+                    REST:   '/images/zoomin_rest.png',
+                    GROUP:  '/images/zoomin_grouphover.png',
+                    HOVER:  '/images/zoomin_hover.png',
+                    DOWN:   '/images/zoomin_pressed.png'
+                },
+                zoomOut: {
+                    REST:   '/images/zoomout_rest.png',
+                    GROUP:  '/images/zoomout_grouphover.png',
+                    HOVER:  '/images/zoomout_hover.png',
+                    DOWN:   '/images/zoomout_pressed.png'
+                },
+                home: {
+                    REST:   '/images/home_rest.png',
+                    GROUP:  '/images/home_grouphover.png',
+                    HOVER:  '/images/home_hover.png',
+                    DOWN:   '/images/home_pressed.png'
+                },
+                fullpage: {
+                    REST:   '/images/fullpage_rest.png',
+                    GROUP:  '/images/fullpage_grouphover.png',
+                    HOVER:  '/images/fullpage_hover.png',
+                    DOWN:   '/images/fullpage_pressed.png'
+                }
+            }
+        },
+        
         // See test/unit/core.js for details concerning isFunction.
         // Since version 1.3, DOM methods and functions like alert
         // aren't supported. They return false on IE (#2968).
