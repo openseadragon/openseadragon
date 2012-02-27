@@ -2461,8 +2461,7 @@ $.Viewer = function( options ) {
     $.extend( true, this, { 
         id:                 options.id,
         xmlPath:            null,
-        dzis:               null, 
-        images:             null, 
+        tileSources:        null, 
         prefixUrl:          '',
         controls:           [],
         overlays:           [],
@@ -2726,8 +2725,10 @@ $.Viewer = function( options ) {
 
     if ( this.xmlPath  ){
         //Deprecated option.  Now it is preferred to use the tileSources option
-        this.openDzi( this.xmlPath );
-    } else if ( this.tileSources  ){
+        this.tileSources = [ this.xmlPath ];
+    }
+
+    if ( this.tileSources  ){
         //tileSource is a complex option...
         //It can be a string, object, function, or an array of any of these.
         //A string implies a DZI
@@ -4199,10 +4200,10 @@ $.Button = function( options ) {
         this.config.clickTimeThreshold, 
         this.config.clickDistThreshold
     );
-    this.imgRest    = $.makeTransparentImage( this.config.prefixURL + this.srcRest );
-    this.imgGroup   = $.makeTransparentImage( this.config.prefixURL + this.srcGroup );
-    this.imgHover   = $.makeTransparentImage( this.config.prefixURL + this.srcHover );
-    this.imgDown    = $.makeTransparentImage( this.config.prefixURL + this.srcDown );
+    this.imgRest    = $.makeTransparentImage( this.config.prefixUrl + this.srcRest );
+    this.imgGroup   = $.makeTransparentImage( this.config.prefixUrl + this.srcGroup );
+    this.imgHover   = $.makeTransparentImage( this.config.prefixUrl + this.srcHover );
+    this.imgDown    = $.makeTransparentImage( this.config.prefixUrl + this.srcDown );
 
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds

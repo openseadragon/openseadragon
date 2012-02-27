@@ -51,8 +51,7 @@ $.Viewer = function( options ) {
     $.extend( true, this, { 
         id:                 options.id,
         xmlPath:            null,
-        dzis:               null, 
-        images:             null, 
+        tileSources:        null, 
         prefixUrl:          '',
         controls:           [],
         overlays:           [],
@@ -316,8 +315,10 @@ $.Viewer = function( options ) {
 
     if ( this.xmlPath  ){
         //Deprecated option.  Now it is preferred to use the tileSources option
-        this.openDzi( this.xmlPath );
-    } else if ( this.tileSources  ){
+        this.tileSources = [ this.xmlPath ];
+    }
+
+    if ( this.tileSources  ){
         //tileSource is a complex option...
         //It can be a string, object, function, or an array of any of these.
         //A string implies a DZI
