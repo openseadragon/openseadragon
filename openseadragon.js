@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.15
+ * @version  OpenSeadragon 0.9.16
  *
  * @fileOverview 
  * <h2>
@@ -111,9 +111,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             zoomPerScroll:      1.2,
             zoomPerSecond:      2.0,
             showNavigationControl: true,
+            controlsFadeDelay:  2000,
+            controlsFadeLength: 1500,
             maxImageCacheCount: 100,
             minPixelRatio:      0.5,
             mouseNavEnabled:    true,
+            prefixUrl:          null,
             navImages: {
                 zoomIn: {
                     REST:   '/images/zoomin_rest.png',
@@ -141,7 +144,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 }
             }
         },
-        
+
         // See test/unit/core.js for details concerning isFunction.
         // Since version 1.3, DOM methods and functions like alert
         // aren't supported. They return false on IE (#2968).
@@ -2518,15 +2521,12 @@ $.Viewer = function( options ) {
         id:                 options.id,
         xmlPath:            null,
         tileSources:        null, 
-        prefixUrl:          null,
         controls:           [],
         overlays:           [],
         overlayControls:    [],
         config:             $.DEFAULT_SETTINGS,
 
         //These were referenced but never defined
-        controlsFadeDelay:  2000,
-        controlsFadeLength: 1500,
 
         //These are originally not part options but declared as members
         //in initialize.  Its still considered idiomatic to put them here
@@ -2629,9 +2629,7 @@ $.Viewer = function( options ) {
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////
-    // Navigation Controls
-    //////////////////////////////////////////////////////////////////////////
+    //private state properties
     $.extend( THIS[ this.hash ], {
         "group":        null,
         // whether we should be continuously zooming
@@ -2641,6 +2639,9 @@ $.Viewer = function( options ) {
         "lastZoomTime": null
     });
 
+    //////////////////////////////////////////////////////////////////////////
+    // Navigation Controls
+    //////////////////////////////////////////////////////////////////////////
     var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
         endZoomingHandler       = $.delegate( this, endZooming ),
         doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
@@ -3233,11 +3234,11 @@ function beginControlsAutoHide( viewer ) {
     viewer.controlsShouldFade = true;
     viewer.controlsFadeBeginTime = 
         +new Date() + 
-        viewer.controlsFadeDelay;
+        viewer.config.controlsFadeDelay;
 
     window.setTimeout( function(){
         scheduleControlsFade( viewer );
-    }, viewer.controlsFadeDelay );
+    }, viewer.config.controlsFadeDelay );
 };
 
 
@@ -3250,7 +3251,7 @@ function updateControlsFade( viewer ) {
     if ( viewer.controlsShouldFade ) {
         currentTime = new Date().getTime();
         deltaTime = currentTime - viewer.controlsFadeBeginTime;
-        opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
+        opacity = 1.0 - deltaTime / viewer.config.controlsFadeLength;
 
         opacity = Math.min( 1.0, opacity );
         opacity = Math.max( 0.0, opacity );

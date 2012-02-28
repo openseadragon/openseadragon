@@ -111,9 +111,12 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             zoomPerScroll:      1.2,
             zoomPerSecond:      2.0,
             showNavigationControl: true,
+            controlsFadeDelay:  2000,
+            controlsFadeLength: 1500,
             maxImageCacheCount: 100,
             minPixelRatio:      0.5,
             mouseNavEnabled:    true,
+            prefixUrl:          null,
             navImages: {
                 zoomIn: {
                     REST:   '/images/zoomin_rest.png',
@@ -141,7 +144,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 }
             }
         },
-        
+
         // See test/unit/core.js for details concerning isFunction.
         // Since version 1.3, DOM methods and functions like alert
         // aren't supported. They return false on IE (#2968).
