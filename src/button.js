@@ -135,6 +135,7 @@ $.Button = function( options ) {
         element:            this.element, 
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
+
         enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
@@ -143,16 +144,19 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
+
         exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
+
         pressHandler: function( tracker, position ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
+
         releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
             if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
@@ -163,6 +167,7 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
+
         clickHandler: function( tracker, position, quick, shift ) {
             if ( quick ) {
                 _this.raiseEvent("onClick", _this);
@@ -212,11 +217,11 @@ function updateFade( button ) {
 
     if ( button.shouldFade ) {
         currentTime = +new Date();
-        deltaTime   = currentTime - this.fadeBeginTime;
-        opacity     = 1.0 - deltaTime / this.fadeLength;
+        deltaTime   = currentTime - button.fadeBeginTime;
+        opacity     = 1.0 - deltaTime / button.fadeLength;
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
-
+        
         $.setElementOpacity( button.imgGroup, opacity, true );
         if ( opacity > 0 ) {
             // fade again
@@ -227,7 +232,7 @@ function updateFade( button ) {
 
 function beginFading( button ) {
     button.shouldFade = true;
-    button.fadeBeginTime = new Date().getTime() + button.fadeDelay;
+    button.fadeBeginTime = +new Date() + button.fadeDelay;
     window.setTimeout( function(){ 
         scheduleFade( button );
     }, button.fadeDelay );
@@ -272,9 +277,9 @@ function outTo( button, newState ) {
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( button.newState <= $.ButtonState.REST && 
+    if ( newState <= $.ButtonState.REST && 
          button.currentState == $.ButtonState.GROUP ) {
-        button.beginFading();
+        beginFading( button );
         button.currentState = $.ButtonState.REST;
     }
 };

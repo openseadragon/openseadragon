@@ -22,7 +22,9 @@ $.EventHandler.prototype = {
         if( !events ){
             this.events[ eventName ] = events = [];
         }
-        events[ events.length ] = handler;
+        if( handler && $.isFunction( handler ) ){
+            events[ events.length ] = handler;
+        }
     },
 
     /**
@@ -59,7 +61,9 @@ $.EventHandler.prototype = {
             var i, 
                 length = events.length;
             for ( i = 0; i < length; i++ ) {
-                events[ i ]( source, args );
+                if( events[ i ] ){
+                    events[ i ]( source, args );
+                }
             }
         };
     },

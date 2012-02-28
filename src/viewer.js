@@ -233,8 +233,14 @@ $.Viewer = function( options ) {
         });
 
     this.buttons = new $.ButtonGroup({ 
-        config:     this.config, 
-        buttons:    [ zoomIn, zoomOut, goHome, fullPage ] 
+        clickTimeThreshold: this.config.clickTimeThreshold,
+        clickDistThreshold: this.config.clickDistThreshold,
+        buttons: [ 
+            zoomIn, 
+            zoomOut, 
+            goHome, 
+            fullPage 
+        ] 
     });
 
     this.navControl  = this.buttons.element;
@@ -427,7 +433,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         if( source ){
             this.source = source;
         }
-        
+
         this.viewport = new $.Viewport({
             containerSize:  THIS[ this.hash ].prevContainerSize, 
             contentSize:    this.source.dimensions, 

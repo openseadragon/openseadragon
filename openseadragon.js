@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.14
+ * @version  OpenSeadragon 0.9.15
  *
  * @fileOverview 
  * <h2>
@@ -1291,7 +1291,9 @@ $.EventHandler.prototype = {
         if( !events ){
             this.events[ eventName ] = events = [];
         }
-        events[ events.length ] = handler;
+        if( handler && $.isFunction( handler ) ){
+            events[ events.length ] = handler;
+        }
     },
 
     /**
@@ -1328,7 +1330,9 @@ $.EventHandler.prototype = {
             var i, 
                 length = events.length;
             for ( i = 0; i < length; i++ ) {
-                events[ i ]( source, args );
+                if( events[ i ] ){
+                    events[ i ]( source, args );
+                }
             }
         };
     },
@@ -2695,8 +2699,14 @@ $.Viewer = function( options ) {
         });
 
     this.buttons = new $.ButtonGroup({ 
-        config:     this.config, 
-        buttons:    [ zoomIn, zoomOut, goHome, fullPage ] 
+        clickTimeThreshold: this.config.clickTimeThreshold,
+        clickDistThreshold: this.config.clickDistThreshold,
+        buttons: [ 
+            zoomIn, 
+            zoomOut, 
+            goHome, 
+            fullPage 
+        ] 
     });
 
     this.navControl  = this.buttons.element;
@@ -2889,7 +2899,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         if( source ){
             this.source = source;
         }
-        
+
         this.viewport = new $.Viewport({
             containerSize:  THIS[ this.hash ].prevContainerSize, 
             contentSize:    this.source.dimensions, 
@@ -4256,6 +4266,7 @@ $.Button = function( options ) {
         element:            this.element, 
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
+
         enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
@@ -4264,16 +4275,19 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
+
         exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
+
         pressHandler: function( tracker, position ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
+
         releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
             if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
@@ -4284,6 +4298,7 @@ $.Button = function( options ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
+
         clickHandler: function( tracker, position, quick, shift ) {
             if ( quick ) {
                 _this.raiseEvent("onClick", _this);
@@ -4333,11 +4348,11 @@ function updateFade( button ) {
 
     if ( button.shouldFade ) {
         currentTime = +new Date();
-        deltaTime   = currentTime - this.fadeBeginTime;
-        opacity     = 1.0 - deltaTime / this.fadeLength;
+        deltaTime   = currentTime - button.fadeBeginTime;
+        opacity     = 1.0 - deltaTime / button.fadeLength;
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
-
+        
         $.setElementOpacity( button.imgGroup, opacity, true );
         if ( opacity > 0 ) {
             // fade again
@@ -4348,7 +4363,7 @@ function updateFade( button ) {
 
 function beginFading( button ) {
     button.shouldFade = true;
-    button.fadeBeginTime = new Date().getTime() + button.fadeDelay;
+    button.fadeBeginTime = +new Date() + button.fadeDelay;
     window.setTimeout( function(){ 
         scheduleFade( button );
     }, button.fadeDelay );
@@ -4393,9 +4408,9 @@ function outTo( button, newState ) {
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( button.newState <= $.ButtonState.REST && 
+    if ( newState <= $.ButtonState.REST && 
          button.currentState == $.ButtonState.GROUP ) {
-        button.beginFading();
+        beginFading( button );
         button.currentState = $.ButtonState.REST;
     }
 };
@@ -4428,54 +4443,57 @@ function outTo( button, newState ) {
  **/
 $.ButtonGroup = function( options ) {
 
-    this.buttons = options.buttons;
-    this.element = options.group || $.makeNeutralElement( "span" );
-    this.config  = options.config;
-    this.tracker = new $.MouseTracker(
-        this.element, 
-        this.config.clickTimeThreshold, 
-        this.config.clickDistThreshold
-    );
-    
+    $.extend( true, this, {
+        buttons:            null,
+        clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
+        clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold
+    }, options );
+
     // copy the botton elements
     var buttons = this.buttons.concat([]),   
         _this = this,
         i;
 
+    this.element = options.group || $.makeNeutralElement( "span" );
     this.element.style.display = "inline-block";
     for ( i = 0; i < buttons.length; i++ ) {
         this.element.appendChild( buttons[ i ].element );
     }
 
 
-    this.tracker.enter =  options.enter || function() {
-        var i;
-        for ( i = 0; i < _this.buttons.length; i++ ) {
-            _this.buttons[ i ].notifyGroupEnter();
-        }
-    };
-
-    this.tracker.exit = options.exit || function() {
-        var i,
-            buttonDownElement = arguments.length > 2 ? arguments[ 2 ] : null;
-        if ( !buttonDownElement ) {
+    this.tracker = new $.MouseTracker({
+        element:            this.element, 
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
+        enterHandler: function() {
+            var i;
             for ( i = 0; i < _this.buttons.length; i++ ) {
-                _this.buttons[ i ].notifyGroupExit();
+                _this.buttons[ i ].notifyGroupEnter();
+            }
+        },
+        exitHandler: function() {
+            var i,
+                buttonDownElement = arguments.length > 2 ? 
+                    arguments[ 2 ] : 
+                    null;
+            if ( !buttonDownElement ) {
+                for ( i = 0; i < _this.buttons.length; i++ ) {
+                    _this.buttons[ i ].notifyGroupExit();
+                }
+            }
+        },
+        releaseHandler: function() {
+            var i,
+                insideElementRelease = arguments.length > 3 ? 
+                    arguments[ 3 ] : 
+                    null;
+            if ( !insideElementRelease ) {
+                for ( i = 0; i < _this.buttons.length; i++ ) {
+                    _this.buttons[ i ].notifyGroupExit();
+                }
             }
         }
-    };
-
-    this.tracker.release = options.release || function() {
-        var i,
-            insideElementRelease = arguments.length > 3 ? arguments[ 3 ] : null;
-        if ( !insideElementRelease ) {
-            for ( i = 0; i < _this.buttons.length; i++ ) {
-                _this.buttons[ i ].notifyGroupExit();
-            }
-        }
-    };
-
-    this.tracker.setTracking( true );
+    }).setTracking( true );
 };
 
 $.ButtonGroup.prototype = {
@@ -4487,7 +4505,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
      */
     emulateEnter: function() {
-        this.tracker.enter();
+        this.tracker.enterHandler();
     },
 
     /**
@@ -4497,7 +4515,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
      */
     emulateExit: function() {
-        this.tracker.exit();
+        this.tracker.exitHandler();
     }
 };
 
