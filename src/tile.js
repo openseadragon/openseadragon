@@ -7,18 +7,18 @@
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
  * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
- *  coordinates
+ *      coordinates.
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
- *  this tile failed to load?
+ *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
  *
  * @property {Number} level The zoom level this tile belongs to.
  * @property {Number} x The vector component 'x'.
  * @property {Number} y The vector component 'y'.
  * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
- *  coordinates
+ *      coordinates
  * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
- *  this tile failed to load?
+ *      this tile failed to load?
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
  * @property {Boolean} loading Is this tile loading

@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.16
+ * @version  OpenSeadragon 0.9.18
  *
  * @fileOverview 
  * <h2>
@@ -59,18 +59,138 @@
  **/
 
  /** 
-  * The root namespace for OpenSeadragon.  All utility methods and classes
-  * are defined on or below this namespace. The OpenSeadragon namespace will
-  * only be defined once even if mutliple versions are loaded on the page in 
-  * succession.
-  * @namespace 
+  * The root namespace for OpenSeadragon, this function also serves as a single
+  * point of instantiation for an {@link OpenSeadragon.Viewer}, including all 
+  * combinations of out-of-the-box configurable features.  All utility methods 
+  * and classes are defined on or below this namespace. 
+  *
+  * @namespace
+  * @function
   * @name OpenSeadragon
   * @exports $ as OpenSeadragon
+  *
+  * @param {Object} options All required and optional settings for instantiating
+  *     a new instance of an OpenSeadragon image viewer. 
+  *
+  * @param {String} options.xmlPath 
+  *     DEPRECATED. A relative path to load a DZI file from the server. 
+  *     Prefer the newer options.tileSources.
+  *
+  * @param {Array|String|Function|Object[]|Array[]|String[]|Function[]} options.tileSources
+  *     As an Array, the tileSource can hold either be all Objects or mixed 
+  *     types of Arrays of Objects, String, Function. When a value is a String, 
+  *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.  
+  *     When a value is a Function, the function is used to create a new 
+  *     {@link OpenSeadragon.TileSource} whose abstract method 
+  *     getUrl( level, x, y ) is implemented by the function. Finally, when it 
+  *     is an Array of objects, it is used to create a 
+  *     {@link OpenSeadragon.LegacyTileSource}.
+  *
+  * @param {Boolean} [options.debugMode=true]
+  *     Currently does nothing. TODO: provide an in-screen panel providing event
+  *     detail feedback.
+  *
+  * @param {Number} [options.animationTime=1.5]
+  *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
+  *     which occur when the image is dragged or zoomed.
+  *
+  * @param {Number} [options.blendTime=0.5] 
+  *     Specifies the duration of animation as higher or lower level tiles are
+  *     replacing the existing tile.
+  *
+  * @param {Boolean} [options.alwaysBlend=false]
+  *     Forces the tile to always blend.  By default the tiles skip blending
+  *     when the blendTime is surpassed and the current animation frame would
+  *     not complete the blend.
+  *
+  * @param {Boolean} [options.autoHideControls=true]
+  *     If the user stops interacting with the viewport, fade the navigation 
+  *     controls.  Useful for presentation since the controls are by default
+  *     floated on top of the image the user is viewing.
+  *
+  * @param {Boolean} [options.immediateRender=false]
+  *
+  * @param {Boolean} [options.wrapHorizontal=false]
+  *     Should the image wrap horizontally within the viewport.  Useful for
+  *     maps or images representing the surface of a sphere or cylinder.
+  *
+  * @param {Boolean} [options.wrapVertical=false]
+  *     Should the image wrap vertically within the viewport.  Useful for
+  *     maps or images representing the surface of a sphere or cylinder.
+  *
+  * @param {Number} [options.minZoomImageRatio=0.8]
+  * @param {Number} [options.maxZoomPixelRatio=2]
+  *
+  * @param {Number} [options.visibilityRatio=0.5]
+  *     The percentage ( as a number from 0 to 1 ) of the source image which
+  *     must be kept within the viewport.  If the image is dragged beyond that
+  *     limit, it will 'bounce' back until the minimum visibility ration is 
+  *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
+  *     true will provide the effect of an infinitely scrolling viewport.
+  *
+  * @param {Number} [options.springStiffness=5.0]
+  * @param {Number} [options.imageLoaderLimit=0]
+  * @param {Number} [options.clickTimeThreshold=200]
+  * @param {Number} [options.clickDistThreshold=5]
+  * @param {Number} [options.zoomPerClick=2.0]
+  * @param {Number} [options.zoomPerScroll=1.2]
+  * @param {Number} [options.zoomPerSecond=2.0]
+  *
+  * @param {Boolean} [options.showNavigationControl=true]
+  *
+  * @param {Number} [options.controlsFadeDelay=2000]
+  *     The number of milliseconds to wait once the user has stopped interacting
+  *     with the interface before begining to fade the controls. Assumes
+  *     showNavigationControl and autoHideControls are both true.
+  *
+  * @param {Number} [options.controlsFadeLength=1500]
+  *     The number of milliseconds to animate the controls fading out.
+  *
+  * @param {Number} [options.maxImageCacheCount=100]
+  *     The max number of images we should keep in memory (per drawer).
+  *
+  * @param {Number} [options.minPixelRatio=0.5]
+  *     The higher the minPixelRatio, the lower the quality of the image that
+  *     is considered sufficient to stop rendering a given zoom level.  For
+  *     example, if you are targeting mobile devices with less bandwith you may 
+  *     try setting this to 1.5 or higher.
+  *
+  * @param {Boolean} [options.mouseNavEnabled=true]
+  *     Is the user able to interact with the image via mouse or touch. Default 
+  *     interactions include draging the image in a plane, and zooming in toward
+  *     and away from the image.
+  *
+  * @param {String} [options.prefixUrl='']
+  *     Appends the prefixUrl to navImages paths, which is very useful
+  *     since the default paths are rarely useful for production
+  *     environments.
+  *
+  * @param {Object} [options.navImages=]
+  *     An object with a property for each button or other built-in navigation
+  *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
+  *     Each of those in turn provides an image path for each state of the botton
+  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
+  *     image paths, by default assume there is a folder on the servers root path
+  *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
+  *     these paths, prefer setting the option.prefixUrl rather than overriding 
+  *     every image path directly through this setting.
+  *
+  * @returns {OpenSeadragon.Viewer}
   */
-OpenSeadragon = window.OpenSeadragon || (function(){
+OpenSeadragon = window.OpenSeadragon || function( options ){
+    
+    return new OpenSeadragon.Viewer( options );
 
-    //Taken from jquery 1.6.1
-    // [[Class]] -> type pairs
+};
+
+(function( $ ){
+    
+
+    /**
+     * Taken from jquery 1.6.1
+     * [[Class]] -> type pairs
+     * @private
+     */
     var class2type = {
         '[object Boolean]':     'boolean',
         '[object Number]':      'number',
@@ -89,142 +209,118 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     trim        = String.prototype.trim,
     indexOf     = Array.prototype.indexOf;
 
-    return {
 
-        DEFAULT_SETTINGS: {
-            debugMode:          true,
-            animationTime:      1.5,
-            blendTime:          0.5,
-            alwaysBlend:        false,
-            autoHideControls:   true,
-            immediateRender:    false,
-            wrapHorizontal:     false,
-            wrapVertical:       false,
-            minZoomImageRatio:  0.8,
-            maxZoomPixelRatio:  2,
-            visibilityRatio:    0.5,
-            springStiffness:    5.0,
-            imageLoaderLimit:   0,
-            clickTimeThreshold: 200,
-            clickDistThreshold: 5,
-            zoomPerClick:       2.0,
-            zoomPerScroll:      1.2,
-            zoomPerSecond:      2.0,
-            showNavigationControl: true,
-            controlsFadeDelay:  2000,
-            controlsFadeLength: 1500,
-            maxImageCacheCount: 100,
-            minPixelRatio:      0.5,
-            mouseNavEnabled:    true,
-            prefixUrl:          null,
-            navImages: {
-                zoomIn: {
-                    REST:   '/images/zoomin_rest.png',
-                    GROUP:  '/images/zoomin_grouphover.png',
-                    HOVER:  '/images/zoomin_hover.png',
-                    DOWN:   '/images/zoomin_pressed.png'
-                },
-                zoomOut: {
-                    REST:   '/images/zoomout_rest.png',
-                    GROUP:  '/images/zoomout_grouphover.png',
-                    HOVER:  '/images/zoomout_hover.png',
-                    DOWN:   '/images/zoomout_pressed.png'
-                },
-                home: {
-                    REST:   '/images/home_rest.png',
-                    GROUP:  '/images/home_grouphover.png',
-                    HOVER:  '/images/home_hover.png',
-                    DOWN:   '/images/home_pressed.png'
-                },
-                fullpage: {
-                    REST:   '/images/fullpage_rest.png',
-                    GROUP:  '/images/fullpage_grouphover.png',
-                    HOVER:  '/images/fullpage_hover.png',
-                    DOWN:   '/images/fullpage_pressed.png'
-                }
-            }
-        },
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isFunction
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isFunction = function( obj ) {
+        return $.type(obj) === "function";
+    };
 
-        // See test/unit/core.js for details concerning isFunction.
-        // Since version 1.3, DOM methods and functions like alert
-        // aren't supported. They return false on IE (#2968).
-        isFunction: function( obj ) {
-            return OpenSeadragon.type(obj) === "function";
-        },
 
-        isArray: Array.isArray || function( obj ) {
-            return OpenSeadragon.type(obj) === "array";
-        },
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isArray
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isArray = Array.isArray || function( obj ) {
+        return $.type(obj) === "array";
+    };
 
-        // A crude way of determining if an object is a window
-        isWindow: function( obj ) {
-            return obj && typeof obj === "object" && "setInterval" in obj;
-        },
 
-        type: function( obj ) {
-            return obj == null ?
-                String( obj ) :
-                class2type[ toString.call(obj) ] || "object";
-        },
+    /**
+     * A crude way of determining if an object is a window.
+     * Taken from jQuery 1.6.1
+     * @name $.isWindow
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isWindow = function( obj ) {
+        return obj && typeof obj === "object" && "setInterval" in obj;
+    };
 
-        isPlainObject: function( obj ) {
-            // Must be an Object.
-            // Because of IE, we also have to check the presence of the constructor property.
-            // Make sure that DOM nodes and window objects don't pass through, as well
-            if ( !obj || OpenSeadragon.type(obj) !== "object" || obj.nodeType || OpenSeadragon.isWindow( obj ) ) {
-                return false;
-            }
 
-            // Not own constructor property must be Object
-            if ( obj.constructor &&
-                !hasOwn.call(obj, "constructor") &&
-                !hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
-                return false;
-            }
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.type
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.type = function( obj ) {
+        return obj == null ?
+            String( obj ) :
+            class2type[ toString.call(obj) ] || "object";
+    };
 
-            // Own properties are enumerated firstly, so to speed up,
-            // if last one is own, then all properties are own.
 
-            var key;
-            for ( key in obj ) {}
-
-            return key === undefined || hasOwn.call( obj, key );
-        },
-
-        isEmptyObject: function( obj ) {
-            for ( var name in obj ) {
-                return false;
-            }
-            return true;
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isPlainObject
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isPlainObject = function( obj ) {
+        // Must be an Object.
+        // Because of IE, we also have to check the presence of the constructor property.
+        // Make sure that DOM nodes and window objects don't pass through, as well
+        if ( !obj || OpenSeadragon.type(obj) !== "object" || obj.nodeType || $.isWindow( obj ) ) {
+            return false;
         }
 
+        // Not own constructor property must be Object
+        if ( obj.constructor &&
+            !hasOwn.call(obj, "constructor") &&
+            !hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
+            return false;
+        }
+
+        // Own properties are enumerated firstly, so to speed up,
+        // if last one is own, then all properties are own.
+
+        var key;
+        for ( key in obj ) {}
+
+        return key === undefined || hasOwn.call( obj, key );
     };
 
-}());
-
-(function( $ ){    
 
     /**
-     * @static
-     * @ignore
+     * Taken from jQuery 1.6.1
+     * @name $.isEmptyObject
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
-    $.SIGNAL = "----seadragon----";
-
-    /**
-     * Invokes the the method as if it where a method belonging to the object.
-     * @param {Object} object 
-     * @param {Function} method
-     */
-    $.delegate = function( object, method ) {
-        return function() {
-            if ( arguments === undefined )
-                arguments = [];
-            return method.apply( object, arguments );
-        };
+    $.isEmptyObject = function( obj ) {
+        for ( var name in obj ) {
+            return false;
+        }
+        return true;
     };
-    
+
+
+}( OpenSeadragon ));
+
+/**
+ *  This closure defines all static methods available to the OpenSeadragon
+ *  namespace.  Many, if not most, are taked directly from jQuery for use
+ *  to simplify and reduce common programming patterns.  More static methods 
+ *  from jQuery may eventually make their way into this though we are
+ *  attempting to avoid substaintial plagarism or the more explicit dependency
+ *  on jQuery only because OpenSeadragon is a broadly useful code base and
+ *  would be made less broad by requiring jQuery fully.
+ *
+ *  Some static methods have also been refactored from the original OpenSeadragon 
+ *  project.
+ */
+(function( $ ){
+
     /**
-     * Taken from jQuery 1.6.1, see the jQuery documentation
+     * Taken from jQuery 1.6.1
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
     $.extend = function() {
         var options, 
@@ -294,152 +390,115 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         // Return the modified object
         return target;
     };
-
-    //The following functions are originally from the Openseadragon Utils 
-    //module but have been moved to Openseadragon to avoid the 'Utils' anti-
-    //pattern.  Not all of the code is A-grade compared to equivalent functions
-    // from libraries like jquery, but until we need better we'll leave those
-    //orignally developed by the project.
     
-    /**
-     * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
-     * SAFARI, CHROME, and OPERA.
-     * @static
-     */
-    $.BROWSERS = {
-        UNKNOWN:    0,
-        IE:         1,
-        FIREFOX:    2,
-        SAFARI:     3,
-        CHROME:     4,
-        OPERA:      5
-    };
 
-    /**
-     * The current browser vendor, version, and related information regarding
-     * detected features.  Features include <br/>
-     *  <strong>'alpha'</strong> - Does the browser support image alpha 
-     *  transparency.<br/>
-     * @static
-     */
-    $.Browser = {
-        vendor:     $.BROWSERS.UNKNOWN,
-        version:    0,
-        alpha:      true
-    };
-
-    var ACTIVEX = [
-            "Msxml2.XMLHTTP", 
-            "Msxml3.XMLHTTP", 
-            "Microsoft.XMLHTTP"
-        ],  
-        FILEFORMATS = {
-            "bmp":  false,
-            "jpeg": true,
-            "jpg":  true,
-            "png":  true,
-            "tif":  false,
-            "wdp":  false
-        },
-        URLPARAMS = {};
-
-    (function() {
-        //A small auto-executing routine to determine the browser vendor, 
-        //version and supporting feature sets.
-        var app = navigator.appName,
-            ver = navigator.appVersion,
-            ua  = navigator.userAgent;
-
-        switch( navigator.appName ){
-            case "Microsoft Internet Explorer":
-                if( !!window.attachEvent && 
-                    !!window.ActiveXObject ) {
-
-                    $.Browser.vendor = $.BROWSERS.IE;
-                    $.Browser.version = parseFloat(
-                        ua.substring( 
-                            ua.indexOf( "MSIE" ) + 5, 
-                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
-                        );
-                }
-                break;
-            case "Netscape":
-                if( !!window.addEventListener ){
-                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
-                        $.Browser.vendor = $.BROWSERS.FIREFOX;
-                        $.Browser.version = parseFloat(
-                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
-                        );
-                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
-                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
-                            $.BROWSERS.CHROME : 
-                            $.BROWSERS.SAFARI;
-                        $.Browser.version = parseFloat(
-                            ua.substring( 
-                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
-                                ua.indexOf( "Safari" )
-                            )
-                        );
-                    }
-                }
-                break;
-            case "Opera":
-                $.Browser.vendor = $.BROWSERS.OPERA;
-                $.Browser.version = parseFloat( ver );
-                break;
-        }
-
-            // ignore '?' portion of query string
-        var query = window.location.search.substring( 1 ),
-            parts = query.split('&'),
-            part,
-            sep,
-            i;
-
-        for ( i = 0; i < parts.length; i++ ) {
-            part = parts[ i ];
-            sep  = part.indexOf( '=' );
-
-            if ( sep > 0 ) {
-                URLPARAMS[ part.substring( 0, sep ) ] =
-                    decodeURIComponent( part.substring( sep + 1 ) );
-            }
-        }
-
-        //determine if this browser supports image alpha transparency
-        $.Browser.alpha = !( 
-            $.Browser.vendor == $.BROWSERS.IE || (
-                $.Browser.vendor == $.BROWSERS.CHROME && 
-                $.Browser.version < 2
-            )
-        );
-
-    })();
-
-    //TODO: $.console is often used inside a try/catch block which generally
-    //      prevents allowings errors to occur with detection until a debugger
-    //      is attached.  Although I've been guilty of the same anti-pattern
-    //      I eventually was convinced that errors should naturally propogate in
-    //      all but the most special cases.
-    /**
-     * A convenient alias for console when available, and a simple null 
-     * function when console is unavailable.
-     * @static
-     * @private
-     */
-    var nullfunction = function( msg ){
-            //document.location.hash = msg;
-        };
-
-    $.console = window.console || {
-        log:    nullfunction,
-        debug:  nullfunction,
-        info:   nullfunction,
-        warn:   nullfunction,
-        error:  nullfunction
-    };
-        
     $.extend( $, {
+        /**
+         * These are the default values for the optional settings documented
+         * in the {@link OpenSeadragon} constructor detail.
+         * @name $.DEFAULT_SETTINGS
+         * @static
+         */
+        DEFAULT_SETTINGS: {
+            xmlPath:            null,
+            tileSources:        null, 
+            debugMode:          true,
+            animationTime:      1.5,
+            blendTime:          0.5,
+            alwaysBlend:        false,
+            autoHideControls:   true,
+            immediateRender:    false,
+            wrapHorizontal:     false,
+            wrapVertical:       false,
+            minZoomImageRatio:  0.8,
+            maxZoomPixelRatio:  2,
+            visibilityRatio:    0.5,
+            springStiffness:    5.0,
+            imageLoaderLimit:   0,
+            clickTimeThreshold: 200,
+            clickDistThreshold: 5,
+            zoomPerClick:       2.0,
+            zoomPerScroll:      1.2,
+            zoomPerSecond:      2.0,
+            showNavigationControl: true,
+            
+            //These two were referenced but never defined
+            controlsFadeDelay:  2000,
+            controlsFadeLength: 1500,
+
+            maxImageCacheCount: 100,
+            minPixelRatio:      0.5,
+            mouseNavEnabled:    true,
+            prefixUrl:          null,
+            navImages: {
+                zoomIn: {
+                    REST:   '/images/zoomin_rest.png',
+                    GROUP:  '/images/zoomin_grouphover.png',
+                    HOVER:  '/images/zoomin_hover.png',
+                    DOWN:   '/images/zoomin_pressed.png'
+                },
+                zoomOut: {
+                    REST:   '/images/zoomout_rest.png',
+                    GROUP:  '/images/zoomout_grouphover.png',
+                    HOVER:  '/images/zoomout_hover.png',
+                    DOWN:   '/images/zoomout_pressed.png'
+                },
+                home: {
+                    REST:   '/images/home_rest.png',
+                    GROUP:  '/images/home_grouphover.png',
+                    HOVER:  '/images/home_hover.png',
+                    DOWN:   '/images/home_pressed.png'
+                },
+                fullpage: {
+                    REST:   '/images/fullpage_rest.png',
+                    GROUP:  '/images/fullpage_grouphover.png',
+                    HOVER:  '/images/fullpage_hover.png',
+                    DOWN:   '/images/fullpage_pressed.png'
+                }
+            }
+        },
+
+
+        /**
+         * TODO: get rid of this.  I can't see how it's required at all.  Looks
+         *       like an early legacy code artifact.
+         * @static
+         * @ignore
+         */
+        SIGNAL: "----seadragon----",
+
+
+        /**
+         * Invokes the the method as if it where a method belonging to the object.
+         * @name $.delegate
+         * @function
+         * @param {Object} object 
+         * @param {Function} method
+         */
+        delegate: function( object, method ) {
+            return function() {
+                if ( arguments === undefined )
+                    arguments = [];
+                return method.apply( object, arguments );
+            };
+        },
+        
+        
+        /**
+         * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
+         * SAFARI, CHROME, and OPERA.
+         * @name $.BROWSERS
+         * @static
+         */
+        BROWSERS: {
+            UNKNOWN:    0,
+            IE:         1,
+            FIREFOX:    2,
+            SAFARI:     3,
+            CHROME:     4,
+            OPERA:      5
+        },
+
 
         /**
          * Returns a DOM Element for the given id or element.
@@ -454,6 +513,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
             return element;
         },
+
 
         /**
          * Determines the position of the upper-left corner of the element.
@@ -488,6 +548,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+
         /**
          * Determines the height and width of the given element.
          * @function
@@ -503,6 +564,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 element.clientHeight
             );
         },
+
 
         /**
          * Returns the CSSStyle object for the given element.
@@ -523,6 +585,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Gets the latest event, really only useful internally since its 
          * specific to IE behavior.  TODO: Deprecate this from the api and
@@ -535,6 +598,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         getEvent: function( event ) {
             return event ? event : window.event;
         },
+
 
         /**
          * Gets the position of the mouse on the screen for a given event.
@@ -569,6 +633,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+
         /**
          * Determines the pages current scroll position.
          * @function
@@ -593,6 +658,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return result;
         },
+
 
         /**
          * Determines the size of the browsers window.
@@ -667,6 +733,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return div;
         },
 
+
         /**
          * Creates an easily positionable element of the given type that therefor
          * serves as an excellent container element.
@@ -687,6 +754,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return element;
         },
+
 
         /**
          * Ensures an image is loaded correctly to support alpha transparency.
@@ -730,6 +798,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return element;
         },
+
 
         /**
          * Sets the opacity of the specified element.
@@ -779,6 +848,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Adds an event listener for the given element, eventName and handler.
          * @function
@@ -807,6 +877,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 );
             }
         },
+
 
         /**
          * Remove a given event listener for the given element, event type and 
@@ -838,6 +909,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Cancels the default browser behavior had the event propagated all
          * the way up the DOM to the window object.
@@ -858,6 +930,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             event.returnValue = false;
         },
 
+
         /**
          * Stops the propagation of the event up the DOM.
          * @function
@@ -873,6 +946,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             event.cancelBubble = true;      // IE for stopping propagation
         },
+
 
         /**
          * Similar to OpenSeadragon.delegate, but it does not immediately call 
@@ -910,6 +984,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             };
         },
 
+
         /**
          * Retreives the value of a url parameter from the window.location string.
          * @function
@@ -921,6 +996,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
+
 
         /**
          * Makes an AJAX request.
@@ -1076,6 +1152,138 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         }
 
     });
+
+
+    /**
+     * The current browser vendor, version, and related information regarding
+     * detected features.  Features include <br/>
+     *  <strong>'alpha'</strong> - Does the browser support image alpha 
+     *  transparency.<br/>
+     * @name $.Browser
+     * @static
+     */
+    $.Browser = {
+        vendor:     $.BROWSERS.UNKNOWN,
+        version:    0,
+        alpha:      true
+    };
+
+
+    var ACTIVEX = [
+            "Msxml2.XMLHTTP", 
+            "Msxml3.XMLHTTP", 
+            "Microsoft.XMLHTTP"
+        ],  
+        FILEFORMATS = {
+            "bmp":  false,
+            "jpeg": true,
+            "jpg":  true,
+            "png":  true,
+            "tif":  false,
+            "wdp":  false
+        },
+        URLPARAMS = {};
+
+    (function() {
+        //A small auto-executing routine to determine the browser vendor, 
+        //version and supporting feature sets.
+        var app = navigator.appName,
+            ver = navigator.appVersion,
+            ua  = navigator.userAgent;
+
+        //console.error( 'appName: ' + navigator.appName );
+        //console.error( 'appVersion: ' + navigator.appVersion );
+        //console.error( 'userAgent: ' + navigator.userAgent );
+
+        switch( navigator.appName ){
+            case "Microsoft Internet Explorer":
+                if( !!window.attachEvent && 
+                    !!window.ActiveXObject ) {
+
+                    $.Browser.vendor = $.BROWSERS.IE;
+                    $.Browser.version = parseFloat(
+                        ua.substring( 
+                            ua.indexOf( "MSIE" ) + 5, 
+                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
+                        );
+                }
+                break;
+            case "Netscape":
+                if( !!window.addEventListener ){
+                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.FIREFOX;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
+                        );
+                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
+                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
+                            $.BROWSERS.CHROME : 
+                            $.BROWSERS.SAFARI;
+                        $.Browser.version = parseFloat(
+                            ua.substring( 
+                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
+                                ua.indexOf( "Safari" )
+                            )
+                        );
+                    }
+                }
+                break;
+            case "Opera":
+                $.Browser.vendor = $.BROWSERS.OPERA;
+                $.Browser.version = parseFloat( ver );
+                break;
+        }
+
+            // ignore '?' portion of query string
+        var query = window.location.search.substring( 1 ),
+            parts = query.split('&'),
+            part,
+            sep,
+            i;
+
+        for ( i = 0; i < parts.length; i++ ) {
+            part = parts[ i ];
+            sep  = part.indexOf( '=' );
+
+            if ( sep > 0 ) {
+                URLPARAMS[ part.substring( 0, sep ) ] =
+                    decodeURIComponent( part.substring( sep + 1 ) );
+            }
+        }
+
+        //determine if this browser supports image alpha transparency
+        $.Browser.alpha = !( 
+            $.Browser.vendor == $.BROWSERS.IE || (
+                $.Browser.vendor == $.BROWSERS.CHROME && 
+                $.Browser.version < 2
+            )
+        );
+
+    })();
+
+    //TODO: $.console is often used inside a try/catch block which generally
+    //      prevents allowings errors to occur with detection until a debugger
+    //      is attached.  Although I've been guilty of the same anti-pattern
+    //      I eventually was convinced that errors should naturally propogate in
+    //      all but the most special cases.
+    /**
+     * A convenient alias for console when available, and a simple null 
+     * function when console is unavailable.
+     * @static
+     * @private
+     */
+    var nullfunction = function( msg ){
+            //document.location.hash = msg;
+        };
+
+    $.console = window.console || {
+        log:    nullfunction,
+        debug:  nullfunction,
+        info:   nullfunction,
+        warn:   nullfunction,
+        error:  nullfunction
+    };
+        
 
     /**
      * @private
@@ -2504,6 +2712,8 @@ $.Viewer = function( options ) {
 
     $.EventHandler.call( this );
 
+    //backward compatibility for positional args while prefering more 
+    //idiomatic javascript options object as the only argument
     if( !$.isPlainObject( options ) ){
         options = {
             id:                 args[ 0 ],
@@ -2511,29 +2721,29 @@ $.Viewer = function( options ) {
             prefixUrl:          args.length > 2 ? args[ 2 ] : undefined,
             controls:           args.length > 3 ? args[ 3 ] : undefined,
             overlays:           args.length > 4 ? args[ 4 ] : undefined,
-            overlayControls:    args.length > 5 ? args[ 5 ] : undefined,
-            config:             {}
+            overlayControls:    args.length > 5 ? args[ 5 ] : undefined
         };
+    }
+
+    //options.config and the general config argument are deprecated
+    //in favor of the more direct specification of optional settings
+    //being pass directly on the options object
+    if ( options.config ){
+        $.extend( true, options, options.config );
+        delete options.config;
     }
     
     //Allow the options object to override global defaults
     $.extend( true, this, { 
+
         id:                 options.id,
-        xmlPath:            null,
-        tileSources:        null, 
+        hash:               options.id,
         controls:           [],
         overlays:           [],
         overlayControls:    [],
-        config:             $.DEFAULT_SETTINGS,
 
-        //These were referenced but never defined
-
-        //These are originally not part options but declared as members
-        //in initialize.  Its still considered idiomatic to put them here
-        source:     null,
-        drawer:     null,
-        viewport:   null,
-        profiler:   null,
+        //private state properties
+        previousBody:       [],
 
         //This was originally initialized in the constructor and so could never
         //have anything in it.  now it can because we allow it to be specified
@@ -2541,11 +2751,18 @@ $.Viewer = function( options ) {
         //this array was returned from get_controls which I find confusing
         //since this object has a controls property which is treated in other
         //functions like clearControls.  I'm removing the accessors.
-        customControls: []
+        customControls: [],
 
-    }, options );
+        //These are originally not part options but declared as members
+        //in initialize.  Its still considered idiomatic to put them here
+        source:         null,
+        drawer:         null,
+        viewport:       null,
+        profiler:       null
 
-    this.element        = document.getElementById( options.id );
+    }, $.DEFAULT_SETTINGS, options );
+
+    this.element        = document.getElementById( this.id );
     this.container      = $.makeNeutralElement( "div" );
     this.canvas         = $.makeNeutralElement( "div" );
 
@@ -2556,9 +2773,6 @@ $.Viewer = function( options ) {
     this.bodyHeight     = document.body.style.height;
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
-    this.previousBody   = [];
-
-    this.hash           = Math.random(); 
 
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
@@ -2572,8 +2786,8 @@ $.Viewer = function( options ) {
 
     this.innerTracker = new $.MouseTracker({
         element:            this.canvas, 
-        clickTimeThreshold: this.config.clickTimeThreshold, 
-        clickDistThreshold: this.config.clickDistThreshold,
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
         clickHandler:       $.delegate( this, onCanvasClick ),
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
@@ -2582,8 +2796,8 @@ $.Viewer = function( options ) {
 
     this.outerTracker = new $.MouseTracker({
         element:            this.container, 
-        clickTimeThreshold: this.config.clickTimeThreshold, 
-        clickDistThreshold: this.config.clickDistThreshold,
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
         enterHandler:       $.delegate( this, onContainerEnter ),
         exitHandler:        $.delegate( this, onContainerExit ),
         releaseHandler:     $.delegate( this, onContainerRelease )
@@ -2649,15 +2863,15 @@ $.Viewer = function( options ) {
         doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
         onHomeHandler           = $.delegate( this, onHome ),
         onFullPageHandler       = $.delegate( this, onFullPage ),
-        navImages               = this.config.navImages,
+        navImages               = this.navImages,
         zoomIn = new $.Button({ 
-            clickTimeThreshold: this.config.clickTimeThreshold,
-            clickDistThreshold: this.config.clickDistThreshold,
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomIn" ), 
-            srcRest:    resolveUrl( this.config.prefixUrl, navImages.zoomIn.REST ),
-            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.zoomIn.GROUP ),
-            srcHover:   resolveUrl( this.config.prefixUrl, navImages.zoomIn.HOVER ),
-            srcDown:    resolveUrl( this.config.prefixUrl, navImages.zoomIn.DOWN ),
+            srcRest:    resolveUrl( this.prefixUrl, navImages.zoomIn.REST ),
+            srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomIn.GROUP ),
+            srcHover:   resolveUrl( this.prefixUrl, navImages.zoomIn.HOVER ),
+            srcDown:    resolveUrl( this.prefixUrl, navImages.zoomIn.DOWN ),
             onPress:    beginZoomingInHandler,
             onRelease:  endZoomingHandler,
             onClick:    doSingleZoomInHandler,
@@ -2665,13 +2879,13 @@ $.Viewer = function( options ) {
             onExit:     endZoomingHandler
         }),
         zoomOut = new $.Button({ 
-            clickTimeThreshold: this.config.clickTimeThreshold,
-            clickDistThreshold: this.config.clickDistThreshold,
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomOut" ), 
-            srcRest:    resolveUrl( this.config.prefixUrl, navImages.zoomOut.REST ), 
-            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.zoomOut.GROUP ), 
-            srcHover:   resolveUrl( this.config.prefixUrl, navImages.zoomOut.HOVER ), 
-            srcDown:    resolveUrl( this.config.prefixUrl, navImages.zoomOut.DOWN ),
+            srcRest:    resolveUrl( this.prefixUrl, navImages.zoomOut.REST ), 
+            srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomOut.GROUP ), 
+            srcHover:   resolveUrl( this.prefixUrl, navImages.zoomOut.HOVER ), 
+            srcDown:    resolveUrl( this.prefixUrl, navImages.zoomOut.DOWN ),
             onPress:    beginZoomingOutHandler, 
             onRelease:  endZoomingHandler, 
             onClick:    doSingleZoomOutHandler, 
@@ -2679,29 +2893,29 @@ $.Viewer = function( options ) {
             onExit:     endZoomingHandler 
         }),
         goHome = new $.Button({ 
-            clickTimeThreshold: this.config.clickTimeThreshold,
-            clickDistThreshold: this.config.clickDistThreshold,
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.Home" ), 
-            srcRest:    resolveUrl( this.config.prefixUrl, navImages.home.REST ), 
-            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.home.GROUP ), 
-            srcHover:   resolveUrl( this.config.prefixUrl, navImages.home.HOVER ), 
-            srcDown:    resolveUrl( this.config.prefixUrl, navImages.home.DOWN ),
+            srcRest:    resolveUrl( this.prefixUrl, navImages.home.REST ), 
+            srcGroup:   resolveUrl( this.prefixUrl, navImages.home.GROUP ), 
+            srcHover:   resolveUrl( this.prefixUrl, navImages.home.HOVER ), 
+            srcDown:    resolveUrl( this.prefixUrl, navImages.home.DOWN ),
             onRelease:  onHomeHandler 
         }),
         fullPage = new $.Button({ 
-            clickTimeThreshold: this.config.clickTimeThreshold,
-            clickDistThreshold: this.config.clickDistThreshold,
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.FullPage" ),
-            srcRest:    resolveUrl( this.config.prefixUrl, navImages.fullpage.REST ),
-            srcGroup:   resolveUrl( this.config.prefixUrl, navImages.fullpage.GROUP ),
-            srcHover:   resolveUrl( this.config.prefixUrl, navImages.fullpage.HOVER ),
-            srcDown:    resolveUrl( this.config.prefixUrl, navImages.fullpage.DOWN ),
+            srcRest:    resolveUrl( this.prefixUrl, navImages.fullpage.REST ),
+            srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
+            srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
+            srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
             onRelease:  onFullPageHandler 
         });
 
     this.buttons = new $.ButtonGroup({ 
-        clickTimeThreshold: this.config.clickTimeThreshold,
-        clickDistThreshold: this.config.clickDistThreshold,
+        clickTimeThreshold: this.clickTimeThreshold,
+        clickDistThreshold: this.clickDistThreshold,
         buttons: [ 
             zoomIn, 
             zoomOut, 
@@ -2714,7 +2928,7 @@ $.Viewer = function( options ) {
     this.navControl[ $.SIGNAL ] = true;   // hack to get our controls to fade
     this.addHandler( 'open', $.delegate( this, lightUp ) );
 
-    if ( this.config.showNavigationControl ) {
+    if ( this.showNavigationControl ) {
         this.navControl.style.marginRight = "4px";
         this.navControl.style.marginBottom = "4px";
         this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
@@ -2766,7 +2980,7 @@ $.Viewer = function( options ) {
             initialTileSource = this.tileSources
         }
 
-        if ( $.type( initialTileSource ) == 'string ') {
+        if ( $.type( initialTileSource ) == 'string') {
             //Standard DZI format
             this.openDzi( initialTileSource );
         } else if ( $.isArray( initialTileSource ) ){
@@ -2778,9 +2992,6 @@ $.Viewer = function( options ) {
             customTileSource.getTileUrl = initialTileSource;
             this.open( customTileSource );
         }
-
-
-
     }
 };
 
@@ -2902,16 +3113,31 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         }
 
         this.viewport = new $.Viewport({
-            containerSize:  THIS[ this.hash ].prevContainerSize, 
-            contentSize:    this.source.dimensions, 
-            config:         this.config
+            containerSize:      THIS[ this.hash ].prevContainerSize, 
+            contentSize:        this.source.dimensions, 
+            springStiffness:    this.springStiffness,
+            animationTime:      this.animationTime,
+            minZoomImageRatio:  this.minZoomImageRatio,
+            maxZoomPixelRatio:  this.maxZoomPixelRatio,
+            visibilityRatio:    this.visibilityRatio,
+            wrapHorizontal:     this.wrapHorizontal,
+            wrapVertical:       this.wrapVertical
         });
 
-        this.drawer = new $.Drawer(
-            this.source, 
-            this.viewport, 
-            this.canvas
-        );
+        this.drawer = new $.Drawer({
+            source:             this.source, 
+            viewport:           this.viewport, 
+            element:            this.canvas,
+            maxImageCacheCount: this.maxImageCacheCount,
+            imageLoaderLimit:   this.imageLoaderLimit,
+            minZoomImageRatio:  this.minZoomImageRatio,
+            wrapHorizontal:     this.wrapHorizontal,
+            wrapVertical:       this.wrapVertical,
+            immediateRender:    this.immediateRender,
+            blendTime:          this.blendTime,
+            alwaysBlend:        this.alwaysBlend,
+            minPixelRatio:      this.minPixelRatio
+        });
 
         //this.profiler = new $.Profiler();
 
@@ -3228,17 +3454,17 @@ function scheduleControlsFade( viewer ) {
 
 //initiates an animation to hide the controls
 function beginControlsAutoHide( viewer ) {
-    if ( !viewer.config.autoHideControls ) {
+    if ( !viewer.autoHideControls ) {
         return;
     }
     viewer.controlsShouldFade = true;
     viewer.controlsFadeBeginTime = 
         +new Date() + 
-        viewer.config.controlsFadeDelay;
+        viewer.controlsFadeDelay;
 
     window.setTimeout( function(){
         scheduleControlsFade( viewer );
-    }, viewer.config.controlsFadeDelay );
+    }, viewer.controlsFadeDelay );
 };
 
 
@@ -3251,7 +3477,7 @@ function updateControlsFade( viewer ) {
     if ( viewer.controlsShouldFade ) {
         currentTime = new Date().getTime();
         deltaTime = currentTime - viewer.controlsFadeBeginTime;
-        opacity = 1.0 - deltaTime / viewer.config.controlsFadeLength;
+        opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
 
         opacity = Math.min( 1.0, opacity );
         opacity = Math.max( 0.0, opacity );
@@ -3284,7 +3510,7 @@ function onCanvasClick( tracker, position, quick, shift ) {
     var zoomPreClick,
         factor;
     if ( this.viewport && quick ) {    // ignore clicks where mouse moved         
-        zoomPerClick = this.config.zoomPerClick;
+        zoomPerClick = this.zoomPerClick;
         factor = shift ? 1.0 / zoomPerClick : zoomPerClick;
         this.viewport.zoomBy(
             factor, 
@@ -3313,7 +3539,7 @@ function onCanvasRelease( tracker, position, insideElementPress, insideElementRe
 function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
     if ( this.viewport ) {
-        factor = Math.pow( this.config.zoomPerScroll, scroll );
+        factor = Math.pow( this.zoomPerScroll, scroll );
         this.viewport.zoomBy( 
             factor, 
             this.viewport.pointFromPixel( position, true ) 
@@ -3432,14 +3658,14 @@ function resolveUrl( prefix, url ) {
 
 function beginZoomingIn() {
     THIS[ this.hash ].lastZoomTime = +new Date();
-    THIS[ this.hash ].zoomFactor = this.config.zoomPerSecond;
+    THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
 }
 
 function beginZoomingOut() {
     THIS[ this.hash ].lastZoomTime = +new Date();
-    THIS[ this.hash ].zoomFactor = 1.0 / this.config.zoomPerSecond;
+    THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
 }
@@ -3473,7 +3699,7 @@ function doSingleZoomIn() {
     if ( this.viewport ) {
         THIS[ this.hash ].zooming = false;
         this.viewport.zoomBy( 
-            this.config.zoomPerClick / 1.0 
+            this.zoomPerClick / 1.0 
         );
         this.viewport.applyConstraints();
     }
@@ -3483,7 +3709,7 @@ function doSingleZoomOut() {
     if ( this.viewport ) {
         THIS[ this.hash ].zooming = false;
         this.viewport.zoomBy(
-            1.0 / this.config.zoomPerClick
+            1.0 / this.zoomPerClick
         );
         this.viewport.applyConstraints();
     }
@@ -4794,18 +5020,18 @@ function transform( stiffness, x ) {
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
  * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
- *  coordinates
+ *      coordinates.
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
- *  this tile failed to load?
+ *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
  *
  * @property {Number} level The zoom level this tile belongs to.
  * @property {Number} x The vector component 'x'.
  * @property {Number} y The vector component 'y'.
  * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
- *  coordinates
+ *      coordinates
  * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
- *  this tile failed to load?
+ *      this tile failed to load?
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
  * @property {Boolean} loading Is this tile loading
@@ -5113,12 +5339,7 @@ $.Tile.prototype = {
 
 (function( $ ){
     
-    // the max number of images we should keep in memory
-var QUOTA               = 100,
-    // the most shrunk a tile should be
-    MIN_PIXEL_RATIO     = 0.5,
-    //TODO: make TIMEOUT configurable
-    TIMEOUT             = 5000,
+var TIMEOUT             = 5000,
 
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
@@ -5128,10 +5349,12 @@ var QUOTA               = 100,
         ( BROWSER == $.BROWSERS.OPERA )   ||
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
-    ),
+    ) && ( !navigator.appVersion.match( 'Mobile' ) ),
 
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
         SUBPIXEL_RENDERING;
+
+//console.error( 'USE_CANVAS ' + USE_CANVAS );
 
 /**
  * @class
@@ -5156,26 +5379,54 @@ var QUOTA               = 100,
  * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
  * @property {Element} element - DEPRECATED Alias for container.
  */
-$.Drawer = function( source, viewport, element ) {
+$.Drawer = function( options ) {
+    
+    //backward compatibility for positional args while prefering more 
+    //idiomatic javascript options object as the only argument
+    var args  = arguments;
+    if( !$.isPlainObject( options ) ){
+        options = {
+            source:     args[ 0 ],
+            viewport:   args[ 1 ],
+            element:    args[ 2 ]
+        };
+    }
 
-    this.viewport   = viewport;
-    this.source     = source;
-    this.container  = $.getElement( element );
+    $.extend( true, this, {
+        //references to closely related openseadragon objects
+        //viewport:       null,
+        //source:         null,
+
+        //internal state properties
+        downloading:    0,
+        tilesMatrix:    {},
+        tilesLoaded:    [],
+        coverage:       {},
+        overlays:       [],
+        lastDrawn:      [],
+        lastResetTime:  0,
+        midUpdate:      false,
+        updateAgain:    true,
+
+        //configurable settings
+        maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
+        imageLoaderLimit:   $.DEFAULT_SETTINGS.imageLoaderLimit,
+        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:          $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio
+
+    }, options );
+
+    this.container  = $.getElement( this.element );
     this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
     this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
-    this.config     = this.viewport.config;
-    this.normHeight = source.dimensions.y / source.dimensions.x;
+    this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
+    this.element    = this.container;
 
-    this.downloading        = 0;
-    this.tilesMatrix        = {};
-    this.tilesLoaded        = [];
-    this.coverage           = {};
-    this.overlays           = [];
-    this.lastDrawn          = [];
-    this.lastResetTime      = 0;
-    this.midUpdate          = false;
-    this.updateAgain        = true;
-    this.element               = this.container;
     
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
@@ -5320,7 +5571,7 @@ $.Drawer.prototype = {
      * the local cache to optimize user experience in certain cases. Because
      * the number of parallel image loads is configurable, if too many images
      * are currently being loaded, the request will be ignored.  Since by 
-     * default viewer.config.imageLoaderLimit is 0, the native browser parallel 
+     * default drawer.imageLoaderLimit is 0, the native browser parallel 
      * image loading policy will be used.
      * @method
      * @param {String} src - The url of the image to load.
@@ -5329,7 +5580,7 @@ $.Drawer.prototype = {
      *      For now this means the callback is expected to distinguish between
      *      error and success conditions by inspecting the Image object.
      * @return {Boolean} loading - Wheter the request was submitted or ignored 
-     *      based on viewer.config.imageLoaderLimit.
+     *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
      */
     loadImage: function( src, callback ) {
         var _this = this,
@@ -5338,8 +5589,8 @@ $.Drawer.prototype = {
             jobid,
             complete;
         
-        if ( !this.config.imageLoaderLimit || 
-              this.downloading < this.config.imageLoaderLimit ) {
+        if ( !this.imageLoaderLimit || 
+              this.downloading < this.imageLoaderLimit ) {
             
             this.downloading++;
 
@@ -5409,14 +5660,14 @@ function updateViewport( drawer ) {
         lowestLevel     = Math.max(
             drawer.source.minLevel, 
             Math.floor( 
-                Math.log( drawer.config.minZoomImageRatio ) / 
+                Math.log( drawer.minZoomImageRatio ) / 
                 Math.log( 2 )
             )
         ),
         highestLevel    = Math.min(
             drawer.source.maxLevel,
             Math.floor( 
-                Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
+                Math.log( zeroRatioC / drawer.minPixelRatio ) / 
                 Math.log( 2 )
             )
         ),
@@ -5442,21 +5693,21 @@ function updateViewport( drawer ) {
     }
 
     //TODO
-    if  ( !drawer.config.wrapHorizontal && 
+    if  ( !drawer.wrapHorizontal && 
         ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
         return;
     } else if 
-        ( !drawer.config.wrapVertical &&
+        ( !drawer.wrapVertical &&
         ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
         return;
     }
 
     //TODO
-    if ( !drawer.config.wrapHorizontal ) {
+    if ( !drawer.wrapHorizontal ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
         viewportBR.x = Math.min( viewportBR.x, 1 );
     }
-    if ( !drawer.config.wrapVertical ) {
+    if ( !drawer.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
         viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
     }
@@ -5473,7 +5724,7 @@ function updateViewport( drawer ) {
             true
         ).x;
 
-        if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
+        if ( ( !haveDrawn && renderPixelRatioC >= drawer.minPixelRatio ) ||
              ( level == lowestLevel ) ) {
             drawLevel = true;
             haveDrawn = true;
@@ -5491,7 +5742,7 @@ function updateViewport( drawer ) {
             false
         ).x;
         
-        optimalRatio    = drawer.config.immediateRender ? 
+        optimalRatio    = drawer.immediateRender ? 
             1 : 
             zeroRatioT;
 
@@ -5549,10 +5800,10 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 
     resetCoverage( drawer.coverage, level );
 
-    if ( !drawer.config.wrapHorizontal ) {
+    if ( !drawer.wrapHorizontal ) {
         tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
     }
-    if ( !drawer.config.wrapVertical ) {
+    if ( !drawer.wrapVertical ) {
         tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
     }
 
@@ -5721,7 +5972,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     insertionIndex = drawer.tilesLoaded.length;
 
-    if ( drawer.tilesLoaded.length >= QUOTA ) {
+    if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
         cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
 
         worstTile       = null;
@@ -5783,7 +6034,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility 
 
 
 function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
-    var blendTimeMillis = 1000 * drawer.config.blendTime,
+    var blendTimeMillis = 1000 * drawer.blendTime,
         deltaTime,
         opacity;
 
@@ -5794,7 +6045,7 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     deltaTime   = currentTime - tile.blendStart;
     opacity     = Math.min( 1, deltaTime / blendTimeMillis );
     
-    if ( drawer.config.alwaysBlend ) {
+    if ( drawer.alwaysBlend ) {
         opacity *= levelOpacity;
     }
 
@@ -6017,44 +6268,64 @@ function drawTiles( drawer, lastDrawn ){
  */
 $.Viewport = function( options ) {
 
-
-    if(  arguments.length && arguments[ 0 ] instanceof $.Point ){
+    //backward compatibility for positional args while prefering more 
+    //idiomatic javascript options object as the only argument
+    var args = arguments;
+    if(  args.length && args[ 0 ] instanceof $.Point ){
         options = {
-            containerSize:      arguments[ 0 ],
-            contentSize:        arguments[ 1 ],
-            config:             arguments[ 2 ]
+            containerSize:  args[ 0 ],
+            contentSize:    args[ 1 ],
+            config:         args[ 2 ]
         };
     }
 
-    //TODO: this.config is something that should go away but currently the 
-    //      Drawer references the viewport.config
-    this.config        = options.config;
-    this.zoomPoint     = null;
-    this.containerSize = options.containerSize;
-    this.contentSize   = options.contentSize;
+    //options.config and the general config argument are deprecated
+    //in favor of the more direct specification of optional settings
+    //being pass directly on the options object
+    if ( options.config ){
+        $.extend( true, options, options.config );
+        delete options.config;
+    }
+
+    $.extend( true, this, {
+        
+        //required settings
+        containerSize:      null,
+        contentSize:        null,
+
+        //internal state properties
+        zoomPoint:          null,
+
+        //configurable options
+        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:      $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
+        maxZoomPixelRatio:  $.DEFAULT_SETTINGS.maxZoomPixelRatio,
+        visibilityRatio:    $.DEFAULT_SETTINGS.visibilityRatio,
+        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical
+
+    }, options );
+
+
     this.contentAspect = this.contentSize.x / this.contentSize.y;
     this.contentHeight = this.contentSize.y / this.contentSize.x;
     this.centerSpringX = new $.Spring({
         initial: 0, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
     this.centerSpringY = new $.Spring({
         initial: 0, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
     this.zoomSpring    = new $.Spring({
         initial: 1, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
-    this.minZoomImageRatio = this.config.minZoomImageRatio;
-    this.maxZoomPixelRatio = this.config.maxZoomPixelRatio;
-    this.visibilityRatio   = this.config.visibilityRatio;
-    this.wrapHorizontal    = this.config.wrapHorizontal;
-    this.wrapVertical      = this.config.wrapVertical;
-    this.homeBounds        = new $.Rect( 0, 0, 1, this.contentHeight );
+    this.homeBounds    = new $.Rect( 0, 0, 1, this.contentHeight );
 
     this.goHome( true );
     this.update();

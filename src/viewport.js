@@ -7,44 +7,64 @@
  */
 $.Viewport = function( options ) {
 
-
-    if(  arguments.length && arguments[ 0 ] instanceof $.Point ){
+    //backward compatibility for positional args while prefering more 
+    //idiomatic javascript options object as the only argument
+    var args = arguments;
+    if(  args.length && args[ 0 ] instanceof $.Point ){
         options = {
-            containerSize:      arguments[ 0 ],
-            contentSize:        arguments[ 1 ],
-            config:             arguments[ 2 ]
+            containerSize:  args[ 0 ],
+            contentSize:    args[ 1 ],
+            config:         args[ 2 ]
         };
     }
 
-    //TODO: this.config is something that should go away but currently the 
-    //      Drawer references the viewport.config
-    this.config        = options.config;
-    this.zoomPoint     = null;
-    this.containerSize = options.containerSize;
-    this.contentSize   = options.contentSize;
+    //options.config and the general config argument are deprecated
+    //in favor of the more direct specification of optional settings
+    //being pass directly on the options object
+    if ( options.config ){
+        $.extend( true, options, options.config );
+        delete options.config;
+    }
+
+    $.extend( true, this, {
+        
+        //required settings
+        containerSize:      null,
+        contentSize:        null,
+
+        //internal state properties
+        zoomPoint:          null,
+
+        //configurable options
+        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:      $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
+        maxZoomPixelRatio:  $.DEFAULT_SETTINGS.maxZoomPixelRatio,
+        visibilityRatio:    $.DEFAULT_SETTINGS.visibilityRatio,
+        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical
+
+    }, options );
+
+
     this.contentAspect = this.contentSize.x / this.contentSize.y;
     this.contentHeight = this.contentSize.y / this.contentSize.x;
     this.centerSpringX = new $.Spring({
         initial: 0, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
     this.centerSpringY = new $.Spring({
         initial: 0, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
     this.zoomSpring    = new $.Spring({
         initial: 1, 
-        springStiffness: this.config.springStiffness,
-        animationTime:   this.config.animationTime
+        springStiffness: this.springStiffness,
+        animationTime:   this.animationTime
     });
-    this.minZoomImageRatio = this.config.minZoomImageRatio;
-    this.maxZoomPixelRatio = this.config.maxZoomPixelRatio;
-    this.visibilityRatio   = this.config.visibilityRatio;
-    this.wrapHorizontal    = this.config.wrapHorizontal;
-    this.wrapVertical      = this.config.wrapVertical;
-    this.homeBounds        = new $.Rect( 0, 0, 1, this.contentHeight );
+    this.homeBounds    = new $.Rect( 0, 0, 1, this.contentHeight );
 
     this.goHome( true );
     this.update();

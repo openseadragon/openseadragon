@@ -1,12 +1,7 @@
 
 (function( $ ){
     
-    // the max number of images we should keep in memory
-var QUOTA               = 100,
-    // the most shrunk a tile should be
-    MIN_PIXEL_RATIO     = 0.5,
-    //TODO: make TIMEOUT configurable
-    TIMEOUT             = 5000,
+var TIMEOUT             = 5000,
 
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
@@ -16,10 +11,12 @@ var QUOTA               = 100,
         ( BROWSER == $.BROWSERS.OPERA )   ||
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
-    ),
+    ) && ( !navigator.appVersion.match( 'Mobile' ) ),
 
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
         SUBPIXEL_RENDERING;
+
+//console.error( 'USE_CANVAS ' + USE_CANVAS );
 
 /**
  * @class
@@ -44,26 +41,54 @@ var QUOTA               = 100,
  * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
  * @property {Element} element - DEPRECATED Alias for container.
  */
-$.Drawer = function( source, viewport, element ) {
+$.Drawer = function( options ) {
+    
+    //backward compatibility for positional args while prefering more 
+    //idiomatic javascript options object as the only argument
+    var args  = arguments;
+    if( !$.isPlainObject( options ) ){
+        options = {
+            source:     args[ 0 ],
+            viewport:   args[ 1 ],
+            element:    args[ 2 ]
+        };
+    }
 
-    this.viewport   = viewport;
-    this.source     = source;
-    this.container  = $.getElement( element );
+    $.extend( true, this, {
+        //references to closely related openseadragon objects
+        //viewport:       null,
+        //source:         null,
+
+        //internal state properties
+        downloading:    0,
+        tilesMatrix:    {},
+        tilesLoaded:    [],
+        coverage:       {},
+        overlays:       [],
+        lastDrawn:      [],
+        lastResetTime:  0,
+        midUpdate:      false,
+        updateAgain:    true,
+
+        //configurable settings
+        maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
+        imageLoaderLimit:   $.DEFAULT_SETTINGS.imageLoaderLimit,
+        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:          $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio
+
+    }, options );
+
+    this.container  = $.getElement( this.element );
     this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
     this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
-    this.config     = this.viewport.config;
-    this.normHeight = source.dimensions.y / source.dimensions.x;
+    this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
+    this.element    = this.container;
 
-    this.downloading        = 0;
-    this.tilesMatrix        = {};
-    this.tilesLoaded        = [];
-    this.coverage           = {};
-    this.overlays           = [];
-    this.lastDrawn          = [];
-    this.lastResetTime      = 0;
-    this.midUpdate          = false;
-    this.updateAgain        = true;
-    this.element               = this.container;
     
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
@@ -208,7 +233,7 @@ $.Drawer.prototype = {
      * the local cache to optimize user experience in certain cases. Because
      * the number of parallel image loads is configurable, if too many images
      * are currently being loaded, the request will be ignored.  Since by 
-     * default viewer.config.imageLoaderLimit is 0, the native browser parallel 
+     * default drawer.imageLoaderLimit is 0, the native browser parallel 
      * image loading policy will be used.
      * @method
      * @param {String} src - The url of the image to load.
@@ -217,7 +242,7 @@ $.Drawer.prototype = {
      *      For now this means the callback is expected to distinguish between
      *      error and success conditions by inspecting the Image object.
      * @return {Boolean} loading - Wheter the request was submitted or ignored 
-     *      based on viewer.config.imageLoaderLimit.
+     *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
      */
     loadImage: function( src, callback ) {
         var _this = this,
@@ -226,8 +251,8 @@ $.Drawer.prototype = {
             jobid,
             complete;
         
-        if ( !this.config.imageLoaderLimit || 
-              this.downloading < this.config.imageLoaderLimit ) {
+        if ( !this.imageLoaderLimit || 
+              this.downloading < this.imageLoaderLimit ) {
             
             this.downloading++;
 
@@ -297,14 +322,14 @@ function updateViewport( drawer ) {
         lowestLevel     = Math.max(
             drawer.source.minLevel, 
             Math.floor( 
-                Math.log( drawer.config.minZoomImageRatio ) / 
+                Math.log( drawer.minZoomImageRatio ) / 
                 Math.log( 2 )
             )
         ),
         highestLevel    = Math.min(
             drawer.source.maxLevel,
             Math.floor( 
-                Math.log( zeroRatioC / MIN_PIXEL_RATIO ) / 
+                Math.log( zeroRatioC / drawer.minPixelRatio ) / 
                 Math.log( 2 )
             )
         ),
@@ -330,21 +355,21 @@ function updateViewport( drawer ) {
     }
 
     //TODO
-    if  ( !drawer.config.wrapHorizontal && 
+    if  ( !drawer.wrapHorizontal && 
         ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
         return;
     } else if 
-        ( !drawer.config.wrapVertical &&
+        ( !drawer.wrapVertical &&
         ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
         return;
     }
 
     //TODO
-    if ( !drawer.config.wrapHorizontal ) {
+    if ( !drawer.wrapHorizontal ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
         viewportBR.x = Math.min( viewportBR.x, 1 );
     }
-    if ( !drawer.config.wrapVertical ) {
+    if ( !drawer.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
         viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
     }
@@ -361,7 +386,7 @@ function updateViewport( drawer ) {
             true
         ).x;
 
-        if ( ( !haveDrawn && renderPixelRatioC >= MIN_PIXEL_RATIO ) ||
+        if ( ( !haveDrawn && renderPixelRatioC >= drawer.minPixelRatio ) ||
              ( level == lowestLevel ) ) {
             drawLevel = true;
             haveDrawn = true;
@@ -379,7 +404,7 @@ function updateViewport( drawer ) {
             false
         ).x;
         
-        optimalRatio    = drawer.config.immediateRender ? 
+        optimalRatio    = drawer.immediateRender ? 
             1 : 
             zeroRatioT;
 
@@ -437,10 +462,10 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 
     resetCoverage( drawer.coverage, level );
 
-    if ( !drawer.config.wrapHorizontal ) {
+    if ( !drawer.wrapHorizontal ) {
         tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
     }
-    if ( !drawer.config.wrapVertical ) {
+    if ( !drawer.wrapVertical ) {
         tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
     }
 
@@ -609,7 +634,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     insertionIndex = drawer.tilesLoaded.length;
 
-    if ( drawer.tilesLoaded.length >= QUOTA ) {
+    if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
         cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
 
         worstTile       = null;
@@ -671,7 +696,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility 
 
 
 function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
-    var blendTimeMillis = 1000 * drawer.config.blendTime,
+    var blendTimeMillis = 1000 * drawer.blendTime,
         deltaTime,
         opacity;
 
@@ -682,7 +707,7 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     deltaTime   = currentTime - tile.blendStart;
     opacity     = Math.min( 1, deltaTime / blendTimeMillis );
     
-    if ( drawer.config.alwaysBlend ) {
+    if ( drawer.alwaysBlend ) {
         opacity *= levelOpacity;
     }
 

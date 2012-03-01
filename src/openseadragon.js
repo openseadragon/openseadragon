@@ -59,18 +59,138 @@
  **/
 
  /** 
-  * The root namespace for OpenSeadragon.  All utility methods and classes
-  * are defined on or below this namespace. The OpenSeadragon namespace will
-  * only be defined once even if mutliple versions are loaded on the page in 
-  * succession.
-  * @namespace 
+  * The root namespace for OpenSeadragon, this function also serves as a single
+  * point of instantiation for an {@link OpenSeadragon.Viewer}, including all 
+  * combinations of out-of-the-box configurable features.  All utility methods 
+  * and classes are defined on or below this namespace. 
+  *
+  * @namespace
+  * @function
   * @name OpenSeadragon
   * @exports $ as OpenSeadragon
+  *
+  * @param {Object} options All required and optional settings for instantiating
+  *     a new instance of an OpenSeadragon image viewer. 
+  *
+  * @param {String} options.xmlPath 
+  *     DEPRECATED. A relative path to load a DZI file from the server. 
+  *     Prefer the newer options.tileSources.
+  *
+  * @param {Array|String|Function|Object[]|Array[]|String[]|Function[]} options.tileSources
+  *     As an Array, the tileSource can hold either be all Objects or mixed 
+  *     types of Arrays of Objects, String, Function. When a value is a String, 
+  *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.  
+  *     When a value is a Function, the function is used to create a new 
+  *     {@link OpenSeadragon.TileSource} whose abstract method 
+  *     getUrl( level, x, y ) is implemented by the function. Finally, when it 
+  *     is an Array of objects, it is used to create a 
+  *     {@link OpenSeadragon.LegacyTileSource}.
+  *
+  * @param {Boolean} [options.debugMode=true]
+  *     Currently does nothing. TODO: provide an in-screen panel providing event
+  *     detail feedback.
+  *
+  * @param {Number} [options.animationTime=1.5]
+  *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
+  *     which occur when the image is dragged or zoomed.
+  *
+  * @param {Number} [options.blendTime=0.5] 
+  *     Specifies the duration of animation as higher or lower level tiles are
+  *     replacing the existing tile.
+  *
+  * @param {Boolean} [options.alwaysBlend=false]
+  *     Forces the tile to always blend.  By default the tiles skip blending
+  *     when the blendTime is surpassed and the current animation frame would
+  *     not complete the blend.
+  *
+  * @param {Boolean} [options.autoHideControls=true]
+  *     If the user stops interacting with the viewport, fade the navigation 
+  *     controls.  Useful for presentation since the controls are by default
+  *     floated on top of the image the user is viewing.
+  *
+  * @param {Boolean} [options.immediateRender=false]
+  *
+  * @param {Boolean} [options.wrapHorizontal=false]
+  *     Should the image wrap horizontally within the viewport.  Useful for
+  *     maps or images representing the surface of a sphere or cylinder.
+  *
+  * @param {Boolean} [options.wrapVertical=false]
+  *     Should the image wrap vertically within the viewport.  Useful for
+  *     maps or images representing the surface of a sphere or cylinder.
+  *
+  * @param {Number} [options.minZoomImageRatio=0.8]
+  * @param {Number} [options.maxZoomPixelRatio=2]
+  *
+  * @param {Number} [options.visibilityRatio=0.5]
+  *     The percentage ( as a number from 0 to 1 ) of the source image which
+  *     must be kept within the viewport.  If the image is dragged beyond that
+  *     limit, it will 'bounce' back until the minimum visibility ration is 
+  *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
+  *     true will provide the effect of an infinitely scrolling viewport.
+  *
+  * @param {Number} [options.springStiffness=5.0]
+  * @param {Number} [options.imageLoaderLimit=0]
+  * @param {Number} [options.clickTimeThreshold=200]
+  * @param {Number} [options.clickDistThreshold=5]
+  * @param {Number} [options.zoomPerClick=2.0]
+  * @param {Number} [options.zoomPerScroll=1.2]
+  * @param {Number} [options.zoomPerSecond=2.0]
+  *
+  * @param {Boolean} [options.showNavigationControl=true]
+  *
+  * @param {Number} [options.controlsFadeDelay=2000]
+  *     The number of milliseconds to wait once the user has stopped interacting
+  *     with the interface before begining to fade the controls. Assumes
+  *     showNavigationControl and autoHideControls are both true.
+  *
+  * @param {Number} [options.controlsFadeLength=1500]
+  *     The number of milliseconds to animate the controls fading out.
+  *
+  * @param {Number} [options.maxImageCacheCount=100]
+  *     The max number of images we should keep in memory (per drawer).
+  *
+  * @param {Number} [options.minPixelRatio=0.5]
+  *     The higher the minPixelRatio, the lower the quality of the image that
+  *     is considered sufficient to stop rendering a given zoom level.  For
+  *     example, if you are targeting mobile devices with less bandwith you may 
+  *     try setting this to 1.5 or higher.
+  *
+  * @param {Boolean} [options.mouseNavEnabled=true]
+  *     Is the user able to interact with the image via mouse or touch. Default 
+  *     interactions include draging the image in a plane, and zooming in toward
+  *     and away from the image.
+  *
+  * @param {String} [options.prefixUrl='']
+  *     Appends the prefixUrl to navImages paths, which is very useful
+  *     since the default paths are rarely useful for production
+  *     environments.
+  *
+  * @param {Object} [options.navImages=]
+  *     An object with a property for each button or other built-in navigation
+  *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
+  *     Each of those in turn provides an image path for each state of the botton
+  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
+  *     image paths, by default assume there is a folder on the servers root path
+  *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
+  *     these paths, prefer setting the option.prefixUrl rather than overriding 
+  *     every image path directly through this setting.
+  *
+  * @returns {OpenSeadragon.Viewer}
   */
-OpenSeadragon = window.OpenSeadragon || (function(){
+OpenSeadragon = window.OpenSeadragon || function( options ){
+    
+    return new OpenSeadragon.Viewer( options );
 
-    //Taken from jquery 1.6.1
-    // [[Class]] -> type pairs
+};
+
+(function( $ ){
+    
+
+    /**
+     * Taken from jquery 1.6.1
+     * [[Class]] -> type pairs
+     * @private
+     */
     var class2type = {
         '[object Boolean]':     'boolean',
         '[object Number]':      'number',
@@ -89,142 +209,118 @@ OpenSeadragon = window.OpenSeadragon || (function(){
     trim        = String.prototype.trim,
     indexOf     = Array.prototype.indexOf;
 
-    return {
 
-        DEFAULT_SETTINGS: {
-            debugMode:          true,
-            animationTime:      1.5,
-            blendTime:          0.5,
-            alwaysBlend:        false,
-            autoHideControls:   true,
-            immediateRender:    false,
-            wrapHorizontal:     false,
-            wrapVertical:       false,
-            minZoomImageRatio:  0.8,
-            maxZoomPixelRatio:  2,
-            visibilityRatio:    0.5,
-            springStiffness:    5.0,
-            imageLoaderLimit:   0,
-            clickTimeThreshold: 200,
-            clickDistThreshold: 5,
-            zoomPerClick:       2.0,
-            zoomPerScroll:      1.2,
-            zoomPerSecond:      2.0,
-            showNavigationControl: true,
-            controlsFadeDelay:  2000,
-            controlsFadeLength: 1500,
-            maxImageCacheCount: 100,
-            minPixelRatio:      0.5,
-            mouseNavEnabled:    true,
-            prefixUrl:          null,
-            navImages: {
-                zoomIn: {
-                    REST:   '/images/zoomin_rest.png',
-                    GROUP:  '/images/zoomin_grouphover.png',
-                    HOVER:  '/images/zoomin_hover.png',
-                    DOWN:   '/images/zoomin_pressed.png'
-                },
-                zoomOut: {
-                    REST:   '/images/zoomout_rest.png',
-                    GROUP:  '/images/zoomout_grouphover.png',
-                    HOVER:  '/images/zoomout_hover.png',
-                    DOWN:   '/images/zoomout_pressed.png'
-                },
-                home: {
-                    REST:   '/images/home_rest.png',
-                    GROUP:  '/images/home_grouphover.png',
-                    HOVER:  '/images/home_hover.png',
-                    DOWN:   '/images/home_pressed.png'
-                },
-                fullpage: {
-                    REST:   '/images/fullpage_rest.png',
-                    GROUP:  '/images/fullpage_grouphover.png',
-                    HOVER:  '/images/fullpage_hover.png',
-                    DOWN:   '/images/fullpage_pressed.png'
-                }
-            }
-        },
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isFunction
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isFunction = function( obj ) {
+        return $.type(obj) === "function";
+    };
 
-        // See test/unit/core.js for details concerning isFunction.
-        // Since version 1.3, DOM methods and functions like alert
-        // aren't supported. They return false on IE (#2968).
-        isFunction: function( obj ) {
-            return OpenSeadragon.type(obj) === "function";
-        },
 
-        isArray: Array.isArray || function( obj ) {
-            return OpenSeadragon.type(obj) === "array";
-        },
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isArray
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isArray = Array.isArray || function( obj ) {
+        return $.type(obj) === "array";
+    };
 
-        // A crude way of determining if an object is a window
-        isWindow: function( obj ) {
-            return obj && typeof obj === "object" && "setInterval" in obj;
-        },
 
-        type: function( obj ) {
-            return obj == null ?
-                String( obj ) :
-                class2type[ toString.call(obj) ] || "object";
-        },
+    /**
+     * A crude way of determining if an object is a window.
+     * Taken from jQuery 1.6.1
+     * @name $.isWindow
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isWindow = function( obj ) {
+        return obj && typeof obj === "object" && "setInterval" in obj;
+    };
 
-        isPlainObject: function( obj ) {
-            // Must be an Object.
-            // Because of IE, we also have to check the presence of the constructor property.
-            // Make sure that DOM nodes and window objects don't pass through, as well
-            if ( !obj || OpenSeadragon.type(obj) !== "object" || obj.nodeType || OpenSeadragon.isWindow( obj ) ) {
-                return false;
-            }
 
-            // Not own constructor property must be Object
-            if ( obj.constructor &&
-                !hasOwn.call(obj, "constructor") &&
-                !hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
-                return false;
-            }
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.type
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.type = function( obj ) {
+        return obj == null ?
+            String( obj ) :
+            class2type[ toString.call(obj) ] || "object";
+    };
 
-            // Own properties are enumerated firstly, so to speed up,
-            // if last one is own, then all properties are own.
 
-            var key;
-            for ( key in obj ) {}
-
-            return key === undefined || hasOwn.call( obj, key );
-        },
-
-        isEmptyObject: function( obj ) {
-            for ( var name in obj ) {
-                return false;
-            }
-            return true;
+    /**
+     * Taken from jQuery 1.6.1
+     * @name $.isPlainObject
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     */
+    $.isPlainObject = function( obj ) {
+        // Must be an Object.
+        // Because of IE, we also have to check the presence of the constructor property.
+        // Make sure that DOM nodes and window objects don't pass through, as well
+        if ( !obj || OpenSeadragon.type(obj) !== "object" || obj.nodeType || $.isWindow( obj ) ) {
+            return false;
         }
 
+        // Not own constructor property must be Object
+        if ( obj.constructor &&
+            !hasOwn.call(obj, "constructor") &&
+            !hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
+            return false;
+        }
+
+        // Own properties are enumerated firstly, so to speed up,
+        // if last one is own, then all properties are own.
+
+        var key;
+        for ( key in obj ) {}
+
+        return key === undefined || hasOwn.call( obj, key );
     };
 
-}());
-
-(function( $ ){    
 
     /**
-     * @static
-     * @ignore
+     * Taken from jQuery 1.6.1
+     * @name $.isEmptyObject
+     * @function
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
-    $.SIGNAL = "----seadragon----";
-
-    /**
-     * Invokes the the method as if it where a method belonging to the object.
-     * @param {Object} object 
-     * @param {Function} method
-     */
-    $.delegate = function( object, method ) {
-        return function() {
-            if ( arguments === undefined )
-                arguments = [];
-            return method.apply( object, arguments );
-        };
+    $.isEmptyObject = function( obj ) {
+        for ( var name in obj ) {
+            return false;
+        }
+        return true;
     };
-    
+
+
+}( OpenSeadragon ));
+
+/**
+ *  This closure defines all static methods available to the OpenSeadragon
+ *  namespace.  Many, if not most, are taked directly from jQuery for use
+ *  to simplify and reduce common programming patterns.  More static methods 
+ *  from jQuery may eventually make their way into this though we are
+ *  attempting to avoid substaintial plagarism or the more explicit dependency
+ *  on jQuery only because OpenSeadragon is a broadly useful code base and
+ *  would be made less broad by requiring jQuery fully.
+ *
+ *  Some static methods have also been refactored from the original OpenSeadragon 
+ *  project.
+ */
+(function( $ ){
+
     /**
-     * Taken from jQuery 1.6.1, see the jQuery documentation
+     * Taken from jQuery 1.6.1
+     * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
     $.extend = function() {
         var options, 
@@ -294,152 +390,115 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         // Return the modified object
         return target;
     };
-
-    //The following functions are originally from the Openseadragon Utils 
-    //module but have been moved to Openseadragon to avoid the 'Utils' anti-
-    //pattern.  Not all of the code is A-grade compared to equivalent functions
-    // from libraries like jquery, but until we need better we'll leave those
-    //orignally developed by the project.
     
-    /**
-     * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
-     * SAFARI, CHROME, and OPERA.
-     * @static
-     */
-    $.BROWSERS = {
-        UNKNOWN:    0,
-        IE:         1,
-        FIREFOX:    2,
-        SAFARI:     3,
-        CHROME:     4,
-        OPERA:      5
-    };
 
-    /**
-     * The current browser vendor, version, and related information regarding
-     * detected features.  Features include <br/>
-     *  <strong>'alpha'</strong> - Does the browser support image alpha 
-     *  transparency.<br/>
-     * @static
-     */
-    $.Browser = {
-        vendor:     $.BROWSERS.UNKNOWN,
-        version:    0,
-        alpha:      true
-    };
-
-    var ACTIVEX = [
-            "Msxml2.XMLHTTP", 
-            "Msxml3.XMLHTTP", 
-            "Microsoft.XMLHTTP"
-        ],  
-        FILEFORMATS = {
-            "bmp":  false,
-            "jpeg": true,
-            "jpg":  true,
-            "png":  true,
-            "tif":  false,
-            "wdp":  false
-        },
-        URLPARAMS = {};
-
-    (function() {
-        //A small auto-executing routine to determine the browser vendor, 
-        //version and supporting feature sets.
-        var app = navigator.appName,
-            ver = navigator.appVersion,
-            ua  = navigator.userAgent;
-
-        switch( navigator.appName ){
-            case "Microsoft Internet Explorer":
-                if( !!window.attachEvent && 
-                    !!window.ActiveXObject ) {
-
-                    $.Browser.vendor = $.BROWSERS.IE;
-                    $.Browser.version = parseFloat(
-                        ua.substring( 
-                            ua.indexOf( "MSIE" ) + 5, 
-                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
-                        );
-                }
-                break;
-            case "Netscape":
-                if( !!window.addEventListener ){
-                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
-                        $.Browser.vendor = $.BROWSERS.FIREFOX;
-                        $.Browser.version = parseFloat(
-                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
-                        );
-                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
-                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
-                            $.BROWSERS.CHROME : 
-                            $.BROWSERS.SAFARI;
-                        $.Browser.version = parseFloat(
-                            ua.substring( 
-                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
-                                ua.indexOf( "Safari" )
-                            )
-                        );
-                    }
-                }
-                break;
-            case "Opera":
-                $.Browser.vendor = $.BROWSERS.OPERA;
-                $.Browser.version = parseFloat( ver );
-                break;
-        }
-
-            // ignore '?' portion of query string
-        var query = window.location.search.substring( 1 ),
-            parts = query.split('&'),
-            part,
-            sep,
-            i;
-
-        for ( i = 0; i < parts.length; i++ ) {
-            part = parts[ i ];
-            sep  = part.indexOf( '=' );
-
-            if ( sep > 0 ) {
-                URLPARAMS[ part.substring( 0, sep ) ] =
-                    decodeURIComponent( part.substring( sep + 1 ) );
-            }
-        }
-
-        //determine if this browser supports image alpha transparency
-        $.Browser.alpha = !( 
-            $.Browser.vendor == $.BROWSERS.IE || (
-                $.Browser.vendor == $.BROWSERS.CHROME && 
-                $.Browser.version < 2
-            )
-        );
-
-    })();
-
-    //TODO: $.console is often used inside a try/catch block which generally
-    //      prevents allowings errors to occur with detection until a debugger
-    //      is attached.  Although I've been guilty of the same anti-pattern
-    //      I eventually was convinced that errors should naturally propogate in
-    //      all but the most special cases.
-    /**
-     * A convenient alias for console when available, and a simple null 
-     * function when console is unavailable.
-     * @static
-     * @private
-     */
-    var nullfunction = function( msg ){
-            //document.location.hash = msg;
-        };
-
-    $.console = window.console || {
-        log:    nullfunction,
-        debug:  nullfunction,
-        info:   nullfunction,
-        warn:   nullfunction,
-        error:  nullfunction
-    };
-        
     $.extend( $, {
+        /**
+         * These are the default values for the optional settings documented
+         * in the {@link OpenSeadragon} constructor detail.
+         * @name $.DEFAULT_SETTINGS
+         * @static
+         */
+        DEFAULT_SETTINGS: {
+            xmlPath:            null,
+            tileSources:        null, 
+            debugMode:          true,
+            animationTime:      1.5,
+            blendTime:          0.5,
+            alwaysBlend:        false,
+            autoHideControls:   true,
+            immediateRender:    false,
+            wrapHorizontal:     false,
+            wrapVertical:       false,
+            minZoomImageRatio:  0.8,
+            maxZoomPixelRatio:  2,
+            visibilityRatio:    0.5,
+            springStiffness:    5.0,
+            imageLoaderLimit:   0,
+            clickTimeThreshold: 200,
+            clickDistThreshold: 5,
+            zoomPerClick:       2.0,
+            zoomPerScroll:      1.2,
+            zoomPerSecond:      2.0,
+            showNavigationControl: true,
+            
+            //These two were referenced but never defined
+            controlsFadeDelay:  2000,
+            controlsFadeLength: 1500,
+
+            maxImageCacheCount: 100,
+            minPixelRatio:      0.5,
+            mouseNavEnabled:    true,
+            prefixUrl:          null,
+            navImages: {
+                zoomIn: {
+                    REST:   '/images/zoomin_rest.png',
+                    GROUP:  '/images/zoomin_grouphover.png',
+                    HOVER:  '/images/zoomin_hover.png',
+                    DOWN:   '/images/zoomin_pressed.png'
+                },
+                zoomOut: {
+                    REST:   '/images/zoomout_rest.png',
+                    GROUP:  '/images/zoomout_grouphover.png',
+                    HOVER:  '/images/zoomout_hover.png',
+                    DOWN:   '/images/zoomout_pressed.png'
+                },
+                home: {
+                    REST:   '/images/home_rest.png',
+                    GROUP:  '/images/home_grouphover.png',
+                    HOVER:  '/images/home_hover.png',
+                    DOWN:   '/images/home_pressed.png'
+                },
+                fullpage: {
+                    REST:   '/images/fullpage_rest.png',
+                    GROUP:  '/images/fullpage_grouphover.png',
+                    HOVER:  '/images/fullpage_hover.png',
+                    DOWN:   '/images/fullpage_pressed.png'
+                }
+            }
+        },
+
+
+        /**
+         * TODO: get rid of this.  I can't see how it's required at all.  Looks
+         *       like an early legacy code artifact.
+         * @static
+         * @ignore
+         */
+        SIGNAL: "----seadragon----",
+
+
+        /**
+         * Invokes the the method as if it where a method belonging to the object.
+         * @name $.delegate
+         * @function
+         * @param {Object} object 
+         * @param {Function} method
+         */
+        delegate: function( object, method ) {
+            return function() {
+                if ( arguments === undefined )
+                    arguments = [];
+                return method.apply( object, arguments );
+            };
+        },
+        
+        
+        /**
+         * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
+         * SAFARI, CHROME, and OPERA.
+         * @name $.BROWSERS
+         * @static
+         */
+        BROWSERS: {
+            UNKNOWN:    0,
+            IE:         1,
+            FIREFOX:    2,
+            SAFARI:     3,
+            CHROME:     4,
+            OPERA:      5
+        },
+
 
         /**
          * Returns a DOM Element for the given id or element.
@@ -454,6 +513,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
             return element;
         },
+
 
         /**
          * Determines the position of the upper-left corner of the element.
@@ -488,6 +548,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+
         /**
          * Determines the height and width of the given element.
          * @function
@@ -503,6 +564,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 element.clientHeight
             );
         },
+
 
         /**
          * Returns the CSSStyle object for the given element.
@@ -523,6 +585,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Gets the latest event, really only useful internally since its 
          * specific to IE behavior.  TODO: Deprecate this from the api and
@@ -535,6 +598,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         getEvent: function( event ) {
             return event ? event : window.event;
         },
+
 
         /**
          * Gets the position of the mouse on the screen for a given event.
@@ -569,6 +633,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return result;
         },
 
+
         /**
          * Determines the pages current scroll position.
          * @function
@@ -593,6 +658,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return result;
         },
+
 
         /**
          * Determines the size of the browsers window.
@@ -667,6 +733,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             return div;
         },
 
+
         /**
          * Creates an easily positionable element of the given type that therefor
          * serves as an excellent container element.
@@ -687,6 +754,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return element;
         },
+
 
         /**
          * Ensures an image is loaded correctly to support alpha transparency.
@@ -730,6 +798,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             return element;
         },
+
 
         /**
          * Sets the opacity of the specified element.
@@ -779,6 +848,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Adds an event listener for the given element, eventName and handler.
          * @function
@@ -807,6 +877,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
                 );
             }
         },
+
 
         /**
          * Remove a given event listener for the given element, event type and 
@@ -838,6 +909,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             }
         },
 
+
         /**
          * Cancels the default browser behavior had the event propagated all
          * the way up the DOM to the window object.
@@ -858,6 +930,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             event.returnValue = false;
         },
 
+
         /**
          * Stops the propagation of the event up the DOM.
          * @function
@@ -873,6 +946,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
 
             event.cancelBubble = true;      // IE for stopping propagation
         },
+
 
         /**
          * Similar to OpenSeadragon.delegate, but it does not immediately call 
@@ -910,6 +984,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             };
         },
 
+
         /**
          * Retreives the value of a url parameter from the window.location string.
          * @function
@@ -921,6 +996,7 @@ OpenSeadragon = window.OpenSeadragon || (function(){
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
+
 
         /**
          * Makes an AJAX request.
@@ -1076,6 +1152,138 @@ OpenSeadragon = window.OpenSeadragon || (function(){
         }
 
     });
+
+
+    /**
+     * The current browser vendor, version, and related information regarding
+     * detected features.  Features include <br/>
+     *  <strong>'alpha'</strong> - Does the browser support image alpha 
+     *  transparency.<br/>
+     * @name $.Browser
+     * @static
+     */
+    $.Browser = {
+        vendor:     $.BROWSERS.UNKNOWN,
+        version:    0,
+        alpha:      true
+    };
+
+
+    var ACTIVEX = [
+            "Msxml2.XMLHTTP", 
+            "Msxml3.XMLHTTP", 
+            "Microsoft.XMLHTTP"
+        ],  
+        FILEFORMATS = {
+            "bmp":  false,
+            "jpeg": true,
+            "jpg":  true,
+            "png":  true,
+            "tif":  false,
+            "wdp":  false
+        },
+        URLPARAMS = {};
+
+    (function() {
+        //A small auto-executing routine to determine the browser vendor, 
+        //version and supporting feature sets.
+        var app = navigator.appName,
+            ver = navigator.appVersion,
+            ua  = navigator.userAgent;
+
+        //console.error( 'appName: ' + navigator.appName );
+        //console.error( 'appVersion: ' + navigator.appVersion );
+        //console.error( 'userAgent: ' + navigator.userAgent );
+
+        switch( navigator.appName ){
+            case "Microsoft Internet Explorer":
+                if( !!window.attachEvent && 
+                    !!window.ActiveXObject ) {
+
+                    $.Browser.vendor = $.BROWSERS.IE;
+                    $.Browser.version = parseFloat(
+                        ua.substring( 
+                            ua.indexOf( "MSIE" ) + 5, 
+                            ua.indexOf( ";", ua.indexOf( "MSIE" ) ) )
+                        );
+                }
+                break;
+            case "Netscape":
+                if( !!window.addEventListener ){
+                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.FIREFOX;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Firefox" ) + 8 )
+                        );
+                    } else if ( ua.indexOf( "Safari" ) >= 0 ) {
+                        $.Browser.vendor = ua.indexOf( "Chrome" ) >= 0 ? 
+                            $.BROWSERS.CHROME : 
+                            $.BROWSERS.SAFARI;
+                        $.Browser.version = parseFloat(
+                            ua.substring( 
+                                ua.substring( 0, ua.indexOf( "Safari" ) ).lastIndexOf( "/" ) + 1, 
+                                ua.indexOf( "Safari" )
+                            )
+                        );
+                    }
+                }
+                break;
+            case "Opera":
+                $.Browser.vendor = $.BROWSERS.OPERA;
+                $.Browser.version = parseFloat( ver );
+                break;
+        }
+
+            // ignore '?' portion of query string
+        var query = window.location.search.substring( 1 ),
+            parts = query.split('&'),
+            part,
+            sep,
+            i;
+
+        for ( i = 0; i < parts.length; i++ ) {
+            part = parts[ i ];
+            sep  = part.indexOf( '=' );
+
+            if ( sep > 0 ) {
+                URLPARAMS[ part.substring( 0, sep ) ] =
+                    decodeURIComponent( part.substring( sep + 1 ) );
+            }
+        }
+
+        //determine if this browser supports image alpha transparency
+        $.Browser.alpha = !( 
+            $.Browser.vendor == $.BROWSERS.IE || (
+                $.Browser.vendor == $.BROWSERS.CHROME && 
+                $.Browser.version < 2
+            )
+        );
+
+    })();
+
+    //TODO: $.console is often used inside a try/catch block which generally
+    //      prevents allowings errors to occur with detection until a debugger
+    //      is attached.  Although I've been guilty of the same anti-pattern
+    //      I eventually was convinced that errors should naturally propogate in
+    //      all but the most special cases.
+    /**
+     * A convenient alias for console when available, and a simple null 
+     * function when console is unavailable.
+     * @static
+     * @private
+     */
+    var nullfunction = function( msg ){
+            //document.location.hash = msg;
+        };
+
+    $.console = window.console || {
+        log:    nullfunction,
+        debug:  nullfunction,
+        info:   nullfunction,
+        warn:   nullfunction,
+        error:  nullfunction
+    };
+        
 
     /**
      * @private
