@@ -129,8 +129,8 @@ $.Viewport.prototype = {
             height = width / this.getAspectRatio();
 
         return new $.Rect(
-            center.x - width / 2.0, 
-            center.y - height / 2.0,
+            center.x - ( width / 2.0 ), 
+            center.y - ( height / 2.0 ),
             width, 
             height
         );

@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.18
+ * @version  OpenSeadragon 0.9.21
  *
  * @fileOverview 
  * <h2>
@@ -109,17 +109,28 @@
   *     floated on top of the image the user is viewing.
   *
   * @param {Boolean} [options.immediateRender=false]
+  *     Render the best closest level first, ignoring the lowering levels which
+  *     provide the effect of very blurry to sharp. It is recommended to change 
+  *     setting to true for mobile devices.
   *
   * @param {Boolean} [options.wrapHorizontal=false]
-  *     Should the image wrap horizontally within the viewport.  Useful for
-  *     maps or images representing the surface of a sphere or cylinder.
+  *     Set to true to force the image to wrap horizontally within the viewport.
+  *     Useful for maps or images representing the surface of a sphere or cylinder.
   *
   * @param {Boolean} [options.wrapVertical=false]
-  *     Should the image wrap vertically within the viewport.  Useful for
-  *     maps or images representing the surface of a sphere or cylinder.
+  *     Set to true to force the image to wrap vertically within the viewport.
+  *     Useful for maps or images representing the surface of a sphere or cylinder.
   *
   * @param {Number} [options.minZoomImageRatio=0.8]
+  *     The minimum percentage ( expressed as a number between 0 and 1 ) of 
+  *     the viewport height or width at which the zoom out will be constrained.
+  *     Setting it to 0, for example will allow you to zoom out infinitly.
+  *
   * @param {Number} [options.maxZoomPixelRatio=2]
+  *     The maximum ratio to allow a zoom-in to affect the highest level pixel
+  *     ratio. This can be set to Infinity to allow 'infinite' zooming into the
+  *     image though it is less effective visually if the HTML5 Canvas is not 
+  *     availble on the viewing device.
   *
   * @param {Number} [options.visibilityRatio=0.5]
   *     The percentage ( as a number from 0 to 1 ) of the source image which
@@ -129,14 +140,31 @@
   *     true will provide the effect of an infinitely scrolling viewport.
   *
   * @param {Number} [options.springStiffness=5.0]
+  *
   * @param {Number} [options.imageLoaderLimit=0]
+  *     The maximum number of image requests to make concurrently.  By default
+  *     it is set to 0 allowing the browser to make the maximum number of
+  *     image requests in parallel as allowed by the browsers policy.
+  *
   * @param {Number} [options.clickTimeThreshold=200]
+  *     If multiple mouse clicks occurs within less than this number of 
+  *     milliseconds, treat them as a single click.
+  *
   * @param {Number} [options.clickDistThreshold=5]
+  *     If a mouse or touch drag occurs and the distance to the starting drag
+  *     point is less than this many pixels, ignore the drag event.
+  *
   * @param {Number} [options.zoomPerClick=2.0]
+  *     The "zoom distance" per mouse click or touch tap.
+  *
   * @param {Number} [options.zoomPerScroll=1.2]
+  *     The "zoom distance" per mouse scroll or touch pinch.
+  *
   * @param {Number} [options.zoomPerSecond=2.0]
+  *     The number of seconds to animate a single zoom event over.
   *
   * @param {Boolean} [options.showNavigationControl=true]
+  *     Set to false to prevent the appearance of the default navigation controls.
   *
   * @param {Number} [options.controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
@@ -421,6 +449,12 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerScroll:      1.2,
             zoomPerSecond:      2.0,
             showNavigationControl: true,
+
+            showNavigator:      false,
+            navigatorElement:   null,
+            navigatorHeight:    null,
+            navigatorWidth:     null,
+            navigatorPosition:  null,
             
             //These two were referenced but never defined
             controlsFadeDelay:  2000,
@@ -1073,6 +1107,78 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             }
 
             return async ? null : request;
+        },
+
+
+        /**
+         * Taken from jQuery 1.6.1
+         *  @param {Object} options
+         *  @param {String} options.url
+         *  @param {Function} options.callback
+         *  @param {String} [options.param='callback'] The name of the url parameter
+         *      to request the jsonp provider with.
+         *  @param {String} [options.callbackName=] The name of the callback to
+         *      request the jsonp provider with.
+         */
+        jsonp: function( options ){
+            var script,
+                url     = options.url,
+                head    = document.head || 
+                    document.getElementsByTagName( "head" )[ 0 ] || 
+                    document.documentElement,
+                jsonpCallback = options.callbackName || 'openseadragon' + (+new Date()),
+                previous      = window[ jsonpCallback ],
+                replace       = "$1" + jsonpCallback + "$2",
+                callbackParam = options.param || 'callback',
+                callback      = options.callback;
+
+            url = url.replace( /(\=)\?(&|$)|\?\?/i, replace );
+            // Add callback manually
+            url += (/\?/.test( url ) ? "&" : "?") + callbackParam + "=" + jsonpCallback;
+
+            // Install callback
+            window[ jsonpCallback ] = function( response ) {
+                if ( !previous ){
+                    delete window[ jsonpCallback ];
+                } else {
+                    window[ jsonpCallback ] = previous;
+                }
+                if( callback && $.isFunction( callback ) ){
+                    callback( response );
+                }
+            };
+
+            script = document.createElement( "script" );
+
+            script.async = "async";
+
+            if ( options.scriptCharset ) {
+                script.charset = options.scriptCharset;
+            }
+
+            script.src = url;
+
+            // Attach handlers for all browsers
+            script.onload = script.onreadystatechange = function( _, isAbort ) {
+
+                if ( isAbort || !script.readyState || /loaded|complete/.test( script.readyState ) ) {
+
+                    // Handle memory leak in IE
+                    script.onload = script.onreadystatechange = null;
+
+                    // Remove the script
+                    if ( head && script.parentNode ) {
+                        head.removeChild( script );
+                    }
+
+                    // Dereference the script
+                    script = undefined;
+                }
+            };
+            // Use insertBefore instead of appendChild  to circumvent an IE6 bug.
+            // This arises when a base node is used (#2709 and #4378).
+            head.insertBefore( script, head.firstChild );
+        
         },
 
 
@@ -2758,11 +2864,12 @@ $.Viewer = function( options ) {
         source:         null,
         drawer:         null,
         viewport:       null,
+        navigator:      null, 
         profiler:       null
 
     }, $.DEFAULT_SETTINGS, options );
 
-    this.element        = document.getElementById( this.id );
+    this.element        = this.element || document.getElementById( this.id );
     this.container      = $.makeNeutralElement( "div" );
     this.canvas         = $.makeNeutralElement( "div" );
 
@@ -2792,7 +2899,7 @@ $.Viewer = function( options ) {
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:      $.delegate( this, onCanvasScroll )
-    }).setTracking( true ); // default state
+    }).setTracking( this.mouseNavEnabled ? true : false ); // default state
 
     this.outerTracker = new $.MouseTracker({
         element:            this.container, 
@@ -2801,7 +2908,7 @@ $.Viewer = function( options ) {
         enterHandler:       $.delegate( this, onContainerEnter ),
         exitHandler:        $.delegate( this, onContainerExit ),
         releaseHandler:     $.delegate( this, onContainerRelease )
-    }).setTracking( true ); // always tracking
+    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
     (function( canvas ){
         canvas.width    = "100%";
@@ -2933,6 +3040,23 @@ $.Viewer = function( options ) {
         this.navControl.style.marginBottom = "4px";
         this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
     }
+
+    if ( this.showNavigator ){
+        this.navigator = new $.Navigator({
+            viewerId:    this.id,
+            id:          this.navigatorElement,
+            position:    this.navigatorPosition,
+            height:      this.navigatorHeight,
+            width:       this.navigatorWidth,
+            tileSources: this.tileSources,
+            prefixUrl:   this.prefixUrl
+        });
+        this.addControl( 
+            this.navigator.element, 
+            $.ControlAnchor.TOP_RIGHT 
+        );
+    }
+
 
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
@@ -3628,9 +3752,15 @@ function updateOnce( viewer ) {
 
     if ( animated ) {
         viewer.drawer.update();
+        if( viewer.navigator ){
+            viewer.navigator.update( viewer.viewport );
+        }
         viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
+        if( viewer.navigator ){
+            viewer.navigator.update( viewer.viewport );
+        }
         THIS[ viewer.hash ].forceRedraw = false;
     } 
 
@@ -3736,7 +3866,102 @@ function onFullPage() {
 };
 
 }( OpenSeadragon ));
+(function( $ ){
+    
+/**
+ * @param {Object} options
+ * @param {String} options.viewerId
+ */
+$.Navigator = function( options ){
 
+    var _this       = this,
+        viewer      = $.getElement( options.viewerId ),
+        viewerSize  = $.getElementSize( viewer );
+    
+    //We may need to create a new element and id if they did not
+    //provide the id for the existing element
+    if( !options.id ){
+        options.id      = 'navigator-' + (+new Date());
+        this.element    = $.makeNeutralElement( "div" );
+        this.element.id = options.id;
+    }
+
+    options = $.extend( true, options, {
+        element:                this.element,
+        //These need to be overridden to prevent recursion since
+        //the navigator is a viewer and a viewer has a navigator
+        showNavigator:          false,
+        mouseNavEnabled:        false,
+        showNavigationControl:  false 
+    });
+
+    (function( style ){
+        style.marginTop     = '0px';
+        style.marginRight   = '0px';
+        style.marginBottom  = '0px';
+        style.marginLeft    = '0px';
+        style.border        = '2px solid #555';
+        style.background    = '#000';
+        style.opacity       = 0.8;
+        style.overflow      = 'hidden';
+    }( this.element.style ));
+
+    this.displayRegion = $.makeNeutralElement( "div" );
+    this.displayRegion.id = this.element.id + '-displayregion';
+
+    (function( style ){
+        style.position      = 'relative';
+        style.top           = '0px';
+        style.left          = '0px';
+        style.border        = '1px solid red';
+        style.background    = 'transparent';
+        style.float         = 'left';
+        style.zIndex        = 999999999;
+        style.opacity       = 0.8;
+    }( this.displayRegion.style ));
+
+    this.element.appendChild( this.displayRegion );
+
+    $.Viewer.apply( this, [ options ] ); 
+
+    if( options.width ){
+        this.element.style.width = options.width + 'px';
+    } else {
+        this.element.style.width = ( viewerSize.x / 4 ) + 'px';
+    }
+    if( options.height ){
+        this.element.style.height = options.height + 'px';
+    } else {
+        this.element.style.height = ( viewerSize.y / 4 ) + 'px';
+    }
+
+};
+
+$.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
+
+    update: function( viewport ){
+        
+
+        var bounds      = viewport.getBounds( true ),
+            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() )
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight() );
+
+        //update style for navigator-box    
+        (function(style){
+
+            style.top    = topleft.y + 'px';
+            style.left   = topleft.x + 'px';
+            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 2 ) + 'px';
+            style.height = ( Math.abs( topleft.y - bottomright.y ) - 2 ) + 'px';
+
+        }( this.displayRegion.style ));   
+
+    }
+
+});
+
+
+}( OpenSeadragon ));
 (function( $ ){
     
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look 
@@ -6390,8 +6615,8 @@ $.Viewport.prototype = {
             height = width / this.getAspectRatio();
 
         return new $.Rect(
-            center.x - width / 2.0, 
-            center.y - height / 2.0,
+            center.x - ( width / 2.0 ), 
+            center.y - ( height / 2.0 ),
             width, 
             height
         );

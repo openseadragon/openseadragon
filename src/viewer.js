@@ -81,11 +81,12 @@ $.Viewer = function( options ) {
         source:         null,
         drawer:         null,
         viewport:       null,
+        navigator:      null, 
         profiler:       null
 
     }, $.DEFAULT_SETTINGS, options );
 
-    this.element        = document.getElementById( this.id );
+    this.element        = this.element || document.getElementById( this.id );
     this.container      = $.makeNeutralElement( "div" );
     this.canvas         = $.makeNeutralElement( "div" );
 
@@ -115,7 +116,7 @@ $.Viewer = function( options ) {
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:      $.delegate( this, onCanvasScroll )
-    }).setTracking( true ); // default state
+    }).setTracking( this.mouseNavEnabled ? true : false ); // default state
 
     this.outerTracker = new $.MouseTracker({
         element:            this.container, 
@@ -124,7 +125,7 @@ $.Viewer = function( options ) {
         enterHandler:       $.delegate( this, onContainerEnter ),
         exitHandler:        $.delegate( this, onContainerExit ),
         releaseHandler:     $.delegate( this, onContainerRelease )
-    }).setTracking( true ); // always tracking
+    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
     (function( canvas ){
         canvas.width    = "100%";
@@ -256,6 +257,23 @@ $.Viewer = function( options ) {
         this.navControl.style.marginBottom = "4px";
         this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
     }
+
+    if ( this.showNavigator ){
+        this.navigator = new $.Navigator({
+            viewerId:    this.id,
+            id:          this.navigatorElement,
+            position:    this.navigatorPosition,
+            height:      this.navigatorHeight,
+            width:       this.navigatorWidth,
+            tileSources: this.tileSources,
+            prefixUrl:   this.prefixUrl
+        });
+        this.addControl( 
+            this.navigator.element, 
+            $.ControlAnchor.TOP_RIGHT 
+        );
+    }
+
 
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
@@ -951,9 +969,15 @@ function updateOnce( viewer ) {
 
     if ( animated ) {
         viewer.drawer.update();
+        if( viewer.navigator ){
+            viewer.navigator.update( viewer.viewport );
+        }
         viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
+        if( viewer.navigator ){
+            viewer.navigator.update( viewer.viewport );
+        }
         THIS[ viewer.hash ].forceRedraw = false;
     } 
 

@@ -24,6 +24,7 @@
             <file name="src/mousetracker.js" />
             <file name="src/control.js" />
             <file name="src/viewer.js" />
+            <file name="src/navigator.js" />
             <file name="src/strings.js" />
             <file name="src/point.js" />
             <!--file name="src/profiler.js" /-->
