@@ -24,7 +24,7 @@
 $.ButtonGroup = function( options ) {
 
     $.extend( true, this, {
-        buttons:            null,
+        buttons:            [],
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold
     }, options );

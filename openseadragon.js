@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.21
+ * @version  OpenSeadragon 0.9.25
  *
  * @fileOverview 
  * <h2>
@@ -455,6 +455,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorHeight:    null,
             navigatorWidth:     null,
             navigatorPosition:  null,
+            navigatorSizeRatio: 0.25,
             
             //These two were referenced but never defined
             controlsFadeDelay:  2000,
@@ -2781,7 +2782,190 @@ $.Control.prototype = {
 };
 
 }( OpenSeadragon ));
+(function( $ ){
 
+    //id hash for private properties;
+    var THIS = {};
+    
+    /**
+     * @class
+     */
+    $.ControlDock = function( options ){
+        var layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'],
+            layout,
+            i;
+        
+        $.extend( true, this, {
+            id: 'controldock-'+(+new Date())+'-'+Math.floor(Math.random()*1000000),
+            container: $.makeNeutralElement('div'),
+            controls: []
+        }, options );
+
+        if( this.element ){
+            this.element = $.getElement( this.element );
+            this.element.appendChild( this.container );   
+            this.element.style.position = 'relative'; 
+            this.container.style.width = '100%';
+            this.container.style.height = '100%';
+        }
+
+        for( i = 0; i < layouts.length; i++ ){
+            layout = layouts[ i ];
+            this.controls[ layout ] = $.makeNeutralElement( "div" );
+            this.controls[ layout ].style.position = 'absolute';
+            if ( layout.match( 'left' ) ){
+                this.controls[ layout ].style.left = '0px';
+            }
+            if ( layout.match( 'right' ) ){
+                this.controls[ layout ].style.right = '0px';
+            }
+            if ( layout.match( 'top' ) ){
+                this.controls[ layout ].style.top = '0px';
+            }
+            if ( layout.match( 'bottom' ) ){
+                this.controls[ layout ].style.bottom = '0px';
+            }
+        }
+
+        this.container.appendChild( this.controls.topleft );
+        this.container.appendChild( this.controls.topright );
+        this.container.appendChild( this.controls.bottomright );
+        this.container.appendChild( this.controls.bottomleft );
+    };
+
+    $.ControlDock.prototype = {
+
+        /**
+         * @function
+         */
+        addControl: function ( element, anchor ) {
+            var element = $.getElement( element ),
+                div = null;
+
+            if ( getControlIndex( this, element ) >= 0 ) {
+                return;     // they're trying to add a duplicate control
+            }
+
+            switch ( anchor ) {
+                case $.ControlAnchor.TOP_RIGHT:
+                    div = this.controls.topright;
+                    element.style.position = "relative";
+                    element.style.marginRight = "4px";
+                    element.style.marginTop = "4px";
+                    break;
+                case $.ControlAnchor.BOTTOM_RIGHT:
+                    div = this.controls.bottomright;
+                    element.style.position = "relative";
+                    element.style.marginRight = "4px";
+                    element.style.marginBottom = "4px";
+                    break;
+                case $.ControlAnchor.BOTTOM_LEFT:
+                    div = this.controls.bottomleft;
+                    element.style.position = "relative";
+                    element.style.marginLeft = "4px";
+                    element.style.marginBottom = "4px";
+                    break;
+                case $.ControlAnchor.TOP_LEFT:
+                    div = this.controls.topleft;
+                    element.style.position = "relative";
+                    element.style.marginLeft = "4px";
+                    element.style.marginTop = "4px";
+                    break;
+                case $.ControlAnchor.NONE:
+                default:
+                    div = this.container;
+                    element.style.margin = "0px";
+                    element.style.padding = "0px";
+                    break;
+            }
+
+            this.controls.push(
+                new $.Control( element, anchor, div )
+            );
+            element.style.display = "inline-block";
+        },
+
+
+        /**
+         * @function
+         * @return {OpenSeadragon.Viewer} Chainable.
+         */
+        removeControl: function ( element ) {
+            var element  = $.getElement( element ),
+                i        = getControlIndex( this, element );
+            
+            if ( i >= 0 ) {
+                this.controls[ i ].destroy();
+                this.controls.splice( i, 1 );
+            }
+
+            return this;
+        },
+
+        /**
+         * @function
+         * @return {OpenSeadragon.Viewer} Chainable.
+         */
+        clearControls: function () {
+            while ( this.controls.length > 0 ) {
+                this.controls.pop().destroy();
+            }
+            
+            return this;
+        },
+
+
+        /**
+         * @function
+         * @return {Boolean}
+         */
+        areControlsEnabled: function () {
+            var i;
+            
+            for ( i = this.controls.length - 1; i >= 0; i-- ) {
+                if ( this.controls[ i ].isVisible() ) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
+
+        /**
+         * @function
+         * @return {OpenSeadragon.Viewer} Chainable.
+         */
+        setControlsEnabled: function( enabled ) {
+            var i;
+
+            for ( i = this.controls.length - 1; i >= 0; i-- ) {
+                this.controls[ i ].setVisible( enabled );
+            }
+
+            return this;
+        }
+
+    };
+
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Utility methods
+    ///////////////////////////////////////////////////////////////////////////////
+    function getControlIndex( dock, element ) {
+        var controls = dock.controls,
+            i;
+
+        for ( i = controls.length - 1; i >= 0; i-- ) {
+            if ( controls[ i ].element == element ) {
+                return i;
+            }
+        }
+
+        return -1;
+    };
+
+}( OpenSeadragon ));
 (function( $ ){
      
 // dictionary from hash to private properties
@@ -2799,6 +2983,7 @@ var THIS = {};
  *
  * @class
  * @extends OpenSeadragon.EventHandler
+ * @extends OpenSeadragon.ControlDock
  * @param {Object} options
  * @param {String} options.element Id of Element to attach to,
  * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
@@ -2816,7 +3001,6 @@ $.Viewer = function( options ) {
         _this = this,
         i;
 
-    $.EventHandler.call( this );
 
     //backward compatibility for positional args while prefering more 
     //idiomatic javascript options object as the only argument
@@ -2844,7 +3028,6 @@ $.Viewer = function( options ) {
 
         id:                 options.id,
         hash:               options.id,
-        controls:           [],
         overlays:           [],
         overlayControls:    [],
 
@@ -2869,9 +3052,32 @@ $.Viewer = function( options ) {
 
     }, $.DEFAULT_SETTINGS, options );
 
+    $.EventHandler.call( this );
+    $.ControlDock.call( this, options );
+
     this.element        = this.element || document.getElementById( this.id );
-    this.container      = $.makeNeutralElement( "div" );
     this.canvas         = $.makeNeutralElement( "div" );
+
+    (function( canvas ){
+        canvas.width    = "100%";
+        canvas.height   = "100%";
+        canvas.overflow = "hidden";
+        canvas.position = "absolute";
+        canvas.top      = "0px";
+        canvas.left     = "0px";
+    }(  this.canvas.style ));
+
+    (function( container ){
+        container.width     = "100%";
+        container.height    = "100%";
+        container.position  = "relative";
+        container.left      = "0px";
+        container.top       = "0px";
+        container.textAlign = "left";  // needed to protect against
+    }( this.container.style ));
+
+    this.container.insertBefore( this.canvas, this.container.firstChild);
+    this.element.appendChild( this.container );
 
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
@@ -2910,45 +3116,6 @@ $.Viewer = function( options ) {
         releaseHandler:     $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
-    (function( canvas ){
-        canvas.width    = "100%";
-        canvas.height   = "100%";
-        canvas.overflow = "hidden";
-        canvas.position = "absolute";
-        canvas.top      = "0px";
-        canvas.left     = "0px";
-    }(  this.canvas.style ));
-
-
-    (function( container ){
-        container.width     = "100%";
-        container.height    = "100%";
-        container.position  = "relative";
-        container.left      = "0px";
-        container.top       = "0px";
-        container.textAlign = "left";  // needed to protect against
-    }( this.container.style ));
-
-    var layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'],
-        layout;
-
-    for( i = 0; i < layouts.length; i++ ){
-        layout = layouts[ i ]
-        this.controls[ layout ] = $.makeNeutralElement( "div" );
-        this.controls[ layout ].style.position = 'absolute';
-        if ( layout.match( 'left' ) ){
-            this.controls[ layout ].style.left = '0px';
-        }
-        if ( layout.match( 'right' ) ){
-            this.controls[ layout ].style.right = '0px';
-        }
-        if ( layout.match( 'top' ) ){
-            this.controls[ layout ].style.top = '0px';
-        }
-        if ( layout.match( 'bottom' ) ){
-            this.controls[ layout ].style.bottom = '0px';
-        }
-    }
 
     //private state properties
     $.extend( THIS[ this.hash ], {
@@ -2971,7 +3138,14 @@ $.Viewer = function( options ) {
         onHomeHandler           = $.delegate( this, onHome ),
         onFullPageHandler       = $.delegate( this, onFullPage ),
         navImages               = this.navImages,
-        zoomIn = new $.Button({ 
+        zoomIn,
+        zoomOut,
+        goHome,
+        fullPage;
+
+    if( this.showNavigationControl ){
+
+         zoomIn = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomIn" ), 
@@ -2984,7 +3158,8 @@ $.Viewer = function( options ) {
             onClick:    doSingleZoomInHandler,
             onEnter:    beginZoomingInHandler,
             onExit:     endZoomingHandler
-        }),
+        });
+
         zoomOut = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
@@ -2998,7 +3173,8 @@ $.Viewer = function( options ) {
             onClick:    doSingleZoomOutHandler, 
             onEnter:    beginZoomingOutHandler, 
             onExit:     endZoomingHandler 
-        }),
+        });
+
         goHome = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
@@ -3008,7 +3184,8 @@ $.Viewer = function( options ) {
             srcHover:   resolveUrl( this.prefixUrl, navImages.home.HOVER ), 
             srcDown:    resolveUrl( this.prefixUrl, navImages.home.DOWN ),
             onRelease:  onHomeHandler 
-        }),
+        });
+
         fullPage = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
@@ -3020,25 +3197,27 @@ $.Viewer = function( options ) {
             onRelease:  onFullPageHandler 
         });
 
-    this.buttons = new $.ButtonGroup({ 
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        buttons: [ 
-            zoomIn, 
-            zoomOut, 
-            goHome, 
-            fullPage 
-        ] 
-    });
+        this.buttons = new $.ButtonGroup({ 
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
+            buttons: [ 
+                zoomIn, 
+                zoomOut, 
+                goHome, 
+                fullPage 
+            ] 
+        });
 
-    this.navControl  = this.buttons.element;
-    this.navControl[ $.SIGNAL ] = true;   // hack to get our controls to fade
-    this.addHandler( 'open', $.delegate( this, lightUp ) );
-
-    if ( this.showNavigationControl ) {
-        this.navControl.style.marginRight = "4px";
-        this.navControl.style.marginBottom = "4px";
-        this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
+        this.navControl  = this.buttons.element;
+        this.navControl[ $.SIGNAL ] = true;   // hack to get our controls to fade
+        this.addHandler( 'open', $.delegate( this, lightUp ) );
+        
+        if( this.toolbar ){
+            this.toolbar = new $.ControlDock({ element: this.toolbar });
+            this.toolbar.addControl( this.navControl );
+        }else{
+            this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
+        }
     }
 
     if ( this.showNavigator ){
@@ -3064,13 +3243,6 @@ $.Viewer = function( options ) {
             this.customControls[ i ].anchor
         );
     }
-
-    this.container.appendChild( this.canvas );
-    this.container.appendChild( this.controls.topleft );
-    this.container.appendChild( this.controls.topright );
-    this.container.appendChild( this.controls.bottomright );
-    this.container.appendChild( this.controls.bottomleft );
-    this.element.appendChild( this.container );
 
     window.setTimeout( function(){
         beginControlsAutoHide( _this );
@@ -3119,49 +3291,8 @@ $.Viewer = function( options ) {
     }
 };
 
-$.extend( $.Viewer.prototype, $.EventHandler.prototype, {
+$.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype, {
 
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.addControl
-     */
-    addControl: function ( element, anchor ) {
-        var element = $.getElement( element ),
-            div = null;
-
-        if ( getControlIndex( this, element ) >= 0 ) {
-            return;     // they're trying to add a duplicate control
-        }
-
-        switch ( anchor ) {
-            case $.ControlAnchor.TOP_RIGHT:
-                div = this.controls.topright;
-                element.style.position = "relative";
-                break;
-            case $.ControlAnchor.BOTTOM_RIGHT:
-                div = this.controls.bottomright;
-                element.style.position = "relative";
-                break;
-            case $.ControlAnchor.BOTTOM_LEFT:
-                div = this.controls.bottomleft;
-                element.style.position = "relative";
-                break;
-            case $.ControlAnchor.TOP_LEFT:
-                div = this.controls.topleft;
-                element.style.position = "relative";
-                break;
-            case $.ControlAnchor.NONE:
-            default:
-                div = this.container;
-                element.style.position = "absolute";
-                break;
-        }
-
-        this.controls.push(
-            new $.Control( element, anchor, div )
-        );
-        element.style.display = "inline-block";
-    },
 
     /**
      * @function
@@ -3317,61 +3448,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         return this;
     },
 
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.removeControl
-     * @return {OpenSeadragon.Viewer} Chainable.
-     */
-    removeControl: function ( element ) {
-        
-        var element = $.getElement( element ),
-            i    = getControlIndex( this, element );
-        
-        if ( i >= 0 ) {
-            this.controls[ i ].destroy();
-            this.controls.splice( i, 1 );
-        }
-
-        return this;
-    },
-
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.clearControls
-     * @return {OpenSeadragon.Viewer} Chainable.
-     */
-    clearControls: function () {
-        while ( this.controls.length > 0 ) {
-            this.controls.pop().destroy();
-        }
-        return this;
-    },
-
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
-     * @return {Boolean}
-     */
-    isDashboardEnabled: function () {
-        var i;
-        
-        for ( i = this.controls.length - 1; i >= 0; i-- ) {
-            if ( this.controls[ i ].isVisible() ) {
-                return true;
-            }
-        }
-
-        return false;
-    },
-
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.isFullPage
-     * @return {Boolean}
-     */
-    isFullPage: function () {
-        return this.container.parentNode == document.body;
-    },
 
     /**
      * @function
@@ -3384,12 +3460,24 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isVisible
+     * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    setMouseNavEnabled: function( enabled ){
+        this.innerTracker.setTracking( enabled );
+        return this;
+    },
+
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
      * @return {Boolean}
      */
-    isVisible: function () {
-        return this.container.style.visibility != "hidden";
+    isDashboardEnabled: function () {
+        return this.areControlsEnabled( enabled );
     },
+
 
     /**
      * @function
@@ -3397,12 +3485,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setDashboardEnabled: function( enabled ) {
-        var i;
-        for ( i = this.controls.length - 1; i >= 0; i-- ) {
-            this.controls[ i ].setVisible( enabled );
-        }
-        return this;
+        return this.setControlsEnabled( enabled );
     },
+
+    
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.isFullPage
+     * @return {Boolean}
+     */
+    isFullPage: function () {
+        return this.container.parentNode == document.body;
+    },
+
 
     /**
      * Toggle full page mode.
@@ -3445,7 +3540,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             canvasStyle.color           = "white";
 
             containerStyle.position = "fixed";
-            containerStyle.zIndex   = "99999999";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would 
@@ -3453,11 +3547,29 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             //them as touch events on the document body.  Thus we remove and store
             //the bodies elements and replace them when we leave full screen.
             this.previousBody = [];
-            nodes = document.body.childNodes.length;
+            nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
-                this.previousBody.push( document.body.childNodes[ 0 ] );
-                document.body.removeChild( document.body.childNodes[ 0 ] );
+                this.previousBody.push( body.childNodes[ 0 ] );
+                body.removeChild( body.childNodes[ 0 ] );
             }
+            
+            //If we've got a toolbar, we need to enable the user to use css to
+            //preserve it in fullpage mode
+            if( this.toolbar && this.toolbar.element ){
+                //save a reference to the parent so we can put it back
+                //in the long run we need a better strategy
+                this.toolbar.parentNode = this.toolbar.element.parentNode;
+                this.toolbar.previousSibling = this.toolbar.element.previousSibling;
+                body.appendChild( this.toolbar.element );
+
+                //Make sure the user has some ability to style the toolbar based
+                //on the mode
+                this.toolbar.element.setAttribute( 
+                    'class',
+                    this.toolbar.element.className +" fullpage"
+                );
+            }
+
             body.appendChild( this.container );
             THIS[ this.hash ].prevContainerSize = $.getWindowSize();
 
@@ -3479,11 +3591,30 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
             containerStyle.position = "relative";
             containerStyle.zIndex   = "";
 
-            document.body.removeChild( this.container );
+            //If we've got a toolbar, we need to enable the user to use css to
+            //reset it to its original state 
+            if( this.toolbar && this.toolbar.element ){
+                body.removeChild( this.toolbar.element );
+
+                //Make sure the user has some ability to style the toolbar based
+                //on the mode
+                this.toolbar.element.setAttribute( 
+                    'class',
+                    this.toolbar.element.className.replace('fullpage','')
+                );
+            }
+
+            body.removeChild( this.container );
             nodes = this.previousBody.length;
             for ( i = 0; i < nodes; i++ ){
-                document.body.appendChild( this.previousBody.shift() );
+                body.appendChild( this.previousBody.shift() );
             }
+            this.toolbar.parentNode.insertBefore( 
+                this.toolbar.element,
+                this.toolbar.previousSibling
+            );
+            delete this.toolbar.parentNode;
+            delete this.toolbar.previousSibling;
             this.element.appendChild( this.container );
             THIS[ this.hash ].prevContainerSize = $.getElementSize( this.element );
             
@@ -3521,15 +3652,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, {
         return this;
     },
 
+    
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @name OpenSeadragon.Viewer.prototype.isVisible
+     * @return {Boolean}
      */
-    setMouseNavEnabled: function( enabled ){
-        this.innerTracker.setTracking( enabled );
-        return this;
+    isVisible: function () {
+        return this.container.style.visibility != "hidden";
     },
+
 
     /**
      * @function
@@ -3693,18 +3825,6 @@ function onContainerRelease( tracker, position, insideElementPress, insideElemen
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Utility methods
-///////////////////////////////////////////////////////////////////////////////
-function getControlIndex( viewer, element ) {
-    for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
-        if ( viewer.controls[ i ].element == element ) {
-            return i;
-        }
-    }
-    return -1;
 };
 
 
@@ -3886,13 +4006,15 @@ $.Navigator = function( options ){
         this.element.id = options.id;
     }
 
-    options = $.extend( true, options, {
+    options = $.extend( true, {
+        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
+    }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
         showNavigator:          false,
         mouseNavEnabled:        false,
-        showNavigationControl:  false 
+        showNavigationControl:  false
     });
 
     (function( style ){
@@ -3906,33 +4028,29 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
     }( this.element.style ));
 
-    this.displayRegion = $.makeNeutralElement( "div" );
+    this.displayRegion    = $.makeNeutralElement( "div" );
     this.displayRegion.id = this.element.id + '-displayregion';
 
     (function( style ){
         style.position      = 'relative';
         style.top           = '0px';
         style.left          = '0px';
-        style.border        = '1px solid red';
+        style.border        = '2px solid red';
         style.background    = 'transparent';
         style.float         = 'left';
         style.zIndex        = 999999999;
-        style.opacity       = 0.8;
     }( this.displayRegion.style ));
 
     this.element.appendChild( this.displayRegion );
 
     $.Viewer.apply( this, [ options ] ); 
 
-    if( options.width ){
-        this.element.style.width = options.width + 'px';
-    } else {
-        this.element.style.width = ( viewerSize.x / 4 ) + 'px';
-    }
-    if( options.height ){
+    if( options.width && options.height ){
+        this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.height = ( viewerSize.y / 4 ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
     }
 
 };
@@ -3951,8 +4069,8 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
             style.top    = topleft.y + 'px';
             style.left   = topleft.x + 'px';
-            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 2 ) + 'px';
-            style.height = ( Math.abs( topleft.y - bottomright.y ) - 2 ) + 'px';
+            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
+            style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
 
         }( this.displayRegion.style ));   
 
@@ -4896,7 +5014,7 @@ function outTo( button, newState ) {
 $.ButtonGroup = function( options ) {
 
     $.extend( true, this, {
-        buttons:            null,
+        buttons:            [],
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold
     }, options );

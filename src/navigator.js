@@ -18,13 +18,15 @@ $.Navigator = function( options ){
         this.element.id = options.id;
     }
 
-    options = $.extend( true, options, {
+    options = $.extend( true, {
+        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
+    }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
         showNavigator:          false,
         mouseNavEnabled:        false,
-        showNavigationControl:  false 
+        showNavigationControl:  false
     });
 
     (function( style ){
@@ -38,33 +40,29 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
     }( this.element.style ));
 
-    this.displayRegion = $.makeNeutralElement( "div" );
+    this.displayRegion    = $.makeNeutralElement( "div" );
     this.displayRegion.id = this.element.id + '-displayregion';
 
     (function( style ){
         style.position      = 'relative';
         style.top           = '0px';
         style.left          = '0px';
-        style.border        = '1px solid red';
+        style.border        = '2px solid red';
         style.background    = 'transparent';
         style.float         = 'left';
         style.zIndex        = 999999999;
-        style.opacity       = 0.8;
     }( this.displayRegion.style ));
 
     this.element.appendChild( this.displayRegion );
 
     $.Viewer.apply( this, [ options ] ); 
 
-    if( options.width ){
-        this.element.style.width = options.width + 'px';
-    } else {
-        this.element.style.width = ( viewerSize.x / 4 ) + 'px';
-    }
-    if( options.height ){
+    if( options.width && options.height ){
+        this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.height = ( viewerSize.y / 4 ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
     }
 
 };
@@ -83,8 +81,8 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
             style.top    = topleft.y + 'px';
             style.left   = topleft.x + 'px';
-            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 2 ) + 'px';
-            style.height = ( Math.abs( topleft.y - bottomright.y ) - 2 ) + 'px';
+            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
+            style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
 
         }( this.displayRegion.style ));   
 

@@ -23,6 +23,7 @@
             <file name="src/eventhandler.js" />
             <file name="src/mousetracker.js" />
             <file name="src/control.js" />
+            <file name="src/controldock.js" />
             <file name="src/viewer.js" />
             <file name="src/navigator.js" />
             <file name="src/strings.js" />

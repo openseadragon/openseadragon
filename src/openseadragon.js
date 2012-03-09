@@ -455,6 +455,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorHeight:    null,
             navigatorWidth:     null,
             navigatorPosition:  null,
+            navigatorSizeRatio: 0.25,
             
             //These two were referenced but never defined
             controlsFadeDelay:  2000,
