@@ -635,6 +635,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className.replace('fullpage','')
                 );
+                this.toolbar.parentNode.insertBefore( 
+                    this.toolbar.element,
+                    this.toolbar.previousSibling
+                );
+                delete this.toolbar.parentNode;
+                delete this.toolbar.previousSibling;
             }
 
             body.removeChild( this.container );
@@ -642,12 +648,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             for ( i = 0; i < nodes; i++ ){
                 body.appendChild( this.previousBody.shift() );
             }
-            this.toolbar.parentNode.insertBefore( 
-                this.toolbar.element,
-                this.toolbar.previousSibling
-            );
-            delete this.toolbar.parentNode;
-            delete this.toolbar.previousSibling;
             this.element.appendChild( this.container );
             THIS[ this.hash ].prevContainerSize = $.getElementSize( this.element );
             
