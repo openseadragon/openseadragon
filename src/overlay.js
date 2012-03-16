@@ -24,7 +24,7 @@
      * @class
      */
     $.Overlay = function( element, location, placement ) {
-        this.element       = element;
+        this.element    = element;
         this.scales     = location instanceof $.Rect;
         this.bounds     = new $.Rect(
             location.x, 

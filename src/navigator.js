@@ -7,23 +7,25 @@
 $.Navigator = function( options ){
 
     var _this       = this,
-        viewer      = $.getElement( options.viewerId ),
-        viewerSize  = $.getElementSize( viewer );
+        viewer      = options.viewer,
+        viewerSize  = $.getElementSize( viewer.element );
     
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
-        options.id      = 'navigator-' + (+new Date());
-        this.element    = $.makeNeutralElement( "div" );
-        this.element.id = options.id;
+        options.id              = 'navigator-' + (+new Date());
+        this.element            = $.makeNeutralElement( "div" );
+        this.element.id         = options.id;
+        this.element.className  = 'navigator';
     }
 
     options = $.extend( true, {
-        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
+        sizeRatio:              $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
+        minPixelRatio:          0,
         showNavigator:          false,
         mouseNavEnabled:        false,
         showNavigationControl:  false
@@ -47,7 +49,8 @@ $.Navigator = function( options ){
         style.position      = 'relative';
         style.top           = '0px';
         style.left          = '0px';
-        style.border        = '2px solid red';
+        style.border        = '1px solid #900';
+        style.outline       = '2px auto #900';
         style.background    = 'transparent';
         style.float         = 'left';
         style.zIndex        = 999999999;
@@ -55,15 +58,20 @@ $.Navigator = function( options ){
 
     this.element.appendChild( this.displayRegion );
 
-    $.Viewer.apply( this, [ options ] ); 
+    viewer.addControl( 
+        this.element, 
+        $.ControlAnchor.TOP_RIGHT 
+    );
 
     if( options.width && options.height ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
-        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
     }
+
+    $.Viewer.apply( this, [ options ] ); 
 
 };
 

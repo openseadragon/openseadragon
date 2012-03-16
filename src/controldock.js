@@ -13,7 +13,7 @@
         
         $.extend( true, this, {
             id: 'controldock-'+(+new Date())+'-'+Math.floor(Math.random()*1000000),
-            container: $.makeNeutralElement('div'),
+            container: $.makeNeutralElement('form'),
             controls: []
         }, options );
 

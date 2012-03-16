@@ -70,14 +70,16 @@ $.Button = function( options ) {
         onRelease:          null,
         onClick:            null,
         onEnter:            null,
-        onExit:             null
+        onExit:             null,
+        onFocus:            null,
+        onBlur:             null
 
     }, options );
 
     //TODO: make button elements accessible by making them a-tags
     //      maybe even consider basing them on the element and adding
     //      methods jquery-style.
-    this.element        = options.element || $.makeNeutralElement( "a" );
+    this.element        = options.element || $.makeNeutralElement( "button" );
     this.element.href   = '#';
 
     this.addHandler( "onPress",     this.onPress );
@@ -85,6 +87,8 @@ $.Button = function( options ) {
     this.addHandler( "onClick",     this.onClick );
     this.addHandler( "onEnter",     this.onEnter );
     this.addHandler( "onExit",      this.onExit );
+    this.addHandler( "onFocus",     this.onFocus );
+    this.addHandler( "onBlur",      this.onBlur );
 
     this.currentState = $.ButtonState.GROUP;
     this.imgRest      = $.makeTransparentImage( this.srcRest );
@@ -145,11 +149,21 @@ $.Button = function( options ) {
             }
         },
 
+        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny );
+            _this.raiseEvent( "onFocus", _this );
+        },
+
         exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
+        },
+
+        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny );
+            _this.raiseEvent( "onBlur", _this );
         },
 
         pressHandler: function( tracker, position ) {
@@ -172,6 +186,12 @@ $.Button = function( options ) {
             if ( quick ) {
                 _this.raiseEvent("onClick", _this);
             }
+        },
+
+        keyHandler: function( tracker, key ){
+            //console.log( "%s : handling key!", _this.tooltip);
+            _this.raiseEvent( "onClick", _this );
+            _this.raiseEvent( "onRelease", _this );
         }
 
     }).setTracking( true );
@@ -221,7 +241,7 @@ function updateFade( button ) {
         opacity     = 1.0 - deltaTime / button.fadeLength;
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
-        
+
         $.setElementOpacity( button.imgGroup, opacity, true );
         if ( opacity > 0 ) {
             // fade again

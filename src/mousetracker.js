@@ -81,6 +81,9 @@
         this.scrollHandler      = options.scrollHandler  || null;
         this.clickHandler       = options.clickHandler   || null;
         this.dragHandler        = options.dragHandler    || null;
+        this.keyHandler         = options.keyHandler     || null;
+        this.focusHandler       = options.focusHandler   || null;
+        this.blurHandler        = options.blurHandler    || null;
 
         //Store private properties in a scope sealed hash map
         var _this = this;
@@ -118,6 +121,9 @@
             "touchstart":       function( event ){ onTouchStart( _this, event ); },
             "touchmove":        function( event ){ onTouchMove( _this, event ); },
             "touchend":         function( event ){ onTouchEnd( _this, event ); },
+            "keypress":         function( event ){ onKeyPress( _this, event ); },
+            "focus":            function( event ){ onFocus( _this, event ); },
+            "blur":             function( event ){ onBlur( _this, event ); },
             tracking:           false,
             capturing:          false,
             buttonDown:         false,
@@ -263,8 +269,24 @@
          * @param {Boolean} shift
          *      Was the shift key being pressed during this event?
          */
-        dragHandler: function(){}
+        dragHandler: function(){},
 
+        /**
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor. 
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker  
+         *      A reference to the tracker instance.
+         * @param {Number} keyCode
+         *      The key code that was pressed.
+         * @param {Boolean} shift
+         *      Was the shift key being pressed during this event?
+         */
+        keyHandler: function(){},
+
+        focusHandler: function(){},
+
+        blurHandler: function(){}
     };
 
     /**
@@ -277,7 +299,9 @@
                 "mouseover", "mouseout", "mousedown", "mouseup", 
                 "click",
                 "DOMMouseScroll", "mousewheel", 
-                "touchstart", "touchmove", "touchend"
+                "touchstart", "touchmove", "touchend",
+                "keypress",
+                "focus", "blur"
             ], 
             delegate = THIS[ tracker.hash ],
             event, 
@@ -308,7 +332,9 @@
                 "mouseover", "mouseout", "mousedown", "mouseup", 
                 "click",
                 "DOMMouseScroll", "mousewheel", 
-                "touchstart", "touchmove", "touchend"
+                "touchstart", "touchmove", "touchend",
+                "keypress",
+                "focus", "blur"
             ],
             delegate = THIS[ tracker.hash ],
             event, 
@@ -442,6 +468,81 @@
         for ( otherHash in ACTIVE ) {
             if ( trackers.hasOwnProperty( otherHash ) && tracker.hash != otherHash ) {
                 handler( ACTIVE[ otherHash ], event );
+            }
+        }
+    };
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onFocus( tracker, event ){
+        console.log( "focus %s", event );
+        if ( tracker.focusHandler ) {
+            try {
+                tracker.focusHandler( 
+                    tracker, 
+                    event
+                );
+                $.cancelEvent( event );
+            } catch ( e ) {
+                $.console.error(
+                    "%s while executing key handler: %s", 
+                    e.name,
+                    e.message,
+                    e
+                );
+            }
+        }
+    };
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onBlur( tracker, event ){
+        console.log( "blur %s", event );
+        if ( tracker.blurHandler ) {
+            try {
+                tracker.blurHandler( 
+                    tracker, 
+                    event
+                );
+                $.cancelEvent( event );
+            } catch ( e ) {
+                $.console.error(
+                    "%s while executing key handler: %s", 
+                    e.name,
+                    e.message,
+                    e
+                );
+            }
+        }
+    };
+
+    
+    /**
+     * @private
+     * @inner
+     */
+    function onKeyPress( tracker, event ){
+        //console.log( "keypress %s", event.keyCode );
+        if ( tracker.keyHandler ) {
+            try {
+                tracker.keyHandler( 
+                    tracker, 
+                    event.keyCode
+                );
+                $.cancelEvent( event );
+            } catch ( e ) {
+                $.console.error(
+                    "%s while executing key handler: %s", 
+                    e.name,
+                    e.message,
+                    e
+                );
             }
         }
     };

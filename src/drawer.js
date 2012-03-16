@@ -45,7 +45,9 @@ $.Drawer = function( options ) {
     
     //backward compatibility for positional args while prefering more 
     //idiomatic javascript options object as the only argument
-    var args  = arguments;
+    var args  = arguments,
+        i;
+
     if( !$.isPlainObject( options ) ){
         options = {
             source:     args[ 0 ],
@@ -55,20 +57,19 @@ $.Drawer = function( options ) {
     }
 
     $.extend( true, this, {
-        //references to closely related openseadragon objects
-        //viewport:       null,
-        //source:         null,
 
         //internal state properties
         downloading:    0,
         tilesMatrix:    {},
         tilesLoaded:    [],
         coverage:       {},
-        overlays:       [],
         lastDrawn:      [],
         lastResetTime:  0,
         midUpdate:      false,
         updateAgain:    true,
+
+        //internal state / configurable settings 
+        overlays:       [],
 
         //configurable settings
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
@@ -97,6 +98,37 @@ $.Drawer = function( options ) {
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
+
+    //create the correct type of overlay by convention if the overlays
+    //are not already OpenSeadragon.Overlays
+    for( i = 0; i < this.overlays.length; i++ ){
+        if( $.isPlainObject( this.overlays[ i ] ) ){
+            
+            (function( _this, overlay ){
+                
+                var link  = document.createElement("a"),
+                    rect = new $.Rect(
+                        overlay.x, 
+                        overlay.y, 
+                        overlay.width, 
+                        overlay.height
+                    ),
+                    id = Math.floor(Math.random()*10000000);
+
+                link.href      = "#/overlay/"+id;
+                link.id        = id;
+                link.className = overlay.class ?
+                    overlay.class :
+                    "openseadragon-overlay";
+
+                _this.overlays[ i ] = new $.Overlay( link, rect );
+
+            }( this, this.overlays[ i ] ));
+
+        } else if ( $.isFunction( this.overlays[ i ] ) ){
+            
+        }
+    }
 
     //this.profiler    = new $.Profiler();
 };

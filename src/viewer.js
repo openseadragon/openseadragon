@@ -2,7 +2,10 @@
 (function( $ ){
      
 // dictionary from hash to private properties
-var THIS = {};   
+var THIS = {},
+// We keep a list of viewers so we can 'wake-up' each viewer on
+// a page after toggling between fullpage modes
+    VIEWERS = {};  
 
 /**
  *
@@ -170,6 +173,8 @@ $.Viewer = function( options ) {
         doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
         onHomeHandler           = $.delegate( this, onHome ),
         onFullPageHandler       = $.delegate( this, onFullPage ),
+        onFocusHandler          = $.delegate( this, onFocus ),
+        onBlurHandler           = $.delegate( this, onBlur ),
         navImages               = this.navImages,
         zoomIn,
         zoomOut,
@@ -190,7 +195,9 @@ $.Viewer = function( options ) {
             onRelease:  endZoomingHandler,
             onClick:    doSingleZoomInHandler,
             onEnter:    beginZoomingInHandler,
-            onExit:     endZoomingHandler
+            onExit:     endZoomingHandler,
+            onFocus:    onFocusHandler,
+            onBlur:     onBlurHandler
         });
 
         zoomOut = new $.Button({ 
@@ -205,7 +212,9 @@ $.Viewer = function( options ) {
             onRelease:  endZoomingHandler, 
             onClick:    doSingleZoomOutHandler, 
             onEnter:    beginZoomingOutHandler, 
-            onExit:     endZoomingHandler 
+            onExit:     endZoomingHandler,
+            onFocus:    onFocusHandler,
+            onBlur:     onBlurHandler
         });
 
         goHome = new $.Button({ 
@@ -216,7 +225,9 @@ $.Viewer = function( options ) {
             srcGroup:   resolveUrl( this.prefixUrl, navImages.home.GROUP ), 
             srcHover:   resolveUrl( this.prefixUrl, navImages.home.HOVER ), 
             srcDown:    resolveUrl( this.prefixUrl, navImages.home.DOWN ),
-            onRelease:  onHomeHandler 
+            onRelease:  onHomeHandler,
+            onFocus:    onFocusHandler,
+            onBlur:     onBlurHandler
         });
 
         fullPage = new $.Button({ 
@@ -227,7 +238,9 @@ $.Viewer = function( options ) {
             srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
             srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
             srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
-            onRelease:  onFullPageHandler 
+            onRelease:  onFullPageHandler,
+            onFocus:    onFocusHandler,
+            onBlur:     onBlurHandler
         });
 
         this.buttons = new $.ButtonGroup({ 
@@ -247,34 +260,32 @@ $.Viewer = function( options ) {
         
         if( this.toolbar ){
             this.toolbar = new $.ControlDock({ element: this.toolbar });
-            this.toolbar.addControl( this.navControl );
+            this.toolbar.addControl( this.navControl, $.ControlAnchor.TOP_LEFT  );
         }else{
             this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
         }
     }
-
-    if ( this.showNavigator ){
-        this.navigator = new $.Navigator({
-            viewerId:    this.id,
-            id:          this.navigatorElement,
-            position:    this.navigatorPosition,
-            height:      this.navigatorHeight,
-            width:       this.navigatorWidth,
-            tileSources: this.tileSources,
-            prefixUrl:   this.prefixUrl
-        });
-        this.addControl( 
-            this.navigator.element, 
-            $.ControlAnchor.TOP_RIGHT 
-        );
-    }
-
 
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
             this.customControls[ i ].id, 
             this.customControls[ i ].anchor
         );
+    }
+
+    //Instantiate a navigator if configured
+    if ( this.showNavigator ){
+        this.navigator = new $.Navigator({
+            id:          this.navigatorElement,
+            position:    this.navigatorPosition,
+            sizeRatio:   this.navigatorSizeRatio,
+            height:      this.navigatorHeight,
+            width:       this.navigatorWidth,
+            tileSources: this.tileSources,
+            prefixUrl:   this.prefixUrl,
+            overlays:    this.overlays,
+            viewer:      this
+        });
     }
 
     window.setTimeout( function(){
@@ -315,9 +326,16 @@ $.Viewer = function( options ) {
         } else if ( $.isArray( initialTileSource ) ){
             //Legacy image pyramid
             this.open( new $.LegacyTileSource( initialTileSource ) );
-        } else if ( $.isFunction( initialTileSource ) ){
+        } else if ( $.isPlainObject( initialTileSource ) && $.isFunction( initialTileSource.getTileUrl ) ){
             //Custom tile source
-            customTileSource = new TileSource();
+            customTileSource = new $.TileSource(
+                initialTileSource.width,
+                initialTileSource.height,
+                initialTileSource.tileSize,
+                initialTileSource.tileOverlap,
+                initialTileSource.minLevel,
+                initialTileSource.maxLevel
+            );
             customTileSource.getTileUrl = initialTileSource;
             this.open( customTileSource );
         }
@@ -416,6 +434,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             source:             this.source, 
             viewport:           this.viewport, 
             element:            this.canvas,
+            overlays:           this.overlays,
             maxImageCacheCount: this.maxImageCacheCount,
             imageLoaderLimit:   this.imageLoaderLimit,
             minZoomImageRatio:  this.minZoomImageRatio,
@@ -433,6 +452,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         THIS[ this.hash ].forceRedraw = true;
         scheduleUpdate( this, updateMulti );
 
+        //Assuming you had programatically created a bunch of overlays
+        //and added them via configuration
         for ( i = 0; i < this.overlayControls.length; i++ ) {
             
             overlay = this.overlayControls[ i ];
@@ -463,6 +484,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             
             }
         }
+        VIEWERS[ this.hash ] = this;
         this.raiseEvent( "open" );
         return this;
     },
@@ -478,6 +500,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         this.drawer     = null;
         //this.profiler   = null;
         this.canvas.innerHTML = "";
+
+        VIEWERS[ this.hash ] = null;
+        delete VIEWERS[ this.hash ];
+        
         return this;
     },
 
@@ -508,7 +534,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {Boolean}
      */
     isDashboardEnabled: function () {
-        return this.areControlsEnabled( enabled );
+        //TODO: why this indirection?  these methods arent even implemented
+        return this.areControlsEnabled();
     },
 
 
@@ -518,6 +545,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setDashboardEnabled: function( enabled ) {
+        //TODO: why this indirection?  these methods arent even implemented
         return this.setControlsEnabled( enabled );
     },
 
@@ -549,6 +577,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             canvasStyle     = this.canvas.style,
             oldBounds,
             newBounds,
+            viewer,
+            hash,
             nodes,
             i;
         
@@ -592,7 +622,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 //save a reference to the parent so we can put it back
                 //in the long run we need a better strategy
                 this.toolbar.parentNode = this.toolbar.element.parentNode;
-                this.toolbar.previousSibling = this.toolbar.element.previousSibling;
+                this.toolbar.nextSibling = this.toolbar.element.nextSibling;
                 body.appendChild( this.toolbar.element );
 
                 //Make sure the user has some ability to style the toolbar based
@@ -601,8 +631,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className +" fullpage"
                 );
-            }
+                this.toolbar.element.style.position = 'fixed';
 
+                this.container.style.top = $.getElementSize(
+                    this.toolbar.element
+                ).y + 'px';
+            }
             body.appendChild( this.container );
             THIS[ this.hash ].prevContainerSize = $.getWindowSize();
 
@@ -635,12 +669,15 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className.replace('fullpage','')
                 );
+                this.toolbar.element.style.position = 'relative';
                 this.toolbar.parentNode.insertBefore( 
                     this.toolbar.element,
-                    this.toolbar.previousSibling
+                    this.toolbar.nextSibling
                 );
                 delete this.toolbar.parentNode;
-                delete this.toolbar.previousSibling;
+                delete this.toolbar.nextSibling;
+
+                this.container.style.top = 'auto';
             }
 
             body.removeChild( this.container );
@@ -676,11 +713,20 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     null, 
                     true
                 );
+                //Ensures that if multiple viewers are on a page, the viewers that
+                //were hidden during fullpage are 'reopened'
+                for( hash in VIEWERS ){
+                    viewer = VIEWERS[ hash ];
+                    if( viewer !== this && viewer != this.navigator ){
+                        viewer.open( viewer.source );
+                    }
+                }
             }
 
             THIS[ this.hash ].forceRedraw = true;
             this.raiseEvent( "resize", this );
             updateOnce( this );
+
         }
         return this;
     },
@@ -795,6 +841,15 @@ function abortControlsAutoHide( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Default view event handlers.
 ///////////////////////////////////////////////////////////////////////////////
+function onFocus(){
+    abortControlsAutoHide( this );
+};
+
+function onBlur(){
+    beginControlsAutoHide( this );
+    
+};
+
 function onCanvasClick( tracker, position, quick, shift ) {
     var zoomPreClick,
         factor;
