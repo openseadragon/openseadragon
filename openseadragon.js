@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.27
+ * @version  OpenSeadragon 0.9.30
  *
  * @fileOverview 
  * <h2>
@@ -461,7 +461,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             controlsFadeDelay:  2000,
             controlsFadeLength: 1500,
 
-            maxImageCacheCount: 100,
+            maxImageCacheCount: 200,
             minPixelRatio:      0.5,
             mouseNavEnabled:    true,
             prefixUrl:          null,
@@ -2155,7 +2155,7 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onFocus( tracker, event ){
-        console.log( "focus %s", event );
+        //console.log( "focus %s", event );
         if ( tracker.focusHandler ) {
             try {
                 tracker.focusHandler( 
@@ -2180,7 +2180,7 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onBlur( tracker, event ){
-        console.log( "blur %s", event );
+        //console.log( "blur %s", event );
         if ( tracker.blurHandler ) {
             try {
                 tracker.blurHandler( 
@@ -3070,10 +3070,7 @@ $.Control.prototype = {
 (function( $ ){
      
 // dictionary from hash to private properties
-var THIS = {},
-// We keep a list of viewers so we can 'wake-up' each viewer on
-// a page after toggling between fullpage modes
-    VIEWERS = {};  
+var THIS = {};
 
 /**
  *
@@ -3243,15 +3240,16 @@ $.Viewer = function( options ) {
         onFullPageHandler       = $.delegate( this, onFullPage ),
         onFocusHandler          = $.delegate( this, onFocus ),
         onBlurHandler           = $.delegate( this, onBlur ),
-        navImages               = this.navImages,
-        zoomIn,
-        zoomOut,
-        goHome,
-        fullPage;
+        navImages               = this.navImages;
+
+    this.zoomInButton           = null;
+    this.zoomOutButton          = null;
+    this.goHomeButton           = null;
+    this.fullPageButton         = null;
 
     if( this.showNavigationControl ){
 
-         zoomIn = new $.Button({ 
+         this.zoomInButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomIn" ), 
@@ -3268,7 +3266,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        zoomOut = new $.Button({ 
+        this.zoomOutButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomOut" ), 
@@ -3285,7 +3283,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        goHome = new $.Button({ 
+        this.goHomeButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.Home" ), 
@@ -3298,7 +3296,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        fullPage = new $.Button({ 
+        this.fullPageButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.FullPage" ),
@@ -3315,10 +3313,10 @@ $.Viewer = function( options ) {
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             buttons: [ 
-                zoomIn, 
-                zoomOut, 
-                goHome, 
-                fullPage 
+                this.zoomInButton, 
+                this.zoomOutButton, 
+                this.goHomeButton, 
+                this.fullPageButton 
             ] 
         });
 
@@ -3404,7 +3402,7 @@ $.Viewer = function( options ) {
                 initialTileSource.minLevel,
                 initialTileSource.maxLevel
             );
-            customTileSource.getTileUrl = initialTileSource;
+            customTileSource.getTileUrl = initialTileSource.getTileUrl;
             this.open( customTileSource );
         }
     }
@@ -3601,9 +3599,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
      * @return {Boolean}
      */
-    isDashboardEnabled: function () {
-        //TODO: why this indirection?  these methods arent even implemented
-        return this.areControlsEnabled();
+    areControlsEnabled: function () {
+        return this.controls.length && this.controls[ i ].isVisibile();
     },
 
 
@@ -3612,9 +3609,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
      * @return {OpenSeadragon.Viewer} Chainable.
      */
-    setDashboardEnabled: function( enabled ) {
-        //TODO: why this indirection?  these methods arent even implemented
-        return this.setControlsEnabled( enabled );
+    setControlsEnabled: function( enabled ) {
+        if( enabled ){
+            abortControlsAutoHide( this );
+        } else {
+            beginControlsAutoHide( this );
+        };
     },
 
     
@@ -4135,7 +4135,8 @@ function onHome() {
 function onFullPage() {
     this.setFullPage( !this.isFullPage() );
     // correct for no mouseout event on change
-    this.buttons.emulateExit();  
+    this.buttons.emulateExit();
+    this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
     }
@@ -4164,16 +4165,20 @@ $.Navigator = function( options ){
     }
 
     options = $.extend( true, {
-        sizeRatio:              $.DEFAULT_SETTINGS.navigatorSizeRatio
+        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
-        minPixelRatio:          0,
         showNavigator:          false,
         mouseNavEnabled:        false,
         showNavigationControl:  false
     });
+
+    options.minPixelRatio = Math.min(
+        options.navigatorSizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
+        $.DEFAULT_SETTINGS.minPixelRatio
+    );
 
     (function( style ){
         style.marginTop     = '0px';
@@ -4186,8 +4191,9 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
     }( this.element.style ));
 
-    this.displayRegion    = $.makeNeutralElement( "div" );
-    this.displayRegion.id = this.element.id + '-displayregion';
+    this.displayRegion           = $.makeNeutralElement( "textarea" );
+    this.displayRegion.id        = this.element.id + '-displayregion';
+    this.displayRegion.className = 'displayregion';
 
     (function( style ){
         style.position      = 'relative';
@@ -4200,6 +4206,65 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
     }( this.displayRegion.style ));
 
+    this.displayRegion.innerTracker = new $.MouseTracker({
+        element:            this.displayRegion, 
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
+        focusHandler:       function(){
+            _this.viewer.setControlsEnabled( true );
+            (function( style ){
+                style.border        = '1px solid #437AB2';
+                style.outline       = '2px auto #437AB2';
+            }( this.element.style ));
+
+        },
+        blurHandler:       function(){
+            _this.viewer.setControlsEnabled( false );
+            (function( style ){
+                style.border        = '1px solid #900';
+                style.outline       = '2px auto #900';
+            }( this.element.style ));
+        },
+        keyHandler:         function(tracker, keyCode){
+            //console.log( keyCode );
+            switch( keyCode ){
+                case 119://w
+                    _this.viewer.viewport.panBy(new $.Point(0, -0.1));
+                    break;
+                case 115://s
+                    _this.viewer.viewport.panBy(new $.Point(0, 0.1));
+                    break;
+                case 97://a
+                    _this.viewer.viewport.panBy(new $.Point(-0.1, 0));
+                    break;
+                case 100://d
+                    _this.viewer.viewport.panBy(new $.Point(0.1, 0));  
+                    break;
+                case 61://=|+
+                    _this.viewer.viewport.zoomBy(1.1);  
+                    break;
+                case 45://-|_
+                    _this.viewer.viewport.zoomBy(0.9);
+                    break;
+                case 48://0|)
+                    _this.viewer.viewport.goHome();
+                    break;
+                default:
+                    //console.log( 'navigator keycode %s', keyCode );
+                    return;
+            }
+        }
+    }).setTracking( true ); // default state
+
+    /*this.displayRegion.outerTracker = new $.MouseTracker({
+        element:            this.container, 
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
+        enterHandler:       $.delegate( this, onContainerEnter ),
+        exitHandler:        $.delegate( this, onContainerExit ),
+        releaseHandler:     $.delegate( this, onContainerRelease )
+    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
+
     this.element.appendChild( this.displayRegion );
 
     viewer.addControl( 
@@ -4211,8 +4276,8 @@ $.Navigator = function( options ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
-        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
     }
 
     $.Viewer.apply( this, [ options ] ); 
@@ -4222,7 +4287,6 @@ $.Navigator = function( options ){
 $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
     update: function( viewport ){
-        
 
         var bounds      = viewport.getBounds( true ),
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() )
@@ -6403,7 +6467,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             numberOfTiles, 
             drawer.normHeight 
         ),
-        drawTile = drawLevel;
+        drawTile = drawLevel,
+        newbest;
 
     setCoverage( drawer.coverage, level, x, y, false );
 

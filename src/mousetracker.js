@@ -478,7 +478,7 @@
      * @inner
      */
     function onFocus( tracker, event ){
-        console.log( "focus %s", event );
+        //console.log( "focus %s", event );
         if ( tracker.focusHandler ) {
             try {
                 tracker.focusHandler( 
@@ -503,7 +503,7 @@
      * @inner
      */
     function onBlur( tracker, event ){
-        console.log( "blur %s", event );
+        //console.log( "blur %s", event );
         if ( tracker.blurHandler ) {
             try {
                 tracker.blurHandler( 

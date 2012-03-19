@@ -461,7 +461,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             controlsFadeDelay:  2000,
             controlsFadeLength: 1500,
 
-            maxImageCacheCount: 100,
+            maxImageCacheCount: 200,
             minPixelRatio:      0.5,
             mouseNavEnabled:    true,
             prefixUrl:          null,

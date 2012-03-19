@@ -2,10 +2,7 @@
 (function( $ ){
      
 // dictionary from hash to private properties
-var THIS = {},
-// We keep a list of viewers so we can 'wake-up' each viewer on
-// a page after toggling between fullpage modes
-    VIEWERS = {};  
+var THIS = {};
 
 /**
  *
@@ -175,15 +172,16 @@ $.Viewer = function( options ) {
         onFullPageHandler       = $.delegate( this, onFullPage ),
         onFocusHandler          = $.delegate( this, onFocus ),
         onBlurHandler           = $.delegate( this, onBlur ),
-        navImages               = this.navImages,
-        zoomIn,
-        zoomOut,
-        goHome,
-        fullPage;
+        navImages               = this.navImages;
+
+    this.zoomInButton           = null;
+    this.zoomOutButton          = null;
+    this.goHomeButton           = null;
+    this.fullPageButton         = null;
 
     if( this.showNavigationControl ){
 
-         zoomIn = new $.Button({ 
+         this.zoomInButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomIn" ), 
@@ -200,7 +198,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        zoomOut = new $.Button({ 
+        this.zoomOutButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.ZoomOut" ), 
@@ -217,7 +215,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        goHome = new $.Button({ 
+        this.goHomeButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.Home" ), 
@@ -230,7 +228,7 @@ $.Viewer = function( options ) {
             onBlur:     onBlurHandler
         });
 
-        fullPage = new $.Button({ 
+        this.fullPageButton = new $.Button({ 
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             tooltip:    $.getString( "Tooltips.FullPage" ),
@@ -247,10 +245,10 @@ $.Viewer = function( options ) {
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             buttons: [ 
-                zoomIn, 
-                zoomOut, 
-                goHome, 
-                fullPage 
+                this.zoomInButton, 
+                this.zoomOutButton, 
+                this.goHomeButton, 
+                this.fullPageButton 
             ] 
         });
 
@@ -336,7 +334,7 @@ $.Viewer = function( options ) {
                 initialTileSource.minLevel,
                 initialTileSource.maxLevel
             );
-            customTileSource.getTileUrl = initialTileSource;
+            customTileSource.getTileUrl = initialTileSource.getTileUrl;
             this.open( customTileSource );
         }
     }
@@ -533,9 +531,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
      * @return {Boolean}
      */
-    isDashboardEnabled: function () {
-        //TODO: why this indirection?  these methods arent even implemented
-        return this.areControlsEnabled();
+    areControlsEnabled: function () {
+        return this.controls.length && this.controls[ i ].isVisibile();
     },
 
 
@@ -544,9 +541,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
      * @return {OpenSeadragon.Viewer} Chainable.
      */
-    setDashboardEnabled: function( enabled ) {
-        //TODO: why this indirection?  these methods arent even implemented
-        return this.setControlsEnabled( enabled );
+    setControlsEnabled: function( enabled ) {
+        if( enabled ){
+            abortControlsAutoHide( this );
+        } else {
+            beginControlsAutoHide( this );
+        };
     },
 
     
@@ -1067,7 +1067,8 @@ function onHome() {
 function onFullPage() {
     this.setFullPage( !this.isFullPage() );
     // correct for no mouseout event on change
-    this.buttons.emulateExit();  
+    this.buttons.emulateExit();
+    this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
     }

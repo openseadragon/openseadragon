@@ -20,16 +20,20 @@ $.Navigator = function( options ){
     }
 
     options = $.extend( true, {
-        sizeRatio:              $.DEFAULT_SETTINGS.navigatorSizeRatio
+        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
-        minPixelRatio:          0,
         showNavigator:          false,
         mouseNavEnabled:        false,
         showNavigationControl:  false
     });
+
+    options.minPixelRatio = Math.min(
+        options.navigatorSizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
+        $.DEFAULT_SETTINGS.minPixelRatio
+    );
 
     (function( style ){
         style.marginTop     = '0px';
@@ -42,8 +46,9 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
     }( this.element.style ));
 
-    this.displayRegion    = $.makeNeutralElement( "div" );
-    this.displayRegion.id = this.element.id + '-displayregion';
+    this.displayRegion           = $.makeNeutralElement( "textarea" );
+    this.displayRegion.id        = this.element.id + '-displayregion';
+    this.displayRegion.className = 'displayregion';
 
     (function( style ){
         style.position      = 'relative';
@@ -56,6 +61,65 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
     }( this.displayRegion.style ));
 
+    this.displayRegion.innerTracker = new $.MouseTracker({
+        element:            this.displayRegion, 
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
+        focusHandler:       function(){
+            _this.viewer.setControlsEnabled( true );
+            (function( style ){
+                style.border        = '1px solid #437AB2';
+                style.outline       = '2px auto #437AB2';
+            }( this.element.style ));
+
+        },
+        blurHandler:       function(){
+            _this.viewer.setControlsEnabled( false );
+            (function( style ){
+                style.border        = '1px solid #900';
+                style.outline       = '2px auto #900';
+            }( this.element.style ));
+        },
+        keyHandler:         function(tracker, keyCode){
+            //console.log( keyCode );
+            switch( keyCode ){
+                case 119://w
+                    _this.viewer.viewport.panBy(new $.Point(0, -0.1));
+                    break;
+                case 115://s
+                    _this.viewer.viewport.panBy(new $.Point(0, 0.1));
+                    break;
+                case 97://a
+                    _this.viewer.viewport.panBy(new $.Point(-0.1, 0));
+                    break;
+                case 100://d
+                    _this.viewer.viewport.panBy(new $.Point(0.1, 0));  
+                    break;
+                case 61://=|+
+                    _this.viewer.viewport.zoomBy(1.1);  
+                    break;
+                case 45://-|_
+                    _this.viewer.viewport.zoomBy(0.9);
+                    break;
+                case 48://0|)
+                    _this.viewer.viewport.goHome();
+                    break;
+                default:
+                    //console.log( 'navigator keycode %s', keyCode );
+                    return;
+            }
+        }
+    }).setTracking( true ); // default state
+
+    /*this.displayRegion.outerTracker = new $.MouseTracker({
+        element:            this.container, 
+        clickTimeThreshold: this.clickTimeThreshold, 
+        clickDistThreshold: this.clickDistThreshold,
+        enterHandler:       $.delegate( this, onContainerEnter ),
+        exitHandler:        $.delegate( this, onContainerExit ),
+        releaseHandler:     $.delegate( this, onContainerRelease )
+    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
+
     this.element.appendChild( this.displayRegion );
 
     viewer.addControl( 
@@ -67,8 +131,8 @@ $.Navigator = function( options ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
-        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
     }
 
     $.Viewer.apply( this, [ options ] ); 
@@ -78,7 +142,6 @@ $.Navigator = function( options ){
 $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
     update: function( viewport ){
-        
 
         var bounds      = viewport.getBounds( true ),
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() )

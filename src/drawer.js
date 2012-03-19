@@ -534,7 +534,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             numberOfTiles, 
             drawer.normHeight 
         ),
-        drawTile = drawLevel;
+        drawTile = drawLevel,
+        newbest;
 
     setCoverage( drawer.coverage, level, x, y, false );
 
