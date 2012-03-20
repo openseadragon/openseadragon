@@ -2,7 +2,10 @@
 (function( $ ){
      
 // dictionary from hash to private properties
-var THIS = {};
+var THIS = {},
+// We keep a list of viewers so we can 'wake-up' each viewer on
+// a page after toggling between fullpage modes
+    VIEWERS = {};  
 
 /**
  *
