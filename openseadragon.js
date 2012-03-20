@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.32
+ * @version  OpenSeadragon 0.9.33
  *
  * @fileOverview 
  * <h2>
@@ -6511,11 +6511,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             levelOpacity, 
             currentTime 
         );
-
-    } else if ( tile.Loading ) {
-        //TODO: .Loading is never defined... did they mean .loading?
-        //      but they didnt do anything so what is this block if
-        //      if it does nothing?
+    } else if ( tile.loading ) {
+        // the tile is already in the download queue 
     } else {
         best = compareTiles( best, tile );
     }
