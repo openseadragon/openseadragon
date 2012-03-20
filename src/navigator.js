@@ -57,7 +57,9 @@ $.Navigator = function( options ){
         style.border        = '1px solid #900';
         style.outline       = '2px auto #900';
         style.background    = 'transparent';
-        style.float         = 'left';
+        style.float         = 'left'; //Webkit
+        style.cssFloat      = 'left'; //Firefox
+        style.floatStyle    = 'left'; //IE
         style.zIndex        = 999999999;
     }( this.displayRegion.style ));
 
