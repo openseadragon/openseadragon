@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.34
+ * @version  OpenSeadragon 0.9.36
  *
  * @fileOverview 
  * <h2>
@@ -2206,13 +2206,16 @@ $.EventHandler.prototype = {
      */
     function onKeyPress( tracker, event ){
         //console.log( "keypress %s", event.keyCode );
+        var propagate;
         if ( tracker.keyHandler ) {
             try {
-                tracker.keyHandler( 
+                propagate = tracker.keyHandler( 
                     tracker, 
                     event.keyCode
                 );
-                $.cancelEvent( event );
+                if( !propagate ){
+                    $.cancelEvent( event );
+                }
             } catch ( e ) {
                 $.console.error(
                     "%s while executing key handler: %s", 
@@ -4208,7 +4211,7 @@ $.Navigator = function( options ){
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
-        style.floatStyle    = 'left'; //IE
+        style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
     }( this.displayRegion.style ));
 
@@ -4235,29 +4238,33 @@ $.Navigator = function( options ){
             //console.log( keyCode );
             switch( keyCode ){
                 case 119://w
+                case 38://up arrow
                     _this.viewer.viewport.panBy(new $.Point(0, -0.05));
-                    break;
+                    return false;
                 case 115://s
+                case 40://down arrow
                     _this.viewer.viewport.panBy(new $.Point(0, 0.05));
-                    break;
+                    return false;
                 case 97://a
+                case 37://left arrow
                     _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
-                    break;
+                    return false;
                 case 100://d
+                case 39://right arrow
                     _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
-                    break;
+                    return false;
                 case 61://=|+
                     _this.viewer.viewport.zoomBy(1.1);  
-                    break;
+                    return false;
                 case 45://-|_
                     _this.viewer.viewport.zoomBy(0.9);
-                    break;
+                    return false;
                 case 48://0|)
                     _this.viewer.viewport.goHome();
-                    break;
+                    return false;
                 default:
                     //console.log( 'navigator keycode %s', keyCode );
-                    return;
+                    return true;
             }
         }
     }).setTracking( true ); // default state
@@ -5124,9 +5131,13 @@ $.Button = function( options ) {
         },
 
         keyHandler: function( tracker, key ){
-            //console.log( "%s : handling key!", _this.tooltip);
-            _this.raiseEvent( "onClick", _this );
-            _this.raiseEvent( "onRelease", _this );
+            //console.log( "%s : handling key %s!", _this.tooltip, key);
+            if( 13 === key ){
+                _this.raiseEvent( "onClick", _this );
+                _this.raiseEvent( "onRelease", _this );
+                return false;
+            }
+            return true;
         }
 
     }).setTracking( true );

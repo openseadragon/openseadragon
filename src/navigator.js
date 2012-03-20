@@ -60,7 +60,7 @@ $.Navigator = function( options ){
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
-        style.floatStyle    = 'left'; //IE
+        style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
     }( this.displayRegion.style ));
 
@@ -87,29 +87,33 @@ $.Navigator = function( options ){
             //console.log( keyCode );
             switch( keyCode ){
                 case 119://w
+                case 38://up arrow
                     _this.viewer.viewport.panBy(new $.Point(0, -0.05));
-                    break;
+                    return false;
                 case 115://s
+                case 40://down arrow
                     _this.viewer.viewport.panBy(new $.Point(0, 0.05));
-                    break;
+                    return false;
                 case 97://a
+                case 37://left arrow
                     _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
-                    break;
+                    return false;
                 case 100://d
+                case 39://right arrow
                     _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
-                    break;
+                    return false;
                 case 61://=|+
                     _this.viewer.viewport.zoomBy(1.1);  
-                    break;
+                    return false;
                 case 45://-|_
                     _this.viewer.viewport.zoomBy(0.9);
-                    break;
+                    return false;
                 case 48://0|)
                     _this.viewer.viewport.goHome();
-                    break;
+                    return false;
                 default:
                     //console.log( 'navigator keycode %s', keyCode );
-                    return;
+                    return true;
             }
         }
     }).setTracking( true ); // default state

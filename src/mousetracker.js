@@ -529,13 +529,16 @@
      */
     function onKeyPress( tracker, event ){
         //console.log( "keypress %s", event.keyCode );
+        var propagate;
         if ( tracker.keyHandler ) {
             try {
-                tracker.keyHandler( 
+                propagate = tracker.keyHandler( 
                     tracker, 
                     event.keyCode
                 );
-                $.cancelEvent( event );
+                if( !propagate ){
+                    $.cancelEvent( event );
+                }
             } catch ( e ) {
                 $.console.error(
                     "%s while executing key handler: %s", 

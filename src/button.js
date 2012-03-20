@@ -189,9 +189,13 @@ $.Button = function( options ) {
         },
 
         keyHandler: function( tracker, key ){
-            //console.log( "%s : handling key!", _this.tooltip);
-            _this.raiseEvent( "onClick", _this );
-            _this.raiseEvent( "onRelease", _this );
+            //console.log( "%s : handling key %s!", _this.tooltip, key);
+            if( 13 === key ){
+                _this.raiseEvent( "onClick", _this );
+                _this.raiseEvent( "onRelease", _this );
+                return false;
+            }
+            return true;
         }
 
     }).setTracking( true );
