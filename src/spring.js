@@ -32,7 +32,7 @@ $.Spring = function( options ) {
                 5.0,
             animationTime: args.length > 1 ? 
                 args[ 1 ].animationTime : 
-                1.5,
+                1.5
         };
     }
 

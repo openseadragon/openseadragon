@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.33
+ * @version  OpenSeadragon 0.9.34
  *
  * @fileOverview 
  * <h2>
@@ -4203,7 +4203,8 @@ $.Navigator = function( options ){
         style.top           = '0px';
         style.left          = '0px';
         style.border        = '1px solid #900';
-        style.outline       = '2px auto #900';
+        //TODO: IE doesnt like this property being set
+        //style.outline       = '2px auto #900';
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
@@ -4234,16 +4235,16 @@ $.Navigator = function( options ){
             //console.log( keyCode );
             switch( keyCode ){
                 case 119://w
-                    _this.viewer.viewport.panBy(new $.Point(0, -0.1));
+                    _this.viewer.viewport.panBy(new $.Point(0, -0.05));
                     break;
                 case 115://s
-                    _this.viewer.viewport.panBy(new $.Point(0, 0.1));
+                    _this.viewer.viewport.panBy(new $.Point(0, 0.05));
                     break;
                 case 97://a
-                    _this.viewer.viewport.panBy(new $.Point(-0.1, 0));
+                    _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
                     break;
                 case 100://d
-                    _this.viewer.viewport.panBy(new $.Point(0.1, 0));  
+                    _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
                     break;
                 case 61://=|+
                     _this.viewer.viewport.zoomBy(1.1);  
@@ -5527,7 +5528,7 @@ $.Spring = function( options ) {
                 5.0,
             animationTime: args.length > 1 ? 
                 args[ 1 ].animationTime : 
-                1.5,
+                1.5
         };
     }
 
@@ -6055,8 +6056,8 @@ $.Drawer = function( options ) {
 
                 link.href      = "#/overlay/"+id;
                 link.id        = id;
-                link.className = overlay.class ?
-                    overlay.class :
+                link.className = overlay.className ?
+                    overlay.className :
                     "openseadragon-overlay";
 
                 _this.overlays[ i ] = new $.Overlay( link, rect );
@@ -6513,6 +6514,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         );
     } else if ( tile.loading ) {
         // the tile is already in the download queue 
+        // thanks josh1093 for finally translating this typo
     } else {
         best = compareTiles( best, tile );
     }

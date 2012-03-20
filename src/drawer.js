@@ -117,8 +117,8 @@ $.Drawer = function( options ) {
 
                 link.href      = "#/overlay/"+id;
                 link.id        = id;
-                link.className = overlay.class ?
-                    overlay.class :
+                link.className = overlay.className ?
+                    overlay.className :
                     "openseadragon-overlay";
 
                 _this.overlays[ i ] = new $.Overlay( link, rect );
@@ -575,6 +575,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         );
     } else if ( tile.loading ) {
         // the tile is already in the download queue 
+        // thanks josh1093 for finally translating this typo
     } else {
         best = compareTiles( best, tile );
     }

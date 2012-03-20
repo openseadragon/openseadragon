@@ -55,7 +55,8 @@ $.Navigator = function( options ){
         style.top           = '0px';
         style.left          = '0px';
         style.border        = '1px solid #900';
-        style.outline       = '2px auto #900';
+        //TODO: IE doesnt like this property being set
+        //style.outline       = '2px auto #900';
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
@@ -86,16 +87,16 @@ $.Navigator = function( options ){
             //console.log( keyCode );
             switch( keyCode ){
                 case 119://w
-                    _this.viewer.viewport.panBy(new $.Point(0, -0.1));
+                    _this.viewer.viewport.panBy(new $.Point(0, -0.05));
                     break;
                 case 115://s
-                    _this.viewer.viewport.panBy(new $.Point(0, 0.1));
+                    _this.viewer.viewport.panBy(new $.Point(0, 0.05));
                     break;
                 case 97://a
-                    _this.viewer.viewport.panBy(new $.Point(-0.1, 0));
+                    _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
                     break;
                 case 100://d
-                    _this.viewer.viewport.panBy(new $.Point(0.1, 0));  
+                    _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
                     break;
                 case 61://=|+
                     _this.viewer.viewport.zoomBy(1.1);  
