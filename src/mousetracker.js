@@ -528,13 +528,14 @@
      * @inner
      */
     function onKeyPress( tracker, event ){
-        //console.log( "keypress %s", event.keyCode );
+        //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
         if ( tracker.keyHandler ) {
             try {
                 propagate = tracker.keyHandler( 
                     tracker, 
-                    event.keyCode
+                    event.keyCode ? event.keyCode : event.charCode,
+                    event.shiftKey
                 );
                 if( !propagate ){
                     $.cancelEvent( event );

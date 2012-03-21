@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.36
+ * @version  OpenSeadragon 0.9.37
  *
  * @fileOverview 
  * <h2>
@@ -2205,13 +2205,14 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onKeyPress( tracker, event ){
-        //console.log( "keypress %s", event.keyCode );
+        //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
         if ( tracker.keyHandler ) {
             try {
                 propagate = tracker.keyHandler( 
                     tracker, 
-                    event.keyCode
+                    event.keyCode ? event.keyCode : event.charCode,
+                    event.shiftKey
                 );
                 if( !propagate ){
                     $.cancelEvent( event );
@@ -4205,9 +4206,10 @@ $.Navigator = function( options ){
         style.position      = 'relative';
         style.top           = '0px';
         style.left          = '0px';
-        style.border        = '1px solid #900';
+        style.fontSize      = '0px';
+        style.border        = '2px solid #900';
         //TODO: IE doesnt like this property being set
-        //style.outline       = '2px auto #900';
+        try{ style.outline  = '2px auto #900'; }catch(e){/*ignore*/}
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
@@ -4222,7 +4224,7 @@ $.Navigator = function( options ){
         focusHandler:       function(){
             _this.viewer.setControlsEnabled( true );
             (function( style ){
-                style.border        = '1px solid #437AB2';
+                style.border        = '2px solid #437AB2';
                 style.outline       = '2px auto #437AB2';
             }( this.element.style ));
 
@@ -4230,20 +4232,35 @@ $.Navigator = function( options ){
         blurHandler:       function(){
             _this.viewer.setControlsEnabled( false );
             (function( style ){
-                style.border        = '1px solid #900';
+                style.border        = '2px solid #900';
                 style.outline       = '2px auto #900';
             }( this.element.style ));
         },
-        keyHandler:         function(tracker, keyCode){
+        keyHandler:         function(tracker, keyCode, shiftKey){
             //console.log( keyCode );
             switch( keyCode ){
+                case 61://=|+
+                    _this.viewer.viewport.zoomBy(1.1);
+                    return false;
+                case 45://-|_
+                    _this.viewer.viewport.zoomBy(0.9);
+                    return false;
+                case 48://0|)
+                    _this.viewer.viewport.goHome();
+                    return false;
                 case 119://w
+                case 87://W
                 case 38://up arrow
-                    _this.viewer.viewport.panBy(new $.Point(0, -0.05));
+                    shiftKey ?
+                        _this.viewer.viewport.zoomBy(1.1):
+                        _this.viewer.viewport.panBy(new $.Point(0, -0.05));
                     return false;
                 case 115://s
+                case 83://S
                 case 40://down arrow
-                    _this.viewer.viewport.panBy(new $.Point(0, 0.05));
+                    shiftKey ?
+                        _this.viewer.viewport.zoomBy(0.9):
+                        _this.viewer.viewport.panBy(new $.Point(0, 0.05));
                     return false;
                 case 97://a
                 case 37://left arrow
@@ -4252,15 +4269,6 @@ $.Navigator = function( options ){
                 case 100://d
                 case 39://right arrow
                     _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
-                    return false;
-                case 61://=|+
-                    _this.viewer.viewport.zoomBy(1.1);  
-                    return false;
-                case 45://-|_
-                    _this.viewer.viewport.zoomBy(0.9);
-                    return false;
-                case 48://0|)
-                    _this.viewer.viewport.goHome();
                     return false;
                 default:
                     //console.log( 'navigator keycode %s', keyCode );
