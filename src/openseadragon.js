@@ -188,6 +188,12 @@
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
   *
+  * @param {Boolean} [options.preserveViewport=false]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     normally navigating to through each image resets the viewport to 'home'
+  *     position.  If preserveViewport is set to true, then the viewport position
+  *     is preserved when navigating between images in the sequence.
+  *
   * @param {String} [options.prefixUrl='']
   *     Appends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
@@ -428,43 +434,50 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @static
          */
         DEFAULT_SETTINGS: {
-            xmlPath:            null,
-            tileSources:        null, 
-            debugMode:          true,
-            animationTime:      1.5,
-            blendTime:          0.5,
-            alwaysBlend:        false,
-            autoHideControls:   true,
-            immediateRender:    false,
-            wrapHorizontal:     false,
-            wrapVertical:       false,
-            minZoomImageRatio:  0.8,
-            maxZoomPixelRatio:  2,
-            visibilityRatio:    0.5,
-            springStiffness:    5.0,
-            imageLoaderLimit:   0,
-            clickTimeThreshold: 200,
-            clickDistThreshold: 5,
-            zoomPerClick:       2.0,
-            zoomPerScroll:      1.2,
-            zoomPerSecond:      2.0,
-            showNavigationControl: true,
-
-            showNavigator:      false,
-            navigatorElement:   null,
-            navigatorHeight:    null,
-            navigatorWidth:     null,
-            navigatorPosition:  null,
-            navigatorSizeRatio: 0.25,
+            //DATA SOURCE DETAILS
+            xmlPath:                null,
+            tileSources:            null, 
+            tileHost:               null,
+             
+            //INTERFACE FEATURES
+            debugMode:              true,
+            animationTime:          1.5,
+            blendTime:              0.5,
+            alwaysBlend:            false,
+            autoHideControls:       true,
+            immediateRender:        false,
+            wrapHorizontal:         false,
+            wrapVertical:           false,
+            panHorizontal:          true,
+            panVertical:            true,
+            visibilityRatio:        0.5,
+            springStiffness:        5.0,
+            clickTimeThreshold:     200,
+            clickDistThreshold:     5,
+            zoomPerClick:           2.0,
+            zoomPerScroll:          1.2,
+            zoomPerSecond:          2.0,
+            showNavigationControl:  true,
+            controlsFadeDelay:      2000,
+            controlsFadeLength:     1500,
+            mouseNavEnabled:        true,
+            showNavigator:          false,
+            navigatorElement:       null,
+            navigatorHeight:        null,
+            navigatorWidth:         null,
+            navigatorPosition:      null,
+            navigatorSizeRatio:     0.25,
+            preserveViewport:       false,
             
-            //These two were referenced but never defined
-            controlsFadeDelay:  2000,
-            controlsFadeLength: 1500,
+            //PERFORMANCE SETTINGS
+            minPixelRatio:          0.5,
+            imageLoaderLimit:       0,
+            maxImageCacheCount:     200,
+            minZoomImageRatio:      0.9,
+            maxZoomPixelRatio:      2,
 
-            maxImageCacheCount: 200,
-            minPixelRatio:      0.5,
-            mouseNavEnabled:    true,
-            prefixUrl:          null,
+            //INTERFACE RESOURCE SETTINGS
+            prefixUrl:              null,
             navImages: {
                 zoomIn: {
                     REST:   '/images/zoomin_rest.png',
@@ -489,6 +502,18 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                     GROUP:  '/images/fullpage_grouphover.png',
                     HOVER:  '/images/fullpage_hover.png',
                     DOWN:   '/images/fullpage_pressed.png'
+                },
+                previous: {
+                    REST:   '/images/previous_rest.png',
+                    GROUP:  '/images/previous_grouphover.png',
+                    HOVER:  '/images/previous_hover.png',
+                    DOWN:   '/images/previous_pressed.png'
+                },
+                next: {
+                    REST:   '/images/next_rest.png',
+                    GROUP:  '/images/next_grouphover.png',
+                    HOVER:  '/images/next_hover.png',
+                    DOWN:   '/images/next_pressed.png'
                 }
             }
         },
@@ -1192,7 +1217,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {String} xmlString
          * @param {Function} callback
          */
-        createFromDZI: function( dzi, callback ) {
+        createFromDZI: function( dzi, callback, tileHost ) {
             var async       = typeof ( callback ) == "function",
                 xmlUrl      = dzi.substring(0,1) != '<' ? dzi : null,
                 xmlString   = xmlUrl ? null : dzi,
@@ -1203,7 +1228,12 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 tilesUrl;
 
 
-            if( xmlUrl ){
+            if( tileHost ){
+
+                tilesUrl = tileHost + "/_files/";
+                
+            } else if( xmlUrl ) {
+
                 urlParts = xmlUrl.split( '/' );
                 filename = urlParts[ urlParts.length - 1 ];
                 lastDot  = filename.lastIndexOf( '.' );
@@ -1213,6 +1243,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 }
 
                 tilesUrl = urlParts.join( '/' ) + "_files/";
+
             }
 
             function finish( func, obj ) {

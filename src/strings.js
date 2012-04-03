@@ -6,28 +6,30 @@
 //      pythons gettext might be a reasonable approach.
 var I18N = {
     Errors: {
-        Failure:    "Sorry, but Seadragon Ajax can't run on your browser!\n" +
-                    "Please try using IE 7 or Firefox 3.\n",
-        Dzc:        "Sorry, we don't support Deep Zoom Collections!",
-        Dzi:        "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
-        Xml:        "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
-        Empty:      "You asked us to open nothing, so we did just that.",
-        ImageFormat: "Sorry, we don't support {0}-based Deep Zoom Images.",
-        Security:   "It looks like a security restriction stopped us from " +
-                    "loading this Deep Zoom Image.",
-        Status:     "This space unintentionally left blank ({0} {1}).",
-        Unknown:    "Whoops, something inexplicably went wrong. Sorry!"
+        Failure:        "Sorry, but Seadragon Ajax can't run on your browser!\n" +
+                        "Please try using IE 7 or Firefox 3.\n",
+        Dzc:            "Sorry, we don't support Deep Zoom Collections!",
+        Dzi:            "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
+        Xml:            "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
+        Empty:          "You asked us to open nothing, so we did just that.",
+        ImageFormat:    "Sorry, we don't support {0}-based Deep Zoom Images.",
+        Security:       "It looks like a security restriction stopped us from " +
+                        "loading this Deep Zoom Image.",
+        Status:         "This space unintentionally left blank ({0} {1}).",
+        Unknown:        "Whoops, something inexplicably went wrong. Sorry!"
     },
 
     Messages: {
-        Loading:    "Loading..."
+        Loading:        "Loading..."
     },
 
     Tooltips: {
-        FullPage:   "Toggle full page",
-        Home:       "Go home",
-        ZoomIn:     "Zoom in",
-        ZoomOut:    "Zoom out"
+        FullPage:       "Toggle full page",
+        Home:           "Go home",
+        ZoomIn:         "Zoom in",
+        ZoomOut:        "Zoom out",
+        NextPage:       "Next page",
+        PreviousPage:   "Previous page"
     }
 };
 
@@ -41,12 +43,13 @@ $.extend( $, {
     getString: function( prop ) {
         
         var props   = prop.split('.'),
-            string  = I18N,
+            string  = null,
             args    = arguments,
             i;
 
         for ( i = 0; i < props.length; i++ ) {
-            string = string[ props[ i ] ] || {};    // in case not a subproperty
+            // in case not a subproperty
+            string = I18N[ props[ i ] ] || {};
         }
 
         if ( typeof( string ) != "string" ) {

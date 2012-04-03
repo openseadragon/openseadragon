@@ -10,7 +10,8 @@ var TIMEOUT             = 5000,
         ( BROWSER == $.BROWSERS.FIREFOX ) ||
         ( BROWSER == $.BROWSERS.OPERA )   ||
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
-        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
+        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
+        ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
     ) && ( !navigator.appVersion.match( 'Mobile' ) ),
 
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&

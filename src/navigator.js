@@ -63,13 +63,31 @@ $.Navigator = function( options ){
         style.cssFloat      = 'left'; //Firefox
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
+        style.cursor        = 'default';
     }( this.displayRegion.style ));
+
+    this.element.innerTracker = new $.MouseTracker({
+        element:        this.element,
+        scrollHandler:  function(){
+            //dont scroll the page up and down if the user is scrolling
+            //in the navigator
+            return false;
+        }
+    }).setTracking( true );
 
     this.displayRegion.innerTracker = new $.MouseTracker({
         element:            this.displayRegion, 
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
+        clickHandler:       $.delegate( this, onCanvasClick ),
+        dragHandler:        $.delegate( this, onCanvasDrag ),
+        releaseHandler:     $.delegate( this, onCanvasRelease ),
+        scrollHandler:      $.delegate( this, onCanvasScroll ),
         focusHandler:       function(){
+            var point    = $.getElementPosition( _this.viewer.element );
+
+            window.scrollTo( 0, point.y );
+
             _this.viewer.setControlsEnabled( true );
             (function( style ){
                 style.border        = '2px solid #437AB2';
@@ -89,12 +107,15 @@ $.Navigator = function( options ){
             switch( keyCode ){
                 case 61://=|+
                     _this.viewer.viewport.zoomBy(1.1);
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 45://-|_
                     _this.viewer.viewport.zoomBy(0.9);
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 48://0|)
                     _this.viewer.viewport.goHome();
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 119://w
                 case 87://W
@@ -102,6 +123,7 @@ $.Navigator = function( options ){
                     shiftKey ?
                         _this.viewer.viewport.zoomBy(1.1):
                         _this.viewer.viewport.panBy(new $.Point(0, -0.05));
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 115://s
                 case 83://S
@@ -109,14 +131,17 @@ $.Navigator = function( options ){
                     shiftKey ?
                         _this.viewer.viewport.zoomBy(0.9):
                         _this.viewer.viewport.panBy(new $.Point(0, 0.05));
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 97://a
                 case 37://left arrow
                     _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 case 100://d
                 case 39://right arrow
                     _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
+                    _this.viewer.viewport.applyConstraints();
                     return false;
                 default:
                     //console.log( 'navigator keycode %s', keyCode );
@@ -157,23 +182,73 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
     update: function( viewport ){
 
-        var bounds      = viewport.getBounds( true ),
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() )
+        var bounds,
+            topleft,
+            bottomright;
+
+        if( viewport && this.viewport ){
+            bounds      = viewport.getBounds( true );
+            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() );
             bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight() );
 
-        //update style for navigator-box    
-        (function(style){
+            //update style for navigator-box    
+            (function(style){
 
-            style.top    = topleft.y + 'px';
-            style.left   = topleft.x + 'px';
-            style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
-            style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
+                style.top    = topleft.y + 'px';
+                style.left   = topleft.x + 'px';
+                style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
+                style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
 
-        }( this.displayRegion.style ));   
+            }( this.displayRegion.style ));  
+        } 
 
     }
 
 });
+
+
+function onCanvasClick( tracker, position, quick, shift ) {
+    this.displayRegion.focus();
+};
+
+
+function onCanvasDrag( tracker, position, delta, shift ) {
+    if ( this.viewer.viewport ) {
+        if( !this.panHorizontal ){
+            delta.x = 0;
+        }
+        if( !this.panVertical ){
+            delta.y = 0;
+        }
+        this.viewer.viewport.panBy( 
+            this.viewport.deltaPointsFromPixels( 
+                delta
+            ) 
+        );
+    }
+};
+
+
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
+    if ( insideElementPress && this.viewer.viewport ) {
+        this.viewer.viewport.applyConstraints();
+    }
+};
+
+function onCanvasScroll( tracker, position, scroll, shift ) {
+    var factor;
+    if ( this.viewer.viewport ) {
+        factor = Math.pow( this.zoomPerScroll, scroll );
+        this.viewer.viewport.zoomBy( 
+            factor, 
+            //this.viewport.pointFromPixel( position, true ) 
+            this.viewport.getCenter()
+        );
+        this.viewer.viewport.applyConstraints();
+    }
+    //cancels event
+    return false;
+};
 
 
 }( OpenSeadragon ));

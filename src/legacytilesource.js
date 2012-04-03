@@ -49,8 +49,8 @@ $.LegacyTileSource.prototype = {
         var levelScale = NaN;
         if (  level >= this.minLevel && level <= this.maxLevel ){
             levelScale = 
-                this.files[ level ].height / 
-                this.files[ this.maxLevel ].height;
+                this.files[ level ].width / 
+                this.files[ this.maxLevel ].width;
         } 
         return levelScale;
     },
@@ -101,9 +101,9 @@ $.LegacyTileSource.prototype = {
             py = ( y === 0 ) ? 0 : this.files[ level ].height,
             sx = this.files[ level ].width,
             sy = this.files[ level ].height,
-            scale = Math.max( 
-                1.0 / dimensionsScaled.x,
-                1.0 / dimensionsScaled.y
+            scale = 1.0 / ( this.width >= this.height  ? 
+                dimensionsScaled.y :
+                dimensionsScaled.x 
             );
 
         sx = Math.min( sx, dimensionsScaled.x - px );

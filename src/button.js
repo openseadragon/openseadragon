@@ -223,6 +223,18 @@ $.extend( $.Button.prototype, $.EventHandler.prototype, {
      */
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
+    },
+
+    disable: function(){
+        this.notifyGroupExit();
+        this.element.disabled = true;
+        $.setElementOpacity( this.element, 0.2, true );
+    },
+
+    enable: function(){
+        this.element.disabled = false;
+        $.setElementOpacity( this.element, 1.0, true );
+        this.notifyGroupEnter();
     }
 
 });
@@ -268,6 +280,11 @@ function stopFading( button ) {
 };
 
 function inTo( button, newState ) {
+
+    if( button.element.disabled ){
+        return;
+    }
+
     if ( newState >= $.ButtonState.GROUP && 
          button.currentState == $.ButtonState.REST ) {
         stopFading( button );
@@ -289,6 +306,11 @@ function inTo( button, newState ) {
 
 
 function outTo( button, newState ) {
+
+    if( button.element.disabled ){
+        return;
+    }
+
     if ( newState <= $.ButtonState.HOVER && 
          button.currentState == $.ButtonState.DOWN ) {
         button.imgDown.style.visibility = "hidden";

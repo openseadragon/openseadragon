@@ -46,9 +46,6 @@ $.Viewport = function( options ) {
 
     }, options );
 
-
-    this.contentAspect = this.contentSize.x / this.contentSize.y;
-    this.contentHeight = this.contentSize.y / this.contentSize.x;
     this.centerSpringX = new $.Spring({
         initial: 0, 
         springStiffness: this.springStiffness,
@@ -64,19 +61,39 @@ $.Viewport = function( options ) {
         springStiffness: this.springStiffness,
         animationTime:   this.animationTime
     });
-    this.homeBounds    = new $.Rect( 0, 0, 1, this.contentHeight );
 
+    this.resetContentSize( this.contentSize );
     this.goHome( true );
+    //this.fitHorizontally( true );
     this.update();
 };
 
 $.Viewport.prototype = {
 
+    resetContentSize: function( contentSize ){
+        this.contentSize    = contentSize;
+        this.contentAspectX = this.contentSize.x / this.contentSize.y;
+        this.contentAspectY = this.contentSize.y / this.contentSize.x;
+        this.homeBounds     = new $.Rect( 
+            0, 
+            0, 
+            1, 
+            this.contentAspectY
+        );
+        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
+        this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+    },
+
     /**
      * @function
      */
     getHomeZoom: function() {
-        var aspectFactor = this.contentAspect / this.getAspectRatio();
+        
+        var aspectFactor = Math.min( 
+            this.contentAspectX, 
+            this.contentAspectY 
+        ) / this.getAspectRatio();
+
         return ( aspectFactor >= 1 ) ? 
             1 : 
             aspectFactor;
@@ -229,7 +246,7 @@ $.Viewport.prototype = {
         left   = bounds.x + bounds.width;
         right  = 1 - bounds.x;
         top    = bounds.y + bounds.height;
-        bottom = this.contentHeight - bounds.y;
+        bottom = this.contentAspectY - bounds.y;
 
         if ( this.wrapHorizontal ) {
             //do nothing
@@ -311,15 +328,22 @@ $.Viewport.prototype = {
             this.containerSize.x / newBounds.width
         );
 
-
         this.zoomTo( newZoom, referencePoint, immediately );
+    },
+    
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
+    goHome: function( immediately ) {
+        return this.fitVertically( immediately );
     },
 
     /**
      * @function
      * @param {Boolean} immediately
      */
-    goHome: function( immediately ) {
+    fitVertically: function( immediately ) {
         var center = this.getCenter();
 
         if ( this.wrapHorizontal ) {
@@ -330,14 +354,39 @@ $.Viewport.prototype = {
 
         if ( this.wrapVertical ) {
             center.y = (
-                this.contentHeight + ( center.y % this.contentHeight )
-            ) % this.contentHeight;
+                this.contentAspectY + ( center.y % this.contentAspectY )
+            ) % this.contentAspectY;
             this.centerSpringY.resetTo( center.y );
             this.centerSpringY.update();
         }
 
         this.fitBounds( this.homeBounds, immediately );
     },
+
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
+    fitHorizontally: function( immediately ) {
+        var center = this.getCenter();
+
+        if ( this.wrapHorizontal ) {
+            center.x = ( 
+                this.contentAspectX + ( center.x % this.contentAspectX ) 
+            ) % this.contentAspectX;
+            this.centerSpringX.resetTo( center.x );
+            this.centerSpringX.update();
+        }
+
+        if ( this.wrapVertical ) {
+            center.y = ( 1 + ( center.y % 1 ) ) % 1;
+            this.centerSpringY.resetTo( center.y );
+            this.centerSpringY.update();
+        }
+
+        this.fitBounds( this.fitWidthBounds, immediately );
+    },
+
 
     /**
      * @function

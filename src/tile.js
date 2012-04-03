@@ -45,7 +45,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.loading = false;
 
     this.element    = null;
-    this.image   = null;
+    this.image      = null;
 
     this.style      = null;
     this.position   = null;
@@ -81,7 +81,7 @@ $.Tile.prototype = {
         var position = this.position.apply( Math.floor ),
             size     = this.size.apply( Math.ceil );
 
-        if ( !this.loaded ) {
+        if ( !this.loaded || !this.image ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -90,9 +90,9 @@ $.Tile.prototype = {
         }
 
         if ( !this.element ) {
-            this.element       = $.makeNeutralElement("img");
-            this.element.src   = this.url;
-            this.style      = this.element.style;
+            this.element        = $.makeNeutralElement("img");
+            this.element.src    = this.url;
+            this.style          = this.element.style;
 
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
@@ -122,14 +122,13 @@ $.Tile.prototype = {
         var position = this.position,
             size     = this.size;
 
-        if ( !this.loaded ) {
+        if ( !this.loaded || !this.image ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
             return;
         }
-
         context.globalAlpha = this.opacity;
         context.drawImage( this.image, position.x, position.y, size.x, size.y );
     },
