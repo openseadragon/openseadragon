@@ -14,7 +14,7 @@
  * zoomable map interfaces driven by SVG files.
  * </p>
  * 
- * @author <br/>(c) 2011 Christopher Thatcher 
+ * @author <br/>(c) 2011, 2012 Christopher Thatcher 
  * @author <br/>(c) 2010 OpenSeadragon Team 
  * @author <br/>(c) 2010 CodePlex Foundation 
  * 
@@ -53,7 +53,35 @@
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  *  POSSIBILITY OF SUCH DAMAGE.
  * 
+ * ---------------------------------------------------------------------------
+ * </pre>
+ * </p>
+ * <p>
+ * <strong> Work done by Chris Thatcher adds an MIT license </strong><br/>
+ * <pre>
  * ----------------------------------------------------------------------------
+ * (c) Christopher Thatcher 2011, 2012. All rights reserved.
+ * 
+ * Licensed with the MIT License
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * ---------------------------------------------------------------------------
  * </pre>
  * </p>
  **/
@@ -458,6 +486,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
             showNavigationControl:  true,
+            showSequenceControl:    true,
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
@@ -473,7 +502,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             minPixelRatio:          0.5,
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
-            minZoomImageRatio:      0.9,
+            minZoomImageRatio:      0.8,
             maxZoomPixelRatio:      2,
 
             //INTERFACE RESOURCE SETTINGS
@@ -633,17 +662,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Element|String} element
          * @returns {CSSStyle}
          */
-        getElementStyle: function( element ) {
-            element = $.getElement( element );
-
-            if ( element.currentStyle ) {
+        getElementStyle: 
+            document.documentElement.currentStyle ? 
+            function( element ) {
+                element = $.getElement( element );
                 return element.currentStyle;
-            } else if ( window.getComputedStyle ) {
+            } : 
+            function( element ) {
+                element = $.getElement( element );
                 return window.getComputedStyle( element, "" );
-            } else {
-                throw new Error( "Unknown element style, no known technique." );
-            }
-        },
+            },
 
 
         /**
@@ -656,7 +684,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Event}
          */
         getEvent: function( event ) {
-            return event ? event : window.event;
+            if( event ){
+                $.getEvent = function( event ){
+                    return event;
+                };
+            } else {
+                $.getEvent = function( event ){
+                    return window.event;
+                };
+            }
+            return $.getEvent( event );
         },
 
 
@@ -668,29 +705,40 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getMousePosition: function( event ) {
-            var result = new $.Point();
-
-            event = $.getEvent( event );
 
             if ( typeof( event.pageX ) == "number" ) {
-                result.x = event.pageX;
-                result.y = event.pageY;
+                $.getMousePosition = function( event ){
+                    var result = new $.Point();
+
+                    event = $.getEvent( event );
+                    result.x = event.pageX;
+                    result.y = event.pageY;
+
+                    return result;
+                };
             } else if ( typeof( event.clientX ) == "number" ) {
-                result.x = 
-                    event.clientX + 
-                    document.body.scrollLeft + 
-                    document.documentElement.scrollLeft;
-                result.y = 
-                    event.clientY + 
-                    document.body.scrollTop + 
-                    document.documentElement.scrollTop;
+                $.getMousePosition = function( event ){
+                    var result = new $.Point();
+
+                    event = $.getEvent( event );
+                    result.x = 
+                        event.clientX + 
+                        document.body.scrollLeft + 
+                        document.documentElement.scrollLeft;
+                    result.y = 
+                        event.clientY + 
+                        document.body.scrollTop + 
+                        document.documentElement.scrollTop;
+
+                    return result;
+                };
             } else {
                 throw new Error(
                     "Unknown event mouse position, no known technique."
                 );
             }
 
-            return result;
+            return $.getMousePosition( event );
         },
 
 
@@ -701,22 +749,33 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getPageScroll: function() {
-            var result  = new $.Point(),
-                docElement = document.documentElement || {},
-                body    = document.body || {};
+            var docElement  = document.documentElement || {},
+                body        = document.body || {};
 
             if ( typeof( window.pageXOffset ) == "number" ) {
-                result.x = window.pageXOffset;
-                result.y = window.pageYOffset;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        window.pageXOffset,
+                        window.pageYOffset
+                    );
+                };
             } else if ( body.scrollLeft || body.scrollTop ) {
-                result.x = body.scrollLeft;
-                result.y = body.scrollTop;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        document.body.scrollLeft,
+                        document.body.scrollTop
+                    );
+                };
             } else if ( docElement.scrollLeft || docElement.scrollTop ) {
-                result.x = docElement.scrollLeft;
-                result.y = docElement.scrollTop;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        document.documentElement.scrollLeft,
+                        document.documentElement.scrollTop
+                    );
+                };
             }
 
-            return result;
+            return $.getPageScroll();
         },
 
 
@@ -727,24 +786,35 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getWindowSize: function() {
-            var result  = new $.Point(),
-                docElement = document.documentElement || {},
+            var docElement = document.documentElement || {},
                 body    = document.body || {};
 
             if ( typeof( window.innerWidth ) == 'number' ) {
-                result.x = window.innerWidth;
-                result.y = window.innerHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        window.innerWidth,
+                        window.innerHeight
+                    );
+                }
             } else if ( docElement.clientWidth || docElement.clientHeight ) {
-                result.x = docElement.clientWidth;
-                result.y = docElement.clientHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        document.documentElement.clientWidth,
+                        document.documentElement.clientHeight
+                    );
+                }
             } else if ( body.clientWidth || body.clientHeight ) {
-                result.x = body.clientWidth;
-                result.y = body.clientHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        document.body.clientWidth,
+                        document.body.clientHeight
+                    );
+                }
             } else {
                 throw new Error("Unknown window size, no known technique.");
             }
 
-            return result;
+            return $.getWindowSize();
         },
 
 
@@ -826,37 +896,44 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Element}
          */
         makeTransparentImage: function( src ) {
-            var img     = $.makeNeutralElement( "img" ),
-                element = null;
 
-            if ( $.Browser.vendor == $.BROWSERS.IE && 
-                 $.Browser.version < 7 ) {
+            $.makeTransparentImage = function( src ){
+                var img = $.makeNeutralElement( "img" );
+                
+                img.src = src;
+                
+                return img;
+            };
 
-                element = $.makeNeutralElement("span");
-                element.style.display = "inline-block";
+            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 7 ) {
 
-                img.onload = function() {
-                    element.style.width  = element.style.width || img.width + "px";
-                    element.style.height = element.style.height || img.height + "px";
+                $.makeTransparentImage = function( src ){
+                    var img     = $.makeNeutralElement( "img" ),
+                        element = null;
 
-                    img.onload = null;
-                    img = null;     // to prevent memory leaks in IE
+                    element = $.makeNeutralElement("span");
+                    element.style.display = "inline-block";
+
+                    img.onload = function() {
+                        element.style.width  = element.style.width || img.width + "px";
+                        element.style.height = element.style.height || img.height + "px";
+
+                        img.onload = null;
+                        img = null;     // to prevent memory leaks in IE
+                    };
+
+                    img.src = src;
+                    element.style.filter =
+                        "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
+                        src + 
+                        "', sizingMethod='scale')";
+
+                    return element;
                 };
 
-                img.src = src;
-                element.style.filter =
-                    "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
-                    src + 
-                    "', sizingMethod='scale')";
+            } 
 
-            } else {
-
-                element = img;
-                element.src = src;
-
-            }
-
-            return element;
+            return $.makeTransparentImage( src );
         },
 
 
@@ -925,17 +1002,25 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
             if ( element.addEventListener ) {
-                element.addEventListener( eventName, handler, useCapture );
+                $.addEvent = function( element, eventName, handler, useCapture ){
+                    element = $.getElement( element );
+                    element.addEventListener( eventName, handler, useCapture );                    
+                };
             } else if ( element.attachEvent ) {
-                element.attachEvent( "on" + eventName, handler );
-                if ( useCapture && element.setCapture ) {
-                    element.setCapture();
-                }
+                $.addEvent = function( element, eventName, handler, useCapture ){
+                    element = $.getElement( element );
+                    element.attachEvent( "on" + eventName, handler );
+                    if ( useCapture && element.setCapture ) {
+                        element.setCapture();
+                    }                    
+                };
             } else {
                 throw new Error(
                     "Unable to attach event handler, no known technique."
                 );
             }
+
+            return $.addEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -956,17 +1041,24 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
             if ( element.removeEventListener ) {
-                element.removeEventListener( eventName, handler, useCapture );
+                $.removeEvent = function( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.removeEventListener( eventName, handler, useCapture );
+                };
             } else if ( element.detachEvent ) {
-                element.detachEvent("on" + eventName, handler);
-                if ( useCapture && element.releaseCapture ) {
-                    element.releaseCapture();
-                }
+                $.removeEvent = function( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.detachEvent("on" + eventName, handler);
+                    if ( useCapture && element.releaseCapture ) {
+                        element.releaseCapture();
+                    }
+                };
             } else {
                 throw new Error(
                     "Unable to detach event handler, no known technique."
                 );
             }
+            return $.removeEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -981,13 +1073,20 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             event = $.getEvent( event );
 
             if ( event.preventDefault ) {
-                // W3C for preventing default
-                event.preventDefault();
+                $.cancelEvent = function( event ){
+                    // W3C for preventing default
+                    event.preventDefault();
+                }
+            } else {
+                $.cancelEvent = function( event ){
+                    event = $.getEvent( event );
+                    // legacy for preventing default
+                    event.cancel = true;
+                    // IE for preventing default
+                    event.returnValue = false;
+                };
             }
-            // legacy for preventing default
-            event.cancel = true;
-            // IE for preventing default
-            event.returnValue = false;
+            $.cancelEvent( event );
         },
 
 
@@ -1000,11 +1099,21 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         stopEvent: function( event ) {
             event = $.getEvent( event );
 
-            if ( event.stopPropagation ) {
-                event.stopPropagation();    // W3C for stopping propagation
+            if ( event.stopPropagation ) {    
+                // W3C for stopping propagation
+                $.stopEvent = function( event ){
+                    event.stopPropagation();
+                };
+            } else {      
+                // IE for stopping propagation
+                $.stopEvent = function( event ){
+                    event = $.getEvent( event );
+                    event.cancelBubble = true;
+                };
+                
             }
 
-            event.cancelBubble = true;      // IE for stopping propagation
+            $.stopEvent( event );
         },
 
 
@@ -1058,6 +1167,38 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         },
 
 
+        createAjaxRequest: function(){
+            var request;
+
+            if ( window.ActiveXObject ) {
+                //TODO: very bad...Why check every time using try/catch when
+                //      we could determine once at startup which activeX object
+                //      was supported.  This will have significant impact on 
+                //      performance for IE Browsers
+                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                    try {
+                        request = new ActiveXObject( ACTIVEX[ i ] );
+                        $.createAjaxRequest = function( ){
+                            return new ActiveXObject( ACTIVEX[ i ] );
+                        };
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            } else if ( window.XMLHttpRequest ) {
+                $.createAjaxRequest = function( ){
+                    return new XMLHttpRequest();
+                };
+                request = new XMLHttpRequest();
+            }
+
+            if ( !request ) {
+                throw new Error( "Browser doesn't support XMLHttpRequest." );
+            }
+
+            return request;
+        },
         /**
          * Makes an AJAX request.
          * @function
@@ -1068,7 +1209,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
-                request = null,
+                request = $.createAjaxRequest(),
                 actual,
                 i;
 
@@ -1080,31 +1221,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                         1
                     );
                 };
-            }
-
-            if ( window.ActiveXObject ) {
-                //TODO: very bad...Why check every time using try/catch when
-                //      we could determine once at startup which activeX object
-                //      was supported.  This will have significant impact on 
-                //      performance for IE Browsers
-                for ( i = 0; i < ACTIVEX.length; i++ ) {
-                    try {
-                        request = new ActiveXObject( ACTIVEX[ i ] );
-                        break;
-                    } catch (e) {
-                        continue;
-                    }
-                }
-            } else if ( window.XMLHttpRequest ) {
-                request = new XMLHttpRequest();
-            }
-
-            if ( !request ) {
-                throw new Error( "Browser doesn't support XMLHttpRequest." );
-            }
-
-
-            if ( async ) {
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
@@ -1138,12 +1254,14 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Taken from jQuery 1.6.1
-         *  @param {Object} options
-         *  @param {String} options.url
-         *  @param {Function} options.callback
-         *  @param {String} [options.param='callback'] The name of the url parameter
+         * @function
+         * @name OpenSeadragon.jsonp
+         * @param {Object} options
+         * @param {String} options.url
+         * @param {Function} options.callback
+         * @param {String} [options.param='callback'] The name of the url parameter
          *      to request the jsonp provider with.
-         *  @param {String} [options.callbackName=] The name of the callback to
+         * @param {String} [options.callbackName=] The name of the callback to
          *      request the jsonp provider with.
          */
         jsonp: function( options ){
@@ -1391,7 +1509,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
         //determine if this browser supports image alpha transparency
         $.Browser.alpha = !( 
-            $.Browser.vendor == $.BROWSERS.IE || (
+            ( 
+                $.Browser.vendor == $.BROWSERS.IE && 
+                $.Browser.version < 9
+            ) || (
                 $.Browser.vendor == $.BROWSERS.CHROME && 
                 $.Browser.version < 2
             )
@@ -1593,26 +1714,35 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
     function parseXml( string ) {
         //TODO: yet another example where we can determine the correct
         //      implementation once at start-up instead of everytime we use
-        //      the function.
-        var xmlDoc = null,
-            parser;
-
+        //      the function. DONE.
         if ( window.ActiveXObject ) {
 
-            xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-            xmlDoc.async = false;
-            xmlDoc.loadXML( string );
+            $.parseXml = function( string ){
+                var xmlDoc = null,
+                    parser;
+
+                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                xmlDoc.async = false;
+                xmlDoc.loadXML( string );
+                return xmlDoc;
+            };
 
         } else if ( window.DOMParser ) {
-
-            parser = new DOMParser();
-            xmlDoc = parser.parseFromString( string, "text/xml" );
             
+            $.parseXml = function( string ){
+                var xmlDoc = null,
+                    parser;
+
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString( string, "text/xml" );
+                return xmlDoc;
+            };
+
         } else {
             throw new Error( "Browser doesn't support XML DOM." );
         }
 
-        return xmlDoc;
+        return $.parseXml( string );
     };
     
 }( OpenSeadragon ));

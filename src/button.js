@@ -76,11 +76,49 @@ $.Button = function( options ) {
 
     }, options );
 
-    //TODO: make button elements accessible by making them a-tags
-    //      maybe even consider basing them on the element and adding
-    //      methods jquery-style.
-    this.element        = options.element || $.makeNeutralElement( "button" );
-    this.element.href   = '#';
+    this.element        = options.element   || $.makeNeutralElement( "button" );
+    this.element.href   = this.element.href || '#';
+    
+    //if the user has specified the element to bind the control to explicitly
+    //then do not add the default control images
+    if( !options.element ){
+        this.imgRest      = $.makeTransparentImage( this.srcRest );
+        this.imgGroup     = $.makeTransparentImage( this.srcGroup );
+        this.imgHover     = $.makeTransparentImage( this.srcHover );
+        this.imgDown      = $.makeTransparentImage( this.srcDown );
+        
+        this.element.appendChild( this.imgRest );
+        this.element.appendChild( this.imgGroup );
+        this.element.appendChild( this.imgHover );
+        this.element.appendChild( this.imgDown );
+
+        this.imgGroup.style.position = 
+        this.imgHover.style.position = 
+        this.imgDown.style.position  = 
+            "absolute";
+
+        this.imgGroup.style.top = 
+        this.imgHover.style.top = 
+        this.imgDown.style.top  = 
+            "0px";
+
+        this.imgGroup.style.left = 
+        this.imgHover.style.left = 
+        this.imgDown.style.left  = 
+            "0px";
+
+        this.imgHover.style.visibility = 
+        this.imgDown.style.visibility  = 
+            "hidden";
+
+        if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
+            this.imgGroup.style.top = 
+            this.imgHover.style.top = 
+            this.imgDown.style.top  = 
+                "";
+        }
+    }
+
 
     this.addHandler( "onPress",     this.onPress );
     this.addHandler( "onRelease",   this.onRelease );
@@ -91,10 +129,6 @@ $.Button = function( options ) {
     this.addHandler( "onBlur",      this.onBlur );
 
     this.currentState = $.ButtonState.GROUP;
-    this.imgRest      = $.makeTransparentImage( this.srcRest );
-    this.imgGroup     = $.makeTransparentImage( this.srcGroup );
-    this.imgHover     = $.makeTransparentImage( this.srcHover );
-    this.imgDown      = $.makeTransparentImage( this.srcDown );
 
     this.fadeBeginTime  = null;
     this.shouldFade     = false;
@@ -102,37 +136,6 @@ $.Button = function( options ) {
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
     this.element.title          = this.tooltip;
-
-    this.element.appendChild( this.imgRest );
-    this.element.appendChild( this.imgGroup );
-    this.element.appendChild( this.imgHover );
-    this.element.appendChild( this.imgDown );
-
-    this.imgGroup.style.position = 
-    this.imgHover.style.position = 
-    this.imgDown.style.position  = 
-        "absolute";
-
-    this.imgGroup.style.top = 
-    this.imgHover.style.top = 
-    this.imgDown.style.top  = 
-        "0px";
-
-    this.imgGroup.style.left = 
-    this.imgHover.style.left = 
-    this.imgDown.style.left  = 
-        "0px";
-
-    this.imgHover.style.visibility = 
-    this.imgDown.style.visibility  = 
-        "hidden";
-
-    if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
-        this.imgGroup.style.top = 
-        this.imgHover.style.top = 
-        this.imgDown.style.top  = 
-            "";
-    }
 
     this.tracker = new $.MouseTracker({
 
@@ -258,7 +261,9 @@ function updateFade( button ) {
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
 
-        $.setElementOpacity( button.imgGroup, opacity, true );
+        if( button.imgGroup ){
+            $.setElementOpacity( button.imgGroup, opacity, true );
+        }
         if ( opacity > 0 ) {
             // fade again
             scheduleFade( button );
@@ -276,7 +281,9 @@ function beginFading( button ) {
 
 function stopFading( button ) {
     button.shouldFade = false;
-    $.setElementOpacity( button.imgGroup, 1.0, true );
+    if( button.imgGroup ){
+        $.setElementOpacity( button.imgGroup, 1.0, true );
+    }
 };
 
 function inTo( button, newState ) {
@@ -293,13 +300,17 @@ function inTo( button, newState ) {
 
     if ( newState >= $.ButtonState.HOVER && 
          button.currentState == $.ButtonState.GROUP ) {
-        button.imgHover.style.visibility = "";
+        if( button.imgHover ){
+            button.imgHover.style.visibility = "";
+        }
         button.currentState = $.ButtonState.HOVER;
     }
 
     if ( newState >= $.ButtonState.DOWN && 
          button.currentState == $.ButtonState.HOVER ) {
-        button.imgDown.style.visibility = "";
+        if( button.imgDown ){
+            button.imgDown.style.visibility = "";
+        }
         button.currentState = $.ButtonState.DOWN;
     }
 };
@@ -313,13 +324,17 @@ function outTo( button, newState ) {
 
     if ( newState <= $.ButtonState.HOVER && 
          button.currentState == $.ButtonState.DOWN ) {
-        button.imgDown.style.visibility = "hidden";
+        if( button.imgDown ){
+            button.imgDown.style.visibility = "hidden";
+        }
         button.currentState = $.ButtonState.HOVER;
     }
 
     if ( newState <= $.ButtonState.GROUP && 
          button.currentState == $.ButtonState.HOVER ) {
-        button.imgHover.style.visibility = "hidden";
+        if( button.imgHover ){
+            button.imgHover.style.visibility = "hidden";
+        }
         button.currentState = $.ButtonState.GROUP;
     }
 

@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.40
+ * @version  OpenSeadragon 0.9.50
  *
  * @fileOverview 
  * <h2>
@@ -14,7 +14,7 @@
  * zoomable map interfaces driven by SVG files.
  * </p>
  * 
- * @author <br/>(c) 2011 Christopher Thatcher 
+ * @author <br/>(c) 2011, 2012 Christopher Thatcher 
  * @author <br/>(c) 2010 OpenSeadragon Team 
  * @author <br/>(c) 2010 CodePlex Foundation 
  * 
@@ -53,7 +53,35 @@
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  *  POSSIBILITY OF SUCH DAMAGE.
  * 
+ * ---------------------------------------------------------------------------
+ * </pre>
+ * </p>
+ * <p>
+ * <strong> Work done by Chris Thatcher adds an MIT license </strong><br/>
+ * <pre>
  * ----------------------------------------------------------------------------
+ * (c) Christopher Thatcher 2011, 2012. All rights reserved.
+ * 
+ * Licensed with the MIT License
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * ---------------------------------------------------------------------------
  * </pre>
  * </p>
  **/
@@ -458,6 +486,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
             showNavigationControl:  true,
+            showSequenceControl:    true,
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
@@ -473,7 +502,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             minPixelRatio:          0.5,
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
-            minZoomImageRatio:      0.9,
+            minZoomImageRatio:      0.8,
             maxZoomPixelRatio:      2,
 
             //INTERFACE RESOURCE SETTINGS
@@ -633,17 +662,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Element|String} element
          * @returns {CSSStyle}
          */
-        getElementStyle: function( element ) {
-            element = $.getElement( element );
-
-            if ( element.currentStyle ) {
+        getElementStyle: 
+            document.documentElement.currentStyle ? 
+            function( element ) {
+                element = $.getElement( element );
                 return element.currentStyle;
-            } else if ( window.getComputedStyle ) {
+            } : 
+            function( element ) {
+                element = $.getElement( element );
                 return window.getComputedStyle( element, "" );
-            } else {
-                throw new Error( "Unknown element style, no known technique." );
-            }
-        },
+            },
 
 
         /**
@@ -656,7 +684,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Event}
          */
         getEvent: function( event ) {
-            return event ? event : window.event;
+            if( event ){
+                $.getEvent = function( event ){
+                    return event;
+                };
+            } else {
+                $.getEvent = function( event ){
+                    return window.event;
+                };
+            }
+            return $.getEvent( event );
         },
 
 
@@ -668,29 +705,40 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getMousePosition: function( event ) {
-            var result = new $.Point();
-
-            event = $.getEvent( event );
 
             if ( typeof( event.pageX ) == "number" ) {
-                result.x = event.pageX;
-                result.y = event.pageY;
+                $.getMousePosition = function( event ){
+                    var result = new $.Point();
+
+                    event = $.getEvent( event );
+                    result.x = event.pageX;
+                    result.y = event.pageY;
+
+                    return result;
+                };
             } else if ( typeof( event.clientX ) == "number" ) {
-                result.x = 
-                    event.clientX + 
-                    document.body.scrollLeft + 
-                    document.documentElement.scrollLeft;
-                result.y = 
-                    event.clientY + 
-                    document.body.scrollTop + 
-                    document.documentElement.scrollTop;
+                $.getMousePosition = function( event ){
+                    var result = new $.Point();
+
+                    event = $.getEvent( event );
+                    result.x = 
+                        event.clientX + 
+                        document.body.scrollLeft + 
+                        document.documentElement.scrollLeft;
+                    result.y = 
+                        event.clientY + 
+                        document.body.scrollTop + 
+                        document.documentElement.scrollTop;
+
+                    return result;
+                };
             } else {
                 throw new Error(
                     "Unknown event mouse position, no known technique."
                 );
             }
 
-            return result;
+            return $.getMousePosition( event );
         },
 
 
@@ -701,22 +749,33 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getPageScroll: function() {
-            var result  = new $.Point(),
-                docElement = document.documentElement || {},
-                body    = document.body || {};
+            var docElement  = document.documentElement || {},
+                body        = document.body || {};
 
             if ( typeof( window.pageXOffset ) == "number" ) {
-                result.x = window.pageXOffset;
-                result.y = window.pageYOffset;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        window.pageXOffset,
+                        window.pageYOffset
+                    );
+                };
             } else if ( body.scrollLeft || body.scrollTop ) {
-                result.x = body.scrollLeft;
-                result.y = body.scrollTop;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        document.body.scrollLeft,
+                        document.body.scrollTop
+                    );
+                };
             } else if ( docElement.scrollLeft || docElement.scrollTop ) {
-                result.x = docElement.scrollLeft;
-                result.y = docElement.scrollTop;
+                $.getPageScroll = function(){
+                    return new $.Point(
+                        document.documentElement.scrollLeft,
+                        document.documentElement.scrollTop
+                    );
+                };
             }
 
-            return result;
+            return $.getPageScroll();
         },
 
 
@@ -727,24 +786,35 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point}
          */
         getWindowSize: function() {
-            var result  = new $.Point(),
-                docElement = document.documentElement || {},
+            var docElement = document.documentElement || {},
                 body    = document.body || {};
 
             if ( typeof( window.innerWidth ) == 'number' ) {
-                result.x = window.innerWidth;
-                result.y = window.innerHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        window.innerWidth,
+                        window.innerHeight
+                    );
+                }
             } else if ( docElement.clientWidth || docElement.clientHeight ) {
-                result.x = docElement.clientWidth;
-                result.y = docElement.clientHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        document.documentElement.clientWidth,
+                        document.documentElement.clientHeight
+                    );
+                }
             } else if ( body.clientWidth || body.clientHeight ) {
-                result.x = body.clientWidth;
-                result.y = body.clientHeight;
+                $.getWindowSize = function(){
+                    return new $.Point(
+                        document.body.clientWidth,
+                        document.body.clientHeight
+                    );
+                }
             } else {
                 throw new Error("Unknown window size, no known technique.");
             }
 
-            return result;
+            return $.getWindowSize();
         },
 
 
@@ -826,37 +896,44 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Element}
          */
         makeTransparentImage: function( src ) {
-            var img     = $.makeNeutralElement( "img" ),
-                element = null;
 
-            if ( $.Browser.vendor == $.BROWSERS.IE && 
-                 $.Browser.version < 7 ) {
+            $.makeTransparentImage = function( src ){
+                var img = $.makeNeutralElement( "img" );
+                
+                img.src = src;
+                
+                return img;
+            };
 
-                element = $.makeNeutralElement("span");
-                element.style.display = "inline-block";
+            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 7 ) {
 
-                img.onload = function() {
-                    element.style.width  = element.style.width || img.width + "px";
-                    element.style.height = element.style.height || img.height + "px";
+                $.makeTransparentImage = function( src ){
+                    var img     = $.makeNeutralElement( "img" ),
+                        element = null;
 
-                    img.onload = null;
-                    img = null;     // to prevent memory leaks in IE
+                    element = $.makeNeutralElement("span");
+                    element.style.display = "inline-block";
+
+                    img.onload = function() {
+                        element.style.width  = element.style.width || img.width + "px";
+                        element.style.height = element.style.height || img.height + "px";
+
+                        img.onload = null;
+                        img = null;     // to prevent memory leaks in IE
+                    };
+
+                    img.src = src;
+                    element.style.filter =
+                        "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
+                        src + 
+                        "', sizingMethod='scale')";
+
+                    return element;
                 };
 
-                img.src = src;
-                element.style.filter =
-                    "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
-                    src + 
-                    "', sizingMethod='scale')";
+            } 
 
-            } else {
-
-                element = img;
-                element.src = src;
-
-            }
-
-            return element;
+            return $.makeTransparentImage( src );
         },
 
 
@@ -925,17 +1002,25 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
             if ( element.addEventListener ) {
-                element.addEventListener( eventName, handler, useCapture );
+                $.addEvent = function( element, eventName, handler, useCapture ){
+                    element = $.getElement( element );
+                    element.addEventListener( eventName, handler, useCapture );                    
+                };
             } else if ( element.attachEvent ) {
-                element.attachEvent( "on" + eventName, handler );
-                if ( useCapture && element.setCapture ) {
-                    element.setCapture();
-                }
+                $.addEvent = function( element, eventName, handler, useCapture ){
+                    element = $.getElement( element );
+                    element.attachEvent( "on" + eventName, handler );
+                    if ( useCapture && element.setCapture ) {
+                        element.setCapture();
+                    }                    
+                };
             } else {
                 throw new Error(
                     "Unable to attach event handler, no known technique."
                 );
             }
+
+            return $.addEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -956,17 +1041,24 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //TODO: Why do this if/else on every method call instead of just
             //      defining this function once based on the same logic
             if ( element.removeEventListener ) {
-                element.removeEventListener( eventName, handler, useCapture );
+                $.removeEvent = function( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.removeEventListener( eventName, handler, useCapture );
+                };
             } else if ( element.detachEvent ) {
-                element.detachEvent("on" + eventName, handler);
-                if ( useCapture && element.releaseCapture ) {
-                    element.releaseCapture();
-                }
+                $.removeEvent = function( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.detachEvent("on" + eventName, handler);
+                    if ( useCapture && element.releaseCapture ) {
+                        element.releaseCapture();
+                    }
+                };
             } else {
                 throw new Error(
                     "Unable to detach event handler, no known technique."
                 );
             }
+            return $.removeEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -981,13 +1073,20 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             event = $.getEvent( event );
 
             if ( event.preventDefault ) {
-                // W3C for preventing default
-                event.preventDefault();
+                $.cancelEvent = function( event ){
+                    // W3C for preventing default
+                    event.preventDefault();
+                }
+            } else {
+                $.cancelEvent = function( event ){
+                    event = $.getEvent( event );
+                    // legacy for preventing default
+                    event.cancel = true;
+                    // IE for preventing default
+                    event.returnValue = false;
+                };
             }
-            // legacy for preventing default
-            event.cancel = true;
-            // IE for preventing default
-            event.returnValue = false;
+            $.cancelEvent( event );
         },
 
 
@@ -1000,11 +1099,21 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         stopEvent: function( event ) {
             event = $.getEvent( event );
 
-            if ( event.stopPropagation ) {
-                event.stopPropagation();    // W3C for stopping propagation
+            if ( event.stopPropagation ) {    
+                // W3C for stopping propagation
+                $.stopEvent = function( event ){
+                    event.stopPropagation();
+                };
+            } else {      
+                // IE for stopping propagation
+                $.stopEvent = function( event ){
+                    event = $.getEvent( event );
+                    event.cancelBubble = true;
+                };
+                
             }
 
-            event.cancelBubble = true;      // IE for stopping propagation
+            $.stopEvent( event );
         },
 
 
@@ -1058,6 +1167,38 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         },
 
 
+        createAjaxRequest: function(){
+            var request;
+
+            if ( window.ActiveXObject ) {
+                //TODO: very bad...Why check every time using try/catch when
+                //      we could determine once at startup which activeX object
+                //      was supported.  This will have significant impact on 
+                //      performance for IE Browsers
+                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                    try {
+                        request = new ActiveXObject( ACTIVEX[ i ] );
+                        $.createAjaxRequest = function( ){
+                            return new ActiveXObject( ACTIVEX[ i ] );
+                        };
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            } else if ( window.XMLHttpRequest ) {
+                $.createAjaxRequest = function( ){
+                    return new XMLHttpRequest();
+                };
+                request = new XMLHttpRequest();
+            }
+
+            if ( !request ) {
+                throw new Error( "Browser doesn't support XMLHttpRequest." );
+            }
+
+            return request;
+        },
         /**
          * Makes an AJAX request.
          * @function
@@ -1068,7 +1209,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         makeAjaxRequest: function( url, callback ) {
             var async   = typeof( callback ) == "function",
-                request = null,
+                request = $.createAjaxRequest(),
                 actual,
                 i;
 
@@ -1080,31 +1221,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                         1
                     );
                 };
-            }
-
-            if ( window.ActiveXObject ) {
-                //TODO: very bad...Why check every time using try/catch when
-                //      we could determine once at startup which activeX object
-                //      was supported.  This will have significant impact on 
-                //      performance for IE Browsers
-                for ( i = 0; i < ACTIVEX.length; i++ ) {
-                    try {
-                        request = new ActiveXObject( ACTIVEX[ i ] );
-                        break;
-                    } catch (e) {
-                        continue;
-                    }
-                }
-            } else if ( window.XMLHttpRequest ) {
-                request = new XMLHttpRequest();
-            }
-
-            if ( !request ) {
-                throw new Error( "Browser doesn't support XMLHttpRequest." );
-            }
-
-
-            if ( async ) {
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
@@ -1138,12 +1254,14 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Taken from jQuery 1.6.1
-         *  @param {Object} options
-         *  @param {String} options.url
-         *  @param {Function} options.callback
-         *  @param {String} [options.param='callback'] The name of the url parameter
+         * @function
+         * @name OpenSeadragon.jsonp
+         * @param {Object} options
+         * @param {String} options.url
+         * @param {Function} options.callback
+         * @param {String} [options.param='callback'] The name of the url parameter
          *      to request the jsonp provider with.
-         *  @param {String} [options.callbackName=] The name of the callback to
+         * @param {String} [options.callbackName=] The name of the callback to
          *      request the jsonp provider with.
          */
         jsonp: function( options ){
@@ -1391,7 +1509,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
         //determine if this browser supports image alpha transparency
         $.Browser.alpha = !( 
-            $.Browser.vendor == $.BROWSERS.IE || (
+            ( 
+                $.Browser.vendor == $.BROWSERS.IE && 
+                $.Browser.version < 9
+            ) || (
                 $.Browser.vendor == $.BROWSERS.CHROME && 
                 $.Browser.version < 2
             )
@@ -1593,26 +1714,35 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
     function parseXml( string ) {
         //TODO: yet another example where we can determine the correct
         //      implementation once at start-up instead of everytime we use
-        //      the function.
-        var xmlDoc = null,
-            parser;
-
+        //      the function. DONE.
         if ( window.ActiveXObject ) {
 
-            xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-            xmlDoc.async = false;
-            xmlDoc.loadXML( string );
+            $.parseXml = function( string ){
+                var xmlDoc = null,
+                    parser;
+
+                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                xmlDoc.async = false;
+                xmlDoc.loadXML( string );
+                return xmlDoc;
+            };
 
         } else if ( window.DOMParser ) {
-
-            parser = new DOMParser();
-            xmlDoc = parser.parseFromString( string, "text/xml" );
             
+            $.parseXml = function( string ){
+                var xmlDoc = null,
+                    parser;
+
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString( string, "text/xml" );
+                return xmlDoc;
+            };
+
         } else {
             throw new Error( "Browser doesn't support XML DOM." );
         }
 
-        return xmlDoc;
+        return $.parseXml( string );
     };
     
 }( OpenSeadragon ));
@@ -2082,7 +2212,7 @@ $.EventHandler.prototype = {
         var delegate = THIS[ tracker.hash ];
         if ( !delegate.capturing ) {
 
-            if ( $.Browser.vendor == $.BROWSERS.IE ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
                 $.removeEvent( 
                     tracker.element, 
                     "mouseup", 
@@ -2129,7 +2259,7 @@ $.EventHandler.prototype = {
         var delegate = THIS[ tracker.hash ];
         if ( delegate.capturing ) {
 
-            if ( $.Browser.vendor == $.BROWSERS.IE ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
                 $.removeEvent( 
                     tracker.element, 
                     "mousemove", 
@@ -2189,21 +2319,12 @@ $.EventHandler.prototype = {
         //console.log( "focus %s", event );
         var propagate;
         if ( tracker.focusHandler ) {
-            try {
-                propagate = tracker.focusHandler( 
-                    tracker, 
-                    event
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing key handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.focusHandler( 
+                tracker, 
+                event
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2217,21 +2338,12 @@ $.EventHandler.prototype = {
         //console.log( "blur %s", event );
         var propagate;
         if ( tracker.blurHandler ) {
-            try {
-                propagate = tracker.blurHandler( 
-                    tracker, 
-                    event
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing key handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.blurHandler( 
+                tracker, 
+                event
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2245,22 +2357,13 @@ $.EventHandler.prototype = {
         //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
         if ( tracker.keyHandler ) {
-            try {
-                propagate = tracker.keyHandler( 
-                    tracker, 
-                    event.keyCode ? event.keyCode : event.charCode,
-                    event.shiftKey
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing key handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.keyHandler( 
+                tracker, 
+                event.keyCode ? event.keyCode : event.charCode,
+                event.shiftKey
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2277,6 +2380,7 @@ $.EventHandler.prototype = {
             propagate;
 
         if ( $.Browser.vendor == $.BROWSERS.IE && 
+             $.Browser.version < 9 && 
              delegate.capturing && 
              !isChild( event.srcElement, tracker.element ) ) {
 
@@ -2299,23 +2403,14 @@ $.EventHandler.prototype = {
         delegate.insideElement = true;
 
         if ( tracker.enterHandler ) {
-            try {
-                propagate = tracker.enterHandler(
-                    tracker, 
-                    getMouseRelative( event, tracker.element ),
-                    delegate.buttonDown, 
-                    IS_BUTTON_DOWN
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing enter handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.enterHandler(
+                tracker, 
+                getMouseRelative( event, tracker.element ),
+                delegate.buttonDown, 
+                IS_BUTTON_DOWN
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2331,6 +2426,7 @@ $.EventHandler.prototype = {
             propagate;
 
         if ( $.Browser.vendor == $.BROWSERS.IE && 
+             $.Browser.version < 9 &&
              delegate.capturing && 
              !isChild( event.srcElement, tracker.element ) ) {
 
@@ -2353,24 +2449,15 @@ $.EventHandler.prototype = {
         delegate.insideElement = false;
 
         if ( tracker.exitHandler ) {
-            try {
-                propagate = tracker.exitHandler( 
-                    tracker, 
-                    getMouseRelative( event, tracker.element ),
-                    delegate.buttonDown, 
-                    IS_BUTTON_DOWN
-                );
+            propagate = tracker.exitHandler( 
+                tracker, 
+                getMouseRelative( event, tracker.element ),
+                delegate.buttonDown, 
+                IS_BUTTON_DOWN
+            );
 
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing exit handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2396,21 +2483,12 @@ $.EventHandler.prototype = {
         delegate.lastMouseDownTime = +new Date();
 
         if ( tracker.pressHandler ) {
-            try {
-                propagate = tracker.pressHandler( 
-                    tracker, 
-                    getMouseRelative( event, tracker.element )
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch (e) {
-                $.console.error(
-                    "%s while executing press handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.pressHandler( 
+                tracker, 
+                getMouseRelative( event, tracker.element )
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
 
@@ -2418,12 +2496,13 @@ $.EventHandler.prototype = {
             $.cancelEvent( event );
         }
 
-        if ( !( $.Browser.vendor == $.BROWSERS.IE ) || !IS_CAPTURING ) {
+        if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) || 
+             !IS_CAPTURING ) {
             captureMouse( tracker );
             IS_CAPTURING = true;
             // reset to empty & add us
             CAPTURING = [ tracker ];     
-        } else if ( $.Browser.vendor == $.BROWSERS.IE ) {
+        } else if ( $.Browser.vendor == $.BROWSERS.IE  && $.Browser.version < 9 ) {
             // add us to the list
             CAPTURING.push( tracker );   
         }
@@ -2480,23 +2559,14 @@ $.EventHandler.prototype = {
         delegate.buttonDown = false;
 
         if ( tracker.releaseHandler ) {
-            try {
-                propagate = tracker.releaseHandler(
-                    tracker, 
-                    getMouseRelative( event, tracker.element ),
-                    insideElementPress, 
-                    insideElementRelease
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch (e) {
-                $.console.error(
-                    "%s while executing release handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.releaseHandler(
+                tracker, 
+                getMouseRelative( event, tracker.element ),
+                insideElementPress, 
+                insideElementRelease
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
 
@@ -2619,23 +2689,14 @@ $.EventHandler.prototype = {
         nDelta = nDelta > 0 ? 1 : -1;
 
         if ( tracker.scrollHandler ) {
-            try {
-                propagate = tracker.scrollHandler(
-                    tracker, 
-                    getMouseRelative( event, tracker.element ), 
-                    nDelta, 
-                    event.shiftKey
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch (e) {
-                $.console.error(
-                    "%s while executing scroll handler: %s", 
-                    e.name,
-                    e.message,
-                    e
-                );
+            propagate = tracker.scrollHandler(
+                tracker, 
+                getMouseRelative( event, tracker.element ), 
+                nDelta, 
+                event.shiftKey
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2661,23 +2722,14 @@ $.EventHandler.prototype = {
                        distance <= tracker.clickDistThreshold;
 
         if ( tracker.clickHandler ) {
-            try {
-                propagate = tracker.clickHandler(
-                    tracker, 
-                    getMouseRelative( event, tracker.element ),
-                    quick, 
-                    event.shiftKey
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch ( e ) {
-                $.console.error(
-                    "%s while executing click handler: %s", 
-                    e.name,
-                    e.message, 
-                    e
-                );
+            propagate = tracker.clickHandler(
+                tracker, 
+                getMouseRelative( event, tracker.element ),
+                quick, 
+                event.shiftKey
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
         }
     };
@@ -2697,25 +2749,15 @@ $.EventHandler.prototype = {
         delegate.lastPoint = point;
 
         if ( tracker.dragHandler ) {
-            try {
-                propagate = tracker.dragHandler(
-                    tracker, 
-                    getMouseRelative( event, tracker.element ),
-                    delta, 
-                    event.shiftKey
-                );
-                if( propagate === false ){
-                    $.cancelEvent( event );
-                }
-            } catch (e) {
-                $.console.error(
-                    "%s while executing drag handler: %s", 
-                    e.name,
-                    e.message,  
-                    e
-                );
+            propagate = tracker.dragHandler(
+                tracker, 
+                getMouseRelative( event, tracker.element ),
+                delta, 
+                event.shiftKey
+            );
+            if( propagate === false ){
+                $.cancelEvent( event );
             }
-
         }
     };
 
@@ -2835,7 +2877,7 @@ $.EventHandler.prototype = {
 
 
     (function () {
-        if ( $.Browser.vendor == $.BROWSERS.IE ) {
+        if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
             $.addEvent( document, "mousedown", onGlobalMouseDown, false );
             $.addEvent( document, "mouseup", onGlobalMouseUp, false );
         } else {
@@ -3056,7 +3098,7 @@ $.Control.prototype = {
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
             var element  = $.getElement( element ),
@@ -3072,7 +3114,7 @@ $.Control.prototype = {
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         clearControls: function () {
             while ( this.controls.length > 0 ) {
@@ -3102,7 +3144,7 @@ $.Control.prototype = {
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         setControlsEnabled: function( enabled ) {
             var i;
@@ -3348,137 +3390,13 @@ $.Viewer = function( options ) {
         exitHandler:        $.delegate( this, onContainerExit ),
         releaseHandler:     $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
-
-
-    //////////////////////////////////////////////////////////////////////////
-    // Navigation Controls
-    //////////////////////////////////////////////////////////////////////////
-    var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
-        endZoomingHandler       = $.delegate( this, endZooming ),
-        doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
-        beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
-        doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
-        onHomeHandler           = $.delegate( this, onHome ),
-        onFullPageHandler       = $.delegate( this, onFullPage ),
-        onFocusHandler          = $.delegate( this, onFocus ),
-        onBlurHandler           = $.delegate( this, onBlur ),
-        onNextHandler           = $.delegate( this, onNext ),
-        onPreviousHandler       = $.delegate( this, onPrevious ),
-        navImages               = this.navImages,
-        buttons                 = [];
-
-
-    if( this.showNavigationControl ){
-
-         buttons.push( this.zoomInButton = new $.Button({ 
-            clickTimeThreshold: this.clickTimeThreshold,
-            clickDistThreshold: this.clickDistThreshold,
-            tooltip:    $.getString( "Tooltips.ZoomIn" ), 
-            srcRest:    resolveUrl( this.prefixUrl, navImages.zoomIn.REST ),
-            srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomIn.GROUP ),
-            srcHover:   resolveUrl( this.prefixUrl, navImages.zoomIn.HOVER ),
-            srcDown:    resolveUrl( this.prefixUrl, navImages.zoomIn.DOWN ),
-            onPress:    beginZoomingInHandler,
-            onRelease:  endZoomingHandler,
-            onClick:    doSingleZoomInHandler,
-            onEnter:    beginZoomingInHandler,
-            onExit:     endZoomingHandler,
-            onFocus:    onFocusHandler,
-            onBlur:     onBlurHandler
-        }));
-
-        buttons.push( this.zoomOutButton = new $.Button({ 
-            clickTimeThreshold: this.clickTimeThreshold,
-            clickDistThreshold: this.clickDistThreshold,
-            tooltip:    $.getString( "Tooltips.ZoomOut" ), 
-            srcRest:    resolveUrl( this.prefixUrl, navImages.zoomOut.REST ), 
-            srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomOut.GROUP ), 
-            srcHover:   resolveUrl( this.prefixUrl, navImages.zoomOut.HOVER ), 
-            srcDown:    resolveUrl( this.prefixUrl, navImages.zoomOut.DOWN ),
-            onPress:    beginZoomingOutHandler, 
-            onRelease:  endZoomingHandler, 
-            onClick:    doSingleZoomOutHandler, 
-            onEnter:    beginZoomingOutHandler, 
-            onExit:     endZoomingHandler,
-            onFocus:    onFocusHandler,
-            onBlur:     onBlurHandler
-        }));
-
-        buttons.push( this.homeButton = new $.Button({ 
-            clickTimeThreshold: this.clickTimeThreshold,
-            clickDistThreshold: this.clickDistThreshold,
-            tooltip:    $.getString( "Tooltips.Home" ), 
-            srcRest:    resolveUrl( this.prefixUrl, navImages.home.REST ), 
-            srcGroup:   resolveUrl( this.prefixUrl, navImages.home.GROUP ), 
-            srcHover:   resolveUrl( this.prefixUrl, navImages.home.HOVER ), 
-            srcDown:    resolveUrl( this.prefixUrl, navImages.home.DOWN ),
-            onRelease:  onHomeHandler,
-            onFocus:    onFocusHandler,
-            onBlur:     onBlurHandler
-        }));
-
-        buttons.push( this.fullPageButton = new $.Button({ 
-            clickTimeThreshold: this.clickTimeThreshold,
-            clickDistThreshold: this.clickDistThreshold,
-            tooltip:    $.getString( "Tooltips.FullPage" ),
-            srcRest:    resolveUrl( this.prefixUrl, navImages.fullpage.REST ),
-            srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
-            srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
-            srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
-            onRelease:  onFullPageHandler,
-            onFocus:    onFocusHandler,
-            onBlur:     onBlurHandler
-        }));
-
-        if( THIS[ this.hash ].sequenced ){
-            
-            buttons.push( this.previousButton = new $.Button({ 
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.PreviousPage" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.previous.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
-                onRelease:  onPreviousHandler,
-                onFocus:    onFocusHandler,
-                onBlur:     onBlurHandler
-            }));
-
-            buttons.push( this.nextButton = new $.Button({ 
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.NextPage" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.next.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.next.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.next.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.next.DOWN ),
-                onRelease:  onNextHandler,
-                onFocus:    onFocusHandler,
-                onBlur:     onBlurHandler
-            }));
-
-            this.previousButton.disable();
-
-        }
-
-        this.buttons = new $.ButtonGroup({
-            buttons:            buttons,
-            clickTimeThreshold: this.clickTimeThreshold,
-            clickDistThreshold: this.clickDistThreshold
-        });
-
-        this.navControl  = this.buttons.element;
-        this.navControl[ $.SIGNAL ] = true;   // hack to get our controls to fade
-        this.addHandler( 'open', $.delegate( this, lightUp ) );
-        
-        if( this.toolbar ){
-            this.toolbar = new $.ControlDock({ element: this.toolbar });
-            this.toolbar.addControl( this.navControl, $.ControlAnchor.TOP_LEFT  );
-        }else{
-            this.addControl( this.navControl, $.ControlAnchor.BOTTOM_RIGHT );
-        }
+    
+    if( this.toolbar ){
+        this.toolbar = new $.ControlDock({ element: this.toolbar });
     }
+    
+    this.bindStandardControls();
+    this.bindSequenceControls();
 
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
@@ -3955,6 +3873,201 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
         return this;
+    },
+
+    bindSequenceControls: function(){
+        
+        //////////////////////////////////////////////////////////////////////////
+        // Image Sequence Controls
+        //////////////////////////////////////////////////////////////////////////
+        var onFocusHandler          = $.delegate( this, onFocus ),
+            onBlurHandler           = $.delegate( this, onBlur ),
+            onNextHandler           = $.delegate( this, onNext ),
+            onPreviousHandler       = $.delegate( this, onPrevious ),
+            navImages               = this.navImages,
+            buttons                 = [],
+            useGroup                = true ;
+
+        if( this.showSequenceControl && THIS[ this.hash ].sequenced ){
+            
+            if( this.previousButton || this.nextButton ){
+                //if we are binding to custom buttons then layout and 
+                //grouping is the responsibility of the page author
+                useGroup = false;
+            }
+
+            this.previousButton = new $.Button({ 
+                element:    this.previousButton ? $.getElement( this.previousButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.PreviousPage" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.previous.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
+                onRelease:  onPreviousHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            });
+
+            this.nextButton = new $.Button({ 
+                element:    this.nextButton ? $.getElement( this.nextButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.NextPage" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.next.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.next.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.next.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.next.DOWN ),
+                onRelease:  onNextHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            });
+
+            this.previousButton.disable();
+
+            if( useGroup ){
+                this.paging = new $.ButtonGroup({
+                    buttons: [ 
+                        this.previousButton, 
+                        this.nextButton 
+                    ],
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold
+                });
+
+                this.pagingControl = this.paging.element;
+
+                if( this.toolbar ){
+                    this.toolbar.addControl( 
+                        this.navControl, 
+                        $.ControlAnchor.BOTTOM_RIGHT  
+                    );
+                }else{
+                    this.addControl( 
+                        this.pagingControl, 
+                        $.ControlAnchor.TOP_LEFT 
+                    );
+                }
+            }
+        }
+    },
+
+    bindStandardControls: function(){
+        //////////////////////////////////////////////////////////////////////////
+        // Navigation Controls
+        //////////////////////////////////////////////////////////////////////////
+        var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
+            endZoomingHandler       = $.delegate( this, endZooming ),
+            doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
+            beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
+            doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
+            onHomeHandler           = $.delegate( this, onHome ),
+            onFullPageHandler       = $.delegate( this, onFullPage ),
+            onFocusHandler          = $.delegate( this, onFocus ),
+            onBlurHandler           = $.delegate( this, onBlur ),
+            navImages               = this.navImages,
+            buttons                 = [],
+            useGroup                = true ;
+
+
+        if( this.showNavigationControl ){
+
+            if( this.zoomInButton || this.zoomOutButton || this.homeButton || this.fullPageButton ){
+                //if we are binding to custom buttons then layout and 
+                //grouping is the responsibility of the page author
+                useGroup = false;
+            }
+            
+            buttons.push( this.zoomInButton = new $.Button({ 
+                element:    this.zoomInButton ? $.getElement( this.zoomInButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.ZoomIn" ), 
+                srcRest:    resolveUrl( this.prefixUrl, navImages.zoomIn.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomIn.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.zoomIn.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.zoomIn.DOWN ),
+                onPress:    beginZoomingInHandler,
+                onRelease:  endZoomingHandler,
+                onClick:    doSingleZoomInHandler,
+                onEnter:    beginZoomingInHandler,
+                onExit:     endZoomingHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            buttons.push( this.zoomOutButton = new $.Button({ 
+                element:    this.zoomOutButton ? $.getElement( this.zoomOutButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.ZoomOut" ), 
+                srcRest:    resolveUrl( this.prefixUrl, navImages.zoomOut.REST ), 
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.zoomOut.GROUP ), 
+                srcHover:   resolveUrl( this.prefixUrl, navImages.zoomOut.HOVER ), 
+                srcDown:    resolveUrl( this.prefixUrl, navImages.zoomOut.DOWN ),
+                onPress:    beginZoomingOutHandler, 
+                onRelease:  endZoomingHandler, 
+                onClick:    doSingleZoomOutHandler, 
+                onEnter:    beginZoomingOutHandler, 
+                onExit:     endZoomingHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            buttons.push( this.homeButton = new $.Button({ 
+                element:    this.homeButton ? $.getElement( this.homeButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.Home" ), 
+                srcRest:    resolveUrl( this.prefixUrl, navImages.home.REST ), 
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.home.GROUP ), 
+                srcHover:   resolveUrl( this.prefixUrl, navImages.home.HOVER ), 
+                srcDown:    resolveUrl( this.prefixUrl, navImages.home.DOWN ),
+                onRelease:  onHomeHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            buttons.push( this.fullPageButton = new $.Button({ 
+                element:    this.fullPageButton ? $.getElement( this.fullPageButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.FullPage" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.fullpage.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
+                onRelease:  onFullPageHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            if( useGroup ){
+                this.buttons = new $.ButtonGroup({
+                    buttons:            buttons,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold
+                });
+
+                this.navControl  = this.buttons.element;
+                this.addHandler( 'open', $.delegate( this, lightUp ) );
+
+                if( this.toolbar ){
+                    this.toolbar.addControl( 
+                        this.navControl, 
+                        $.ControlAnchor.TOP_LEFT  
+                    );
+                }else{
+                    this.addControl( 
+                        this.navControl, 
+                        $.ControlAnchor.BOTTOM_RIGHT 
+                    );
+                }
+            }
+
+            
+        }
     }
 
 });
@@ -4296,7 +4409,9 @@ function onHome() {
 function onFullPage() {
     this.setFullPage( !this.isFullPage() );
     // correct for no mouseout event on change
-    this.buttons.emulateExit();
+    if( this.buttons ){
+        this.buttons.emulateExit();
+    }
     this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
@@ -4350,6 +4465,15 @@ function onNext(){
 (function( $ ){
     
 /**
+ * The Navigator provides a small view of the current image as fixed
+ * while representing the viewport as a moving box serving as a frame
+ * of reference in the larger viewport as to which portion of the image
+ * is currently being examined.  The navigators viewport can be interacted
+ * with using the keyboard or the mouse.
+ * @class 
+ * @name OpenSeadragon.Navigator
+ * @extends OpenSeadragon.Viewer
+ * @extends OpenSeadragon.EventHandler
  * @param {Object} options
  * @param {String} options.viewerId
  */
@@ -4376,7 +4500,8 @@ $.Navigator = function( options ){
         //the navigator is a viewer and a viewer has a navigator
         showNavigator:          false,
         mouseNavEnabled:        false,
-        showNavigationControl:  false
+        showNavigationControl:  false,
+        showSequenceControl:    false
     });
 
     options.minPixelRatio = Math.min(
@@ -4529,6 +4654,10 @@ $.Navigator = function( options ){
 
 $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.Navigator.prototype.update
+     */
     update: function( viewport ){
 
         var bounds,
@@ -4556,11 +4685,21 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 });
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasClick( tracker, position, quick, shift ) {
     this.displayRegion.focus();
 };
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasDrag( tracker, position, delta, shift ) {
     if ( this.viewer.viewport ) {
         if( !this.panHorizontal ){
@@ -4578,12 +4717,23 @@ function onCanvasDrag( tracker, position, delta, shift ) {
 };
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
 };
 
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
     if ( this.viewer.viewport ) {
@@ -5301,11 +5451,49 @@ $.Button = function( options ) {
 
     }, options );
 
-    //TODO: make button elements accessible by making them a-tags
-    //      maybe even consider basing them on the element and adding
-    //      methods jquery-style.
-    this.element        = options.element || $.makeNeutralElement( "button" );
-    this.element.href   = '#';
+    this.element        = options.element   || $.makeNeutralElement( "button" );
+    this.element.href   = this.element.href || '#';
+    
+    //if the user has specified the element to bind the control to explicitly
+    //then do not add the default control images
+    if( !options.element ){
+        this.imgRest      = $.makeTransparentImage( this.srcRest );
+        this.imgGroup     = $.makeTransparentImage( this.srcGroup );
+        this.imgHover     = $.makeTransparentImage( this.srcHover );
+        this.imgDown      = $.makeTransparentImage( this.srcDown );
+        
+        this.element.appendChild( this.imgRest );
+        this.element.appendChild( this.imgGroup );
+        this.element.appendChild( this.imgHover );
+        this.element.appendChild( this.imgDown );
+
+        this.imgGroup.style.position = 
+        this.imgHover.style.position = 
+        this.imgDown.style.position  = 
+            "absolute";
+
+        this.imgGroup.style.top = 
+        this.imgHover.style.top = 
+        this.imgDown.style.top  = 
+            "0px";
+
+        this.imgGroup.style.left = 
+        this.imgHover.style.left = 
+        this.imgDown.style.left  = 
+            "0px";
+
+        this.imgHover.style.visibility = 
+        this.imgDown.style.visibility  = 
+            "hidden";
+
+        if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
+            this.imgGroup.style.top = 
+            this.imgHover.style.top = 
+            this.imgDown.style.top  = 
+                "";
+        }
+    }
+
 
     this.addHandler( "onPress",     this.onPress );
     this.addHandler( "onRelease",   this.onRelease );
@@ -5316,10 +5504,6 @@ $.Button = function( options ) {
     this.addHandler( "onBlur",      this.onBlur );
 
     this.currentState = $.ButtonState.GROUP;
-    this.imgRest      = $.makeTransparentImage( this.srcRest );
-    this.imgGroup     = $.makeTransparentImage( this.srcGroup );
-    this.imgHover     = $.makeTransparentImage( this.srcHover );
-    this.imgDown      = $.makeTransparentImage( this.srcDown );
 
     this.fadeBeginTime  = null;
     this.shouldFade     = false;
@@ -5327,37 +5511,6 @@ $.Button = function( options ) {
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
     this.element.title          = this.tooltip;
-
-    this.element.appendChild( this.imgRest );
-    this.element.appendChild( this.imgGroup );
-    this.element.appendChild( this.imgHover );
-    this.element.appendChild( this.imgDown );
-
-    this.imgGroup.style.position = 
-    this.imgHover.style.position = 
-    this.imgDown.style.position  = 
-        "absolute";
-
-    this.imgGroup.style.top = 
-    this.imgHover.style.top = 
-    this.imgDown.style.top  = 
-        "0px";
-
-    this.imgGroup.style.left = 
-    this.imgHover.style.left = 
-    this.imgDown.style.left  = 
-        "0px";
-
-    this.imgHover.style.visibility = 
-    this.imgDown.style.visibility  = 
-        "hidden";
-
-    if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
-        this.imgGroup.style.top = 
-        this.imgHover.style.top = 
-        this.imgDown.style.top  = 
-            "";
-    }
 
     this.tracker = new $.MouseTracker({
 
@@ -5483,7 +5636,9 @@ function updateFade( button ) {
         opacity     = Math.min( 1.0, opacity );
         opacity     = Math.max( 0.0, opacity );
 
-        $.setElementOpacity( button.imgGroup, opacity, true );
+        if( button.imgGroup ){
+            $.setElementOpacity( button.imgGroup, opacity, true );
+        }
         if ( opacity > 0 ) {
             // fade again
             scheduleFade( button );
@@ -5501,7 +5656,9 @@ function beginFading( button ) {
 
 function stopFading( button ) {
     button.shouldFade = false;
-    $.setElementOpacity( button.imgGroup, 1.0, true );
+    if( button.imgGroup ){
+        $.setElementOpacity( button.imgGroup, 1.0, true );
+    }
 };
 
 function inTo( button, newState ) {
@@ -5518,13 +5675,17 @@ function inTo( button, newState ) {
 
     if ( newState >= $.ButtonState.HOVER && 
          button.currentState == $.ButtonState.GROUP ) {
-        button.imgHover.style.visibility = "";
+        if( button.imgHover ){
+            button.imgHover.style.visibility = "";
+        }
         button.currentState = $.ButtonState.HOVER;
     }
 
     if ( newState >= $.ButtonState.DOWN && 
          button.currentState == $.ButtonState.HOVER ) {
-        button.imgDown.style.visibility = "";
+        if( button.imgDown ){
+            button.imgDown.style.visibility = "";
+        }
         button.currentState = $.ButtonState.DOWN;
     }
 };
@@ -5538,13 +5699,17 @@ function outTo( button, newState ) {
 
     if ( newState <= $.ButtonState.HOVER && 
          button.currentState == $.ButtonState.DOWN ) {
-        button.imgDown.style.visibility = "hidden";
+        if( button.imgDown ){
+            button.imgDown.style.visibility = "hidden";
+        }
         button.currentState = $.ButtonState.HOVER;
     }
 
     if ( newState <= $.ButtonState.GROUP && 
          button.currentState == $.ButtonState.HOVER ) {
-        button.imgHover.style.visibility = "hidden";
+        if( button.imgHover ){
+            button.imgHover.style.visibility = "hidden";
+        }
         button.currentState = $.ButtonState.GROUP;
     }
 
@@ -5586,7 +5751,8 @@ $.ButtonGroup = function( options ) {
     $.extend( true, this, {
         buttons:            [],
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
-        clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold
+        clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
+        labelText:          ""
     }, options );
 
     // copy the botton elements
@@ -5594,15 +5760,17 @@ $.ButtonGroup = function( options ) {
         _this = this,
         i;
 
-    this.element = options.group || $.makeNeutralElement( "fieldgroup" );
-    this.label   = $.makeNeutralElement( "label" );
-    //TODO: support labels for ButtonGroups
-    //this.label.innerHTML = "test";
+    this.element = options.element || $.makeNeutralElement( "fieldgroup" );
     
-    this.element.style.display = "inline-block";
-    this.element.appendChild( this.label );
-    for ( i = 0; i < buttons.length; i++ ) {
-        this.element.appendChild( buttons[ i ].element );
+    if( !options.group ){
+        this.label   = $.makeNeutralElement( "label" );
+        //TODO: support labels for ButtonGroups
+        //this.label.innerHTML = this.labelText;
+        this.element.style.display = "inline-block";
+        this.element.appendChild( this.label );
+        for ( i = 0; i < buttons.length; i++ ) {
+            this.element.appendChild( buttons[ i ].element );
+        }
     }
 
     this.tracker = new $.MouseTracker({
@@ -6256,7 +6424,7 @@ $.Tile.prototype = {
 (function( $ ){
     
 var TIMEOUT             = 5000,
-
+    DEVICE_SCREEN       = $.getWindowSize(),
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
 
@@ -6264,11 +6432,14 @@ var TIMEOUT             = 5000,
         ( BROWSER == $.BROWSERS.FIREFOX ) ||
         ( BROWSER == $.BROWSERS.OPERA )   ||
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
-        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 )
-    ) && ( !navigator.appVersion.match( 'Mobile' ) ),
+        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
+        ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
+    ), 
 
-    USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
-        SUBPIXEL_RENDERING;
+    USE_CANVAS = SUBPIXEL_RENDERING 
+        && !( DEVICE_SCREEN.x < 600 || DEVICE_SCREEN.y < 600 ) 
+        && !( navigator.appVersion.match( 'Mobile' ) )
+        && $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 

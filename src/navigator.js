@@ -1,6 +1,15 @@
 (function( $ ){
     
 /**
+ * The Navigator provides a small view of the current image as fixed
+ * while representing the viewport as a moving box serving as a frame
+ * of reference in the larger viewport as to which portion of the image
+ * is currently being examined.  The navigators viewport can be interacted
+ * with using the keyboard or the mouse.
+ * @class 
+ * @name OpenSeadragon.Navigator
+ * @extends OpenSeadragon.Viewer
+ * @extends OpenSeadragon.EventHandler
  * @param {Object} options
  * @param {String} options.viewerId
  */
@@ -27,7 +36,8 @@ $.Navigator = function( options ){
         //the navigator is a viewer and a viewer has a navigator
         showNavigator:          false,
         mouseNavEnabled:        false,
-        showNavigationControl:  false
+        showNavigationControl:  false,
+        showSequenceControl:    false
     });
 
     options.minPixelRatio = Math.min(
@@ -180,6 +190,10 @@ $.Navigator = function( options ){
 
 $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
+    /**
+     * @function
+     * @name OpenSeadragon.Navigator.prototype.update
+     */
     update: function( viewport ){
 
         var bounds,
@@ -207,11 +221,21 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 });
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasClick( tracker, position, quick, shift ) {
     this.displayRegion.focus();
 };
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasDrag( tracker, position, delta, shift ) {
     if ( this.viewer.viewport ) {
         if( !this.panHorizontal ){
@@ -229,12 +253,23 @@ function onCanvasDrag( tracker, position, delta, shift ) {
 };
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
 };
 
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
 function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
     if ( this.viewer.viewport ) {

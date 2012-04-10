@@ -104,7 +104,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
             var element  = $.getElement( element ),
@@ -120,7 +120,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         clearControls: function () {
             while ( this.controls.length > 0 ) {
@@ -150,7 +150,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.Viewer} Chainable.
+         * @return {OpenSeadragon.ControlDock} Chainable.
          */
         setControlsEnabled: function( enabled ) {
             var i;

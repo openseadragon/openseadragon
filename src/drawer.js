@@ -2,7 +2,7 @@
 (function( $ ){
     
 var TIMEOUT             = 5000,
-
+    DEVICE_SCREEN       = $.getWindowSize(),
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
 
@@ -12,10 +12,12 @@ var TIMEOUT             = 5000,
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
-    ) && ( !navigator.appVersion.match( 'Mobile' ) ),
+    ), 
 
-    USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext ) &&
-        SUBPIXEL_RENDERING;
+    USE_CANVAS = SUBPIXEL_RENDERING 
+        && !( DEVICE_SCREEN.x < 600 || DEVICE_SCREEN.y < 600 ) 
+        && !( navigator.appVersion.match( 'Mobile' ) )
+        && $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
