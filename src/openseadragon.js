@@ -773,6 +773,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                         document.documentElement.scrollTop
                     );
                 };
+            } else {
+                $.getPageScroll = function(){
+                    return new $.Point(0,0);
+                };
             }
 
             return $.getPageScroll();
@@ -1283,7 +1287,11 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             // Install callback
             window[ jsonpCallback ] = function( response ) {
                 if ( !previous ){
-                    delete window[ jsonpCallback ];
+                    try{
+                        delete window[ jsonpCallback ];
+                    }catch(e){
+                        //swallow
+                    }
                 } else {
                     window[ jsonpCallback ] = previous;
                 }
@@ -1343,7 +1351,8 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 urlParts,
                 filename,
                 lastDot,
-                tilesUrl;
+                tilesUrl,
+                callbackName;
 
 
             if( tileHost ){
@@ -1384,11 +1393,23 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                         callback( source, error );    
                     }, 1);
                 } else {
-                    $.makeAjaxRequest( xmlUrl, function( xhr ) {
-                        var source = finish( processDZIResponse, xhr );
-                        // call after finish sets error
-                        callback( source, error );
-                    });
+                    if( xmlUrl.match(/\.js$/) ){
+                        callbackName = xmlUrl.split( '/' ).pop().replace('.js','_dzi');
+                        $.jsonp({
+                            url: xmlUrl,
+                            callbackName: callbackName,
+                            callback: function( imageData ){
+                                var source = finish( processDZIJSON, imageData.Image );
+                                callback( source );
+                            }
+                        });
+                    } else {
+                        $.makeAjaxRequest( xmlUrl, function( xhr ) {
+                            var source = finish( processDZIResponse, xhr );
+                            // call after finish sets error
+                            callback( source, error );
+                        });
+                    }
                 }
 
                 return null;
@@ -1674,6 +1695,53 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         );
     };
 
+    /**
+     * @private
+     * @inner
+     * @function
+     * @param {Element} imageNode
+     * @param {String} tilesUrl
+     */
+    function processDZIJSON( imageData, tilesUrl ) {
+        var fileFormat    = imageData.Format,
+            sizeData      = imageData.Size,
+            dispRectData  = imageData.DisplayRect || [],
+            width         = parseInt( sizeData.Width ),
+            height        = parseInt( sizeData.Height ),
+            tileSize      = parseInt( imageData.TileSize ),
+            tileOverlap   = parseInt( imageData.Overlap ),
+            dispRects     = [],
+            rectData,
+            i;
+
+        if ( !imageFormatSupported( fileFormat ) ) {
+            throw new Error(
+                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
+            );
+        }
+
+        for ( i = 0; i < dispRectData.length; i++ ) {
+            rectData     = dispRectData[ i ].Rect;
+
+            dispRects.push( new $.DisplayRect(
+                parseInt( rectData.X ),
+                parseInt( rectData.Y ),
+                parseInt( rectData.Width ),
+                parseInt( rectData.Height ),
+                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                parseInt( rectData.MaxLevel )
+            ));
+        }
+        return new $.DziTileSource(
+            width, 
+            height, 
+            tileSize, 
+            tileOverlap,
+            tilesUrl, 
+            fileFormat, 
+            dispRects
+        );
+    };
     /**
      * @private
      * @inner
