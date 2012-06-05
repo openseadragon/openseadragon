@@ -18,14 +18,27 @@
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
-        level;
-
-    $.TileSource.call( this, width, height, tileSize, tileOverlap, null, null );
+        level,
+        options;
+    
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: arguments[ 0 ],
+            height: arguments[ 1 ],
+            tileSize: arguments[ 2 ],
+            tileOverlap: arguments[ 3 ],
+            tilesUrl: arguments[ 4 ],
+            fileFormat: arguments[ 5 ],
+            dispRects: arguments[ 6 ]
+        };
+    }
 
     this._levelRects  = {};
-    this.tilesUrl     = tilesUrl;
-    this.fileFormat   = fileFormat;
-    this.displayRects = displayRects;
+    this.tilesUrl     = options.tilesUrl;
+    this.fileFormat   = options.fileFormat;
+    this.displayRects = options.displayRects;
     
     if ( this.displayRects ) {
         for ( i = this.displayRects.length - 1; i >= 0; i-- ) {
@@ -38,11 +51,80 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             }
         }
     }
+    
+    $.TileSource.apply( this, [ options ] );
 
 };
 
 $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
-    
+
+
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( 
+            data.Image && 
+            "http://schemas.microsoft.com/deepzoom/2008" == data.Image.xmlns
+        ) || (
+            data.documentElement &&
+            "Image" == data.documentElement.tagName &&
+            "http://schemas.microsoft.com/deepzoom/2008" ==
+                data.documentElement.namespaceURI
+        );
+    },
+
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.configure
+     * @param {Object|XMLDocument} configuration - the raw configuration
+     * @param {String} dataUrl - the url the data was retreived from if any.
+     * @return {Array} args - positional arguments required and/or optional
+     *      for this tile sources constructor
+     */
+    configure: function( configuration, dataUrl ){
+
+        var dziPath,
+            dziName,
+            tilesUrl,
+            options,
+            host;
+
+        if( configuration instanceof XMLDocument ){
+
+            options = configureFromXML( this, configuration );
+
+        }else if( 'object' == $.type( configuration) ){
+
+            options = configureFromObject( this, configuration );
+        }
+
+        if( dataUrl && !options.tilesUrl ){
+            if( !( 'http' == dataUrl.substring( 0, 4 ) ) ){
+                host = location.protocol + '//' + location.host;
+            }
+            dziPath = dataUrl.split('/');
+            dziName = dziPath.pop();
+            dziName = dziName.substring(0, dziName.indexOf('.'));
+            dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
+            tilesUrl = dziPath;
+            if( host ){
+                tilesUrl = host + tilesUrl;
+            }
+            options.tilesUrl = tilesUrl;
+        }
+
+        return options;
+    },
+
+
     /**
      * @function
      * @name OpenSeadragon.DziTileSource.prototype.getTileUrl
@@ -53,6 +135,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     getTileUrl: function( level, x, y ) {
         return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat ].join( '' );
     },
+
 
     /**
      * @function
@@ -103,5 +186,146 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 });
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromXML( tileSource, xmlDoc ){
+    
+    if ( !xmlDoc || !xmlDoc.documentElement ) {
+        throw new Error( $.getString( "Errors.Xml" ) );
+    }
+
+    var root         = xmlDoc.documentElement,
+        rootName     = root.tagName,
+        conf         = null,
+        displayRects = [],
+        dispRectNodes,
+        dispRectNode,
+        rectNode,
+        sizeNode,
+        i;
+
+    if ( rootName == "Image" ) {
+        
+        try {
+            sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
+            conf = {
+                Image: {
+                    xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
+                    Format:      root.getAttribute( "Format" ),
+                    DisplayRect: null,
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ) ), 
+                    TileSize:    parseInt( root.getAttribute( "TileSize" ) ),
+                    Size: {
+                        Height: parseInt( sizeNode.getAttribute( "Height" ) ),
+                        Width:  parseInt( sizeNode.getAttribute( "Width" ) )
+                    }
+                }
+            };
+
+            if ( !$.imageFormatSupported( conf.Image.Format ) ) {
+                throw new Error(
+                    $.getString( "Errors.ImageFormat", conf.Image.Format.toUpperCase() )
+                );
+            }
+            
+            dispRectNodes = root.getElementsByTagName( "DisplayRect" );
+            for ( i = 0; i < dispRectNodes.length; i++ ) {
+                dispRectNode = dispRectNodes[ i ];
+                rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
+
+                displayRects.push({
+                    Rect: {
+                        X: parseInt( rectNode.getAttribute( "X" ) ),
+                        Y: parseInt( rectNode.getAttribute( "Y" ) ),
+                        Width: parseInt( rectNode.getAttribute( "Width" ) ),
+                        Height: parseInt( rectNode.getAttribute( "Height" ) ),
+                        MinLevel: 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                    }
+                });
+            }
+
+            if( displayRects.length ){
+                conf.Image.DisplayRect = displayRects;
+            }
+
+            return configureFromObject( tileSource, conf );
+
+        } catch ( e ) {
+            throw (e instanceof Error) ? 
+                e : 
+                new Error( $.getString("Errors.Dzi") );
+        }
+    } else if ( rootName == "Collection" ) {
+        throw new Error( $.getString( "Errors.Dzc" ) );
+    } else if ( rootName == "Error" ) {
+        return processDZIError( root );
+    }
+
+    throw new Error( $.getString( "Errors.Dzi" ) );
+};
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromObject( tileSource, configuration ){
+    var imageData     = configuration.Image,
+        tilesUrl      = imageData.Url,
+        fileFormat    = imageData.Format,
+        sizeData      = imageData.Size,
+        dispRectData  = imageData.DisplayRect || [],
+        width         = parseInt( sizeData.Width ),
+        height        = parseInt( sizeData.Height ),
+        tileSize      = parseInt( imageData.TileSize ),
+        tileOverlap   = parseInt( imageData.Overlap ),
+        dispRects     = [],
+        rectData,
+        i;
+
+    //TODO: need to figure out out to better handle image format compatibility
+    //      which actually includes additional file formats like xml and pdf
+    //      and plain text for various tilesource implementations to avoid low 
+    //      level errors.
+    //
+    //      For now, just don't perform the check.
+    //
+    /*if ( !imageFormatSupported( fileFormat ) ) {
+        throw new Error(
+            $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
+        );
+    }*/
+
+    for ( i = 0; i < dispRectData.length; i++ ) {
+        rectData = dispRectData[ i ].Rect;
+
+        dispRects.push( new $.DisplayRect(
+            parseInt( rectData.X ),
+            parseInt( rectData.Y ),
+            parseInt( rectData.Width ),
+            parseInt( rectData.Height ),
+            0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+            parseInt( rectData.MaxLevel )
+        ));
+    }
+
+
+    return {
+        width: width, /* width *required */
+        height: height, /* height *required */
+        tileSize: tileSize, /* tileSize *required */
+        tileOverlap: tileOverlap, /* tileOverlap *required */
+        minLevel: null, /* minLevel */
+        maxLevel: null, /* maxLevel */
+        tilesUrl: tilesUrl, /* tilesUrl */
+        fileFormat: fileFormat, /* fileFormat */
+        dispRects: dispRects /* dispRects */
+    };
+
+};
 
 }( OpenSeadragon ));

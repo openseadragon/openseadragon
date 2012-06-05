@@ -470,7 +470,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //INTERFACE FEATURES
             debugMode:              true,
             animationTime:          1.5,
-            blendTime:              0.5,
+            blendTime:              0.1,
             alwaysBlend:            false,
             autoHideControls:       true,
             immediateRender:        false,
@@ -490,13 +490,17 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
-            showNavigator:          false,
+            showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,
             navigatorSizeRatio:     0.25,
             preserveViewport:       false,
+            defaultZoomLevel:       0, 
+
+            //EVENT RELATED CALLBACKS
+            onPageChange:           null, 
             
             //PERFORMANCE SETTINGS
             minPixelRatio:          0.5,
@@ -1178,7 +1182,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 //TODO: very bad...Why check every time using try/catch when
                 //      we could determine once at startup which activeX object
                 //      was supported.  This will have significant impact on 
-                //      performance for IE Browsers
+                //      performance for IE Browsers DONE
                 for ( i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
@@ -1212,30 +1216,39 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
-            var async   = typeof( callback ) == "function",
+
+
+
+            var async   = true,
                 request = $.createAjaxRequest(),
                 actual,
+                options,
                 i;
 
-            if ( async ) {
-                actual = callback;
-                callback = function() {
-                    window.setTimeout(
-                        $.createCallback( null, actual, request ), 
-                        1
-                    );
+
+            if( $.isPlainObject( url ) ){
+                options.async = options.async || async;
+            }else{
+                options = {
+                    url: url,
+                    async: $.isFunction( callback ),
+                    success: callback,
+                    error: null
                 };
+            }
+
+            if ( options.async ) {
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
                         request.onreadystatechange = new function() { };
-                        callback();
+                        options.success( request );
                     }
                 };
             }
 
             try {
-                request.open( "GET", url, async );
+                request.open( "GET", options.url, options.async );
                 request.send( null );
             } catch (e) {
                 $.console.log(
@@ -1247,12 +1260,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.onreadystatechange = null;
                 request = null;
 
-                if ( async ) {
-                    callback();
+                if ( options.error && $.isFunction( options.error ) ) {
+                    options.error( request );
                 }
             }
 
-            return async ? null : request;
+            if( !options.async && $.isFunction( options.success ) ){
+                options.success( request );
+            }
+
+            return options.async ? null : request;
         },
 
 
@@ -1302,7 +1319,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
             script = document.createElement( "script" );
 
-            script.async = "async";
+            //TODO: having an issue with async info requests
+            if( undefined !== options.async || false !== options.async ){
+                script.async = "async";
+            }
 
             if ( options.scriptCharset ) {
                 script.charset = options.scriptCharset;
@@ -1335,18 +1355,22 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Loads a Deep Zoom Image description from a url or XML string and
-         * provides a callback hook for the resulting Document
+         * Loads a Deep Zoom Image description from a url, XML string or JSON string
+         * and provides a callback hook for the resulting Document
          * @function
          * @name OpenSeadragon.createFromDZI
          * @param {String} xmlUrl
          * @param {String} xmlString
          * @param {Function} callback
+         * @deprecated
          */
         createFromDZI: function( dzi, callback, tileHost ) {
             var async       = typeof ( callback ) == "function",
-                xmlUrl      = dzi.substring(0,1) != '<' ? dzi : null,
-                xmlString   = xmlUrl ? null : dzi,
+                dziUrl      = (
+                    dzi.substring(0,1) != '<' && 
+                    dzi.substring(0,1) != '{' 
+                ) ? dzi : null,
+                dziString   = dziUrl ? null : dzi,
                 error       = null,
                 urlParts,
                 filename,
@@ -1359,15 +1383,22 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
                 tilesUrl = tileHost + "/_files/";
                 
-            } else if( xmlUrl ) {
+            } else if( dziUrl ) {
 
-                urlParts = xmlUrl.split( '/' );
+                urlParts = dziUrl.split( '/' );
                 filename = urlParts[ urlParts.length - 1 ];
+                if( filename.match(/_dzi\.js$/) ){
+                    //for jsonp dzi specification, the '_dzi' needs to be removed
+                    //from the filename to be consistent with the spec
+                    filename = filename.replace('_dzi.js', '.js');
+                }
+
                 lastDot  = filename.lastIndexOf( '.' );
 
                 if ( lastDot > -1 ) {
                     urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
                 }
+
 
                 tilesUrl = urlParts.join( '/' ) + "_files/";
 
@@ -1386,17 +1417,17 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             }
 
             if ( async ) {
-                if ( xmlString ) {
+                if ( dziString ) {
                     window.setTimeout( function() {
-                        var source = finish( processDZIXml, parseXml( xmlString ) );
+                        var source = finish( processDZIXml, $.parseXml( xmlString ) );
                         // call after finish sets error
                         callback( source, error );    
                     }, 1);
                 } else {
-                    if( xmlUrl.match(/\.js$/) ){
-                        callbackName = xmlUrl.split( '/' ).pop().replace('.js','_dzi');
+                    if( dziUrl.match(/_dzi\.js$/) ){
+                        callbackName = dziUrl.split( '/' ).pop().replace('.js','');
                         $.jsonp({
-                            url: xmlUrl,
+                            url: dziUrl,
                             callbackName: callbackName,
                             callback: function( imageData ){
                                 var source = finish( processDZIJSON, imageData.Image );
@@ -1404,7 +1435,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                             }
                         });
                     } else {
-                        $.makeAjaxRequest( xmlUrl, function( xhr ) {
+                        $.makeAjaxRequest( dziUrl, function( xhr ) {
                             var source = finish( processDZIResponse, xhr );
                             // call after finish sets error
                             callback( source, error );
@@ -1415,17 +1446,72 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 return null;
             }
 
-            if ( xmlString ) {
+            if ( dziString ) {
                 return finish( 
                     processDZIXml,
-                    parseXml( xmlString ) 
+                    $.parseXml( dziString ) 
                 );
             } else {
                 return finish( 
                     processDZIResponse, 
-                    $.makeAjaxRequest( xmlUrl )
+                    $.makeAjaxRequest( dziUrl )
                 );
             }
+        },
+
+        /**
+         * Parses an XML string into a DOM Document.
+         * @function
+         * @name OpenSeadragon.parseXml
+         * @param {String} string
+         * @returns {Document}
+         */
+        parseXml: function( string ) {
+            //TODO: yet another example where we can determine the correct
+            //      implementation once at start-up instead of everytime we use
+            //      the function. DONE.
+            if ( window.ActiveXObject ) {
+
+                $.parseXml = function( string ){
+                    var xmlDoc = null,
+                        parser;
+
+                    xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                    xmlDoc.async = false;
+                    xmlDoc.loadXML( string );
+                    return xmlDoc;
+                };
+
+            } else if ( window.DOMParser ) {
+                
+                $.parseXml = function( string ){
+                    var xmlDoc = null,
+                        parser;
+
+                    parser = new DOMParser();
+                    xmlDoc = parser.parseFromString( string, "text/xml" );
+                    return xmlDoc;
+                };
+
+            } else {
+                throw new Error( "Browser doesn't support XML DOM." );
+            }
+
+            return $.parseXml( string );
+        },
+
+
+        /**
+         * Reports whether the image format is supported for tiling in this
+         * version.
+         * @function
+         * @name OpenSeadragon.imageFormatSupported
+         * @param {String} [extension]
+         * @returns {Boolean}
+         */
+        imageFormatSupported: function( extension ) {
+            extension = extension ? extension : "";
+            return !!FILEFORMATS[ extension.toLowerCase() ];
         }
 
     });
@@ -1587,6 +1673,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {XMLHttpRequest} xhr
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIResponse( xhr, tilesUrl ) {
         var status,
@@ -1606,7 +1693,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         if ( xhr.responseXML && xhr.responseXML.documentElement ) {
             doc = xhr.responseXML;
         } else if ( xhr.responseText ) {
-            doc = parseXml( xhr.responseText );
+            doc = $.parseXml( xhr.responseText );
         }
 
         return processDZIXml( doc, tilesUrl );
@@ -1618,6 +1705,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Document} xmlDoc
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIXml( xmlDoc, tilesUrl ) {
 
@@ -1651,6 +1739,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Element} imageNode
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZI( imageNode, tilesUrl ) {
         var fileFormat    = imageNode.getAttribute( "Format" ),
@@ -1701,6 +1790,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Element} imageNode
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIJSON( imageData, tilesUrl ) {
         var fileFormat    = imageData.Format,
@@ -1748,6 +1838,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Document} errorNode
      * @throws {Error}
+     * @deprecated
      */
     function processDZIError( errorNode ) {
         var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
@@ -1756,61 +1847,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         throw new Error(message);
     };
 
-    /**
-     * Reports whether the image format is supported for tiling in this
-     * version.
-     * @private
-     * @inner
-     * @function
-     * @param {String} [extension]
-     * @returns {Boolean}
-     */
-    function imageFormatSupported( extension ) {
-        extension = extension ? extension : "";
-        return !!FILEFORMATS[ extension.toLowerCase() ];
-    };
 
-    /**
-     * Parses an XML string into a DOM Document.
-     * @private
-     * @inner
-     * @function
-     * @name OpenSeadragon.parseXml
-     * @param {String} string
-     * @returns {Document}
-     */
-    function parseXml( string ) {
-        //TODO: yet another example where we can determine the correct
-        //      implementation once at start-up instead of everytime we use
-        //      the function. DONE.
-        if ( window.ActiveXObject ) {
-
-            $.parseXml = function( string ){
-                var xmlDoc = null,
-                    parser;
-
-                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                xmlDoc.async = false;
-                xmlDoc.loadXML( string );
-                return xmlDoc;
-            };
-
-        } else if ( window.DOMParser ) {
-            
-            $.parseXml = function( string ){
-                var xmlDoc = null,
-                    parser;
-
-                parser = new DOMParser();
-                xmlDoc = parser.parseFromString( string, "text/xml" );
-                return xmlDoc;
-            };
-
-        } else {
-            throw new Error( "Browser doesn't support XML DOM." );
-        }
-
-        return $.parseXml( string );
-    };
     
 }( OpenSeadragon ));

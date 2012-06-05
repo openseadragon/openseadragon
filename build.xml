@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Version: $Id: build.xml 495 2011-07-07 20:14:37Z chth $ -->
 <project name="openseadragon" 
-         default="build">
+         default="www">
 
 	<tstamp/>
     
@@ -52,9 +52,24 @@
             </filterchain>
             <filelist refid="openseadragon.javascript" />
         </concat>
+    </target>
+
+
+    <target name='www' depends='build'>
+        <echo>| Compiling OpenSeadragon Web Site </echo>
+        <publish page='overlay-highlights' title='Overlay Highlights | '/>
+
+        <publish page='tilesource-custom' title='Custom Tile Source | '/>
+        <publish page='tilesource-dzi' title='DZI Tile Source | '/>
+        <publish page='tilesource-iiif' title='IIIF Tile Source | '/>
+        <publish page='tilesource-legacy' title='Legacy Tile Sources | '/>
+        <publish page='tilesource-sequence' title='Tile Source Sequence | '/>
+
+        <publish page='ui-binding-custom-buttons' title='Binding Custom Buttons | '/>
+        <publish page='ui-toolbar' title='Toolbar | '/>
+        <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
 
         <copy todir='${WWW}' file='openseadragon.js' />
-        
     </target>
 
     
@@ -70,5 +85,34 @@
             <arg value="--verbose"/>
         </java>
     </target>
+
+
+    <macrodef name='publish'>
+        <attribute name='page'/>
+        <attribute name='title'/>
+        <sequential>
+            <loadfile property='@{page}.html' srcfile='www/@{page}.html' />
+            <mkdir dir='${WWW}/examples/@{page}'/>
+            <copy file='www/base.html' 
+                  tofile="${WWW}/examples/@{page}/index.html"
+                  overwrite='true'>
+                <filterchain>    
+                    <replacetokens>
+                        <token key="EXAMPLE" value='${@{page}.html}'/>
+                        <token key="TITLE" value='@{title}'/>
+                    </replacetokens>
+                </filterchain>
+            </copy>
+            <loadfile property='index.html' srcfile='www/index.html' />
+            <copy file='www/base.html' tofile="${WWW}/index.html" overwrite='true'>
+                <filterchain>    
+                    <replacetokens>
+                        <token key="EXAMPLE" value='${index.html}'/>
+                        <token key="TITLE" value=''/>
+                    </replacetokens>
+                </filterchain>
+            </copy>
+        </sequential>
+    </macrodef>
 
 </project>

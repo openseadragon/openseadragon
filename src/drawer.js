@@ -15,7 +15,7 @@ var TIMEOUT             = 5000,
     ), 
 
     USE_CANVAS = SUBPIXEL_RENDERING 
-        && !( DEVICE_SCREEN.x < 600 || DEVICE_SCREEN.y < 600 ) 
+        && !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) 
         && !( navigator.appVersion.match( 'Mobile' ) )
         && $.isFunction( document.createElement( "canvas" ).getContext );
 

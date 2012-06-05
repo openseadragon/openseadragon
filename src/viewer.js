@@ -140,22 +140,19 @@ $.Viewer = function( options ) {
     }
 
     if ( this.tileSources  ){
-        //tileSources is a complex option...
-        //It can be a string, object, function, or an array of any of these.
-        // - A String implies a DZI
-        // - An Srray of Objects implies a simple image
-        // - A Function implies a custom tile source callback
-        // - An Array that is not an Array of simple Objects implies a sequence 
-        //   of tile sources which can be any of the above
+        // tileSources is a complex option...
+        // 
+        // It can be a string, object, or an array of any of strings and objects.
+        // At this point we only care about if it is an Array or not. 
+        //
         if( $.isArray( this.tileSources ) ){
-            if( $.isPlainObject( this.tileSources[ 0 ] ) ){
-                //This is a non-sequenced legacy tile source
-                initialTileSource = this.tileSources;
-            } else {
-                //Sequenced tile source
-                initialTileSource = this.tileSources[ 0 ];
+            
+            //must be a sequence of tileSource since the first item
+            //is a legacy tile source
+            if( this.tileSources.length > 1 ){ 
                 THIS[ this.hash ].sequenced = true;
-            }
+            } 
+            initialTileSource = this.tileSources[ 0 ];
         } else {
             initialTileSource = this.tileSources;
         }
@@ -250,6 +247,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * If the string is xml is simply parsed and opened, otherwise the string 
      * is treated as an URL and an xml document is requested via ajax, parsed 
      * and then opened in the viewer.
+     * @deprecated - use 'open' instead.
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi and xml string or the url to a DZI xml document.
@@ -268,33 +266,66 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     },
 
     /**
+     * tileSources is a complex option...
+     * 
+     * It can be a string, object, function, or an array of any of these:
+     *
+     * - A String implies a url used to determine the tileSource implementation
+     *      based on the file extension of url. JSONP is implied by *.js,
+     *      otherwise the url is retrieved as text and the resulting text is
+     *      introspected to determine if its json, xml, or text and parsed. 
+     * - An Object implies an inline configuration which has a single 
+     *      property sufficient for being able to determine tileSource 
+     *      implementation. If the object has a property which is a function
+     *      named 'getTileUrl', it is treated as a custom TileSource.
+     * - An Array implies a one of two cases:
+     *      1)  Its a legacy tile source if it is an array of objects and at 
+     *          least one object satisfies the conditions of having a 'height',
+     *          'width', and 'url'.
+     *      2)  It's a sequence of tileSources, each item of which applying the 
+     *          rules above independently
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     openTileSource: function ( tileSource ) {
         var _this = this,
-            customTileSource;
+            customTileSource,
+            readySource,
+            $TileSource,
+            options;
 
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
-                //Standard DZI format
-                _this.openDzi( tileSource );
-            } else if ( $.isArray( tileSource ) ){
-                //Legacy image pyramid
-                _this.open( new $.LegacyTileSource( tileSource ) );
-            } else if ( $.isPlainObject( tileSource ) && $.isFunction( tileSource.getTileUrl ) ){
-                //Custom tile source
-                customTileSource = new $.TileSource(
-                    tileSource.width,
-                    tileSource.height,
-                    tileSource.tileSize,
-                    tileSource.tileOverlap,
-                    tileSource.minLevel,
-                    tileSource.maxLevel
-                );
-                customTileSource.getTileUrl = tileSource.getTileUrl;
-                _this.open( customTileSource );
+                //TODO: We cant assume a string implies a dzi since all 
+                //complete TileSource implementations should have a getInfo
+                //which allows them to be configured via AJAX.  Im not sure
+                //if its better to use file extension or url pattern, or to 
+                //inspect the resulting info object.
+                tileSource = new $.TileSource( tileSource, function( readySource ){
+                    _this.open( readySource );
+                });
+
+            } else if ( $.isPlainObject( tileSource ) ){
+                if( $.isFunction( tileSource.getTileUrl ) ){
+                    //Custom tile source
+                    customTileSource = new $.TileSource(
+                        tileSource.width,
+                        tileSource.height,
+                        tileSource.tileSize,
+                        tileSource.tileOverlap,
+                        tileSource.minLevel,
+                        tileSource.maxLevel
+                    );
+                    customTileSource.getTileUrl = tileSource.getTileUrl;
+                    _this.open( customTileSource );
+                } else {
+                    //inline configuration
+                    $TileSource = $.TileSource.determineType( _this, tileSource );
+                    options = $TileSource.prototype.configure.apply( _this, [ tileSource ]);
+                    readySource = new $TileSource( options );
+                    _this.open( readySource );
+                }
             } else {
                 //can assume it's already a tile source implementation
                 _this.open( tileSource );
@@ -346,8 +377,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             wrapHorizontal:     this.wrapHorizontal,
             wrapVertical:       this.wrapVertical
         });
+        
         if( this.preserveVewport ){
+            
             this.viewport.resetContentSize( this.source.dimensions );
+
+        } else if( this.defaultZoomLevel ){
+
+            this.viewport.zoomTo( 
+                this.defaultZoomLevel, 
+                this.viewport.getCenter(),  
+                true
+            );
+
         }
 
         this.drawer = new $.Drawer({
@@ -891,6 +933,40 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             
         }
+    },
+
+    goToPage: function( page ){
+        //page is a 1 based index so normalize now
+        //page = page;
+        if( this.tileSources.length > page ){
+            
+            THIS[ this.hash ].sequence = page;
+
+            if( this.nextButton ){
+                if( ( this.tileSources.length - 1 ) === page  ){
+                    //Disable next button
+                    this.nextButton.disable();
+                } else {
+                    this.nextButton.enable();
+                }
+            }
+            if( this.previousButton ){
+                if( page > 0 ){
+                    //Enable previous button
+                    this.previousButton.enable();
+                } else {
+                    this.previousButton.disable();
+                }
+            }
+
+            this.openTileSource( this.tileSources[ page ] );
+        }
+        if( $.isFunction( this.onPageChange ) ){
+            this.onPageChange({
+                page: page,
+                viewer: this
+            });
+        }
     }
 
 });
@@ -1243,44 +1319,14 @@ function onFullPage() {
 
 
 function onPrevious(){
-    var previous = THIS[ this.hash ].sequence - 1,
-        preserveVewport = true;
-    if( previous >= 0 ){
-
-        THIS[ this.hash ].sequence = previous;
-
-        if( 0 === previous  ){
-            //Disable previous button
-            this.previousButton.disable();
-        }
-        if( this.tileSources.length > 0  ){
-            //Enable next button
-            this.nextButton.enable();
-        }
-
-        this.openTileSource( this.tileSources[ previous ] );
-    }
+    var previous = THIS[ this.hash ].sequence - 1;
+    this.goToPage( previous );
 };
 
 
 function onNext(){
-    var next = THIS[ this.hash ].sequence + 1,
-        preserveVewport = true;
-    if( this.tileSources.length > next ){
-        
-        THIS[ this.hash ].sequence = next;
-
-        if( ( this.tileSources.length - 1 ) === next  ){
-            //Disable next button
-            this.nextButton.disable();
-        }
-        if( next > 0 ){
-            //Enable previous button
-            this.previousButton.enable();
-        }
-
-        this.openTileSource( this.tileSources[ next ] );
-    }
+    var next = THIS[ this.hash ].sequence + 1;
+    this.goToPage( next );
 };
 
 

@@ -1,0 +1,123 @@
+<h2>example: binding custom buttons</h2>
+
+<div class="description">
+    <p>
+    You can now bind to an entirely custom user interface by just passing
+    the id of the elements you want treated as buttons!  This is especially useful
+    when you need to fully control the look and feel of the user interface.
+    (New since 0.9.50)
+    </p>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Binding custom buttons.
+    </div>
+    <div id="toolbarDiv" class="toolbar">
+        <span style='float:right;margin:10px 20px 0 0'>
+            | <a id="zoom-in" href="#zoom-in">Zoom In</a> 
+            | <a id="zoom-out" href="#zoom-out">Zoom 0ut</a> 
+            | <a id="home" href="#home">Home</a> 
+            | <a id="full-page" href="#full-page">Full Page</a> 
+        </span>
+        <span style='float:left;margin:10px 0 0 20px'>
+        &lt;&nbsp;
+            <a id="previous" href="#previous-page">Previous</a> 
+            | <a id="next" href="#next-page">Next</a> 
+            &nbsp;&gt;
+            <span id='currentpage'> 1 of 3 </span>
+        </span>
+    </div>
+    <div id="contentDiv" 
+         class="openseadragon"></div>
+</div>
+
+<script type="text/javascript">
+
+    OpenSeadragon({
+        id:             "contentDiv",
+        prefixUrl:      "/openseadragon",
+        toolbar:        "toolbarDiv",
+        zoomInButton:   "zoom-in",
+        zoomOutButton:  "zoom-out",
+        homeButton:     "home",
+        fullPageButton: "full-page",
+        nextButton:     "next",
+        previousButton: "previous",
+        showNavigator:  true,
+        tileSources:    [{
+            type: 'legacy-image-pyramid',
+            levels:[{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels:[{
+                url: '/openseadragon/examples/images/rpbaasm/0900/0908/090801t.gif',
+                height: 150,
+                width:  116
+            },{
+                url: '/openseadragon/examples/images/rpbaasm/0900/0908/090801q.jpg',
+                height: 400,
+                width:  310
+            },{
+                url: '/openseadragon/examples/images/rpbaasm/0900/0908/090801r.jpg',
+                height: 860,
+                width:  667
+            },{
+                url: '/openseadragon/examples/images/rpbaasm/0900/0908/090801v.jpg',
+                height: 1650,
+                width:  1279
+                
+            }],
+        },
+            "/openseadragon/examples/images/highsmith/highsmith.dzi"
+        ],
+        onPageChange:   function( data ){
+            document.getElementById('currentpage').innerHTML = ( data.page + 1 ) + ' of 3';
+        }
+    });
+</script>
+
+<p>
+The relevant configuration options are shown below. Note the value for the options
+are the id of the element on the page to bind the button's action to.
+</p>
+
+<pre>
+OpenSeadragon({
+    ...
+    zoomInButton:   "zoom-in",
+    zoomOutButton:  "zoom-out",
+    homeButton:     "home",
+    fullPageButton: "full-page",
+    nextButton:     "next",
+    previousButton: "previous",
+    ...
+});
+</pre>
+
+<p>
+Also note the interface in this example updates the current page numbers in the label
+"Page N of 3".  This is achieved by making use of the provided callback 'onPageChange'
+</p>
+<pre>
+OpenSeadragon({
+    ...
+    onPageChange:   function( data ){
+        document.getElementById('currentpage').innerHTML = ( data.page + 1 ) + ' of 3';
+    }
+    ...
+});
+</pre>

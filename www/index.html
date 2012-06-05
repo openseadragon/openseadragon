@@ -1,0 +1,33 @@
+<h2>refactored</h2>
+
+<div class="description">
+  Fork of OpenSeadragon (from its mercurial repository).  We are working to
+  refactor the code base and see what happens from there. <br/><br/>
+  <strong>Try it on the iPad! (new since 0.9)</strong>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Seadragon control with default properties
+        <span id='consolelog'></span>
+    </div>
+    <div id="contentDiv" class="openseadragon"></div>
+</div>
+
+<script type="text/javascript">
+    // Example
+    OpenSeadragon({
+        id:              "contentDiv",
+        prefixUrl:       "/openseadragon/",
+        tileSources:     "/openseadragon/examples/images/highsmith/highsmith.js"/*,
+        wrapVertical:    true,
+        wrapHorizontal:  true,
+        visibilityRatio: 0,
+        minPixelRatio:   1,
+        immediateRender: true,
+        minZoomImageRatio: 1,
+        maxZoomPixelRatio: 1,
+        showNavigationControl: false
+        */
+    });
+</script>

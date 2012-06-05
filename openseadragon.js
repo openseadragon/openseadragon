@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.50
+ * @version  OpenSeadragon 0.9.64
  *
  * @fileOverview 
  * <h2>
@@ -470,7 +470,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             //INTERFACE FEATURES
             debugMode:              true,
             animationTime:          1.5,
-            blendTime:              0.5,
+            blendTime:              0.1,
             alwaysBlend:            false,
             autoHideControls:       true,
             immediateRender:        false,
@@ -490,13 +490,17 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
-            showNavigator:          false,
+            showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,
             navigatorSizeRatio:     0.25,
             preserveViewport:       false,
+            defaultZoomLevel:       0, 
+
+            //EVENT RELATED CALLBACKS
+            onPageChange:           null, 
             
             //PERFORMANCE SETTINGS
             minPixelRatio:          0.5,
@@ -1178,7 +1182,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 //TODO: very bad...Why check every time using try/catch when
                 //      we could determine once at startup which activeX object
                 //      was supported.  This will have significant impact on 
-                //      performance for IE Browsers
+                //      performance for IE Browsers DONE
                 for ( i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
@@ -1212,30 +1216,39 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
-            var async   = typeof( callback ) == "function",
+
+
+
+            var async   = true,
                 request = $.createAjaxRequest(),
                 actual,
+                options,
                 i;
 
-            if ( async ) {
-                actual = callback;
-                callback = function() {
-                    window.setTimeout(
-                        $.createCallback( null, actual, request ), 
-                        1
-                    );
+
+            if( $.isPlainObject( url ) ){
+                options.async = options.async || async;
+            }else{
+                options = {
+                    url: url,
+                    async: $.isFunction( callback ),
+                    success: callback,
+                    error: null
                 };
+            }
+
+            if ( options.async ) {
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
                         request.onreadystatechange = new function() { };
-                        callback();
+                        options.success( request );
                     }
                 };
             }
 
             try {
-                request.open( "GET", url, async );
+                request.open( "GET", options.url, options.async );
                 request.send( null );
             } catch (e) {
                 $.console.log(
@@ -1247,12 +1260,16 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.onreadystatechange = null;
                 request = null;
 
-                if ( async ) {
-                    callback();
+                if ( options.error && $.isFunction( options.error ) ) {
+                    options.error( request );
                 }
             }
 
-            return async ? null : request;
+            if( !options.async && $.isFunction( options.success ) ){
+                options.success( request );
+            }
+
+            return options.async ? null : request;
         },
 
 
@@ -1302,7 +1319,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
             script = document.createElement( "script" );
 
-            script.async = "async";
+            //TODO: having an issue with async info requests
+            if( undefined !== options.async || false !== options.async ){
+                script.async = "async";
+            }
 
             if ( options.scriptCharset ) {
                 script.charset = options.scriptCharset;
@@ -1335,18 +1355,22 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Loads a Deep Zoom Image description from a url or XML string and
-         * provides a callback hook for the resulting Document
+         * Loads a Deep Zoom Image description from a url, XML string or JSON string
+         * and provides a callback hook for the resulting Document
          * @function
          * @name OpenSeadragon.createFromDZI
          * @param {String} xmlUrl
          * @param {String} xmlString
          * @param {Function} callback
+         * @deprecated
          */
         createFromDZI: function( dzi, callback, tileHost ) {
             var async       = typeof ( callback ) == "function",
-                xmlUrl      = dzi.substring(0,1) != '<' ? dzi : null,
-                xmlString   = xmlUrl ? null : dzi,
+                dziUrl      = (
+                    dzi.substring(0,1) != '<' && 
+                    dzi.substring(0,1) != '{' 
+                ) ? dzi : null,
+                dziString   = dziUrl ? null : dzi,
                 error       = null,
                 urlParts,
                 filename,
@@ -1359,15 +1383,22 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
                 tilesUrl = tileHost + "/_files/";
                 
-            } else if( xmlUrl ) {
+            } else if( dziUrl ) {
 
-                urlParts = xmlUrl.split( '/' );
+                urlParts = dziUrl.split( '/' );
                 filename = urlParts[ urlParts.length - 1 ];
+                if( filename.match(/_dzi\.js$/) ){
+                    //for jsonp dzi specification, the '_dzi' needs to be removed
+                    //from the filename to be consistent with the spec
+                    filename = filename.replace('_dzi.js', '.js');
+                }
+
                 lastDot  = filename.lastIndexOf( '.' );
 
                 if ( lastDot > -1 ) {
                     urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
                 }
+
 
                 tilesUrl = urlParts.join( '/' ) + "_files/";
 
@@ -1386,17 +1417,17 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             }
 
             if ( async ) {
-                if ( xmlString ) {
+                if ( dziString ) {
                     window.setTimeout( function() {
-                        var source = finish( processDZIXml, parseXml( xmlString ) );
+                        var source = finish( processDZIXml, $.parseXml( xmlString ) );
                         // call after finish sets error
                         callback( source, error );    
                     }, 1);
                 } else {
-                    if( xmlUrl.match(/\.js$/) ){
-                        callbackName = xmlUrl.split( '/' ).pop().replace('.js','_dzi');
+                    if( dziUrl.match(/_dzi\.js$/) ){
+                        callbackName = dziUrl.split( '/' ).pop().replace('.js','');
                         $.jsonp({
-                            url: xmlUrl,
+                            url: dziUrl,
                             callbackName: callbackName,
                             callback: function( imageData ){
                                 var source = finish( processDZIJSON, imageData.Image );
@@ -1404,7 +1435,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                             }
                         });
                     } else {
-                        $.makeAjaxRequest( xmlUrl, function( xhr ) {
+                        $.makeAjaxRequest( dziUrl, function( xhr ) {
                             var source = finish( processDZIResponse, xhr );
                             // call after finish sets error
                             callback( source, error );
@@ -1415,17 +1446,72 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                 return null;
             }
 
-            if ( xmlString ) {
+            if ( dziString ) {
                 return finish( 
                     processDZIXml,
-                    parseXml( xmlString ) 
+                    $.parseXml( dziString ) 
                 );
             } else {
                 return finish( 
                     processDZIResponse, 
-                    $.makeAjaxRequest( xmlUrl )
+                    $.makeAjaxRequest( dziUrl )
                 );
             }
+        },
+
+        /**
+         * Parses an XML string into a DOM Document.
+         * @function
+         * @name OpenSeadragon.parseXml
+         * @param {String} string
+         * @returns {Document}
+         */
+        parseXml: function( string ) {
+            //TODO: yet another example where we can determine the correct
+            //      implementation once at start-up instead of everytime we use
+            //      the function. DONE.
+            if ( window.ActiveXObject ) {
+
+                $.parseXml = function( string ){
+                    var xmlDoc = null,
+                        parser;
+
+                    xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                    xmlDoc.async = false;
+                    xmlDoc.loadXML( string );
+                    return xmlDoc;
+                };
+
+            } else if ( window.DOMParser ) {
+                
+                $.parseXml = function( string ){
+                    var xmlDoc = null,
+                        parser;
+
+                    parser = new DOMParser();
+                    xmlDoc = parser.parseFromString( string, "text/xml" );
+                    return xmlDoc;
+                };
+
+            } else {
+                throw new Error( "Browser doesn't support XML DOM." );
+            }
+
+            return $.parseXml( string );
+        },
+
+
+        /**
+         * Reports whether the image format is supported for tiling in this
+         * version.
+         * @function
+         * @name OpenSeadragon.imageFormatSupported
+         * @param {String} [extension]
+         * @returns {Boolean}
+         */
+        imageFormatSupported: function( extension ) {
+            extension = extension ? extension : "";
+            return !!FILEFORMATS[ extension.toLowerCase() ];
         }
 
     });
@@ -1587,6 +1673,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {XMLHttpRequest} xhr
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIResponse( xhr, tilesUrl ) {
         var status,
@@ -1606,7 +1693,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         if ( xhr.responseXML && xhr.responseXML.documentElement ) {
             doc = xhr.responseXML;
         } else if ( xhr.responseText ) {
-            doc = parseXml( xhr.responseText );
+            doc = $.parseXml( xhr.responseText );
         }
 
         return processDZIXml( doc, tilesUrl );
@@ -1618,6 +1705,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Document} xmlDoc
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIXml( xmlDoc, tilesUrl ) {
 
@@ -1651,6 +1739,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Element} imageNode
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZI( imageNode, tilesUrl ) {
         var fileFormat    = imageNode.getAttribute( "Format" ),
@@ -1701,6 +1790,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Element} imageNode
      * @param {String} tilesUrl
+     * @deprecated
      */
     function processDZIJSON( imageData, tilesUrl ) {
         var fileFormat    = imageData.Format,
@@ -1748,6 +1838,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
      * @function
      * @param {Document} errorNode
      * @throws {Error}
+     * @deprecated
      */
     function processDZIError( errorNode ) {
         var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
@@ -1756,62 +1847,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
         throw new Error(message);
     };
 
-    /**
-     * Reports whether the image format is supported for tiling in this
-     * version.
-     * @private
-     * @inner
-     * @function
-     * @param {String} [extension]
-     * @returns {Boolean}
-     */
-    function imageFormatSupported( extension ) {
-        extension = extension ? extension : "";
-        return !!FILEFORMATS[ extension.toLowerCase() ];
-    };
 
-    /**
-     * Parses an XML string into a DOM Document.
-     * @private
-     * @inner
-     * @function
-     * @name OpenSeadragon.parseXml
-     * @param {String} string
-     * @returns {Document}
-     */
-    function parseXml( string ) {
-        //TODO: yet another example where we can determine the correct
-        //      implementation once at start-up instead of everytime we use
-        //      the function. DONE.
-        if ( window.ActiveXObject ) {
-
-            $.parseXml = function( string ){
-                var xmlDoc = null,
-                    parser;
-
-                xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                xmlDoc.async = false;
-                xmlDoc.loadXML( string );
-                return xmlDoc;
-            };
-
-        } else if ( window.DOMParser ) {
-            
-            $.parseXml = function( string ){
-                var xmlDoc = null,
-                    parser;
-
-                parser = new DOMParser();
-                xmlDoc = parser.parseFromString( string, "text/xml" );
-                return xmlDoc;
-            };
-
-        } else {
-            throw new Error( "Browser doesn't support XML DOM." );
-        }
-
-        return $.parseXml( string );
-    };
     
 }( OpenSeadragon ));
 
@@ -1819,6 +1855,12 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
 /**
  * For use by classes which want to support custom, non-browser events.
+ * TODO: This is an aweful name!  This thing represents an "event source",
+ *       not an "event handler".  PLEASE change the to EventSource. Also please 
+ *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind', 
+ *       'unbind', and 'trigger' respectively.  Finally add a method 'one' which
+ *       automatically unbinds a listener after the first triggered event that 
+ *       matches.
  * @class
  */
 $.EventHandler = function() {
@@ -3385,22 +3427,19 @@ $.Viewer = function( options ) {
     }
 
     if ( this.tileSources  ){
-        //tileSources is a complex option...
-        //It can be a string, object, function, or an array of any of these.
-        // - A String implies a DZI
-        // - An Srray of Objects implies a simple image
-        // - A Function implies a custom tile source callback
-        // - An Array that is not an Array of simple Objects implies a sequence 
-        //   of tile sources which can be any of the above
+        // tileSources is a complex option...
+        // 
+        // It can be a string, object, or an array of any of strings and objects.
+        // At this point we only care about if it is an Array or not. 
+        //
         if( $.isArray( this.tileSources ) ){
-            if( $.isPlainObject( this.tileSources[ 0 ] ) ){
-                //This is a non-sequenced legacy tile source
-                initialTileSource = this.tileSources;
-            } else {
-                //Sequenced tile source
-                initialTileSource = this.tileSources[ 0 ];
+            
+            //must be a sequence of tileSource since the first item
+            //is a legacy tile source
+            if( this.tileSources.length > 1 ){ 
                 THIS[ this.hash ].sequenced = true;
-            }
+            } 
+            initialTileSource = this.tileSources[ 0 ];
         } else {
             initialTileSource = this.tileSources;
         }
@@ -3495,6 +3534,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * If the string is xml is simply parsed and opened, otherwise the string 
      * is treated as an URL and an xml document is requested via ajax, parsed 
      * and then opened in the viewer.
+     * @deprecated - use 'open' instead.
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi and xml string or the url to a DZI xml document.
@@ -3513,33 +3553,66 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     },
 
     /**
+     * tileSources is a complex option...
+     * 
+     * It can be a string, object, function, or an array of any of these:
+     *
+     * - A String implies a url used to determine the tileSource implementation
+     *      based on the file extension of url. JSONP is implied by *.js,
+     *      otherwise the url is retrieved as text and the resulting text is
+     *      introspected to determine if its json, xml, or text and parsed. 
+     * - An Object implies an inline configuration which has a single 
+     *      property sufficient for being able to determine tileSource 
+     *      implementation. If the object has a property which is a function
+     *      named 'getTileUrl', it is treated as a custom TileSource.
+     * - An Array implies a one of two cases:
+     *      1)  Its a legacy tile source if it is an array of objects and at 
+     *          least one object satisfies the conditions of having a 'height',
+     *          'width', and 'url'.
+     *      2)  It's a sequence of tileSources, each item of which applying the 
+     *          rules above independently
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     openTileSource: function ( tileSource ) {
         var _this = this,
-            customTileSource;
+            customTileSource,
+            readySource,
+            $TileSource,
+            options;
 
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
-                //Standard DZI format
-                _this.openDzi( tileSource );
-            } else if ( $.isArray( tileSource ) ){
-                //Legacy image pyramid
-                _this.open( new $.LegacyTileSource( tileSource ) );
-            } else if ( $.isPlainObject( tileSource ) && $.isFunction( tileSource.getTileUrl ) ){
-                //Custom tile source
-                customTileSource = new $.TileSource(
-                    tileSource.width,
-                    tileSource.height,
-                    tileSource.tileSize,
-                    tileSource.tileOverlap,
-                    tileSource.minLevel,
-                    tileSource.maxLevel
-                );
-                customTileSource.getTileUrl = tileSource.getTileUrl;
-                _this.open( customTileSource );
+                //TODO: We cant assume a string implies a dzi since all 
+                //complete TileSource implementations should have a getInfo
+                //which allows them to be configured via AJAX.  Im not sure
+                //if its better to use file extension or url pattern, or to 
+                //inspect the resulting info object.
+                tileSource = new $.TileSource( tileSource, function( readySource ){
+                    _this.open( readySource );
+                });
+
+            } else if ( $.isPlainObject( tileSource ) ){
+                if( $.isFunction( tileSource.getTileUrl ) ){
+                    //Custom tile source
+                    customTileSource = new $.TileSource(
+                        tileSource.width,
+                        tileSource.height,
+                        tileSource.tileSize,
+                        tileSource.tileOverlap,
+                        tileSource.minLevel,
+                        tileSource.maxLevel
+                    );
+                    customTileSource.getTileUrl = tileSource.getTileUrl;
+                    _this.open( customTileSource );
+                } else {
+                    //inline configuration
+                    $TileSource = $.TileSource.determineType( _this, tileSource );
+                    options = $TileSource.prototype.configure.apply( _this, [ tileSource ]);
+                    readySource = new $TileSource( options );
+                    _this.open( readySource );
+                }
             } else {
                 //can assume it's already a tile source implementation
                 _this.open( tileSource );
@@ -3591,8 +3664,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             wrapHorizontal:     this.wrapHorizontal,
             wrapVertical:       this.wrapVertical
         });
+        
         if( this.preserveVewport ){
+            
             this.viewport.resetContentSize( this.source.dimensions );
+
+        } else if( this.defaultZoomLevel ){
+
+            this.viewport.zoomTo( 
+                this.defaultZoomLevel, 
+                this.viewport.getCenter(),  
+                true
+            );
+
         }
 
         this.drawer = new $.Drawer({
@@ -4136,6 +4220,40 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             
         }
+    },
+
+    goToPage: function( page ){
+        //page is a 1 based index so normalize now
+        //page = page;
+        if( this.tileSources.length > page ){
+            
+            THIS[ this.hash ].sequence = page;
+
+            if( this.nextButton ){
+                if( ( this.tileSources.length - 1 ) === page  ){
+                    //Disable next button
+                    this.nextButton.disable();
+                } else {
+                    this.nextButton.enable();
+                }
+            }
+            if( this.previousButton ){
+                if( page > 0 ){
+                    //Enable previous button
+                    this.previousButton.enable();
+                } else {
+                    this.previousButton.disable();
+                }
+            }
+
+            this.openTileSource( this.tileSources[ page ] );
+        }
+        if( $.isFunction( this.onPageChange ) ){
+            this.onPageChange({
+                page: page,
+                viewer: this
+            });
+        }
     }
 
 });
@@ -4488,44 +4606,14 @@ function onFullPage() {
 
 
 function onPrevious(){
-    var previous = THIS[ this.hash ].sequence - 1,
-        preserveVewport = true;
-    if( previous >= 0 ){
-
-        THIS[ this.hash ].sequence = previous;
-
-        if( 0 === previous  ){
-            //Disable previous button
-            this.previousButton.disable();
-        }
-        if( this.tileSources.length > 0  ){
-            //Enable next button
-            this.nextButton.enable();
-        }
-
-        this.openTileSource( this.tileSources[ previous ] );
-    }
+    var previous = THIS[ this.hash ].sequence - 1;
+    this.goToPage( previous );
 };
 
 
 function onNext(){
-    var next = THIS[ this.hash ].sequence + 1,
-        preserveVewport = true;
-    if( this.tileSources.length > next ){
-        
-        THIS[ this.hash ].sequence = next;
-
-        if( ( this.tileSources.length - 1 ) === next  ){
-            //Disable next button
-            this.nextButton.disable();
-        }
-        if( next > 0 ){
-            //Enable previous button
-            this.previousButton.enable();
-        }
-
-        this.openTileSource( this.tileSources[ next ] );
-    }
+    var next = THIS[ this.hash ].sequence + 1;
+    this.goToPage( next );
 };
 
 
@@ -5056,32 +5144,135 @@ $.Point.prototype = {
 
 
 /**
+ * The TileSource contains the most basic implementation required to create a
+ * smooth transition between layer in an image pyramid. It has only a single key 
+ * interface that must be implemented to complete it key functionality: 
+ * 'getTileUrl'.  It also has several optional interfaces that can be 
+ * implemented if a new TileSource wishes to support configuration via a simple
+ * object or array ('configure') and if the tile source supports or requires 
+ * configuration via retreival of a document on the network ala AJAX or JSONP, 
+ * ('getImageInfo').
+ * <br/>
+ * By default the image pyramid is split into N layers where the images longest
+ * side in M (in pixels), where N is the smallest integer which satisfies 
+ *      <strong>2^(N+1) >= M</strong>.
  * @class
- * @param {Number} width
+ * @extends OpenSeadragon.EventHandler
+ * @param {Number|Object|Array|String} width 
+ *      If more than a single argument is supplied, the traditional use of 
+ *      positional parameters is supplied and width is expected to be the width 
+ *      source image at it's max resolution in pixels.  If a single argument is supplied and
+ *      it is an Object or Array, the construction is assumed to occur through
+ *      the extending classes implementation of 'configure'.  Finally if only a
+ *      single argument is supplied and it is a String, the extending class is
+ *      expected to implement 'getImageInfo' and 'configure'.
  * @param {Number} height
+ *      Width of the source image at max resolution in pixels.
  * @param {Number} tileSize
+ *      The size of the tiles to assumed to make up each pyramid layer in pixels.
+ *      Tile size determines the point at which the image pyramid must be 
+ *      divided into a matrix of smaller images.
  * @param {Number} tileOverlap
+ *      The number of pixels each tile is expected to overlap touching tiles.
  * @param {Number} minLevel
+ *      The minimum level to attempt to load.
  * @param {Number} maxLevel
+ *      The maximum level to attempt to load.
  * @property {Number} aspectRatio
- * @property {Number} dimensions
+ *      Ratio of width to height
+ * @property {OpenSeadragon.Point} dimensions
+ *      Vector storing x and y dimensions ( width and height respectively ).
  * @property {Number} tileSize
+ *      The size of the image tiles used to compose the image.
  * @property {Number} tileOverlap
+ *      The overlap in pixels each tile shares with it's adjacent neighbors.
  * @property {Number} minLevel
+ *      The minimum pyramid level this tile source supports or should attempt to load.
  * @property {Number} maxLevel
+ *      The maximum pyramid level this tile source supports or should attempt to load.
  */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
-    this.aspectRatio = width / height;
-    this.dimensions  = new $.Point( width, height );
-    this.tileSize    = tileSize ? tileSize : 0;
-    this.tileOverlap = tileOverlap ? tileOverlap : 0;
-    this.minLevel    = minLevel ? minLevel : 0;
-    this.maxLevel    = maxLevel ? maxLevel :
-        Math.ceil( 
-            Math.log( Math.max( width, height ) ) / 
-            Math.log( 2 ) 
+    var _this = this,
+        callback = null,
+        readyHandler = null,
+        args = arguments,
+        options,
+        i;
+
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: args[0],
+            height: args[1],
+            tileSize: args[2],
+            tileOverlap: args[3],
+            minlevel: args[4],
+            maxLevel: args[5]
+        };
+    }
+
+    //Tile sources supply some events, namely 'ready' when they must be configured
+    //by asyncronously fetching their configuration data.
+    $.EventHandler.call( this );
+
+    //we allow options to override anything we dont treat as
+    //required via idiomatic options or which is functionally
+    //set depending on the state of the readiness of this tile
+    //source
+    $.extend( true, this, options );
+
+    //Any functions that are passed as arguments are bound to the ready callback
+    for( i = 0; i < arguments.length; i++ ){
+        if( $.isFunction( arguments[i] ) ){
+            callback = arguments[ i ];
+            this.addHandler( 'ready', function( placeHolderSource, readySource ){
+                callback( readySource );
+            });
+            //only one callback per constructor
+            break;
+        }
+    }
+
+    if( 'string' == $.type( arguments[ 0 ] ) ){
+        //in case the getImageInfo method is overriden and/or implies an
+        //async mechanism set some safe defaults first
+        this.aspectRatio = 1;
+        this.dimensions  = new $.Point( 10, 10 );
+        this.tileSize    = 0;
+        this.tileOverlap = 0;
+        this.minLevel    = 0;
+        this.maxLevel    = 0;
+        this.ready       = false;
+        //configuration via url implies the extending class 
+        //implements and 'configure'
+        this.getImageInfo( arguments[ 0 ] );
+
+    } else {
+    
+        //explicit configuration via positional args in constructor
+        //or the more idiomatic 'options' object
+        this.ready       = true;
+        this.aspectRatio = ( options.width && options.height ) ? 
+            (  options.width / options.height ) : 1;
+        this.dimensions  = new $.Point( options.width, options.height );
+        this.tileSize    = options.tileSize ? options.tileSize : 0;
+        this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
+        this.minLevel    = options.minLevel ? options.minLevel : 0;
+        this.maxLevel    = options.maxLevel ? options.maxLevel : (
+            ( options.width && options.height ) ? Math.ceil( 
+                Math.log( Math.max( options.width, options.height ) ) / 
+                Math.log( 2 ) 
+            ) : 0
         );
+        if( callback && $.isFunction( callback ) ){
+            callback( this );
+        }
+    }
+
+
 };
+
 
 $.TileSource.prototype = {
     
@@ -5151,6 +5342,107 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Responsible for retrieving, and caching the
+     * image metadata pertinent to this TileSources implementation.
+     * @function
+     * @param {String} url
+     * @throws {Error}
+     */
+    getImageInfo: function( url ) {
+        var _this   = this,
+            url     = url,
+            error,
+            callbackName,
+            callback,
+            readySource,
+            options,
+            urlParts,
+            filename,
+            lastDot,
+            tilesUrl;
+
+
+        if( url ) {
+            urlParts = url.split( '/' );
+            filename = urlParts[ urlParts.length - 1 ];
+            lastDot  = filename.lastIndexOf( '.' );
+            if ( lastDot > -1 ) {
+                urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
+            }
+        }
+    
+        callback = function( data ){
+            var $TileSource = $.TileSource.determineType( _this, data, url );
+            options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
+            readySource = new $TileSource( options );
+            _this.ready = true;
+            _this.raiseEvent( 'ready', readySource );
+        };
+
+        if( url.match(/\.js$/) ){
+            //TODO: Its not very flexible to require tile sources to end jsonp
+            //      request for info  with a url that ends with '.js' but for
+            //      now it's the only way I see to distinguish uniformly.
+            callbackName = url.split( '/' ).pop().replace('.js','');
+            $.jsonp({
+                url: url,
+                async: false,
+                callbackName: callbackName,
+                callback: callback
+            });
+        } else {
+            //TODO: struggling a little with TileSource rewrite to make info
+            //      requests work asyncronously.  For now I'm opting to make
+            //      all xhr info request syncronous.
+            $.makeAjaxRequest( url, function( xhr ) {
+                var data = processResponse( xhr );
+                callback( data );
+            });
+        }
+
+    },
+
+    /**
+     * Responsible determining if a the particular TileSource supports the
+     * data format ( and allowed to apply logic against the url the data was
+     * loaded from, if any ). Overriding implementations are expected to do
+     * something smart with data and / or url to determine support.  Also
+     * understand that iteration order of TileSources is not guarunteed so
+     * please make sure your data or url is expressive enough to ensure a simple
+     * and sufficient mechanisim for clear determination.
+     * @function
+     * @param {String|Object|Array|Document} data
+     * @param {String} url - the url the data was loaded 
+     *      from if any.
+     * @return {Boolean}
+     */
+    supports: function( data, url ) {
+        return false;
+    },
+
+    /**
+     * Responsible for parsing and configuring the
+     * image metadata pertinent to this TileSources implementation.
+     * This method is not implemented by this class other than to throw an Error
+     * announcing you have to implement it.  Because of the variety of tile 
+     * server technologies, and various specifications for building image
+     * pyramids, this method is here to allow easy integration.
+     * @function
+     * @param {String|Object|Array|Document} data
+     * @param {String} url - the url the data was loaded 
+     *      from if any.
+     * @return {Array} args - Returns an array containing the normalized values
+     *      of the positional parameters for the constructor of the implementing
+     *      tile source.
+     * @throws {Error}
+     */
+    configure: function( data, url ) {
+        throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Responsible for retriving the url which will return an image for the 
+     * region speified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile 
      * server technologies, and various specifications for building image
@@ -5182,6 +5474,75 @@ $.TileSource.prototype = {
     }
 };
 
+
+$.extend( true, $.TileSource.prototype, $.EventHandler.prototype );
+
+
+/**
+ * Decides whether to try to process the response as xml, json, or hand back
+ * the text
+ * @eprivate
+ * @inner
+ * @function
+ * @param {XMLHttpRequest} xhr - the completed network request
+ */
+function processResponse( xhr ){
+    var responseText = xhr.responseText,
+        status       = xhr.status,
+        statusText,
+        data;
+
+    if ( !xhr ) {
+        throw new Error( $.getString( "Errors.Security" ) );
+    } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
+        status     = xhr.status;
+        statusText = ( status == 404 ) ? 
+            "Not Found" : 
+            xhr.statusText;
+        throw new Error( $.getString( "Errors.Status", status, statusText ) );
+    }
+
+    if( responseText.match(/\s*<.*/) ){
+        try{
+        data = ( xhr.responseXML && xhr.responseXML.documentElement ) ? 
+            xhr.responseXML : 
+            $.parseXml( responseText );
+        } catch (e){
+            data = xhr.responseText;
+        }
+    }else if( responseText.match(/\s*[\{\[].*/) ){
+        data = eval( responseText );
+    }else{
+        data = responseText;
+    }
+    return data;
+};
+
+
+/**
+ * Determines the TileSource Implementation by introspection of OpenSeadragon
+ * namespace, calling each TileSource implementation of 'isType'
+ * @eprivate
+ * @inner
+ * @function
+ * @param {Object|Array} data - the tile source configuration object
+ * @param {String} url - the url where the tile source configuration object was
+ *      loaded from, if any.
+ */
+$.TileSource.determineType = function( tileSource, data, url ){
+    var property;
+    for( property in OpenSeadragon ){
+        if( property.match(/.+TileSource$/) &&
+            $.isFunction( OpenSeadragon[ property ] ) &&
+            $.isFunction( OpenSeadragon[ property ].prototype.supports ) &&
+            OpenSeadragon[ property ].prototype.supports.call( tileSource, data, url )
+        ){
+            return OpenSeadragon[ property ];
+        }
+    }
+};
+
+
 }( OpenSeadragon ));
 
 (function( $ ){
@@ -5203,14 +5564,27 @@ $.TileSource.prototype = {
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
     var i,
         rect,
-        level;
-
-    $.TileSource.call( this, width, height, tileSize, tileOverlap, null, null );
+        level,
+        options;
+    
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: arguments[ 0 ],
+            height: arguments[ 1 ],
+            tileSize: arguments[ 2 ],
+            tileOverlap: arguments[ 3 ],
+            tilesUrl: arguments[ 4 ],
+            fileFormat: arguments[ 5 ],
+            dispRects: arguments[ 6 ]
+        };
+    }
 
     this._levelRects  = {};
-    this.tilesUrl     = tilesUrl;
-    this.fileFormat   = fileFormat;
-    this.displayRects = displayRects;
+    this.tilesUrl     = options.tilesUrl;
+    this.fileFormat   = options.fileFormat;
+    this.displayRects = options.displayRects;
     
     if ( this.displayRects ) {
         for ( i = this.displayRects.length - 1; i >= 0; i-- ) {
@@ -5223,11 +5597,80 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             }
         }
     }
+    
+    $.TileSource.apply( this, [ options ] );
 
 };
 
 $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
-    
+
+
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( 
+            data.Image && 
+            "http://schemas.microsoft.com/deepzoom/2008" == data.Image.xmlns
+        ) || (
+            data.documentElement &&
+            "Image" == data.documentElement.tagName &&
+            "http://schemas.microsoft.com/deepzoom/2008" ==
+                data.documentElement.namespaceURI
+        );
+    },
+
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.configure
+     * @param {Object|XMLDocument} configuration - the raw configuration
+     * @param {String} dataUrl - the url the data was retreived from if any.
+     * @return {Array} args - positional arguments required and/or optional
+     *      for this tile sources constructor
+     */
+    configure: function( configuration, dataUrl ){
+
+        var dziPath,
+            dziName,
+            tilesUrl,
+            options,
+            host;
+
+        if( configuration instanceof XMLDocument ){
+
+            options = configureFromXML( this, configuration );
+
+        }else if( 'object' == $.type( configuration) ){
+
+            options = configureFromObject( this, configuration );
+        }
+
+        if( dataUrl && !options.tilesUrl ){
+            if( !( 'http' == dataUrl.substring( 0, 4 ) ) ){
+                host = location.protocol + '//' + location.host;
+            }
+            dziPath = dataUrl.split('/');
+            dziName = dziPath.pop();
+            dziName = dziName.substring(0, dziName.indexOf('.'));
+            dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
+            tilesUrl = dziPath;
+            if( host ){
+                tilesUrl = host + tilesUrl;
+            }
+            options.tilesUrl = tilesUrl;
+        }
+
+        return options;
+    },
+
+
     /**
      * @function
      * @name OpenSeadragon.DziTileSource.prototype.getTileUrl
@@ -5238,6 +5681,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     getTileUrl: function( level, x, y ) {
         return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat ].join( '' );
     },
+
 
     /**
      * @function
@@ -5288,6 +5732,147 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 });
 
 
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromXML( tileSource, xmlDoc ){
+    
+    if ( !xmlDoc || !xmlDoc.documentElement ) {
+        throw new Error( $.getString( "Errors.Xml" ) );
+    }
+
+    var root         = xmlDoc.documentElement,
+        rootName     = root.tagName,
+        conf         = null,
+        displayRects = [],
+        dispRectNodes,
+        dispRectNode,
+        rectNode,
+        sizeNode,
+        i;
+
+    if ( rootName == "Image" ) {
+        
+        try {
+            sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
+            conf = {
+                Image: {
+                    xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
+                    Format:      root.getAttribute( "Format" ),
+                    DisplayRect: null,
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ) ), 
+                    TileSize:    parseInt( root.getAttribute( "TileSize" ) ),
+                    Size: {
+                        Height: parseInt( sizeNode.getAttribute( "Height" ) ),
+                        Width:  parseInt( sizeNode.getAttribute( "Width" ) )
+                    }
+                }
+            };
+
+            if ( !$.imageFormatSupported( conf.Image.Format ) ) {
+                throw new Error(
+                    $.getString( "Errors.ImageFormat", conf.Image.Format.toUpperCase() )
+                );
+            }
+            
+            dispRectNodes = root.getElementsByTagName( "DisplayRect" );
+            for ( i = 0; i < dispRectNodes.length; i++ ) {
+                dispRectNode = dispRectNodes[ i ];
+                rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
+
+                displayRects.push({
+                    Rect: {
+                        X: parseInt( rectNode.getAttribute( "X" ) ),
+                        Y: parseInt( rectNode.getAttribute( "Y" ) ),
+                        Width: parseInt( rectNode.getAttribute( "Width" ) ),
+                        Height: parseInt( rectNode.getAttribute( "Height" ) ),
+                        MinLevel: 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                    }
+                });
+            }
+
+            if( displayRects.length ){
+                conf.Image.DisplayRect = displayRects;
+            }
+
+            return configureFromObject( tileSource, conf );
+
+        } catch ( e ) {
+            throw (e instanceof Error) ? 
+                e : 
+                new Error( $.getString("Errors.Dzi") );
+        }
+    } else if ( rootName == "Collection" ) {
+        throw new Error( $.getString( "Errors.Dzc" ) );
+    } else if ( rootName == "Error" ) {
+        return processDZIError( root );
+    }
+
+    throw new Error( $.getString( "Errors.Dzi" ) );
+};
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromObject( tileSource, configuration ){
+    var imageData     = configuration.Image,
+        tilesUrl      = imageData.Url,
+        fileFormat    = imageData.Format,
+        sizeData      = imageData.Size,
+        dispRectData  = imageData.DisplayRect || [],
+        width         = parseInt( sizeData.Width ),
+        height        = parseInt( sizeData.Height ),
+        tileSize      = parseInt( imageData.TileSize ),
+        tileOverlap   = parseInt( imageData.Overlap ),
+        dispRects     = [],
+        rectData,
+        i;
+
+    //TODO: need to figure out out to better handle image format compatibility
+    //      which actually includes additional file formats like xml and pdf
+    //      and plain text for various tilesource implementations to avoid low 
+    //      level errors.
+    //
+    //      For now, just don't perform the check.
+    //
+    /*if ( !imageFormatSupported( fileFormat ) ) {
+        throw new Error(
+            $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
+        );
+    }*/
+
+    for ( i = 0; i < dispRectData.length; i++ ) {
+        rectData = dispRectData[ i ].Rect;
+
+        dispRects.push( new $.DisplayRect(
+            parseInt( rectData.X ),
+            parseInt( rectData.Y ),
+            parseInt( rectData.Width ),
+            parseInt( rectData.Height ),
+            0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+            parseInt( rectData.MaxLevel )
+        ));
+    }
+
+
+    return {
+        width: width, /* width *required */
+        height: height, /* height *required */
+        tileSize: tileSize, /* tileSize *required */
+        tileOverlap: tileOverlap, /* tileOverlap *required */
+        minLevel: null, /* minLevel */
+        maxLevel: null, /* maxLevel */
+        tilesUrl: tilesUrl, /* tilesUrl */
+        fileFormat: fileFormat, /* fileFormat */
+        dispRects: dispRects /* dispRects */
+    };
+
+};
 
 }( OpenSeadragon ));
 
@@ -5302,10 +5887,10 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
  * resolution image and a high resolution image in standard web formats like
  * png or jpg.
  * @class
- * @param {Array} files An array of file descriptions, each is an object with
+ * @param {Array} levels An array of file descriptions, each is an object with
  *      a 'url', a 'width', and a 'height'.  Overriding classes can expect more
  *      properties but these properties are sufficient for this implementation.
- *      Additionally, the files are required to be listed in order from
+ *      Additionally, the levels are required to be listed in order from
  *      smallest to largest.
  * @property {Number} aspectRatio
  * @property {Number} dimensions
@@ -5313,25 +5898,85 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
  * @property {Number} tileOverlap
  * @property {Number} minLevel
  * @property {Number} maxLevel
- * @property {Array} files
+ * @property {Array}  levels
  */ 
-$.LegacyTileSource = function( files ) {
-    var width   = files[ files.length - 1 ].width,
-        height  = files[ files.length - 1 ].height;
+$.LegacyTileSource = function( levels ) {
 
-    $.TileSource.apply( this, [ 
-        width,      
-        height, 
-        Math.max( height, width ),  //tileSize
-        0,                          //overlap
-        0,                          //mimLevel
-        files.length - 1            //maxLevel
-    ] );
+    var options,
+        width,
+        height;
 
-    this.files = files;
+    if( $.isArray( levels ) ){
+        options = {
+            type: 'legacy-image-pyramid',
+            levels: levels
+        };
+    }
+
+    //clean up the levels to make sure we support all formats
+    options.levels = filterFiles( options.levels );
+    width = options.levels[ options.levels.length - 1 ].width;
+    height = options.levels[ options.levels.length - 1 ].height;
+
+    $.extend( true,  options, {
+        width:       width,
+        height:      height,
+        tileSize:    Math.max( height, width ),
+        tileOverlap: 0,
+        minLevel:    0,
+        maxLevel:    options.levels.length - 1
+    });
+
+    $.TileSource.apply( this, [ options ] );
+
+    this.levels = options.levels;
 };
 
 $.LegacyTileSource.prototype = {
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( 
+            data.type && 
+            "legacy-image-pyramid" == data.type
+        ) || (
+            data.documentElement &&
+            "legacy-image-pyramid" == data.documentElement.getAttribute('type')
+        );
+    },
+
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.configure
+     * @param {Object|XMLDocument} configuration - the raw configuration
+     * @param {String} dataUrl - the url the data was retreived from if any.
+     * @return {Array} args - positional arguments required and/or optional
+     *      for this tile sources constructor
+     */
+    configure: function( configuration, dataUrl ){
+
+        var options;
+
+        if( configuration instanceof XMLDocument ){
+
+            options = configureFromXML( this, configuration );
+
+        }else if( 'object' == $.type( configuration) ){
+
+            options = configureFromObject( this, configuration );
+        }
+
+        return options;
+
+    },
     
     /**
      * @function
@@ -5341,8 +5986,8 @@ $.LegacyTileSource.prototype = {
         var levelScale = NaN;
         if (  level >= this.minLevel && level <= this.maxLevel ){
             levelScale = 
-                this.files[ level ].width / 
-                this.files[ this.maxLevel ].width;
+                this.levels[ level ].width / 
+                this.levels[ this.maxLevel ].width;
         } 
         return levelScale;
     },
@@ -5389,10 +6034,10 @@ $.LegacyTileSource.prototype = {
      */
     getTileBounds: function( level, x, y ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            px = ( x === 0 ) ? 0 : this.files[ level ].width,
-            py = ( y === 0 ) ? 0 : this.files[ level ].height,
-            sx = this.files[ level ].width,
-            sy = this.files[ level ].height,
+            px = ( x === 0 ) ? 0 : this.levels[ level ].width,
+            py = ( y === 0 ) ? 0 : this.levels[ level ].height,
+            sx = this.levels[ level ].width,
+            sy = this.levels[ level ].height,
             scale = 1.0 / ( this.width >= this.height  ? 
                 dimensionsScaled.y :
                 dimensionsScaled.x 
@@ -5418,7 +6063,7 @@ $.LegacyTileSource.prototype = {
     getTileUrl: function( level, x, y ) {
         var url = null;
         if( level >= this.minLevel && level <= this.maxLevel ){   
-            url = this.files[ level ].url;
+            url = this.levels[ level ].url;
         }
         return url;
     },
@@ -5438,6 +6083,106 @@ $.LegacyTileSource.prototype = {
                 x < numTiles.x && 
                 y < numTiles.y;
     }
+};
+
+/**
+ * This method removes any files from the Array which dont conform to our
+ * basic requirements for a 'level' in the LegacyTileSource.
+ * @private
+ * @inner
+ * @function
+ */
+function filterFiles( files ){
+    var filtered = [],
+        file,
+        i;
+    for( i = 0; i < files.length; i++ ){
+        file = files[ i ];
+        if( file.height && 
+            file.width && 
+            file.url && (
+                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)$/) || (
+                    file.mimetype && 
+                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/) 
+                )
+            ) ){
+            //This is sufficient to serve as a level
+            filtered.push({
+                url: file.url,
+                width: Number( file.width ),
+                height: Number( file.height )
+            });
+        }
+    }
+
+    return filtered.sort(function(a,b){
+        return a.height - b.height;
+    });
+
+};
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromXML( tileSource, xmlDoc ){
+    
+    if ( !xmlDoc || !xmlDoc.documentElement ) {
+        throw new Error( $.getString( "Errors.Xml" ) );
+    }
+
+    var root         = xmlDoc.documentElement,
+        rootName     = root.tagName,
+        conf         = null,
+        levels       = [],
+        level,
+        i;
+
+    if ( rootName == "image" ) {
+        
+        try {
+            conf = {
+                type:        root.getAttribute( "type" ),
+                levels:      []
+            };
+            
+            levels = root.getElementsByTagName( "level" );
+            for ( i = 0; i < levels.length; i++ ) {
+                level = levels[ i ];
+
+                conf.levels .push({
+                    url:    level.getAttribute( "url" ),
+                    width:  parseInt( level.getAttribute( "width" ) ),
+                    height: parseInt( level.getAttribute( "height" ) )
+                });
+            }
+
+            return configureFromObject( tileSource, conf );
+
+        } catch ( e ) {
+            throw (e instanceof Error) ? 
+                e : 
+                new Error( 'Unknown error parsing Legacy Image Pyramid XML.' );
+        }
+    } else if ( rootName == "collection" ) {
+        throw new Error( 'Legacy Image Pyramid Collections not yet supported.' );
+    } else if ( rootName == "error" ) {
+        throw new Error( 'Error: ' + xmlDoc );
+    }
+
+    throw new Error( 'Unknown element ' + rootName );
+};
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function configureFromObject( tileSource, configuration ){
+    
+    return configuration.levels;
+
 };
 
 }( OpenSeadragon ));
@@ -6505,7 +7250,7 @@ var TIMEOUT             = 5000,
     ), 
 
     USE_CANVAS = SUBPIXEL_RENDERING 
-        && !( DEVICE_SCREEN.x < 600 || DEVICE_SCREEN.y < 600 ) 
+        && !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) 
         && !( navigator.appVersion.match( 'Mobile' ) )
         && $.isFunction( document.createElement( "canvas" ).getContext );
 

@@ -1,0 +1,64 @@
+<h2>example: highlights</h2>
+
+<div class="description">
+    <p>
+    &nbsp;Highlighted overlays are very useful for directing users attention to
+    specific areas of interest, though the style is often decided based
+    on the specific content being presented.  
+    </p>
+    <p>
+    &nbsp;OpenSeadragon makes it easy to declare highlighted areas and control 
+    the presentation through simple css mechanisms.
+    </p>
+    <p>
+    <strong>Try it on the iPad! (new since 0.9)</strong>
+    </p>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Highlights
+    </div>
+    <div id="toolbarDiv" class="toolbar">
+        <span style='float:right;margin:10px 20px 0 0'>
+        | <a href="#">show highlights</a> 
+        | <a href="#">hide highlights</a> 
+        </span>
+    </div>
+    <div id="contentDiv" class="openseadragon"></div>
+</div>
+
+<script type="text/javascript">
+    OpenSeadragon({
+        id:            "contentDiv",
+        prefixUrl:     "/openseadragon",
+        tileSources:   "/openseadragon/examples/images/highsmith/highsmith.dzi",
+        toolbar:       "toolbarDiv",
+        showNavigator: true,
+        overlays: [{
+          x: 0.45, 
+          y: 0.35, 
+          width: 0.08, 
+          height: 0.05,
+          className: 'highlight'
+        },{
+          x: 0.22, 
+          y: 0.38, 
+          width: 0.1, 
+          height: 0.15,
+          className: 'highlight'
+        },{
+          x: 0.65, 
+          y: 0.38, 
+          width: 0.1, 
+          height: 0.15,
+          className: 'highlight'
+        },{
+          x: 0.45, 
+          y: 0.50, 
+          width: 0.08, 
+          height: 0.15,
+          className: 'highlight'
+        }]
+    });
+</script>   
