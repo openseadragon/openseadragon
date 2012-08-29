@@ -66,26 +66,26 @@
                 case $.ControlAnchor.TOP_RIGHT:
                     div = this.controls.topright;
                     element.style.position = "relative";
-                    element.style.marginRight = "4px";
-                    element.style.marginTop = "4px";
+                    element.style.paddingRight = "0px";
+                    element.style.paddingTop = "0px";
                     break;
                 case $.ControlAnchor.BOTTOM_RIGHT:
                     div = this.controls.bottomright;
                     element.style.position = "relative";
-                    element.style.marginRight = "4px";
-                    element.style.marginBottom = "4px";
+                    element.style.paddingRight = "0px";
+                    element.style.paddingBottom = "0px";
                     break;
                 case $.ControlAnchor.BOTTOM_LEFT:
                     div = this.controls.bottomleft;
                     element.style.position = "relative";
-                    element.style.marginLeft = "4px";
-                    element.style.marginBottom = "4px";
+                    element.style.paddingLeft = "0px";
+                    element.style.paddingBottom = "0px";
                     break;
                 case $.ControlAnchor.TOP_LEFT:
                     div = this.controls.topleft;
                     element.style.position = "relative";
-                    element.style.marginLeft = "4px";
-                    element.style.marginTop = "4px";
+                    element.style.paddingLeft = "0px";
+                    element.style.paddingTop = "0px";
                     break;
                 case $.ControlAnchor.NONE:
                 default:

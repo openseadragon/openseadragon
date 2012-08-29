@@ -35,6 +35,7 @@
             <file name="src/button.js" />
             <file name="src/buttongroup.js" />
             <file name="src/rectangle.js" />
+            <file name="src/referencestrip.js" />
             <file name="src/displayrectangle.js" />
             <file name="src/spring.js" />
             <file name="src/tile.js" />
@@ -66,6 +67,7 @@
         <publish page='tilesource-sequence' title='Tile Source Sequence | '/>
 
         <publish page='ui-binding-custom-buttons' title='Binding Custom Buttons | '/>
+        <publish page='ui-collections' title='Image Reference Strip | '/>
         <publish page='ui-toolbar' title='Toolbar | '/>
         <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
 

@@ -176,6 +176,7 @@ $.Viewer = function( options ) {
         container.width     = "100%";
         container.height    = "100%";
         container.position  = "relative";
+        container.overflow  = "hidden";
         container.left      = "0px";
         container.top       = "0px";
         container.textAlign = "left";  // needed to protect against
@@ -247,11 +248,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * If the string is xml is simply parsed and opened, otherwise the string 
      * is treated as an URL and an xml document is requested via ajax, parsed 
      * and then opened in the viewer.
-     * @deprecated - use 'open' instead.
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi and xml string or the url to a DZI xml document.
      * @return {OpenSeadragon.Viewer} Chainable.
+     *
+     * @deprecated - use 'open' instead.
      */
     openDzi: function ( dzi ) {
         var _this = this;
@@ -278,12 +280,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      *      property sufficient for being able to determine tileSource 
      *      implementation. If the object has a property which is a function
      *      named 'getTileUrl', it is treated as a custom TileSource.
-     * - An Array implies a one of two cases:
-     *      1)  Its a legacy tile source if it is an array of objects and at 
-     *          least one object satisfies the conditions of having a 'height',
-     *          'width', and 'url'.
-     *      2)  It's a sequence of tileSources, each item of which applying the 
-     *          rules above independently
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -424,6 +420,23 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             });
         }
 
+        //Instantiate a referencestrip if configured
+        if ( this.showReferenceStrip  && ! this.referenceStrip ){
+            this.referenceStrip = new $.ReferenceStrip({
+                id:          this.referenceStripElement,
+                position:    this.referenceStripPosition,
+                sizeRatio:   this.referenceStripSizeRatio,
+                scroll:      this.referenceStripScroll,
+                height:      this.referenceStripHeight,
+                width:       this.referenceStripWidth,
+                tileSources: this.tileSources,
+                tileHost:    this.tileHost,
+                prefixUrl:   this.prefixUrl,
+                overlays:    this.overlays,
+                viewer:      this
+            });
+        }
+
         //this.profiler = new $.Profiler();
 
         THIS[ this.hash ].animating = false;
@@ -513,11 +526,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
+     * @name OpenSeadragon.Viewer.prototype.areControlsEnabled
      * @return {Boolean}
      */
     areControlsEnabled: function () {
-        return this.controls.length && this.controls[ i ].isVisibile();
+        var enabled = this.controls.length,
+            i;
+        for( i = 0; i < this.controls.length; i++ ){
+            enabled = enabled && this.controls[ i ].isVisibile();
+        }
+        return enabled;
     },
 
 
@@ -926,7 +944,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 }else{
                     this.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.BOTTOM_RIGHT 
+                        $.ControlAnchor.TOP_LEFT 
                     );
                 }
             }

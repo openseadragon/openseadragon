@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.64
+ * @version  OpenSeadragon 0.9.65
  *
  * @fileOverview 
  * <h2>
@@ -480,7 +480,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             panVertical:            true,
             visibilityRatio:        0.5,
             springStiffness:        5.0,
-            clickTimeThreshold:     200,
+            clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
@@ -498,6 +498,18 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorSizeRatio:     0.25,
             preserveViewport:       false,
             defaultZoomLevel:       0, 
+
+            showReferenceStrip:          false, 
+            referenceStripScroll:       'horizontal',
+            referenceStripElement:       null,
+            referenceStripHeight:        null,
+            referenceStripWidth:         null,
+            referenceStripPosition:      'BOTTOM_LEFT',
+            referenceStripSizeRatio:     0.25,
+
+            //COLLECTION VISUALIZATION SETTINGS
+            collectionRows:         3,
+            collectionScroll:       'horizontal',
 
             //EVENT RELATED CALLBACKS
             onPageChange:           null, 
@@ -1216,8 +1228,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
-
-
 
             var async   = true,
                 request = $.createAjaxRequest(),
@@ -3170,26 +3180,26 @@ $.Control.prototype = {
                 case $.ControlAnchor.TOP_RIGHT:
                     div = this.controls.topright;
                     element.style.position = "relative";
-                    element.style.marginRight = "4px";
-                    element.style.marginTop = "4px";
+                    element.style.paddingRight = "0px";
+                    element.style.paddingTop = "0px";
                     break;
                 case $.ControlAnchor.BOTTOM_RIGHT:
                     div = this.controls.bottomright;
                     element.style.position = "relative";
-                    element.style.marginRight = "4px";
-                    element.style.marginBottom = "4px";
+                    element.style.paddingRight = "0px";
+                    element.style.paddingBottom = "0px";
                     break;
                 case $.ControlAnchor.BOTTOM_LEFT:
                     div = this.controls.bottomleft;
                     element.style.position = "relative";
-                    element.style.marginLeft = "4px";
-                    element.style.marginBottom = "4px";
+                    element.style.paddingLeft = "0px";
+                    element.style.paddingBottom = "0px";
                     break;
                 case $.ControlAnchor.TOP_LEFT:
                     div = this.controls.topleft;
                     element.style.position = "relative";
-                    element.style.marginLeft = "4px";
-                    element.style.marginTop = "4px";
+                    element.style.paddingLeft = "0px";
+                    element.style.paddingTop = "0px";
                     break;
                 case $.ControlAnchor.NONE:
                 default:
@@ -3463,6 +3473,7 @@ $.Viewer = function( options ) {
         container.width     = "100%";
         container.height    = "100%";
         container.position  = "relative";
+        container.overflow  = "hidden";
         container.left      = "0px";
         container.top       = "0px";
         container.textAlign = "left";  // needed to protect against
@@ -3534,11 +3545,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * If the string is xml is simply parsed and opened, otherwise the string 
      * is treated as an URL and an xml document is requested via ajax, parsed 
      * and then opened in the viewer.
-     * @deprecated - use 'open' instead.
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi and xml string or the url to a DZI xml document.
      * @return {OpenSeadragon.Viewer} Chainable.
+     *
+     * @deprecated - use 'open' instead.
      */
     openDzi: function ( dzi ) {
         var _this = this;
@@ -3565,12 +3577,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      *      property sufficient for being able to determine tileSource 
      *      implementation. If the object has a property which is a function
      *      named 'getTileUrl', it is treated as a custom TileSource.
-     * - An Array implies a one of two cases:
-     *      1)  Its a legacy tile source if it is an array of objects and at 
-     *          least one object satisfies the conditions of having a 'height',
-     *          'width', and 'url'.
-     *      2)  It's a sequence of tileSources, each item of which applying the 
-     *          rules above independently
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -3711,6 +3717,23 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             });
         }
 
+        //Instantiate a referencestrip if configured
+        if ( this.showReferenceStrip  && ! this.referenceStrip ){
+            this.referenceStrip = new $.ReferenceStrip({
+                id:          this.referenceStripElement,
+                position:    this.referenceStripPosition,
+                sizeRatio:   this.referenceStripSizeRatio,
+                scroll:      this.referenceStripScroll,
+                height:      this.referenceStripHeight,
+                width:       this.referenceStripWidth,
+                tileSources: this.tileSources,
+                tileHost:    this.tileHost,
+                prefixUrl:   this.prefixUrl,
+                overlays:    this.overlays,
+                viewer:      this
+            });
+        }
+
         //this.profiler = new $.Profiler();
 
         THIS[ this.hash ].animating = false;
@@ -3800,11 +3823,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isDashboardEnabled
+     * @name OpenSeadragon.Viewer.prototype.areControlsEnabled
      * @return {Boolean}
      */
     areControlsEnabled: function () {
-        return this.controls.length && this.controls[ i ].isVisibile();
+        var enabled = this.controls.length,
+            i;
+        for( i = 0; i < this.controls.length; i++ ){
+            enabled = enabled && this.controls[ i ].isVisibile();
+        }
+        return enabled;
     },
 
 
@@ -4213,7 +4241,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 }else{
                     this.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.BOTTOM_RIGHT 
+                        $.ControlAnchor.TOP_LEFT 
                     );
                 }
             }
@@ -4789,7 +4817,6 @@ $.Navigator = function( options ){
         releaseHandler:     $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
 
-    this.element.appendChild( this.displayRegion );
 
     viewer.addControl( 
         this.element, 
@@ -4805,6 +4832,8 @@ $.Navigator = function( options ){
     }
 
     $.Viewer.apply( this, [ options ] ); 
+
+    this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
 
 };
 
@@ -5259,12 +5288,13 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.tileSize    = options.tileSize ? options.tileSize : 0;
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
-        this.maxLevel    = options.maxLevel ? options.maxLevel : (
-            ( options.width && options.height ) ? Math.ceil( 
-                Math.log( Math.max( options.width, options.height ) ) / 
-                Math.log( 2 ) 
-            ) : 0
-        );
+        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ? 
+            options.maxLevel : (
+                ( options.width && options.height ) ? Math.ceil( 
+                    Math.log( Math.max( options.width, options.height ) ) / 
+                    Math.log( 2 ) 
+                ) : 0
+            );
         if( callback && $.isFunction( callback ) ){
             callback( this );
         }
@@ -5431,9 +5461,8 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded 
      *      from if any.
-     * @return {Array} args - Returns an array containing the normalized values
-     *      of the positional parameters for the constructor of the implementing
-     *      tile source.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      * @throws {Error}
      */
     configure: function( data, url ) {
@@ -5550,7 +5579,8 @@ $.TileSource.determineType = function( tileSource, data, url ){
 /**
  * @class
  * @extends OpenSeadragon.TileSource
- * @param {Number} width
+ * @param {Number|Object} width - the pixel width of the image or the idiomatic
+ *      options object which is used instead of positional arguments.
  * @param {Number} height
  * @param {Number} tileSize
  * @param {Number} tileOverlap
@@ -5630,12 +5660,12 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
      * 
      * @function
      * @name OpenSeadragon.DziTileSource.prototype.configure
-     * @param {Object|XMLDocument} configuration - the raw configuration
-     * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Array} args - positional arguments required and/or optional
-     *      for this tile sources constructor
+     * @param {Object|XMLDocument} data - the raw configuration
+     * @param {String} url - the url the data was retreived from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      */
-    configure: function( configuration, dataUrl ){
+    configure: function( data, url ){
 
         var dziPath,
             dziName,
@@ -5643,20 +5673,20 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             options,
             host;
 
-        if( configuration instanceof XMLDocument ){
+        if( !$.isPlainObject(data) ){
 
-            options = configureFromXML( this, configuration );
+            options = configureFromXML( this, data );
 
-        }else if( 'object' == $.type( configuration) ){
+        }else{
 
-            options = configureFromObject( this, configuration );
+            options = configureFromObject( this, data );
         }
 
-        if( dataUrl && !options.tilesUrl ){
-            if( !( 'http' == dataUrl.substring( 0, 4 ) ) ){
+        if( url && !options.tilesUrl ){
+            if( !( 'http' == url.substring( 0, 4 ) ) ){
                 host = location.protocol + '//' + location.host;
             }
-            dziPath = dataUrl.split('/');
+            dziPath = url.split('/');
             dziName = dziPath.pop();
             dziName = dziName.substring(0, dziName.indexOf('.'));
             dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
@@ -5743,10 +5773,10 @@ function configureFromXML( tileSource, xmlDoc ){
         throw new Error( $.getString( "Errors.Xml" ) );
     }
 
-    var root         = xmlDoc.documentElement,
-        rootName     = root.tagName,
-        conf         = null,
-        displayRects = [],
+    var root           = xmlDoc.documentElement,
+        rootName       = root.tagName,
+        configuration  = null,
+        displayRects   = [],
         dispRectNodes,
         dispRectNode,
         rectNode,
@@ -5757,7 +5787,7 @@ function configureFromXML( tileSource, xmlDoc ){
         
         try {
             sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
-            conf = {
+            configuration = {
                 Image: {
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
                     Format:      root.getAttribute( "Format" ),
@@ -5771,9 +5801,9 @@ function configureFromXML( tileSource, xmlDoc ){
                 }
             };
 
-            if ( !$.imageFormatSupported( conf.Image.Format ) ) {
+            if ( !$.imageFormatSupported( configuration.Image.Format ) ) {
                 throw new Error(
-                    $.getString( "Errors.ImageFormat", conf.Image.Format.toUpperCase() )
+                    $.getString( "Errors.ImageFormat", configuration.Image.Format.toUpperCase() )
                 );
             }
             
@@ -5795,10 +5825,10 @@ function configureFromXML( tileSource, xmlDoc ){
             }
 
             if( displayRects.length ){
-                conf.Image.DisplayRect = displayRects;
+                configuration.Image.DisplayRect = displayRects;
             }
 
-            return configureFromObject( tileSource, conf );
+            return configureFromObject( tileSource, configuration );
 
         } catch ( e ) {
             throw (e instanceof Error) ? 
@@ -5958,18 +5988,18 @@ $.LegacyTileSource.prototype = {
      * @name OpenSeadragon.DziTileSource.prototype.configure
      * @param {Object|XMLDocument} configuration - the raw configuration
      * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Array} args - positional arguments required and/or optional
-     *      for this tile sources constructor
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      */
     configure: function( configuration, dataUrl ){
 
         var options;
 
-        if( configuration instanceof XMLDocument ){
+        if( !$.isPlainObject(configuration) ){
 
             options = configureFromXML( this, configuration );
 
-        }else if( 'object' == $.type( configuration) ){
+        }else{
 
             options = configureFromObject( this, configuration );
         }
@@ -6763,7 +6793,419 @@ $.Rect.prototype = {
 
 
 }( OpenSeadragon ));
+(function( $ ){
+    
+/**
+ *  The CollectionDrawer is a reimplementation if the Drawer API that
+ *  focuses on allowing a viewport to be redefined as a collection 
+ *  of smaller viewports, defined by a clear number of rows and / or
+ *  columns of which each item in the matrix of viewports has its own
+ *  source.  
+ *
+ *  This idea is a reexpression of the idea of dzi collections
+ *  which allows a clearer algorithm to reuse the tile sources already
+ *  supported by OpenSeadragon, in heterogenious or homogenious
+ *  sequences just like mixed groups already supported by the viewer
+ *  for the purpose of image sequnces.
+ *
+ *  TODO:   The difficult part of this feature is figuring out how to express
+ *          this functionality as a combination of the functionality already 
+ *          provided by Drawer, Viewport, TileSource, and Navigator.  It may 
+ *          require better abstraction at those points in order to effeciently
+ *          reuse those paradigms.
+ */
+$.ReferenceStrip = function( options ){
 
+    var _this       = this,
+        viewer      = options.viewer,
+        viewerSize  = $.getElementSize( viewer.element ),
+        miniViewer,
+        minPixelRatio,
+        element,
+        i;
+    
+    //We may need to create a new element and id if they did not
+    //provide the id for the existing element
+    if( !options.id ){
+        options.id              = 'referencestrip-' + (+new Date());
+        this.element            = $.makeNeutralElement( "div" );
+        this.element.id         = options.id;
+        this.element.className  = 'referencestrip';
+    }
+
+    options = $.extend( true, {
+        sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
+        position:   $.DEFAULT_SETTINGS.referenceStripPosition,
+        scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
+        clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold
+    }, options, {
+        //required overrides
+        element:                this.element,
+        //These need to be overridden to prevent recursion since
+        //the navigator is a viewer and a viewer has a navigator
+        showNavigator:          false,
+        mouseNavEnabled:        false,
+        showNavigationControl:  false,
+        showSequenceControl:    false
+    });
+
+    $.extend(this, options);
+
+    minPixelRatio = Math.min(
+        options.sizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
+        $.DEFAULT_SETTINGS.minPixelRatio
+    );
+
+    (function( style ){
+        style.marginTop     = '0px';
+        style.marginRight   = '0px';
+        style.marginBottom  = '0px';
+        style.marginLeft    = '0px';
+        style.left          = '0px';
+        style.bottom        = '0px';
+        style.border        = '1px solid #555';
+        style.background    = '#000';
+        style.opacity       = 0.8;
+        style.position      = 'relative';
+    }( this.element.style ));
+
+    this.viewer = viewer;
+    this.innerTracker = new $.MouseTracker({
+        element:        this.element,
+        dragHandler:    $.delegate( this, onStripDrag ),
+        scrollHandler:  $.delegate( this, onStripScroll ),
+        enterHandler:   $.delegate( this, onStripEnter ),
+        exitHandler:    $.delegate( this, onStripExit )
+    }).setTracking( true );
+
+    
+
+    //Controls the position and orientation of the reference strip and sets the  
+    //appropriate width and height
+    if( options.width && options.height ){
+        this.element.style.width  = options.width + 'px';
+        this.element.style.height = options.height + 'px';
+        viewer.addControl( 
+            this.element, 
+            $.ControlAnchor.BOTTOM_LEFT
+        );
+    } else {
+        if( "horizontal" == options.scroll ){
+            this.element.style.width = ( 
+                viewerSize.x * 
+                options.sizeRatio * 
+                viewer.tileSources.length
+            ) + ( 12 * viewer.tileSources.length ) + 'px';
+
+            this.element.style.height  = ( 
+                viewerSize.y * 
+                options.sizeRatio 
+            ) + 'px';
+
+            viewer.addControl( 
+                this.element, 
+                $.ControlAnchor.BOTTOM_LEFT
+            );
+        }else {
+            this.element.style.height = ( 
+                viewerSize.y * 
+                options.sizeRatio * 
+                viewer.tileSources.length
+            ) + ( 12 * viewer.tileSources.length ) + 'px';
+
+            this.element.style.width  = ( 
+                viewerSize.x * 
+                options.sizeRatio 
+            ) + 'px';
+
+            viewer.addControl( 
+                this.element, 
+                $.ControlAnchor.TOP_LEFT
+            );
+
+        }
+    }
+
+    for( i = 0; i < viewer.tileSources.length; i++ ){
+        
+        element = $.makeNeutralElement('div');
+        element.id = this.element.id + "-" + i;
+
+        (function(style){
+            style.width         = ( viewerSize.x * options.sizeRatio ) + 8 + 'px';
+            style.height        = ( viewerSize.y * options.sizeRatio ) + 8 + 'px';
+            style.display       = 'inline';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.border        = '2px solid #000';
+            style.background    = 'inherit';
+        }(element.style));
+
+        element.innerTracker = new $.MouseTracker({
+            element:        element,
+            clickTimeThreshold: options.clickTimeThreshold, 
+            clickDistThreshold: options.clickDistThreshold,
+            pressHandler: function( tracker ){
+                tracker.dragging = +new Date;
+            },
+            releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ){
+                var id = tracker.element.id,
+                    page = Number( id.split( '-' )[ 2 ] ),
+                    now = +new Date;
+                
+                if ( insideElementPress && 
+                     insideElementRelease && 
+                     tracker.dragging &&
+                     ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
+                    tracker.dragging = null;
+                    viewer.goToPage( page );
+                    $.getElement( tracker.element.id + '-displayregion' ).focus();
+                }
+            },
+            enterHandler: function( tracker ){
+                tracker.element.style.border = '2px solid #900';
+            },
+            exitHandler: function( tracker ){
+                tracker.element.style.border = '2px solid #000';
+            }
+        }).setTracking( true );
+
+        this.element.appendChild( element );
+
+        miniViewer = new $.Viewer( {
+            id:                     element.id,
+            tileSources:            [ viewer.tileSources[ i ] ],
+            element:                element,
+            navigatorSizeRatio:     options.sizeRatio,
+            minPixelRatio:          minPixelRatio, 
+            showNavigator:          false,
+            mouseNavEnabled:        false,
+            showNavigationControl:  false,
+            showSequenceControl:    false
+        } ); 
+
+        miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
+        miniViewer.displayRegion.id        = element.id + '-displayregion';
+        miniViewer.displayRegion.className = 'displayregion';
+
+        (function( style ){
+            style.position      = 'relative';
+            style.top           = '0px';
+            style.left          = '0px';
+            style.fontSize      = '0px';
+            style.background    = 'transparent';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.zIndex        = 999999999;
+            style.cursor        = 'default';
+            style.width         = ( viewerSize.x * options.sizeRatio + 4 ) + 'px';
+            style.height        = ( viewerSize.y * options.sizeRatio + 4 ) + 'px';
+            style.border        = '2px solid #000';
+        }( miniViewer.displayRegion.style ));
+
+        miniViewer.displayRegion.innerTracker = new $.MouseTracker({
+            element:        miniViewer.displayRegion,
+            focusHandler:   function(){
+                tracker.element.style.border = '2px solid #437AB2';
+            },
+            blurHandler:    function(){
+                tracker.element.style.border = '2px solid #000';
+            }
+        });
+
+        element.getElementsByTagName('form')[0].appendChild( miniViewer.displayRegion );
+    }
+
+};
+
+$.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
+
+    /**
+     * @function
+     * @name OpenSeadragon.Navigator.prototype.update
+     */
+    update: function( viewport ){
+
+        
+
+    }
+
+});
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripClick( tracker, position, quick, shift ) {
+    var id = tracker.element.id,
+        page = Number( id.split( '-' )[ 2 ] );
+    if( !this.dragging ){
+        this.viewer.goToPage( page );
+    }else{
+        this.dragging = false;
+    }
+};
+
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripDrag( tracker, position, delta, shift ) {
+    
+    var offsetLeft = Number(this.element.style.marginLeft.replace('px','')),
+        offsetTop = Number(this.element.style.marginTop.replace('px','')),
+        scrollWidth = Number(this.element.style.width.replace('px','')),
+        scrollHeight = Number(this.element.style.height.replace('px','')),
+        viewserSize;
+    this.dragging = true;
+    if ( this.element ) {
+        if( 'horizontal' == this.scroll ){
+            if ( -delta.x > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetLeft > -(scrollWidth - viewerSize.x)){
+                    this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                }
+            } else if ( -delta.x < 0 ) {
+                //reverse
+                if( offsetLeft < 0 ){
+                    this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }else{
+            if ( -delta.y > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetTop > -(scrollHeight - viewerSize.y)){
+                    this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                }
+            } else if ( -delta.y < 0 ) {
+                //reverse
+                if( offsetTop < 0 ){
+                    this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
+};
+
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripScroll( tracker, position, scroll, shift ) {
+    var offsetLeft = Number(this.element.style.marginLeft.replace('px','')),
+        offsetTop = Number(this.element.style.marginTop.replace('px','')),
+        scrollWidth = Number(this.element.style.width.replace('px','')),
+        scrollHeight = Number(this.element.style.height.replace('px','')),
+        viewserSize;
+    if ( this.element ) {
+        if( 'horizontal' == this.scroll ){
+            if ( scroll > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetLeft > -(scrollWidth - viewerSize.x)){
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                }
+            } else if ( scroll < 0 ) {
+                //reverse
+                if( offsetLeft < 0 ){
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }else{
+            if ( scroll < 0 ) {
+                //scroll up
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetTop > viewerSize.y - scrollHeight  ){
+                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                }
+            } else if ( scroll > 0 ) {
+                //scroll dowm
+                if( offsetTop < 0 ){
+                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+    //cancels event
+    return false;
+};
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripEnter( tracker ) {
+
+    $.setElementOpacity(tracker.element, 0.8);
+
+    tracker.element.style.border = '1px solid #555';
+    tracker.element.style.background = '#000';
+
+    if( 'horizontal' == this.scroll ){
+
+        tracker.element.style.paddingTop = "0px";
+        tracker.element.style.marginBottom = "0px";
+
+    } else {
+        
+        tracker.element.style.paddingRight = "0px";
+        tracker.element.style.marginLeft = "0px";
+
+    }
+};
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripExit( tracker ) {
+
+    var viewerSize = $.getElementSize( this.viewer.element );
+
+    $.setElementOpacity(tracker.element, 0.4);
+    tracker.element.style.border = 'none';
+    tracker.element.style.background = '#fff';
+    
+    if( 'horizontal' == this.scroll ){
+    
+        tracker.element.style.paddingTop = "10px";
+        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.9 ) + "px";
+    
+    } else {
+    
+        tracker.element.style.paddingRight = "10px";
+        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.9 )+ "px";
+    
+    }
+};
+
+
+}( OpenSeadragon ));
 (function( $ ){
 
 /**
@@ -8266,14 +8708,14 @@ $.Viewport.prototype = {
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-        this.homeBounds     = new $.Rect( 
-            0, 
-            0, 
-            1, 
-            this.contentAspectY
-        );
-        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
+        this.fitWidthBounds = new $.Rect( 0, 0, this.contentAspectX, 1 );
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+
+        if( this.contentSize.x <= this.contentSize.y ){
+            this.homeBounds = this.fitHeightBounds;
+        } else {
+            this.homeBounds = this.fitWidthBounds;
+        }
     },
 
     /**
@@ -8295,7 +8737,7 @@ $.Viewport.prototype = {
      * @function
      */
     getMinZoom: function() {
-        var homeZoom = this.getHomeZoom()
+        var homeZoom = this.getHomeZoom(),
             zoom = this.minZoomImageRatio * homeZoom;
 
         return Math.min( zoom, homeZoom );
@@ -8528,7 +8970,11 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     goHome: function( immediately ) {
-        return this.fitVertically( immediately );
+        if( this.contentSize.x <= this.contentSize.y ){
+            return this.fitVertically( immediately );
+        } else {
+            return this.fitHorizontally( immediately );
+        }
     },
 
     /**
@@ -8576,7 +9022,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.fitWidthBounds, immediately );
+        this.fitBounds( this.homeBounds, immediately );
     },
 
 

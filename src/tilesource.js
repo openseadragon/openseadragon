@@ -118,12 +118,13 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.tileSize    = options.tileSize ? options.tileSize : 0;
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
-        this.maxLevel    = options.maxLevel ? options.maxLevel : (
-            ( options.width && options.height ) ? Math.ceil( 
-                Math.log( Math.max( options.width, options.height ) ) / 
-                Math.log( 2 ) 
-            ) : 0
-        );
+        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ? 
+            options.maxLevel : (
+                ( options.width && options.height ) ? Math.ceil( 
+                    Math.log( Math.max( options.width, options.height ) ) / 
+                    Math.log( 2 ) 
+                ) : 0
+            );
         if( callback && $.isFunction( callback ) ){
             callback( this );
         }
@@ -290,9 +291,8 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded 
      *      from if any.
-     * @return {Array} args - Returns an array containing the normalized values
-     *      of the positional parameters for the constructor of the implementing
-     *      tile source.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      * @throws {Error}
      */
     configure: function( data, url ) {

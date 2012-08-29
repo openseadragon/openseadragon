@@ -4,7 +4,8 @@
 /**
  * @class
  * @extends OpenSeadragon.TileSource
- * @param {Number} width
+ * @param {Number|Object} width - the pixel width of the image or the idiomatic
+ *      options object which is used instead of positional arguments.
  * @param {Number} height
  * @param {Number} tileSize
  * @param {Number} tileOverlap
@@ -84,12 +85,12 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
      * 
      * @function
      * @name OpenSeadragon.DziTileSource.prototype.configure
-     * @param {Object|XMLDocument} configuration - the raw configuration
-     * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Array} args - positional arguments required and/or optional
-     *      for this tile sources constructor
+     * @param {Object|XMLDocument} data - the raw configuration
+     * @param {String} url - the url the data was retreived from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      */
-    configure: function( configuration, dataUrl ){
+    configure: function( data, url ){
 
         var dziPath,
             dziName,
@@ -97,20 +98,20 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             options,
             host;
 
-        if( configuration instanceof XMLDocument ){
+        if( !$.isPlainObject(data) ){
 
-            options = configureFromXML( this, configuration );
+            options = configureFromXML( this, data );
 
-        }else if( 'object' == $.type( configuration) ){
+        }else{
 
-            options = configureFromObject( this, configuration );
+            options = configureFromObject( this, data );
         }
 
-        if( dataUrl && !options.tilesUrl ){
-            if( !( 'http' == dataUrl.substring( 0, 4 ) ) ){
+        if( url && !options.tilesUrl ){
+            if( !( 'http' == url.substring( 0, 4 ) ) ){
                 host = location.protocol + '//' + location.host;
             }
-            dziPath = dataUrl.split('/');
+            dziPath = url.split('/');
             dziName = dziPath.pop();
             dziName = dziName.substring(0, dziName.indexOf('.'));
             dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
@@ -197,10 +198,10 @@ function configureFromXML( tileSource, xmlDoc ){
         throw new Error( $.getString( "Errors.Xml" ) );
     }
 
-    var root         = xmlDoc.documentElement,
-        rootName     = root.tagName,
-        conf         = null,
-        displayRects = [],
+    var root           = xmlDoc.documentElement,
+        rootName       = root.tagName,
+        configuration  = null,
+        displayRects   = [],
         dispRectNodes,
         dispRectNode,
         rectNode,
@@ -211,7 +212,7 @@ function configureFromXML( tileSource, xmlDoc ){
         
         try {
             sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
-            conf = {
+            configuration = {
                 Image: {
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
                     Format:      root.getAttribute( "Format" ),
@@ -225,9 +226,9 @@ function configureFromXML( tileSource, xmlDoc ){
                 }
             };
 
-            if ( !$.imageFormatSupported( conf.Image.Format ) ) {
+            if ( !$.imageFormatSupported( configuration.Image.Format ) ) {
                 throw new Error(
-                    $.getString( "Errors.ImageFormat", conf.Image.Format.toUpperCase() )
+                    $.getString( "Errors.ImageFormat", configuration.Image.Format.toUpperCase() )
                 );
             }
             
@@ -249,10 +250,10 @@ function configureFromXML( tileSource, xmlDoc ){
             }
 
             if( displayRects.length ){
-                conf.Image.DisplayRect = displayRects;
+                configuration.Image.DisplayRect = displayRects;
             }
 
-            return configureFromObject( tileSource, conf );
+            return configureFromObject( tileSource, configuration );
 
         } catch ( e ) {
             throw (e instanceof Error) ? 

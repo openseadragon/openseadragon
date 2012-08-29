@@ -169,7 +169,6 @@ $.Navigator = function( options ){
         releaseHandler:     $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
 
-    this.element.appendChild( this.displayRegion );
 
     viewer.addControl( 
         this.element, 
@@ -185,6 +184,8 @@ $.Navigator = function( options ){
     }
 
     $.Viewer.apply( this, [ options ] ); 
+
+    this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
 
 };
 

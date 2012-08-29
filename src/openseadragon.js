@@ -480,7 +480,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             panVertical:            true,
             visibilityRatio:        0.5,
             springStiffness:        5.0,
-            clickTimeThreshold:     200,
+            clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
@@ -498,6 +498,18 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorSizeRatio:     0.25,
             preserveViewport:       false,
             defaultZoomLevel:       0, 
+
+            showReferenceStrip:          false, 
+            referenceStripScroll:       'horizontal',
+            referenceStripElement:       null,
+            referenceStripHeight:        null,
+            referenceStripWidth:         null,
+            referenceStripPosition:      'BOTTOM_LEFT',
+            referenceStripSizeRatio:     0.25,
+
+            //COLLECTION VISUALIZATION SETTINGS
+            collectionRows:         3,
+            collectionScroll:       'horizontal',
 
             //EVENT RELATED CALLBACKS
             onPageChange:           null, 
@@ -1216,8 +1228,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, callback ) {
-
-
 
             var async   = true,
                 request = $.createAjaxRequest(),

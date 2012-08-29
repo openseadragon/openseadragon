@@ -12,9 +12,10 @@
 <div class="description">
     <h3>XMLHTTPRequest for LIP JSON</h3>
     <p>
-        The LIP format is implied by a tile source specified as a string
-        and which does not have the </em>.js</em> extension.  The legacy image 
-        pyramid format does not currently have an xml serialization.
+        The LIP format is implied by a tile source specified as a string (URL)
+        and which does not have the </em>.js</em> extension.  The information
+        is loaded via AJAX and inspection of the content of the url is used to
+        determine if it is JSON or XML formatted.
     </p>
 </div>
 <div class="demoarea">
@@ -225,3 +226,37 @@ OpenSeadragon({
     ...
 });
 </pre>
+
+<div class="description">
+    <h3>One example showing an image with a different aspect ratio.s</h3>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        One final example.
+    </div>
+    <div id="aspect-ratio" 
+         class="openseadragon"></div>
+</div>
+
+<script type="text/javascript">
+    // Example
+    OpenSeadragon({
+        id: "aspect-ratio",
+        prefixUrl: '/openseadragon',
+        showNavigator: true,
+        tileSources: {
+            type: 'legacy-image-pyramid',
+            levels:[{
+                url: '/openseadragon/examples/images/highsmith/09250r.jpg',
+                height: 427,
+                width:  640
+            },{
+                url: '/openseadragon/examples/images/highsmith/09250v.jpg',
+                height: 683,
+                width:  1024
+            }]
+        }
+    });
+
+</script>

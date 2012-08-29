@@ -81,18 +81,18 @@ $.LegacyTileSource.prototype = {
      * @name OpenSeadragon.DziTileSource.prototype.configure
      * @param {Object|XMLDocument} configuration - the raw configuration
      * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Array} args - positional arguments required and/or optional
-     *      for this tile sources constructor
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
      */
     configure: function( configuration, dataUrl ){
 
         var options;
 
-        if( configuration instanceof XMLDocument ){
+        if( !$.isPlainObject(configuration) ){
 
             options = configureFromXML( this, configuration );
 
-        }else if( 'object' == $.type( configuration) ){
+        }else{
 
             options = configureFromObject( this, configuration );
         }
