@@ -1,0 +1,413 @@
+(function( $ ){
+    
+/**
+ *  The CollectionDrawer is a reimplementation if the Drawer API that
+ *  focuses on allowing a viewport to be redefined as a collection 
+ *  of smaller viewports, defined by a clear number of rows and / or
+ *  columns of which each item in the matrix of viewports has its own
+ *  source.  
+ *
+ *  This idea is a reexpression of the idea of dzi collections
+ *  which allows a clearer algorithm to reuse the tile sources already
+ *  supported by OpenSeadragon, in heterogenious or homogenious
+ *  sequences just like mixed groups already supported by the viewer
+ *  for the purpose of image sequnces.
+ *
+ *  TODO:   The difficult part of this feature is figuring out how to express
+ *          this functionality as a combination of the functionality already 
+ *          provided by Drawer, Viewport, TileSource, and Navigator.  It may 
+ *          require better abstraction at those points in order to effeciently
+ *          reuse those paradigms.
+ */
+$.ReferenceStrip = function( options ){
+
+    var _this       = this,
+        viewer      = options.viewer,
+        viewerSize  = $.getElementSize( viewer.element ),
+        miniViewer,
+        minPixelRatio,
+        element,
+        i;
+    
+    //We may need to create a new element and id if they did not
+    //provide the id for the existing element
+    if( !options.id ){
+        options.id              = 'referencestrip-' + (+new Date());
+        this.element            = $.makeNeutralElement( "div" );
+        this.element.id         = options.id;
+        this.element.className  = 'referencestrip';
+    }
+
+    options = $.extend( true, {
+        sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
+        position:   $.DEFAULT_SETTINGS.referenceStripPosition,
+        scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
+        clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold
+    }, options, {
+        //required overrides
+        element:                this.element,
+        //These need to be overridden to prevent recursion since
+        //the navigator is a viewer and a viewer has a navigator
+        showNavigator:          false,
+        mouseNavEnabled:        false,
+        showNavigationControl:  false,
+        showSequenceControl:    false
+    });
+
+    $.extend(this, options);
+
+    minPixelRatio = Math.min(
+        options.sizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
+        $.DEFAULT_SETTINGS.minPixelRatio
+    );
+
+    (function( style ){
+        style.marginTop     = '0px';
+        style.marginRight   = '0px';
+        style.marginBottom  = '0px';
+        style.marginLeft    = '0px';
+        style.left          = '0px';
+        style.bottom        = '0px';
+        style.border        = '1px solid #555';
+        style.background    = '#000';
+        style.opacity       = 0.8;
+        style.position      = 'relative';
+    }( this.element.style ));
+
+    this.viewer = viewer;
+    this.innerTracker = new $.MouseTracker({
+        element:        this.element,
+        dragHandler:    $.delegate( this, onStripDrag ),
+        scrollHandler:  $.delegate( this, onStripScroll ),
+        enterHandler:   $.delegate( this, onStripEnter ),
+        exitHandler:    $.delegate( this, onStripExit )
+    }).setTracking( true );
+
+    
+
+    //Controls the position and orientation of the reference strip and sets the  
+    //appropriate width and height
+    if( options.width && options.height ){
+        this.element.style.width  = options.width + 'px';
+        this.element.style.height = options.height + 'px';
+        viewer.addControl( 
+            this.element, 
+            $.ControlAnchor.BOTTOM_LEFT
+        );
+    } else {
+        if( "horizontal" == options.scroll ){
+            this.element.style.width = ( 
+                viewerSize.x * 
+                options.sizeRatio * 
+                viewer.tileSources.length
+            ) + ( 12 * viewer.tileSources.length ) + 'px';
+
+            this.element.style.height  = ( 
+                viewerSize.y * 
+                options.sizeRatio 
+            ) + 'px';
+
+            viewer.addControl( 
+                this.element, 
+                $.ControlAnchor.BOTTOM_LEFT
+            );
+        }else {
+            this.element.style.height = ( 
+                viewerSize.y * 
+                options.sizeRatio * 
+                viewer.tileSources.length
+            ) + ( 12 * viewer.tileSources.length ) + 'px';
+
+            this.element.style.width  = ( 
+                viewerSize.x * 
+                options.sizeRatio 
+            ) + 'px';
+
+            viewer.addControl( 
+                this.element, 
+                $.ControlAnchor.TOP_LEFT
+            );
+
+        }
+    }
+
+    for( i = 0; i < viewer.tileSources.length; i++ ){
+        
+        element = $.makeNeutralElement('div');
+        element.id = this.element.id + "-" + i;
+
+        (function(style){
+            style.width         = ( viewerSize.x * options.sizeRatio ) + 8 + 'px';
+            style.height        = ( viewerSize.y * options.sizeRatio ) + 8 + 'px';
+            style.display       = 'inline';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.border        = '2px solid #000';
+            style.background    = 'inherit';
+        }(element.style));
+
+        element.innerTracker = new $.MouseTracker({
+            element:        element,
+            clickTimeThreshold: options.clickTimeThreshold, 
+            clickDistThreshold: options.clickDistThreshold,
+            pressHandler: function( tracker ){
+                tracker.dragging = +new Date;
+            },
+            releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ){
+                var id = tracker.element.id,
+                    page = Number( id.split( '-' )[ 2 ] ),
+                    now = +new Date;
+                
+                if ( insideElementPress && 
+                     insideElementRelease && 
+                     tracker.dragging &&
+                     ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
+                    tracker.dragging = null;
+                    viewer.goToPage( page );
+                    $.getElement( tracker.element.id + '-displayregion' ).focus();
+                }
+            },
+            enterHandler: function( tracker ){
+                tracker.element.style.border = '2px solid #900';
+            },
+            exitHandler: function( tracker ){
+                tracker.element.style.border = '2px solid #000';
+            }
+        }).setTracking( true );
+
+        this.element.appendChild( element );
+
+        miniViewer = new $.Viewer( {
+            id:                     element.id,
+            tileSources:            [ viewer.tileSources[ i ] ],
+            element:                element,
+            navigatorSizeRatio:     options.sizeRatio,
+            minPixelRatio:          minPixelRatio, 
+            showNavigator:          false,
+            mouseNavEnabled:        false,
+            showNavigationControl:  false,
+            showSequenceControl:    false
+        } ); 
+
+        miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
+        miniViewer.displayRegion.id        = element.id + '-displayregion';
+        miniViewer.displayRegion.className = 'displayregion';
+
+        (function( style ){
+            style.position      = 'relative';
+            style.top           = '0px';
+            style.left          = '0px';
+            style.fontSize      = '0px';
+            style.background    = 'transparent';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.zIndex        = 999999999;
+            style.cursor        = 'default';
+            style.width         = ( viewerSize.x * options.sizeRatio + 4 ) + 'px';
+            style.height        = ( viewerSize.y * options.sizeRatio + 4 ) + 'px';
+            style.border        = '2px solid #000';
+        }( miniViewer.displayRegion.style ));
+
+        miniViewer.displayRegion.innerTracker = new $.MouseTracker({
+            element:        miniViewer.displayRegion,
+            focusHandler:   function(){
+                tracker.element.style.border = '2px solid #437AB2';
+            },
+            blurHandler:    function(){
+                tracker.element.style.border = '2px solid #000';
+            }
+        });
+
+        element.getElementsByTagName('form')[0].appendChild( miniViewer.displayRegion );
+    }
+
+};
+
+$.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
+
+    /**
+     * @function
+     * @name OpenSeadragon.Navigator.prototype.update
+     */
+    update: function( viewport ){
+
+        
+
+    }
+
+});
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripClick( tracker, position, quick, shift ) {
+    var id = tracker.element.id,
+        page = Number( id.split( '-' )[ 2 ] );
+    if( !this.dragging ){
+        this.viewer.goToPage( page );
+    }else{
+        this.dragging = false;
+    }
+};
+
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripDrag( tracker, position, delta, shift ) {
+    
+    var offsetLeft = Number(this.element.style.marginLeft.replace('px','')),
+        offsetTop = Number(this.element.style.marginTop.replace('px','')),
+        scrollWidth = Number(this.element.style.width.replace('px','')),
+        scrollHeight = Number(this.element.style.height.replace('px','')),
+        viewserSize;
+    this.dragging = true;
+    if ( this.element ) {
+        if( 'horizontal' == this.scroll ){
+            if ( -delta.x > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetLeft > -(scrollWidth - viewerSize.x)){
+                    this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                }
+            } else if ( -delta.x < 0 ) {
+                //reverse
+                if( offsetLeft < 0 ){
+                    this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }else{
+            if ( -delta.y > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetTop > -(scrollHeight - viewerSize.y)){
+                    this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                }
+            } else if ( -delta.y < 0 ) {
+                //reverse
+                if( offsetTop < 0 ){
+                    this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
+};
+
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripScroll( tracker, position, scroll, shift ) {
+    var offsetLeft = Number(this.element.style.marginLeft.replace('px','')),
+        offsetTop = Number(this.element.style.marginTop.replace('px','')),
+        scrollWidth = Number(this.element.style.width.replace('px','')),
+        scrollHeight = Number(this.element.style.height.replace('px','')),
+        viewserSize;
+    if ( this.element ) {
+        if( 'horizontal' == this.scroll ){
+            if ( scroll > 0 ) {
+                //forward
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetLeft > -(scrollWidth - viewerSize.x)){
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                }
+            } else if ( scroll < 0 ) {
+                //reverse
+                if( offsetLeft < 0 ){
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }else{
+            if ( scroll < 0 ) {
+                //scroll up
+                viewerSize = $.getElementSize( this.viewer.canvas );
+                if( offsetTop > viewerSize.y - scrollHeight  ){
+                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                }
+            } else if ( scroll > 0 ) {
+                //scroll dowm
+                if( offsetTop < 0 ){
+                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+    //cancels event
+    return false;
+};
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripEnter( tracker ) {
+
+    $.setElementOpacity(tracker.element, 0.8);
+
+    tracker.element.style.border = '1px solid #555';
+    tracker.element.style.background = '#000';
+
+    if( 'horizontal' == this.scroll ){
+
+        tracker.element.style.paddingTop = "0px";
+        tracker.element.style.marginBottom = "0px";
+
+    } else {
+        
+        tracker.element.style.paddingRight = "0px";
+        tracker.element.style.marginLeft = "0px";
+
+    }
+};
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onStripExit( tracker ) {
+
+    var viewerSize = $.getElementSize( this.viewer.element );
+
+    $.setElementOpacity(tracker.element, 0.4);
+    tracker.element.style.border = 'none';
+    tracker.element.style.background = '#fff';
+    
+    if( 'horizontal' == this.scroll ){
+    
+        tracker.element.style.paddingTop = "10px";
+        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.9 ) + "px";
+    
+    } else {
+    
+        tracker.element.style.paddingRight = "10px";
+        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.9 )+ "px";
+    
+    }
+};
+
+
+}( OpenSeadragon ));
