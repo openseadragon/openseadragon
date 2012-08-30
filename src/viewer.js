@@ -305,14 +305,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             } else if ( $.isPlainObject( tileSource ) ){
                 if( $.isFunction( tileSource.getTileUrl ) ){
                     //Custom tile source
-                    customTileSource = new $.TileSource(
-                        tileSource.width,
-                        tileSource.height,
-                        tileSource.tileSize,
-                        tileSource.tileOverlap,
-                        tileSource.minLevel,
-                        tileSource.maxLevel
-                    );
+                    customTileSource = new $.TileSource(tileSource);
                     customTileSource.getTileUrl = tileSource.getTileUrl;
                     _this.open( customTileSource );
                 } else {
