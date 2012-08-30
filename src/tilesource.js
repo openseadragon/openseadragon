@@ -200,6 +200,7 @@ $.TileSource.prototype = {
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
     },
+    
 
     /**
      * Responsible for retrieving, and caching the

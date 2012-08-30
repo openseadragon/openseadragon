@@ -29,14 +29,15 @@ tiff_list = open( 'tiffs.txt', 'r' )\
     .split( '\n' )
 
 for tiff_url in tiff_list:
-
+    print tiff_url
     parts = re.match(
-        r'http://lcweb2\.loc\.gov/master/pnp/ppmsca/(\d*)/(\d*)/(\d*)u\.tif',
+        r'http://lcweb2\.loc\.gov/master/pnp/([a-z0-9]*)/([a-z0-9]*)/([a-z0-9]*)/([a-z0-9]*)u\.tif',
         tiff_url
     ).groups()
 
-    id      = parts[ 1 ]
-    fileid  = parts[ 2 ]
+    agg     = parts[ 1 ]
+    id      = parts[ 2 ]
+    fileid  = parts[ 3 ]
 
     if id not in PAGE_COUNT:
         PAGE_COUNT[ id ] = 0
@@ -48,12 +49,12 @@ for tiff_url in tiff_list:
     and not os.path.exists( dzi_files ):
 
         print 'making directory: %s' % os.path.dirname( path )
-        ensure_dir( path )
+        #ensure_dir( path )
 
         print 'downloading master tiff: %s' % tiff_url
-        tiff_file = open( path, 'wb' )
-        tiff_file.write( urllib.urlopen( tiff_url ).read() )
-        tiff_file.close()
+        #tiff_file = open( path, 'wb' )
+        #tiff_file.write( urllib.urlopen( tiff_url ).read() )
+        #tiff_file.close()
 
         print 'creating dzi: %s' % path
         # Create Deep Zoom image pyramid from source

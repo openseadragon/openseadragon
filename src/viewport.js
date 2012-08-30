@@ -74,14 +74,14 @@ $.Viewport.prototype = {
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-        this.fitWidthBounds = new $.Rect( 0, 0, this.contentAspectX, 1 );
+        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
-        if( this.contentSize.x <= this.contentSize.y ){
+        //if( this.contentSize.x <= this.contentSize.y ){
             this.homeBounds = this.fitHeightBounds;
-        } else {
-            this.homeBounds = this.fitWidthBounds;
-        }
+        //} else {
+        //    this.homeBounds = this.fitWidthBounds;
+        //}
     },
 
     /**
@@ -89,10 +89,8 @@ $.Viewport.prototype = {
      */
     getHomeZoom: function() {
         
-        var aspectFactor = Math.min( 
-            this.contentAspectX, 
-            this.contentAspectY 
-        ) / this.getAspectRatio();
+        var aspectFactor = 
+            this.contentAspectX / this.getAspectRatio();
 
         return ( aspectFactor >= 1 ) ? 
             1 : 

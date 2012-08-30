@@ -55,7 +55,7 @@ $.LegacyTileSource = function( levels ) {
     this.levels = options.levels;
 };
 
-$.LegacyTileSource.prototype = {
+$.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
@@ -131,46 +131,12 @@ $.LegacyTileSource.prototype = {
     /**
      * @function
      * @param {Number} level
-     */
-    getPixelRatio: function( level ) {
-        var imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            rx = 1.0 / imageSizeScaled.x,
-            ry = 1.0 / imageSizeScaled.y;
-
-        return new $.Point(rx, ry);
-    },
-
-    /**
-     * @function
-     * @param {Number} level
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function( level, point ) {
         return new $.Point( 0, 0 );
     },
 
-    /**
-     * @function
-     * @param {Number} level
-     * @param {Number} x
-     * @param {Number} y
-     */
-    getTileBounds: function( level, x, y ) {
-        var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            px = ( x === 0 ) ? 0 : this.levels[ level ].width,
-            py = ( y === 0 ) ? 0 : this.levels[ level ].height,
-            sx = this.levels[ level ].width,
-            sy = this.levels[ level ].height,
-            scale = 1.0 / ( this.width >= this.height  ? 
-                dimensionsScaled.y :
-                dimensionsScaled.x 
-            );
-
-        sx = Math.min( sx, dimensionsScaled.x - px );
-        sy = Math.min( sy, dimensionsScaled.y - py );
-
-        return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
-    },
 
     /**
      * This method is not implemented by this class other than to throw an Error
@@ -189,24 +155,8 @@ $.LegacyTileSource.prototype = {
             url = this.levels[ level ].url;
         }
         return url;
-    },
-
-    /**
-     * @function
-     * @param {Number} level
-     * @param {Number} x
-     * @param {Number} y
-     */
-    tileExists: function( level, x, y ) {
-        var numTiles = this.getNumTiles( level );
-        return  level >= this.minLevel && 
-                level <= this.maxLevel &&
-                x >= 0 && 
-                y >= 0 && 
-                x < numTiles.x && 
-                y < numTiles.y;
     }
-};
+});
 
 /**
  * This method removes any files from the Array which dont conform to our
