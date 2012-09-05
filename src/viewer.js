@@ -1194,6 +1194,11 @@ function updateOnce( viewer ) {
     }
 
     animated = viewer.viewport.update();
+
+    if( viewer.referenceStrip ){
+        animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
+    }
+    
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animationstart" );
         abortControlsAutoHide( viewer );

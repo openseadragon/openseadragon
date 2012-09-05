@@ -77,11 +77,7 @@ $.Viewport.prototype = {
         this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
-        //if( this.contentSize.x <= this.contentSize.y ){
-            this.homeBounds = this.fitHeightBounds;
-        //} else {
-        //    this.homeBounds = this.fitWidthBounds;
-        //}
+        this.homeBounds = this.fitHeightBounds;
     },
 
     /**

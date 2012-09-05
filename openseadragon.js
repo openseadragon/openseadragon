@@ -4491,6 +4491,11 @@ function updateOnce( viewer ) {
     }
 
     animated = viewer.viewport.update();
+
+    if( viewer.referenceStrip ){
+        animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
+    }
+    
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animationstart" );
         abortControlsAutoHide( viewer );
@@ -6739,6 +6744,9 @@ $.Rect.prototype = {
 }( OpenSeadragon ));
 (function( $ ){
     
+// dictionary from id to private properties
+var THIS = {};
+
 /**
  *  The CollectionDrawer is a reimplementation if the Drawer API that
  *  focuses on allowing a viewport to be redefined as a collection 
@@ -6793,12 +6801,18 @@ $.ReferenceStrip = function( options ){
         showSequenceControl:    false
     });
 
-    $.extend(this, options);
+    $.extend( this, options );
+
+    //Private state properties
+    THIS[ this.id ] = {
+        "animating":         false
+    };
 
     minPixelRatio = Math.min(
         options.sizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
         $.DEFAULT_SETTINGS.minPixelRatio
     );
+    this.minPixelRatio = minPixelRatio;
 
     (function( style ){
         style.marginTop     = '0px';
@@ -6809,7 +6823,7 @@ $.ReferenceStrip = function( options ){
         style.bottom        = '0px';
         style.border        = '1px solid #555';
         style.background    = '#000';
-        style.opacity       = 0.8;
+        //style.opacity       = 0.8;
         style.position      = 'relative';
     }( this.element.style ));
 
@@ -6819,7 +6833,8 @@ $.ReferenceStrip = function( options ){
         dragHandler:    $.delegate( this, onStripDrag ),
         scrollHandler:  $.delegate( this, onStripScroll ),
         enterHandler:   $.delegate( this, onStripEnter ),
-        exitHandler:    $.delegate( this, onStripExit )
+        exitHandler:    $.delegate( this, onStripExit ),
+        keyHandler:     $.delegate( this, onKeyPress )
     }).setTracking( true );
 
     
@@ -6870,14 +6885,18 @@ $.ReferenceStrip = function( options ){
         }
     }
 
+    this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 8;
+    this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
+    this.panels = [];
+
     for( i = 0; i < viewer.tileSources.length; i++ ){
         
         element = $.makeNeutralElement('div');
         element.id = this.element.id + "-" + i;
 
         (function(style){
-            style.width         = ( viewerSize.x * options.sizeRatio ) + 8 + 'px';
-            style.height        = ( viewerSize.y * options.sizeRatio ) + 8 + 'px';
+            style.width         = this.panelWidth + 'px';
+            style.height        = this.panelHeight + 'px';
             style.display       = 'inline';
             style.float         = 'left'; //Webkit
             style.cssFloat      = 'left'; //Firefox
@@ -6888,8 +6907,8 @@ $.ReferenceStrip = function( options ){
 
         element.innerTracker = new $.MouseTracker({
             element:        element,
-            clickTimeThreshold: options.clickTimeThreshold, 
-            clickDistThreshold: options.clickDistThreshold,
+            clickTimeThreshold: this.clickTimeThreshold, 
+            clickDistThreshold: this.clickDistThreshold,
             pressHandler: function( tracker ){
                 tracker.dragging = +new Date;
             },
@@ -6903,64 +6922,27 @@ $.ReferenceStrip = function( options ){
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
                     tracker.dragging = null;
-                    viewer.goToPage( page );
-                    $.getElement( tracker.element.id + '-displayregion' ).focus();
+                    if ( _this.currentSelected !== tracker.element ){
+                        if(_this.currentSelected){
+                            _this.currentSelected.style.background = '#000';
+                        }
+                        _this.currentSelected = tracker.element;
+                        _this.currentSelected.style.background = '#999';
+                        viewer.goToPage( page );
+                        $.getElement( tracker.element.id + '-displayregion' ).focus();
+                    }
                 }
-            },
-            enterHandler: function( tracker ){
-                tracker.element.style.border = '2px solid #900';
-            },
-            exitHandler: function( tracker ){
-                tracker.element.style.border = '2px solid #000';
             }
         }).setTracking( true );
 
         this.element.appendChild( element );
 
-        miniViewer = new $.Viewer( {
-            id:                     element.id,
-            tileSources:            [ viewer.tileSources[ i ] ],
-            element:                element,
-            navigatorSizeRatio:     options.sizeRatio,
-            minPixelRatio:          minPixelRatio, 
-            showNavigator:          false,
-            mouseNavEnabled:        false,
-            showNavigationControl:  false,
-            showSequenceControl:    false
-        } ); 
+        element.activePanel = false;
 
-        miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
-        miniViewer.displayRegion.id        = element.id + '-displayregion';
-        miniViewer.displayRegion.className = 'displayregion';
+        this.panels.push( element );
 
-        (function( style ){
-            style.position      = 'relative';
-            style.top           = '0px';
-            style.left          = '0px';
-            style.fontSize      = '0px';
-            style.background    = 'transparent';
-            style.float         = 'left'; //Webkit
-            style.cssFloat      = 'left'; //Firefox
-            style.styleFloat    = 'left'; //IE
-            style.zIndex        = 999999999;
-            style.cursor        = 'default';
-            style.width         = ( viewerSize.x * options.sizeRatio + 4 ) + 'px';
-            style.height        = ( viewerSize.y * options.sizeRatio + 4 ) + 'px';
-            style.border        = '2px solid #000';
-        }( miniViewer.displayRegion.style ));
-
-        miniViewer.displayRegion.innerTracker = new $.MouseTracker({
-            element:        miniViewer.displayRegion,
-            focusHandler:   function(){
-                tracker.element.style.border = '2px solid #437AB2';
-            },
-            blurHandler:    function(){
-                tracker.element.style.border = '2px solid #000';
-            }
-        });
-
-        element.getElementsByTagName('form')[0].appendChild( miniViewer.displayRegion );
     }
+    loadPanels( this, this.scroll == 'vertical' ? viewerSize.y : viewerSize.y, 0);
 
 };
 
@@ -6972,27 +6954,16 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
      */
     update: function( viewport ){
 
-        
+        if( THIS[ this.id ].animating ){
+            $.console.log('image reference strip update');
+            return true;
+        }
+        return false;
 
     }
 
 });
 
-
-/**
- * @private
- * @inner
- * @function
- */
-function onStripClick( tracker, position, quick, shift ) {
-    var id = tracker.element.id,
-        page = Number( id.split( '-' )[ 2 ] );
-    if( !this.dragging ){
-        this.viewer.goToPage( page );
-    }else{
-        this.dragging = false;
-    }
-};
 
 
 
@@ -7007,7 +6978,7 @@ function onStripDrag( tracker, position, delta, shift ) {
         offsetTop = Number(this.element.style.marginTop.replace('px','')),
         scrollWidth = Number(this.element.style.width.replace('px','')),
         scrollHeight = Number(this.element.style.height.replace('px','')),
-        viewserSize;
+        viewerSize;
     this.dragging = true;
     if ( this.element ) {
         if( 'horizontal' == this.scroll ){
@@ -7057,19 +7028,19 @@ function onStripScroll( tracker, position, scroll, shift ) {
         offsetTop = Number(this.element.style.marginTop.replace('px','')),
         scrollWidth = Number(this.element.style.width.replace('px','')),
         scrollHeight = Number(this.element.style.height.replace('px','')),
-        viewserSize;
+        viewerSize = $.getElementSize( this.viewer.canvas );
     if ( this.element ) {
         if( 'horizontal' == this.scroll ){
             if ( scroll > 0 ) {
                 //forward
-                viewerSize = $.getElementSize( this.viewer.canvas );
                 if( offsetLeft > -(scrollWidth - viewerSize.x)){
-                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 60) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - (scroll * 60) );
                 }
             } else if ( scroll < 0 ) {
                 //reverse
                 if( offsetLeft < 0 ){
-                    this.element.style.marginLeft = ( offsetLeft - (scroll * 30) ) + 'px';
+                    this.element.style.marginLeft = ( offsetLeft - (scroll * 60) ) + 'px';
                 }
             } else {
                 return false;
@@ -7077,14 +7048,14 @@ function onStripScroll( tracker, position, scroll, shift ) {
         }else{
             if ( scroll < 0 ) {
                 //scroll up
-                viewerSize = $.getElementSize( this.viewer.canvas );
                 if( offsetTop > viewerSize.y - scrollHeight  ){
-                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                    this.element.style.marginTop = ( offsetTop + (scroll * 60) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + (scroll * 60) );
                 }
             } else if ( scroll > 0 ) {
                 //scroll dowm
                 if( offsetTop < 0 ){
-                    this.element.style.marginTop = ( offsetTop + (scroll * 30) ) + 'px';
+                    this.element.style.marginTop = ( offsetTop + (scroll * 60) ) + 'px';
                 }
             } else {
                 return false;
@@ -7096,6 +7067,79 @@ function onStripScroll( tracker, position, scroll, shift ) {
 };
 
 
+function loadPanels(strip, viewerSize, scroll){
+    var panelSize,
+        activePanels,
+        miniViewer,
+        i;
+    if( 'horizontal' == strip.scroll ){
+        panelSize = strip.panelWidth;
+    }else{
+        panelSize = strip.panelHeight;
+    }
+    activePanels = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
+
+    for( i = 0; i < activePanels; i++ ){
+        element = strip.panels[ i ];
+        if ( !element.activePanel ){
+            miniViewer = new $.Viewer( {
+                id:                     element.id,
+                tileSources:            [ strip.viewer.tileSources[ i ] ],
+                element:                element,
+                navigatorSizeRatio:     strip.sizeRatio,
+                minPixelRatio:          strip.minPixelRatio, 
+                showNavigator:          false,
+                mouseNavEnabled:        false,
+                showNavigationControl:  false,
+                showSequenceControl:    false
+            } ); 
+
+            miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
+            miniViewer.displayRegion.id        = element.id + '-displayregion';
+            miniViewer.displayRegion.className = 'displayregion';
+
+            (function( style ){
+                style.position      = 'relative';
+                style.top           = '0px';
+                style.left          = '0px';
+                style.fontSize      = '0px';
+                style.background    = 'transparent';
+                style.float         = 'left'; //Webkit
+                style.cssFloat      = 'left'; //Firefox
+                style.styleFloat    = 'left'; //IE
+                style.zIndex        = 999999999;
+                style.cursor        = 'default';
+                style.width         = ( strip.panelWidth - 4 ) + 'px';
+                style.height        = ( strip.panelHeight - 4 ) + 'px';
+                style.border        = '2px solid #000';
+            }( miniViewer.displayRegion.style ));
+
+            miniViewer.displayRegion.innerTracker = new $.MouseTracker({
+                element:        miniViewer.displayRegion/*,
+                focusHandler:   function(){
+                    //tracker.element.style.border = '2px solid #437AB2';
+                    if( strip.currentSelected !== tracker.element ){
+                        tracker.element.style.background = '#ddd';
+                    }
+                },
+                blurHandler:    function(){
+                    //tracker.element.style.border = '2px solid #000';
+                    if( strip.currentSelected !== tracker.element ){
+                        tracker.element.style.background = '#000';
+                    }
+                }*/
+            });
+
+            element.getElementsByTagName('form')[ 0 ].appendChild( 
+                miniViewer.displayRegion 
+            );
+
+            element.activePanel = true;
+        }
+    }
+};
+
+
 /**
  * @private
  * @inner
@@ -7103,19 +7147,19 @@ function onStripScroll( tracker, position, scroll, shift ) {
  */
 function onStripEnter( tracker ) {
 
-    $.setElementOpacity(tracker.element, 0.8);
+    //$.setElementOpacity(tracker.element, 0.8);
 
-    tracker.element.style.border = '1px solid #555';
-    tracker.element.style.background = '#000';
+    //tracker.element.style.border = '1px solid #555';
+    //tracker.element.style.background = '#000';
 
     if( 'horizontal' == this.scroll ){
 
-        tracker.element.style.paddingTop = "0px";
+        //tracker.element.style.paddingTop = "0px";
         tracker.element.style.marginBottom = "0px";
 
     } else {
         
-        tracker.element.style.paddingRight = "0px";
+        //tracker.element.style.paddingRight = "0px";
         tracker.element.style.marginLeft = "0px";
 
     }
@@ -7131,22 +7175,65 @@ function onStripExit( tracker ) {
 
     var viewerSize = $.getElementSize( this.viewer.element );
 
-    $.setElementOpacity(tracker.element, 0.4);
-    tracker.element.style.border = 'none';
-    tracker.element.style.background = '#fff';
+    //$.setElementOpacity(tracker.element, 0.4);
+    //tracker.element.style.border = 'none';
+    //tracker.element.style.background = '#fff';
     
     if( 'horizontal' == this.scroll ){
     
-        tracker.element.style.paddingTop = "10px";
-        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.9 ) + "px";
+        //tracker.element.style.paddingTop = "10px";
+        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.8 ) + "px";
     
     } else {
     
-        tracker.element.style.paddingRight = "10px";
-        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.9 )+ "px";
+        //tracker.element.style.paddingRight = "10px";
+        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.8 )+ "px";
     
     }
 };
+
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function onKeyPress( tracker, keyCode, shiftKey ){
+    //console.log( keyCode );
+
+    switch( keyCode ){
+        case 61://=|+
+            onStripScroll.call(this, this.tracker, null, 1, null);
+            return false;
+        case 45://-|_
+            onStripScroll.call(this, this.tracker, null, -1, null);
+            return false;
+        case 48://0|)
+        case 119://w
+        case 87://W
+        case 38://up arrow
+            onStripScroll.call(this, this.tracker, null, 1, null);
+            return false;
+        case 115://s
+        case 83://S
+        case 40://down arrow
+            onStripScroll.call(this, this.tracker, null, -1, null);
+            return false;
+        case 97://a
+        case 37://left arrow
+            onStripScroll.call(this, this.tracker, null, -1, null);
+            return false;
+        case 100://d
+        case 39://right arrow
+            onStripScroll.call(this, this.tracker, null, 1, null);
+            return false;
+        default:
+            //console.log( 'navigator keycode %s', keyCode );
+            return true;
+    }
+};
+
 
 
 }( OpenSeadragon ));
@@ -8655,11 +8742,7 @@ $.Viewport.prototype = {
         this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
-        //if( this.contentSize.x <= this.contentSize.y ){
-            this.homeBounds = this.fitHeightBounds;
-        //} else {
-        //    this.homeBounds = this.fitWidthBounds;
-        //}
+        this.homeBounds = this.fitHeightBounds;
     },
 
     /**
