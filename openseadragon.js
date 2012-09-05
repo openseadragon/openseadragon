@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.70
+ * @version  OpenSeadragon 0.9.72
  *
  * @fileOverview 
  * <h2>
@@ -6978,41 +6978,38 @@ function onStripDrag( tracker, position, delta, shift ) {
         offsetTop = Number(this.element.style.marginTop.replace('px','')),
         scrollWidth = Number(this.element.style.width.replace('px','')),
         scrollHeight = Number(this.element.style.height.replace('px','')),
-        viewerSize;
+        viewerSize = $.getElementSize( this.viewer.canvas );
     this.dragging = true;
     if ( this.element ) {
         if( 'horizontal' == this.scroll ){
             if ( -delta.x > 0 ) {
                 //forward
-                viewerSize = $.getElementSize( this.viewer.canvas );
                 if( offsetLeft > -(scrollWidth - viewerSize.x)){
                     this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft + (delta.x * 2) );
                 }
             } else if ( -delta.x < 0 ) {
                 //reverse
                 if( offsetLeft < 0 ){
                     this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
                 }
-            } else {
-                return false;
             }
         }else{
             if ( -delta.y > 0 ) {
                 //forward
-                viewerSize = $.getElementSize( this.viewer.canvas );
                 if( offsetTop > -(scrollHeight - viewerSize.y)){
                     this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + (delta.y * 2) );
                 }
             } else if ( -delta.y < 0 ) {
                 //reverse
                 if( offsetTop < 0 ){
                     this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
                 }
-            } else {
-                return false;
             }
         }
     }
+    return false;
 
 };
 
@@ -7042,8 +7039,6 @@ function onStripScroll( tracker, position, scroll, shift ) {
                 if( offsetLeft < 0 ){
                     this.element.style.marginLeft = ( offsetLeft - (scroll * 60) ) + 'px';
                 }
-            } else {
-                return false;
             }
         }else{
             if ( scroll < 0 ) {
@@ -7057,8 +7052,6 @@ function onStripScroll( tracker, position, scroll, shift ) {
                 if( offsetTop < 0 ){
                     this.element.style.marginTop = ( offsetTop + (scroll * 60) ) + 'px';
                 }
-            } else {
-                return false;
             }
         }
     }
@@ -7079,7 +7072,7 @@ function loadPanels(strip, viewerSize, scroll){
     }
     activePanels = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
 
-    for( i = 0; i < activePanels; i++ ){
+    for( i = 0; i < activePanels && i < strip.panels.length; i++ ){
         element = strip.panels[ i ];
         if ( !element.activePanel ){
             miniViewer = new $.Viewer( {
