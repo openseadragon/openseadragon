@@ -71,6 +71,8 @@
         <publish page='ui-toolbar' title='Toolbar | '/>
         <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
 
+        <publish page='workspace-dzi' title='Workspace - DZI | '/>
+
         <copy todir='${WWW}' file='openseadragon.js' />
     </target>
 

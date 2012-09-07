@@ -40,10 +40,7 @@ $.Navigator = function( options ){
         showSequenceControl:    false
     });
 
-    options.minPixelRatio = Math.min(
-        options.navigatorSizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
-        $.DEFAULT_SETTINGS.minPixelRatio
-    );
+    options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
     (function( style ){
         style.marginTop     = '0px';

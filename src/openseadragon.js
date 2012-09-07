@@ -495,7 +495,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,
-            navigatorSizeRatio:     0.25,
+            navigatorSizeRatio:     0.2,
             preserveViewport:       false,
             defaultZoomLevel:       0, 
 
@@ -505,7 +505,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             referenceStripHeight:        null,
             referenceStripWidth:         null,
             referenceStripPosition:      'BOTTOM_LEFT',
-            referenceStripSizeRatio:     0.25,
+            referenceStripSizeRatio:     0.2,
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows:         3,

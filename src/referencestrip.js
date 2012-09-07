@@ -64,11 +64,7 @@ $.ReferenceStrip = function( options ){
         "animating":         false
     };
 
-    minPixelRatio = Math.min(
-        options.sizeRatio * $.DEFAULT_SETTINGS.minPixelRatio,
-        $.DEFAULT_SETTINGS.minPixelRatio
-    );
-    this.minPixelRatio = minPixelRatio;
+    this.minPixelRatio = this.viewer.minPixelRatio;
 
     (function( style ){
         style.marginTop     = '0px';
@@ -79,9 +75,10 @@ $.ReferenceStrip = function( options ){
         style.bottom        = '0px';
         style.border        = '1px solid #555';
         style.background    = '#000';
-        //style.opacity       = 0.8;
         style.position      = 'relative';
     }( this.element.style ));
+
+    $.setElementOpacity( this.element, 0.8 );
 
     this.viewer = viewer;
     this.innerTracker = new $.MouseTracker({
@@ -151,13 +148,13 @@ $.ReferenceStrip = function( options ){
         element.id = this.element.id + "-" + i;
 
         (function(style){
-            style.width         = this.panelWidth + 'px';
-            style.height        = this.panelHeight + 'px';
+            style.width         = _this.panelWidth + 'px';
+            style.height        = _this.panelHeight + 'px';
             style.display       = 'inline';
             style.float         = 'left'; //Webkit
             style.cssFloat      = 'left'; //Firefox
             style.styleFloat    = 'left'; //IE
-            style.border        = '2px solid #000';
+            style.padding       = '2px';
             style.background    = 'inherit';
         }(element.style));
 
@@ -360,23 +357,10 @@ function loadPanels(strip, viewerSize, scroll){
                 style.cursor        = 'default';
                 style.width         = ( strip.panelWidth - 4 ) + 'px';
                 style.height        = ( strip.panelHeight - 4 ) + 'px';
-                style.border        = '2px solid #000';
             }( miniViewer.displayRegion.style ));
 
             miniViewer.displayRegion.innerTracker = new $.MouseTracker({
-                element:        miniViewer.displayRegion/*,
-                focusHandler:   function(){
-                    //tracker.element.style.border = '2px solid #437AB2';
-                    if( strip.currentSelected !== tracker.element ){
-                        tracker.element.style.background = '#ddd';
-                    }
-                },
-                blurHandler:    function(){
-                    //tracker.element.style.border = '2px solid #000';
-                    if( strip.currentSelected !== tracker.element ){
-                        tracker.element.style.background = '#000';
-                    }
-                }*/
+                element:        miniViewer.displayRegion
             });
 
             element.getElementsByTagName('form')[ 0 ].appendChild( 
