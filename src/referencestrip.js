@@ -73,7 +73,7 @@ $.ReferenceStrip = function( options ){
         style.marginLeft    = '0px';
         style.left          = '0px';
         style.bottom        = '0px';
-        style.border        = '1px solid #555';
+        style.border        = '0px';
         style.background    = '#000';
         style.position      = 'relative';
     }( this.element.style ));
@@ -155,7 +155,6 @@ $.ReferenceStrip = function( options ){
             style.cssFloat      = 'left'; //Firefox
             style.styleFloat    = 'left'; //IE
             style.padding       = '2px';
-            style.background    = 'inherit';
         }(element.style));
 
         element.innerTracker = new $.MouseTracker({
@@ -349,7 +348,7 @@ function loadPanels(strip, viewerSize, scroll){
                 style.top           = '0px';
                 style.left          = '0px';
                 style.fontSize      = '0px';
-                style.background    = 'transparent';
+                style.overflow      = 'hidden';
                 style.float         = 'left'; //Webkit
                 style.cssFloat      = 'left'; //Firefox
                 style.styleFloat    = 'left'; //IE
@@ -396,6 +395,7 @@ function onStripEnter( tracker ) {
         tracker.element.style.marginLeft = "0px";
 
     }
+    return false
 };
 
 
@@ -423,6 +423,7 @@ function onStripExit( tracker ) {
         tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.8 )+ "px";
     
     }
+    return false;
 };
 
 

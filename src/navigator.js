@@ -62,6 +62,7 @@ $.Navigator = function( options ){
         style.top           = '0px';
         style.left          = '0px';
         style.fontSize      = '0px';
+        style.overflow      = 'hidden';
         style.border        = '2px solid #900';
         //TODO: IE doesnt like this property being set
         try{ style.outline  = '2px auto #900'; }catch(e){/*ignore*/}
