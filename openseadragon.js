@@ -5641,17 +5641,16 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        return ( 
-            data.Image && 
-            "http://schemas.microsoft.com/deepzoom/2008" == data.Image.xmlns
-        ) || (
-            data.documentElement &&
-            "Image" == data.documentElement.tagName &&
-            "http://schemas.microsoft.com/deepzoom/2008" ==
-                data.documentElement.namespaceURI
-        );
-    },
+        var ns;
+        if ( data.Image ) {
+            ns = data.Image.xmlns;
+        } else if ( data.documentElement && "Image" == data.documentElement.tagName ) {
+            ns = data.documentElement.namespaceURI;
+        }
 
+        return ( "http://schemas.microsoft.com/deepzoom/2008" == ns ||
+            "http://schemas.microsoft.com/deepzoom/2009" == ns );
+    },
 
     /**
      * 
