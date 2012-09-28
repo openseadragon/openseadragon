@@ -223,7 +223,7 @@
   *     is preserved when navigating between images in the sequence.
   *
   * @param {String} [options.prefixUrl='/images/']
-  *     Appends the prefixUrl to navImages paths, which is very useful
+  *     Prepends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
   *     environments.
   *
