@@ -311,11 +311,11 @@ $.Drawer.prototype = {
             };
 
             image.onload = function(){
-                finishLoadingImage( image, complete, true );
+                finishLoadingImage( image, complete, true, jobid );
             };
 
             image.onabort = image.onerror = function(){
-                finishLoadingImage( image, complete, false );
+                finishLoadingImage( image, complete, false, jobid );
             };
 
             jobid = window.setTimeout( function(){
