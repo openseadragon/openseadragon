@@ -293,11 +293,11 @@ $.Drawer.prototype = {
 
             image = new Image();
 
-            complete = function( imagesrc ){
+            complete = function( imagesrc, img ){
                 _this.downloading--;
                 if (typeof ( callback ) == "function") {
                     try {
-                        callback( image );
+                        callback( img );
                     } catch ( e ) {
                         $.console.error(
                             "%s while executing %s callback: %s", 
