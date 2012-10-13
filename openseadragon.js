@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.80
+ * @version  OpenSeadragon 0.9.81
  *
  * @fileOverview 
  * <h2>
