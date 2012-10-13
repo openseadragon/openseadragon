@@ -552,7 +552,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {Boolean}
      */
     isFullPage: function () {
-        return this.container.parentNode == document.body;
+        return this.element.parentNode == document.body;
     },
 
 
@@ -569,7 +569,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         var body            = document.body,
             bodyStyle       = body.style,
             docStyle        = document.documentElement.style,
-            containerStyle  = this.container.style,
+            containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
             oldBounds,
             newBounds,
@@ -598,7 +598,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             canvasStyle.backgroundColor = "black";
             canvasStyle.color           = "white";
 
-            containerStyle.position = "fixed";
+            //containerStyle.position = "fixed";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would 
@@ -606,6 +606,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             //them as touch events on the document body.  Thus we remove and store
             //the bodies elements and replace them when we leave full screen.
             this.previousBody = [];
+            THIS[ this.hash ].prevElementParent = this.element.parentNode;
+            THIS[ this.hash ].prevNextSibling = this.element.prevNextSibling;
+            THIS[ this.hash ].prevElementSize = $.getElementSize( this.element );
             nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
                 this.previousBody.push( body.childNodes[ 0 ] );
@@ -627,14 +630,21 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className +" fullpage"
                 );
-                this.toolbar.element.style.position = 'fixed';
+                //this.toolbar.element.style.position = 'fixed';
 
-                this.container.style.top = $.getElementSize(
-                    this.toolbar.element
-                ).y + 'px';
+                //this.container.style.top = $.getElementSize(
+                //    this.toolbar.element
+                //).y + 'px';
             }
-            body.appendChild( this.container );
-            THIS[ this.hash ].prevContainerSize = $.getWindowSize();
+            body.appendChild( this.element );
+            if( this.toolbar && this.toolbar.element ){
+                this.element.style.height = (
+                    $.getWindowSize().y - $.getElementSize( this.toolbar.element ).y
+                ) + 'px';
+            }else{
+                this.element.style.height = $.getWindowSize().y + 'px';
+            }
+            this.element.style.width = $.getWindowSize().x + 'px';
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
@@ -651,9 +661,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             canvasStyle.backgroundColor = "";
             canvasStyle.color           = "";
 
-            containerStyle.position = "relative";
-            containerStyle.zIndex   = "";
+            //containerStyle.position = "relative";
+            //containerStyle.zIndex   = "";
 
+            body.removeChild( this.element );
+            nodes = this.previousBody.length;
+            for ( i = 0; i < nodes; i++ ){
+                body.appendChild( this.previousBody.shift() );
+            }
+            THIS[ this.hash ].prevElementParent.insertBefore(
+                this.element,
+                THIS[ this.hash ].prevNextSibling
+            );
+            
             //If we've got a toolbar, we need to enable the user to use css to
             //reset it to its original state 
             if( this.toolbar && this.toolbar.element ){
@@ -665,7 +685,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className.replace('fullpage','')
                 );
-                this.toolbar.element.style.position = 'relative';
+                //this.toolbar.element.style.position = 'relative';
                 this.toolbar.parentNode.insertBefore( 
                     this.toolbar.element,
                     this.toolbar.nextSibling
@@ -673,17 +693,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 delete this.toolbar.parentNode;
                 delete this.toolbar.nextSibling;
 
-                this.container.style.top = 'auto';
+                //this.container.style.top = 'auto';
             }
 
-            body.removeChild( this.container );
-            nodes = this.previousBody.length;
-            for ( i = 0; i < nodes; i++ ){
-                body.appendChild( this.previousBody.shift() );
-            }
-            this.element.appendChild( this.container );
-            THIS[ this.hash ].prevContainerSize = $.getElementSize( this.element );
-            
+            this.element.style.height = THIS[ this.hash ].prevElementSize.y + 'px';
+            this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
+
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();      
 
@@ -816,7 +831,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 if( this.toolbar ){
                     this.toolbar.addControl( 
-                        this.navControl, 
+                        this.pagingControl, 
                         $.ControlAnchor.BOTTOM_RIGHT  
                     );
                 }else{
@@ -977,6 +992,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 page: page,
                 viewer: this
             });
+        }
+        if( this.referenceStrip ){
+            this.referenceStrip.setFocus( page );
         }
     }
 
@@ -1198,7 +1216,7 @@ function updateOnce( viewer ) {
     if( viewer.referenceStrip ){
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
     }
-    
+
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animationstart" );
         abortControlsAutoHide( viewer );

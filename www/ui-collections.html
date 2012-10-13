@@ -2,16 +2,14 @@
 
 <div class="description">
     <p>
-    A tile source collections is really just another way of viewing a
-    sequence of tile sources, though instead of viewing one at a time
-    the user is able to view many tile sources at the same time. At this
-    point in time it supports a matrix layout of N by M rows.
+    An image reference strip allows the user to quickly preview and navigate a
+    sequence of images.
     </p>
 </div>
 
 <div class="demoarea">
     <div class="demoheading">
-        A 1 by 2 tile collection.
+        Horizontal Scrolling Image Reference Strip
     </div>
     <div id="contentDiv" 
          class="openseadragon"></div>
@@ -76,12 +74,15 @@
 </script>
 
 <p>
-The relevant configuration options are shown below. Note the value for the options
-are the id of the element on the page to bind the button's action to.
+The relevant configuration options are shown below.
 </p>
 
 <pre>
-    TODO
+    OpenSeadragon({
+        ...
+        showReferenceStrip:  true,
+        ...
+    });
 </pre>
 
 <h2>example: vertical scrolling</h2>
@@ -107,8 +108,10 @@ are the id of the element on the page to bind the button's action to.
         id:            "contentDiv2",
         prefixUrl:     "/openseadragon",
         toolbar:       "toolbarDiv",
-        showReferenceStrip:   true,
-        referenceStripScroll: 'vertical',
+        springStiffness:        10,
+        showReferenceStrip:     true,
+        autoHideControls:       false,
+        referenceStripScroll:   'vertical',
         tileSources:    [{
             type: 'legacy-image-pyramid',
             levels:[{
@@ -162,5 +165,14 @@ are the id of the element on the page to bind the button's action to.
 </script>
 
 <p>
-TODO
+The relevant configuration options are shown below.
 </p>
+
+<pre>
+    OpenSeadragon({
+        ...
+        showReferenceStrip:  true,
+        referenceStripScroll:   'vertical',
+        ...
+    });
+</pre>

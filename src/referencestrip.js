@@ -174,15 +174,7 @@ $.ReferenceStrip = function( options ){
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
                     tracker.dragging = null;
-                    if ( _this.currentSelected !== tracker.element ){
-                        if(_this.currentSelected){
-                            _this.currentSelected.style.background = '#000';
-                        }
-                        _this.currentSelected = tracker.element;
-                        _this.currentSelected.style.background = '#999';
-                        viewer.goToPage( page );
-                        $.getElement( tracker.element.id + '-displayregion' ).focus();
-                    }
+                    viewer.goToPage( page );
                 }
             }
         }).setTracking( true );
@@ -195,11 +187,61 @@ $.ReferenceStrip = function( options ){
 
     }
     loadPanels( this, this.scroll == 'vertical' ? viewerSize.y : viewerSize.y, 0);
+    this.setFocus( 0 );
 
 };
 
 $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
+    setFocus: function( page ){
+        var element = $.getElement( this.element.id + '-' + page ),
+            viewerSize = $.getElementSize( this.viewer.canvas ),
+            scrollWidth = Number(this.element.style.width.replace('px','')),
+            scrollHeight = Number(this.element.style.height.replace('px','')),
+            offsetLeft = -Number(this.element.style.marginLeft.replace('px','')),
+            offsetTop = -Number(this.element.style.marginTop.replace('px','')),
+            offset;
+
+        if ( this.currentSelected !== element ){
+            if( this.currentSelected ){
+                this.currentSelected.style.background = '#000';
+            }
+            this.currentSelected = element;
+            this.currentSelected.style.background = '#999';
+            $.getElement( element.id + '-displayregion' ).focus();
+
+            if( 'horizontal' == this.scroll ){
+                //right left
+                offset = (Number(page)) * this.panelWidth;
+                if( offset > offsetLeft + viewerSize.x - this.panelWidth){
+                    offset = Math.min(offset, (scrollWidth - viewerSize.x));
+                    this.element.style.marginLeft = -offset + 'px';
+                    loadPanels( this, viewerSize.x, -offset );
+                }else if( offset < offsetLeft ){
+                    offset = Math.max(0, offset - viewerSize.x / 2);
+                    this.element.style.marginLeft = -offset + 'px';
+                    loadPanels( this, viewerSize.x, -offset );
+                }
+            }else{
+                offset = (Number(page) ) * this.panelHeight;
+                if( offset > offsetTop + viewerSize.y - this.panelHeight){
+                    offset = Math.min(offset, (scrollHeight - viewerSize.y));
+                    this.element.style.marginTop = -offset + 'px';
+                    loadPanels( this, viewerSize.y, -offset );
+                }else if( offset < offsetTop ){
+                    offset = Math.max(0, offset - viewerSize.y / 2);
+                    this.element.style.marginTop = -offset + 'px';
+                    loadPanels( this, viewerSize.y, -offset );
+                }
+            }
+
+            this.currentPage = page;
+            onStripEnter.call( this, this.innerTracker );
+        }
+    },
+    isVisibleInReferenceStrip: function( page ){
+        return true;
+    },
     /**
      * @function
      * @name OpenSeadragon.Navigator.prototype.update
@@ -314,7 +356,8 @@ function onStripScroll( tracker, position, scroll, shift ) {
 
 function loadPanels(strip, viewerSize, scroll){
     var panelSize,
-        activePanels,
+        activePanelsStart,
+        activePanelsEnd,
         miniViewer,
         i;
     if( 'horizontal' == strip.scroll ){
@@ -322,9 +365,12 @@ function loadPanels(strip, viewerSize, scroll){
     }else{
         panelSize = strip.panelHeight;
     }
-    activePanels = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
+    activePanelsStart = Math.ceil( viewerSize / panelSize ) - 1;
+    activePanelsEnd = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
+    activePanelsStart = activePanelsEnd - activePanelsEnd;
+    activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
-    for( i = 0; i < activePanels && i < strip.panels.length; i++ ){
+    for( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ){
         element = strip.panels[ i ];
         if ( !element.activePanel ){
             miniViewer = new $.Viewer( {
@@ -412,15 +458,16 @@ function onStripExit( tracker ) {
     //tracker.element.style.border = 'none';
     //tracker.element.style.background = '#fff';
     
+
     if( 'horizontal' == this.scroll ){
     
         //tracker.element.style.paddingTop = "10px";
-        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.8 ) + "px";
+        tracker.element.style.marginBottom = "-" + ( $.getElementSize( tracker.element ).y / 2 ) + "px";
     
     } else {
     
         //tracker.element.style.paddingRight = "10px";
-        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.8 )+ "px";
+        tracker.element.style.marginLeft = "-" + ( $.getElementSize( tracker.element ).x / 2 )+ "px";
     
     }
     return false;

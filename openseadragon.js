@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.76
+ * @version  OpenSeadragon 0.9.80
  *
  * @fileOverview 
  * <h2>
@@ -3849,7 +3849,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {Boolean}
      */
     isFullPage: function () {
-        return this.container.parentNode == document.body;
+        return this.element.parentNode == document.body;
     },
 
 
@@ -3866,7 +3866,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         var body            = document.body,
             bodyStyle       = body.style,
             docStyle        = document.documentElement.style,
-            containerStyle  = this.container.style,
+            containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
             oldBounds,
             newBounds,
@@ -3895,7 +3895,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             canvasStyle.backgroundColor = "black";
             canvasStyle.color           = "white";
 
-            containerStyle.position = "fixed";
+            //containerStyle.position = "fixed";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would 
@@ -3903,6 +3903,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             //them as touch events on the document body.  Thus we remove and store
             //the bodies elements and replace them when we leave full screen.
             this.previousBody = [];
+            THIS[ this.hash ].prevElementParent = this.element.parentNode;
+            THIS[ this.hash ].prevNextSibling = this.element.prevNextSibling;
+            THIS[ this.hash ].prevElementSize = $.getElementSize( this.element );
             nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
                 this.previousBody.push( body.childNodes[ 0 ] );
@@ -3924,14 +3927,21 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className +" fullpage"
                 );
-                this.toolbar.element.style.position = 'fixed';
+                //this.toolbar.element.style.position = 'fixed';
 
-                this.container.style.top = $.getElementSize(
-                    this.toolbar.element
-                ).y + 'px';
+                //this.container.style.top = $.getElementSize(
+                //    this.toolbar.element
+                //).y + 'px';
             }
-            body.appendChild( this.container );
-            THIS[ this.hash ].prevContainerSize = $.getWindowSize();
+            body.appendChild( this.element );
+            if( this.toolbar && this.toolbar.element ){
+                this.element.style.height = (
+                    $.getWindowSize().y - $.getElementSize( this.toolbar.element ).y
+                ) + 'px';
+            }else{
+                this.element.style.height = $.getWindowSize().y + 'px';
+            }
+            this.element.style.width = $.getWindowSize().x + 'px';
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();    
@@ -3948,9 +3958,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             canvasStyle.backgroundColor = "";
             canvasStyle.color           = "";
 
-            containerStyle.position = "relative";
-            containerStyle.zIndex   = "";
+            //containerStyle.position = "relative";
+            //containerStyle.zIndex   = "";
 
+            body.removeChild( this.element );
+            nodes = this.previousBody.length;
+            for ( i = 0; i < nodes; i++ ){
+                body.appendChild( this.previousBody.shift() );
+            }
+            THIS[ this.hash ].prevElementParent.insertBefore(
+                this.element,
+                THIS[ this.hash ].prevNextSibling
+            );
+            
             //If we've got a toolbar, we need to enable the user to use css to
             //reset it to its original state 
             if( this.toolbar && this.toolbar.element ){
@@ -3962,7 +3982,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className.replace('fullpage','')
                 );
-                this.toolbar.element.style.position = 'relative';
+                //this.toolbar.element.style.position = 'relative';
                 this.toolbar.parentNode.insertBefore( 
                     this.toolbar.element,
                     this.toolbar.nextSibling
@@ -3970,17 +3990,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 delete this.toolbar.parentNode;
                 delete this.toolbar.nextSibling;
 
-                this.container.style.top = 'auto';
+                //this.container.style.top = 'auto';
             }
 
-            body.removeChild( this.container );
-            nodes = this.previousBody.length;
-            for ( i = 0; i < nodes; i++ ){
-                body.appendChild( this.previousBody.shift() );
-            }
-            this.element.appendChild( this.container );
-            THIS[ this.hash ].prevContainerSize = $.getElementSize( this.element );
-            
+            this.element.style.height = THIS[ this.hash ].prevElementSize.y + 'px';
+            this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
+
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();      
 
@@ -4113,7 +4128,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 if( this.toolbar ){
                     this.toolbar.addControl( 
-                        this.navControl, 
+                        this.pagingControl, 
                         $.ControlAnchor.BOTTOM_RIGHT  
                     );
                 }else{
@@ -4274,6 +4289,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 page: page,
                 viewer: this
             });
+        }
+        if( this.referenceStrip ){
+            this.referenceStrip.setFocus( page );
         }
     }
 
@@ -4495,7 +4513,7 @@ function updateOnce( viewer ) {
     if( viewer.referenceStrip ){
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
     }
-    
+
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animationstart" );
         abortControlsAutoHide( viewer );
@@ -6916,15 +6934,7 @@ $.ReferenceStrip = function( options ){
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
                     tracker.dragging = null;
-                    if ( _this.currentSelected !== tracker.element ){
-                        if(_this.currentSelected){
-                            _this.currentSelected.style.background = '#000';
-                        }
-                        _this.currentSelected = tracker.element;
-                        _this.currentSelected.style.background = '#999';
-                        viewer.goToPage( page );
-                        $.getElement( tracker.element.id + '-displayregion' ).focus();
-                    }
+                    viewer.goToPage( page );
                 }
             }
         }).setTracking( true );
@@ -6937,11 +6947,61 @@ $.ReferenceStrip = function( options ){
 
     }
     loadPanels( this, this.scroll == 'vertical' ? viewerSize.y : viewerSize.y, 0);
+    this.setFocus( 0 );
 
 };
 
 $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
+    setFocus: function( page ){
+        var element = $.getElement( this.element.id + '-' + page ),
+            viewerSize = $.getElementSize( this.viewer.canvas ),
+            scrollWidth = Number(this.element.style.width.replace('px','')),
+            scrollHeight = Number(this.element.style.height.replace('px','')),
+            offsetLeft = -Number(this.element.style.marginLeft.replace('px','')),
+            offsetTop = -Number(this.element.style.marginTop.replace('px','')),
+            offset;
+
+        if ( this.currentSelected !== element ){
+            if( this.currentSelected ){
+                this.currentSelected.style.background = '#000';
+            }
+            this.currentSelected = element;
+            this.currentSelected.style.background = '#999';
+            $.getElement( element.id + '-displayregion' ).focus();
+
+            if( 'horizontal' == this.scroll ){
+                //right left
+                offset = (Number(page)) * this.panelWidth;
+                if( offset > offsetLeft + viewerSize.x - this.panelWidth){
+                    offset = Math.min(offset, (scrollWidth - viewerSize.x));
+                    this.element.style.marginLeft = -offset + 'px';
+                    loadPanels( this, viewerSize.x, -offset );
+                }else if( offset < offsetLeft ){
+                    offset = Math.max(0, offset - viewerSize.x / 2);
+                    this.element.style.marginLeft = -offset + 'px';
+                    loadPanels( this, viewerSize.x, -offset );
+                }
+            }else{
+                offset = (Number(page) ) * this.panelHeight;
+                if( offset > offsetTop + viewerSize.y - this.panelHeight){
+                    offset = Math.min(offset, (scrollHeight - viewerSize.y));
+                    this.element.style.marginTop = -offset + 'px';
+                    loadPanels( this, viewerSize.y, -offset );
+                }else if( offset < offsetTop ){
+                    offset = Math.max(0, offset - viewerSize.y / 2);
+                    this.element.style.marginTop = -offset + 'px';
+                    loadPanels( this, viewerSize.y, -offset );
+                }
+            }
+
+            this.currentPage = page;
+            onStripEnter.call( this, this.innerTracker );
+        }
+    },
+    isVisibleInReferenceStrip: function( page ){
+        return true;
+    },
     /**
      * @function
      * @name OpenSeadragon.Navigator.prototype.update
@@ -7056,7 +7116,8 @@ function onStripScroll( tracker, position, scroll, shift ) {
 
 function loadPanels(strip, viewerSize, scroll){
     var panelSize,
-        activePanels,
+        activePanelsStart,
+        activePanelsEnd,
         miniViewer,
         i;
     if( 'horizontal' == strip.scroll ){
@@ -7064,9 +7125,12 @@ function loadPanels(strip, viewerSize, scroll){
     }else{
         panelSize = strip.panelHeight;
     }
-    activePanels = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
+    activePanelsStart = Math.ceil( viewerSize / panelSize ) - 1;
+    activePanelsEnd = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
+    activePanelsStart = activePanelsEnd - activePanelsEnd;
+    activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
-    for( i = 0; i < activePanels && i < strip.panels.length; i++ ){
+    for( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ){
         element = strip.panels[ i ];
         if ( !element.activePanel ){
             miniViewer = new $.Viewer( {
@@ -7154,15 +7218,16 @@ function onStripExit( tracker ) {
     //tracker.element.style.border = 'none';
     //tracker.element.style.background = '#fff';
     
+
     if( 'horizontal' == this.scroll ){
     
         //tracker.element.style.paddingTop = "10px";
-        tracker.element.style.marginBottom = "-" + ( Math.floor(viewerSize.y*this.sizeRatio)*0.8 ) + "px";
+        tracker.element.style.marginBottom = "-" + ( $.getElementSize( tracker.element ).y / 2 ) + "px";
     
     } else {
     
         //tracker.element.style.paddingRight = "10px";
-        tracker.element.style.marginLeft = "-" + ( Math.floor(viewerSize.x*this.sizeRatio)*0.8 )+ "px";
+        tracker.element.style.marginLeft = "-" + ( $.getElementSize( tracker.element ).x / 2 )+ "px";
     
     }
     return false;
