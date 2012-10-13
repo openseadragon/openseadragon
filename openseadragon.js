@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.81
+ * @version  OpenSeadragon 0.9.82
  *
  * @fileOverview 
  * <h2>
@@ -6968,11 +6968,10 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
             }
             this.currentSelected = element;
             this.currentSelected.style.background = '#999';
-            $.getElement( element.id + '-displayregion' ).focus();
 
             if( 'horizontal' == this.scroll ){
                 //right left
-                offset = (Number(page)) * this.panelWidth;
+                offset = (Number(page)) * ( this.panelWidth + 3 );
                 if( offset > offsetLeft + viewerSize.x - this.panelWidth){
                     offset = Math.min(offset, (scrollWidth - viewerSize.x));
                     this.element.style.marginLeft = -offset + 'px';
@@ -6983,7 +6982,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
                     loadPanels( this, viewerSize.x, -offset );
                 }
             }else{
-                offset = (Number(page) ) * this.panelHeight;
+                offset = (Number(page) ) * ( this.panelHeight + 3 );
                 if( offset > offsetTop + viewerSize.y - this.panelHeight){
                     offset = Math.min(offset, (scrollHeight - viewerSize.y));
                     this.element.style.marginTop = -offset + 'px';
@@ -6996,11 +6995,9 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
             }
 
             this.currentPage = page;
+            $.getElement( element.id + '-displayregion' ).focus();
             onStripEnter.call( this, this.innerTracker );
         }
-    },
-    isVisibleInReferenceStrip: function( page ){
-        return true;
     },
     /**
      * @function
@@ -7046,6 +7043,7 @@ function onStripDrag( tracker, position, delta, shift ) {
                 //reverse
                 if( offsetLeft < 0 ){
                     this.element.style.marginLeft = ( offsetLeft + (delta.x * 2) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft + (delta.x * 2) );
                 }
             }
         }else{
@@ -7059,6 +7057,7 @@ function onStripDrag( tracker, position, delta, shift ) {
                 //reverse
                 if( offsetTop < 0 ){
                     this.element.style.marginTop = ( offsetTop + (delta.y * 2) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + (delta.y * 2) );
                 }
             }
         }
@@ -7092,6 +7091,7 @@ function onStripScroll( tracker, position, scroll, shift ) {
                 //reverse
                 if( offsetLeft < 0 ){
                     this.element.style.marginLeft = ( offsetLeft - (scroll * 60) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - (scroll * 60) );
                 }
             }
         }else{
@@ -7105,6 +7105,7 @@ function onStripScroll( tracker, position, scroll, shift ) {
                 //scroll dowm
                 if( offsetTop < 0 ){
                     this.element.style.marginTop = ( offsetTop + (scroll * 60) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + (scroll * 60) );
                 }
             }
         }
@@ -7125,9 +7126,9 @@ function loadPanels(strip, viewerSize, scroll){
     }else{
         panelSize = strip.panelHeight;
     }
-    activePanelsStart = Math.ceil( viewerSize / panelSize ) - 1;
+    activePanelsStart = Math.ceil( viewerSize / panelSize ) + 5;
     activePanelsEnd = Math.ceil( (Math.abs(scroll) + viewerSize ) / panelSize ) + 1;
-    activePanelsStart = activePanelsEnd - activePanelsEnd;
+    activePanelsStart = activePanelsEnd - activePanelsStart;
     activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
     for( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ){
