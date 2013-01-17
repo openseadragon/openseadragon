@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Version: $Id: build.xml 495 2011-07-07 20:14:37Z chth $ -->
 <project name="openseadragon" 
-         default="www">
+         default="build">
 
 	<tstamp/>
     
