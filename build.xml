@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Version: $Id: build.xml 495 2011-07-07 20:14:37Z chth $ -->
 <project name="openseadragon" 
-         default="www">
+         default="build">
 
 	<tstamp/>
     
@@ -72,8 +72,6 @@
         <publish page='ui-reference-strip' title='Image Reference Strip | '/>
         <publish page='ui-toolbar' title='Toolbar | '/>
         <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
-
-        <publish page='workspace-dzi' title='Workspace - DZI | '/>
 
         <publish page='developer-debug-mode' title='Developer Tools - Debug Mode | '/>
 
