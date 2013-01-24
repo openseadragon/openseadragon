@@ -1,8 +1,12 @@
-== OpenSeadragon
+== OpenSeadragon 
 
 This project is a fork of the OpenSeadragon project at http://openseadragon.codeplex.com/
 
 We are forking it primarily to do heavy clean-up on the code base, simplify the build, and see what happens from there.
+
+== On the Web
+
+[ Current url: http://thatcher.github.com/openseadragon/ ]
 
 == Building from Source
 
