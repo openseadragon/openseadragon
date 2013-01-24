@@ -105,10 +105,10 @@ $.Rect.prototype = {
      */
     toString: function() {
         return "[" + 
-            this.x + "," + 
-            this.y + "," + 
-            this.width + "x" +
-            this.height + 
+            Math.round(this.x*100) + "," + 
+            Math.round(this.y*100) + "," + 
+            Math.round(this.width*100) + "x" +
+            Math.round(this.height*100) + 
         "]";
     }
 };

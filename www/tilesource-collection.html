@@ -1,0 +1,505 @@
+<h2>
+    example: tilesource-collection *NOTE* UNDER DEVELOPMENT
+</h2>
+<p>
+    The image collection is a major hurdle for OpenSeadragon. It allows arbitrarily 
+    large sets of tile sources, of mixed types, to be used to easily visualize the
+    group as 'wall' or 'grid'.  Many core features are available for preview now, though
+    they may change soon. Many additional features are under development.
+</p>
+<p>
+    KNOWN ISSUE:<br/>
+    This implementation does not support plain html rendering techniques, eg canvas 
+    is required for smooth, regular rendering.  The plain html image rendering support, 
+    for IE and small mobile devices should be done soon.
+</p>
+
+<div class="description">
+    <h3>A basic single row tile source collection.</h3>
+    <p>
+        Just a simple row of tile sources visualized as a collection.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        One row, mixed tile sources..
+    </div>
+    <div id="example-tilesource-collection" 
+         class="openseadragon" >
+    </div>
+    <p>
+        No doubt this makes OpenSeadragon into a whole new platform for deepzoom
+        image visualization.
+    </p>
+<pre>
+OpenSeadragon({
+    ...
+    collectionMode:     true,
+    collectionRows:     1, 
+    collectionTileSize: 1024,
+    collectionTileMargin: 256,
+    ...
+});</pre>
+</div>
+<script type="text/javascript">
+    OpenSeadragon({
+        id:                 "example-tilesource-collection",
+        prefixUrl:          "/openseadragon",
+        //debugMode:          true,
+        showNavigator:      false,
+        minPixelRatio:      0.0,
+        collectionMode:     true,
+        collectionRows:     1, 
+        collectionTileSize: 1024,
+        collectionTileMargin: 256,
+        //collectionLayout:   'vertical',
+        //defaultZoomLevel:   1,
+        //wrapHorizontal: true,
+        //wrapVertical: true,
+        tileSources: [
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05954.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05955.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05956.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05957.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05958.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05959.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05960.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05961.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05962.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05963.dzi", 
+        {
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0001v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0002q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0002r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0002v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0003q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0003r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0003v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0004q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0004r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0004v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0005q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0005r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0005v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0006q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0006r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0006v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0007q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0007r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0007v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0008q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0008r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0008v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0009q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0009r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0009v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0010q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0010r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0010v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        }/*,{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0011q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0011r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0011v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0012q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0012r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0012v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0013q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0013r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0013v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0014q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0014r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0014v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0015q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0015r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0015v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0016q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0016r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0016v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0017q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0017r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0017v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0018q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0018r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0018v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0019q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0019r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0019v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0020q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0020r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0020v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0021q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0021r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0021v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0022q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0022r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0022v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0023q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0023r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0023v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0024q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0024r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0024v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0025q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0025r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0025v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0026q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0026r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0026v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        },{
+            type: 'legacy-image-pyramid',
+            levels: [{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0027q.jpg',
+                height: 889,
+                width:  600
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0027r.jpg',
+                height: 2201,
+                width:  1485
+            },{
+                url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0027v.jpg',
+                height: 4402,
+                width:  2970
+                
+            }]
+        }*/]
+    });
+</script>
+

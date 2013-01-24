@@ -468,7 +468,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             tileHost:               null,
              
             //INTERFACE FEATURES
-            debugMode:              true,
             animationTime:          1.5,
             blendTime:              0.1,
             alwaysBlend:            false,
@@ -478,6 +477,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             wrapVertical:           false,
             panHorizontal:          true,
             panVertical:            true,
+
             visibilityRatio:        0.5,
             springStiffness:        5.0,
             clickTimeThreshold:     300,
@@ -485,19 +485,21 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
+            
             showNavigationControl:  true,
             showSequenceControl:    true,
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
+            preserveViewport:       false,
+            defaultZoomLevel:       0, 
+
             showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
-            preserveViewport:       false,
-            defaultZoomLevel:       0, 
 
             showReferenceStrip:          false, 
             referenceStripScroll:       'horizontal',
@@ -508,8 +510,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             referenceStripSizeRatio:     0.2,
 
             //COLLECTION VISUALIZATION SETTINGS
-            collectionRows:         3,
-            collectionScroll:       'horizontal',
+            collectionRows:         3, //or columns depending on layout
+            collectionLayout:       'horizontal', //vertical
+            collectionMode:         false,
+            collectionTileSize:     800,
 
             //EVENT RELATED CALLBACKS
             onPageChange:           null, 
@@ -560,7 +564,11 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                     HOVER:  '/images/next_hover.png',
                     DOWN:   '/images/next_pressed.png'
                 }
-            }
+            },
+
+            //DEVELOPER SETTINGS
+            debugMode:              false,
+            debugGridColor:         '#437AB2'
         },
 
 

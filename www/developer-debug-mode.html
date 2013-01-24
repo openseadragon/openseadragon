@@ -1,0 +1,39 @@
+<h2>developer: debug mode</h2>
+
+<div class="description">
+  Enabling developer mode provides some in-context information
+  about the tiles being drawn in a given viewport. <br/><br/>
+  Currently this is only implemented for browsers supporting 
+  HTML Canvas.
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Seadragon in debug mode.
+        <span id='consolelog'></span>
+    </div>
+    <div id="contentDiv" class="openseadragon"></div>
+</div>
+
+<script type="text/javascript">
+    // Example
+    OpenSeadragon({
+        id:              "contentDiv",
+        prefixUrl:       "/openseadragon/",
+        tileSources:     "/openseadragon/examples/images/highsmith/highsmith.js",
+        showNavigator:   false, 
+        debugMode:       true
+    });
+</script>
+
+<p>
+The relevant configuration options are shown below.
+</p>
+
+<pre>
+    OpenSeadragon({
+        ...
+        debugMode:  true,
+        ...
+    });
+</pre>

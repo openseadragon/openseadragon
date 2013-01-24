@@ -72,7 +72,8 @@ $.Drawer = function( options ) {
         updateAgain:    true,
 
         //internal state / configurable settings 
-        overlays:       [],
+        overlays:           [],
+        collectionOverlays: {},
 
         //configurable settings
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
@@ -83,7 +84,8 @@ $.Drawer = function( options ) {
         immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
         blendTime:          $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio
+        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
+        debugMode:          $.DEFAULT_SETTINGS.debugMode
 
     }, options );
 
@@ -129,7 +131,7 @@ $.Drawer = function( options ) {
             }( this, this.overlays[ i ] ));
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
-            
+            //TODO
         }
     }
 
@@ -937,21 +939,150 @@ function drawOverlay( viewport, overlay, container ){
 
 function drawTiles( drawer, lastDrawn ){
     var i, 
-        tile;
+        tile,
+        tileKey,
+        viewer,
+        viewport,
+        position,
+        tileSource,
+        collectionTileSource;
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
 
-        //TODO: get rid of this if by determining the tile draw method once up
-        //      front and defining the appropriate 'draw' function
-        if ( USE_CANVAS ) {
-            tile.drawCanvas( drawer.context );
-        } else {
-            tile.drawHTML( drawer.canvas );
+        if( drawer.debugMode ){
+            try{
+                drawDebugInfo( drawer, tile, lastDrawn.length, i );
+            }catch(e){
+                $.console.error(e);
+            }
         }
+        
+        //We dont actually 'draw' a collection tile, rather its used to house
+        //an overlay which does the drawing in its own viewport
+        if( drawer.viewport.collectionMode ){
+            tileKey = tile.x + '/' + tile.y;
+            viewport = drawer.viewport;
+            collectionTileSource = viewport.collectionTileSource;
+            if( !drawer.collectionOverlays[ tileKey ] ){
+                position = collectionTileSource.layout == 'horizontal' ? 
+                    tile.x + ( tile.y * collectionTileSource.tilesPerRow ) :
+                    tile.y + ( tile.x * collectionTileSource.tilesPerRow ),
+                tileSource = position < collectionTileSource.tileSources.length ?
+                    collectionTileSource.tileSources[ position ] :
+                    null;
+                //$.console.log("Rendering collection tile [%s] %s", position, tileKey);
+                if( tileSource ){
+                    drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
+                        element:               $.makeNeutralElement( "div" ),
+                        mouseNavEnabled:       false,
+                        showNavigator:         false,
+                        showSequenceControl:   false,
+                        showNavigationControl: false,
+                        //visibilityRatio:       1,
+                        //debugMode:             true,
+                        //debugGridColor:        'red',
+                        tileSources: [
+                            tileSource
+                        ]
+                    });
+                    
+                    (function(style){
+                        style['-webkit-box-reflect'] = 
+                            'below 0px -webkit-gradient('+
+                                'linear,left '+
+                                'top,left '+
+                                'bottom,from(transparent),color-stop(60%,transparent),to(rgba(255,255,255,0.4))'+
+                            ')';
+                        style['border'] = '1px solid rgba(255,255,255,0.2)';
+                        //style['borderRight'] = '1px solid #fff';
+                    }(viewer.element.style));
 
-        tile.beingDrawn = true;
+                    drawer.addOverlay(
+                        viewer.element,
+                        tile.bounds
+                    );  
+                }
+
+            }else{
+                viewer = drawer.collectionOverlays[ tileKey ];
+                if( viewer.viewport ){
+                    viewer.viewport.resize( tile.size, true );
+                    viewer.viewport.goHome( true );
+                }
+            }
+
+        } else {
+
+            if ( USE_CANVAS ) {
+                tile.drawCanvas( drawer.context );
+            } else {
+                tile.drawHTML( drawer.canvas );
+            }
+
+            tile.beingDrawn = true;
+        }
     }
 };
+
+
+function drawDebugInfo( drawer, tile, count, i ){
+
+    if ( USE_CANVAS ) {
+        drawer.context.lineWidth = 2;
+        drawer.context.font = 'small-caps bold 12px ariel';
+        drawer.context.strokeStyle = drawer.debugGridColor;
+        drawer.context.fillStyle = drawer.debugGridColor;
+        drawer.context.strokeRect( 
+            tile.position.x, 
+            tile.position.y, 
+            tile.size.x, 
+            tile.size.y 
+        );
+        if( tile.x == 0 && tile.y == 0 ){
+            drawer.context.fillText(
+                "Zoom: " + drawer.viewport.getZoom(),
+                tile.position.x, 
+                tile.position.y - 30
+            );
+            drawer.context.fillText(
+                "Pan: " + drawer.viewport.getBounds().toString(), 
+                tile.position.x, 
+                tile.position.y - 20
+            );
+        }
+        drawer.context.fillText(
+            "Level: " + tile.level,
+            tile.position.x + 10, 
+            tile.position.y + 20
+        );
+        drawer.context.fillText(
+            "Column: " + tile.x,
+            tile.position.x + 10, 
+            tile.position.y + 30
+        );
+        drawer.context.fillText(
+            "Row: " + tile.y,
+            tile.position.x + 10, 
+            tile.position.y + 40
+        );
+        drawer.context.fillText(
+            "Order: " + i + " of " + count,
+            tile.position.x + 10, 
+            tile.position.y + 50
+        );
+        drawer.context.fillText(
+            "Size: " + tile.size.toString(),
+            tile.position.x + 10, 
+            tile.position.y + 60
+        );
+        drawer.context.fillText(
+            "Position: " + tile.position.toString(),
+            tile.position.x + 10, 
+            tile.position.y + 70
+        );
+    }
+};
+
 
 }( OpenSeadragon ));

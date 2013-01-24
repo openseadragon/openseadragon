@@ -65,7 +65,7 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
         style.border        = '2px solid #900';
         //TODO: IE doesnt like this property being set
-        try{ style.outline  = '2px auto #900'; }catch(e){/*ignore*/}
+        //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
@@ -99,7 +99,7 @@ $.Navigator = function( options ){
             _this.viewer.setControlsEnabled( true );
             (function( style ){
                 style.border        = '2px solid #437AB2';
-                style.outline       = '2px auto #437AB2';
+                //style.outline       = '2px auto #437AB2';
             }( this.element.style ));
 
         },
@@ -107,7 +107,7 @@ $.Navigator = function( options ){
             _this.viewer.setControlsEnabled( false );
             (function( style ){
                 style.border        = '2px solid #900';
-                style.outline       = '2px auto #900';
+                //style.outline       = '2px auto #900';
             }( this.element.style ));
         },
         keyHandler:         function(tracker, keyCode, shiftKey){

@@ -135,7 +135,7 @@ $.Point.prototype = {
      *  vector components
      */
     toString: function() {
-        return "(" + this.x + "," + this.y + ")";
+        return "(" + Math.round(this.x) + "," + Math.round(this.y) + ")";
     }
 };
 

@@ -1,5 +1,5 @@
 /**
- * @version  OpenSeadragon 0.9.82
+ * @version  OpenSeadragon 0.9.90
  *
  * @fileOverview 
  * <h2>
@@ -468,7 +468,6 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             tileHost:               null,
              
             //INTERFACE FEATURES
-            debugMode:              true,
             animationTime:          1.5,
             blendTime:              0.1,
             alwaysBlend:            false,
@@ -478,6 +477,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             wrapVertical:           false,
             panHorizontal:          true,
             panVertical:            true,
+
             visibilityRatio:        0.5,
             springStiffness:        5.0,
             clickTimeThreshold:     300,
@@ -485,19 +485,21 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
+            
             showNavigationControl:  true,
             showSequenceControl:    true,
             controlsFadeDelay:      2000,
             controlsFadeLength:     1500,
             mouseNavEnabled:        true,
+            preserveViewport:       false,
+            defaultZoomLevel:       0, 
+
             showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
-            preserveViewport:       false,
-            defaultZoomLevel:       0, 
 
             showReferenceStrip:          false, 
             referenceStripScroll:       'horizontal',
@@ -508,8 +510,10 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             referenceStripSizeRatio:     0.2,
 
             //COLLECTION VISUALIZATION SETTINGS
-            collectionRows:         3,
-            collectionScroll:       'horizontal',
+            collectionRows:         3, //or columns depending on layout
+            collectionLayout:       'horizontal', //vertical
+            collectionMode:         false,
+            collectionTileSize:     800,
 
             //EVENT RELATED CALLBACKS
             onPageChange:           null, 
@@ -560,7 +564,11 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
                     HOVER:  '/images/next_hover.png',
                     DOWN:   '/images/next_pressed.png'
                 }
-            }
+            },
+
+            //DEVELOPER SETTINGS
+            debugMode:              false,
+            debugGridColor:         '#437AB2'
         },
 
 
@@ -3295,8 +3303,7 @@ $.Control.prototype = {
         return -1;
     };
 
-}( OpenSeadragon ));
-(function( $ ){
+}( OpenSeadragon ));(function( $ ){
      
 // dictionary from hash to private properties
 var THIS = {},
@@ -3390,6 +3397,11 @@ $.Viewer = function( options ) {
         drawer:         null,
         viewport:       null,
         navigator:      null, 
+
+        //A collection viewport is a seperate viewport used to provide 
+        //simultanious rendering of sets of tiless
+        collectionViewport:     null,
+        collectionDrawer:       null,
 
         //UI image resources
         //TODO: rename navImages to uiImages
@@ -3648,34 +3660,61 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         this.canvas.innerHTML = "";
         THIS[ this.hash ].prevContainerSize = $.getElementSize( this.container );
 
-        if( source ){
-            this.source = source;
-        }
 
-        this.viewport = this.viewport ? this.viewport : new $.Viewport({
-            containerSize:      THIS[ this.hash ].prevContainerSize, 
-            contentSize:        this.source.dimensions, 
-            springStiffness:    this.springStiffness,
-            animationTime:      this.animationTime,
-            minZoomImageRatio:  this.minZoomImageRatio,
-            maxZoomPixelRatio:  this.maxZoomPixelRatio,
-            visibilityRatio:    this.visibilityRatio,
-            wrapHorizontal:     this.wrapHorizontal,
-            wrapVertical:       this.wrapVertical
-        });
+        if( this.collectionMode ){
+            this.source = new $.TileSourceCollection({
+                rows: this.collectionRows,
+                layout: this.collectionLayout,
+                tileSize: this.collectionTileSize,
+                tileSources: this.tileSources,
+                tileMargin: this.collectionTileMargin
+            });
+            this.viewport = this.viewport ? this.viewport : new $.Viewport({
+                collectionMode:         true,
+                collectionTileSource:   this.source,
+                containerSize:          THIS[ this.hash ].prevContainerSize, 
+                contentSize:            this.source.dimensions, 
+                springStiffness:        this.springStiffness,
+                animationTime:          this.animationTime,
+                minZoomImageRatio:      1,
+                maxZoomPixelRatio:      1
+            });
+        }else{
+            if( source ){
+                this.source = source;
+            }
+            this.viewport = this.viewport ? this.viewport : new $.Viewport({
+                containerSize:      THIS[ this.hash ].prevContainerSize, 
+                contentSize:        this.source.dimensions, 
+                springStiffness:    this.springStiffness,
+                animationTime:      this.animationTime,
+                minZoomImageRatio:  this.minZoomImageRatio,
+                maxZoomPixelRatio:  this.maxZoomPixelRatio,
+                visibilityRatio:    this.visibilityRatio,
+                wrapHorizontal:     this.wrapHorizontal,
+                wrapVertical:       this.wrapVertical
+            });
+        }
         
         if( this.preserveVewport ){
             
             this.viewport.resetContentSize( this.source.dimensions );
 
-        } else if( this.defaultZoomLevel ){
+        } else if( this.defaultZoomLevel || this.collectionMode ){
 
-            this.viewport.zoomTo( 
-                this.defaultZoomLevel, 
-                this.viewport.getCenter(),  
-                true
-            );
-
+            if( this.collectionMode ){
+                /*this.viewport.zoomTo( 
+                    ( this.viewport.getMaxZoom() + this.viewport.getMaxZoom())/ 2, 
+                    this.viewport.getCenter(),
+                    true
+                );*/
+            }else{
+                this.viewport.zoomTo( 
+                    this.defaultZoomLevel, 
+                    this.viewport.getCenter(),  
+                    true
+                );
+            }
         }
 
         this.drawer = new $.Drawer({
@@ -3691,7 +3730,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             immediateRender:    this.immediateRender,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.minPixelRatio
+            minPixelRatio:      this.minPixelRatio,
+            debugMode:          this.debugMode,
+            debugGridColor:     this.debugGridColor
         });
 
         //Instantiate a navigator if configured
@@ -4729,7 +4770,7 @@ $.Navigator = function( options ){
         style.overflow      = 'hidden';
         style.border        = '2px solid #900';
         //TODO: IE doesnt like this property being set
-        try{ style.outline  = '2px auto #900'; }catch(e){/*ignore*/}
+        //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
         style.background    = 'transparent';
         style.float         = 'left'; //Webkit
         style.cssFloat      = 'left'; //Firefox
@@ -4763,7 +4804,7 @@ $.Navigator = function( options ){
             _this.viewer.setControlsEnabled( true );
             (function( style ){
                 style.border        = '2px solid #437AB2';
-                style.outline       = '2px auto #437AB2';
+                //style.outline       = '2px auto #437AB2';
             }( this.element.style ));
 
         },
@@ -4771,7 +4812,7 @@ $.Navigator = function( options ){
             _this.viewer.setControlsEnabled( false );
             (function( style ){
                 style.border        = '2px solid #900';
-                style.outline       = '2px auto #900';
+                //style.outline       = '2px auto #900';
             }( this.element.style ));
         },
         keyHandler:         function(tracker, keyCode, shiftKey){
@@ -5177,7 +5218,7 @@ $.Point.prototype = {
      *  vector components
      */
     toString: function() {
-        return "(" + this.x + "," + this.y + ")";
+        return "(" + Math.round(this.x) + "," + Math.round(this.y) + ")";
     }
 };
 
@@ -6182,6 +6223,117 @@ function configureFromObject( tileSource, configuration ){
 
 }( OpenSeadragon ));
 
+(function( $ ){
+    
+/**
+ * @class
+ * @extends OpenSeadragon.TileSourceCollection
+ */ 
+$.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
+    
+    
+    if( $.isPlainObject( tileSize ) ){
+        options = tileSize;
+    }else{
+        options = {
+            tileSize: arguments[ 0 ],
+            tileSources: arguments[ 1 ],
+            rows: arguments[ 2 ],
+            layout: arguments[ 3 ]
+        };
+    }
+
+    if( !options.layout ){
+        options.layout = 'horizontal';
+    }
+
+    var minLevel = 0,
+        levelSize = 1.0,
+        tilesPerRow = Math.ceil( options.tileSources.length / options.rows ),
+        longSide = tilesPerRow >= options.rows ?
+            tilesPerRow :
+            options.rows
+
+    if( 'horizontal' == options.layout ){
+        options.width = ( options.tileSize ) * tilesPerRow;
+        options.height = ( options.tileSize ) * options.rows;
+    } else {
+        options.height = ( options.tileSize + ( options.tileMargin * 2 ) ) * tilesPerRow;
+        options.width = ( options.tileSize + ( options.tileMargin * 2 ) ) * options.rows;
+    }
+
+    options.tileOverlap = -options.tileMargin;
+    options.tilesPerRow = tilesPerRow;
+
+    //Set min level to avoid loading sublevels since collection is a
+    //different kind of abstraction
+
+    while( levelSize  <  ( options.tileSize ) * longSide ){
+        //$.console.log( '%s levelSize %s minLevel %s', options.tileSize * longSide, levelSize, minLevel );
+        levelSize = levelSize * 2.0;
+        minLevel++;
+    }
+    options.minLevel = minLevel;
+
+    //for( var name in options ){
+    //    $.console.log( 'Collection %s %s', name, options[ name ] ); 
+    //}
+
+    $.TileSource.apply( this, [ options ] );
+
+};
+
+$.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
+
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    getTileBounds: function( level, x, y ) {
+        var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
+            px = this.tileSize * x - this.tileOverlap,
+            py = this.tileSize * y - this.tileOverlap,
+            sx = this.tileSize + 1 * this.tileOverlap,
+            sy = this.tileSize + 1 * this.tileOverlap,
+            scale = 1.0 / dimensionsScaled.x;
+
+        sx = Math.min( sx, dimensionsScaled.x - px );
+        sy = Math.min( sy, dimensionsScaled.y - py );
+
+        return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
+    },
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.TileSourceCollection.prototype.configure
+     */
+    configure: function( data, url ){
+        return
+    },
+
+
+    /**
+     * @function
+     * @name OpenSeadragon.TileSourceCollection.prototype.getTileUrl
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    getTileUrl: function( level, x, y ) {
+        //$.console.log([  level, '/', x, '_', y ].join( '' ));
+        return null;
+    }
+
+
+    
+});
+
+
+}( OpenSeadragon ));
+
 
 (function( $ ){
 
@@ -6748,10 +6900,10 @@ $.Rect.prototype = {
      */
     toString: function() {
         return "[" + 
-            this.x + "," + 
-            this.y + "," + 
-            this.width + "x" +
-            this.height + 
+            Math.round(this.x*100) + "," + 
+            Math.round(this.y*100) + "," + 
+            Math.round(this.width*100) + "x" +
+            Math.round(this.height*100) + 
         "]";
     }
 };
@@ -7822,7 +7974,8 @@ $.Drawer = function( options ) {
         updateAgain:    true,
 
         //internal state / configurable settings 
-        overlays:       [],
+        overlays:           [],
+        collectionOverlays: {},
 
         //configurable settings
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
@@ -7833,7 +7986,8 @@ $.Drawer = function( options ) {
         immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
         blendTime:          $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio
+        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
+        debugMode:          $.DEFAULT_SETTINGS.debugMode
 
     }, options );
 
@@ -7879,7 +8033,7 @@ $.Drawer = function( options ) {
             }( this, this.overlays[ i ] ));
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
-            
+            //TODO
         }
     }
 
@@ -8687,22 +8841,151 @@ function drawOverlay( viewport, overlay, container ){
 
 function drawTiles( drawer, lastDrawn ){
     var i, 
-        tile;
+        tile,
+        tileKey,
+        viewer,
+        viewport,
+        position,
+        tileSource,
+        collectionTileSource;
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
 
-        //TODO: get rid of this if by determining the tile draw method once up
-        //      front and defining the appropriate 'draw' function
-        if ( USE_CANVAS ) {
-            tile.drawCanvas( drawer.context );
-        } else {
-            tile.drawHTML( drawer.canvas );
+        if( drawer.debugMode ){
+            try{
+                drawDebugInfo( drawer, tile, lastDrawn.length, i );
+            }catch(e){
+                $.console.error(e);
+            }
         }
+        
+        //We dont actually 'draw' a collection tile, rather its used to house
+        //an overlay which does the drawing in its own viewport
+        if( drawer.viewport.collectionMode ){
+            tileKey = tile.x + '/' + tile.y;
+            viewport = drawer.viewport;
+            collectionTileSource = viewport.collectionTileSource;
+            if( !drawer.collectionOverlays[ tileKey ] ){
+                position = collectionTileSource.layout == 'horizontal' ? 
+                    tile.x + ( tile.y * collectionTileSource.tilesPerRow ) :
+                    tile.y + ( tile.x * collectionTileSource.tilesPerRow ),
+                tileSource = position < collectionTileSource.tileSources.length ?
+                    collectionTileSource.tileSources[ position ] :
+                    null;
+                //$.console.log("Rendering collection tile [%s] %s", position, tileKey);
+                if( tileSource ){
+                    drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
+                        element:               $.makeNeutralElement( "div" ),
+                        mouseNavEnabled:       false,
+                        showNavigator:         false,
+                        showSequenceControl:   false,
+                        showNavigationControl: false,
+                        //visibilityRatio:       1,
+                        //debugMode:             true,
+                        //debugGridColor:        'red',
+                        tileSources: [
+                            tileSource
+                        ]
+                    });
+                    
+                    (function(style){
+                        style['-webkit-box-reflect'] = 
+                            'below 0px -webkit-gradient('+
+                                'linear,left '+
+                                'top,left '+
+                                'bottom,from(transparent),color-stop(60%,transparent),to(rgba(255,255,255,0.4))'+
+                            ')';
+                        style['border'] = '1px solid rgba(255,255,255,0.2)';
+                        //style['borderRight'] = '1px solid #fff';
+                    }(viewer.element.style));
 
-        tile.beingDrawn = true;
+                    drawer.addOverlay(
+                        viewer.element,
+                        tile.bounds
+                    );  
+                }
+
+            }else{
+                viewer = drawer.collectionOverlays[ tileKey ];
+                if( viewer.viewport ){
+                    viewer.viewport.resize( tile.size, true );
+                    viewer.viewport.goHome( true );
+                }
+            }
+
+        } else {
+
+            if ( USE_CANVAS ) {
+                tile.drawCanvas( drawer.context );
+            } else {
+                tile.drawHTML( drawer.canvas );
+            }
+
+            tile.beingDrawn = true;
+        }
     }
 };
+
+
+function drawDebugInfo( drawer, tile, count, i ){
+
+    if ( USE_CANVAS ) {
+        drawer.context.lineWidth = 2;
+        drawer.context.font = 'small-caps bold 12px ariel';
+        drawer.context.strokeStyle = drawer.debugGridColor;
+        drawer.context.fillStyle = drawer.debugGridColor;
+        drawer.context.strokeRect( 
+            tile.position.x, 
+            tile.position.y, 
+            tile.size.x, 
+            tile.size.y 
+        );
+        if( tile.x == 0 && tile.y == 0 ){
+            drawer.context.fillText(
+                "Zoom: " + drawer.viewport.getZoom(),
+                tile.position.x, 
+                tile.position.y - 30
+            );
+            drawer.context.fillText(
+                "Pan: " + drawer.viewport.getBounds().toString(), 
+                tile.position.x, 
+                tile.position.y - 20
+            );
+        }
+        drawer.context.fillText(
+            "Level: " + tile.level,
+            tile.position.x + 10, 
+            tile.position.y + 20
+        );
+        drawer.context.fillText(
+            "Column: " + tile.x,
+            tile.position.x + 10, 
+            tile.position.y + 30
+        );
+        drawer.context.fillText(
+            "Row: " + tile.y,
+            tile.position.x + 10, 
+            tile.position.y + 40
+        );
+        drawer.context.fillText(
+            "Order: " + i + " of " + count,
+            tile.position.x + 10, 
+            tile.position.y + 50
+        );
+        drawer.context.fillText(
+            "Size: " + tile.size.toString(),
+            tile.position.x + 10, 
+            tile.position.y + 60
+        );
+        drawer.context.fillText(
+            "Position: " + tile.position.toString(),
+            tile.position.x + 10, 
+            tile.position.y + 70
+        );
+    }
+};
+
 
 }( OpenSeadragon ));
 

@@ -1,4 +1,3 @@
-
 (function( $ ){
      
 // dictionary from hash to private properties
@@ -93,6 +92,11 @@ $.Viewer = function( options ) {
         drawer:         null,
         viewport:       null,
         navigator:      null, 
+
+        //A collection viewport is a seperate viewport used to provide 
+        //simultanious rendering of sets of tiless
+        collectionViewport:     null,
+        collectionDrawer:       null,
 
         //UI image resources
         //TODO: rename navImages to uiImages
@@ -351,34 +355,61 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         this.canvas.innerHTML = "";
         THIS[ this.hash ].prevContainerSize = $.getElementSize( this.container );
 
-        if( source ){
-            this.source = source;
-        }
 
-        this.viewport = this.viewport ? this.viewport : new $.Viewport({
-            containerSize:      THIS[ this.hash ].prevContainerSize, 
-            contentSize:        this.source.dimensions, 
-            springStiffness:    this.springStiffness,
-            animationTime:      this.animationTime,
-            minZoomImageRatio:  this.minZoomImageRatio,
-            maxZoomPixelRatio:  this.maxZoomPixelRatio,
-            visibilityRatio:    this.visibilityRatio,
-            wrapHorizontal:     this.wrapHorizontal,
-            wrapVertical:       this.wrapVertical
-        });
+        if( this.collectionMode ){
+            this.source = new $.TileSourceCollection({
+                rows: this.collectionRows,
+                layout: this.collectionLayout,
+                tileSize: this.collectionTileSize,
+                tileSources: this.tileSources,
+                tileMargin: this.collectionTileMargin
+            });
+            this.viewport = this.viewport ? this.viewport : new $.Viewport({
+                collectionMode:         true,
+                collectionTileSource:   this.source,
+                containerSize:          THIS[ this.hash ].prevContainerSize, 
+                contentSize:            this.source.dimensions, 
+                springStiffness:        this.springStiffness,
+                animationTime:          this.animationTime,
+                minZoomImageRatio:      1,
+                maxZoomPixelRatio:      1
+            });
+        }else{
+            if( source ){
+                this.source = source;
+            }
+            this.viewport = this.viewport ? this.viewport : new $.Viewport({
+                containerSize:      THIS[ this.hash ].prevContainerSize, 
+                contentSize:        this.source.dimensions, 
+                springStiffness:    this.springStiffness,
+                animationTime:      this.animationTime,
+                minZoomImageRatio:  this.minZoomImageRatio,
+                maxZoomPixelRatio:  this.maxZoomPixelRatio,
+                visibilityRatio:    this.visibilityRatio,
+                wrapHorizontal:     this.wrapHorizontal,
+                wrapVertical:       this.wrapVertical
+            });
+        }
         
         if( this.preserveVewport ){
             
             this.viewport.resetContentSize( this.source.dimensions );
 
-        } else if( this.defaultZoomLevel ){
+        } else if( this.defaultZoomLevel || this.collectionMode ){
 
-            this.viewport.zoomTo( 
-                this.defaultZoomLevel, 
-                this.viewport.getCenter(),  
-                true
-            );
-
+            if( this.collectionMode ){
+                /*this.viewport.zoomTo( 
+                    ( this.viewport.getMaxZoom() + this.viewport.getMaxZoom())/ 2, 
+                    this.viewport.getCenter(),
+                    true
+                );*/
+            }else{
+                this.viewport.zoomTo( 
+                    this.defaultZoomLevel, 
+                    this.viewport.getCenter(),  
+                    true
+                );
+            }
         }
 
         this.drawer = new $.Drawer({
@@ -394,7 +425,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             immediateRender:    this.immediateRender,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.minPixelRatio
+            minPixelRatio:      this.minPixelRatio,
+            debugMode:          this.debugMode,
+            debugGridColor:     this.debugGridColor
         });
 
         //Instantiate a navigator if configured
