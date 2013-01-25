@@ -7957,10 +7957,10 @@ $.Drawer.prototype = {
      * @method
      * @param {String} src - The url of the image to load.
      * @param {Function} callback - The function that will be called with the
-     *      Image object as the only parameter, whether on 'load' or on 'abort'.
-     *      For now this means the callback is expected to distinguish between
-     *      error and success conditions by inspecting the Image object.
-     * @return {Boolean} loading - Wheter the request was submitted or ignored 
+     *      Image object as the only parameter if it was loaded successfully.
+     *      If an error occured, or the request timed out or was aborted,
+     *      the parameter is null instead.
+     * @return {Boolean} loading - Wheter the request was submitted or ignored
      *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
      */
     loadImage: function( src, callback ) {
@@ -7977,11 +7977,11 @@ $.Drawer.prototype = {
 
             image = new Image();
 
-            complete = function( imagesrc, img ){
+            complete = function( imagesrc, resultingImage ){
                 _this.downloading--;
                 if (typeof ( callback ) == "function") {
                     try {
-                        callback( img );
+                        callback( resultingImage );
                     } catch ( e ) {
                         $.console.error(
                             "%s while executing %s callback: %s", 
