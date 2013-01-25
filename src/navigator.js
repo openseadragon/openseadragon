@@ -209,6 +209,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
+                // TODO: What's this magic number mean?
                 var width = Math.abs( topleft.x - bottomright.x ) - 3;
                 var height = Math.abs( topleft.y - bottomright.y ) - 3;
                 // make sure width and height are non-negative so IE doesn't throw
