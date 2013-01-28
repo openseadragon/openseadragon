@@ -4914,8 +4914,12 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
-                style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
-                style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
+
+                var width = Math.abs( topleft.x - bottomright.x ) - 3; // TODO: What's this magic number mean?
+                var height = Math.abs( topleft.y - bottomright.y ) - 3;
+                // make sure width and height are non-negative so IE doesn't throw
+                style.width  = Math.max( width, 0 ) + 'px';
+                style.height = Math.max( height, 0 ) + 'px';
 
             }( this.displayRegion.style ));  
         } 
@@ -4991,6 +4995,7 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
 
 
 }( OpenSeadragon ));
+
 (function( $ ){
     
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look 
