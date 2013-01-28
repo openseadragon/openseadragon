@@ -8184,7 +8184,7 @@ $.Drawer.prototype = {
      *      Image object as the only parameter if it was loaded successfully.
      *      If an error occured, or the request timed out or was aborted,
      *      the parameter is null instead.
-     * @return {Boolean} loading - Wheter the request was submitted or ignored
+     * @return {Boolean} loading - Whether the request was submitted or ignored
      *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
      */
     loadImage: function( src, callback ) {
