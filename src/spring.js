@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -105,7 +106,7 @@ $.Spring.prototype = {
                     ( this.target.time  - this.start.time )
                 );
     }
-}
+};
 
 /**
  * @private
@@ -113,6 +114,6 @@ $.Spring.prototype = {
 function transform( stiffness, x ) {
     return ( 1.0 - Math.exp( stiffness * -x ) ) / 
         ( 1.0 - Math.exp( -stiffness ) );
-};
+}
 
 }( OpenSeadragon ));

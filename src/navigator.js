@@ -1,3 +1,5 @@
+/*globals OpenSeadragon */
+
 (function( $ ){
     
 /**
@@ -128,16 +130,18 @@ $.Navigator = function( options ){
                 case 119://w
                 case 87://W
                 case 38://up arrow
-                    shiftKey ?
-                        _this.viewer.viewport.zoomBy(1.1):
+                    if (shiftKey) 
+                        _this.viewer.viewport.zoomBy(1.1);
+                    else
                         _this.viewer.viewport.panBy(new $.Point(0, -0.05));
                     _this.viewer.viewport.applyConstraints();
                     return false;
                 case 115://s
                 case 83://S
                 case 40://down arrow
-                    shiftKey ?
-                        _this.viewer.viewport.zoomBy(0.9):
+                    if (shiftKey)
+                        _this.viewer.viewport.zoomBy(0.9);
+                    else
                         _this.viewer.viewport.panBy(new $.Point(0, 0.05));
                     _this.viewer.viewport.applyConstraints();
                     return false;
@@ -231,7 +235,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  */
 function onCanvasClick( tracker, position, quick, shift ) {
     this.displayRegion.focus();
-};
+}
 
 
 /**
@@ -253,7 +257,7 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             ) 
         );
     }
-};
+}
 
 
 /**
@@ -265,7 +269,7 @@ function onCanvasRelease( tracker, position, insideElementPress, insideElementRe
     if ( insideElementPress && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
-};
+}
 
 
 /**
@@ -286,7 +290,7 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     }
     //cancels event
     return false;
-};
+}
 
 
 }( OpenSeadragon ));

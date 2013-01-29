@@ -1,3 +1,5 @@
+/*globals OpenSeadragon */
+
 (function( $ ){
 
     //id hash for private properties;
@@ -55,8 +57,8 @@
          * @function
          */
         addControl: function ( element, anchor ) {
-            var element = $.getElement( element ),
-                div = null;
+            element = $.getElement( element );
+            var div = null;
 
             if ( getControlIndex( this, element ) >= 0 ) {
                 return;     // they're trying to add a duplicate control
@@ -87,8 +89,8 @@
                     element.style.paddingLeft = "0px";
                     element.style.paddingTop = "0px";
                     break;
-                case $.ControlAnchor.NONE:
                 default:
+                case $.ControlAnchor.NONE:
                     div = this.container;
                     element.style.margin = "0px";
                     element.style.padding = "0px";
@@ -107,8 +109,8 @@
          * @return {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
-            var element  = $.getElement( element ),
-                i        = getControlIndex( this, element );
+            element = $.getElement( element );
+            var i = getControlIndex( this, element );
             
             if ( i >= 0 ) {
                 this.controls[ i ].destroy();
@@ -179,6 +181,6 @@
         }
 
         return -1;
-    };
+    }
 
 }( OpenSeadragon ));

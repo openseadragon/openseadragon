@@ -1,3 +1,5 @@
+/*globals OpenSeadragon */
+
 /**
  * @version  OpenSeadragon @VERSION@
  *
@@ -239,7 +241,7 @@
   *
   * @returns {OpenSeadragon.Viewer}
   */
-OpenSeadragon = window.OpenSeadragon || function( options ){
+window.OpenSeadragon = window.OpenSeadragon || function( options ){
     
     return new OpenSeadragon.Viewer( options );
 

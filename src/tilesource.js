@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -376,7 +377,7 @@ function processResponse( xhr ){
         data = responseText;
     }
     return data;
-};
+}
 
 
 /**
