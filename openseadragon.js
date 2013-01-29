@@ -1,3 +1,5 @@
+/*globals OpenSeadragon */
+
 /**
  * @version  OpenSeadragon 0.9.90
  *
@@ -239,7 +241,7 @@
   *
   * @returns {OpenSeadragon.Viewer}
   */
-OpenSeadragon = window.OpenSeadragon || function( options ){
+window.OpenSeadragon = window.OpenSeadragon || function( options ){
     
     return new OpenSeadragon.Viewer( options );
 
@@ -1868,6 +1870,7 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
 
     
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function($){
 
@@ -1955,7 +1958,7 @@ $.EventHandler.prototype = {
 
         if ( handler ) {
             if ( !eventArgs ) {
-                eventArgs = new Object();
+                eventArgs = {};
             }
 
             handler( this, eventArgs );
@@ -1964,6 +1967,7 @@ $.EventHandler.prototype = {
 };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
         
@@ -2286,7 +2290,7 @@ $.EventHandler.prototype = {
             delegate.tracking = true;
             ACTIVE[ tracker.hash ] = tracker;
         }
-    };
+    }
 
     /**
      * Stops tracking mouse events on this element.
@@ -2321,7 +2325,7 @@ $.EventHandler.prototype = {
             delegate.tracking = false;
             delete ACTIVE[ tracker.hash ];
         }
-    };
+    }
 
     /**
      * @private
@@ -2329,7 +2333,7 @@ $.EventHandler.prototype = {
      */
     function hasMouse( tracker ) {
         return THIS[ tracker.hash ].insideElement;
-    };
+    }
 
     /**
      * Begin capturing mouse events on this element.
@@ -2375,7 +2379,7 @@ $.EventHandler.prototype = {
             }
             delegate.capturing = true;
         }
-    };
+    }
 
         
     /**
@@ -2422,7 +2426,7 @@ $.EventHandler.prototype = {
             }
             delegate.capturing = false;
         }
-    };
+    }
 
 
     /**
@@ -2436,7 +2440,7 @@ $.EventHandler.prototype = {
                 handler( ACTIVE[ otherHash ], event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2455,7 +2459,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2474,7 +2478,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
     
     /**
@@ -2494,7 +2498,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2541,7 +2545,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2588,7 +2592,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2634,7 +2638,7 @@ $.EventHandler.prototype = {
             // add us to the list
             CAPTURING.push( tracker );   
         }
-    };
+    }
 
     /**
      * @private
@@ -2664,7 +2668,7 @@ $.EventHandler.prototype = {
         }
 
         event.preventDefault();
-    };
+    }
 
 
     /**
@@ -2701,7 +2705,7 @@ $.EventHandler.prototype = {
         if ( insideElementPress && insideElementRelease ) {
             handleMouseClick( tracker, event );
         }
-    };
+    }
 
 
     /**
@@ -2723,7 +2727,7 @@ $.EventHandler.prototype = {
             //$.console.debug("pinch end");
         }
         event.preventDefault();
-    };
+    }
 
 
     /**
@@ -2760,7 +2764,7 @@ $.EventHandler.prototype = {
         );
 
         $.stopEvent( event );
-    };
+    }
 
 
     /**
@@ -2777,7 +2781,7 @@ $.EventHandler.prototype = {
             onMouseUp( tracker, event );
         }
         releaseMouse( tracker );
-    };
+    }
 
 
     /**
@@ -2788,7 +2792,7 @@ $.EventHandler.prototype = {
         if ( tracker.clickHandler ) {
             $.cancelEvent( event );
         }
-    };
+    }
 
 
     /**
@@ -2827,7 +2831,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2860,7 +2864,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2887,7 +2891,7 @@ $.EventHandler.prototype = {
                 $.cancelEvent( event );
             }
         }
-    };
+    }
 
 
     /**
@@ -2931,7 +2935,7 @@ $.EventHandler.prototype = {
             }
         }
         event.preventDefault();
-    };
+    }
 
     /**
      * Only triggered once by the deepest element that initially received
@@ -2949,7 +2953,7 @@ $.EventHandler.prototype = {
         }
 
         $.stopEvent( event );
-    };
+    }
 
     /**
      * @private
@@ -2957,7 +2961,7 @@ $.EventHandler.prototype = {
      */
     function getMouseAbsolute( event ) {
         return $.getMousePosition( event );
-    };
+    }
 
     /**
     * @private
@@ -2968,7 +2972,7 @@ $.EventHandler.prototype = {
             offset  = $.getElementPosition( element );
 
         return mouse.minus( offset );
-    };
+    }
 
     /**
     * @private
@@ -2985,7 +2989,7 @@ $.EventHandler.prototype = {
             }
         }
         return elementA == elementB;
-    };
+    }
 
     /**
     * @private
@@ -2993,7 +2997,7 @@ $.EventHandler.prototype = {
     */
     function onGlobalMouseDown() {
         IS_BUTTON_DOWN = true;
-    };
+    }
 
     /**
     * @private
@@ -3001,7 +3005,7 @@ $.EventHandler.prototype = {
     */
     function onGlobalMouseUp() {
         IS_BUTTON_DOWN = false;
-    };
+    }
 
 
     (function () {
@@ -3015,6 +3019,7 @@ $.EventHandler.prototype = {
     })();
     
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -3120,6 +3125,8 @@ $.Control.prototype = {
 };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
+
 (function( $ ){
 
     //id hash for private properties;
@@ -3177,8 +3184,8 @@ $.Control.prototype = {
          * @function
          */
         addControl: function ( element, anchor ) {
-            var element = $.getElement( element ),
-                div = null;
+            element = $.getElement( element );
+            var div = null;
 
             if ( getControlIndex( this, element ) >= 0 ) {
                 return;     // they're trying to add a duplicate control
@@ -3209,8 +3216,8 @@ $.Control.prototype = {
                     element.style.paddingLeft = "0px";
                     element.style.paddingTop = "0px";
                     break;
-                case $.ControlAnchor.NONE:
                 default:
+                case $.ControlAnchor.NONE:
                     div = this.container;
                     element.style.margin = "0px";
                     element.style.padding = "0px";
@@ -3229,8 +3236,8 @@ $.Control.prototype = {
          * @return {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
-            var element  = $.getElement( element ),
-                i        = getControlIndex( this, element );
+            element = $.getElement( element );
+            var i = getControlIndex( this, element );
             
             if ( i >= 0 ) {
                 this.controls[ i ].destroy();
@@ -3301,9 +3308,11 @@ $.Control.prototype = {
         }
 
         return -1;
-    };
+    }
 
-}( OpenSeadragon ));(function( $ ){
+}( OpenSeadragon ));/*globals OpenSeadragon */
+
+(function( $ ){
      
 // dictionary from hash to private properties
 var THIS = {},
@@ -3880,7 +3889,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             abortControlsAutoHide( this );
         } else {
             beginControlsAutoHide( this );
-        };
+        }
     },
 
     
@@ -4363,7 +4372,7 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
     return window.setTimeout( function(){
         updateFunc( viewer );
     }, deltaTime );
-};
+}
 
 
 //provides a sequence in the fade animation
@@ -4371,7 +4380,7 @@ function scheduleControlsFade( viewer ) {
     window.setTimeout( function(){
         updateControlsFade( viewer );
     }, 20);
-};
+}
 
 
 //initiates an animation to hide the controls
@@ -4387,7 +4396,7 @@ function beginControlsAutoHide( viewer ) {
     window.setTimeout( function(){
         scheduleControlsFade( viewer );
     }, viewer.controlsFadeDelay );
-};
+}
 
 
 //determines if fade animation is done or continues the animation
@@ -4413,7 +4422,7 @@ function updateControlsFade( viewer ) {
             scheduleControlsFade( viewer ); 
         }
     }
-};
+}
 
 
 //stop the fade animation on the controls and show them
@@ -4423,7 +4432,7 @@ function abortControlsAutoHide( viewer ) {
     for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
     }
-};
+}
 
 
 
@@ -4432,12 +4441,12 @@ function abortControlsAutoHide( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function onFocus(){
     abortControlsAutoHide( this );
-};
+}
 
 function onBlur(){
     beginControlsAutoHide( this );
     
-};
+}
 
 function onCanvasClick( tracker, position, quick, shift ) {
     var zoomPreClick,
@@ -4451,7 +4460,7 @@ function onCanvasClick( tracker, position, quick, shift ) {
         );
         this.viewport.applyConstraints();
     }
-};
+}
 
 function onCanvasDrag( tracker, position, delta, shift ) {
     if ( this.viewport ) {
@@ -4467,13 +4476,13 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             ) 
         );
     }
-};
+}
 
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
-};
+}
 
 function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
@@ -4487,7 +4496,7 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     }
     //cancels event
     return false;
-};
+}
 
 function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
     if ( !buttonDownElement ) {
@@ -4496,7 +4505,7 @@ function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) 
             beginControlsAutoHide( this );
         }
     }
-};
+}
 
 function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( !insideElementRelease ) {
@@ -4505,12 +4514,12 @@ function onContainerRelease( tracker, position, insideElementPress, insideElemen
             beginControlsAutoHide( this );
         }
     }
-};
+}
 
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
-};
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4528,7 +4537,7 @@ function updateMulti( viewer ) {
     beginTime = +new Date();
     updateOnce( viewer );
     scheduleUpdate( viewer, arguments.callee, beginTime );
-};
+}
 
 function updateOnce( viewer ) {
 
@@ -4585,7 +4594,7 @@ function updateOnce( viewer ) {
     THIS[ viewer.hash ].animating = animated;
 
     //viewer.profiler.endUpdate();
-};
+}
 
 
 
@@ -4594,7 +4603,7 @@ function updateOnce( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
-};
+}
 
 
 
@@ -4603,7 +4612,7 @@ function beginZoomingIn() {
     THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
-};
+}
 
 
 function beginZoomingOut() {
@@ -4611,17 +4620,17 @@ function beginZoomingOut() {
     THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
-};
+}
 
 
 function endZooming() {
     THIS[ this.hash ].zooming = false;
-};
+}
 
 
 function scheduleZoom( viewer ) {
     window.setTimeout( $.delegate( viewer, doZoom ), 10 );
-};
+}
 
 
 function doZoom() {
@@ -4639,7 +4648,7 @@ function doZoom() {
         THIS[ this.hash ].lastZoomTime = currentTime;
         scheduleZoom( this );
     }
-};
+}
 
 
 function doSingleZoomIn() {
@@ -4650,7 +4659,7 @@ function doSingleZoomIn() {
         );
         this.viewport.applyConstraints();
     }
-};
+}
 
 
 function doSingleZoomOut() {
@@ -4661,20 +4670,20 @@ function doSingleZoomOut() {
         );
         this.viewport.applyConstraints();
     }
-};
+}
 
 
 function lightUp() {
     this.buttons.emulateEnter();
     this.buttons.emulateExit();
-};
+}
 
 
 function onHome() {
     if ( this.viewport ) {
         this.viewport.goHome();
     }
-};
+}
 
 
 function onFullPage() {
@@ -4687,22 +4696,24 @@ function onFullPage() {
     if ( this.viewport ) {
         this.viewport.applyConstraints();
     }
-};
+}
 
 
 function onPrevious(){
     var previous = THIS[ this.hash ].sequence - 1;
     this.goToPage( previous );
-};
+}
 
 
 function onNext(){
     var next = THIS[ this.hash ].sequence + 1;
     this.goToPage( next );
-};
+}
 
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
+
 (function( $ ){
     
 /**
@@ -4833,16 +4844,18 @@ $.Navigator = function( options ){
                 case 119://w
                 case 87://W
                 case 38://up arrow
-                    shiftKey ?
-                        _this.viewer.viewport.zoomBy(1.1):
+                    if (shiftKey) 
+                        _this.viewer.viewport.zoomBy(1.1);
+                    else
                         _this.viewer.viewport.panBy(new $.Point(0, -0.05));
                     _this.viewer.viewport.applyConstraints();
                     return false;
                 case 115://s
                 case 83://S
                 case 40://down arrow
-                    shiftKey ?
-                        _this.viewer.viewport.zoomBy(0.9):
+                    if (shiftKey)
+                        _this.viewer.viewport.zoomBy(0.9);
+                    else
                         _this.viewer.viewport.panBy(new $.Point(0, 0.05));
                     _this.viewer.viewport.applyConstraints();
                     return false;
@@ -4936,7 +4949,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  */
 function onCanvasClick( tracker, position, quick, shift ) {
     this.displayRegion.focus();
-};
+}
 
 
 /**
@@ -4958,7 +4971,7 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             ) 
         );
     }
-};
+}
 
 
 /**
@@ -4970,7 +4983,7 @@ function onCanvasRelease( tracker, position, insideElementPress, insideElementRe
     if ( insideElementPress && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
-};
+}
 
 
 /**
@@ -4991,7 +5004,7 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     }
     //cancels event
     return false;
-};
+}
 
 
 }( OpenSeadragon ));
@@ -5086,6 +5099,7 @@ $.extend( $, {
 });
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -5228,6 +5242,7 @@ $.Point.prototype = {
 };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -5606,7 +5621,7 @@ function processResponse( xhr ){
         data = responseText;
     }
     return data;
-};
+}
 
 
 /**
@@ -5965,6 +5980,7 @@ function configureFromObject( tileSource, configuration ){
 };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -6159,7 +6175,7 @@ function filterFiles( files ){
         return a.height - b.height;
     });
 
-};
+}
 
 /**
  * @private
@@ -6193,8 +6209,8 @@ function configureFromXML( tileSource, xmlDoc ){
 
                 conf.levels .push({
                     url:    level.getAttribute( "url" ),
-                    width:  parseInt( level.getAttribute( "width" ) ),
-                    height: parseInt( level.getAttribute( "height" ) )
+                    width:  parseInt( level.getAttribute( "width" ), 10 ),
+                    height: parseInt( level.getAttribute( "height" ), 10 )
                 });
             }
 
@@ -6212,7 +6228,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     throw new Error( 'Unknown element ' + rootName );
-};
+}
 
 /**
  * @private
@@ -6223,9 +6239,10 @@ function configureFromObject( tileSource, configuration ){
     
     return configuration.levels;
 
-};
+}
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -6337,7 +6354,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
 
 
 }( OpenSeadragon ));
-
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -6586,7 +6603,7 @@ function scheduleFade( button ) {
     window.setTimeout(function(){
         updateFade( button );
     }, 20 );
-};
+}
 
 function updateFade( button ) {
     var currentTime,
@@ -6608,7 +6625,7 @@ function updateFade( button ) {
             scheduleFade( button );
         }
     }
-};
+}
 
 function beginFading( button ) {
     button.shouldFade = true;
@@ -6616,14 +6633,14 @@ function beginFading( button ) {
     window.setTimeout( function(){ 
         scheduleFade( button );
     }, button.fadeDelay );
-};
+}
 
 function stopFading( button ) {
     button.shouldFade = false;
     if( button.imgGroup ){
         $.setElementOpacity( button.imgGroup, 1.0, true );
     }
-};
+}
 
 function inTo( button, newState ) {
 
@@ -6652,7 +6669,7 @@ function inTo( button, newState ) {
         }
         button.currentState = $.ButtonState.DOWN;
     }
-};
+}
 
 
 function outTo( button, newState ) {
@@ -6682,11 +6699,12 @@ function outTo( button, newState ) {
         beginFading( button );
         button.currentState = $.ButtonState.REST;
     }
-};
+}
 
 
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 /**
@@ -6797,6 +6815,7 @@ $.ButtonGroup.prototype = {
 
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -7434,7 +7453,8 @@ function onKeyPress( tracker, keyCode, shiftKey ){
 
 
 
-}( OpenSeadragon ));
+}( OpenSeadragon ));/*globals OpenSeadragon */
+
 (function( $ ){
 
 /**
@@ -7457,11 +7477,12 @@ $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
 
     this.minLevel = minLevel;
     this.maxLevel = maxLevel;
-}
+};
 
 $.extend( $.DisplayRect.prototype, $.Rect.prototype );
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -7569,7 +7590,7 @@ $.Spring.prototype = {
                     ( this.target.time  - this.start.time )
                 );
     }
-}
+};
 
 /**
  * @private
@@ -7577,9 +7598,10 @@ $.Spring.prototype = {
 function transform( stiffness, x ) {
     return ( 1.0 - Math.exp( stiffness * -x ) ) / 
         ( 1.0 - Math.exp( -stiffness ) );
-};
+}
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -7732,6 +7754,7 @@ $.Tile.prototype = {
 };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -7816,8 +7839,8 @@ $.Tile.prototype = {
                 case $.OverlayPlacement.LEFT:
                     position.y -= size.y / 2;
                     break;
-                case $.OverlayPlacement.CENTER:
                 default:
+                case $.OverlayPlacement.CENTER:
                     position.x -= size.x / 2;
                     position.y -= size.y / 2;
                     break;
@@ -7904,6 +7927,7 @@ $.Tile.prototype = {
     };
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -8386,7 +8410,7 @@ function updateViewport( drawer ) {
         // because we haven't finished drawing, so
         drawer.updateAgain = true; 
     }
-};
+}
 
 
 function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
@@ -8432,7 +8456,7 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
         }
     }
     return best;
-};
+}
 
 function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
     
@@ -8492,7 +8516,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
     }
 
     return best;
-};
+}
 
 function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeight ) {
     var xMod,
@@ -8533,7 +8557,7 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
     tile.lastTouchTime = time;
 
     return tile;
-};
+}
 
 
 function loadTile( drawer, tile, time ) {
@@ -8543,7 +8567,7 @@ function loadTile( drawer, tile, time ) {
             onTileLoad( drawer, tile, time, image );
         }
     );
-};
+}
 
 function onTileLoad( drawer, tile, time, image ) {
     var insertionIndex,
@@ -8613,7 +8637,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     drawer.tilesLoaded[ insertionIndex ] = tile;
     drawer.updateAgain = true;
-};
+}
 
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
@@ -8634,7 +8658,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility 
     tile.size       = sizeC;
     tile.distance   = tileDistance;
     tile.visibility = levelVisibility;
-};
+}
 
 
 function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
@@ -8664,13 +8688,13 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     }
 
     return false;
-};
+}
 
 
 function clearTiles( drawer ) {
     drawer.tilesMatrix = {};
     drawer.tilesLoaded = [];
-};
+}
 
 /**
  * @private
@@ -8713,7 +8737,7 @@ function providesCoverage( coverage, level, x, y ) {
         coverage[ level ][ x ][ y ] === undefined ||
         coverage[ level ][ x ][ y ] === true
     );
-};
+}
 
 /**
  * @private
@@ -8733,7 +8757,7 @@ function isCovered( coverage, level, x, y ) {
              providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
         );
     }
-};
+}
 
 /**
  * @private
@@ -8754,7 +8778,7 @@ function setCoverage( coverage, level, x, y, covers ) {
     }
 
     coverage[ level ][ x ][ y ] = covers;
-};
+}
 
 /**
  * @private
@@ -8765,7 +8789,7 @@ function setCoverage( coverage, level, x, y, covers ) {
  */
 function resetCoverage( coverage, level ) {
     coverage[ level ] = {};
-};
+}
 
 /**
  * @private
@@ -8782,7 +8806,7 @@ function getOverlayIndex( overlays, element ) {
     }
 
     return -1;
-};
+}
 
 /**
  * @private
@@ -8804,7 +8828,7 @@ function compareTiles( previousBest, tile ) {
     }
 
     return previousBest;
-};
+}
 
 function finishLoadingImage( image, callback, successful, jobid ){
 
@@ -8819,7 +8843,7 @@ function finishLoadingImage( image, callback, successful, jobid ){
         callback( image.src, successful ? image : null);
     }, 1 );
 
-};
+}
 
 
 function drawOverlays( viewport, overlays, container ){
@@ -8828,7 +8852,7 @@ function drawOverlays( viewport, overlays, container ){
     for ( i = 0; i < length; i++ ) {
         drawOverlay( viewport, overlays[ i ], container );
     }
-};
+}
 
 function drawOverlay( viewport, overlay, container ){
 
@@ -8841,7 +8865,7 @@ function drawOverlay( viewport, overlay, container ){
         true
     );
     overlay.drawHTML( container );
-};
+}
 
 function drawTiles( drawer, lastDrawn ){
     var i, 
@@ -8929,7 +8953,7 @@ function drawTiles( drawer, lastDrawn ){
             tile.beingDrawn = true;
         }
     }
-};
+}
 
 
 function drawDebugInfo( drawer, tile, count, i ){
@@ -8988,10 +9012,11 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.position.y + 70
         );
     }
-};
+}
 
 
 }( OpenSeadragon ));
+/*globals OpenSeadragon */
 
 (function( $ ){
 
