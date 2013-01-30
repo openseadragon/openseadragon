@@ -222,8 +222,8 @@
   *     position.  If preserveViewport is set to true, then the viewport position
   *     is preserved when navigating between images in the sequence.
   *
-  * @param {String} [options.prefixUrl='']
-  *     Appends the prefixUrl to navImages paths, which is very useful
+  * @param {String} [options.prefixUrl='/images/']
+  *     Prepends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
   *     environments.
   *
@@ -527,43 +527,43 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS
-            prefixUrl:              null,
+            prefixUrl:              "/images/",
             navImages: {
                 zoomIn: {
-                    REST:   '/images/zoomin_rest.png',
-                    GROUP:  '/images/zoomin_grouphover.png',
-                    HOVER:  '/images/zoomin_hover.png',
-                    DOWN:   '/images/zoomin_pressed.png'
+                    REST:   'zoomin_rest.png',
+                    GROUP:  'zoomin_grouphover.png',
+                    HOVER:  'zoomin_hover.png',
+                    DOWN:   'zoomin_pressed.png'
                 },
                 zoomOut: {
-                    REST:   '/images/zoomout_rest.png',
-                    GROUP:  '/images/zoomout_grouphover.png',
-                    HOVER:  '/images/zoomout_hover.png',
-                    DOWN:   '/images/zoomout_pressed.png'
+                    REST:   'zoomout_rest.png',
+                    GROUP:  'zoomout_grouphover.png',
+                    HOVER:  'zoomout_hover.png',
+                    DOWN:   'zoomout_pressed.png'
                 },
                 home: {
-                    REST:   '/images/home_rest.png',
-                    GROUP:  '/images/home_grouphover.png',
-                    HOVER:  '/images/home_hover.png',
-                    DOWN:   '/images/home_pressed.png'
+                    REST:   'home_rest.png',
+                    GROUP:  'home_grouphover.png',
+                    HOVER:  'home_hover.png',
+                    DOWN:   'home_pressed.png'
                 },
                 fullpage: {
-                    REST:   '/images/fullpage_rest.png',
-                    GROUP:  '/images/fullpage_grouphover.png',
-                    HOVER:  '/images/fullpage_hover.png',
-                    DOWN:   '/images/fullpage_pressed.png'
+                    REST:   'fullpage_rest.png',
+                    GROUP:  'fullpage_grouphover.png',
+                    HOVER:  'fullpage_hover.png',
+                    DOWN:   'fullpage_pressed.png'
                 },
                 previous: {
-                    REST:   '/images/previous_rest.png',
-                    GROUP:  '/images/previous_grouphover.png',
-                    HOVER:  '/images/previous_hover.png',
-                    DOWN:   '/images/previous_pressed.png'
+                    REST:   'previous_rest.png',
+                    GROUP:  'previous_grouphover.png',
+                    HOVER:  'previous_hover.png',
+                    DOWN:   'previous_pressed.png'
                 },
                 next: {
-                    REST:   '/images/next_rest.png',
-                    GROUP:  '/images/next_grouphover.png',
-                    HOVER:  '/images/next_hover.png',
-                    DOWN:   '/images/next_pressed.png'
+                    REST:   'next_rest.png',
+                    GROUP:  'next_grouphover.png',
+                    HOVER:  'next_hover.png',
+                    DOWN:   'next_pressed.png'
                 }
             },
 
@@ -4916,8 +4916,12 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
-                style.width  = ( Math.abs( topleft.x - bottomright.x ) - 3 ) + 'px';
-                style.height = ( Math.abs( topleft.y - bottomright.y ) - 3 ) + 'px';
+
+                var width = Math.abs( topleft.x - bottomright.x ) - 3; // TODO: What's this magic number mean?
+                var height = Math.abs( topleft.y - bottomright.y ) - 3;
+                // make sure width and height are non-negative so IE doesn't throw
+                style.width  = Math.max( width, 0 ) + 'px';
+                style.height = Math.max( height, 0 ) + 'px';
 
             }( this.displayRegion.style ));  
         } 
@@ -4993,6 +4997,7 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
 
 
 }( OpenSeadragon ));
+
 (function( $ ){
     
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look 
@@ -5665,7 +5670,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             tileOverlap: arguments[ 3 ],
             tilesUrl: arguments[ 4 ],
             fileFormat: arguments[ 5 ],
-            dispRects: arguments[ 6 ]
+            displayRects: arguments[ 6 ]
         };
     }
 
@@ -5916,7 +5921,7 @@ function configureFromObject( tileSource, configuration ){
         height        = parseInt( sizeData.Height ),
         tileSize      = parseInt( imageData.TileSize ),
         tileOverlap   = parseInt( imageData.Overlap ),
-        dispRects     = [],
+        displayRects  = [],
         rectData,
         i;
 
@@ -5936,7 +5941,7 @@ function configureFromObject( tileSource, configuration ){
     for ( i = 0; i < dispRectData.length; i++ ) {
         rectData = dispRectData[ i ].Rect;
 
-        dispRects.push( new $.DisplayRect(
+        displayRects.push( new $.DisplayRect(
             parseInt( rectData.X ),
             parseInt( rectData.Y ),
             parseInt( rectData.Width ),
@@ -5956,7 +5961,7 @@ function configureFromObject( tileSource, configuration ){
         maxLevel: null, /* maxLevel */
         tilesUrl: tilesUrl, /* tilesUrl */
         fileFormat: fileFormat, /* fileFormat */
-        dispRects: dispRects /* dispRects */
+        displayRects: displayRects /* displayRects */
     };
 
 };
@@ -8204,10 +8209,10 @@ $.Drawer.prototype = {
      * @method
      * @param {String} src - The url of the image to load.
      * @param {Function} callback - The function that will be called with the
-     *      Image object as the only parameter, whether on 'load' or on 'abort'.
-     *      For now this means the callback is expected to distinguish between
-     *      error and success conditions by inspecting the Image object.
-     * @return {Boolean} loading - Wheter the request was submitted or ignored 
+     *      Image object as the only parameter if it was loaded successfully.
+     *      If an error occured, or the request timed out or was aborted,
+     *      the parameter is null instead.
+     * @return {Boolean} loading - Whether the request was submitted or ignored
      *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
      */
     loadImage: function( src, callback ) {
@@ -8224,11 +8229,11 @@ $.Drawer.prototype = {
 
             image = new Image();
 
-            complete = function( imagesrc ){
+            complete = function( imagesrc, resultingImage ){
                 _this.downloading--;
                 if (typeof ( callback ) == "function") {
                     try {
-                        callback( image );
+                        callback( resultingImage );
                     } catch ( e ) {
                         $.console.error(
                             "%s while executing %s callback: %s", 
@@ -8242,11 +8247,11 @@ $.Drawer.prototype = {
             };
 
             image.onload = function(){
-                finishLoadingImage( image, complete, true );
+                finishLoadingImage( image, complete, true, jobid );
             };
 
             image.onabort = image.onerror = function(){
-                finishLoadingImage( image, complete, false );
+                finishLoadingImage( image, complete, false, jobid );
             };
 
             jobid = window.setTimeout( function(){

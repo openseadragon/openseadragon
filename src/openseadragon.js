@@ -222,8 +222,8 @@
   *     position.  If preserveViewport is set to true, then the viewport position
   *     is preserved when navigating between images in the sequence.
   *
-  * @param {String} [options.prefixUrl='']
-  *     Appends the prefixUrl to navImages paths, which is very useful
+  * @param {String} [options.prefixUrl='/images/']
+  *     Prepends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
   *     environments.
   *
@@ -527,43 +527,43 @@ OpenSeadragon = window.OpenSeadragon || function( options ){
             timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS
-            prefixUrl:              null,
+            prefixUrl:              "/images/",
             navImages: {
                 zoomIn: {
-                    REST:   '/images/zoomin_rest.png',
-                    GROUP:  '/images/zoomin_grouphover.png',
-                    HOVER:  '/images/zoomin_hover.png',
-                    DOWN:   '/images/zoomin_pressed.png'
+                    REST:   'zoomin_rest.png',
+                    GROUP:  'zoomin_grouphover.png',
+                    HOVER:  'zoomin_hover.png',
+                    DOWN:   'zoomin_pressed.png'
                 },
                 zoomOut: {
-                    REST:   '/images/zoomout_rest.png',
-                    GROUP:  '/images/zoomout_grouphover.png',
-                    HOVER:  '/images/zoomout_hover.png',
-                    DOWN:   '/images/zoomout_pressed.png'
+                    REST:   'zoomout_rest.png',
+                    GROUP:  'zoomout_grouphover.png',
+                    HOVER:  'zoomout_hover.png',
+                    DOWN:   'zoomout_pressed.png'
                 },
                 home: {
-                    REST:   '/images/home_rest.png',
-                    GROUP:  '/images/home_grouphover.png',
-                    HOVER:  '/images/home_hover.png',
-                    DOWN:   '/images/home_pressed.png'
+                    REST:   'home_rest.png',
+                    GROUP:  'home_grouphover.png',
+                    HOVER:  'home_hover.png',
+                    DOWN:   'home_pressed.png'
                 },
                 fullpage: {
-                    REST:   '/images/fullpage_rest.png',
-                    GROUP:  '/images/fullpage_grouphover.png',
-                    HOVER:  '/images/fullpage_hover.png',
-                    DOWN:   '/images/fullpage_pressed.png'
+                    REST:   'fullpage_rest.png',
+                    GROUP:  'fullpage_grouphover.png',
+                    HOVER:  'fullpage_hover.png',
+                    DOWN:   'fullpage_pressed.png'
                 },
                 previous: {
-                    REST:   '/images/previous_rest.png',
-                    GROUP:  '/images/previous_grouphover.png',
-                    HOVER:  '/images/previous_hover.png',
-                    DOWN:   '/images/previous_pressed.png'
+                    REST:   'previous_rest.png',
+                    GROUP:  'previous_grouphover.png',
+                    HOVER:  'previous_hover.png',
+                    DOWN:   'previous_pressed.png'
                 },
                 next: {
-                    REST:   '/images/next_rest.png',
-                    GROUP:  '/images/next_grouphover.png',
-                    HOVER:  '/images/next_hover.png',
-                    DOWN:   '/images/next_pressed.png'
+                    REST:   'next_rest.png',
+                    GROUP:  'next_grouphover.png',
+                    HOVER:  'next_hover.png',
+                    DOWN:   'next_pressed.png'
                 }
             },
 

@@ -32,7 +32,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             tileOverlap: arguments[ 3 ],
             tilesUrl: arguments[ 4 ],
             fileFormat: arguments[ 5 ],
-            dispRects: arguments[ 6 ]
+            displayRects: arguments[ 6 ]
         };
     }
 
@@ -283,7 +283,7 @@ function configureFromObject( tileSource, configuration ){
         height        = parseInt( sizeData.Height ),
         tileSize      = parseInt( imageData.TileSize ),
         tileOverlap   = parseInt( imageData.Overlap ),
-        dispRects     = [],
+        displayRects  = [],
         rectData,
         i;
 
@@ -303,7 +303,7 @@ function configureFromObject( tileSource, configuration ){
     for ( i = 0; i < dispRectData.length; i++ ) {
         rectData = dispRectData[ i ].Rect;
 
-        dispRects.push( new $.DisplayRect(
+        displayRects.push( new $.DisplayRect(
             parseInt( rectData.X ),
             parseInt( rectData.Y ),
             parseInt( rectData.Width ),
@@ -323,7 +323,7 @@ function configureFromObject( tileSource, configuration ){
         maxLevel: null, /* maxLevel */
         tilesUrl: tilesUrl, /* tilesUrl */
         fileFormat: fileFormat, /* fileFormat */
-        dispRects: dispRects /* dispRects */
+        displayRects: displayRects /* displayRects */
     };
 
 };
