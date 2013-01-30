@@ -4780,10 +4780,17 @@ $.Navigator = function( options ){
         style.fontSize      = '0px';
         style.overflow      = 'hidden';
         style.border        = '2px solid #900';
+        
         //TODO: IE doesnt like this property being set
         //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
+        
         style.background    = 'transparent';
-        style.float         = 'left'; //Webkit
+
+        // We use square bracket notation on the statement below, because float is a keyword.
+        // This is important for the Google Closure compliler, if nothing else.
+        /*jshint sub:true */ 
+        style['float']      = 'left'; //Webkit
+        
         style.cssFloat      = 'left'; //Firefox
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
