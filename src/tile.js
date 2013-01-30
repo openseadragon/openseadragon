@@ -79,7 +79,8 @@ $.Tile.prototype = {
     drawHTML: function( container ) {
 
         var position = this.position.apply( Math.floor ),
-            size     = this.size.apply( Math.ceil );
+            size     = this.size.apply( Math.ceil )
+            containerSize = $.getElementSize( container );
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -103,10 +104,19 @@ $.Tile.prototype = {
             container.appendChild( this.element );
         }
 
-        this.element.style.left    = position.x + "px";
-        this.element.style.top     = position.y + "px";
-        this.element.style.width   = size.x + "px";
-        this.element.style.height  = size.y + "px";
+        this.style.top     = position.y + "px";
+        this.style.left    = position.x + "px";
+        this.style.height = size.y + "px";
+        this.style.width = size.x + "px";
+
+        //this.style.right   = ( containerSize.x - position.x ) + "px";
+        //this.style.bottom  = ( containerSize.y - position.y ) + "px";
+
+        //when the entire container is filled by a single tile we need
+        //some additional stickyness so when animating container size
+        //the image stays fixed in position
+        //this.element.style.width   =  ( size.x / containerSize.x ) * 100 + "%";
+        //this.element.style.height  =  ( size.y / containerSize.y ) * 100 + "%";
 
         $.setElementOpacity( this.element, this.opacity );
 
@@ -130,7 +140,22 @@ $.Tile.prototype = {
             return;
         }
         context.globalAlpha = this.opacity;
+
+        context.save();
+        if( context.globalAlpha == 1 && this.image.src.match('.png') ){
+
+            context.clearRect( 
+                position.x+1, 
+                position.y+1, 
+                size.x-2, 
+                size.y-2 
+            );
+
+        }
+        
         context.drawImage( this.image, position.x, position.y, size.x, size.y );
+
+        context.restore();
     },
 
     /**

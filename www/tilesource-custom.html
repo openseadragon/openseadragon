@@ -32,22 +32,102 @@
     <div class="demoheading">
         Example Inline Configuration for Custom Tile Sources
     </div>
+    <div id="example-custom-tilesource" 
+         class="openseadragon" >
+    </div>
     <p>
         Below is a make believe minimal inline configuration. Note that the 
         default tileSize is available as a property of the tile source.
     </p>
     <pre>
     OpenSeadragon({
-        id:            "example-inline-configuration",
+        id:            "example-custom-tilesource",
         prefixUrl:     "/openseadragon",
-        showNavigator:  true,
+        navigatorSizeRatio: 0.25,
         tileSources:   {
-            height: 1140,
-            width:  2450,
+            height: 512*256,
+            width:  512*256,
+            tileSize: 256,
+            minLevel: 8,
             getTileUrl: function( level, x, y ){
-                return "http://example.org/imageservice/"+level+"/"+x+"/"+y+"/?tileSize="+this.tileSize
+                return "http://s3.amazonaws.com/com.modestmaps.bluemarble/"+(level-8)+"-r"+x+"-c"+y+".jpg";
             }
         }
     });
     </pre>
+    <script>
+    OpenSeadragon({
+        id:                 "example-custom-tilesource",
+        prefixUrl:          "/openseadragon",
+        navigatorSizeRatio: 0.25,
+        wrapHorizontal:     true,
+        tileSources:   {
+            height: 512*256,
+            width:  512*256,
+            tileSize: 256,
+            minLevel: 8,
+            getTileUrl: function( level, x, y ){
+                return "http://s3.amazonaws.com/com.modestmaps.bluemarble/"+(level-8)+"-r"+y+"-c"+x+".jpg";
+            }
+        }
+    });
+    </script>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Another Inline Configuration for Custom Tile Sources
+    </div>
+    <div id="example2-custom-tilesource" 
+         class="openseadragon" 
+         style='background-color:#aaa'>
+    </div>
+    <p>
+        Below is a make believe minimal inline configuration. Note that the 
+        default tileSize is available as a property of the tile source.
+    </p>
+    <pre>
+    OpenSeadragon({
+        id:            "example2-custom-tilesource",
+        prefixUrl:     "/openseadragon",
+        navigatorSizeRatio: 0.25,
+        tileSources:   {
+            height: 512*256,
+            width:  512*256,
+            tileSize: 256,
+            minLevel: 8,
+            getTileUrl: function( level, x, y ){
+                return "http://s3.amazonaws.com/com.modestmaps.bluemarble/"+(level-8)+"-r"+x+"-c"+y+".jpg";
+            }
+        }
+    });
+    </pre>
+    <script>
+    OpenSeadragon({
+        id:                 "example2-custom-tilesource",
+        prefixUrl:          "/openseadragon",
+        showNavigator:      false,
+        blendTime:          0,
+        alwaysBlend:        false,
+        //immediateRender:    true,
+        wrapHorizontal:     true,
+        tileSources:   {
+            height: 1024*256,
+            width:  1024*256,
+            tileSize: 256,
+            minLevel: 9,
+            getTileUrl: function( level, x, y ){
+
+                function zeropad( i ) {
+                    var n = String( i ),
+                        m = 6 - n.length;
+                    n = (m < 1) ? n : new Array(m + 1).join( "0" ) + n;
+                    return n.substr(0, 3) + "/" + n.substr(3);
+                };
+
+                return "http://s3.amazonaws.com/info.aaronland.tiles.shapetiles/"+(level-8)+"/"+zeropad(x)+"/"+zeropad(y)+".png";
+            }
+        }
+    });
+    </script>
 </div>

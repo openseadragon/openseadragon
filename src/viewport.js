@@ -78,6 +78,7 @@ $.Viewport.prototype = {
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         this.homeBounds = this.fitHeightBounds;
+        return this;
     },
 
     /**
@@ -263,6 +264,7 @@ $.Viewport.prototype = {
             bounds.y += dy;
             this.fitBounds( bounds, immediately );
         }
+        return this;
     },
 
     /**
@@ -271,6 +273,7 @@ $.Viewport.prototype = {
      */
     ensureVisible: function( immediately ) {
         this.applyConstraints( immediately );
+        return this;
     },
 
     /**
@@ -308,7 +311,7 @@ $.Viewport.prototype = {
         newZoom   = 1.0 / newBounds.width;
         if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
             this.panTo( center, immediately );
-            return;
+            return this;
         }
 
         referencePoint = oldBounds.getTopLeft().times( 
@@ -323,6 +326,7 @@ $.Viewport.prototype = {
         );
 
         this.zoomTo( newZoom, referencePoint, immediately );
+        return this;
     },
     
     /**
@@ -335,6 +339,7 @@ $.Viewport.prototype = {
         } else {
             return this.fitHorizontally( immediately );
         }
+        return this;
     },
 
     /**
@@ -359,6 +364,7 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( this.homeBounds, immediately );
+        return this;
     },
 
     /**
@@ -383,6 +389,7 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( this.homeBounds, immediately );
+        return this;
     },
 
 
@@ -397,6 +404,7 @@ $.Viewport.prototype = {
             this.centerSpringY.target.value
         );
         this.panTo( center.plus( delta ), immediately );
+        return this;
     },
 
     /**
@@ -412,6 +420,8 @@ $.Viewport.prototype = {
             this.centerSpringX.springTo( center.x );
             this.centerSpringY.springTo( center.y );
         }
+
+        return this;
     },
 
     /**
@@ -419,6 +429,7 @@ $.Viewport.prototype = {
      */
     zoomBy: function( factor, refPoint, immediately ) {
         this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
+        return this;
     },
 
     /**
@@ -426,15 +437,18 @@ $.Viewport.prototype = {
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
+        this.zoomPoint = refPoint instanceof $.Point ? 
+            refPoint : 
+            null;
+            
         if ( immediately ) {
             this.zoomSpring.resetTo( zoom );
         } else {        
             this.zoomSpring.springTo( zoom );
         }
 
-        this.zoomPoint = refPoint instanceof $.Point ? 
-            refPoint : 
-            null;
+
+        return this;
     },
 
     /**
@@ -456,6 +470,8 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( newBounds, true );
+
+        return this;
     },
 
     /**

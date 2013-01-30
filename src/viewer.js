@@ -426,6 +426,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
             minPixelRatio:      this.minPixelRatio,
+            timeout:            this.timeout,
             debugMode:          this.debugMode,
             debugGridColor:     this.debugGridColor
         });
@@ -628,8 +629,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             bodyStyle.width     = "100%";
             bodyStyle.height    = "100%";
 
-            canvasStyle.backgroundColor = "black";
-            canvasStyle.color           = "white";
+            //canvasStyle.backgroundColor = "black";
+            //canvasStyle.color           = "white";
 
             //containerStyle.position = "fixed";
 

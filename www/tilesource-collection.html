@@ -42,7 +42,7 @@ OpenSeadragon({
 });</pre>
 </div>
 <script type="text/javascript">
-    OpenSeadragon({
+    var viewer = OpenSeadragon({
         id:                 "example-tilesource-collection",
         prefixUrl:          "/openseadragon",
         //debugMode:          true,
@@ -54,13 +54,13 @@ OpenSeadragon({
         collectionTileMargin: 256,
         //collectionLayout:   'vertical',
         //defaultZoomLevel:   1,
-        //wrapHorizontal: true,
+        wrapHorizontal: true,
         //wrapVertical: true,
         tileSources: [
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05954.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05955.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05956.dzi",
-            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05957.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05957.dzi"/*,
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05958.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05959.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05960.dzi",
@@ -227,7 +227,7 @@ OpenSeadragon({
                 width:  2970
                 
             }]
-        }/*,{
+        }*//*,{
             type: 'legacy-image-pyramid',
             levels: [{
                 url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0011q.jpg',
