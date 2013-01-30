@@ -58,7 +58,7 @@
     <script>
     OpenSeadragon({
         id:                 "example-custom-tilesource",
-        prefixUrl:          "/openseadragon",
+        prefixUrl:          "/openseadragon/images/",
         navigatorSizeRatio: 0.25,
         wrapHorizontal:     true,
         tileSources:   {
@@ -88,28 +88,38 @@
     </p>
     <pre>
     OpenSeadragon({
-        id:            "example2-custom-tilesource",
-        prefixUrl:     "/openseadragon",
-        navigatorSizeRatio: 0.25,
+        ...
+        showNavigator:      false,
+        blendTime:          0,
+        alwaysBlend:        false,
+        wrapHorizontal:     true,
         tileSources:   {
-            height: 512*256,
-            width:  512*256,
+            height: 1024*256,
+            width:  1024*256,
             tileSize: 256,
-            minLevel: 8,
+            minLevel: 9,
             getTileUrl: function( level, x, y ){
-                return "http://s3.amazonaws.com/com.modestmaps.bluemarble/"+(level-8)+"-r"+x+"-c"+y+".jpg";
+
+                function zeropad( i ) {
+                    var n = String( i ),
+                        m = 6 - n.length;
+                    n = (m < 1) ? n : new Array(m + 1).join( "0" ) + n;
+                    return n.substr(0, 3) + "/" + n.substr(3);
+                };
+
+                return "http://s3.amazonaws.com/info.aaronland.tiles.shapetiles/"+(level-8)+"/"+zeropad(x)+"/"+zeropad(y)+".png";
             }
         }
+        ...
     });
     </pre>
     <script>
     OpenSeadragon({
         id:                 "example2-custom-tilesource",
-        prefixUrl:          "/openseadragon",
+        prefixUrl:          "/openseadragon/images/",
         showNavigator:      false,
         blendTime:          0,
         alwaysBlend:        false,
-        //immediateRender:    true,
         wrapHorizontal:     true,
         tileSources:   {
             height: 1024*256,
