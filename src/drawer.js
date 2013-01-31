@@ -636,12 +636,17 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
 
 
 function loadTile( drawer, tile, time ) {
-    tile.loading = drawer.loadImage(
-        tile.url,
-        function( image ){
-            onTileLoad( drawer, tile, time, image );
-        }
-    );
+    if( drawer.viewport.collectionMode ){
+        drawer.midUpdate = false;
+        onTileLoad( drawer, tile, time );
+    } else {
+        tile.loading = drawer.loadImage(
+            tile.url,
+            function( image ){
+                onTileLoad( drawer, tile, time, image );
+            }
+        );
+    }
 };
 
 function onTileLoad( drawer, tile, time, image ) {
@@ -661,7 +666,7 @@ function onTileLoad( drawer, tile, time, image ) {
     if ( drawer.midUpdate ) {
         $.console.warn( "Tile load callback in middle of drawing routine." );
         return;
-    } else if ( !image ) {
+    } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         tile.exists = false;
         return;

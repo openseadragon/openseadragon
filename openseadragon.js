@@ -3677,6 +3677,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 contentSize:            this.source.dimensions, 
                 springStiffness:        this.springStiffness,
                 animationTime:          this.animationTime,
+                showNavigator:          false,
                 minZoomImageRatio:      1,
                 maxZoomPixelRatio:      1
             });
@@ -3731,14 +3732,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             immediateRender:    this.immediateRender,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.minPixelRatio,
+            minPixelRatio:      this.collectionMode ? 0 : this.minPixelRatio,
             timeout:            this.timeout,
             debugMode:          this.debugMode,
             debugGridColor:     this.debugGridColor
         });
 
         //Instantiate a navigator if configured
-        if ( this.showNavigator  && ! this.navigator ){
+        if ( this.showNavigator  && ! this.navigator && !this.collectionMode ){
             this.navigator = new $.Navigator({
                 id:          this.navigatorElement,
                 position:    this.navigatorPosition,
@@ -7675,14 +7676,13 @@ $.Tile.prototype = {
         }
 
         if ( !this.element ) {
-            this.element        = $.makeNeutralElement("img");
-            this.element.src    = this.url;
-            this.style          = this.element.style;
+            this.element              = $.makeNeutralElement("img");
+            this.element.src          = this.url;
 
+            this.style                     = this.element.style;
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
-
 
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
@@ -7690,19 +7690,33 @@ $.Tile.prototype = {
 
         this.style.top     = position.y + "px";
         this.style.left    = position.x + "px";
-        this.style.height = size.y + "px";
-        this.style.width = size.x + "px";
+        this.style.height  = size.y + "px";
+        this.style.width   = size.x + "px";
 
-        //this.style.right   = ( containerSize.x - position.x ) + "px";
-        //this.style.bottom  = ( containerSize.y - position.y ) + "px";
+        //EXPERIMENTAL - trying to figure out how to scale the container
+        //               content during animation of the container size.
+        /*
+        if ( !this.element ) {
+            this.element            = $.makeNeutralElement("div");
+            this.image              = $.makeNeutralElement("img");
+            this.image.src          = this.url;
+            this.image.style.height = '100%';
+            this.image.style.width  = '100%';
+            this.image.style.msInterpolationMode = "nearest-neighbor";
+            this.element.appendChild( this.image );
 
-        //when the entire container is filled by a single tile we need
-        //some additional stickyness so when animating container size
-        //the image stays fixed in position
-        //this.element.style.width   =  ( size.x / containerSize.x ) * 100 + "%";
-        //this.element.style.height  =  ( size.y / containerSize.y ) * 100 + "%";
-
+            this.style                     = this.element.style;
+            this.style.position            = "absolute";
+        }
+        this.style.right   = "0px";
+        this.style.bottom  = "0px";
+        if ( size.y == containerSize.y || size.x == containerSize.x ){
+            this.style.right   = position.x + "px";
+            this.style.bottom  = position.y + "px";
+        } 
+        */
         $.setElementOpacity( this.element, this.opacity );
+
 
     },
 
@@ -7726,6 +7740,7 @@ $.Tile.prototype = {
         context.globalAlpha = this.opacity;
 
         context.save();
+
         if( context.globalAlpha == 1 && this.image.src.match('.png') ){
 
             context.clearRect( 
@@ -8569,12 +8584,17 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
 
 
 function loadTile( drawer, tile, time ) {
-    tile.loading = drawer.loadImage(
-        tile.url,
-        function( image ){
-            onTileLoad( drawer, tile, time, image );
-        }
-    );
+    if( drawer.viewport.collectionMode ){
+        drawer.midUpdate = false;
+        onTileLoad( drawer, tile, time );
+    } else {
+        tile.loading = drawer.loadImage(
+            tile.url,
+            function( image ){
+                onTileLoad( drawer, tile, time, image );
+            }
+        );
+    }
 };
 
 function onTileLoad( drawer, tile, time, image ) {
@@ -8594,7 +8614,7 @@ function onTileLoad( drawer, tile, time, image ) {
     if ( drawer.midUpdate ) {
         $.console.warn( "Tile load callback in middle of drawing routine." );
         return;
-    } else if ( !image ) {
+    } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         tile.exists = false;
         return;

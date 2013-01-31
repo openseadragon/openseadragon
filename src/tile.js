@@ -91,14 +91,13 @@ $.Tile.prototype = {
         }
 
         if ( !this.element ) {
-            this.element        = $.makeNeutralElement("img");
-            this.element.src    = this.url;
-            this.style          = this.element.style;
+            this.element              = $.makeNeutralElement("img");
+            this.element.src          = this.url;
 
+            this.style                     = this.element.style;
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
-
 
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
@@ -106,19 +105,33 @@ $.Tile.prototype = {
 
         this.style.top     = position.y + "px";
         this.style.left    = position.x + "px";
-        this.style.height = size.y + "px";
-        this.style.width = size.x + "px";
+        this.style.height  = size.y + "px";
+        this.style.width   = size.x + "px";
 
-        //this.style.right   = ( containerSize.x - position.x ) + "px";
-        //this.style.bottom  = ( containerSize.y - position.y ) + "px";
+        //EXPERIMENTAL - trying to figure out how to scale the container
+        //               content during animation of the container size.
+        /*
+        if ( !this.element ) {
+            this.element            = $.makeNeutralElement("div");
+            this.image              = $.makeNeutralElement("img");
+            this.image.src          = this.url;
+            this.image.style.height = '100%';
+            this.image.style.width  = '100%';
+            this.image.style.msInterpolationMode = "nearest-neighbor";
+            this.element.appendChild( this.image );
 
-        //when the entire container is filled by a single tile we need
-        //some additional stickyness so when animating container size
-        //the image stays fixed in position
-        //this.element.style.width   =  ( size.x / containerSize.x ) * 100 + "%";
-        //this.element.style.height  =  ( size.y / containerSize.y ) * 100 + "%";
-
+            this.style                     = this.element.style;
+            this.style.position            = "absolute";
+        }
+        this.style.right   = "0px";
+        this.style.bottom  = "0px";
+        if ( size.y == containerSize.y || size.x == containerSize.x ){
+            this.style.right   = position.x + "px";
+            this.style.bottom  = position.y + "px";
+        } 
+        */
         $.setElementOpacity( this.element, this.opacity );
+
 
     },
 
@@ -142,6 +155,7 @@ $.Tile.prototype = {
         context.globalAlpha = this.opacity;
 
         context.save();
+
         if( context.globalAlpha == 1 && this.image.src.match('.png') ){
 
             context.clearRect( 
