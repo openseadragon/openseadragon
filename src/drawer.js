@@ -971,17 +971,22 @@ function drawTiles( drawer, lastDrawn ){
         //We dont actually 'draw' a collection tile, rather its used to house
         //an overlay which does the drawing in its own viewport
         if( drawer.viewport.collectionMode ){
+            
             tileKey = tile.x + '/' + tile.y;
             viewport = drawer.viewport;
             collectionTileSource = viewport.collectionTileSource;
+            
             if( !drawer.collectionOverlays[ tileKey ] ){
+                
                 position = collectionTileSource.layout == 'horizontal' ? 
-                    tile.x + ( tile.y * collectionTileSource.tilesPerRow ) :
-                    tile.y + ( tile.x * collectionTileSource.tilesPerRow ),
+                    tile.y + ( tile.x * collectionTileSource.rows ) :
+                    tile.x + ( tile.y * collectionTileSource.rows ),
+                
                 tileSource = position < collectionTileSource.tileSources.length ?
                     collectionTileSource.tileSources[ position ] :
                     null;
-                //$.console.log("Rendering collection tile [%s] %s", position, tileKey);
+
+                //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
                     drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
                         element:               $.makeNeutralElement( "div" ),

@@ -6265,8 +6265,8 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
         options.width = ( options.tileSize ) * tilesPerRow;
         options.height = ( options.tileSize ) * options.rows;
     } else {
-        options.height = ( options.tileSize + ( options.tileMargin * 2 ) ) * tilesPerRow;
-        options.width = ( options.tileSize + ( options.tileMargin * 2 ) ) * options.rows;
+        options.height = ( options.tileSize ) * tilesPerRow;
+        options.width = ( options.tileSize ) * options.rows;
     }
 
     options.tileOverlap = -options.tileMargin;
@@ -7663,9 +7663,7 @@ $.Tile.prototype = {
      */
     drawHTML: function( container ) {
 
-        var position = this.position.apply( Math.floor ),
-            size     = this.size.apply( Math.ceil )
-            containerSize = $.getElementSize( container );
+        var containerSize = $.getElementSize( container );
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -7675,6 +7673,7 @@ $.Tile.prototype = {
             return;
         }
 
+        /* EXISTING IMPLEMENTATION
         if ( !this.element ) {
             this.element              = $.makeNeutralElement("img");
             this.element.src          = this.url;
@@ -7692,10 +7691,11 @@ $.Tile.prototype = {
         this.style.left    = position.x + "px";
         this.style.height  = size.y + "px";
         this.style.width   = size.x + "px";
+        */
 
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
-        /*
+        
         if ( !this.element ) {
             this.element            = $.makeNeutralElement("div");
             this.image              = $.makeNeutralElement("img");
@@ -7708,14 +7708,16 @@ $.Tile.prototype = {
             this.style                     = this.element.style;
             this.style.position            = "absolute";
         }
-        this.style.right   = "0px";
-        this.style.bottom  = "0px";
-        if ( size.y == containerSize.y || size.x == containerSize.x ){
-            this.style.right   = position.x + "px";
-            this.style.bottom  = position.y + "px";
-        } 
-        */
-        $.setElementOpacity( this.element, this.opacity );
+        if ( this.element.parentNode != container ) {
+            container.appendChild( this.element );
+        }
+
+        this.style.top     = 100 * ( this.position.y / containerSize.y ) + "%";
+        this.style.left    = 100 * ( this.position.x / containerSize.x ) + "%";
+        this.style.height  = 100 * ( this.size.y / containerSize.y ) + "%";
+        this.style.width   = 100 * ( this.size.x / containerSize.x ) + "%";
+        
+        $.setElementOpacity( this.image, this.opacity );
 
 
     },
@@ -7741,8 +7743,13 @@ $.Tile.prototype = {
 
         context.save();
 
+        //if we are supposed to b rendering fully opaque rectangle,
+        //ie its done fading or fading is turned off, and if we are drawing
+        //an image with an alpha channel, then the only way
+        //to avoid seeing the tile underneath is to clear the rectangle
         if( context.globalAlpha == 1 && this.image.src.match('.png') ){
-
+            //clearing only the inside of the rectangle occupied
+            //by the png prevents edge flikering
             context.clearRect( 
                 position.x+1, 
                 position.y+1, 
@@ -8919,17 +8926,22 @@ function drawTiles( drawer, lastDrawn ){
         //We dont actually 'draw' a collection tile, rather its used to house
         //an overlay which does the drawing in its own viewport
         if( drawer.viewport.collectionMode ){
+            
             tileKey = tile.x + '/' + tile.y;
             viewport = drawer.viewport;
             collectionTileSource = viewport.collectionTileSource;
+            
             if( !drawer.collectionOverlays[ tileKey ] ){
+                
                 position = collectionTileSource.layout == 'horizontal' ? 
-                    tile.x + ( tile.y * collectionTileSource.tilesPerRow ) :
-                    tile.y + ( tile.x * collectionTileSource.tilesPerRow ),
+                    tile.y + ( tile.x * collectionTileSource.rows ) :
+                    tile.x + ( tile.y * collectionTileSource.rows ),
+                
                 tileSource = position < collectionTileSource.tileSources.length ?
                     collectionTileSource.tileSources[ position ] :
                     null;
-                //$.console.log("Rendering collection tile [%s] %s", position, tileKey);
+
+                //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
                     drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
                         element:               $.makeNeutralElement( "div" ),
@@ -9120,10 +9132,10 @@ $.Viewport.prototype = {
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
-        this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+        this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
-        this.homeBounds = this.fitHeightBounds;
+        this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
         return this;
     },
 
@@ -9380,12 +9392,7 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     goHome: function( immediately ) {
-        if( this.contentSize.x <= this.contentSize.y ){
-            return this.fitVertically( immediately );
-        } else {
-            return this.fitHorizontally( immediately );
-        }
-        return this;
+        return this.fitBounds( this.homeBounds, immediately );
     },
 
     /**
@@ -9409,7 +9416,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.homeBounds, immediately );
+        this.fitBounds( this.fitHeightBounds, immediately );
         return this;
     },
 
@@ -9434,7 +9441,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.homeBounds, immediately );
+        this.fitBounds( this.fitWidthBounds, immediately );
         return this;
     },
 

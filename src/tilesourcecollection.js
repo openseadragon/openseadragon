@@ -34,8 +34,8 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
         options.width = ( options.tileSize ) * tilesPerRow;
         options.height = ( options.tileSize ) * options.rows;
     } else {
-        options.height = ( options.tileSize + ( options.tileMargin * 2 ) ) * tilesPerRow;
-        options.width = ( options.tileSize + ( options.tileMargin * 2 ) ) * options.rows;
+        options.height = ( options.tileSize ) * tilesPerRow;
+        options.width = ( options.tileSize ) * options.rows;
     }
 
     options.tileOverlap = -options.tileMargin;

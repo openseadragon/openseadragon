@@ -78,9 +78,7 @@ $.Tile.prototype = {
      */
     drawHTML: function( container ) {
 
-        var position = this.position.apply( Math.floor ),
-            size     = this.size.apply( Math.ceil )
-            containerSize = $.getElementSize( container );
+        var containerSize = $.getElementSize( container );
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -90,6 +88,7 @@ $.Tile.prototype = {
             return;
         }
 
+        /* EXISTING IMPLEMENTATION
         if ( !this.element ) {
             this.element              = $.makeNeutralElement("img");
             this.element.src          = this.url;
@@ -107,10 +106,11 @@ $.Tile.prototype = {
         this.style.left    = position.x + "px";
         this.style.height  = size.y + "px";
         this.style.width   = size.x + "px";
+        */
 
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
-        /*
+        
         if ( !this.element ) {
             this.element            = $.makeNeutralElement("div");
             this.image              = $.makeNeutralElement("img");
@@ -123,14 +123,16 @@ $.Tile.prototype = {
             this.style                     = this.element.style;
             this.style.position            = "absolute";
         }
-        this.style.right   = "0px";
-        this.style.bottom  = "0px";
-        if ( size.y == containerSize.y || size.x == containerSize.x ){
-            this.style.right   = position.x + "px";
-            this.style.bottom  = position.y + "px";
-        } 
-        */
-        $.setElementOpacity( this.element, this.opacity );
+        if ( this.element.parentNode != container ) {
+            container.appendChild( this.element );
+        }
+
+        this.style.top     = 100 * ( this.position.y / containerSize.y ) + "%";
+        this.style.left    = 100 * ( this.position.x / containerSize.x ) + "%";
+        this.style.height  = 100 * ( this.size.y / containerSize.y ) + "%";
+        this.style.width   = 100 * ( this.size.x / containerSize.x ) + "%";
+        
+        $.setElementOpacity( this.image, this.opacity );
 
 
     },
@@ -156,8 +158,13 @@ $.Tile.prototype = {
 
         context.save();
 
+        //if we are supposed to b rendering fully opaque rectangle,
+        //ie its done fading or fading is turned off, and if we are drawing
+        //an image with an alpha channel, then the only way
+        //to avoid seeing the tile underneath is to clear the rectangle
         if( context.globalAlpha == 1 && this.image.src.match('.png') ){
-
+            //clearing only the inside of the rectangle occupied
+            //by the png prevents edge flikering
             context.clearRect( 
                 position.x+1, 
                 position.y+1, 

@@ -13,12 +13,6 @@
    you can always create a new tile source which implements the required 
    interfaces 'getTileUrl', 'configure', and 'supports'.
 </p>
-<p>
-    <em>Please note the examples on this page are sketches or outlines
-    and not functional examples because we do not have an available
-    service to provide a working example against.  If you have a service you
-    can provide an example to illustrate against please let us know.</em>
-</p>
 
 <div class="description">
     <h3>Inline Configuration for Custom Tile Sources</h3>
@@ -36,7 +30,10 @@
          class="openseadragon" >
     </div>
     <p>
-        Below is a make believe minimal inline configuration. Note that the 
+        Below is a  minimal inline configuration which pull tiles from a NASA 
+        Blue Marble tile set transformed into tiles hosted on Amazon S3 (
+        compliments of Michal Migurski 
+        - see http://mike.teczno.com/notes/blue-marble-tiles.html ). Note that the 
         default tileSize is available as a property of the tile source.
     </p>
     <pre>
@@ -84,8 +81,11 @@
          style='background-color:#aaa'>
     </div>
     <p>
-        Below is a make believe minimal inline configuration. Note that the 
-        default tileSize is available as a property of the tile source.
+        Here is another inline example which makes use of a tile set
+        created by Aaron Straup Cope ( see http://shapetiles.spum.org/about/ )
+        which provide a visualization of geotagged Flikr photos. Note in this
+        case we set blendTime to zero since png with alpha channel (transparency)
+        can look unusual during blending.
     </p>
     <pre>
     OpenSeadragon({

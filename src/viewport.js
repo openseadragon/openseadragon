@@ -74,10 +74,10 @@ $.Viewport.prototype = {
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectX );
-        this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+        this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
-        this.homeBounds = this.fitHeightBounds;
+        this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
         return this;
     },
 
@@ -334,12 +334,7 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     goHome: function( immediately ) {
-        if( this.contentSize.x <= this.contentSize.y ){
-            return this.fitVertically( immediately );
-        } else {
-            return this.fitHorizontally( immediately );
-        }
-        return this;
+        return this.fitBounds( this.homeBounds, immediately );
     },
 
     /**
@@ -363,7 +358,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.homeBounds, immediately );
+        this.fitBounds( this.fitHeightBounds, immediately );
         return this;
     },
 
@@ -388,7 +383,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.homeBounds, immediately );
+        this.fitBounds( this.fitWidthBounds, immediately );
         return this;
     },
 
