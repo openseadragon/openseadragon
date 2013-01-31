@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -82,8 +83,8 @@
                 case $.OverlayPlacement.LEFT:
                     position.y -= size.y / 2;
                     break;
-                case $.OverlayPlacement.CENTER:
                 default:
+                case $.OverlayPlacement.CENTER:
                     position.x -= size.x / 2;
                     position.y -= size.y / 2;
                     break;

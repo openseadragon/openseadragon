@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -192,7 +193,7 @@ function filterFiles( files ){
         return a.height - b.height;
     });
 
-};
+}
 
 /**
  * @private
@@ -226,8 +227,8 @@ function configureFromXML( tileSource, xmlDoc ){
 
                 conf.levels .push({
                     url:    level.getAttribute( "url" ),
-                    width:  parseInt( level.getAttribute( "width" ) ),
-                    height: parseInt( level.getAttribute( "height" ) )
+                    width:  parseInt( level.getAttribute( "width" ), 10 ),
+                    height: parseInt( level.getAttribute( "height" ), 10 )
                 });
             }
 
@@ -245,7 +246,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     throw new Error( 'Unknown element ' + rootName );
-};
+}
 
 /**
  * @private
@@ -256,6 +257,6 @@ function configureFromObject( tileSource, configuration ){
     
     return configuration.levels;
 
-};
+}
 
 }( OpenSeadragon ));

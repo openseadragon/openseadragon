@@ -1,4 +1,4 @@
-
+/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -247,7 +247,7 @@ function scheduleFade( button ) {
     window.setTimeout(function(){
         updateFade( button );
     }, 20 );
-};
+}
 
 function updateFade( button ) {
     var currentTime,
@@ -269,7 +269,7 @@ function updateFade( button ) {
             scheduleFade( button );
         }
     }
-};
+}
 
 function beginFading( button ) {
     button.shouldFade = true;
@@ -277,14 +277,14 @@ function beginFading( button ) {
     window.setTimeout( function(){ 
         scheduleFade( button );
     }, button.fadeDelay );
-};
+}
 
 function stopFading( button ) {
     button.shouldFade = false;
     if( button.imgGroup ){
         $.setElementOpacity( button.imgGroup, 1.0, true );
     }
-};
+}
 
 function inTo( button, newState ) {
 
@@ -313,7 +313,7 @@ function inTo( button, newState ) {
         }
         button.currentState = $.ButtonState.DOWN;
     }
-};
+}
 
 
 function outTo( button, newState ) {
@@ -343,7 +343,7 @@ function outTo( button, newState ) {
         beginFading( button );
         button.currentState = $.ButtonState.REST;
     }
-};
+}
 
 
 

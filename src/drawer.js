@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
     
@@ -485,7 +486,7 @@ function updateViewport( drawer ) {
         // because we haven't finished drawing, so
         drawer.updateAgain = true; 
     }
-};
+}
 
 
 function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
@@ -531,7 +532,7 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
         }
     }
     return best;
-};
+}
 
 function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
     
@@ -591,7 +592,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
     }
 
     return best;
-};
+}
 
 function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeight ) {
     var xMod,
@@ -632,7 +633,7 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
     tile.lastTouchTime = time;
 
     return tile;
-};
+}
 
 
 function loadTile( drawer, tile, time ) {
@@ -647,7 +648,7 @@ function loadTile( drawer, tile, time ) {
             }
         );
     }
-};
+}
 
 function onTileLoad( drawer, tile, time, image ) {
     var insertionIndex,
@@ -717,7 +718,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     drawer.tilesLoaded[ insertionIndex ] = tile;
     drawer.updateAgain = true;
-};
+}
 
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
@@ -738,7 +739,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility 
     tile.size       = sizeC;
     tile.distance   = tileDistance;
     tile.visibility = levelVisibility;
-};
+}
 
 
 function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
@@ -768,13 +769,13 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     }
 
     return false;
-};
+}
 
 
 function clearTiles( drawer ) {
     drawer.tilesMatrix = {};
     drawer.tilesLoaded = [];
-};
+}
 
 /**
  * @private
@@ -817,7 +818,7 @@ function providesCoverage( coverage, level, x, y ) {
         coverage[ level ][ x ][ y ] === undefined ||
         coverage[ level ][ x ][ y ] === true
     );
-};
+}
 
 /**
  * @private
@@ -837,7 +838,7 @@ function isCovered( coverage, level, x, y ) {
              providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
         );
     }
-};
+}
 
 /**
  * @private
@@ -858,7 +859,7 @@ function setCoverage( coverage, level, x, y, covers ) {
     }
 
     coverage[ level ][ x ][ y ] = covers;
-};
+}
 
 /**
  * @private
@@ -869,7 +870,7 @@ function setCoverage( coverage, level, x, y, covers ) {
  */
 function resetCoverage( coverage, level ) {
     coverage[ level ] = {};
-};
+}
 
 /**
  * @private
@@ -886,7 +887,7 @@ function getOverlayIndex( overlays, element ) {
     }
 
     return -1;
-};
+}
 
 /**
  * @private
@@ -908,7 +909,7 @@ function compareTiles( previousBest, tile ) {
     }
 
     return previousBest;
-};
+}
 
 function finishLoadingImage( image, callback, successful, jobid ){
 
@@ -923,7 +924,7 @@ function finishLoadingImage( image, callback, successful, jobid ){
         callback( image.src, successful ? image : null);
     }, 1 );
 
-};
+}
 
 
 function drawOverlays( viewport, overlays, container ){
@@ -932,7 +933,7 @@ function drawOverlays( viewport, overlays, container ){
     for ( i = 0; i < length; i++ ) {
         drawOverlay( viewport, overlays[ i ], container );
     }
-};
+}
 
 function drawOverlay( viewport, overlay, container ){
 
@@ -945,7 +946,7 @@ function drawOverlay( viewport, overlay, container ){
         true
     );
     overlay.drawHTML( container );
-};
+}
 
 function drawTiles( drawer, lastDrawn ){
     var i, 
@@ -1038,7 +1039,7 @@ function drawTiles( drawer, lastDrawn ){
             tile.beingDrawn = true;
         }
     }
-};
+}
 
 
 function drawDebugInfo( drawer, tile, count, i ){
@@ -1097,7 +1098,7 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.position.y + 70
         );
     }
-};
+}
 
 
 }( OpenSeadragon ));

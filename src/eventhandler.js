@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function($){
 
@@ -85,7 +86,7 @@ $.EventHandler.prototype = {
 
         if ( handler ) {
             if ( !eventArgs ) {
-                eventArgs = new Object();
+                eventArgs = {};
             }
 
             handler( this, eventArgs );

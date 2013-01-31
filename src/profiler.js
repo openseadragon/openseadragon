@@ -1,3 +1,4 @@
+/*globals OpenSeadragon */
 
 (function( $ ){
 
