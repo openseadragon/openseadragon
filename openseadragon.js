@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.92
+ * @version  OpenSeadragon 0.9.95
  *
  * @fileOverview 
  * <h2>
