@@ -487,7 +487,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
-            
+
             showNavigationControl:  true,
             showSequenceControl:    true,
             controlsFadeDelay:      2000,
@@ -526,6 +526,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxImageCacheCount:     200,
             minZoomImageRatio:      0.8,
             maxZoomPixelRatio:      2,
+            timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",

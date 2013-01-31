@@ -373,6 +373,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 contentSize:            this.source.dimensions, 
                 springStiffness:        this.springStiffness,
                 animationTime:          this.animationTime,
+                showNavigator:          false,
                 minZoomImageRatio:      1,
                 maxZoomPixelRatio:      1
             });
@@ -427,13 +428,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             immediateRender:    this.immediateRender,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.minPixelRatio,
+            minPixelRatio:      this.collectionMode ? 0 : this.minPixelRatio,
+            timeout:            this.timeout,
             debugMode:          this.debugMode,
             debugGridColor:     this.debugGridColor
         });
 
         //Instantiate a navigator if configured
-        if ( this.showNavigator  && ! this.navigator ){
+        if ( this.showNavigator  && ! this.navigator && !this.collectionMode ){
             this.navigator = new $.Navigator({
                 id:          this.navigatorElement,
                 position:    this.navigatorPosition,
@@ -630,8 +632,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             bodyStyle.width     = "100%";
             bodyStyle.height    = "100%";
 
-            canvasStyle.backgroundColor = "black";
-            canvasStyle.color           = "white";
+            //canvasStyle.backgroundColor = "black";
+            //canvasStyle.color           = "white";
 
             //containerStyle.position = "fixed";
 

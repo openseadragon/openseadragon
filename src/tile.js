@@ -80,7 +80,8 @@ $.Tile.prototype = {
     drawHTML: function( container ) {
 
         var position = this.position.apply( Math.floor ),
-            size     = this.size.apply( Math.ceil );
+            size     = this.size.apply( Math.ceil )
+            containerSize = $.getElementSize( container );
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -91,25 +92,47 @@ $.Tile.prototype = {
         }
 
         if ( !this.element ) {
-            this.element        = $.makeNeutralElement("img");
-            this.element.src    = this.url;
-            this.style          = this.element.style;
+            this.element              = $.makeNeutralElement("img");
+            this.element.src          = this.url;
 
+            this.style                     = this.element.style;
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
-
 
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
         }
 
-        this.element.style.left    = position.x + "px";
-        this.element.style.top     = position.y + "px";
-        this.element.style.width   = size.x + "px";
-        this.element.style.height  = size.y + "px";
+        this.style.top     = position.y + "px";
+        this.style.left    = position.x + "px";
+        this.style.height  = size.y + "px";
+        this.style.width   = size.x + "px";
 
+        //EXPERIMENTAL - trying to figure out how to scale the container
+        //               content during animation of the container size.
+        /*
+        if ( !this.element ) {
+            this.element            = $.makeNeutralElement("div");
+            this.image              = $.makeNeutralElement("img");
+            this.image.src          = this.url;
+            this.image.style.height = '100%';
+            this.image.style.width  = '100%';
+            this.image.style.msInterpolationMode = "nearest-neighbor";
+            this.element.appendChild( this.image );
+
+            this.style                     = this.element.style;
+            this.style.position            = "absolute";
+        }
+        this.style.right   = "0px";
+        this.style.bottom  = "0px";
+        if ( size.y == containerSize.y || size.x == containerSize.x ){
+            this.style.right   = position.x + "px";
+            this.style.bottom  = position.y + "px";
+        } 
+        */
         $.setElementOpacity( this.element, this.opacity );
+
 
     },
 
@@ -131,7 +154,23 @@ $.Tile.prototype = {
             return;
         }
         context.globalAlpha = this.opacity;
+
+        context.save();
+
+        if( context.globalAlpha == 1 && this.image.src.match('.png') ){
+
+            context.clearRect( 
+                position.x+1, 
+                position.y+1, 
+                size.x-2, 
+                size.y-2 
+            );
+
+        }
+        
         context.drawImage( this.image, position.x, position.y, size.x, size.y );
+
+        context.restore();
     },
 
     /**

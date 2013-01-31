@@ -31,7 +31,7 @@ $.Navigator = function( options ){
     }
 
     options = $.extend( true, {
-        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
+        sizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
@@ -188,8 +188,8 @@ $.Navigator = function( options ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
-        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
     }
 
     $.Viewer.apply( this, [ options ] ); 

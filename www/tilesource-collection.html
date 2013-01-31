@@ -42,25 +42,31 @@ OpenSeadragon({
 });</pre>
 </div>
 <script type="text/javascript">
-    OpenSeadragon({
+    var viewer = OpenSeadragon({
         id:                 "example-tilesource-collection",
-        prefixUrl:          "/openseadragon",
-        //debugMode:          true,
-        showNavigator:      false,
-        minPixelRatio:      0.0,
+        prefixUrl:          "/openseadragon/images/",
+        debugMode:          false, //if you want to see the render grid
+        
         collectionMode:     true,
         collectionRows:     1, 
         collectionTileSize: 1024,
         collectionTileMargin: 256,
+
         //collectionLayout:   'vertical',
+        //panVertical:        false,
+        //panHorizontal:      false,
         //defaultZoomLevel:   1,
+
+        /*The wrap options can be fun to give a sense of infinite results*/
         //wrapHorizontal: true,
         //wrapVertical: true,
+        
+        /*Tile sources can be mixed*/
         tileSources: [
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05954.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05955.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05956.dzi",
-            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05957.dzi",
+            "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05957.dzi"/*,
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05958.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05959.dzi",
             "/openseadragon/examples/images/pnp/ppmsca/05900/05954/05960.dzi",
@@ -227,7 +233,7 @@ OpenSeadragon({
                 width:  2970
                 
             }]
-        }/*,{
+        }*//*,{
             type: 'legacy-image-pyramid',
             levels: [{
                 url: '/openseadragon/examples/images/rbc/rbc0001/2003/2003rosen1799/0011q.jpg',

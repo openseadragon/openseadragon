@@ -112,7 +112,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             }
             dziPath = url.split('/');
             dziName = dziPath.pop();
-            dziName = dziName.substring(0, dziName.indexOf('.'));
+            dziName = dziName.substring(0, dziName.lastIndexOf('.'));
             dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
             tilesUrl = dziPath;
             if( host ){

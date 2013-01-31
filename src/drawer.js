@@ -2,8 +2,7 @@
 
 (function( $ ){
     
-var TIMEOUT             = 5000,
-    DEVICE_SCREEN       = $.getWindowSize(),
+var DEVICE_SCREEN       = $.getWindowSize(),
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
 
@@ -72,6 +71,7 @@ $.Drawer = function( options ) {
         midUpdate:      false,
         updateAgain:    true,
 
+
         //internal state / configurable settings 
         overlays:           [],
         collectionOverlays: {},
@@ -86,7 +86,8 @@ $.Drawer = function( options ) {
         blendTime:          $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode
+        debugMode:          $.DEFAULT_SETTINGS.debugMode,
+        timeout:            $.DEFAULT_SETTINGS.timeout
 
     }, options );
 
@@ -323,7 +324,7 @@ $.Drawer.prototype = {
 
             jobid = window.setTimeout( function(){
                 finishLoadingImage( image, complete, false, jobid );
-            }, TIMEOUT );
+            }, this.timeout );
 
             loading   = true;
             image.src = src;
@@ -387,8 +388,12 @@ function updateViewport( drawer ) {
     //TODO
     drawer.canvas.innerHTML   = "";
     if ( USE_CANVAS ) {
-        drawer.canvas.width   = viewportSize.x;
-        drawer.canvas.height  = viewportSize.y;
+        if( drawer.canvas.width != viewportSize.x ||
+            drawer.canvas.height != viewportSize.y 
+        ){
+            drawer.canvas.width   = viewportSize.x;
+            drawer.canvas.height  = viewportSize.y;
+        }
         drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
     }
 
@@ -632,12 +637,17 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
 
 
 function loadTile( drawer, tile, time ) {
-    tile.loading = drawer.loadImage(
-        tile.url,
-        function( image ){
-            onTileLoad( drawer, tile, time, image );
-        }
-    );
+    if( drawer.viewport.collectionMode ){
+        drawer.midUpdate = false;
+        onTileLoad( drawer, tile, time );
+    } else {
+        tile.loading = drawer.loadImage(
+            tile.url,
+            function( image ){
+                onTileLoad( drawer, tile, time, image );
+            }
+        );
+    }
 }
 
 function onTileLoad( drawer, tile, time, image ) {
@@ -657,7 +667,7 @@ function onTileLoad( drawer, tile, time, image ) {
     if ( drawer.midUpdate ) {
         $.console.warn( "Tile load callback in middle of drawing routine." );
         return;
-    } else if ( !image ) {
+    } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         tile.exists = false;
         return;
@@ -993,9 +1003,9 @@ function drawTiles( drawer, lastDrawn ){
                             'below 0px -webkit-gradient('+
                                 'linear,left '+
                                 'top,left '+
-                                'bottom,from(transparent),color-stop(60%,transparent),to(rgba(255,255,255,0.4))'+
+                                'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
                             ')';
-                        style['border'] = '1px solid rgba(255,255,255,0.2)';
+                        style['border'] = '1px solid rgba(255,255,255,0.38)';
                         //style['borderRight'] = '1px solid #fff';
                     }(viewer.element.style));
 

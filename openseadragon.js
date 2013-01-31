@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.90
+ * @version  OpenSeadragon 0.9.92
  *
  * @fileOverview 
  * <h2>
@@ -487,7 +487,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
-            
+
             showNavigationControl:  true,
             showSequenceControl:    true,
             controlsFadeDelay:      2000,
@@ -526,6 +526,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxImageCacheCount:     200,
             minZoomImageRatio:      0.8,
             maxZoomPixelRatio:      2,
+            timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
@@ -3685,6 +3686,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 contentSize:            this.source.dimensions, 
                 springStiffness:        this.springStiffness,
                 animationTime:          this.animationTime,
+                showNavigator:          false,
                 minZoomImageRatio:      1,
                 maxZoomPixelRatio:      1
             });
@@ -3739,13 +3741,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             immediateRender:    this.immediateRender,
             blendTime:          this.blendTime,
             alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.minPixelRatio,
+            minPixelRatio:      this.collectionMode ? 0 : this.minPixelRatio,
+            timeout:            this.timeout,
             debugMode:          this.debugMode,
             debugGridColor:     this.debugGridColor
         });
 
         //Instantiate a navigator if configured
-        if ( this.showNavigator  && ! this.navigator ){
+        if ( this.showNavigator  && ! this.navigator && !this.collectionMode ){
             this.navigator = new $.Navigator({
                 id:          this.navigatorElement,
                 position:    this.navigatorPosition,
@@ -3942,8 +3945,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             bodyStyle.width     = "100%";
             bodyStyle.height    = "100%";
 
-            canvasStyle.backgroundColor = "black";
-            canvasStyle.color           = "white";
+            //canvasStyle.backgroundColor = "black";
+            //canvasStyle.color           = "white";
 
             //containerStyle.position = "fixed";
 
@@ -4745,7 +4748,7 @@ $.Navigator = function( options ){
     }
 
     options = $.extend( true, {
-        navigatorSizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
+        sizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
         //These need to be overridden to prevent recursion since
@@ -4902,8 +4905,8 @@ $.Navigator = function( options ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
     } else {
-        this.element.style.width  = ( viewerSize.x * options.navigatorSizeRatio ) + 'px';
-        this.element.style.height = ( viewerSize.y * options.navigatorSizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
     }
 
     $.Viewer.apply( this, [ options ] ); 
@@ -5770,7 +5773,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             }
             dziPath = url.split('/');
             dziName = dziPath.pop();
-            dziName = dziName.substring(0, dziName.indexOf('.'));
+            dziName = dziName.substring(0, dziName.lastIndexOf('.'));
             dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
             tilesUrl = dziPath;
             if( host ){
@@ -7690,7 +7693,8 @@ $.Tile.prototype = {
     drawHTML: function( container ) {
 
         var position = this.position.apply( Math.floor ),
-            size     = this.size.apply( Math.ceil );
+            size     = this.size.apply( Math.ceil )
+            containerSize = $.getElementSize( container );
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -7701,25 +7705,47 @@ $.Tile.prototype = {
         }
 
         if ( !this.element ) {
-            this.element        = $.makeNeutralElement("img");
-            this.element.src    = this.url;
-            this.style          = this.element.style;
+            this.element              = $.makeNeutralElement("img");
+            this.element.src          = this.url;
 
+            this.style                     = this.element.style;
             this.style.position            = "absolute";
             this.style.msInterpolationMode = "nearest-neighbor";
         }
-
 
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
         }
 
-        this.element.style.left    = position.x + "px";
-        this.element.style.top     = position.y + "px";
-        this.element.style.width   = size.x + "px";
-        this.element.style.height  = size.y + "px";
+        this.style.top     = position.y + "px";
+        this.style.left    = position.x + "px";
+        this.style.height  = size.y + "px";
+        this.style.width   = size.x + "px";
 
+        //EXPERIMENTAL - trying to figure out how to scale the container
+        //               content during animation of the container size.
+        /*
+        if ( !this.element ) {
+            this.element            = $.makeNeutralElement("div");
+            this.image              = $.makeNeutralElement("img");
+            this.image.src          = this.url;
+            this.image.style.height = '100%';
+            this.image.style.width  = '100%';
+            this.image.style.msInterpolationMode = "nearest-neighbor";
+            this.element.appendChild( this.image );
+
+            this.style                     = this.element.style;
+            this.style.position            = "absolute";
+        }
+        this.style.right   = "0px";
+        this.style.bottom  = "0px";
+        if ( size.y == containerSize.y || size.x == containerSize.x ){
+            this.style.right   = position.x + "px";
+            this.style.bottom  = position.y + "px";
+        } 
+        */
         $.setElementOpacity( this.element, this.opacity );
+
 
     },
 
@@ -7741,7 +7767,23 @@ $.Tile.prototype = {
             return;
         }
         context.globalAlpha = this.opacity;
+
+        context.save();
+
+        if( context.globalAlpha == 1 && this.image.src.match('.png') ){
+
+            context.clearRect( 
+                position.x+1, 
+                position.y+1, 
+                size.x-2, 
+                size.y-2 
+            );
+
+        }
+        
         context.drawImage( this.image, position.x, position.y, size.x, size.y );
+
+        context.restore();
     },
 
     /**
@@ -7938,8 +7980,7 @@ $.Tile.prototype = {
 
 (function( $ ){
     
-var TIMEOUT             = 5000,
-    DEVICE_SCREEN       = $.getWindowSize(),
+var DEVICE_SCREEN       = $.getWindowSize(),
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
 
@@ -8008,6 +8049,7 @@ $.Drawer = function( options ) {
         midUpdate:      false,
         updateAgain:    true,
 
+
         //internal state / configurable settings 
         overlays:           [],
         collectionOverlays: {},
@@ -8022,7 +8064,8 @@ $.Drawer = function( options ) {
         blendTime:          $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode
+        debugMode:          $.DEFAULT_SETTINGS.debugMode,
+        timeout:            $.DEFAULT_SETTINGS.timeout
 
     }, options );
 
@@ -8259,7 +8302,7 @@ $.Drawer.prototype = {
 
             jobid = window.setTimeout( function(){
                 finishLoadingImage( image, complete, false, jobid );
-            }, TIMEOUT );
+            }, this.timeout );
 
             loading   = true;
             image.src = src;
@@ -8323,8 +8366,12 @@ function updateViewport( drawer ) {
     //TODO
     drawer.canvas.innerHTML   = "";
     if ( USE_CANVAS ) {
-        drawer.canvas.width   = viewportSize.x;
-        drawer.canvas.height  = viewportSize.y;
+        if( drawer.canvas.width != viewportSize.x ||
+            drawer.canvas.height != viewportSize.y 
+        ){
+            drawer.canvas.width   = viewportSize.x;
+            drawer.canvas.height  = viewportSize.y;
+        }
         drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
     }
 
@@ -8568,12 +8615,17 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
 
 
 function loadTile( drawer, tile, time ) {
-    tile.loading = drawer.loadImage(
-        tile.url,
-        function( image ){
-            onTileLoad( drawer, tile, time, image );
-        }
-    );
+    if( drawer.viewport.collectionMode ){
+        drawer.midUpdate = false;
+        onTileLoad( drawer, tile, time );
+    } else {
+        tile.loading = drawer.loadImage(
+            tile.url,
+            function( image ){
+                onTileLoad( drawer, tile, time, image );
+            }
+        );
+    }
 }
 
 function onTileLoad( drawer, tile, time, image ) {
@@ -8593,7 +8645,7 @@ function onTileLoad( drawer, tile, time, image ) {
     if ( drawer.midUpdate ) {
         $.console.warn( "Tile load callback in middle of drawing routine." );
         return;
-    } else if ( !image ) {
+    } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         tile.exists = false;
         return;
@@ -8929,9 +8981,9 @@ function drawTiles( drawer, lastDrawn ){
                             'below 0px -webkit-gradient('+
                                 'linear,left '+
                                 'top,left '+
-                                'bottom,from(transparent),color-stop(60%,transparent),to(rgba(255,255,255,0.4))'+
+                                'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
                             ')';
-                        style['border'] = '1px solid rgba(255,255,255,0.2)';
+                        style['border'] = '1px solid rgba(255,255,255,0.38)';
                         //style['borderRight'] = '1px solid #fff';
                     }(viewer.element.style));
 
@@ -9104,6 +9156,7 @@ $.Viewport.prototype = {
         this.fitHeightBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         this.homeBounds = this.fitHeightBounds;
+        return this;
     },
 
     /**
@@ -9289,6 +9342,7 @@ $.Viewport.prototype = {
             bounds.y += dy;
             this.fitBounds( bounds, immediately );
         }
+        return this;
     },
 
     /**
@@ -9297,6 +9351,7 @@ $.Viewport.prototype = {
      */
     ensureVisible: function( immediately ) {
         this.applyConstraints( immediately );
+        return this;
     },
 
     /**
@@ -9334,7 +9389,7 @@ $.Viewport.prototype = {
         newZoom   = 1.0 / newBounds.width;
         if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
             this.panTo( center, immediately );
-            return;
+            return this;
         }
 
         referencePoint = oldBounds.getTopLeft().times( 
@@ -9349,6 +9404,7 @@ $.Viewport.prototype = {
         );
 
         this.zoomTo( newZoom, referencePoint, immediately );
+        return this;
     },
     
     /**
@@ -9361,6 +9417,7 @@ $.Viewport.prototype = {
         } else {
             return this.fitHorizontally( immediately );
         }
+        return this;
     },
 
     /**
@@ -9385,6 +9442,7 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( this.homeBounds, immediately );
+        return this;
     },
 
     /**
@@ -9409,6 +9467,7 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( this.homeBounds, immediately );
+        return this;
     },
 
 
@@ -9423,6 +9482,7 @@ $.Viewport.prototype = {
             this.centerSpringY.target.value
         );
         this.panTo( center.plus( delta ), immediately );
+        return this;
     },
 
     /**
@@ -9438,6 +9498,8 @@ $.Viewport.prototype = {
             this.centerSpringX.springTo( center.x );
             this.centerSpringY.springTo( center.y );
         }
+
+        return this;
     },
 
     /**
@@ -9445,6 +9507,7 @@ $.Viewport.prototype = {
      */
     zoomBy: function( factor, refPoint, immediately ) {
         this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
+        return this;
     },
 
     /**
@@ -9452,15 +9515,18 @@ $.Viewport.prototype = {
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
+        this.zoomPoint = refPoint instanceof $.Point ? 
+            refPoint : 
+            null;
+            
         if ( immediately ) {
             this.zoomSpring.resetTo( zoom );
         } else {        
             this.zoomSpring.springTo( zoom );
         }
 
-        this.zoomPoint = refPoint instanceof $.Point ? 
-            refPoint : 
-            null;
+
+        return this;
     },
 
     /**
@@ -9482,6 +9548,8 @@ $.Viewport.prototype = {
         }
 
         this.fitBounds( newBounds, true );
+
+        return this;
     },
 
     /**
