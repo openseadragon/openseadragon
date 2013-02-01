@@ -1,0 +1,6 @@
+{
+    "name": "openseadragon",
+    "version": "0.9.95",
+    "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
+    "dependencies": ["grunt"]
+}
