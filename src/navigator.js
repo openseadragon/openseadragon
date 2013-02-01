@@ -6,7 +6,7 @@
  * The Navigator provides a small view of the current image as fixed
  * while representing the viewport as a moving box serving as a frame
  * of reference in the larger viewport as to which portion of the image
- * is currently being examined.  The navigators viewport can be interacted
+ * is currently being examined.  The navigator's viewport can be interacted
  * with using the keyboard or the mouse.
  * @class 
  * @name OpenSeadragon.Navigator
@@ -73,7 +73,7 @@ $.Navigator = function( options ){
         style.background    = 'transparent';
 
         // We use square bracket notation on the statement below, because float is a keyword.
-        // This is important for the Google Closure compliler, if nothing else.
+        // This is important for the Google Closure compiler, if nothing else.
         /*jshint sub:true */ 
         style['float']      = 'left'; //Webkit
         
@@ -221,7 +221,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
 
-                var width = Math.abs( topleft.x - bottomright.x ) - 3; // TODO: What's this magic number mean?
+                var width = Math.abs( topleft.x - bottomright.x ) - 3; // TODO: What does this magic number mean?
                 var height = Math.abs( topleft.y - bottomright.y ) - 3;
                 // make sure width and height are non-negative so IE doesn't throw
                 style.width  = Math.max( width, 0 ) + 'px';
