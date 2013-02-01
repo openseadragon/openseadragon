@@ -471,8 +471,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
              
             //INTERFACE FEATURES
             animationTime:          1.5,
-            blendTime:              0.1,
-            alwaysBlend:            false,
+            blendTime:              0.5,
+            alwaysBlend:            true,
             autoHideControls:       true,
             immediateRender:        false,
             wrapHorizontal:         false,

@@ -113,13 +113,9 @@ $.Tile.prototype = {
         //               content during animation of the container size.
         
         if ( !this.element ) {
-            this.element            = $.makeNeutralElement("div");
-            this.image              = $.makeNeutralElement("img");
-            this.image.src          = this.url;
-            this.image.style.height = '100%';
-            this.image.style.width  = '100%';
-            this.image.style.msInterpolationMode = "nearest-neighbor";
-            this.element.appendChild( this.image );
+            this.element              = $.makeNeutralElement("img");
+            this.element.src          = this.url;
+            this.element.style.msInterpolationMode = "nearest-neighbor";
 
             this.style                     = this.element.style;
             this.style.position            = "absolute";
@@ -133,7 +129,7 @@ $.Tile.prototype = {
         this.style.height  = 100 * ( this.size.y / containerSize.y ) + "%";
         this.style.width   = 100 * ( this.size.x / containerSize.x ) + "%";
         
-        $.setElementOpacity( this.image, this.opacity );
+        $.setElementOpacity( this.element, this.opacity );
 
 
     },

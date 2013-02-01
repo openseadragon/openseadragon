@@ -960,14 +960,6 @@ function drawTiles( drawer, lastDrawn ){
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-
-        if( drawer.debugMode ){
-            try{
-                drawDebugInfo( drawer, tile, lastDrawn.length, i );
-            }catch(e){
-                $.console.error(e);
-            }
-        }
         
         //We dont actually 'draw' a collection tile, rather its used to house
         //an overlay which does the drawing in its own viewport
@@ -1036,7 +1028,16 @@ function drawTiles( drawer, lastDrawn ){
                 tile.drawHTML( drawer.canvas );
             }
 
+
             tile.beingDrawn = true;
+        }
+
+        if( drawer.debugMode ){
+            try{
+                drawDebugInfo( drawer, tile, lastDrawn.length, i );
+            }catch(e){
+                $.console.error(e);
+            }
         }
     }
 }
@@ -1046,7 +1047,7 @@ function drawDebugInfo( drawer, tile, count, i ){
 
     if ( USE_CANVAS ) {
         drawer.context.lineWidth = 2;
-        drawer.context.font = 'small-caps bold 12px ariel';
+        drawer.context.font = 'small-caps bold 13px ariel';
         drawer.context.strokeStyle = drawer.debugGridColor;
         drawer.context.fillStyle = drawer.debugGridColor;
         drawer.context.strokeRect( 
