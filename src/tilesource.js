@@ -1,0 +1,407 @@
+/*globals OpenSeadragon */
+
+(function( $ ){
+
+
+/**
+ * The TileSource contains the most basic implementation required to create a
+ * smooth transition between layer in an image pyramid. It has only a single key 
+ * interface that must be implemented to complete it key functionality: 
+ * 'getTileUrl'.  It also has several optional interfaces that can be 
+ * implemented if a new TileSource wishes to support configuration via a simple
+ * object or array ('configure') and if the tile source supports or requires 
+ * configuration via retreival of a document on the network ala AJAX or JSONP, 
+ * ('getImageInfo').
+ * <br/>
+ * By default the image pyramid is split into N layers where the images longest
+ * side in M (in pixels), where N is the smallest integer which satisfies 
+ *      <strong>2^(N+1) >= M</strong>.
+ * @class
+ * @extends OpenSeadragon.EventHandler
+ * @param {Number|Object|Array|String} width 
+ *      If more than a single argument is supplied, the traditional use of 
+ *      positional parameters is supplied and width is expected to be the width 
+ *      source image at it's max resolution in pixels.  If a single argument is supplied and
+ *      it is an Object or Array, the construction is assumed to occur through
+ *      the extending classes implementation of 'configure'.  Finally if only a
+ *      single argument is supplied and it is a String, the extending class is
+ *      expected to implement 'getImageInfo' and 'configure'.
+ * @param {Number} height
+ *      Width of the source image at max resolution in pixels.
+ * @param {Number} tileSize
+ *      The size of the tiles to assumed to make up each pyramid layer in pixels.
+ *      Tile size determines the point at which the image pyramid must be 
+ *      divided into a matrix of smaller images.
+ * @param {Number} tileOverlap
+ *      The number of pixels each tile is expected to overlap touching tiles.
+ * @param {Number} minLevel
+ *      The minimum level to attempt to load.
+ * @param {Number} maxLevel
+ *      The maximum level to attempt to load.
+ * @property {Number} aspectRatio
+ *      Ratio of width to height
+ * @property {OpenSeadragon.Point} dimensions
+ *      Vector storing x and y dimensions ( width and height respectively ).
+ * @property {Number} tileSize
+ *      The size of the image tiles used to compose the image.
+ * @property {Number} tileOverlap
+ *      The overlap in pixels each tile shares with it's adjacent neighbors.
+ * @property {Number} minLevel
+ *      The minimum pyramid level this tile source supports or should attempt to load.
+ * @property {Number} maxLevel
+ *      The maximum pyramid level this tile source supports or should attempt to load.
+ */ 
+$.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
+    var _this = this,
+        callback = null,
+        readyHandler = null,
+        args = arguments,
+        options,
+        i;
+
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: args[0],
+            height: args[1],
+            tileSize: args[2],
+            tileOverlap: args[3],
+            minlevel: args[4],
+            maxLevel: args[5]
+        };
+    }
+
+    //Tile sources supply some events, namely 'ready' when they must be configured
+    //by asyncronously fetching their configuration data.
+    $.EventHandler.call( this );
+
+    //we allow options to override anything we dont treat as
+    //required via idiomatic options or which is functionally
+    //set depending on the state of the readiness of this tile
+    //source
+    $.extend( true, this, options );
+
+    //Any functions that are passed as arguments are bound to the ready callback
+    for( i = 0; i < arguments.length; i++ ){
+        if( $.isFunction( arguments[i] ) ){
+            callback = arguments[ i ];
+            this.addHandler( 'ready', function( placeHolderSource, readySource ){
+                callback( readySource );
+            });
+            //only one callback per constructor
+            break;
+        }
+    }
+
+    if( 'string' == $.type( arguments[ 0 ] ) ){
+        //in case the getImageInfo method is overriden and/or implies an
+        //async mechanism set some safe defaults first
+        this.aspectRatio = 1;
+        this.dimensions  = new $.Point( 10, 10 );
+        this.tileSize    = 0;
+        this.tileOverlap = 0;
+        this.minLevel    = 0;
+        this.maxLevel    = 0;
+        this.ready       = false;
+        //configuration via url implies the extending class 
+        //implements and 'configure'
+        this.getImageInfo( arguments[ 0 ] );
+
+    } else {
+    
+        //explicit configuration via positional args in constructor
+        //or the more idiomatic 'options' object
+        this.ready       = true;
+        this.aspectRatio = ( options.width && options.height ) ? 
+            (  options.width / options.height ) : 1;
+        this.dimensions  = new $.Point( options.width, options.height );
+        this.tileSize    = options.tileSize ? options.tileSize : 0;
+        this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
+        this.minLevel    = options.minLevel ? options.minLevel : 0;
+        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ? 
+            options.maxLevel : (
+                ( options.width && options.height ) ? Math.ceil( 
+                    Math.log( Math.max( options.width, options.height ) ) / 
+                    Math.log( 2 ) 
+                ) : 0
+            );
+        if( callback && $.isFunction( callback ) ){
+            callback( this );
+        }
+    }
+
+
+};
+
+
+$.TileSource.prototype = {
+    
+    /**
+     * @function
+     * @param {Number} level
+     */
+    getLevelScale: function( level ) {
+        return 1 / ( 1 << ( this.maxLevel - level ) );
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     */
+    getNumTiles: function( level ) {
+        var scale = this.getLevelScale( level ),
+            x = Math.ceil( scale * this.dimensions.x / this.tileSize ),
+            y = Math.ceil( scale * this.dimensions.y / this.tileSize );
+
+        return new $.Point( x, y );
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     */
+    getPixelRatio: function( level ) {
+        var imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) ),
+            rx = 1.0 / imageSizeScaled.x,
+            ry = 1.0 / imageSizeScaled.y;
+
+        return new $.Point(rx, ry);
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     * @param {OpenSeadragon.Point} point
+     */
+    getTileAtPoint: function( level, point ) {
+        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level ) ),
+            tx = Math.floor( pixel.x / this.tileSize ),
+            ty = Math.floor( pixel.y / this.tileSize );
+
+        return new $.Point( tx, ty );
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    getTileBounds: function( level, x, y ) {
+        var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
+            px = ( x === 0 ) ? 0 : this.tileSize * x - this.tileOverlap,
+            py = ( y === 0 ) ? 0 : this.tileSize * y - this.tileOverlap,
+            sx = this.tileSize + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
+            sy = this.tileSize + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
+            scale = 1.0 / dimensionsScaled.x;
+
+        sx = Math.min( sx, dimensionsScaled.x - px );
+        sy = Math.min( sy, dimensionsScaled.y - py );
+
+        return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
+    },
+    
+
+    /**
+     * Responsible for retrieving, and caching the
+     * image metadata pertinent to this TileSources implementation.
+     * @function
+     * @param {String} url
+     * @throws {Error}
+     */
+    getImageInfo: function( url ) {
+        var _this   = this,
+            url     = url,
+            error,
+            callbackName,
+            callback,
+            readySource,
+            options,
+            urlParts,
+            filename,
+            lastDot,
+            tilesUrl;
+
+
+        if( url ) {
+            urlParts = url.split( '/' );
+            filename = urlParts[ urlParts.length - 1 ];
+            lastDot  = filename.lastIndexOf( '.' );
+            if ( lastDot > -1 ) {
+                urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
+            }
+        }
+    
+        callback = function( data ){
+            var $TileSource = $.TileSource.determineType( _this, data, url );
+            options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
+            readySource = new $TileSource( options );
+            _this.ready = true;
+            _this.raiseEvent( 'ready', readySource );
+        };
+
+        if( url.match(/\.js$/) ){
+            //TODO: Its not very flexible to require tile sources to end jsonp
+            //      request for info  with a url that ends with '.js' but for
+            //      now it's the only way I see to distinguish uniformly.
+            callbackName = url.split( '/' ).pop().replace('.js','');
+            $.jsonp({
+                url: url,
+                async: false,
+                callbackName: callbackName,
+                callback: callback
+            });
+        } else {
+            //TODO: struggling a little with TileSource rewrite to make info
+            //      requests work asyncronously.  For now I'm opting to make
+            //      all xhr info request syncronous.
+            $.makeAjaxRequest( url, function( xhr ) {
+                var data = processResponse( xhr );
+                callback( data );
+            });
+        }
+
+    },
+
+    /**
+     * Responsible determining if a the particular TileSource supports the
+     * data format ( and allowed to apply logic against the url the data was
+     * loaded from, if any ). Overriding implementations are expected to do
+     * something smart with data and / or url to determine support.  Also
+     * understand that iteration order of TileSources is not guarunteed so
+     * please make sure your data or url is expressive enough to ensure a simple
+     * and sufficient mechanisim for clear determination.
+     * @function
+     * @param {String|Object|Array|Document} data
+     * @param {String} url - the url the data was loaded 
+     *      from if any.
+     * @return {Boolean}
+     */
+    supports: function( data, url ) {
+        return false;
+    },
+
+    /**
+     * Responsible for parsing and configuring the
+     * image metadata pertinent to this TileSources implementation.
+     * This method is not implemented by this class other than to throw an Error
+     * announcing you have to implement it.  Because of the variety of tile 
+     * server technologies, and various specifications for building image
+     * pyramids, this method is here to allow easy integration.
+     * @function
+     * @param {String|Object|Array|Document} data
+     * @param {String} url - the url the data was loaded 
+     *      from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
+     * @throws {Error}
+     */
+    configure: function( data, url ) {
+        throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Responsible for retriving the url which will return an image for the 
+     * region speified by the given x, y, and level components.
+     * This method is not implemented by this class other than to throw an Error
+     * announcing you have to implement it.  Because of the variety of tile 
+     * server technologies, and various specifications for building image
+     * pyramids, this method is here to allow easy integration.
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @throws {Error}
+     */
+    getTileUrl: function( level, x, y ) {
+        throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    tileExists: function( level, x, y ) {
+        var numTiles = this.getNumTiles( level );
+        return  level >= this.minLevel && 
+                level <= this.maxLevel &&
+                x >= 0 && 
+                y >= 0 && 
+                x < numTiles.x && 
+                y < numTiles.y;
+    }
+};
+
+
+$.extend( true, $.TileSource.prototype, $.EventHandler.prototype );
+
+
+/**
+ * Decides whether to try to process the response as xml, json, or hand back
+ * the text
+ * @eprivate
+ * @inner
+ * @function
+ * @param {XMLHttpRequest} xhr - the completed network request
+ */
+function processResponse( xhr ){
+    var responseText = xhr.responseText,
+        status       = xhr.status,
+        statusText,
+        data;
+
+    if ( !xhr ) {
+        throw new Error( $.getString( "Errors.Security" ) );
+    } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
+        status     = xhr.status;
+        statusText = ( status == 404 ) ? 
+            "Not Found" : 
+            xhr.statusText;
+        throw new Error( $.getString( "Errors.Status", status, statusText ) );
+    }
+
+    if( responseText.match(/\s*<.*/) ){
+        try{
+        data = ( xhr.responseXML && xhr.responseXML.documentElement ) ? 
+            xhr.responseXML : 
+            $.parseXml( responseText );
+        } catch (e){
+            data = xhr.responseText;
+        }
+    }else if( responseText.match(/\s*[\{\[].*/) ){
+        data = eval( responseText );
+    }else{
+        data = responseText;
+    }
+    return data;
+}
+
+
+/**
+ * Determines the TileSource Implementation by introspection of OpenSeadragon
+ * namespace, calling each TileSource implementation of 'isType'
+ * @eprivate
+ * @inner
+ * @function
+ * @param {Object|Array} data - the tile source configuration object
+ * @param {String} url - the url where the tile source configuration object was
+ *      loaded from, if any.
+ */
+$.TileSource.determineType = function( tileSource, data, url ){
+    var property;
+    for( property in OpenSeadragon ){
+        if( property.match(/.+TileSource$/) &&
+            $.isFunction( OpenSeadragon[ property ] ) &&
+            $.isFunction( OpenSeadragon[ property ].prototype.supports ) &&
+            OpenSeadragon[ property ].prototype.supports.call( tileSource, data, url )
+        ){
+            return OpenSeadragon[ property ];
+        }
+    }
+};
+
+
+}( OpenSeadragon ));
