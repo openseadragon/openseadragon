@@ -996,14 +996,18 @@ function drawTiles( drawer, lastDrawn ){
                     });
                     
                     (function(style){
-                        style['-webkit-box-reflect'] = 
-                            'below 0px -webkit-gradient('+
-                                'linear,left '+
-                                'top,left '+
-                                'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
-                            ')';
-                        style['border'] = '1px solid rgba(255,255,255,0.38)';
-                        //style['borderRight'] = '1px solid #fff';
+                        //TODO: IE seems to barf on this, not sure if its just the border
+                        //      but we probably need to clear this up with a better 
+                        //      test of support for various css features
+                        if( SUBPIXEL_RENDERING ){
+                            style['-webkit-box-reflect'] = 
+                                'below 0px -webkit-gradient('+
+                                    'linear,left '+
+                                    'top,left '+
+                                    'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
+                                ')';
+                            style['border'] = '1px solid rgba(255,255,255,0.38)';
+                        } 
                     }(viewer.element.style));
 
                     drawer.addOverlay(
