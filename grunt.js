@@ -42,9 +42,16 @@ module.exports = function(grunt) {
                 dest: 'build/openseadragon.min.js'
             }
         },
+        qunit: {
+            all: ['http://localhost:8000/test/test.html']
+        },
+        server: {
+            port: 8000,
+            base: '.'
+        },
         watch: {
             files: ['grunt.js', 'src/*.js'],
-            tasks: 'concat'
+            tasks: 'concat min'
         },
         jshint: {
             options: {
@@ -105,7 +112,6 @@ module.exports = function(grunt) {
         }
     });
 
-    // Default task.
     grunt.registerTask('default', 'concat min');
-
+    grunt.registerTask('test', 'concat min server qunit');
 };
