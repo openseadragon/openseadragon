@@ -375,7 +375,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 animationTime:          this.animationTime,
                 showNavigator:          false,
                 minZoomImageRatio:      1,
-                maxZoomPixelRatio:      1
+                maxZoomPixelRatio:      1//,
+                //TODO: figure out how to support these in a way that makes sense
+                //minZoomLevel:           this.minZoomLevel,
+                //maxZoomLevel:           this.maxZoomLevel
             });
         }else{
             if( source ){
@@ -390,7 +393,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 maxZoomPixelRatio:  this.maxZoomPixelRatio,
                 visibilityRatio:    this.visibilityRatio,
                 wrapHorizontal:     this.wrapHorizontal,
-                wrapVertical:       this.wrapVertical
+                wrapVertical:       this.wrapVertical,
+                defaultZoomLevel:   this.defaultZoomLevel,
+                minZoomLevel:       this.minZoomLevel,
+                maxZoomLevel:       this.maxZoomLevel
             });
         }
         
@@ -398,22 +404,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             
             this.viewport.resetContentSize( this.source.dimensions );
 
-        } else if( this.defaultZoomLevel || this.collectionMode ){
-
-            if( this.collectionMode ){
-                /*this.viewport.zoomTo( 
-                    ( this.viewport.getMaxZoom() + this.viewport.getMaxZoom())/ 2, 
-                    this.viewport.getCenter(),
-                    true
-                );*/
-            }else{
-                this.viewport.zoomTo( 
-                    this.defaultZoomLevel, 
-                    this.viewport.getCenter(),  
-                    true
-                );
-            }
-        }
+        } 
 
         this.drawer = new $.Drawer({
             source:             this.source, 

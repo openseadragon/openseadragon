@@ -468,34 +468,42 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             xmlPath:                null,
             tileSources:            null, 
             tileHost:               null,
-             
-            //INTERFACE FEATURES
-            animationTime:          1.5,
-            blendTime:              0.5,
-            alwaysBlend:            true,
-            autoHideControls:       true,
-            immediateRender:        false,
-            wrapHorizontal:         false,
-            wrapVertical:           false,
+            
+            //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
             panVertical:            true,
-
+            wrapHorizontal:         false,
+            wrapVertical:           false,
             visibilityRatio:        0.5,
+            minPixelRatio:          0.5,
+            minZoomImageRatio:      0.8,
+            maxZoomPixelRatio:      2,
+            defaultZoomLevel:       0,
+            minZoomLevel:           null,
+            maxZoomLevel:           null, 
+
+            //UI RESPONSIVENESS AND FEEL
             springStiffness:        5.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
+            animationTime:          1.5,
+            blendTime:              0.5,
+            alwaysBlend:            false,
+            autoHideControls:       true,
+            immediateRender:        false,
 
-            showNavigationControl:  true,
-            showSequenceControl:    true,
-            controlsFadeDelay:      2000,
-            controlsFadeLength:     1500,
-            mouseNavEnabled:        true,
-            preserveViewport:       false,
-            defaultZoomLevel:       0, 
+            //DEFAULT CONTROL SETTINGS
+            showSequenceControl:    true,  //SEQUENCE
+            preserveViewport:       false, //SEQUENCE
+            showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
+            mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
 
+            //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
@@ -503,6 +511,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
 
+            //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false, 
             referenceStripScroll:       'horizontal',
             referenceStripElement:       null,
@@ -521,11 +530,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             onPageChange:           null, 
             
             //PERFORMANCE SETTINGS
-            minPixelRatio:          0.5,
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
-            minZoomImageRatio:      0.8,
-            maxZoomPixelRatio:      2,
             timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS

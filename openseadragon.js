@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.97
+ * @version  OpenSeadragon 0.9.98
  *
  * @fileOverview 
  * <h2>
@@ -468,34 +468,42 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             xmlPath:                null,
             tileSources:            null, 
             tileHost:               null,
-             
-            //INTERFACE FEATURES
-            animationTime:          1.5,
-            blendTime:              0.5,
-            alwaysBlend:            true,
-            autoHideControls:       true,
-            immediateRender:        false,
-            wrapHorizontal:         false,
-            wrapVertical:           false,
+            
+            //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
             panVertical:            true,
-
+            wrapHorizontal:         false,
+            wrapVertical:           false,
             visibilityRatio:        0.5,
+            minPixelRatio:          0.5,
+            minZoomImageRatio:      0.8,
+            maxZoomPixelRatio:      2,
+            defaultZoomLevel:       0,
+            minZoomLevel:           null,
+            maxZoomLevel:           null, 
+
+            //UI RESPONSIVENESS AND FEEL
             springStiffness:        5.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
+            animationTime:          1.5,
+            blendTime:              0.5,
+            alwaysBlend:            false,
+            autoHideControls:       true,
+            immediateRender:        false,
 
-            showNavigationControl:  true,
-            showSequenceControl:    true,
-            controlsFadeDelay:      2000,
-            controlsFadeLength:     1500,
-            mouseNavEnabled:        true,
-            preserveViewport:       false,
-            defaultZoomLevel:       0, 
+            //DEFAULT CONTROL SETTINGS
+            showSequenceControl:    true,  //SEQUENCE
+            preserveViewport:       false, //SEQUENCE
+            showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
+            mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
 
+            //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
             navigatorHeight:        null,
@@ -503,6 +511,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
 
+            //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false, 
             referenceStripScroll:       'horizontal',
             referenceStripElement:       null,
@@ -521,11 +530,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             onPageChange:           null, 
             
             //PERFORMANCE SETTINGS
-            minPixelRatio:          0.5,
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
-            minZoomImageRatio:      0.8,
-            maxZoomPixelRatio:      2,
             timeout:                5000,
 
             //INTERFACE RESOURCE SETTINGS
@@ -3688,7 +3694,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 animationTime:          this.animationTime,
                 showNavigator:          false,
                 minZoomImageRatio:      1,
-                maxZoomPixelRatio:      1
+                maxZoomPixelRatio:      1//,
+                //TODO: figure out how to support these in a way that makes sense
+                //minZoomLevel:           this.minZoomLevel,
+                //maxZoomLevel:           this.maxZoomLevel
             });
         }else{
             if( source ){
@@ -3703,7 +3712,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 maxZoomPixelRatio:  this.maxZoomPixelRatio,
                 visibilityRatio:    this.visibilityRatio,
                 wrapHorizontal:     this.wrapHorizontal,
-                wrapVertical:       this.wrapVertical
+                wrapVertical:       this.wrapVertical,
+                defaultZoomLevel:   this.defaultZoomLevel,
+                minZoomLevel:       this.minZoomLevel,
+                maxZoomLevel:       this.maxZoomLevel
             });
         }
         
@@ -3711,22 +3723,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             
             this.viewport.resetContentSize( this.source.dimensions );
 
-        } else if( this.defaultZoomLevel || this.collectionMode ){
-
-            if( this.collectionMode ){
-                /*this.viewport.zoomTo( 
-                    ( this.viewport.getMaxZoom() + this.viewport.getMaxZoom())/ 2, 
-                    this.viewport.getCenter(),
-                    true
-                );*/
-            }else{
-                this.viewport.zoomTo( 
-                    this.defaultZoomLevel, 
-                    this.viewport.getCenter(),  
-                    true
-                );
-            }
-        }
+        } 
 
         this.drawer = new $.Drawer({
             source:             this.source, 
@@ -9133,7 +9130,10 @@ $.Viewport = function( options ) {
         maxZoomPixelRatio:  $.DEFAULT_SETTINGS.maxZoomPixelRatio,
         visibilityRatio:    $.DEFAULT_SETTINGS.visibilityRatio,
         wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical
+        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
+        defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
+        minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
+        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel
 
     }, options );
 
@@ -9155,7 +9155,6 @@ $.Viewport = function( options ) {
 
     this.resetContentSize( this.contentSize );
     this.goHome( true );
-    //this.fitHorizontally( true );
     this.update();
 };
 
@@ -9176,13 +9175,40 @@ $.Viewport.prototype = {
      * @function
      */
     getHomeZoom: function() {
-        
         var aspectFactor = 
             this.contentAspectX / this.getAspectRatio();
 
-        return ( aspectFactor >= 1 ) ? 
-            1 : 
-            aspectFactor;
+        if( this.defaultZoomLevel ){
+            return this.defaultZoomLevel;
+        } else {
+            return ( aspectFactor >= 1 ) ? 
+                1 : 
+                aspectFactor;
+        }
+    },
+
+    /**
+     * @function
+     */
+    getHomeBounds: function() {
+        var center = this.homeBounds.getCenter( ),
+            width  = 1.0 / this.getHomeZoom( ),
+            height = width / this.getAspectRatio();
+
+        return new $.Rect(
+            center.x - ( width / 2.0 ), 
+            center.y - ( height / 2.0 ),
+            width, 
+            height
+        );
+    },
+
+    /**
+     * @function
+     * @param {Boolean} immediately
+     */
+    goHome: function( immediately ) {
+        return this.fitBounds( this.getHomeBounds(), immediately );
     },
 
     /**
@@ -9190,7 +9216,9 @@ $.Viewport.prototype = {
      */
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom(),
-            zoom = this.minZoomImageRatio * homeZoom;
+            zoom = this.minZoomLevel ? 
+            this.minZoomLevel : 
+                this.minZoomImageRatio * homeZoom;
 
         return Math.min( zoom, homeZoom );
     },
@@ -9199,10 +9227,10 @@ $.Viewport.prototype = {
      * @function
      */
     getMaxZoom: function() {
-        var zoom = 
-            this.contentSize.x * 
-            this.maxZoomPixelRatio / 
-            this.containerSize.x;
+        var zoom = this.maxZoomLevel ?
+            this.maxZoomLevel :
+                ( this.contentSize.x * this.maxZoomPixelRatio / this.containerSize.x );
+
         return Math.max( zoom, this.getHomeZoom() );
     },
 
@@ -9300,7 +9328,6 @@ $.Viewport.prototype = {
         }
     },
 
-
     /**
      * @function
      */
@@ -9317,8 +9344,10 @@ $.Viewport.prototype = {
             right,
             top,
             bottom,
+            center,
             dx = 0,
-            dy = 0;
+            dy = 0,
+            dx1 = 0, dx2 = 0, dy1 = 0, dy2 = 0;
 
         if ( actualZoom != constrainedZoom ) {
             this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
@@ -9336,23 +9365,39 @@ $.Viewport.prototype = {
 
         if ( this.wrapHorizontal ) {
             //do nothing
-        } else if ( left < horizontalThreshold ) {
-            dx = horizontalThreshold - left;
-        } else if ( right < horizontalThreshold ) {
-            dx = right - horizontalThreshold;
+        } else {
+            if ( left < horizontalThreshold ) {
+                dx = horizontalThreshold - left;
+            } 
+            if ( right < horizontalThreshold ) {
+                dx = dx ? 
+                    ( dx + right - horizontalThreshold ) / 2 :
+                    ( right - horizontalThreshold );
+            }
         }
 
         if ( this.wrapVertical ) {
             //do nothing
-        } else if ( top < verticalThreshold ) {
-            dy = verticalThreshold - top;
-        } else if ( bottom < verticalThreshold ) {
-            dy = bottom - verticalThreshold;
+        } else {
+            if ( top < verticalThreshold ) {
+                dy = ( verticalThreshold - top );
+            } 
+            if ( bottom < verticalThreshold ) {
+                dy =  dy ? 
+                    ( dy + bottom - verticalThreshold ) / 2 :
+                    ( bottom - verticalThreshold );
+            }
         }
 
-        if ( dx || dy ) {
+        if ( dx || dy || immediately ) {
             bounds.x += dx;
             bounds.y += dy;
+            if( bounds.width > 1  ){
+                bounds.x = 0.5 - bounds.width/2;
+            }
+            if( bounds.height > this.contentAspectY ){
+                bounds.y = this.contentAspectY/2 - bounds.height/2;
+            }
             this.fitBounds( bounds, immediately );
         }
         return this;
@@ -9363,8 +9408,7 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     ensureVisible: function( immediately ) {
-        this.applyConstraints( immediately );
-        return this;
+        return this.applyConstraints( immediately );
     },
 
     /**
@@ -9401,8 +9445,7 @@ $.Viewport.prototype = {
         oldZoom   = this.getZoom();
         newZoom   = 1.0 / newBounds.width;
         if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
-            this.panTo( center, immediately );
-            return this;
+            return this.panTo( center, immediately );
         }
 
         referencePoint = oldBounds.getTopLeft().times( 
@@ -9416,17 +9459,9 @@ $.Viewport.prototype = {
             this.containerSize.x / newBounds.width
         );
 
-        this.zoomTo( newZoom, referencePoint, immediately );
-        return this;
+        return this.zoomTo( newZoom, referencePoint, immediately );
     },
     
-    /**
-     * @function
-     * @param {Boolean} immediately
-     */
-    goHome: function( immediately ) {
-        return this.fitBounds( this.homeBounds, immediately );
-    },
 
     /**
      * @function
@@ -9449,8 +9484,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.fitHeightBounds, immediately );
-        return this;
+        return this.fitBounds( this.fitHeightBounds, immediately );
     },
 
     /**
@@ -9474,8 +9508,7 @@ $.Viewport.prototype = {
             this.centerSpringY.update();
         }
 
-        this.fitBounds( this.fitWidthBounds, immediately );
-        return this;
+        return this.fitBounds( this.fitWidthBounds, immediately );
     },
 
 
@@ -9489,8 +9522,7 @@ $.Viewport.prototype = {
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
         );
-        this.panTo( center.plus( delta ), immediately );
-        return this;
+        return this.panTo( center.plus( delta ), immediately );
     },
 
     /**
@@ -9514,8 +9546,7 @@ $.Viewport.prototype = {
      * @function
      */
     zoomBy: function( factor, refPoint, immediately ) {
-        this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
-        return this;
+        return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
     /**
@@ -9555,9 +9586,7 @@ $.Viewport.prototype = {
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
 
-        this.fitBounds( newBounds, true );
-
-        return this;
+        return this.fitBounds( newBounds, true );
     },
 
     /**

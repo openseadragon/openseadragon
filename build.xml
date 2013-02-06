@@ -72,6 +72,7 @@
         <publish page='ui-reference-strip' title='Image Reference Strip | '/>
         <publish page='ui-toolbar' title='Toolbar | '/>
         <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
+        <publish page='ui-zoom-and-pan' title='Viewport Zoom and Pan | '/>
 
         <publish page='developer-debug-mode' title='Developer Tools - Debug Mode | '/>
 
