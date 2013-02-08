@@ -1,0 +1,114 @@
+<h2>example: zoom and pan options</h2>
+
+<p>
+A deep zoom viewport allows several options to be set in order to constrain
+the minimum and maximum zoom range as well as the range of panning.
+</p>
+<p>
+	These features are generally controlled through various combinations of
+	the options: <ul>
+		<li>
+            <strong>panHorizontal</strong><em>(default:) true</em>
+        <li>
+            <strong>panVertical</strong><em>(default:) true</em>
+        <li>
+            <strong> wrapHorizontal</strong><em>(default:) false</em>
+        <li>
+            <strong>wrapVertical</strong><em>(default:) false</em>
+        <li>
+            <strong>visibilityRatio</strong><em>(default:) 0.5</em>
+        </li>
+        <li>
+            <strong>minPixelRatio</strong><em>(default:) 0.5</em>
+        </li>
+        <li>
+            <strong>minZoomImageRatio</strong><em>(default:) 0.8</em>
+        </li>
+        <li>
+            <strong>maxZoomPixelRatio</strong><em>(default:) 2</em>
+        </li>
+        <li>
+            <strong>defaultZoomLevel</strong><em>(default:) 0</em>
+        </li>
+        <li>
+            <strong>minZoomLevel</strong><em>(default:) null</em>
+        </li>
+        <li>
+            <strong>maxZoomLevel</strong><em>(default:) null</em>
+        </li>
+	</ul>
+</p>
+
+<div class="description">
+    <h3>Constraining by viewport visibility as a ratio.</h3>
+    <p>
+         The option 
+        <strong>visibilityRatio</strong>, which is by default <strong>0.5</strong>,
+        ensure that you cannot pan the image far enough to fill the viewport with
+        more than 50% background.  Setting it to 1, as in this example, ensure 
+        the image cannot be panned so as to show any background.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        A visibilityRatio of 1.
+    </div>
+    <div id="visibility-ratio-1" class="openseadragon"></div>
+</div>
+<script type="text/javascript">
+    OpenSeadragon({
+        id:            "visibility-ratio-1",
+        prefixUrl:     "/openseadragon/images/",
+        tileSources:   "/openseadragon/examples/images/highsmith/highsmith.dzi",
+        visibilityRatio: 1.0
+    });
+</script>
+<p>
+	Below is the relevant configuration.
+</p>
+<pre>OpenSeadragon({
+		...
+        visibilityRatio: 1.0,
+        ...
+    });
+</pre>
+
+
+<div class="description">
+    <h3>Constraining pan direction and using a default zoom level.</h3>
+    <p>
+       In this example we combine a number of options to produce an effect similar to
+       a pdf view 'fit-width'.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        A visibilityRatio of 1.
+    </div>
+    <div id="vertical-scrolling" class="openseadragon"></div>
+</div>
+<script type="text/javascript">
+    OpenSeadragon({
+        id:            "vertical-scrolling",
+        prefixUrl:     "/openseadragon/images/",
+        tileSources:   "/openseadragon/examples/images/highsmith/highsmith.dzi",
+        panHorizontal: 		false,
+        defaultZoomLevel: 	1,
+        minZoomLevel: 		1,
+        maxZoomLevel: 		1,
+        visibilityRatio: 	1
+    });
+</script>
+<p>
+	Below is the relevant configuration.
+</p>
+<pre>OpenSeadragon({
+		...
+        panHorizontal: 		false,
+        defaultZoomLevel: 	1,
+        minZoomLevel: 		1,
+        maxZoomLevel: 		1,
+        visibilityRatio: 	1
+        ...
+    });
+</pre>

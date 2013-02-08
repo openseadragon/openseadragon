@@ -1,0 +1,82 @@
+<h2>
+    example: deep zoom image support
+</h2>
+<p>
+    The DZI (Deep Zoom Image) format is an
+    xml specification maintained by Microsoft and described <a
+    href='http://msdn.microsoft.com/en-us/library/cc645077(v=vs.95).aspx'>here</a>.
+</p>
+<p>
+    OpenSeadragon has added supports for DZI format via AJAX ( XML/JSON ), JSONP,
+    and as inline configuration ( using the json format ). The DZI specification 
+    does not officially describe a JSON format however the 
+    examples below illustrate how DZI xml is mapped to json following some
+    simple conventions.
+</p>
+
+
+
+
+<div class="description">
+    <h3>Inline Configuration for DZI</h3>
+    <p>
+        Inline configuration is convenient as well because it avoids a potentially
+        complicated JSON/XML Ajax request over the network.  Just plop the equivalent
+        json directly into 'tileSources' option.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        Example Inline Configuration for DZI
+    </div>
+    <div id="example-inline-configuration-for-dzi" 
+         style="height:200px; width:300px;">
+    </div>
+    <p>
+        Configuration is done via the 'tileSources' option ( or programatically ).
+    </p>
+    <p>
+        Note however the non-standard dzi property 'Url' which we must supply
+        explicitly since this is normally inferred by the path specified
+        for the dzi XML/JSON/JSONP.
+    </p>
+<pre>
+OpenSeadragon({
+    ...
+    tileSources:   {
+        Image: {
+            xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
+            Url:      "/openseadragon/examples/images/highsmith/highsmith_files/",
+            Format:   "jpg", 
+            Overlap:  "2", 
+            TileSize: "256",
+            Size: {
+                Height: "9221",
+                Width:  "7026"
+            }
+        }
+    }
+    ...
+});</pre>
+</div>
+<script type="text/javascript">
+    OpenSeadragon({
+        id:            "example-inline-configuration-for-dzi",
+        prefixUrl:     "/openseadragon/images/",
+        showNavigator:  true,
+        tileSources:   {
+            Image: {
+                xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
+                Url:      "/openseadragon/examples/images/highsmith/highsmith_files/",
+                Format:   "jpg", 
+                Overlap:  "2", 
+                TileSize: "256",
+                Size: {
+                    Height: "9221",
+                    Width:  "7026"
+                }
+            }
+        }
+    });
+</script>
+
