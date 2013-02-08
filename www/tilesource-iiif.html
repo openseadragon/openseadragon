@@ -1,16 +1,154 @@
-<!-- 
-/opt/djakota/target/lib/kdu_compress \
-	-quiet \
-	-i /opt/djakota/src/test/resources/images/01967u.tif \
-	-o /opt/djakota/target/images/01967u.jp2 \
-	-slope 51651,51337,51186,50804,50548,50232 \
-	Clevels=7 \
-	Cprecincts={256,256},{256,256},{128,128} \
-	Clayers=6 \
-	Corder=RPCL \
-	ORGtparts=R \
-	Cblk={32,32} \
-	ORGgen_plt=yes \
-	Creversible=yes \
-	-jp2_space sRGB
--->
+<h2>
+    example: iiif tiles support
+</h2>
+<p>
+    The International Image Interoperability Format is described formally here 
+    <a href='http://library.stanford.edu/iiif/image-api/'
+        >http://library.stanford.edu/iiif/image-api/</a>.
+</p>
+<p>
+    The IIIF API specifies a web service that returns an image in response to a standard http or https request. 
+    The URL can specify the region, size, rotation, quality characteristics and format of the requested image. A 
+    URL can also be constructed to request basic technical information about the image to support client 
+    applications.  The IIIF API was conceived of to facilitate systematic reuse of image resources in digital 
+    image repositories maintained by cultural heritage organizations. The API could be adopted by any image 
+    repository or service, and can be used to retrieve static images in response to a properly constructed URL.
+</p>
+<p>
+    OpenSeadragon has added support for IIIF thanks to several of its specifications authors
+    as well as the gist provided by <a href='http://github.com/jstroop'>Jon Stroop</a> at 
+    <a href='https://gist.github.com/jpstroop/4624253'>this gist</a>.
+    <em>The tile source reference in this page are not meant for general public consumption
+    without individual consideration of potential copyright infringement.</em>
+</p>
+
+
+<div class="description">
+    <h3>Inline Configuration for IIIF tile sources.</h3>
+    <p>
+        Inline configuration is very straight forward.  The tile source type is
+        identified by it's <strong>profile</strong> attribute an must specify the 
+        url of the tile service with the <strong>tilesUrl</strong> attribute.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        Example Inline Configuration for IIIF
+    </div>
+    <div id="example-inline-configuration-for-iiif" 
+         class="openseadragon">
+    </div>
+    <p>
+        In this example we also specified the 'preserveViewport' option to retain the 
+        viewport zoom and position when changing pages.
+
+    </p>
+<pre>
+OpenSeadragon({
+    ...
+    preserveViewport: true,
+    tileSources:   [{
+        "tilesUrl":     "http://img.princeton.edu/loris",
+        "identifier":   "pudl0001/4609321/s42/00000001",   
+        "width":        2617,   
+        "height":       3600,   
+        "scale_factors": [1, 2, 3, 4, 5],   
+        "tile_width":   256,   
+        "tile_height":  256,   
+        "formats":      [ "jpg", "png" ],   
+        "qualities":    ["native", "bitonal", "grey", "color"],   
+        "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+    }...,{
+
+    ...//more tile sources
+
+    }]
+    ...
+});</pre>
+</div>
+<script type="text/javascript">
+    OpenSeadragon({
+        id:                 "example-inline-configuration-for-iiif",
+        prefixUrl:          "/openseadragon/images/",
+        preserveViewport: true,
+        tileSources:   [{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000001",   
+            "width":        2617,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000002",   
+            "width":        2547,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000003",   
+            "width":        2694,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000004",   
+            "width":        2717,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000005",   
+            "width":        2694,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000006",   
+            "width":        2717,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },{
+            "tilesUrl":     "http://img.princeton.edu/loris",
+            "identifier":   "pudl0001/4609321/s42/00000007",   
+            "width":        2694,   
+            "height":       3600,   
+            "scale_factors": [1, 2, 3, 4, 5],   
+            "tile_width":   256,   
+            "tile_height":  256,   
+            "formats":      [ "jpg", "png" ],   
+            "qualities":    ["native", "bitonal", "grey", "color"],   
+            "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        }]
+    });
+</script>
+

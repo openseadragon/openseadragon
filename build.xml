@@ -31,6 +31,9 @@
             <!--file name="src/profiler.js" /-->
             <file name="src/tilesource.js" />
             <file name="src/dzitilesource.js" />
+            <file name="src/iiiftilesource.js" />
+            <file name="src/osmtilesource.js" />
+            <file name="src/tmstilesource.js" />
             <file name="src/legacytilesource.js" />
             <file name="src/tilesourcecollection.js" />
             <file name="src/button.js" />
@@ -63,6 +66,8 @@
 
         <publish page='tilesource-custom' title='Custom Tile Source | '/>
         <publish page='tilesource-dzi' title='DZI Tile Source | '/>
+        <publish page='tilesource-osm' title='Open Street Maps Tile Source | '/>
+        <publish page='tilesource-tms' title='Tiled Map Service Tile Source | '/>
         <publish page='tilesource-iiif' title='IIIF Tile Source | '/>
         <publish page='tilesource-legacy' title='Legacy Tile Sources | '/>
         <publish page='tilesource-sequence' title='Tile Source Sequence | '/>

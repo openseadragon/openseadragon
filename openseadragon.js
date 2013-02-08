@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.98
+ * @version  OpenSeadragon 0.9.101
  *
  * @fileOverview 
  * <h2>
@@ -3410,7 +3410,8 @@ $.Viewer = function( options ) {
         //These are originally not part options but declared as members
         //in initialize.  Its still considered idiomatic to put them here
         source:         null,
-        drawer:         null,
+        drawer:         null, 
+        drawers:        [],
         viewport:       null,
         navigator:      null, 
 
@@ -5987,7 +5988,503 @@ function configureFromObject( tileSource, configuration ){
 };
 
 }( OpenSeadragon ));
-/*globals OpenSeadragon */
+(function( $ ){
+    
+/**
+ * A client implementation of the International Image Interoperability 
+ * Format: Image API Draft 0.2 - Please read more about the specification
+ * at 
+ *
+ * The getTileUrl implementation is based on the gist from:
+ * https://gist.github.com/jpstroop/4624253
+ *
+ * @class
+ * @name OpenSeadragon.IIIFTileSource
+ * @see http://library.stanford.edu/iiif/image-api/
+ */
+$.IIIFTileSource = function( options ){
+
+    $.extend( true, this, options );
+
+    if( !(this.height && this.width && this.identifier && this.tilesUrl ) ){
+        throw new Error('IIIF required parameters not provided.');
+    }
+
+    //TODO: at this point the base tile source implementation assumes
+    //      a tile is a square and so only has one property tileSize
+    //      to store it.  It may be possible to make tileSize a vector
+    //      OpenSeadraon.Point but would require careful implementation
+    //      to preserve backward compatibility.
+    options.tileSize = this.tile_width;
+
+    options.maxLevel = options.maxLevel ? options.maxLevel : Number( 
+        Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ) )
+    );
+    
+    $.TileSource.apply( this, [ options ] );
+};
+
+$.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
+    
+
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.IIIFTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( 
+            data.ns && 
+            "http://library.stanford.edu/iiif/image-api/ns/" == data.ns
+        ) || (
+            data.profile && (
+                "http://library.stanford.edu/iiif/image-api/compliance.html#level1" == data.profile ||
+                "http://library.stanford.edu/iiif/image-api/compliance.html#level2" == data.profile ||
+                "http://library.stanford.edu/iiif/image-api/compliance.html#level3" == data.profile ||
+                "http://library.stanford.edu/iiif/image-api/compliance.html" == data.profile 
+            )
+        ) || (
+            data.documentElement &&
+            "info" == data.documentElement.tagName &&
+            "http://library.stanford.edu/iiif/image-api/ns/" ==
+                data.documentElement.namespaceURI
+        );
+    },
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.IIIFTileSource.prototype.configure
+     * @param {Object|XMLDocument} data - the raw configuration
+     * @param {String} url - the url the data was retreived from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile source via it's constructor.
+     */
+    configure: function( data, url ){
+        var service,
+            identifier,
+            options,
+            host;
+
+        if( !$.isPlainObject(data) ){
+
+            options = configureFromXML( this, data );
+
+        }else{
+
+            options = configureFromObject( this, data );
+        }
+
+        if( url && !options.tilesUrl ){
+            service = url.split('/');
+            service.pop(); //info.json or info.xml
+            service = service.join('/');
+            if( !( 'http' == url.substring( 0, 4 ) ) ){
+                host = location.protocol + '//' + location.host;
+                service = host + service;
+            }
+            options.tilesUrl = service.replace(
+                data.identifier,
+                ''
+            );
+        }
+
+        return options;
+    },
+
+    /**
+     * Responsible for retreiving the url which will return an image for the 
+     * region speified by the given x, y, and level components.
+     * @function
+     * @name OpenSeadragon.IIIFTileSource.prototype.getTileUrl
+     * @param {Number} level - z index
+     * @param {Number} x
+     * @param {Number} y
+     * @throws {Error}
+     */
+    getTileUrl: function( level, x, y ){
+         
+        //# constants
+        var IIIF_ROTATION = '0',
+            IIIF_QUALITY = 'native.jpg',
+         
+            //## get the scale (level as a decimal)
+            scale = Math.pow( 0.5, this.maxLevel - level ),
+         
+            //## get iiif size
+            iiif_size = 'pct:' + ( scale * 100 ),
+
+            //# image dimensions at this level
+            level_width = Math.ceil( this.width * scale ),
+            level_height = Math.ceil( this.height * scale ),
+         
+            //## iiif region
+            iiif_tile_size_width = Math.ceil( this.tileSize / scale ),
+            iiif_tile_size_height = Math.ceil( this.tileSize / scale ),
+            iiif_region,
+            iiif_tile_x,
+            iiif_tile_y,
+            iiif_tile_w,
+            iiif_tile_h;
+         
+         
+        if ( level_width < this.tile_width || level_height < this.tile_height ){
+            iiif_region = 'full';
+        } else {
+            iiif_tile_x = x * iiif_tile_size_width;
+            iiif_tile_y = y * iiif_tile_size_height;
+            iiif_tile_w = Math.min( iiif_tile_size_width, this.width - iiif_tile_x );
+            iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
+            iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
+        }
+         
+        return [ 
+            this.tilesUrl, 
+            this.identifier, 
+            iiif_region, 
+            iiif_size, 
+            IIIF_ROTATION, 
+            IIIF_QUALITY 
+        ].join('/');
+    }
+
+
+});
+
+/**
+ * @private
+ * @inner
+ * @function
+ * 
+    <?xml version="1.0" encoding="UTF-8"?>
+    <info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
+      <identifier>1E34750D-38DB-4825-A38A-B60A345E591C</identifier>
+      <width>6000</width>
+      <height>4000</height>
+      <scale_factors>
+        <scale_factor>1</scale_factor>
+        <scale_factor>2</scale_factor>
+        <scale_factor>4</scale_factor>
+      </scale_factors>
+      <tile_width>1024</tile_width>
+      <tile_height>1024</tile_height>
+      <formats>
+        <format>jpg</format>
+        <format>png</format>
+      </formats>
+      <qualities>
+        <quality>native</quality>
+        <quality>grey</quality>
+      </qualities>
+    </info>
+ */
+function configureFromXml( tileSource, xmlDoc ){
+    var configuration = {};
+
+    //parse the xml
+    if ( !xmlDoc || !xmlDoc.documentElement ) {
+        throw new Error( $.getString( "Errors.Xml" ) );
+    }
+
+    var root            = xmlDoc.documentElement,
+        rootName        = root.tagName,
+        configuration   = null,
+        scale_factors,
+        formats,
+        qualities,
+        i;
+
+    if ( rootName == "info" ) {
+        
+        try {
+
+            configuration = {
+                "ns":            root.namespaceURI,
+                "identifier":    root.getElement('identifier').innerHTML,
+                "width":         root.getElement('width').innerHTML,
+                "height":        root.getElement('height').innerHTML,
+                "scale_factors": null,
+                "tile_width":    root.getElement('tile_width').innerHTML,
+                "tile_height":   root.getElement('tile_height').innerHTML,
+                "formats":       [ "jpg", "png" ],
+                "quality":       [ "native", "grey" ]
+            };
+
+            scale_factors = root.getElement('scale_factors');
+            if( scale_factors ){
+                scale_factors = scale_factors.getElementsByTagName('scale_factor');
+                configuration.scale_factors = [];
+                for( i = 0; i < scale_factors.length; i++ ){
+                    configuration.scale_factors.push(
+                        scale_factors[ i ].innerHTML
+                    );
+                }
+            }
+
+            formats = root.getElement('formats');
+            if( formats ){
+                formats = formats.getElementsByTagName('format');
+                configuration.formats = [];
+                for( i = 0; i < formats.length; i++ ){
+                    configuration.formats.push(
+                        formats[ i ].innerHTML
+                    );
+                }
+            }
+
+            qualities = root.getElement('qualities');
+            if( qualities ){
+                qualities = formats.getElementsByTagName('quality');
+                configuration.quality = [];
+                for( i = 0; i < qualities.length; i++ ){
+                    configuration.quality.push(
+                        qualities[ i ].innerHTML
+                    );
+                }
+            }
+
+            return configureFromObject( tileSource, configuration );
+
+        } catch ( e ) {
+            throw (e instanceof Error) ? 
+                e : 
+                new Error( $.getString("Errors.IIIF") );
+        }
+    }
+
+    throw new Error( $.getString( "Errors.IIIF" ) );
+
+};
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ * 
+    { 
+        "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
+        "identifier" : "1E34750D-38DB-4825-A38A-B60A345E591C",
+        "width" : 6000,
+        "height" : 4000,
+        "scale_factors" : [ 1, 2, 4 ],
+        "tile_width" : 1024,
+        "tile_height" : 1024,
+        "formats" : [ "jpg", "png" ],
+        "quality" : [ "native", "grey" ]
+    } 
+ */
+function configureFromObject( tileSource, configuration ){
+    return configuration;
+};
+
+}( OpenSeadragon ));(function( $ ){
+    
+/**
+ * A tilesource implementation for OpenStreetMap. Adopted from Rainer Simon
+ * project http://github.com/rsimon/seajax-utils.
+ *
+ * Note 1. Zoomlevels. Deep Zoom and OSM define zoom levels differently. In  Deep 
+ * Zoom, level 0 equals an image of 1x1 pixels. In OSM, level 0 equals an image of
+ * 256x256 levels (see http://gasi.ch/blog/inside-deep-zoom-2). I.e. there is a 
+ * difference of log2(256)=8 levels.
+ *
+ * Note 2. Image dimension. According to the OSM Wiki 
+ * (http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Zoom_levels)
+ * the highest Mapnik zoom level has 256.144x256.144 tiles, with a 256x256
+ * pixel size. I.e. the Deep Zoom image dimension is 65.572.864x65.572.864
+ * pixels.
+ *
+ * @class
+ * @extends OpenSeadragon.TileSource
+ * @param {Number|Object} width - the pixel width of the image or the idiomatic
+ *      options object which is used instead of positional arguments.
+ * @param {Number} height
+ * @param {Number} tileSize
+ * @param {Number} tileOverlap
+ * @param {String} tilesUrl
+ */ 
+$.OsmTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
+    var options;
+
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: arguments[0],
+            height: arguments[1],
+            tileSize: arguments[2],
+            tileOverlap: arguments[3],
+            tilesUrl: arguments[4]
+        };
+    }
+    //apply default setting for standard public OpenStreatMaps service
+    //but allow them to be specified so fliks can host there own instance
+    //or apply against other services supportting the same standard
+    if( !options.width || !options.height ){
+        options.width = 65572864;
+        options.height = 65572864;
+    }
+    if( !options.tileSize ){
+        options.tileSize = 256;
+        options.tileOverlap = 0;
+    }
+    if( !options.tilesUrl ){
+        options.tilesUrl = "http://tile.openstreetmap.org/";
+    }
+    options.minLevel = 8;
+    
+    $.TileSource.apply( this, [ options ] );
+
+};
+
+$.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
+
+
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.DziTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( 
+            data.type && 
+            "openstreetmaps" == data.type
+        )
+    },
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.OsmTileSource.prototype.configure
+     * @param {Object} data - the raw configuration
+     * @param {String} url - the url the data was retreived from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
+     */
+    configure: function( data, url ){
+        return data;
+    },
+
+
+    /**
+     * @function
+     * @name OpenSeadragon.OsmTileSource.prototype.getTileUrl
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    getTileUrl: function( level, x, y ) {
+        return this.tilesUrl + (level - 8) + "/" + x + "/" + y + ".png";
+    }
+});
+
+
+}( OpenSeadragon ));
+(function( $ ){
+    
+/**
+ * A tilesource implementation for Tiled Map Services (TMS). Adopted from Rainer Simon
+ * project http://github.com/rsimon/seajax-utils. TMS tile
+ * scheme ( [ as supported by OpenLayers ] is described here 
+ * ( http://openlayers.org/dev/examples/tms.html ) )
+ *
+ * @class
+ * @extends OpenSeadragon.TileSource
+ * @param {Number|Object} width - the pixel width of the image or the idiomatic
+ *      options object which is used instead of positional arguments.
+ * @param {Number} height
+ * @param {Number} tileSize
+ * @param {Number} tileOverlap
+ * @param {String} tilesUrl
+ */ 
+$.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
+    var options;
+
+    if( $.isPlainObject( width ) ){
+        options = width;
+    }else{
+        options = {
+            width: arguments[0],
+            height: arguments[1],
+            tileSize: arguments[2],
+            tileOverlap: arguments[3],
+            tilesUrl: arguments[4]
+        };
+    }
+    // TMS has integer multiples of 256 for width/height and adds buffer
+    // if necessary -> account for this!
+    var bufferedWidth = Math.ceil(options.width / 256) * 256,
+        bufferedHeight = Math.ceil(options.height / 256) * 256,
+        max;
+
+    // Compute number of zoomlevels in this tileset
+    if (bufferedWidth > bufferedHeight) {
+        max = bufferedWidth / 256;
+    } else {
+        max = bufferedHeight / 256;
+    }
+    options.maxLevel = Math.ceil(Math.log(max)/Math.log(2)) - 1;
+    options.tileSize = 256;
+    options.width = bufferedWidth;
+    options.height = bufferedHeight;
+    
+    $.TileSource.apply( this, [ options ] );
+
+};
+
+$.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
+
+
+    /**
+     * Determine if the data and/or url imply the image service is supported by
+     * this tile source.
+     * @function
+     * @name OpenSeadragon.TmsTileSource.prototype.supports
+     * @param {Object|Array} data
+     * @param {String} optional - url
+     */
+    supports: function( data, url ){
+        return ( data.type && "tiledmapservice" == data.type );
+    },
+
+    /**
+     * 
+     * @function
+     * @name OpenSeadragon.TmsTileSource.prototype.configure
+     * @param {Object} data - the raw configuration
+     * @param {String} url - the url the data was retreived from if any.
+     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     *      to configure this tile sources constructor.
+     */
+    configure: function( data, url ){
+        return data;
+    },
+
+
+    /**
+     * @function
+     * @name OpenSeadragon.TmsTileSource.prototype.getTileUrl
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     */
+    getTileUrl: function( level, x, y ) {
+        // Convert from Deep Zoom definition to TMS zoom definition
+        var yTiles = this.getNumTiles( level ).y - 1;
+
+        return this.tilesUrl + level + "/" + x + "/" +  (yTiles - y) + ".png";
+    }
+});
+
+
+}( OpenSeadragon ));/*globals OpenSeadragon */
 
 (function( $ ){
 
@@ -8343,7 +8840,7 @@ function updateViewport( drawer ) {
                 Math.log( 2 )
             )
         ),
-        highestLevel    = Math.min(
+        highestLevel    = Math.max(
             Math.abs(drawer.source.maxLevel),
             Math.abs(Math.floor( 
                 Math.log( zeroRatioC / drawer.minPixelRatio ) / 
@@ -8366,11 +8863,10 @@ function updateViewport( drawer ) {
     //TODO
     drawer.canvas.innerHTML   = "";
     if ( USE_CANVAS ) {
-        if( drawer.canvas.width != viewportSize.x ||
-            drawer.canvas.height != viewportSize.y 
-        ){
-            drawer.canvas.width   = viewportSize.x;
-            drawer.canvas.height  = viewportSize.y;
+        if( drawer.canvas.width  != viewportSize.x ||
+            drawer.canvas.height != viewportSize.y ){
+            drawer.canvas.width  = viewportSize.x;
+            drawer.canvas.height = viewportSize.y;
         }
         drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
     }
@@ -8647,8 +9143,10 @@ function onTileLoad( drawer, tile, time, image ) {
         return;
     } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
-        tile.exists = false;
-        return;
+        if( !drawer.debugMode ){
+            tile.exists = false;
+            return;
+        }
     } else if ( time < drawer.lastResetTime ) {
         $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         return;
@@ -8656,6 +9154,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     tile.loaded = true;
     tile.image  = image;
+
 
     insertionIndex = drawer.tilesLoaded.length;
 

@@ -91,7 +91,8 @@ $.Viewer = function( options ) {
         //These are originally not part options but declared as members
         //in initialize.  Its still considered idiomatic to put them here
         source:         null,
-        drawer:         null,
+        drawer:         null, 
+        drawers:        [],
         viewport:       null,
         navigator:      null, 
 

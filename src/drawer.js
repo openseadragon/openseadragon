@@ -365,7 +365,7 @@ function updateViewport( drawer ) {
                 Math.log( 2 )
             )
         ),
-        highestLevel    = Math.min(
+        highestLevel    = Math.max(
             Math.abs(drawer.source.maxLevel),
             Math.abs(Math.floor( 
                 Math.log( zeroRatioC / drawer.minPixelRatio ) / 
@@ -388,11 +388,10 @@ function updateViewport( drawer ) {
     //TODO
     drawer.canvas.innerHTML   = "";
     if ( USE_CANVAS ) {
-        if( drawer.canvas.width != viewportSize.x ||
-            drawer.canvas.height != viewportSize.y 
-        ){
-            drawer.canvas.width   = viewportSize.x;
-            drawer.canvas.height  = viewportSize.y;
+        if( drawer.canvas.width  != viewportSize.x ||
+            drawer.canvas.height != viewportSize.y ){
+            drawer.canvas.width  = viewportSize.x;
+            drawer.canvas.height = viewportSize.y;
         }
         drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
     }
@@ -669,8 +668,10 @@ function onTileLoad( drawer, tile, time, image ) {
         return;
     } else if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
-        tile.exists = false;
-        return;
+        if( !drawer.debugMode ){
+            tile.exists = false;
+            return;
+        }
     } else if ( time < drawer.lastResetTime ) {
         $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         return;
@@ -678,6 +679,7 @@ function onTileLoad( drawer, tile, time, image ) {
 
     tile.loaded = true;
     tile.image  = image;
+
 
     insertionIndex = drawer.tilesLoaded.length;
 
