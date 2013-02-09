@@ -365,7 +365,7 @@ function updateViewport( drawer ) {
                 Math.log( 2 )
             )
         ),
-        highestLevel    = Math.max(
+        highestLevel    = Math.min(
             Math.abs(drawer.source.maxLevel),
             Math.abs(Math.floor( 
                 Math.log( zeroRatioC / drawer.minPixelRatio ) / 

@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.101
+ * @version  OpenSeadragon 0.9.102
  *
  * @fileOverview 
  * <h2>
@@ -8840,7 +8840,7 @@ function updateViewport( drawer ) {
                 Math.log( 2 )
             )
         ),
-        highestLevel    = Math.max(
+        highestLevel    = Math.min(
             Math.abs(drawer.source.maxLevel),
             Math.abs(Math.floor( 
                 Math.log( zeroRatioC / drawer.minPixelRatio ) / 
