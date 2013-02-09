@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.102
+ * @version  OpenSeadragon 0.9.107
  *
  * @fileOverview 
  * <h2>
@@ -5624,7 +5624,7 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
-        data = eval( responseText );
+        data = eval( '('+responseText+')' );
     }else{
         data = responseText;
     }
@@ -6071,7 +6071,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
 
         if( !$.isPlainObject(data) ){
 
-            options = configureFromXML( this, data );
+            options = configureFromXml( this, data );
 
         }else{
 
@@ -6201,50 +6201,13 @@ function configureFromXml( tileSource, xmlDoc ){
         
         try {
 
+
             configuration = {
-                "ns":            root.namespaceURI,
-                "identifier":    root.getElement('identifier').innerHTML,
-                "width":         root.getElement('width').innerHTML,
-                "height":        root.getElement('height').innerHTML,
-                "scale_factors": null,
-                "tile_width":    root.getElement('tile_width').innerHTML,
-                "tile_height":   root.getElement('tile_height').innerHTML,
-                "formats":       [ "jpg", "png" ],
-                "quality":       [ "native", "grey" ]
+                "ns": root.namespaceURI
             };
 
-            scale_factors = root.getElement('scale_factors');
-            if( scale_factors ){
-                scale_factors = scale_factors.getElementsByTagName('scale_factor');
-                configuration.scale_factors = [];
-                for( i = 0; i < scale_factors.length; i++ ){
-                    configuration.scale_factors.push(
-                        scale_factors[ i ].innerHTML
-                    );
-                }
-            }
+            parseXML( root, configuration );
 
-            formats = root.getElement('formats');
-            if( formats ){
-                formats = formats.getElementsByTagName('format');
-                configuration.formats = [];
-                for( i = 0; i < formats.length; i++ ){
-                    configuration.formats.push(
-                        formats[ i ].innerHTML
-                    );
-                }
-            }
-
-            qualities = root.getElement('qualities');
-            if( qualities ){
-                qualities = formats.getElementsByTagName('quality');
-                configuration.quality = [];
-                for( i = 0; i < qualities.length; i++ ){
-                    configuration.quality.push(
-                        qualities[ i ].innerHTML
-                    );
-                }
-            }
 
             return configureFromObject( tileSource, configuration );
 
@@ -6258,6 +6221,35 @@ function configureFromXml( tileSource, xmlDoc ){
     throw new Error( $.getString( "Errors.IIIF" ) );
 
 };
+
+
+/**
+ * @private
+ * @inner
+ * @function
+ */
+function parseXML( node, configuration, property ){
+    var i,
+        value;
+    if( node.nodeType == 3 && property ){//text node
+        value = node.nodeValue.trim();
+        if( value.match(/^\d*$/)){
+            value = Number( value );
+        }
+        if( !configuration[ property ] ){
+            configuration[ property ] = value;
+        }else{
+            if( !$.isArray( configuration[ property ] ) ){
+                configuration[ property ] = [ configuration[ property ] ];
+            }
+            configuration[ property ].push( value );
+        }
+    } else if( node.nodeType == 1 ){
+        for( i = 0; i < node.childNodes.length; i++ ){
+            parseXML( node.childNodes[ i ], configuration, node.nodeName );
+        }
+    }
+}
 
 
 /**
@@ -6278,6 +6270,12 @@ function configureFromXml( tileSource, xmlDoc ){
     } 
  */
 function configureFromObject( tileSource, configuration ){
+    //the image_host property is not part of the iiif standard but is included here to
+    //allow the info.json and info.xml specify a different server to load the
+    //images from so we can test the implementation.
+    if( configuration.image_host ){
+        configuration.tilesUrl = configuration.image_host;
+    }
     return configuration;
 };
 

@@ -53,7 +53,6 @@ OpenSeadragon({
     minZoomLevel:       1,
     defaultZoomLevel:   1,
     tileSources:   [{
-        "tilesUrl":     "http://img.princeton.edu/loris",
         "identifier":   "pudl0001/4609321/s42/00000001",   
         "width":        2617,   
         "height":       3600,   
@@ -62,7 +61,8 @@ OpenSeadragon({
         "tile_height":  256,   
         "formats":      [ "jpg", "png" ],   
         "qualities":    ["native", "bitonal", "grey", "color"],   
-        "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
+        "image_host":   "http://img.princeton.edu/loris"
     }...,{
 
     ...//more tile sources
@@ -80,7 +80,7 @@ OpenSeadragon({
         minZoomLevel:       1,
         defaultZoomLevel:   1,
         tileSources:   [{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000001",   
             "width":        2617,   
             "height":       3600,   
@@ -91,7 +91,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000002",   
             "width":        2547,   
             "height":       3600,   
@@ -102,7 +102,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000003",   
             "width":        2694,   
             "height":       3600,   
@@ -113,7 +113,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000004",   
             "width":        2717,   
             "height":       3600,   
@@ -124,7 +124,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000005",   
             "width":        2694,   
             "height":       3600,   
@@ -135,7 +135,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000006",   
             "width":        2717,   
             "height":       3600,   
@@ -146,7 +146,7 @@ OpenSeadragon({
             "qualities":    ["native", "bitonal", "grey", "color"],   
             "profile":      "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
         },{
-            "tilesUrl":     "http://img.princeton.edu/loris",
+            "image_host":     "http://img.princeton.edu/loris",
             "identifier":   "pudl0001/4609321/s42/00000007",   
             "width":        2694,   
             "height":       3600,   
@@ -160,3 +160,90 @@ OpenSeadragon({
     });
 </script>
 
+<div class="description">
+    <h3>XMLHTTPRequest for IIIF info.xml or info.json</h3>
+    <p>
+        The following example info.json and info.xml documents are non-normative and include
+        a property <strong>image_host</strong> which allows the info.json and info.xml
+        to be hosted from a different server than the images are served from.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        Example XMLHTTPRequest for IIIF info ( XML or JSON )
+    </div>
+    <div id="example-xmlhttprequest-for-info-xml" 
+         class="openseadragon">
+        <script type="text/javascript">
+            OpenSeadragon({
+                id:            "example-xmlhttprequest-for-info-xml",
+                prefixUrl:     "/openseadragon/images/",
+                tileSources:   [
+                    "/openseadragon/examples/images/loris/pudl0001/4609321/s42/00000003/info.json",
+                    "/openseadragon/examples/images/loris/pudl0001/4609321/s42/00000004/info.xml"
+                ]
+            });
+        </script>
+        <noscript>
+            <p>Deep zoom is not available unless javascript is enabled.</p>
+            <img src='../images/highsmith/01967v.jpg'
+                 height='600'/>
+        </noscript>
+    </div>
+    <p>
+        Below is a sample IIIF info file formatted as XML.
+    </p>
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?>
+&lt;info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
+    &lt;identifier>pudl0001/4609321/s42/00000004&lt;/identifier>
+    &lt;width>2717&lt;/width>
+    &lt;height>3600&lt;/height>
+    &lt;scale_factors>
+        &lt;scale_factor>1&lt;/scale_factor>
+        &lt;scale_factor>2&lt;/scale_factor>
+        &lt;scale_factor>3&lt;/scale_factor>
+        &lt;scale_factor>4&lt;/scale_factor>
+        &lt;scale_factor>5&lt;/scale_factor>
+    &lt;/scale_factors>
+    &lt;tile_width>256&lt;/tile_width>
+    &lt;tile_height>256&lt;/tile_height>
+    &lt;formats>
+        &lt;format>jpg&lt;/format>
+        &lt;format>png&lt;/format>
+    &lt;/formats>
+    &lt;qualities>
+        &lt;quality>native&lt;/quality>
+        &lt;quality>bitonal&lt;/quality>
+        &lt;quality>grey&lt;/quality>
+        &lt;quality>color&lt;/quality>
+    &lt;/qualities>
+    &lt;profile>http://library.stanford.edu/iiif/image-api/compliance.html#level1&lt;/profile>
+    &lt;image_host>http://img.princeton.edu/loris&lt;/image_host>
+&lt;/info></pre>
+    <p>
+        And the equivalent sample IIIF info file formatted as JSON.
+    </p>
+<pre>
+{  
+    "identifier" : "pudl0001/4609321/s42/00000003",
+    "width":        2694,   
+    "height":       3600,   
+    "scale_factors" : [1, 2, 3, 4, 5],   
+    "tile_width" : 256,   
+    "tile_height" : 256,   
+    "formats" : [ "jpg", "png" ],   
+    "qualities" : ["native", "bitonal", "grey", "color"],   
+    "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
+    "image_host": "http://img.princeton.edu/loris"
+}</pre>
+<pre>
+OpenSeadragon({
+    ...
+    tileSources:   [
+        "/openseadragon/examples/images/loris/pudl0001/4609321/s42/00000003/info.json",
+        "/openseadragon/examples/images/loris/pudl0001/4609321/s42/00000004/info.xml"
+    ],
+    ...
+});</pre>
+</div>

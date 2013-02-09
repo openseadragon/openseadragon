@@ -372,7 +372,7 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
-        data = eval( responseText );
+        data = eval( '('+responseText+')' );
     }else{
         data = responseText;
     }
