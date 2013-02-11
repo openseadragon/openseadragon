@@ -113,22 +113,46 @@ $.Drawer = function( options ) {
             
             (function( _this, overlay ){
                 
-                var link  = document.createElement("a"),
-                    rect = new $.Rect(
-                        overlay.x, 
-                        overlay.y, 
+                var element  = null,
+                    rect = ( overlay.height && overlay.width ) ? new $.Rect(
+                        overlay.x || overlay.px, 
+                        overlay.y || overlay.py, 
                         overlay.width, 
                         overlay.height
+                    ) : new $.Point(
+                        overlay.x || overlay.px, 
+                        overlay.y || overlay.py
                     ),
-                    id = Math.floor(Math.random()*10000000);
-
-                link.href      = "#/overlay/"+id;
-                link.id        = id;
-                link.className = overlay.className ?
+                    id = overlay.id ? 
+                        overlay.id :
+                        "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
+                
+                element = $.getElement(overlay.id);
+                if( !element ){
+                    element         = document.createElement("a");
+                    element.href    = "#/overlay/"+id;
+                }
+                element.id        = id;
+                element.className = element.className + " " + ( overlay.className ?
                     overlay.className :
-                    "openseadragon-overlay";
+                    "openseadragon-overlay"
+                );
 
-                _this.overlays[ i ] = new $.Overlay( link, rect );
+
+                if(overlay.px !== undefined){
+                    //if they specified 'px' so its in pixel coordinates so
+                    //we need to translate to viewport coordinates
+                    rect = _this.viewport.imageToViewportRectangle( rect );
+                }
+                if( overlay.placement ){
+                    _this.overlays[ i ] = new $.Overlay( 
+                        element, 
+                        _this.viewport.pointFromPixel(rect), 
+                        $.OverlayPlacement[overlay.placement.toUpperCase()]
+                    );
+                }else{
+                    _this.overlays[ i ] = new $.Overlay( element, rect );
+                }
 
             }( this, this.overlays[ i ] ));
 

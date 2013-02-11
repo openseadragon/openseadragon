@@ -100,6 +100,16 @@
 
             if ( element.parentNode ) {
                 element.parentNode.removeChild( element );
+                //this should allow us to preserve overlays when required between
+                //pages
+                if( element.prevElementParent ){
+                    style.display = 'none';
+                    //element.prevElementParent.insertBefore( 
+                    //    element,
+                    //    element.prevNextSibling
+                    //);
+                    document.body.appendChild( element );
+                }
             }
 
             style.top = "";
@@ -124,6 +134,9 @@
                 size;
 
             if ( element.parentNode != container ) {
+                //save the source parent for later if we need it
+                element.prevElementParent  = element.parentNode;
+                element.prevNextSibling    = element.nextSibling;
                 container.appendChild( element );
             }
 
@@ -142,6 +155,7 @@
             style.left     = position.x + "px";
             style.top      = position.y + "px";
             style.position = "absolute";
+            style.display  = 'block';
 
             if ( scales ) {
                 style.width  = size.x + "px";

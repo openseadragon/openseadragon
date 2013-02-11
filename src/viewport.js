@@ -580,6 +580,50 @@ $.Viewport.prototype = {
         ).plus(
             bounds.getTopLeft()
         );
+    },
+
+    /**
+     * Translates from Seajax viewer coordinate 
+     * system to image coordinate system 
+     */
+    viewportToImageCoordinates: function(viewerX, viewerY) {
+       return new $.Point(viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX);
+    },
+
+    /**
+     * Translates from image coordinate system to
+     * Seajax viewer coordinate system 
+     */
+    imageToViewportCoordinates: function( imageX, imageY ) {
+       return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX);
+    },
+
+    /**
+     * Translates from a rectanlge which describes a portion of
+     * the image in pixel coordinates to OpenSeadragon viewport
+     * rectangle coordinates.
+     */
+    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if( arguments.length == 1 ){
+            //they passed a rectangle instead of individual components
+            rect = imageX;
+            return this.imageToViewportRectangle(rect.x, rect.y, rect.width, rect.height);
+        }
+        coordA = this.imageToViewportCoordinates(
+            imageX, imageY
+        );
+        coordB = this.imageToViewportCoordinates(
+            pixelWidth, pixelHeight
+        );
+        return new $.Rect( 
+            coordA.x,
+            coordA.y,
+            coordA.x + coordB.x,
+            coordA.y + coordB.y
+        );
     }
 };
 

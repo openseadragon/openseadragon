@@ -1,0 +1,523 @@
+<h2>example: overlays</h2>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.js"></script>
+
+<div class="description">
+    Overlays are an important mechanism for adding additional infomation channels
+    in a deep zoom image.  Below we present just a few examples of how to
+    add some simple overlays.
+    <p>
+        ( Tile source in this example is from Chronicling America
+        at the <a href='http://www.loc.gov/'>Library of Congress</a> )
+    </p>
+</div>
+
+
+<div class="demoarea">
+    <div class="demoheading">
+        Tile source overlays. 
+    </div>
+    <p>
+    Highlighted overlays are very useful for directing users attention to
+    specific areas of interest, though the style is often decided based
+    on the specific content being presented.  
+    </p>
+    <p>
+    OpenSeadragon makes it easy to declare highlighted areas and control 
+    the presentation through simple css mechanisms. <em>A tile source overlay
+    is specific to the particular tile source.</em> So if you have a sequence of
+    tile sources and want to over lay unique content on each, use this mechanism.
+    </p>
+    <div id="example-tilesource-overlay" class="openseadragon">
+        <style>
+        .navigator .highlight{
+            opacity:    0.4;
+            filter:     alpha(opacity=40);
+            border:     2px solid #900;
+            outline:    none;
+            background-color: #900;
+        }
+        .highlight{
+            opacity:    0.4;
+            filter:     alpha(opacity=40);
+            border:     2px solid #0A7EbE;
+            outline:    10px auto #0A7EbE;
+            background-color: white;
+        }
+        .highlight:hover, .highlight:focus{
+            filter:     alpha(opacity=70);
+            opacity:    0.7;
+            background-color: transparent;
+        }
+        </style>
+        <script type="text/javascript">
+            var chronicling_america_example = function( sequence ){
+                return function(level, column, row){
+                    var px = 0;
+                    if (column!=0) {
+                        px = this.tileSize * column - this.tileOverlap;
+                    }
+                    var py = 0;
+                    if (row!=0) {
+                        py = this.tileSize * row - this.tileOverlap;
+                    }
+                    var scale = this.getLevelScale(level);
+                    var dimensionsScaled = this.dimensions.times(scale);
+
+                    // find the dimension of the tile, adjust for no
+                    // overlap data on top and left edges
+                    var sx = this.tileSize + (column==0 ? 1 : 2) * this.tileOverlap;
+                    var sy = this.tileSize + (row==0 ? 1 : 2) * this.tileOverlap;
+
+                    // adjust size for single-tile levels where the image
+                    // size is smaller than the regular tile size, and for
+                    // tiles on the bottom and right edges that would
+                    // exceed the image bounds.
+                    sx = Math.min(sx, dimensionsScaled.x - px);
+                    sy = Math.min(sy, dimensionsScaled.y - py);
+
+                    var tile_width = parseInt(sx);
+                    var tile_height = parseInt(sy);
+
+                    var x1 = parseInt(px / scale);
+                    var y1 = parseInt(py / scale);
+                    var x2 = parseInt((px + sx) / scale);
+                    var y2 = parseInt((py + sy) / scale);
+
+                    return 'http://chroniclingamerica.loc.gov/lccn/sn85066387/1898-01-09/ed-1/seq-'+
+                        sequence+'/'+ 
+                        'image_'+tile_width+'x'+tile_height+
+                        '_from_'+x1+','+y1+
+                        '_to_'+x2+','+y2+'.jpg';
+                };
+            };
+
+            OpenSeadragon({
+                id:            "example-tilesource-overlay",
+                prefixUrl:     "/openseadragon/images/",
+                tileSources: [{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    overlays: [{
+                        id: 'example-overlay',
+                        x: 0.33, 
+                        y: 0.75, 
+                        width: 0.2, 
+                        height: 0.25,
+                        className: 'highlight'
+                    }],
+                    getTileUrl: chronicling_america_example(17)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(18)
+                }],
+                onPageChange: function() {
+                    //Tooltips
+                    setTimeout(bindtooltip, 2000);
+                }
+            });
+
+            jQuery(function() {
+                //Tooltips
+                setTimeout(bindtooltip, 2000);
+            });
+
+            function bindtooltip(){
+                var tip = jQuery('#example-tip');
+                jQuery("#example-overlay").hover(function(e){
+                    var mousex = e.pageX + 20, //Get X coodrinates
+                        mousey = e.pageY + 20, //Get Y coordinates
+                        tipWidth = tip.width(), //Find width of tooltip
+                        tipHeight = tip.height(), //Find height of tooltip
+                    
+                    //Distance of element from the right edge of viewport
+                        tipVisX = $(window).width() - (mousex + tipWidth),
+                    //Distance of element from the bottom of viewport
+                        tipVisY = $(window).height() - (mousey + tipHeight);
+                      
+                    if ( tipVisX < 20 ) { //If tooltip exceeds the X coordinate of viewport
+                        mousex = e.pageX - tipWidth - 20;
+                    } if ( tipVisY < 20 ) { //If tooltip exceeds the Y coordinate of viewport
+                        mousey = e.pageY - tipHeight - 20;
+                    } 
+                    tip.css({  top: mousey, left: mousex, position: 'absolute' });
+                    tip.show().css({opacity: 0.8}); //Show tooltip
+                }, function() {
+                    tip.hide(); //Hide tooltip
+                });
+            };
+        </script> 
+
+        <div id="example-tip" style='display:none;width:250px;background-color:#fff;'>
+            <p>
+                The overlay can provide a class name and id to bind additional events to.
+            </p>
+        </div>
+    </div>
+</div>
+<p>
+The relevant configuration options are shown below. Note the className and id attributes
+will be passed to the overlay element so you can use bind css styles and events to it.
+<em>Be sure to put your styles in the document head, inside the openseadragon viewer element,
+or apply them dynamically so they will persist when full screen mode is entered.</em>
+</p>
+
+<pre>
+    OpenSeadragon({
+        ...
+        tileSources: [{
+            ...
+            overlays: [{
+                id: 'example-overlay',
+                x: 0.33, 
+                y: 0.75, 
+                width: 0.2, 
+                height: 0.25,
+                className: 'highlight'
+            }],
+            ...
+        }]
+        ...
+    });
+</pre>
+  
+
+
+<div class="demoarea">
+    <div class="demoheading">
+        Viewport overlays.
+    </div>
+    <p>
+        OpenSeadragon also supports overlays that persist accross image sequences.
+        In this case the overlay is simply configured outside of the tileSource.
+    </p>
+    <p>
+        This example also demonstrates the ability to configure the overlay position
+        in terms of image pixel coordinates.  The difference is infered by use of 
+        <strong>px</strong>, and <strong>py</strong>, instead of x and y.
+    </p>
+    <div id="example-viewport-overlay" class="openseadragon">
+    <style>
+    .filter{
+        opacity:    0.2;
+        filter:     alpha(opacity=20);
+        background-color: #7FFF00;
+    }
+    </style>
+    <script type="text/javascript">
+        OpenSeadragon({
+            id:            "example-viewport-overlay",
+            prefixUrl:     "/openseadragon/images/",
+            overlays: [{
+                id: 'global-overlay-filter',
+                px: 0, 
+                py: 0, 
+                width: 6425, 
+                height: 8535,
+                className: 'filter'
+            }],
+            tileSources: [{
+                minLevel: 8,
+                width: 6425,
+                height: 8535,
+                tileSize: 256,
+                tileOverlap: 1,
+                getTileUrl: chronicling_america_example(19)
+            },{
+                minLevel: 8,
+                width: 6425,
+                height: 8535,
+                tileSize: 256,
+                tileOverlap: 1,
+                getTileUrl: chronicling_america_example(20)
+            }]
+        });
+
+    </script>   
+    </div>
+
+    <pre>
+        OpenSeadragon({
+            ...
+            overlays: [{
+                id: 'global-overlay-filter',
+                px: 0, 
+                py: 0, 
+                width: 6425, 
+                height: 8535,
+                className: 'filter'
+            }],
+            ...
+        });
+    </pre>
+</div>
+
+<div class="demoarea">
+    <div class="demoheading">
+        Overlaying complex html.
+    </div>
+    <p>
+        By default OpenSeadragon checks for an existing element in the DOM that
+        matches the id of the overlay id (if one is specified).  If that content
+        is found, OpenSeadragon will use it for the overlay, otherwise it will create
+        a link to ensure keyboard accesibilty to the target ( as in the examples above ).
+    </p>
+    <p>
+        In this example we display some additional metadata to the right of the image itself.
+    </p>
+    <div id="complex-html-overlay" class="openseadragon">
+        <script type="text/javascript">
+            OpenSeadragon({
+                id:            "complex-html-overlay",
+                prefixUrl:     "/openseadragon/images/",
+                showNavigator: false,
+                preserveViewport: true,
+                minZoomLevel:  1,
+                overlays: [{
+                    minLevel: 8,
+                    px: 6425,
+                    py: 0,
+                    width: 6425,
+                    height: 8535,
+                    id: 'html-overlay'
+                }],
+                tileSources: [{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(1)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(2)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(3)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(4)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(5)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(6)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(7)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(8)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(9)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(10)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(11)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(11)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(12)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(13)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(14)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(15)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(16)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(17)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(18)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(19)
+                },{
+                    minLevel: 8,
+                    width: 6425,
+                    height: 8535,
+                    tileSize: 256,
+                    tileOverlap: 1,
+                    getTileUrl: chronicling_america_example(20)
+                }]
+            });
+
+        </script>  
+        <style>
+        .navigator .no-overlay-in-navigator{
+               display:none;
+        }        
+        #html-overlay{
+            opacity:    0.7;
+            color: #fff;
+            filter:     alpha(opacity=70);
+        }
+        #html-overlay .info{
+            padding: 20px;
+        }
+        #html-overlay dt{
+            font-weight: bold;
+        }
+        #html-overlay dl ul{
+            padding: 0px;
+        }
+        </style>
+        <div id='html-overlay' style=''>
+            
+            <div class="info">
+                <dl class="alt">
+                    <dt>Title: </dt>
+                    <dd>
+                    The San Francisco call. : (San Francisco [Calif.]) 1895-1913
+                    </dd>
+
+                    <dt>Alternative Titles:</dt>
+                    <dd>
+                        <ul class="bullet_blue">
+                            <li> Call </li>
+                            <li>Call chronicle examiner</li>
+                            <li>Call-chronicle-examinerApr. 19, 1906 </li>
+                            <li>Sunday call &lt;Dec. 5, 1901&gt; </li>
+                        </ul>
+                    </dd>
+
+                    <dt>Preceding Titles:</dt>
+                    <dd>
+                    <ul class="bullet_blue">
+                    <li><a href="http://chroniclingamerica.loc.gov/lccn/sn94052989/">The morning call. (San Francisco [Calif.]) 1878-1895</a></li>
+                    </ul>
+                    </dd>
+                </dl>
+                <a  style='' 
+                    href="http://chroniclingamerica.loc.gov/lccn/sn85066387/1895-03-05/ed-1/seq-1/">
+                    <img class="thumbnail" 
+                         src="http://chroniclingamerica.loc.gov/lccn/sn85066387/1895-03-05/ed-1/seq-1/thumbnail.jpg" alt="">
+                </a>
+            </div>
+
+        </div> 
+    </div>
+
+    <pre>
+        OpenSeadragon({
+            ...
+            preserveViewport: true,
+            showNavigator: false,
+            minZoomLevel:  1,
+            overlays: [{
+                px: 6425,
+                py: 0,
+                width: 6425,
+                height: 8535,
+                id: 'html-overlay'
+            }],
+            tileSources: [{
+                width: 6425,
+                height: 8535,
+                tileSize: 256,
+                tileOverlap: 1,
+                getTileUrl: chronicling_america_example(1)
+            },{
+                ...
+            }]
+            ...
+        });
+    </pre>
+</div>
+        

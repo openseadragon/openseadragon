@@ -402,16 +402,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         }
         
         if( this.preserveVewport ){
-            
             this.viewport.resetContentSize( this.source.dimensions );
-
         } 
+
+        this.source.overlays = this.source.overlays || [];
 
         this.drawer = new $.Drawer({
             source:             this.source, 
             viewport:           this.viewport, 
             element:            this.canvas,
-            overlays:           this.overlays,
+            overlays:           [].concat( this.overlays ).concat( this.source.overlays ),
             maxImageCacheCount: this.maxImageCacheCount,
             imageLoaderLimit:   this.imageLoaderLimit,
             minZoomImageRatio:  this.minZoomImageRatio,
@@ -513,8 +513,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
+        
+        if( this.drawer ){
+            this.drawer.clearOverlays();
+        }
+        
         this.source     = null;
         this.drawer     = null;
+
         this.viewport   = this.preserveViewport ? this.viewport : null;
         //this.profiler   = null;
         this.canvas.innerHTML = "";

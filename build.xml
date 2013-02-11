@@ -62,7 +62,6 @@
 
     <target name='www' depends='build'>
         <echo>| Compiling OpenSeadragon Web Site </echo>
-        <publish page='overlay-highlights' title='Overlay Highlights | '/>
 
         <publish page='tilesource-custom' title='Custom Tile Source | '/>
         <publish page='tilesource-dzi' title='DZI Tile Source | '/>
@@ -70,6 +69,7 @@
         <publish page='tilesource-tms' title='Tiled Map Service Tile Source | '/>
         <publish page='tilesource-iiif' title='IIIF Tile Source | '/>
         <publish page='tilesource-legacy' title='Legacy Tile Sources | '/>
+        <publish page='tilesource-zoomit' title='Zoom.it Tile Sources | '/>
         <publish page='tilesource-sequence' title='Tile Source Sequence | '/>
         <publish page='tilesource-collection' title='Tile Source Collections | '/>
 
@@ -78,6 +78,7 @@
         <publish page='ui-toolbar' title='Toolbar | '/>
         <publish page='ui-viewport-navigator' title='Viewport Navigator | '/>
         <publish page='ui-zoom-and-pan' title='Viewport Zoom and Pan | '/>
+        <publish page='ui-overlays' title='Overlays |'/>
 
         <publish page='developer-debug-mode' title='Developer Tools - Debug Mode | '/>
 

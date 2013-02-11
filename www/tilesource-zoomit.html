@@ -1,0 +1,102 @@
+<h2>
+    example: integrating with zoom.it tiles
+</h2>
+<p>
+    Zoom it provides a simple service based way of loading images and serving 
+    out tiles.  The Zoomit service is based on the DZI format.
+</p>
+<p>
+    OpenSeadragon can render the DZI tiles and provide you all the features
+    you can only get with OpenSeadragon.
+</p>
+
+
+<div class="description">
+    <h3>Pulling tiles from Zoom.it</h3>
+    <p>
+        If you are pulling image tiles from zoom it, please understand and
+        respect any policy and copy rights of the image creator.
+    </p>
+</div>
+<div class="demoarea">
+    <div class="demoheading">
+        Example inline configuration for rendering dzi's hosted at zoom.it
+    </div>
+    <div id="example-zoomit-tilesource" 
+         class="openseadragon">
+        <script type="text/javascript">
+            OpenSeadragon({
+                id:            "example-zoomit-tilesource",
+                prefixUrl:     "/openseadragon/images/",
+                tileSources:   [{ 
+                    Image:  {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2009",
+                        Url: "http://cache.zoom.it/content/WwI0_files/",
+                        TileSize: "254", 
+                        Overlap: "1", 
+                        Format: "jpg", 
+                        ServerFormat: "Default",
+                        Size: { 
+                            Width: "5816",
+                            Height: "3961"
+                        }
+                    }
+                },{ 
+                    Image:  {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2009",
+                        Url: "http://static.seadragon.com/content/misc/carina-nebula_files/",
+                        TileSize: "254", 
+                        Overlap: "1", 
+                        Format: "jpg", 
+                        ServerFormat: "Default",
+                        Size: { 
+                            Width: "29566",
+                            Height: "14321"
+                        }
+                    }
+                },{ 
+                    Image:  {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2009",
+                        Url: "http://static.seadragon.com/content/misc/milwaukee_files/",
+                        TileSize: "254", 
+                        Overlap: "1", 
+                        Format: "jpg", 
+                        ServerFormat: "Default",
+                        Size: { 
+                            Width: "15497",
+                            Height: "5378"
+                        }
+                    }
+                }]
+            });
+        </script>
+        <noscript>
+            <p>Deep zoom is not available unless javascript is enabled.</p>
+            <img src='../images/highsmith/01967v.jpg'
+                 height='600'/>
+        </noscript>
+    </div>
+    
+    <p>
+        Configuration is done via the 'tileSources' option ( or programatically ).
+    </p>
+<pre>
+OpenSeadragon({
+    ...
+    tileSources:   [{ 
+        Image:  {
+            xmlns: "http://schemas.microsoft.com/deepzoom/2009",
+            Url: "http://cache.zoom.it/content/WwI0_files/",
+            TileSize: "254", 
+            Overlap: "1", 
+            Format: "jpg", 
+            ServerFormat: "Default",
+            Size: { 
+                Width: "5816",
+                Height: "3961"
+            }
+        }
+    }]
+    ...
+});</pre>
+</div>

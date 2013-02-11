@@ -1,7 +1,7 @@
 /*globals OpenSeadragon */
 
 /**
- * @version  OpenSeadragon 0.9.107
+ * @version  OpenSeadragon 0.9.111
  *
  * @fileOverview 
  * <h2>
@@ -3721,16 +3721,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         }
         
         if( this.preserveVewport ){
-            
             this.viewport.resetContentSize( this.source.dimensions );
-
         } 
+
+        this.source.overlays = this.source.overlays || [];
 
         this.drawer = new $.Drawer({
             source:             this.source, 
             viewport:           this.viewport, 
             element:            this.canvas,
-            overlays:           this.overlays,
+            overlays:           [].concat( this.overlays ).concat( this.source.overlays ),
             maxImageCacheCount: this.maxImageCacheCount,
             imageLoaderLimit:   this.imageLoaderLimit,
             minZoomImageRatio:  this.minZoomImageRatio,
@@ -3832,8 +3832,14 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
+        
+        if( this.drawer ){
+            this.drawer.clearOverlays();
+        }
+        
         this.source     = null;
         this.drawer     = null;
+
         this.viewport   = this.preserveViewport ? this.viewport : null;
         //this.profiler   = null;
         this.canvas.innerHTML = "";
@@ -8400,6 +8406,16 @@ $.Tile.prototype = {
 
             if ( element.parentNode ) {
                 element.parentNode.removeChild( element );
+                //this should allow us to preserve overlays when required between
+                //pages
+                if( element.prevElementParent ){
+                    style.display = 'none';
+                    //element.prevElementParent.insertBefore( 
+                    //    element,
+                    //    element.prevNextSibling
+                    //);
+                    document.body.appendChild( element );
+                }
             }
 
             style.top = "";
@@ -8424,6 +8440,9 @@ $.Tile.prototype = {
                 size;
 
             if ( element.parentNode != container ) {
+                //save the source parent for later if we need it
+                element.prevElementParent  = element.parentNode;
+                element.prevNextSibling    = element.nextSibling;
                 container.appendChild( element );
             }
 
@@ -8442,6 +8461,7 @@ $.Tile.prototype = {
             style.left     = position.x + "px";
             style.top      = position.y + "px";
             style.position = "absolute";
+            style.display  = 'block';
 
             if ( scales ) {
                 style.width  = size.x + "px";
@@ -8586,22 +8606,46 @@ $.Drawer = function( options ) {
             
             (function( _this, overlay ){
                 
-                var link  = document.createElement("a"),
-                    rect = new $.Rect(
-                        overlay.x, 
-                        overlay.y, 
+                var element  = null,
+                    rect = ( overlay.height && overlay.width ) ? new $.Rect(
+                        overlay.x || overlay.px, 
+                        overlay.y || overlay.py, 
                         overlay.width, 
                         overlay.height
+                    ) : new $.Point(
+                        overlay.x || overlay.px, 
+                        overlay.y || overlay.py
                     ),
-                    id = Math.floor(Math.random()*10000000);
-
-                link.href      = "#/overlay/"+id;
-                link.id        = id;
-                link.className = overlay.className ?
+                    id = overlay.id ? 
+                        overlay.id :
+                        "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
+                
+                element = $.getElement(overlay.id);
+                if( !element ){
+                    element         = document.createElement("a");
+                    element.href    = "#/overlay/"+id;
+                }
+                element.id        = id;
+                element.className = element.className + " " + ( overlay.className ?
                     overlay.className :
-                    "openseadragon-overlay";
+                    "openseadragon-overlay"
+                );
 
-                _this.overlays[ i ] = new $.Overlay( link, rect );
+
+                if(overlay.px !== undefined){
+                    //if they specified 'px' so its in pixel coordinates so
+                    //we need to translate to viewport coordinates
+                    rect = _this.viewport.imageToViewportRectangle( rect );
+                }
+                if( overlay.placement ){
+                    _this.overlays[ i ] = new $.Overlay( 
+                        element, 
+                        _this.viewport.pointFromPixel(rect), 
+                        $.OverlayPlacement[overlay.placement.toUpperCase()]
+                    );
+                }else{
+                    _this.overlays[ i ] = new $.Overlay( element, rect );
+                }
 
             }( this, this.overlays[ i ] ));
 
@@ -10163,6 +10207,50 @@ $.Viewport.prototype = {
             this.containerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
+        );
+    },
+
+    /**
+     * Translates from Seajax viewer coordinate 
+     * system to image coordinate system 
+     */
+    viewportToImageCoordinates: function(viewerX, viewerY) {
+       return new $.Point(viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX);
+    },
+
+    /**
+     * Translates from image coordinate system to
+     * Seajax viewer coordinate system 
+     */
+    imageToViewportCoordinates: function( imageX, imageY ) {
+       return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX);
+    },
+
+    /**
+     * Translates from a rectanlge which describes a portion of
+     * the image in pixel coordinates to OpenSeadragon viewport
+     * rectangle coordinates.
+     */
+    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if( arguments.length == 1 ){
+            //they passed a rectangle instead of individual components
+            rect = imageX;
+            return this.imageToViewportRectangle(rect.x, rect.y, rect.width, rect.height);
+        }
+        coordA = this.imageToViewportCoordinates(
+            imageX, imageY
+        );
+        coordB = this.imageToViewportCoordinates(
+            pixelWidth, pixelHeight
+        );
+        return new $.Rect( 
+            coordA.x,
+            coordA.y,
+            coordA.x + coordB.x,
+            coordA.y + coordB.y
         );
     }
 };
