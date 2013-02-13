@@ -1,7 +1,7 @@
 /*globals OpenSeadragon*/
 
 /**
- * @version  OpenSeadragon 0.9.114
+ * @version  OpenSeadragon 0.9.115
  *
  * @fileOverview 
  * <h2>
@@ -5697,7 +5697,7 @@ $.TileSource.determineType = function( tileSource, data, url ){
  * @property {String} fileFormat
  * @property {OpenSeadragon.DisplayRect[]} displayRects
  */ 
-$.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects ) {
+$.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects, minLevel, maxLevel ) {
     var i,
         rect,
         level,
@@ -5713,7 +5713,9 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             tileOverlap: arguments[ 3 ],
             tilesUrl: arguments[ 4 ],
             fileFormat: arguments[ 5 ],
-            displayRects: arguments[ 6 ]
+            displayRects: arguments[ 6 ],
+            minLevel: arguments[ 7 ], 
+            maxLevel: arguments[ 8 ]
         };
     }
 
