@@ -170,6 +170,7 @@ $.Viewer = function( options ) {
     this.element        = this.element || document.getElementById( this.id );
     this.canvas         = $.makeNeutralElement( "div" );
 
+    this.canvas.className = "openseadragon-canvas";
     (function( canvas ){
         canvas.width    = "100%";
         canvas.height   = "100%";
@@ -179,6 +180,8 @@ $.Viewer = function( options ) {
         canvas.left     = "0px";
     }(  this.canvas.style ));
 
+    //the container is created through applying the ControlDock constructor above
+    this.container.className = "openseadragon-container";
     (function( container ){
         container.width     = "100%";
         container.height    = "100%";
