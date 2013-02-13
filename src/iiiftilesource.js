@@ -92,7 +92,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             service = url.split('/');
             service.pop(); //info.json or info.xml
             service = service.join('/');
-            if( !( 'http' == url.substring( 0, 4 ) ) ){
+            if( 'http' !== url.substring( 0, 4 ) ){
                 host = location.protocol + '//' + location.host;
                 service = host + service;
             }
@@ -192,7 +192,6 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
     </info>
  */
 function configureFromXml( tileSource, xmlDoc ){
-    var configuration = {};
 
     //parse the xml
     if ( !xmlDoc || !xmlDoc.documentElement ) {
@@ -211,13 +210,11 @@ function configureFromXml( tileSource, xmlDoc ){
         
         try {
 
-
             configuration = {
                 "ns": root.namespaceURI
             };
 
             parseXML( root, configuration );
-
 
             return configureFromObject( tileSource, configuration );
 
@@ -230,7 +227,7 @@ function configureFromXml( tileSource, xmlDoc ){
 
     throw new Error( $.getString( "Errors.IIIF" ) );
 
-};
+}
 
 
 /**
@@ -287,6 +284,6 @@ function configureFromObject( tileSource, configuration ){
         configuration.tilesUrl = configuration.image_host;
     }
     return configuration;
-};
+}
 
 }( OpenSeadragon ));

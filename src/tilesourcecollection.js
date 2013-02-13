@@ -29,7 +29,7 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
         tilesPerRow = Math.ceil( options.tileSources.length / options.rows ),
         longSide = tilesPerRow >= options.rows ?
             tilesPerRow :
-            options.rows
+            options.rows;
 
     if( 'horizontal' == options.layout ){
         options.width = ( options.tileSize ) * tilesPerRow;
@@ -88,7 +88,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
      * @name OpenSeadragon.TileSourceCollection.prototype.configure
      */
     configure: function( data, url ){
-        return
+        return;
     },
 
 

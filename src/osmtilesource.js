@@ -73,7 +73,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
         return ( 
             data.type && 
             "openstreetmaps" == data.type
-        )
+        );
     },
 
     /**

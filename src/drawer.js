@@ -14,10 +14,10 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
     ), 
 
-    USE_CANVAS = SUBPIXEL_RENDERING 
-        && !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) 
-        && !( navigator.appVersion.match( 'Mobile' ) )
-        && $.isFunction( document.createElement( "canvas" ).getContext );
+    USE_CANVAS = SUBPIXEL_RENDERING &&
+        !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
+        !( navigator.appVersion.match( 'Mobile' ) ) &&
+        $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
@@ -111,50 +111,7 @@ $.Drawer = function( options ) {
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
             
-            (function( _this, overlay ){
-                
-                var element  = null,
-                    rect = ( overlay.height && overlay.width ) ? new $.Rect(
-                        overlay.x || overlay.px, 
-                        overlay.y || overlay.py, 
-                        overlay.width, 
-                        overlay.height
-                    ) : new $.Point(
-                        overlay.x || overlay.px, 
-                        overlay.y || overlay.py
-                    ),
-                    id = overlay.id ? 
-                        overlay.id :
-                        "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
-                
-                element = $.getElement(overlay.id);
-                if( !element ){
-                    element         = document.createElement("a");
-                    element.href    = "#/overlay/"+id;
-                }
-                element.id        = id;
-                element.className = element.className + " " + ( overlay.className ?
-                    overlay.className :
-                    "openseadragon-overlay"
-                );
-
-
-                if(overlay.px !== undefined){
-                    //if they specified 'px' so its in pixel coordinates so
-                    //we need to translate to viewport coordinates
-                    rect = _this.viewport.imageToViewportRectangle( rect );
-                }
-                if( overlay.placement ){
-                    _this.overlays[ i ] = new $.Overlay( 
-                        element, 
-                        _this.viewport.pointFromPixel(rect), 
-                        $.OverlayPlacement[overlay.placement.toUpperCase()]
-                    );
-                }else{
-                    _this.overlays[ i ] = new $.Overlay( element, rect );
-                }
-
-            }( this, this.overlays[ i ] ));
+            addOverlayFromConfiguration( this, this.overlays[ i ]);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
             //TODO
@@ -357,6 +314,55 @@ $.Drawer.prototype = {
         return loading;
     }
 };
+
+/**
+ * @private
+ * @inner
+ */
+ function addOverlayFromConfiguration( drawer, overlay ){
+                
+    var element  = null,
+        rect = ( overlay.height && overlay.width ) ? new $.Rect(
+            overlay.x || overlay.px, 
+            overlay.y || overlay.py, 
+            overlay.width, 
+            overlay.height
+        ) : new $.Point(
+            overlay.x || overlay.px, 
+            overlay.y || overlay.py
+        ),
+        id = overlay.id ? 
+            overlay.id :
+            "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
+    
+    element = $.getElement(overlay.id);
+    if( !element ){
+        element         = document.createElement("a");
+        element.href    = "#/overlay/"+id;
+    }
+    element.id        = id;
+    element.className = element.className + " " + ( overlay.className ?
+        overlay.className :
+        "openseadragon-overlay"
+    );
+
+
+    if(overlay.px !== undefined){
+        //if they specified 'px' so its in pixel coordinates so
+        //we need to translate to viewport coordinates
+        rect = drawer.viewport.imageToViewportRectangle( rect );
+    }
+    if( overlay.placement ){
+        drawer.overlays[ i ] = new $.Overlay( 
+            element, 
+            drawer.viewport.pointFromPixel(rect), 
+            $.OverlayPlacement[overlay.placement.toUpperCase()]
+        );
+    }else{
+        drawer.overlays[ i ] = new $.Overlay( element, rect );
+    }
+
+}
 
 /**
  * @private
@@ -1021,20 +1027,18 @@ function drawTiles( drawer, lastDrawn ){
                         ]
                     });
                     
-                    (function(style){
-                        //TODO: IE seems to barf on this, not sure if its just the border
-                        //      but we probably need to clear this up with a better 
-                        //      test of support for various css features
-                        if( SUBPIXEL_RENDERING ){
-                            style['-webkit-box-reflect'] = 
-                                'below 0px -webkit-gradient('+
-                                    'linear,left '+
-                                    'top,left '+
-                                    'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
-                                ')';
-                            style['border'] = '1px solid rgba(255,255,255,0.38)';
-                        } 
-                    }(viewer.element.style));
+                    //TODO: IE seems to barf on this, not sure if its just the border
+                    //      but we probably need to clear this up with a better 
+                    //      test of support for various css features
+                    if( SUBPIXEL_RENDERING ){
+                        viewer.element.style.border = '1px solid rgba(255,255,255,0.38)';
+                        viewer.element.style['-webkit-box-reflect'] = 
+                            'below 0px -webkit-gradient('+
+                                'linear,left '+
+                                'top,left '+
+                                'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
+                            ')';
+                    } 
 
                     drawer.addOverlay(
                         viewer.element,
@@ -1086,7 +1090,7 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.size.x, 
             tile.size.y 
         );
-        if( tile.x == 0 && tile.y == 0 ){
+        if( tile.x === 0 && tile.y === 0 ){
             drawer.context.fillText(
                 "Zoom: " + drawer.viewport.getZoom(),
                 tile.position.x, 

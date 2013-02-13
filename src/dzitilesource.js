@@ -107,7 +107,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
         }
 
         if( url && !options.tilesUrl ){
-            if( !( 'http' == url.substring( 0, 4 ) ) ){
+            if( 'http' !== url.substring( 0, 4 ) ){
                 host = location.protocol + '//' + location.host;
             }
             dziPath = url.split('/');
@@ -216,11 +216,11 @@ function configureFromXML( tileSource, xmlDoc ){
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
-                    Overlap:     parseInt( root.getAttribute( "Overlap" ) ), 
-                    TileSize:    parseInt( root.getAttribute( "TileSize" ) ),
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
+                    TileSize:    parseInt( root.getAttribute( "TileSize" ), 10 ),
                     Size: {
-                        Height: parseInt( sizeNode.getAttribute( "Height" ) ),
-                        Width:  parseInt( sizeNode.getAttribute( "Width" ) )
+                        Height: parseInt( sizeNode.getAttribute( "Height" ), 10 ),
+                        Width:  parseInt( sizeNode.getAttribute( "Width" ), 10 )
                     }
                 }
             };
@@ -238,12 +238,12 @@ function configureFromXML( tileSource, xmlDoc ){
 
                 displayRects.push({
                     Rect: {
-                        X: parseInt( rectNode.getAttribute( "X" ) ),
-                        Y: parseInt( rectNode.getAttribute( "Y" ) ),
-                        Width: parseInt( rectNode.getAttribute( "Width" ) ),
-                        Height: parseInt( rectNode.getAttribute( "Height" ) ),
+                        X: parseInt( rectNode.getAttribute( "X" ), 10 ),
+                        Y: parseInt( rectNode.getAttribute( "Y" ), 10 ),
+                        Width: parseInt( rectNode.getAttribute( "Width" ), 10 ),
+                        Height: parseInt( rectNode.getAttribute( "Height" ), 10 ),
                         MinLevel: 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
                     }
                 });
             }
@@ -266,7 +266,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );
-};
+}
 
 /**
  * @private
@@ -279,10 +279,10 @@ function configureFromObject( tileSource, configuration ){
         fileFormat    = imageData.Format,
         sizeData      = imageData.Size,
         dispRectData  = imageData.DisplayRect || [],
-        width         = parseInt( sizeData.Width ),
-        height        = parseInt( sizeData.Height ),
-        tileSize      = parseInt( imageData.TileSize ),
-        tileOverlap   = parseInt( imageData.Overlap ),
+        width         = parseInt( sizeData.Width, 10 ),
+        height        = parseInt( sizeData.Height, 10 ),
+        tileSize      = parseInt( imageData.TileSize, 10 ),
+        tileOverlap   = parseInt( imageData.Overlap, 10 ),
         displayRects  = [],
         rectData,
         i;
@@ -304,12 +304,12 @@ function configureFromObject( tileSource, configuration ){
         rectData = dispRectData[ i ].Rect;
 
         displayRects.push( new $.DisplayRect(
-            parseInt( rectData.X ),
-            parseInt( rectData.Y ),
-            parseInt( rectData.Width ),
-            parseInt( rectData.Height ),
+            parseInt( rectData.X, 10 ),
+            parseInt( rectData.Y, 10 ),
+            parseInt( rectData.Width, 10 ),
+            parseInt( rectData.Height, 10 ),
             0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-            parseInt( rectData.MaxLevel )
+            parseInt( rectData.MaxLevel, 10 )
         ));
     }
 
@@ -326,6 +326,6 @@ function configureFromObject( tileSource, configuration ){
         displayRects: displayRects /* displayRects */
     };
 
-};
+}
 
 }( OpenSeadragon ));

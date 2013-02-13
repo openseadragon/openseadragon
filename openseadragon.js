@@ -1,7 +1,7 @@
-/*globals OpenSeadragon */
+/*globals OpenSeadragon*/
 
 /**
- * @version  OpenSeadragon 0.9.111
+ * @version  OpenSeadragon 0.9.113s
  *
  * @fileOverview 
  * <h2>
@@ -315,7 +315,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
     $.type = function( obj ) {
-        return obj == null ?
+        return ( obj === null ) || ( obj === undefined ) ?
             String( obj ) :
             class2type[ toString.call(obj) ] || "object";
     };
@@ -419,7 +419,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         for ( ; i < length; i++ ) {
             // Only deal with non-null/undefined values
-            if ( ( options = arguments[ i ] ) != null ) {
+            options = arguments[ i ];
+            if ( options !== null || options !== undefined ) {
                 // Extend the base object
                 for ( name in options ) {
                     src = target[ name ];
@@ -472,6 +473,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
             panVertical:            true,
+            constrainDuringPan:     false,
             wrapHorizontal:         false,
             wrapVertical:           false,
             visibilityRatio:        0.5,
@@ -598,10 +600,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Function} method
          */
         delegate: function( object, method ) {
-            return function() {
-                if ( arguments === undefined )
-                    arguments = [];
-                return method.apply( object, arguments );
+            return function(){
+                var args = arguments;
+                if ( args === undefined ){
+                    args = [];
+                }
+                return method.apply( object, args );
             };
         },
         
@@ -832,21 +836,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                         window.innerWidth,
                         window.innerHeight
                     );
-                }
+                };
             } else if ( docElement.clientWidth || docElement.clientHeight ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         document.documentElement.clientWidth,
                         document.documentElement.clientHeight
                     );
-                }
+                };
             } else if ( body.clientWidth || body.clientHeight ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         document.body.clientWidth,
                         document.body.clientHeight
                     );
-                }
+                };
             } else {
                 throw new Error("Unknown window size, no known technique.");
             }
@@ -1113,7 +1117,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 $.cancelEvent = function( event ){
                     // W3C for preventing default
                     event.preventDefault();
-                }
+                };
             } else {
                 $.cancelEvent = function( event ){
                     event = $.getEvent( event );
@@ -1212,6 +1216,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 //      we could determine once at startup which activeX object
                 //      was supported.  This will have significant impact on 
                 //      performance for IE Browsers DONE
+                /*jshint loopfunc:true*/
                 for ( i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
@@ -1268,7 +1273,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
-                        request.onreadystatechange = new function() { };
+                        request.onreadystatechange = function(){};
                         options.success( request );
                     }
                 };
@@ -1692,7 +1697,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         } else {
             return element.offsetParent;
         }
-    };
+    }
 
     /**
      * @private
@@ -1724,7 +1729,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         }
 
         return processDZIXml( doc, tilesUrl );
-    };
+    }
 
     /**
      * @private
@@ -1758,7 +1763,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         }
 
         throw new Error( $.getString( "Errors.Dzi" ) );
-    };
+    }
 
     /**
      * @private
@@ -1772,10 +1777,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         var fileFormat    = imageNode.getAttribute( "Format" ),
             sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
             dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
-            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
-            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
-            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
-            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
+            width         = parseInt( sizeNode.getAttribute( "Width" ), 10 ),
+            height        = parseInt( sizeNode.getAttribute( "Height" ), 10 ),
+            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ), 10 ),
+            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ), 10 ),
             dispRects     = [],
             dispRectNode,
             rectNode,
@@ -1792,12 +1797,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
 
             dispRects.push( new $.DisplayRect(
-                parseInt( rectNode.getAttribute( "X" ) ),
-                parseInt( rectNode.getAttribute( "Y" ) ),
-                parseInt( rectNode.getAttribute( "Width" ) ),
-                parseInt( rectNode.getAttribute( "Height" ) ),
+                parseInt( rectNode.getAttribute( "X" ), 10 ),
+                parseInt( rectNode.getAttribute( "Y" ), 10 ),
+                parseInt( rectNode.getAttribute( "Width" ), 10 ),
+                parseInt( rectNode.getAttribute( "Height" ), 10 ),
                 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
             ));
         }
         return new $.DziTileSource(
@@ -1809,7 +1814,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             fileFormat, 
             dispRects
         );
-    };
+    }
 
     /**
      * @private
@@ -1823,10 +1828,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         var fileFormat    = imageData.Format,
             sizeData      = imageData.Size,
             dispRectData  = imageData.DisplayRect || [],
-            width         = parseInt( sizeData.Width ),
-            height        = parseInt( sizeData.Height ),
-            tileSize      = parseInt( imageData.TileSize ),
-            tileOverlap   = parseInt( imageData.Overlap ),
+            width         = parseInt( sizeData.Width, 10 ),
+            height        = parseInt( sizeData.Height, 10 ),
+            tileSize      = parseInt( imageData.TileSize, 10 ),
+            tileOverlap   = parseInt( imageData.Overlap, 10 ),
             dispRects     = [],
             rectData,
             i;
@@ -1841,12 +1846,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectData     = dispRectData[ i ].Rect;
 
             dispRects.push( new $.DisplayRect(
-                parseInt( rectData.X ),
-                parseInt( rectData.Y ),
-                parseInt( rectData.Width ),
-                parseInt( rectData.Height ),
+                parseInt( rectData.X, 10 ),
+                parseInt( rectData.Y, 10 ),
+                parseInt( rectData.Width, 10 ),
+                parseInt( rectData.Height, 10 ),
                 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( rectData.MaxLevel )
+                parseInt( rectData.MaxLevel, 10 )
             ));
         }
         return new $.DziTileSource(
@@ -1858,7 +1863,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             fileFormat, 
             dispRects
         );
-    };
+    }
+
     /**
      * @private
      * @inner
@@ -1872,10 +1878,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             message     = messageNode.firstChild.nodeValue;
 
         throw new Error(message);
-    };
+    }
 
-
-    
 }( OpenSeadragon ));
 /*globals OpenSeadragon */
 
@@ -2084,23 +2088,23 @@ $.EventHandler.prototype = {
          *      Position of last mouse down
          */
         THIS[ this.hash ] = {
-            "mouseover":        function( event ){ onMouseOver( _this, event ); },
-            "mouseout":         function( event ){ onMouseOut( _this, event ); },
-            "mousedown":        function( event ){ onMouseDown( _this, event ); },
-            "mouseup":          function( event ){ onMouseUp( _this, event ); },
-            "click":            function( event ){ onMouseClick( _this, event ); },
-            "DOMMouseScroll":   function( event ){ onMouseWheelSpin( _this, event ); },
-            "mousewheel":       function( event ){ onMouseWheelSpin( _this, event ); },
-            "mouseupie":        function( event ){ onMouseUpIE( _this, event ); },
-            "mousemoveie":      function( event ){ onMouseMoveIE( _this, event ); },
-            "mouseupwindow":    function( event ){ onMouseUpWindow( _this, event ); },
-            "mousemove":        function( event ){ onMouseMove( _this, event ); },
-            "touchstart":       function( event ){ onTouchStart( _this, event ); },
-            "touchmove":        function( event ){ onTouchMove( _this, event ); },
-            "touchend":         function( event ){ onTouchEnd( _this, event ); },
-            "keypress":         function( event ){ onKeyPress( _this, event ); },
-            "focus":            function( event ){ onFocus( _this, event ); },
-            "blur":             function( event ){ onBlur( _this, event ); },
+            mouseover:          function( event ){ onMouseOver( _this, event ); },
+            mouseout:           function( event ){ onMouseOut( _this, event ); },
+            mousedown:          function( event ){ onMouseDown( _this, event ); },
+            mouseup:            function( event ){ onMouseUp( _this, event ); },
+            click:              function( event ){ onMouseClick( _this, event ); },
+            DOMMouseScroll:     function( event ){ onMouseWheelSpin( _this, event ); },
+            mousewheel:         function( event ){ onMouseWheelSpin( _this, event ); },
+            mouseupie:          function( event ){ onMouseUpIE( _this, event ); },
+            mousemoveie:        function( event ){ onMouseMoveIE( _this, event ); },
+            mouseupwindow:      function( event ){ onMouseUpWindow( _this, event ); },
+            mousemove:          function( event ){ onMouseMove( _this, event ); },
+            touchstart:         function( event ){ onTouchStart( _this, event ); },
+            touchmove:          function( event ){ onTouchMove( _this, event ); },
+            touchend:           function( event ){ onTouchEnd( _this, event ); },
+            keypress:           function( event ){ onKeyPress( _this, event ); },
+            focus:              function( event ){ onFocus( _this, event ); },
+            blur:               function( event ){ onBlur( _this, event ); },
             tracking:           false,
             capturing:          false,
             buttonDown:         false,
@@ -2355,32 +2359,32 @@ $.EventHandler.prototype = {
                 $.removeEvent( 
                     tracker.element, 
                     "mouseup", 
-                    delegate[ "mouseup" ], 
+                    delegate.mouseup, 
                     false 
                 );
                 $.addEvent( 
                     tracker.element, 
                     "mouseup", 
-                    delegate[ "mouseupie" ], 
+                    delegate.mouseupie, 
                     true 
                 );
                 $.addEvent( 
                     tracker.element, 
                     "mousemove", 
-                    delegate[ "mousemoveie" ], 
+                    delegate.mousemoveie, 
                     true 
                 );
             } else {
                 $.addEvent( 
                     window, 
                     "mouseup", 
-                    delegate[ "mouseupwindow" ], 
+                    delegate.mouseupwindow, 
                     true 
                 );
                 $.addEvent( 
                     window, 
                     "mousemove", 
-                    delegate[ "mousemove" ], 
+                    delegate.mousemove, 
                     true 
                 );
             }
@@ -2402,32 +2406,32 @@ $.EventHandler.prototype = {
                 $.removeEvent( 
                     tracker.element, 
                     "mousemove", 
-                    delegate[ "mousemoveie" ], 
+                    delegate.mousemoveie, 
                     true 
                 );
                 $.removeEvent( 
                     tracker.element, 
                     "mouseup", 
-                    delegate[ "mouseupie" ], 
+                    delegate.mouseupie, 
                     true 
                 );
                 $.addEvent( 
                     tracker.element, 
                     "mouseup", 
-                    delegate[ "mouseup" ], 
+                    delegate.mouseup, 
                     false 
                 );
             } else {
                 $.removeEvent( 
                     window, 
                     "mousemove", 
-                    delegate[ "mousemove" ], 
+                    delegate.mousemove, 
                     true 
                 );
                 $.removeEvent( 
                     window, 
                     "mouseup", 
-                    delegate[ "mouseupwindow" ], 
+                    delegate.mouseupwindow, 
                     true 
                 );
             }
@@ -2501,7 +2505,7 @@ $.EventHandler.prototype = {
                 event.keyCode ? event.keyCode : event.charCode,
                 event.shiftKey
             );
-            if( propagate === false ){
+            if( !propagate ){
                 $.cancelEvent( event );
             }
         }
@@ -2514,9 +2518,10 @@ $.EventHandler.prototype = {
      */
     function onMouseOver( tracker, event ) {
 
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
+        var delegate = THIS[ tracker.hash ],
             propagate;
+
+        event = $.getEvent( event );
 
         if ( $.Browser.vendor == $.BROWSERS.IE && 
              $.Browser.version < 9 && 
@@ -2524,7 +2529,6 @@ $.EventHandler.prototype = {
              !isChild( event.srcElement, tracker.element ) ) {
 
             triggerOthers( tracker, onMouseOver, event );
-
         }
 
         var to = event.target ? 
@@ -2560,9 +2564,10 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onMouseOut( tracker, event ) {
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
+        var delegate = THIS[ tracker.hash ],
             propagate;
+
+        event = $.getEvent( event );
 
         if ( $.Browser.vendor == $.BROWSERS.IE && 
              $.Browser.version < 9 &&
@@ -2607,9 +2612,10 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onMouseDown( tracker, event ) {
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
+        var delegate = THIS[ tracker.hash ],
             propagate;
+
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -2683,13 +2689,14 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onMouseUp( tracker, event ) {
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
+        var delegate = THIS[ tracker.hash ],
             //were we inside the tracked element when we were pressed
             insideElementPress = delegate.buttonDown,
             //are we still inside the tracked element when we released
             insideElementRelease = delegate.insideElement,
             propagate;
+
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -2721,8 +2728,8 @@ $.EventHandler.prototype = {
      */
     function onTouchEnd( tracker, event ) {
 
-        if( event.touches.length == 0 &&
-            event.targetTouches.length == 0 && 
+        if( event.touches.length === 0 &&
+            event.targetTouches.length === 0 && 
             event.changedTouches.length == 1 ){
 
             THIS[ tracker.hash ].lastTouch = null;
@@ -2748,9 +2755,10 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onMouseUpIE( tracker, event ) {
-        var event = $.getEvent( event ),
-            othertracker,
+        var othertracker,
             i;
+
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -2846,9 +2854,10 @@ $.EventHandler.prototype = {
      * @inner
      */
     function handleMouseClick( tracker, event ) {
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
+        var delegate = THIS[ tracker.hash ],
             propagate;
+
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -2879,11 +2888,14 @@ $.EventHandler.prototype = {
      * @inner
      */
     function onMouseMove( tracker, event ) {
-        var event = $.getEvent( event ),
-            delegate = THIS[ tracker.hash ],
-            point = getMouseAbsolute( event ),
-            delta = point.minus( delegate.lastPoint ),
-            propagate;
+        var delegate = THIS[ tracker.hash ],
+            delta,
+            propagate,
+            point;
+
+        event = $.getEvent( event );
+        point = getMouseAbsolute( event );
+        delta = point.minus( delegate.lastPoint );
 
         delegate.lastPoint = point;
 
@@ -3790,7 +3802,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             
             overlay = this.overlayControls[ i ];
             
-            if ( overlay.point != null ) {
+            if ( overlay.point ) {
             
                 this.drawer.addOverlay(
                     overlay.id, 
@@ -3836,7 +3848,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if( this.drawer ){
             this.drawer.clearOverlays();
         }
-        
+
         this.source     = null;
         this.drawer     = null;
 
@@ -4482,6 +4494,9 @@ function onCanvasDrag( tracker, position, delta, shift ) {
                 delta.negate() 
             ) 
         );
+        if( this.constrainDuringPan ){
+            this.viewport.applyConstraints();
+        }
     }
 }
 
@@ -5081,7 +5096,7 @@ $.extend( $, {
         }
 
         return string.replace(/\{\d+\}/g, function(capture) {
-            var i = parseInt( capture.match( /\d+/ ) ) + 1;
+            var i = parseInt( capture.match( /\d+/ ), 10 ) + 1;
             return i < args.length ? 
                 args[ i ] : 
                 "";
@@ -5341,6 +5356,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     $.extend( true, this, options );
 
     //Any functions that are passed as arguments are bound to the ready callback
+    /*jshint loopfunc:true*/
     for( i = 0; i < arguments.length; i++ ){
         if( $.isFunction( arguments[i] ) ){
             callback = arguments[ i ];
@@ -5470,7 +5486,6 @@ $.TileSource.prototype = {
      */
     getImageInfo: function( url ) {
         var _this   = this,
-            url     = url,
             error,
             callbackName,
             callback,
@@ -5630,6 +5645,7 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
+        /*jshint evil:true*/
         data = eval( '('+responseText+')' );
     }else{
         data = responseText;
@@ -5772,7 +5788,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
         }
 
         if( url && !options.tilesUrl ){
-            if( !( 'http' == url.substring( 0, 4 ) ) ){
+            if( 'http' !== url.substring( 0, 4 ) ){
                 host = location.protocol + '//' + location.host;
             }
             dziPath = url.split('/');
@@ -5881,11 +5897,11 @@ function configureFromXML( tileSource, xmlDoc ){
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
-                    Overlap:     parseInt( root.getAttribute( "Overlap" ) ), 
-                    TileSize:    parseInt( root.getAttribute( "TileSize" ) ),
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
+                    TileSize:    parseInt( root.getAttribute( "TileSize" ), 10 ),
                     Size: {
-                        Height: parseInt( sizeNode.getAttribute( "Height" ) ),
-                        Width:  parseInt( sizeNode.getAttribute( "Width" ) )
+                        Height: parseInt( sizeNode.getAttribute( "Height" ), 10 ),
+                        Width:  parseInt( sizeNode.getAttribute( "Width" ), 10 )
                     }
                 }
             };
@@ -5903,12 +5919,12 @@ function configureFromXML( tileSource, xmlDoc ){
 
                 displayRects.push({
                     Rect: {
-                        X: parseInt( rectNode.getAttribute( "X" ) ),
-                        Y: parseInt( rectNode.getAttribute( "Y" ) ),
-                        Width: parseInt( rectNode.getAttribute( "Width" ) ),
-                        Height: parseInt( rectNode.getAttribute( "Height" ) ),
+                        X: parseInt( rectNode.getAttribute( "X" ), 10 ),
+                        Y: parseInt( rectNode.getAttribute( "Y" ), 10 ),
+                        Width: parseInt( rectNode.getAttribute( "Width" ), 10 ),
+                        Height: parseInt( rectNode.getAttribute( "Height" ), 10 ),
                         MinLevel: 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                        MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
                     }
                 });
             }
@@ -5931,7 +5947,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );
-};
+}
 
 /**
  * @private
@@ -5944,10 +5960,10 @@ function configureFromObject( tileSource, configuration ){
         fileFormat    = imageData.Format,
         sizeData      = imageData.Size,
         dispRectData  = imageData.DisplayRect || [],
-        width         = parseInt( sizeData.Width ),
-        height        = parseInt( sizeData.Height ),
-        tileSize      = parseInt( imageData.TileSize ),
-        tileOverlap   = parseInt( imageData.Overlap ),
+        width         = parseInt( sizeData.Width, 10 ),
+        height        = parseInt( sizeData.Height, 10 ),
+        tileSize      = parseInt( imageData.TileSize, 10 ),
+        tileOverlap   = parseInt( imageData.Overlap, 10 ),
         displayRects  = [],
         rectData,
         i;
@@ -5969,12 +5985,12 @@ function configureFromObject( tileSource, configuration ){
         rectData = dispRectData[ i ].Rect;
 
         displayRects.push( new $.DisplayRect(
-            parseInt( rectData.X ),
-            parseInt( rectData.Y ),
-            parseInt( rectData.Width ),
-            parseInt( rectData.Height ),
+            parseInt( rectData.X, 10 ),
+            parseInt( rectData.Y, 10 ),
+            parseInt( rectData.Width, 10 ),
+            parseInt( rectData.Height, 10 ),
             0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-            parseInt( rectData.MaxLevel )
+            parseInt( rectData.MaxLevel, 10 )
         ));
     }
 
@@ -5991,7 +6007,7 @@ function configureFromObject( tileSource, configuration ){
         displayRects: displayRects /* displayRects */
     };
 
-};
+}
 
 }( OpenSeadragon ));
 (function( $ ){
@@ -6088,7 +6104,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             service = url.split('/');
             service.pop(); //info.json or info.xml
             service = service.join('/');
-            if( !( 'http' == url.substring( 0, 4 ) ) ){
+            if( 'http' !== url.substring( 0, 4 ) ){
                 host = location.protocol + '//' + location.host;
                 service = host + service;
             }
@@ -6188,7 +6204,6 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
     </info>
  */
 function configureFromXml( tileSource, xmlDoc ){
-    var configuration = {};
 
     //parse the xml
     if ( !xmlDoc || !xmlDoc.documentElement ) {
@@ -6207,13 +6222,11 @@ function configureFromXml( tileSource, xmlDoc ){
         
         try {
 
-
             configuration = {
                 "ns": root.namespaceURI
             };
 
             parseXML( root, configuration );
-
 
             return configureFromObject( tileSource, configuration );
 
@@ -6226,7 +6239,7 @@ function configureFromXml( tileSource, xmlDoc ){
 
     throw new Error( $.getString( "Errors.IIIF" ) );
 
-};
+}
 
 
 /**
@@ -6283,7 +6296,7 @@ function configureFromObject( tileSource, configuration ){
         configuration.tilesUrl = configuration.image_host;
     }
     return configuration;
-};
+}
 
 }( OpenSeadragon ));(function( $ ){
     
@@ -6360,7 +6373,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
         return ( 
             data.type && 
             "openstreetmaps" == data.type
-        )
+        );
     },
 
     /**
@@ -6781,7 +6794,7 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
         tilesPerRow = Math.ceil( options.tileSources.length / options.rows ),
         longSide = tilesPerRow >= options.rows ?
             tilesPerRow :
-            options.rows
+            options.rows;
 
     if( 'horizontal' == options.layout ){
         options.width = ( options.tileSize ) * tilesPerRow;
@@ -6840,7 +6853,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
      * @name OpenSeadragon.TileSourceCollection.prototype.configure
      */
     configure: function( data, url ){
-        return
+        return;
     },
 
 
@@ -7441,6 +7454,7 @@ $.Rect.prototype = {
 
 
 }( OpenSeadragon ));
+
 (function( $ ){
     
 // dictionary from id to private properties
@@ -7473,6 +7487,7 @@ $.ReferenceStrip = function( options ){
         miniViewer,
         minPixelRatio,
         element,
+        style,
         i;
     
     //We may need to create a new element and id if they did not
@@ -7501,7 +7516,6 @@ $.ReferenceStrip = function( options ){
     });
 
     $.extend( this, options );
-
     //Private state properties
     THIS[ this.id ] = {
         "animating":         false
@@ -7509,17 +7523,16 @@ $.ReferenceStrip = function( options ){
 
     this.minPixelRatio = this.viewer.minPixelRatio;
 
-    (function( style ){
-        style.marginTop     = '0px';
-        style.marginRight   = '0px';
-        style.marginBottom  = '0px';
-        style.marginLeft    = '0px';
-        style.left          = '0px';
-        style.bottom        = '0px';
-        style.border        = '0px';
-        style.background    = '#000';
-        style.position      = 'relative';
-    }( this.element.style ));
+    style               = thie.element.style;
+    style.marginTop     = '0px';
+    style.marginRight   = '0px';
+    style.marginBottom  = '0px';
+    style.marginLeft    = '0px';
+    style.left          = '0px';
+    style.bottom        = '0px';
+    style.border        = '0px';
+    style.background    = '#000';
+    style.position      = 'relative';
 
     $.setElementOpacity( this.element, 0.8 );
 
@@ -7532,8 +7545,6 @@ $.ReferenceStrip = function( options ){
         exitHandler:    $.delegate( this, onStripExit ),
         keyHandler:     $.delegate( this, onKeyPress )
     }).setTracking( true );
-
-    
 
     //Controls the position and orientation of the reference strip and sets the  
     //appropriate width and height
@@ -7585,32 +7596,31 @@ $.ReferenceStrip = function( options ){
     this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
     this.panels = [];
 
+    /*jshint loopfunc:true*/
     for( i = 0; i < viewer.tileSources.length; i++ ){
         
         element = $.makeNeutralElement('div');
         element.id = this.element.id + "-" + i;
 
-        (function(style){
-            style.width         = _this.panelWidth + 'px';
-            style.height        = _this.panelHeight + 'px';
-            style.display       = 'inline';
-            style.float         = 'left'; //Webkit
-            style.cssFloat      = 'left'; //Firefox
-            style.styleFloat    = 'left'; //IE
-            style.padding       = '2px';
-        }(element.style));
+        element.style.width         = _this.panelWidth + 'px';
+        element.style.height        = _this.panelHeight + 'px';
+        element.style.display       = 'inline';
+        element.style.float         = 'left'; //Webkit
+        element.style.cssFloat      = 'left'; //Firefox
+        element.style.styleFloat    = 'left'; //IE
+        element.style.padding       = '2px';
 
         element.innerTracker = new $.MouseTracker({
-            element:        element,
+            element:            element,
             clickTimeThreshold: this.clickTimeThreshold, 
             clickDistThreshold: this.clickDistThreshold,
             pressHandler: function( tracker ){
-                tracker.dragging = +new Date;
+                tracker.dragging = +new Date();
             },
             releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ){
                 var id = tracker.element.id,
                     page = Number( id.split( '-' )[ 2 ] ),
-                    now = +new Date;
+                    now = +new Date();
                 
                 if ( insideElementPress && 
                      insideElementRelease && 
@@ -7747,7 +7757,7 @@ function onStripDrag( tracker, position, delta, shift ) {
     }
     return false;
 
-};
+}
 
 
 
@@ -7795,7 +7805,7 @@ function onStripScroll( tracker, position, scroll, shift ) {
     }
     //cancels event
     return false;
-};
+}
 
 
 function loadPanels(strip, viewerSize, scroll){
@@ -7803,6 +7813,7 @@ function loadPanels(strip, viewerSize, scroll){
         activePanelsStart,
         activePanelsEnd,
         miniViewer,
+        style,
         i;
     if( 'horizontal' == strip.scroll ){
         panelSize = strip.panelWidth;
@@ -7833,20 +7844,19 @@ function loadPanels(strip, viewerSize, scroll){
             miniViewer.displayRegion.id        = element.id + '-displayregion';
             miniViewer.displayRegion.className = 'displayregion';
 
-            (function( style ){
-                style.position      = 'relative';
-                style.top           = '0px';
-                style.left          = '0px';
-                style.fontSize      = '0px';
-                style.overflow      = 'hidden';
-                style.float         = 'left'; //Webkit
-                style.cssFloat      = 'left'; //Firefox
-                style.styleFloat    = 'left'; //IE
-                style.zIndex        = 999999999;
-                style.cursor        = 'default';
-                style.width         = ( strip.panelWidth - 4 ) + 'px';
-                style.height        = ( strip.panelHeight - 4 ) + 'px';
-            }( miniViewer.displayRegion.style ));
+            style = miniViewer.displayRegion.style;
+            style.position      = 'relative';
+            style.top           = '0px';
+            style.left          = '0px';
+            style.fontSize      = '0px';
+            style.overflow      = 'hidden';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.zIndex        = 999999999;
+            style.cursor        = 'default';
+            style.width         = ( strip.panelWidth - 4 ) + 'px';
+            style.height        = ( strip.panelHeight - 4 ) + 'px';
 
             miniViewer.displayRegion.innerTracker = new $.MouseTracker({
                 element:        miniViewer.displayRegion
@@ -7859,7 +7869,7 @@ function loadPanels(strip, viewerSize, scroll){
             element.activePanel = true;
         }
     }
-};
+}
 
 
 /**
@@ -7885,8 +7895,8 @@ function onStripEnter( tracker ) {
         tracker.element.style.marginLeft = "0px";
 
     }
-    return false
-};
+    return false;
+}
 
 
 /**
@@ -7915,7 +7925,7 @@ function onStripExit( tracker ) {
     
     }
     return false;
-};
+}
 
 
 
@@ -7957,7 +7967,7 @@ function onKeyPress( tracker, keyCode, shiftKey ){
             //console.log( 'navigator keycode %s', keyCode );
             return true;
     }
-};
+}
 
 
 
@@ -8507,10 +8517,10 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
     ), 
 
-    USE_CANVAS = SUBPIXEL_RENDERING 
-        && !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) 
-        && !( navigator.appVersion.match( 'Mobile' ) )
-        && $.isFunction( document.createElement( "canvas" ).getContext );
+    USE_CANVAS = SUBPIXEL_RENDERING &&
+        !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
+        !( navigator.appVersion.match( 'Mobile' ) ) &&
+        $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
@@ -8604,50 +8614,7 @@ $.Drawer = function( options ) {
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
             
-            (function( _this, overlay ){
-                
-                var element  = null,
-                    rect = ( overlay.height && overlay.width ) ? new $.Rect(
-                        overlay.x || overlay.px, 
-                        overlay.y || overlay.py, 
-                        overlay.width, 
-                        overlay.height
-                    ) : new $.Point(
-                        overlay.x || overlay.px, 
-                        overlay.y || overlay.py
-                    ),
-                    id = overlay.id ? 
-                        overlay.id :
-                        "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
-                
-                element = $.getElement(overlay.id);
-                if( !element ){
-                    element         = document.createElement("a");
-                    element.href    = "#/overlay/"+id;
-                }
-                element.id        = id;
-                element.className = element.className + " " + ( overlay.className ?
-                    overlay.className :
-                    "openseadragon-overlay"
-                );
-
-
-                if(overlay.px !== undefined){
-                    //if they specified 'px' so its in pixel coordinates so
-                    //we need to translate to viewport coordinates
-                    rect = _this.viewport.imageToViewportRectangle( rect );
-                }
-                if( overlay.placement ){
-                    _this.overlays[ i ] = new $.Overlay( 
-                        element, 
-                        _this.viewport.pointFromPixel(rect), 
-                        $.OverlayPlacement[overlay.placement.toUpperCase()]
-                    );
-                }else{
-                    _this.overlays[ i ] = new $.Overlay( element, rect );
-                }
-
-            }( this, this.overlays[ i ] ));
+            addOverlayFromConfiguration( this, this.overlays[ i ]);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
             //TODO
@@ -8850,6 +8817,55 @@ $.Drawer.prototype = {
         return loading;
     }
 };
+
+/**
+ * @private
+ * @inner
+ */
+ function addOverlayFromConfiguration( drawer, overlay ){
+                
+    var element  = null,
+        rect = ( overlay.height && overlay.width ) ? new $.Rect(
+            overlay.x || overlay.px, 
+            overlay.y || overlay.py, 
+            overlay.width, 
+            overlay.height
+        ) : new $.Point(
+            overlay.x || overlay.px, 
+            overlay.y || overlay.py
+        ),
+        id = overlay.id ? 
+            overlay.id :
+            "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
+    
+    element = $.getElement(overlay.id);
+    if( !element ){
+        element         = document.createElement("a");
+        element.href    = "#/overlay/"+id;
+    }
+    element.id        = id;
+    element.className = element.className + " " + ( overlay.className ?
+        overlay.className :
+        "openseadragon-overlay"
+    );
+
+
+    if(overlay.px !== undefined){
+        //if they specified 'px' so its in pixel coordinates so
+        //we need to translate to viewport coordinates
+        rect = drawer.viewport.imageToViewportRectangle( rect );
+    }
+    if( overlay.placement ){
+        drawer.overlays[ i ] = new $.Overlay( 
+            element, 
+            drawer.viewport.pointFromPixel(rect), 
+            $.OverlayPlacement[overlay.placement.toUpperCase()]
+        );
+    }else{
+        drawer.overlays[ i ] = new $.Overlay( element, rect );
+    }
+
+}
 
 /**
  * @private
@@ -9514,20 +9530,18 @@ function drawTiles( drawer, lastDrawn ){
                         ]
                     });
                     
-                    (function(style){
-                        //TODO: IE seems to barf on this, not sure if its just the border
-                        //      but we probably need to clear this up with a better 
-                        //      test of support for various css features
-                        if( SUBPIXEL_RENDERING ){
-                            style['-webkit-box-reflect'] = 
-                                'below 0px -webkit-gradient('+
-                                    'linear,left '+
-                                    'top,left '+
-                                    'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
-                                ')';
-                            style['border'] = '1px solid rgba(255,255,255,0.38)';
-                        } 
-                    }(viewer.element.style));
+                    //TODO: IE seems to barf on this, not sure if its just the border
+                    //      but we probably need to clear this up with a better 
+                    //      test of support for various css features
+                    if( SUBPIXEL_RENDERING ){
+                        viewer.element.style.border = '1px solid rgba(255,255,255,0.38)';
+                        viewer.element.style['-webkit-box-reflect'] = 
+                            'below 0px -webkit-gradient('+
+                                'linear,left '+
+                                'top,left '+
+                                'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
+                            ')';
+                    } 
 
                     drawer.addOverlay(
                         viewer.element,
@@ -9579,7 +9593,7 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.size.x, 
             tile.size.y 
         );
-        if( tile.x == 0 && tile.y == 0 ){
+        if( tile.x === 0 && tile.y === 0 ){
             drawer.context.fillText(
                 "Zoom: " + drawer.viewport.getZoom(),
                 tile.position.x, 

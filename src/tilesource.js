@@ -83,6 +83,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     $.extend( true, this, options );
 
     //Any functions that are passed as arguments are bound to the ready callback
+    /*jshint loopfunc:true*/
     for( i = 0; i < arguments.length; i++ ){
         if( $.isFunction( arguments[i] ) ){
             callback = arguments[ i ];
@@ -212,7 +213,6 @@ $.TileSource.prototype = {
      */
     getImageInfo: function( url ) {
         var _this   = this,
-            url     = url,
             error,
             callbackName,
             callback,
@@ -372,6 +372,7 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
+        /*jshint evil:true*/
         data = eval( '('+responseText+')' );
     }else{
         data = responseText;

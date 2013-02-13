@@ -9,12 +9,19 @@ the minimum and maximum zoom range as well as the range of panning.
 	the options: <ul>
 		<li>
             <strong>panHorizontal</strong><em>(default:) true</em>
+        </li>
         <li>
             <strong>panVertical</strong><em>(default:) true</em>
+        </li>
+        <li>
+            <strong>constrainDuringPan</strong><em>(default:) false</em>
+        </li>
         <li>
             <strong> wrapHorizontal</strong><em>(default:) false</em>
+        </li>
         <li>
             <strong>wrapVertical</strong><em>(default:) false</em>
+        </li>
         <li>
             <strong>visibilityRatio</strong><em>(default:) 0.5</em>
         </li>
@@ -40,13 +47,16 @@ the minimum and maximum zoom range as well as the range of panning.
 </p>
 
 <div class="description">
-    <h3>Constraining by viewport visibility as a ratio.</h3>
+    <h3>Constraining by viewport visibility as a ratio, and constraining during panning</h3>
     <p>
          The option 
         <strong>visibilityRatio</strong>, which is by default <strong>0.5</strong>,
         ensure that you cannot pan the image far enough to fill the viewport with
         more than 50% background.  Setting it to 1, as in this example, ensure 
-        the image cannot be panned so as to show any background.
+        the image cannot be panned so as to show any background. Normally OpenSeadragon 
+        will enforce this by 'bouncing' back when the pan dragging is released.  In this
+        example we also add <strong>constrainDuringPan: true</strong> which stop the drag
+        immediately when it hits the bounding area.
     </p>
 </div>
 <div class="demoarea">
@@ -60,7 +70,8 @@ the minimum and maximum zoom range as well as the range of panning.
         id:            "visibility-ratio-1",
         prefixUrl:     "/openseadragon/images/",
         tileSources:   "/openseadragon/examples/images/highsmith/highsmith.dzi",
-        visibilityRatio: 1.0
+        visibilityRatio: 1.0,
+        constrainDuringPan: true
     });
 </script>
 <p>
@@ -69,6 +80,7 @@ the minimum and maximum zoom range as well as the range of panning.
 <pre>OpenSeadragon({
 		...
         visibilityRatio: 1.0,
+        constrainDuringPan: true
         ...
     });
 </pre>
@@ -83,7 +95,7 @@ the minimum and maximum zoom range as well as the range of panning.
 </div>
 <div class="demoarea">
     <div class="demoheading">
-        A visibilityRatio of 1.
+        Vertical scroll and zoom.
     </div>
     <div id="vertical-scrolling" class="openseadragon"></div>
 </div>

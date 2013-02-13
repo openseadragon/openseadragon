@@ -1,3 +1,4 @@
+
 (function( $ ){
     
 // dictionary from id to private properties
@@ -30,6 +31,7 @@ $.ReferenceStrip = function( options ){
         miniViewer,
         minPixelRatio,
         element,
+        style,
         i;
     
     //We may need to create a new element and id if they did not
@@ -58,7 +60,6 @@ $.ReferenceStrip = function( options ){
     });
 
     $.extend( this, options );
-
     //Private state properties
     THIS[ this.id ] = {
         "animating":         false
@@ -66,17 +67,16 @@ $.ReferenceStrip = function( options ){
 
     this.minPixelRatio = this.viewer.minPixelRatio;
 
-    (function( style ){
-        style.marginTop     = '0px';
-        style.marginRight   = '0px';
-        style.marginBottom  = '0px';
-        style.marginLeft    = '0px';
-        style.left          = '0px';
-        style.bottom        = '0px';
-        style.border        = '0px';
-        style.background    = '#000';
-        style.position      = 'relative';
-    }( this.element.style ));
+    style               = thie.element.style;
+    style.marginTop     = '0px';
+    style.marginRight   = '0px';
+    style.marginBottom  = '0px';
+    style.marginLeft    = '0px';
+    style.left          = '0px';
+    style.bottom        = '0px';
+    style.border        = '0px';
+    style.background    = '#000';
+    style.position      = 'relative';
 
     $.setElementOpacity( this.element, 0.8 );
 
@@ -89,8 +89,6 @@ $.ReferenceStrip = function( options ){
         exitHandler:    $.delegate( this, onStripExit ),
         keyHandler:     $.delegate( this, onKeyPress )
     }).setTracking( true );
-
-    
 
     //Controls the position and orientation of the reference strip and sets the  
     //appropriate width and height
@@ -142,32 +140,31 @@ $.ReferenceStrip = function( options ){
     this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
     this.panels = [];
 
+    /*jshint loopfunc:true*/
     for( i = 0; i < viewer.tileSources.length; i++ ){
         
         element = $.makeNeutralElement('div');
         element.id = this.element.id + "-" + i;
 
-        (function(style){
-            style.width         = _this.panelWidth + 'px';
-            style.height        = _this.panelHeight + 'px';
-            style.display       = 'inline';
-            style.float         = 'left'; //Webkit
-            style.cssFloat      = 'left'; //Firefox
-            style.styleFloat    = 'left'; //IE
-            style.padding       = '2px';
-        }(element.style));
+        element.style.width         = _this.panelWidth + 'px';
+        element.style.height        = _this.panelHeight + 'px';
+        element.style.display       = 'inline';
+        element.style.float         = 'left'; //Webkit
+        element.style.cssFloat      = 'left'; //Firefox
+        element.style.styleFloat    = 'left'; //IE
+        element.style.padding       = '2px';
 
         element.innerTracker = new $.MouseTracker({
-            element:        element,
+            element:            element,
             clickTimeThreshold: this.clickTimeThreshold, 
             clickDistThreshold: this.clickDistThreshold,
             pressHandler: function( tracker ){
-                tracker.dragging = +new Date;
+                tracker.dragging = +new Date();
             },
             releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ){
                 var id = tracker.element.id,
                     page = Number( id.split( '-' )[ 2 ] ),
-                    now = +new Date;
+                    now = +new Date();
                 
                 if ( insideElementPress && 
                      insideElementRelease && 
@@ -304,7 +301,7 @@ function onStripDrag( tracker, position, delta, shift ) {
     }
     return false;
 
-};
+}
 
 
 
@@ -352,7 +349,7 @@ function onStripScroll( tracker, position, scroll, shift ) {
     }
     //cancels event
     return false;
-};
+}
 
 
 function loadPanels(strip, viewerSize, scroll){
@@ -360,6 +357,7 @@ function loadPanels(strip, viewerSize, scroll){
         activePanelsStart,
         activePanelsEnd,
         miniViewer,
+        style,
         i;
     if( 'horizontal' == strip.scroll ){
         panelSize = strip.panelWidth;
@@ -390,20 +388,19 @@ function loadPanels(strip, viewerSize, scroll){
             miniViewer.displayRegion.id        = element.id + '-displayregion';
             miniViewer.displayRegion.className = 'displayregion';
 
-            (function( style ){
-                style.position      = 'relative';
-                style.top           = '0px';
-                style.left          = '0px';
-                style.fontSize      = '0px';
-                style.overflow      = 'hidden';
-                style.float         = 'left'; //Webkit
-                style.cssFloat      = 'left'; //Firefox
-                style.styleFloat    = 'left'; //IE
-                style.zIndex        = 999999999;
-                style.cursor        = 'default';
-                style.width         = ( strip.panelWidth - 4 ) + 'px';
-                style.height        = ( strip.panelHeight - 4 ) + 'px';
-            }( miniViewer.displayRegion.style ));
+            style = miniViewer.displayRegion.style;
+            style.position      = 'relative';
+            style.top           = '0px';
+            style.left          = '0px';
+            style.fontSize      = '0px';
+            style.overflow      = 'hidden';
+            style.float         = 'left'; //Webkit
+            style.cssFloat      = 'left'; //Firefox
+            style.styleFloat    = 'left'; //IE
+            style.zIndex        = 999999999;
+            style.cursor        = 'default';
+            style.width         = ( strip.panelWidth - 4 ) + 'px';
+            style.height        = ( strip.panelHeight - 4 ) + 'px';
 
             miniViewer.displayRegion.innerTracker = new $.MouseTracker({
                 element:        miniViewer.displayRegion
@@ -416,7 +413,7 @@ function loadPanels(strip, viewerSize, scroll){
             element.activePanel = true;
         }
     }
-};
+}
 
 
 /**
@@ -442,8 +439,8 @@ function onStripEnter( tracker ) {
         tracker.element.style.marginLeft = "0px";
 
     }
-    return false
-};
+    return false;
+}
 
 
 /**
@@ -472,7 +469,7 @@ function onStripExit( tracker ) {
     
     }
     return false;
-};
+}
 
 
 
@@ -514,7 +511,7 @@ function onKeyPress( tracker, keyCode, shiftKey ){
             //console.log( 'navigator keycode %s', keyCode );
             return true;
     }
-};
+}
 
 
 

@@ -57,7 +57,7 @@ $.extend( $, {
         }
 
         return string.replace(/\{\d+\}/g, function(capture) {
-            var i = parseInt( capture.match( /\d+/ ) ) + 1;
+            var i = parseInt( capture.match( /\d+/ ), 10 ) + 1;
             return i < args.length ? 
                 args[ i ] : 
                 "";

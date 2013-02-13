@@ -471,7 +471,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             
             overlay = this.overlayControls[ i ];
             
-            if ( overlay.point != null ) {
+            if ( overlay.point ) {
             
                 this.drawer.addOverlay(
                     overlay.id, 
@@ -517,7 +517,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if( this.drawer ){
             this.drawer.clearOverlays();
         }
-        
+
         this.source     = null;
         this.drawer     = null;
 
@@ -1163,6 +1163,9 @@ function onCanvasDrag( tracker, position, delta, shift ) {
                 delta.negate() 
             ) 
         );
+        if( this.constrainDuringPan ){
+            this.viewport.applyConstraints();
+        }
     }
 }
 

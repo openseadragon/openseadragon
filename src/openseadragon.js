@@ -1,4 +1,4 @@
-/*globals OpenSeadragon */
+/*globals OpenSeadragon*/
 
 /**
  * @version  OpenSeadragon @VERSION@
@@ -315,7 +315,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @see <a href='http://www.jquery.com/'>jQuery</a>
      */
     $.type = function( obj ) {
-        return obj == null ?
+        return ( obj === null ) || ( obj === undefined ) ?
             String( obj ) :
             class2type[ toString.call(obj) ] || "object";
     };
@@ -419,7 +419,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         for ( ; i < length; i++ ) {
             // Only deal with non-null/undefined values
-            if ( ( options = arguments[ i ] ) != null ) {
+            options = arguments[ i ];
+            if ( options !== null || options !== undefined ) {
                 // Extend the base object
                 for ( name in options ) {
                     src = target[ name ];
@@ -472,6 +473,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
             panVertical:            true,
+            constrainDuringPan:     false,
             wrapHorizontal:         false,
             wrapVertical:           false,
             visibilityRatio:        0.5,
@@ -598,10 +600,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Function} method
          */
         delegate: function( object, method ) {
-            return function() {
-                if ( arguments === undefined )
-                    arguments = [];
-                return method.apply( object, arguments );
+            return function(){
+                var args = arguments;
+                if ( args === undefined ){
+                    args = [];
+                }
+                return method.apply( object, args );
             };
         },
         
@@ -832,21 +836,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                         window.innerWidth,
                         window.innerHeight
                     );
-                }
+                };
             } else if ( docElement.clientWidth || docElement.clientHeight ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         document.documentElement.clientWidth,
                         document.documentElement.clientHeight
                     );
-                }
+                };
             } else if ( body.clientWidth || body.clientHeight ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         document.body.clientWidth,
                         document.body.clientHeight
                     );
-                }
+                };
             } else {
                 throw new Error("Unknown window size, no known technique.");
             }
@@ -1113,7 +1117,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 $.cancelEvent = function( event ){
                     // W3C for preventing default
                     event.preventDefault();
-                }
+                };
             } else {
                 $.cancelEvent = function( event ){
                     event = $.getEvent( event );
@@ -1212,6 +1216,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 //      we could determine once at startup which activeX object
                 //      was supported.  This will have significant impact on 
                 //      performance for IE Browsers DONE
+                /*jshint loopfunc:true*/
                 for ( i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
@@ -1268,7 +1273,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 /** @ignore */
                 request.onreadystatechange = function() {
                     if ( request.readyState == 4) {
-                        request.onreadystatechange = new function() { };
+                        request.onreadystatechange = function(){};
                         options.success( request );
                     }
                 };
@@ -1692,7 +1697,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         } else {
             return element.offsetParent;
         }
-    };
+    }
 
     /**
      * @private
@@ -1724,7 +1729,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         }
 
         return processDZIXml( doc, tilesUrl );
-    };
+    }
 
     /**
      * @private
@@ -1758,7 +1763,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         }
 
         throw new Error( $.getString( "Errors.Dzi" ) );
-    };
+    }
 
     /**
      * @private
@@ -1772,10 +1777,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         var fileFormat    = imageNode.getAttribute( "Format" ),
             sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
             dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
-            width         = parseInt( sizeNode.getAttribute( "Width" ) ),
-            height        = parseInt( sizeNode.getAttribute( "Height" ) ),
-            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ) ),
-            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ) ),
+            width         = parseInt( sizeNode.getAttribute( "Width" ), 10 ),
+            height        = parseInt( sizeNode.getAttribute( "Height" ), 10 ),
+            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ), 10 ),
+            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ), 10 ),
             dispRects     = [],
             dispRectNode,
             rectNode,
@@ -1792,12 +1797,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
 
             dispRects.push( new $.DisplayRect(
-                parseInt( rectNode.getAttribute( "X" ) ),
-                parseInt( rectNode.getAttribute( "Y" ) ),
-                parseInt( rectNode.getAttribute( "Width" ) ),
-                parseInt( rectNode.getAttribute( "Height" ) ),
+                parseInt( rectNode.getAttribute( "X" ), 10 ),
+                parseInt( rectNode.getAttribute( "Y" ), 10 ),
+                parseInt( rectNode.getAttribute( "Width" ), 10 ),
+                parseInt( rectNode.getAttribute( "Height" ), 10 ),
                 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( dispRectNode.getAttribute( "MaxLevel" ) )
+                parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
             ));
         }
         return new $.DziTileSource(
@@ -1809,7 +1814,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             fileFormat, 
             dispRects
         );
-    };
+    }
 
     /**
      * @private
@@ -1823,10 +1828,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         var fileFormat    = imageData.Format,
             sizeData      = imageData.Size,
             dispRectData  = imageData.DisplayRect || [],
-            width         = parseInt( sizeData.Width ),
-            height        = parseInt( sizeData.Height ),
-            tileSize      = parseInt( imageData.TileSize ),
-            tileOverlap   = parseInt( imageData.Overlap ),
+            width         = parseInt( sizeData.Width, 10 ),
+            height        = parseInt( sizeData.Height, 10 ),
+            tileSize      = parseInt( imageData.TileSize, 10 ),
+            tileOverlap   = parseInt( imageData.Overlap, 10 ),
             dispRects     = [],
             rectData,
             i;
@@ -1841,12 +1846,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectData     = dispRectData[ i ].Rect;
 
             dispRects.push( new $.DisplayRect(
-                parseInt( rectData.X ),
-                parseInt( rectData.Y ),
-                parseInt( rectData.Width ),
-                parseInt( rectData.Height ),
+                parseInt( rectData.X, 10 ),
+                parseInt( rectData.Y, 10 ),
+                parseInt( rectData.Width, 10 ),
+                parseInt( rectData.Height, 10 ),
                 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( rectData.MaxLevel )
+                parseInt( rectData.MaxLevel, 10 )
             ));
         }
         return new $.DziTileSource(
@@ -1858,7 +1863,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             fileFormat, 
             dispRects
         );
-    };
+    }
+
     /**
      * @private
      * @inner
@@ -1872,8 +1878,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             message     = messageNode.firstChild.nodeValue;
 
         throw new Error(message);
-    };
+    }
 
-
-    
 }( OpenSeadragon ));
