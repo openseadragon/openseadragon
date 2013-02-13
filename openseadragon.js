@@ -1,7 +1,7 @@
 /*globals OpenSeadragon*/
 
 /**
- * @version  OpenSeadragon 0.9.113s
+ * @version  OpenSeadragon 0.9.114
  *
  * @fileOverview 
  * <h2>
@@ -8614,7 +8614,7 @@ $.Drawer = function( options ) {
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
             
-            addOverlayFromConfiguration( this, this.overlays[ i ]);
+            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ]);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
             //TODO
@@ -8856,13 +8856,13 @@ $.Drawer.prototype = {
         rect = drawer.viewport.imageToViewportRectangle( rect );
     }
     if( overlay.placement ){
-        drawer.overlays[ i ] = new $.Overlay( 
+        return new $.Overlay( 
             element, 
             drawer.viewport.pointFromPixel(rect), 
             $.OverlayPlacement[overlay.placement.toUpperCase()]
         );
     }else{
-        drawer.overlays[ i ] = new $.Overlay( element, rect );
+        return new $.Overlay( element, rect );
     }
 
 }
