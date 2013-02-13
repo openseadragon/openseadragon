@@ -1,7 +1,7 @@
 /*globals OpenSeadragon*/
 
 /**
- * @version  OpenSeadragon 0.9.117
+ * @version  OpenSeadragon 0.9.118
  *
  * @fileOverview 
  * <h2>
@@ -9309,7 +9309,7 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     }
 
     deltaTime   = currentTime - tile.blendStart;
-    opacity     = Math.min( 1, deltaTime / blendTimeMillis );
+    opacity     = Math.min( 1, deltaTime / ( blendTimeMillis || 1 ) );
     
     if ( drawer.alwaysBlend ) {
         opacity *= levelOpacity;
