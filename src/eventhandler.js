@@ -41,15 +41,32 @@ $.EventHandler.prototype = {
      * @param {Function} handler - Function to be removed.
      */
     removeHandler: function( eventName, handler ) {
-        //Start Thatcher - unneccessary indirection.  Also, because events were
-        //               - not actually being removed, we need to add the code
-        //               - to do the removal ourselves. TODO
-        var events = this.events[ eventName ];
+        var events = this.events[ eventName ],
+            handlers = [],
+            i;
         if ( !events ){ 
             return; 
         }
-        //End Thatcher
+        if( $.isArray( events ) ){
+            for( i = 0; i < events.length; i++ ){
+                if( events[ i ] !== handler ){
+                    handlers.push( handler );
+                }
+            } 
+            this.events[ eventName ] = handlers;
+        }
     },
+
+
+    /**
+     * Remove all event handler for a given event type.
+     * @function
+     * @param {String} eventName - Name of event for which all handlers are to be removed.
+     */
+    removeAllHandlers: function( eventName ){
+        this.events[ eventName ] = [];
+    }, 
+    
 
     /**
      * Retrive the list of all handlers registered for a given event.
