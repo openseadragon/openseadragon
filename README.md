@@ -2,7 +2,7 @@
 
 This project is a fork of the OpenSeadragon project at http://openseadragon.codeplex.com/
 
-## On the Web 
+## On the Web
 
 http://openseadragon.github.com/
 
