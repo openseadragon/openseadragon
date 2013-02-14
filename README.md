@@ -8,7 +8,7 @@ http://openseadragon.github.com/
 
 ## Building from Source
 
-All command-line operations are scripted using Grunt (see http://gruntjs.com/) which is based on node.js (http://nodejs.org/). After installing node, you will need to run this command once to install the required packages:
+All command-line operations are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). After installing Node, you will need to run this command once to install the required packages:
 
     npm install
 
@@ -24,7 +24,7 @@ The built files appear in the `build` folder.
 
 ## Testing
 
-Our tests are based on [QUnit](http://qunitjs.com/) and PhantomJS; they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
+Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phantomjs.org/); they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
 
     grunt test
 
