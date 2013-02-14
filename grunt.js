@@ -1,6 +1,7 @@
 module.exports = function(grunt) {
     
-    var distribution = "openseadragon.js",
+    var distribution = "build/openseadragon.js",
+        minified = "build/openseadragon.min.js",
         sources = [
             "src/openseadragon.js",
             "src/eventhandler.js",
@@ -39,6 +40,23 @@ module.exports = function(grunt) {
                 dest: distribution
             }
         },
+        min: {
+            openseadragon: {
+                src: [ distribution ],
+                dest: minified
+            }
+        },
+        qunit: {
+            all: [ "http://localhost:8000/test/test.html" ]
+        },
+        server: {
+            port: 8000,
+            base: "."
+        },
+        watch: {
+            files: [ "grunt.js", "src/*.js" ],
+            tasks: "default"
+        },
         lint: {
             beforeconcat: sources,
             afterconcat: [ distribution ]
@@ -64,8 +82,10 @@ module.exports = function(grunt) {
         }
     });
 
-
     // Default task.
-    grunt.registerTask('default', 'lint:beforeconcat concat lint:afterconcat');
+    grunt.registerTask("default", "lint:beforeconcat concat lint:afterconcat min");
+
+    // Test task.
+    grunt.registerTask("test", "default server qunit");
 
 };
