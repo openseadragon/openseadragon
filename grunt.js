@@ -86,8 +86,15 @@ module.exports = function(grunt) {
         }
     });
 
+    // Copy task.
+    grunt.registerTask("copy", function() {
+        grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
+            grunt.file.copy(abspath, "build/images/" + (subdir || "") + filename);            
+        });
+    });
+
     // Default task.
-    grunt.registerTask("default", "lint:beforeconcat concat lint:afterconcat min");
+    grunt.registerTask("default", "lint:beforeconcat concat lint:afterconcat min copy");
 
     // Test task.
     grunt.registerTask("test", "default server qunit");
