@@ -1,4 +1,13 @@
 {
-	"name": 	"openseadragon", 
-	"version": 	"0.9.114"
+    "name": "openseadragon", 
+    "version": "0.9.114",
+    "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
+    "dependencies": {
+        "grunt": "0.3.17",
+        "qunitjs": "1.11.0",
+        "phantomjs": "1.8.1-3"
+    },
+    "scripts": {
+        "test": "grunt test"
+    }
 }
