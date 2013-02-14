@@ -379,7 +379,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 animationTime:          this.animationTime,
                 showNavigator:          false,
                 minZoomImageRatio:      1,
-                maxZoomPixelRatio:      1//,
+                maxZoomPixelRatio:      1,
+                viewer:                 this //,
                 //TODO: figure out how to support these in a way that makes sense
                 //minZoomLevel:           this.minZoomLevel,
                 //maxZoomLevel:           this.maxZoomLevel
@@ -400,7 +401,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 wrapVertical:       this.wrapVertical,
                 defaultZoomLevel:   this.defaultZoomLevel,
                 minZoomLevel:       this.minZoomLevel,
-                maxZoomLevel:       this.maxZoomLevel
+                maxZoomLevel:       this.maxZoomLevel,
+                viewer:             this
             });
         }
         
@@ -501,11 +503,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             }
         }
         VIEWERS[ this.hash ] = this;
-        this.raiseEvent( "open" );
 
         if( this.navigator ){
             this.navigator.open( source );
         }
+
+        this.raiseEvent( 'open', { source: source, viewer: this } );
 
         return this;
     },
@@ -530,6 +533,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
+
+        this.raiseEvent( 'close', { viewer: this } );
         
         return this;
     },
@@ -551,6 +556,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
+        this.raiseEvent( 'mouse-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -581,6 +587,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         } else {
             beginControlsAutoHide( this );
         }
+        this.raiseEvent( 'controls-enabled', { enabled: enabled, viewer: this } );
+        return this;
     },
 
     
@@ -741,6 +749,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $.delegate( this, onContainerExit )();      
 
         }
+        this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
 
         if ( this.viewport ) {
             oldBounds = this.viewport.getBounds();
@@ -776,7 +785,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             }
 
             THIS[ this.hash ].forceRedraw = true;
-            this.raiseEvent( "resize", this );
             updateOnce( this );
 
         }
@@ -801,9 +809,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
+        this.raiseEvent( 'visible', { visible: visible, viewer: this } );
         return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.bindSequenceControls
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     bindSequenceControls: function(){
         
         //////////////////////////////////////////////////////////////////////////
@@ -880,8 +895,15 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 }
             }
         }
+        return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.bindStandardControls
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     bindStandardControls: function(){
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
@@ -994,14 +1016,22 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     );
                 }
             }
-
             
         }
+        return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.goToPage
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     goToPage: function( page ){
         //page is a 1 based index so normalize now
         //page = page;
+        this.raiseEvent( 'page', { page: page, viewer: this } );
+
         if( this.tileSources.length > page ){
             
             THIS[ this.hash ].sequence = page;
@@ -1025,6 +1055,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             this.openTileSource( this.tileSources[ page ] );
         }
+
         if( $.isFunction( this.onPageChange ) ){
             this.onPageChange({
                 page: page,
@@ -1034,6 +1065,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if( this.referenceStrip ){
             this.referenceStrip.setFocus( page );
         }
+        return this;
     }
 
 });
@@ -1151,6 +1183,12 @@ function onCanvasClick( tracker, position, quick, shift ) {
         );
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-click', { 
+        tracker: tracker,
+        position: position,
+        quick: quick,
+        shift: shift
+    });
 }
 
 function onCanvasDrag( tracker, position, delta, shift ) {
@@ -1170,12 +1208,24 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             this.viewport.applyConstraints();
         }
     }
+    this.raiseEvent( 'canvas-click', { 
+        tracker: tracker,
+        position: position,
+        delta: delta,
+        shift: shift
+    });
 }
 
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-release', { 
+        tracker: tracker,
+        position: position,
+        insideElementPress: insideElementPress,
+        insideElementRelease: insideElementRelease
+    });
 }
 
 function onCanvasScroll( tracker, position, scroll, shift ) {
@@ -1188,6 +1238,12 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
         );
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-scroll', { 
+        tracker: tracker,
+        position: position,
+        scroll: scroll,
+        shift: shift
+    });
     //cancels event
     return false;
 }
@@ -1199,6 +1255,12 @@ function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) 
             beginControlsAutoHide( this );
         }
     }
+    this.raiseEvent( 'container-exit', { 
+        tracker: tracker,
+        position: position,
+        buttonDownElement: buttonDownElement,
+        buttonDownAny: buttonDownAny
+    });
 }
 
 function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
@@ -1208,11 +1270,23 @@ function onContainerRelease( tracker, position, insideElementPress, insideElemen
             beginControlsAutoHide( this );
         }
     }
+    this.raiseEvent( 'container-release', { 
+        tracker: tracker,
+        position: position,
+        insideElementPress: insideElementPress,
+        insideElementRelease: insideElementRelease
+    });
 }
 
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
+    this.raiseEvent( 'container-enter', { 
+        tracker: tracker,
+        position: position,
+        buttonDownElement: buttonDownElement,
+        buttonDownAny: buttonDownAny
+    });
 }
 
 
@@ -1249,7 +1323,6 @@ function updateOnce( viewer ) {
         // maintain image position
         viewer.viewport.resize( containerSize, true ); 
         THIS[ viewer.hash ].prevContainerSize = containerSize;
-        viewer.raiseEvent( "resize" );
     }
 
     animated = viewer.viewport.update();

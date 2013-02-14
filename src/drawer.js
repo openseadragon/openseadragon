@@ -146,6 +146,15 @@ $.Drawer.prototype = {
 
         this.overlays.push( new $.Overlay( element, location, placement ) );
         this.updateAgain = true;
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'add-overlay', { 
+                viewer: this.viewer,
+                element: element, 
+                location: location, 
+                placement: placement
+            });
+        }
+        return this;
     },
 
     /**
@@ -157,6 +166,7 @@ $.Drawer.prototype = {
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
      *      viewport which the location coordinates will be treated as relative 
      *      to. 
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     updateOverlay: function( element, location, placement ) {
         var i;
@@ -168,6 +178,15 @@ $.Drawer.prototype = {
             this.overlays[ i ].update( location, placement );
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'update-overlay', { 
+                viewer: this.viewer,
+                element: element, 
+                location: location, 
+                placement: placement
+            });
+        }
+        return this;
     },
 
     /**
@@ -176,6 +195,7 @@ $.Drawer.prototype = {
      * @method
      * @param {Element|String} element - A reference to the element or an 
      *      element id which represent the ovelay content to be removed.
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     removeOverlay: function( element ) {
         var i;
@@ -188,18 +208,33 @@ $.Drawer.prototype = {
             this.overlays.splice( i, 1 );
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'remove-overlay', { 
+                viewer: this.viewer,
+                element: element
+            });
+        }
+        return this;
     },
 
     /**
      * Removes all currently configured Overlays from this Drawer and schedules
      *      and update.
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     clearOverlays: function() {
         while ( this.overlays.length > 0 ) {
             this.overlays.pop().destroy();
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'clear-overlay', { 
+                viewer: this.viewer,
+                element: element
+            });
+        }
+        return this;
     },
 
 
@@ -228,16 +263,19 @@ $.Drawer.prototype = {
      * Clears all tiles and triggers an update on the next call to 
      * Drawer.prototype.update().
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     reset: function() {
         clearTiles( this );
         this.lastResetTime = +new Date();
         this.updateAgain = true;
+        return this;
     },
 
     /**
      * Forces the Drawer to update.
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     update: function() {
         //this.profiler.beginUpdate();
@@ -245,6 +283,7 @@ $.Drawer.prototype = {
         updateViewport( this );
         this.midUpdate = false;
         //this.profiler.endUpdate();
+        return this;
     },
 
     /**
@@ -374,6 +413,12 @@ $.Drawer.prototype = {
 function updateViewport( drawer ) {
     
     drawer.updateAgain = false;
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-viewport', { 
+            viewer: drawer.viewer
+        });
+    }
 
     var tile,
         level,
@@ -515,6 +560,7 @@ function updateViewport( drawer ) {
         // because we haven't finished drawing, so
         drawer.updateAgain = true; 
     }
+
 }
 
 
@@ -526,6 +572,20 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
         numberOfTiles,
         viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() );
 
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-level', { 
+            viewer: drawer.viewer,
+            havedrawn: haveDrawn,
+            level: level, 
+            opacity: levelOpacity,
+            visibility: levelVisibility, 
+            topleft: viewportTopLeft, 
+            bottomright: viewportBottomRight, 
+            currenttime: currentTime, 
+            best: best
+        });
+    }
 
     //OK, a new drawing so do your calculations
     tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
@@ -560,6 +620,7 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 
         }
     }
+
     return best;
 }
 
@@ -576,6 +637,13 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         ),
         drawTile = drawLevel,
         newbest;
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-tile', { 
+            viewer: drawer.viewer,
+            tile: tile
+        });
+    }
 
     setCoverage( drawer.coverage, level, x, y, false );
 
@@ -1072,6 +1140,13 @@ function drawTiles( drawer, lastDrawn ){
             }catch(e){
                 $.console.error(e);
             }
+        }
+
+        if( drawer.viewer ){
+            drawer.viewer.raiseEvent( 'tile-drawn', { 
+                viewer: drawer.viewer,
+                tile: tile
+            });
         }
     }
 }

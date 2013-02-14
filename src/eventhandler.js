@@ -66,7 +66,7 @@ $.EventHandler.prototype = {
     removeAllHandlers: function( eventName ){
         this.events[ eventName ] = [];
     }, 
-    
+
 
     /**
      * Retrive the list of all handlers registered for a given event.
@@ -99,6 +99,8 @@ $.EventHandler.prototype = {
      * @param {Function} handler - Function to call when event is triggered.
      */
     raiseEvent: function( eventName, eventArgs ) {
+        //uncomment if you want to get a log og all events
+        //$.console.log( eventName );
         var handler = this.getHandler( eventName );
 
         if ( handler ) {

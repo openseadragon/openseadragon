@@ -35,6 +35,7 @@ $.Viewport = function( options ) {
 
         //internal state properties
         zoomPoint:          null,
+        viewer:           null,
 
         //configurable options
         springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
@@ -73,6 +74,10 @@ $.Viewport = function( options ) {
 
 $.Viewport.prototype = {
 
+    /**
+     * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
     resetContentSize: function( contentSize ){
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
@@ -81,6 +86,14 @@ $.Viewport.prototype = {
         this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'reset-size', { 
+                contentSize: contentSize,
+                viewer: this.viewer
+            });
+        }
+        
         return this;
     },
 
@@ -121,6 +134,12 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     goHome: function( immediately ) {
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'home', { 
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
         return this.fitBounds( this.getHomeBounds(), immediately );
     },
 
@@ -243,6 +262,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
@@ -313,6 +333,14 @@ $.Viewport.prototype = {
             }
             this.fitBounds( bounds, immediately );
         }
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'constrain', { 
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
+
         return this;
     },
 
@@ -328,6 +356,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
@@ -379,6 +408,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function( immediately ) {
         var center = this.getCenter();
@@ -403,6 +433,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function( immediately ) {
         var center = this.getCenter();
@@ -429,6 +460,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
@@ -442,6 +474,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} center
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     panTo: function( center, immediately ) {
         if ( immediately ) {
@@ -452,11 +485,20 @@ $.Viewport.prototype = {
             this.centerSpringY.springTo( center.y );
         }
 
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'pan', { 
+                center: center,
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
+
         return this;
     },
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
         return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
@@ -464,6 +506,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
@@ -477,12 +520,21 @@ $.Viewport.prototype = {
             this.zoomSpring.springTo( zoom );
         }
 
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'zoom', { 
+                zoom: zoom,
+                refPoint: refPoint,
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
 
         return this;
     },
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
@@ -497,6 +549,14 @@ $.Viewport.prototype = {
         if (maintain) {
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
+        }
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'resize', { 
+                newContainerSize: newContainerSize,
+                maintain: maintain,
+                viewer: this.viewer
+            });
         }
 
         return this.fitBounds( newBounds, true );

@@ -1,7 +1,7 @@
 /*globals OpenSeadragon*/
 
 /**
- * @version  OpenSeadragon 0.9.118
+ * @version  OpenSeadragon 0.9.120
  *
  * @fileOverview 
  * <h2>
@@ -1949,7 +1949,7 @@ $.EventHandler.prototype = {
     removeAllHandlers: function( eventName ){
         this.events[ eventName ] = [];
     }, 
-    
+
 
     /**
      * Retrive the list of all handlers registered for a given event.
@@ -1982,6 +1982,8 @@ $.EventHandler.prototype = {
      * @param {Function} handler - Function to call when event is triggered.
      */
     raiseEvent: function( eventName, eventArgs ) {
+        //uncomment if you want to get a log og all events
+        //$.console.log( eventName );
         var handler = this.getHandler( eventName );
 
         if ( handler ) {
@@ -3727,7 +3729,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 animationTime:          this.animationTime,
                 showNavigator:          false,
                 minZoomImageRatio:      1,
-                maxZoomPixelRatio:      1//,
+                maxZoomPixelRatio:      1,
+                viewer:                 this //,
                 //TODO: figure out how to support these in a way that makes sense
                 //minZoomLevel:           this.minZoomLevel,
                 //maxZoomLevel:           this.maxZoomLevel
@@ -3748,7 +3751,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 wrapVertical:       this.wrapVertical,
                 defaultZoomLevel:   this.defaultZoomLevel,
                 minZoomLevel:       this.minZoomLevel,
-                maxZoomLevel:       this.maxZoomLevel
+                maxZoomLevel:       this.maxZoomLevel,
+                viewer:             this
             });
         }
         
@@ -3849,11 +3853,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             }
         }
         VIEWERS[ this.hash ] = this;
-        this.raiseEvent( "open" );
 
         if( this.navigator ){
             this.navigator.open( source );
         }
+
+        this.raiseEvent( 'open', { source: source, viewer: this } );
 
         return this;
     },
@@ -3878,6 +3883,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
+
+        this.raiseEvent( 'close', { viewer: this } );
         
         return this;
     },
@@ -3899,6 +3906,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
+        this.raiseEvent( 'mouse-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -3929,6 +3937,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         } else {
             beginControlsAutoHide( this );
         }
+        this.raiseEvent( 'controls-enabled', { enabled: enabled, viewer: this } );
+        return this;
     },
 
     
@@ -4089,6 +4099,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $.delegate( this, onContainerExit )();      
 
         }
+        this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
 
         if ( this.viewport ) {
             oldBounds = this.viewport.getBounds();
@@ -4124,7 +4135,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             }
 
             THIS[ this.hash ].forceRedraw = true;
-            this.raiseEvent( "resize", this );
             updateOnce( this );
 
         }
@@ -4149,9 +4159,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
+        this.raiseEvent( 'visible', { visible: visible, viewer: this } );
         return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.bindSequenceControls
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     bindSequenceControls: function(){
         
         //////////////////////////////////////////////////////////////////////////
@@ -4228,8 +4245,15 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 }
             }
         }
+        return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.bindStandardControls
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     bindStandardControls: function(){
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
@@ -4342,14 +4366,22 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     );
                 }
             }
-
             
         }
+        return this;
     },
 
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.goToPage
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
     goToPage: function( page ){
         //page is a 1 based index so normalize now
         //page = page;
+        this.raiseEvent( 'page', { page: page, viewer: this } );
+
         if( this.tileSources.length > page ){
             
             THIS[ this.hash ].sequence = page;
@@ -4373,6 +4405,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             this.openTileSource( this.tileSources[ page ] );
         }
+
         if( $.isFunction( this.onPageChange ) ){
             this.onPageChange({
                 page: page,
@@ -4382,6 +4415,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if( this.referenceStrip ){
             this.referenceStrip.setFocus( page );
         }
+        return this;
     }
 
 });
@@ -4499,6 +4533,12 @@ function onCanvasClick( tracker, position, quick, shift ) {
         );
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-click', { 
+        tracker: tracker,
+        position: position,
+        quick: quick,
+        shift: shift
+    });
 }
 
 function onCanvasDrag( tracker, position, delta, shift ) {
@@ -4518,12 +4558,24 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             this.viewport.applyConstraints();
         }
     }
+    this.raiseEvent( 'canvas-click', { 
+        tracker: tracker,
+        position: position,
+        delta: delta,
+        shift: shift
+    });
 }
 
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-release', { 
+        tracker: tracker,
+        position: position,
+        insideElementPress: insideElementPress,
+        insideElementRelease: insideElementRelease
+    });
 }
 
 function onCanvasScroll( tracker, position, scroll, shift ) {
@@ -4536,6 +4588,12 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
         );
         this.viewport.applyConstraints();
     }
+    this.raiseEvent( 'canvas-scroll', { 
+        tracker: tracker,
+        position: position,
+        scroll: scroll,
+        shift: shift
+    });
     //cancels event
     return false;
 }
@@ -4547,6 +4605,12 @@ function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) 
             beginControlsAutoHide( this );
         }
     }
+    this.raiseEvent( 'container-exit', { 
+        tracker: tracker,
+        position: position,
+        buttonDownElement: buttonDownElement,
+        buttonDownAny: buttonDownAny
+    });
 }
 
 function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
@@ -4556,11 +4620,23 @@ function onContainerRelease( tracker, position, insideElementPress, insideElemen
             beginControlsAutoHide( this );
         }
     }
+    this.raiseEvent( 'container-release', { 
+        tracker: tracker,
+        position: position,
+        insideElementPress: insideElementPress,
+        insideElementRelease: insideElementRelease
+    });
 }
 
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
+    this.raiseEvent( 'container-enter', { 
+        tracker: tracker,
+        position: position,
+        buttonDownElement: buttonDownElement,
+        buttonDownAny: buttonDownAny
+    });
 }
 
 
@@ -4597,7 +4673,6 @@ function updateOnce( viewer ) {
         // maintain image position
         viewer.viewport.resize( containerSize, true ); 
         THIS[ viewer.hash ].prevContainerSize = containerSize;
-        viewer.raiseEvent( "resize" );
     }
 
     animated = viewer.viewport.update();
@@ -8671,6 +8746,15 @@ $.Drawer.prototype = {
 
         this.overlays.push( new $.Overlay( element, location, placement ) );
         this.updateAgain = true;
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'add-overlay', { 
+                viewer: this.viewer,
+                element: element, 
+                location: location, 
+                placement: placement
+            });
+        }
+        return this;
     },
 
     /**
@@ -8682,6 +8766,7 @@ $.Drawer.prototype = {
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
      *      viewport which the location coordinates will be treated as relative 
      *      to. 
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     updateOverlay: function( element, location, placement ) {
         var i;
@@ -8693,6 +8778,15 @@ $.Drawer.prototype = {
             this.overlays[ i ].update( location, placement );
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'update-overlay', { 
+                viewer: this.viewer,
+                element: element, 
+                location: location, 
+                placement: placement
+            });
+        }
+        return this;
     },
 
     /**
@@ -8701,6 +8795,7 @@ $.Drawer.prototype = {
      * @method
      * @param {Element|String} element - A reference to the element or an 
      *      element id which represent the ovelay content to be removed.
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     removeOverlay: function( element ) {
         var i;
@@ -8713,18 +8808,33 @@ $.Drawer.prototype = {
             this.overlays.splice( i, 1 );
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'remove-overlay', { 
+                viewer: this.viewer,
+                element: element
+            });
+        }
+        return this;
     },
 
     /**
      * Removes all currently configured Overlays from this Drawer and schedules
      *      and update.
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     clearOverlays: function() {
         while ( this.overlays.length > 0 ) {
             this.overlays.pop().destroy();
             this.updateAgain = true;
         }
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'clear-overlay', { 
+                viewer: this.viewer,
+                element: element
+            });
+        }
+        return this;
     },
 
 
@@ -8753,16 +8863,19 @@ $.Drawer.prototype = {
      * Clears all tiles and triggers an update on the next call to 
      * Drawer.prototype.update().
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     reset: function() {
         clearTiles( this );
         this.lastResetTime = +new Date();
         this.updateAgain = true;
+        return this;
     },
 
     /**
      * Forces the Drawer to update.
      * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
      */
     update: function() {
         //this.profiler.beginUpdate();
@@ -8770,6 +8883,7 @@ $.Drawer.prototype = {
         updateViewport( this );
         this.midUpdate = false;
         //this.profiler.endUpdate();
+        return this;
     },
 
     /**
@@ -8899,6 +9013,12 @@ $.Drawer.prototype = {
 function updateViewport( drawer ) {
     
     drawer.updateAgain = false;
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-viewport', { 
+            viewer: drawer.viewer
+        });
+    }
 
     var tile,
         level,
@@ -9040,6 +9160,7 @@ function updateViewport( drawer ) {
         // because we haven't finished drawing, so
         drawer.updateAgain = true; 
     }
+
 }
 
 
@@ -9051,6 +9172,20 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
         numberOfTiles,
         viewportCenter  = drawer.viewport.pixelFromPoint( drawer.viewport.getCenter() );
 
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-level', { 
+            viewer: drawer.viewer,
+            havedrawn: haveDrawn,
+            level: level, 
+            opacity: levelOpacity,
+            visibility: levelVisibility, 
+            topleft: viewportTopLeft, 
+            bottomright: viewportBottomRight, 
+            currenttime: currentTime, 
+            best: best
+        });
+    }
 
     //OK, a new drawing so do your calculations
     tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
@@ -9085,6 +9220,7 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 
         }
     }
+
     return best;
 }
 
@@ -9101,6 +9237,13 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         ),
         drawTile = drawLevel,
         newbest;
+
+    if( drawer.viewer ){
+        drawer.viewer.raiseEvent( 'update-tile', { 
+            viewer: drawer.viewer,
+            tile: tile
+        });
+    }
 
     setCoverage( drawer.coverage, level, x, y, false );
 
@@ -9598,6 +9741,13 @@ function drawTiles( drawer, lastDrawn ){
                 $.console.error(e);
             }
         }
+
+        if( drawer.viewer ){
+            drawer.viewer.raiseEvent( 'tile-drawn', { 
+                viewer: drawer.viewer,
+                tile: tile
+            });
+        }
     }
 }
 
@@ -9699,6 +9849,7 @@ $.Viewport = function( options ) {
 
         //internal state properties
         zoomPoint:          null,
+        viewer:           null,
 
         //configurable options
         springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
@@ -9737,6 +9888,10 @@ $.Viewport = function( options ) {
 
 $.Viewport.prototype = {
 
+    /**
+     * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
     resetContentSize: function( contentSize ){
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
@@ -9745,6 +9900,14 @@ $.Viewport.prototype = {
         this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'reset-size', { 
+                contentSize: contentSize,
+                viewer: this.viewer
+            });
+        }
+        
         return this;
     },
 
@@ -9785,6 +9948,12 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      */
     goHome: function( immediately ) {
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'home', { 
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
         return this.fitBounds( this.getHomeBounds(), immediately );
     },
 
@@ -9907,6 +10076,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
@@ -9977,6 +10147,14 @@ $.Viewport.prototype = {
             }
             this.fitBounds( bounds, immediately );
         }
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'constrain', { 
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
+
         return this;
     },
 
@@ -9992,6 +10170,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitBounds: function( bounds, immediately ) {
         var aspect = this.getAspectRatio(),
@@ -10043,6 +10222,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function( immediately ) {
         var center = this.getCenter();
@@ -10067,6 +10247,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function( immediately ) {
         var center = this.getCenter();
@@ -10093,6 +10274,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
@@ -10106,6 +10288,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} center
      * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     panTo: function( center, immediately ) {
         if ( immediately ) {
@@ -10116,11 +10299,20 @@ $.Viewport.prototype = {
             this.centerSpringY.springTo( center.y );
         }
 
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'pan', { 
+                center: center,
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
+
         return this;
     },
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
         return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
@@ -10128,6 +10320,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
@@ -10141,12 +10334,21 @@ $.Viewport.prototype = {
             this.zoomSpring.springTo( zoom );
         }
 
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'zoom', { 
+                zoom: zoom,
+                refPoint: refPoint,
+                immediately: immediately,
+                viewer: this.viewer
+            });
+        }
 
         return this;
     },
 
     /**
      * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
      */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
@@ -10161,6 +10363,14 @@ $.Viewport.prototype = {
         if (maintain) {
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
+        }
+
+        if( this.viewer ){
+            this.viewer.raiseEvent( 'resize', { 
+                newContainerSize: newContainerSize,
+                maintain: maintain,
+                viewer: this.viewer
+            });
         }
 
         return this.fitBounds( newBounds, true );
