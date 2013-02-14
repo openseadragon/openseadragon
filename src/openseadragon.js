@@ -1,8 +1,4 @@
-/*globals OpenSeadragon*/
-
 /**
- * @version  OpenSeadragon @VERSION@
- *
  * @fileOverview 
  * <h2>
  * <strong>

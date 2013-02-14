@@ -34,9 +34,13 @@ module.exports = function(grunt) {
 
     // Project configuration.
     grunt.initConfig({
+        pkg: "<json:package.json>",
+        meta: {
+            banner: "/**\n * @version  <%= pkg.name %> <%= pkg.version %>\n */"
+        },
         concat: {
             dist: {
-                src:  sources,
+                src:  [ "<banner>" ].concat(sources),
                 dest: distribution
             }
         },
