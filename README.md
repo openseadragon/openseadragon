@@ -1,26 +1,44 @@
-== OpenSeadragon 
+# OpenSeadragon 
 
 This project is a fork of the OpenSeadragon project at http://openseadragon.codeplex.com/
 
-We are forking it primarily to do heavy clean-up on the code base, simplify the build, and see what happens from there.
+## On the Web
 
-== On the Web
+http://openseadragon.github.com/
 
-[ Current url: http://thatcher.github.com/openseadragon/ ]
+## Building from Source
 
-== Building from Source
+All command-line operations are scripted using Grunt (see http://gruntjs.com/) which is based on node.js (http://nodejs.org/). After installing node, you will need to run this command once to install the required packages:
 
-Building from source is easy with 'ant'.  The result is included in the 
-distribution as 'openseadragon.js', the version being recording in the header.
+    npm install
 
-> ant 
+... then whenever you want to build, just run:
 
-== Licenses
+    grunt
 
-OpenSeadragon was initially released with a New BSD License ( preserved below ), while 
-work done by Chris Thatcher is additionally licensed under the MIT License.
+If you want Grunt to watch your source files and rebuild every time you change one, use:
 
-=== Original license preserved below
+    grunt watch
+
+The built files appear in the `build` folder.
+
+## Testing
+
+Our tests are based on [QUnit](http://qunitjs.com/) and PhantomJS; they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
+
+    grunt test
+
+If you wish to work interactively with the tests or test your changes:
+
+    grunt server watch
+
+and open `http://localhost:8000/` in your browser
+
+## Licenses
+
+OpenSeadragon was initially released with a New BSD License ( preserved below ), while work done by Chris Thatcher is additionally licensed under the MIT License.
+
+### Original license preserved below
 
 -------------------------------------
 License: New BSD License (BSD)
@@ -37,7 +55,7 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-=== MIT License
+### MIT License
 
 --------------------------------------
 (c) Christopher Thatcher 2011, 2012. All rights reserved.
