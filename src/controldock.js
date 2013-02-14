@@ -1,5 +1,3 @@
-/*globals OpenSeadragon */
-
 (function( $ ){
 
     //id hash for private properties;

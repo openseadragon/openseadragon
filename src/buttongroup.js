@@ -1,5 +1,3 @@
-/*globals OpenSeadragon */
-
 (function( $ ){
 /**
  * Manages events on groups of buttons.

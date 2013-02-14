@@ -1,5 +1,3 @@
-/*globals OpenSeadragon */
-
 (function( $ ){
         
         // is any button currently being pressed while mouse events occur
