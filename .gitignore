@@ -1,3 +1,5 @@
 *.sublime-workspace
 node_modules
 build/
+openseadragon.zip
+openseadragon.tar

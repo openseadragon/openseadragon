@@ -1,5 +1,7 @@
 module.exports = function(grunt) {
-    
+
+    grunt.loadNpmTasks("grunt-contrib-compress");
+
     var distribution = "build/openseadragon.js",
         minified = "build/openseadragon.min.js",
         sources = [
@@ -48,6 +50,18 @@ module.exports = function(grunt) {
             openseadragon: {
                 src: [ distribution ],
                 dest: minified
+            }
+        },
+        compress: {
+            zip: {
+                files: {
+                   "openseadragon.zip": "build/**"
+                }
+            },
+            tar: {
+                files: {
+                   "openseadragon.tar": "build/**"
+                }
             }
         },
         qunit: {
@@ -99,4 +113,6 @@ module.exports = function(grunt) {
     // Test task.
     grunt.registerTask("test", "default server qunit");
 
+    // Package task.
+    grunt.registerTask("package", "default compress");
 };
