@@ -22,6 +22,10 @@ If you want Grunt to watch your source files and rebuild every time you change o
 
 The built files appear in the `build` folder.
 
+If you want to build tar and zip files for distribution, use:
+
+    grunt package
+
 ## Testing
 
 Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phantomjs.org/); they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
