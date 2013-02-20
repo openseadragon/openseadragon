@@ -69,7 +69,7 @@ module.exports = function(grunt) {
         },
         server: {
             port: 8000,
-            base: "../openseadragon.github.com"//"."
+            base: "."
         },
         watch: {
             files: [ "grunt.js", "src/*.js" ],
