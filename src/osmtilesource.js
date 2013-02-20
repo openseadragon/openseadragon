@@ -65,7 +65,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.DziTileSource.prototype.supports
+     * @name OpenSeadragon.OsmTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */

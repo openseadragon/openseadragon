@@ -69,7 +69,7 @@ module.exports = function(grunt) {
         },
         server: {
             port: 8000,
-            base: "."
+            base: "../openseadragon.github.com"//"."
         },
         watch: {
             files: [ "grunt.js", "src/*.js" ],
@@ -115,4 +115,5 @@ module.exports = function(grunt) {
 
     // Package task.
     grunt.registerTask("package", "default compress");
+
 };

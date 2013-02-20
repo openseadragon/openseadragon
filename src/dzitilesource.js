@@ -244,7 +244,7 @@ function configureFromXML( tileSource, xmlDoc ){
                         Y: parseInt( rectNode.getAttribute( "Y" ), 10 ),
                         Width: parseInt( rectNode.getAttribute( "Width" ), 10 ),
                         Height: parseInt( rectNode.getAttribute( "Height" ), 10 ),
-                        MinLevel: 0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+                        MinLevel: parseInt( dispRectNode.getAttribute( "MinLevel" ), 10 ),
                         MaxLevel: parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
                     }
                 });
@@ -310,7 +310,7 @@ function configureFromObject( tileSource, configuration ){
             parseInt( rectData.Y, 10 ),
             parseInt( rectData.Width, 10 ),
             parseInt( rectData.Height, 10 ),
-            0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
+            parseInt( rectData.MinLevel, 10 ),
             parseInt( rectData.MaxLevel, 10 )
         ));
     }

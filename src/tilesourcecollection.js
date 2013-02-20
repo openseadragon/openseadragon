@@ -2,7 +2,7 @@
     
 /**
  * @class
- * @extends OpenSeadragon.TileSourceCollection
+ * @extends OpenSeadragon.TileSource
  */ 
 $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
     
@@ -62,6 +62,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
 
     /**
      * @function
+     * @name OpenSeadragon.TileSourceCollection.prototype.getTileBounds
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

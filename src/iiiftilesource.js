@@ -9,7 +9,7 @@
  * https://gist.github.com/jpstroop/4624253
  *
  * @class
- * @name OpenSeadragon.IIIFTileSource
+ * @extends OpenSeadragon.TileSource
  * @see http://library.stanford.edu/iiif/image-api/
  */
 $.IIIFTileSource = function( options ){
@@ -35,8 +35,6 @@ $.IIIFTileSource = function( options ){
 };
 
 $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
-    
-
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.

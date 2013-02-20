@@ -238,7 +238,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
     },
     /**
      * @function
-     * @name OpenSeadragon.Navigator.prototype.update
+     * @name OpenSeadragon.ReferenceStrip.prototype.update
      */
     update: function( viewport ){
 
