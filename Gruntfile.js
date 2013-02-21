@@ -1,6 +1,12 @@
 module.exports = function(grunt) {
 
     grunt.loadNpmTasks("grunt-contrib-compress");
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
+    grunt.loadNpmTasks('grunt-contrib-connect');
+    grunt.loadNpmTasks('grunt-contrib-watch');
 
     var distribution = "build/openseadragon.js",
         minified = "build/openseadragon.min.js",
@@ -37,16 +43,16 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
         pkg: "<json:package.json>",
-        meta: {
-            banner: "/**\n * @version  <%= pkg.name %> <%= pkg.version %>\n */"
-        },
         concat: {
+            options: {
+                banner: "/**\n * @version  <%= pkg.name %> <%= pkg.version %>\n */"
+            },
             dist: {
                 src:  [ "<banner>" ].concat(sources),
                 dest: distribution
             }
         },
-        min: {
+        uglify: {
             openseadragon: {
                 src: [ distribution ],
                 dest: minified
@@ -67,36 +73,27 @@ module.exports = function(grunt) {
         qunit: {
             all: [ "http://localhost:8000/test/test.html" ]
         },
-        server: {
-            port: 8000,
-            base: "."
+        connect: {
+            options: {
+                port: 8000,
+                base: "."
+            }
         },
         watch: {
             files: [ "grunt.js", "src/*.js" ],
             tasks: "default"
         },
-        lint: {
-            beforeconcat: sources,
-            afterconcat: [ distribution ]
-        },
         jshint: {
             options: {
-                browser:    true,
-                eqeqeq:     false,
-                loopfunc:   false
-                /*curly: true,
-                eqeqeq: true,
-                immed: true,
-                latedef: true,
-                newcap: true,
-                noarg: true,
-                sub: true,
-                undef: true,
-                eqnull: true,*/
+                browser: true,
+                eqeqeq: false,
+                loopfunc: false,
+                globals: {
+                    OpenSeadragon: true
+                }
             },
-            globals: {
-                OpenSeadragon: true
-            }
+            beforeconcat: sources,
+            afterconcat: [ distribution ]
         }
     });
 
@@ -108,12 +105,12 @@ module.exports = function(grunt) {
     });
 
     // Default task.
-    grunt.registerTask("default", "lint:beforeconcat concat lint:afterconcat min copy");
+    grunt.registerTask("default", ["jshint:beforeconcat", "concat", "jshint:afterconcat", "uglify", "copy"]);
 
     // Test task.
-    grunt.registerTask("test", "default server qunit");
+    grunt.registerTask("test", ["default", "connect", "qunit"]);
 
     // Package task.
-    grunt.registerTask("package", "default compress");
+    grunt.registerTask("package", ["default", "compress"]);
 
 };
