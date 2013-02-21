@@ -71,12 +71,18 @@ module.exports = function(grunt) {
             }
         },
         qunit: {
-            all: [ "http://localhost:8000/test/test.html" ]
+            all: {
+                options: {
+                    urls: [ "http://localhost:8000/test/test.html" ]
+                }
+            }
         },
         connect: {
-            options: {
-                port: 8000,
-                base: "."
+            server: {
+                options: {
+                    port: 8000,
+                    base: "."
+                }
             }
         },
         watch: {
