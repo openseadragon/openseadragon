@@ -6,13 +6,33 @@ This project is a fork of the OpenSeadragon project at http://openseadragon.code
 
 http://openseadragon.github.com/
 
+## We've upgraded to Grunt 0.4.0! Please follow these directions if you've built OpenSeadragon prior to Feb 22, 2013:
+
+If you're new here, you can skip down to the "First Time Setup" section.
+
+1. If you had already installed Grunt globally, you now need to uninstall it: `npm uninstall -g grunt`
+1. Delete the `build` and `node_modules` folders in your openseadragon directory
+1. On the command line, go in to the openseadragon folder
+1. Run `npm install -g grunt-cli` (this will install the Grunt command line runner)
+1. Run `npm install`
+
+For more information on the upgrade, see http://gruntjs.com/upgrading-from-0.3-to-0.4
+
+## First Time Setup
+
+All command-line operations are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). To get set up:
+
+1. Install Node (available at the link above)
+1. On the command line, run `npm install -g grunt-cli` (this will install the Grunt command line runner)
+1. Clone the openseadragon repository
+1. On the command line, go in to the openseadragon folder
+1. Run `npm install`
+
+You're set... continue reading for build and test instructions.
+
 ## Building from Source
 
-All command-line operations are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). After installing Node, you will need to run this command once to install the required packages:
-
-    npm install
-
-... then whenever you want to build, just run:
+To build, just run (on the command line, in the openseadragon folder):
 
     grunt
 
@@ -22,7 +42,7 @@ If you want Grunt to watch your source files and rebuild every time you change o
 
 The built files appear in the `build` folder.
 
-If you want to build tar and zip files for distribution, use:
+If you want to build tar and zip files for distribution (they will also appear in the `build` folder), use:
 
     grunt package
 
@@ -34,7 +54,7 @@ Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phant
 
 If you wish to work interactively with the tests or test your changes:
 
-    grunt server watch
+    grunt connect watch
 
 and open `http://localhost:8000/` in your browser
 
