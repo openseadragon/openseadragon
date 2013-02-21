@@ -8,8 +8,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
 
-    var distribution = "build/openseadragon.js",
-        minified = "build/openseadragon.min.js",
+    var distribution = "build/openseadragon/openseadragon.js",
+        minified = "build/openseadragon/openseadragon.min.js",
         sources = [
             "src/openseadragon.js",
             "src/eventhandler.js",
@@ -60,14 +60,20 @@ module.exports = function(grunt) {
         },
         compress: {
             zip: {
-                files: {
-                   "openseadragon.zip": "build/**"
-                }
+                options: {
+                    archive: "build/openseadragon.zip"
+                },
+                files: [
+                   { expand: true, cwd: "build/", src: ["openseadragon/**"] }
+                ]
             },
             tar: {
-                files: {
-                   "openseadragon.tar": "build/**"
-                }
+                options: {
+                    archive: "build/openseadragon.tar"
+                },
+                files: [
+                   { expand: true, cwd: "build/", src: [ "openseadragon/**" ] }
+                ]
             }
         },
         qunit: {
@@ -106,7 +112,7 @@ module.exports = function(grunt) {
     // Copy task.
     grunt.registerTask("copy", function() {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
-            grunt.file.copy(abspath, "build/images/" + (subdir || "") + filename);            
+            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);            
         });
     });
 
