@@ -481,21 +481,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomLevel:           null, 
 
             //UI RESPONSIVENESS AND FEEL
-            springStiffness:        5.0,
+            springStiffness:        7.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
             animationTime:          1.5,
-            blendTime:              1.0,
+            blendTime:              0,
             alwaysBlend:            false,
-            autoHideControls:       true,
-            immediateRender:        false,
+            immediateRender:        true,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
             preserveViewport:       false, //SEQUENCE
+            autoHideControls:       true,
             showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
