@@ -629,6 +629,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         if ( fullPage ) {
             
+            requestFullScreen( document.body );
+            
             this.bodyOverflow   = bodyStyle.overflow;
             this.docOverflow    = docStyle.overflow;
             bodyStyle.overflow  = "hidden";
@@ -686,16 +688,18 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     $.getWindowSize().y - $.getElementSize( this.toolbar.element ).y
                 ) + 'px';
             }else{
-                this.element.style.height = $.getWindowSize().y + 'px';
+                this.element.style.height = '100%';
             }
-            this.element.style.width = $.getWindowSize().x + 'px';
+            this.element.style.width = '100%';
 
             // mouse will be inside container now
-            $.delegate( this, onContainerEnter )();    
+            $.delegate( this, onContainerEnter )();
 
 
         } else {
-            
+
+            cancelFullScreen( document );
+
             bodyStyle.overflow  = this.bodyOverflow;
             docStyle.overflow   = this.docOverflow;
 
@@ -744,7 +748,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )();      
+            $.delegate( this, onContainerExit )();
 
         }
         this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
@@ -1475,5 +1479,48 @@ function onNext(){
     this.goToPage( next );
 }
 
+//////////////////////////////////////////////////////////////////
+// True "Full Screen" as opposed to "Full Page"
+// Implementation based on 
+// http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760#7525760
+//////////////////////////////////////////////////////////////////
+function cancelFullScreen(el) {
+    var requestMethod = el.cancelFullScreen||el.webkitCancelFullScreen||el.mozCancelFullScreen||el.exitFullscreen;
+    if (requestMethod) { // cancel full screen.
+        requestMethod.call(el);
+    } else if (typeof window.ActiveXObject !== "undefined") { // Older IE.
+        var wscript = new ActiveXObject("WScript.Shell");
+        if (wscript !== null) {
+            wscript.SendKeys("{F11}");
+        }
+    }
+}
+
+function requestFullScreen(el) {
+    // Supports most browsers and their versions.
+    var requestMethod = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen;
+
+    if (requestMethod) { // Native full screen.
+        requestMethod.call(el);
+    } else if (typeof window.ActiveXObject !== "undefined") { // Older IE.
+        var wscript = new ActiveXObject("WScript.Shell");
+        if (wscript !== null) {
+            wscript.SendKeys("{F11}");
+        }
+    }
+    return false;
+}
+
+function toggleFull() {
+    var elem = document.body; // Make the body go full screen.
+    var isInFullScreen = (document.fullScreenElement && document.fullScreenElement !== null) ||  (document.mozFullScreen || document.webkitIsFullScreen);
+
+    if (isInFullScreen) {
+        cancelFullScreen(document);
+    } else {
+        requestFullScreen(elem);
+    }
+    return false;
+}
 
 }( OpenSeadragon ));
