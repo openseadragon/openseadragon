@@ -943,7 +943,7 @@
         if( event.touches.length === 1 &&
             event.targetTouches.length === 1 && 
             event.changedTouches.length === 1 && 
-            THIS[ tracker.hash ].lastTouch === event.touches[ 0 ]){
+            THIS[ tracker.hash ].lastTouch.identifier === event.touches[ 0 ].identifier){
 
             onMouseMove( tracker, event.touches[ 0 ] );
 
