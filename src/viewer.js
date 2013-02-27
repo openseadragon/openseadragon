@@ -615,6 +615,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             docStyle        = document.documentElement.style,
             containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
+            _this           = this,
             oldBounds,
             newBounds,
             viewer,
@@ -626,10 +627,30 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if ( fullPage == this.isFullPage() ) {
             return;
         }
+        this.tmp = function( event ) {
+            // The event object doesn't carry information about the fullscreen state of the browser,
+            // but it is possible to retrieve it through the fullscreen API
+            if( (document.fullScreenElement && document.fullScreenElement !== null) || 
+                (document.mozFullScreen || document.webkitIsFullScreen) ){
+                 console.log( document.webkitIsFullScreen );
+                // The target of the event is always the document,
+                // but it is possible to retrieve the fullscreen element through the API
+                if( !_this.isFullPage() ){
+                    _this.setFullPage( true );
+                }
+            } else {
+                _this.setFullPage( false );
+            }
+        };
 
         if ( fullPage ) {
-            
+
             requestFullScreen( document.body );
+
+
+            // Note that the API is still vendor-prefixed in browsers implementing it
+            document.addEventListener("mozfullscreenchange", this.tmp);
+            document.addEventListener("webkitfullscreenchange", this.tmp);
             
             this.bodyOverflow   = bodyStyle.overflow;
             this.docOverflow    = docStyle.overflow;
@@ -698,7 +719,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         } else {
 
-            cancelFullScreen( document );
+            // Note that the API is still vendor-prefixed in browsers implementing it
+            document.removeEventListener("mozfullscreenchange", this.tmp);
+            document.removeEventListener("webkitfullscreenchange", this.tmp);
 
             bodyStyle.overflow  = this.bodyOverflow;
             docStyle.overflow   = this.docOverflow;
@@ -749,6 +772,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();
+
+            cancelFullScreen( document );
 
         }
         this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
@@ -1522,5 +1547,6 @@ function toggleFull() {
     }
     return false;
 }
+
 
 }( OpenSeadragon ));
