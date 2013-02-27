@@ -635,9 +635,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                  console.log( document.webkitIsFullScreen );
                 // The target of the event is always the document,
                 // but it is possible to retrieve the fullscreen element through the API
-                if( !_this.isFullPage() ){
-                    _this.setFullPage( true );
-                }
+                _this.setFullPage( true );
             } else {
                 _this.setFullPage( false );
             }
