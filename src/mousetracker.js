@@ -695,6 +695,10 @@
             THIS[ tracker.hash ].lastPinchDelta = 
                 Math.abs( touchA.x - touchB.x ) +
                 Math.abs( touchA.y - touchB.y );
+            THIS[ tracker.hash ].pinchMidpoint = new $.Point(
+                ( touchA.x + touchB.x ) / 2 ,
+                ( touchA.y + touchB.y ) / 2
+            );
             //$.console.debug("pinch start : "+THIS[ tracker.hash ].lastPinchDelta);
         }
 
@@ -756,6 +760,7 @@
         }
         if( event.touches.length + event.changedTouches.length == 2 ){
             THIS[ tracker.hash ].lastPinchDelta = null;
+            THIS[ tracker.hash ].pinchMidpoint  = null;
             //$.console.debug("pinch end");
         }
         event.preventDefault();
@@ -961,8 +966,8 @@
 
                 onMouseWheelSpin( tracker, {
                     shift: false,
-                    pageX: ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
-                    pageY: ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2,
+                    pageX: THIS[ tracker.hash ].pinchMidpoint.x,
+                    pageY: THIS[ tracker.hash ].pinchMidpoint.y,
                     detail:( 
                         THIS[ tracker.hash ].lastPinchDelta > pinchDelta 
                     ) ? 1 : -1
