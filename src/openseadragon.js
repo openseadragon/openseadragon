@@ -481,7 +481,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomLevel:           null, 
 
             //UI RESPONSIVENESS AND FEEL
-            springStiffness:        7.0,
+            springStiffness:        5.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
@@ -490,13 +490,13 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             animationTime:          1.5,
             blendTime:              1.5,
             alwaysBlend:            false,
-            immediateRender:        true,
+            autoHideControls:       true,
+            immediateRender:        false,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
             preserveViewport:       false, //SEQUENCE
             showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
-            autoHideControls:       true,
             controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
