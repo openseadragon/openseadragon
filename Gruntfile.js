@@ -135,7 +135,11 @@ module.exports = function(grunt) {
     // Copies the contents of the build folder into ../site-build.
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
-            grunt.file.copy(abspath, "../site-build/" + (subdir || "") + filename);            
+            var dest = "../site-build/"
+                + (subdir ? subdir + "/" : "")
+                + filename;
+
+            grunt.file.copy(abspath, dest);
         });
     });
 
