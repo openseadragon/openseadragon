@@ -488,15 +488,15 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
             animationTime:          1.5,
-            blendTime:              0,
+            blendTime:              0.5,
             alwaysBlend:            false,
             immediateRender:        true,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
             preserveViewport:       false, //SEQUENCE
-            autoHideControls:       true,
             showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
+            autoHideControls:       true,
             controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
