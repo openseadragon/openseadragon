@@ -1698,7 +1698,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         // polyfill, when necessary
         if ( w.requestAnimationFrame ) {
-            //we cant assign $.requestAnimationFrame directly to $.requestAnimationFrame
+            //we cant assign window.requestAnimationFrame directly to $.requestAnimationFrame
             //without getting Illegal Invocation errors in webkit so call in a
             //wrapper
             $.requestAnimationFrame = function( callback ){ 
