@@ -128,7 +128,8 @@ $.Viewer = function( options ) {
         "lastZoomTime":      null,
         // did we decide this viewer has a sequence of tile sources
         "sequenced":         false,
-        "sequence":          0
+        "sequence":          0,
+        "onfullscreenchange": null
     };
 
     //Inherit some behaviors and properties
@@ -627,28 +628,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if ( fullPage == this.isFullPage() ) {
             return;
         }
-        this.tmp = function( event ) {
-            // The event object doesn't carry information about the fullscreen state of the browser,
-            // but it is possible to retrieve it through the fullscreen API
-            if( (document.fullScreenElement && document.fullScreenElement !== null) || 
-                (document.mozFullScreen || document.webkitIsFullScreen) ){
-                 console.log( document.webkitIsFullScreen );
-                // The target of the event is always the document,
-                // but it is possible to retrieve the fullscreen element through the API
-                _this.setFullPage( true );
-            } else {
-                _this.setFullPage( false );
-            }
-        };
+
 
         if ( fullPage ) {
 
-            requestFullScreen( document.body );
+            if( $.supportsFullScreen ){
 
-
-            // Note that the API is still vendor-prefixed in browsers implementing it
-            document.addEventListener("mozfullscreenchange", this.tmp);
-            document.addEventListener("webkitfullscreenchange", this.tmp);
+            }
             
             this.bodyOverflow   = bodyStyle.overflow;
             this.docOverflow    = docStyle.overflow;
@@ -695,21 +681,43 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className +" fullpage"
                 );
-                //this.toolbar.element.style.position = 'fixed';
-
-                //this.container.style.top = $.getElementSize(
-                //    this.toolbar.element
-                //).y + 'px';
             }
+            
             body.appendChild( this.element );
+            
+            if( $.supportsFullScreen ){
+                THIS[ this.hash ].onfullscreenchange = function( event ) {
+                    // The event object doesn't carry information about the 
+                    // fullscreen state of the browser, but it is possible to
+                    // retrieve it through the fullscreen API
+                    if( $.isFullScreen() ){
+                        // The target of the event is always the document,
+                        // but it is possible to retrieve the fullscreen element through the API
+                        _this.setFullPage( true );
+                    } else {
+                        _this.setFullPage( false );
+                    }
+                };
+
+                $.requestFullScreen( document.body );
+
+                // Note that the API is still vendor-prefixed in browsers implementing it
+                document.addEventListener(
+                    $.fullScreenEventName, 
+                    THIS[ this.hash ].onfullscreenchange
+                );
+                this.element.style.height = '100%';
+                this.element.style.width = '100%';
+            }else{
+                this.element.style.height = $.getWindowSize().y + 'px';
+                this.element.style.width = $.getWindowSize().x + 'px';
+            }
+
             if( this.toolbar && this.toolbar.element ){
                 this.element.style.height = (
-                    $.getWindowSize().y - $.getElementSize( this.toolbar.element ).y
+                    $.getElementSize( this.element ).y - $.getElementSize( this.toolbar.element ).y
                 ) + 'px';
-            }else{
-                this.element.style.height = '100%';
             }
-            this.element.style.width = '100%';
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();
@@ -717,9 +725,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         } else {
 
-            // Note that the API is still vendor-prefixed in browsers implementing it
-            document.removeEventListener("mozfullscreenchange", this.tmp);
-            document.removeEventListener("webkitfullscreenchange", this.tmp);
+            if( $.supportsFullScreen ){
+                document.removeEventListener( 
+                    $.fullScreenEventName, 
+                    THIS[ this.hash ].onfullscreenchange
+                );
+                $.cancelFullScreen( document );
+            }
 
             bodyStyle.overflow  = this.bodyOverflow;
             docStyle.overflow   = this.docOverflow;
@@ -771,7 +783,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();
 
-            cancelFullScreen( document );
 
         }
         this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
@@ -1502,49 +1513,7 @@ function onNext(){
     this.goToPage( next );
 }
 
-//////////////////////////////////////////////////////////////////
-// True "Full Screen" as opposed to "Full Page"
-// Implementation based on 
-// http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760#7525760
-//////////////////////////////////////////////////////////////////
-function cancelFullScreen(el) {
-    var requestMethod = el.cancelFullScreen||el.webkitCancelFullScreen||el.mozCancelFullScreen||el.exitFullscreen;
-    if (requestMethod) { // cancel full screen.
-        requestMethod.call(el);
-    } else if (typeof window.ActiveXObject !== "undefined") { // Older IE.
-        var wscript = new ActiveXObject("WScript.Shell");
-        if (wscript !== null) {
-            wscript.SendKeys("{F11}");
-        }
-    }
-}
 
-function requestFullScreen(el) {
-    // Supports most browsers and their versions.
-    var requestMethod = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen;
-
-    if (requestMethod) { // Native full screen.
-        requestMethod.call(el);
-    } else if (typeof window.ActiveXObject !== "undefined") { // Older IE.
-        var wscript = new ActiveXObject("WScript.Shell");
-        if (wscript !== null) {
-            wscript.SendKeys("{F11}");
-        }
-    }
-    return false;
-}
-
-function toggleFull() {
-    var elem = document.body; // Make the body go full screen.
-    var isInFullScreen = (document.fullScreenElement && document.fullScreenElement !== null) ||  (document.mozFullScreen || document.webkitIsFullScreen);
-
-    if (isInFullScreen) {
-        cancelFullScreen(document);
-    } else {
-        requestFullScreen(elem);
-    }
-    return false;
-}
 
 
 }( OpenSeadragon ));
