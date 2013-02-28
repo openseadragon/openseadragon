@@ -1018,9 +1018,9 @@ function finishLoadingImage( image, callback, successful, jobid ){
     if ( jobid ) {
         window.clearTimeout( jobid );
     }
-    window.setTimeout( function() {
+    $.requestAnimationFrame( function() {
         callback( image.src, successful ? image : null);
-    }, 1 );
+    });
 
 }
 

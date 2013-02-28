@@ -234,9 +234,9 @@ $.Viewer = function( options ) {
         );
     }
 
-    window.setTimeout( function(){
+    $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
-    }, 1 );    // initial fade out
+    } );    // initial fade out
 
 };
 
@@ -1079,9 +1079,9 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
         deltaTime;
 
     if ( THIS[ viewer.hash ].animating ) {
-        return window.setTimeout( function(){
+        return $.requestAnimationFrame( function(){
             updateFunc( viewer );
-        }, 1 );
+        } );
     }
 
     currentTime     = +new Date();
@@ -1090,17 +1090,17 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
     targetTime      = prevUpdateTime + 1000 / 60;
     deltaTime       = Math.max( 1, targetTime - currentTime );
     
-    return window.setTimeout( function(){
+    return $.requestAnimationFrame( function(){
         updateFunc( viewer );
-    }, deltaTime );
+    } );
 }
 
 
 //provides a sequence in the fade animation
 function scheduleControlsFade( viewer ) {
-    window.setTimeout( function(){
+    $.requestAnimationFrame( function(){
         updateControlsFade( viewer );
-    }, 20);
+    });
 }
 
 
@@ -1394,7 +1394,7 @@ function endZooming() {
 
 
 function scheduleZoom( viewer ) {
-    window.setTimeout( $.delegate( viewer, doZoom ), 10 );
+    $.requestAnimationFrame( $.delegate( viewer, doZoom ) );
 }
 
 
