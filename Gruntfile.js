@@ -7,6 +7,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-qunit");
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
+    grunt.loadNpmTasks("grunt-contrib-clean");
 
     var distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
@@ -43,6 +44,19 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
         pkg: grunt.file.readJSON("package.json"),
+        clean: {
+            build: ["build"],
+            release: {
+                src: [
+                    "../site-build/openseadragon",
+                    "../site-build/openseadragon.zip",
+                    "../site-build/openseadragon.tar"
+                ],
+                options: {
+                    force: true
+                }
+            }
+        },
         concat: {
             options: {
                 banner: "/**\n * @version  <%= pkg.name %> <%= pkg.version %>\n */\n\n"
@@ -93,7 +107,7 @@ module.exports = function(grunt) {
         },
         watch: {
             files: [ "grunt.js", "src/*.js" ],
-            tasks: "default"
+            tasks: "build"
         },
         jshint: {
             options: {
@@ -109,20 +123,45 @@ module.exports = function(grunt) {
         }
     });
 
-    // Copy task.
-    grunt.registerTask("copy", function() {
+    // Copy:build task.
+    // Copies the image files into the appropriate location in the build folder.
+    grunt.registerTask("copy:build", function() {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
             grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);            
         });
     });
 
-    // Default task.
-    grunt.registerTask("default", ["jshint:beforeconcat", "concat", "jshint:afterconcat", "uglify", "copy"]);
+    // Copy:release task.
+    // Copies the contents of the build folder into ../site-build.
+    grunt.registerTask("copy:release", function() {
+        grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
+            var dest = "../site-build/"
+                + (subdir ? subdir + "/" : "")
+                + filename;
+
+            grunt.file.copy(abspath, dest);
+        });
+    });
+
+    // Build task.
+    // Cleans out the build folder and builds the code and images into it, checking lint.
+    grunt.registerTask("build", [
+        "clean:build", "jshint:beforeconcat", "concat", "jshint:afterconcat", "uglify", "copy:build"
+    ]);
 
     // Test task.
-    grunt.registerTask("test", ["default", "connect", "qunit"]);
+    // Builds and runs unit tests.
+    grunt.registerTask("test", ["build", "connect", "qunit"]);
 
     // Package task.
-    grunt.registerTask("package", ["default", "compress"]);
+    // Builds and creates the .zip and .tar files.
+    grunt.registerTask("package", ["build", "compress"]);
 
+    // Publish task.
+    // Cleans the built files out of ../site-build and copies newly built ones over.
+    grunt.registerTask("publish", ["package", "clean:release", "copy:release"]);
+
+    // Default task.
+    // Does a normal build.
+    grunt.registerTask("default", ["build"]);
 };

@@ -46,6 +46,14 @@ If you want to build tar and zip files for distribution (they will also appear i
 
     grunt package
 
+Note that the `build` folder is masked with .gitignore; it's just for your local use, and won't be checked in to the repository.
+
+You can also publish the built version to the site-build repository. This assumes you have cloned it next to this repository. The command is:
+
+    grunt publish
+
+... which will delete the existing openseadragon folder, along with the .zip and .tar files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
+
 ## Testing
 
 Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phantomjs.org/); they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
