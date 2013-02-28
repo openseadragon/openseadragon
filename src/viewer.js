@@ -631,10 +631,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
 
         if ( fullPage ) {
-
-            if( $.supportsFullScreen ){
-
-            }
             
             this.bodyOverflow   = bodyStyle.overflow;
             this.docOverflow    = docStyle.overflow;
@@ -691,8 +687,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     // fullscreen state of the browser, but it is possible to
                     // retrieve it through the fullscreen API
                     if( $.isFullScreen() ){
-                        // The target of the event is always the document,
-                        // but it is possible to retrieve the fullscreen element through the API
                         _this.setFullPage( true );
                     } else {
                         _this.setFullPage( false );
@@ -701,6 +695,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 $.requestFullScreen( document.body );
 
+                // The target of the event is always the document,
+                // but it is possible to retrieve the fullscreen element through the API
                 // Note that the API is still vendor-prefixed in browsers implementing it
                 document.addEventListener(
                     $.fullScreenEventName, 
