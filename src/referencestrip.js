@@ -67,7 +67,7 @@ $.ReferenceStrip = function( options ){
 
     this.minPixelRatio = this.viewer.minPixelRatio;
 
-    style               = thie.element.style;
+    style               = this.element.style;
     style.marginTop     = '0px';
     style.marginRight   = '0px';
     style.marginBottom  = '0px';
