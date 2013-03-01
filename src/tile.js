@@ -1,5 +1,7 @@
 (function( $ ){
-    
+    var TILE_CACHE       = {},
+        TILE_CACHE_STACK = [],
+        TILE_CACHE_MAX   = 256;
 /**
  * @class
  * @param {Number} level The zoom level this tile belongs to.
@@ -140,7 +142,9 @@ $.Tile.prototype = {
     drawCanvas: function( context ) {
 
         var position = this.position,
-            size     = this.size;
+            size     = this.size,
+            rendered,
+            canvas;
 
         if ( !this.loaded || !this.image ) {
             $.console.warn(
@@ -151,9 +155,9 @@ $.Tile.prototype = {
         }
         context.globalAlpha = this.opacity;
 
-        context.save();
+        //context.save();
 
-        //if we are supposed to b rendering fully opaque rectangle,
+        //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
@@ -168,10 +172,32 @@ $.Tile.prototype = {
             );
 
         }
-        
-        context.drawImage( this.image, position.x, position.y, size.x, size.y );
 
-        context.restore();
+        if( !TILE_CACHE[ this.image.src ] ){
+            canvas = document.createElement( 'canvas' );
+            canvas.width = this.image.width;
+            canvas.height = this.image.height;
+            rendered = canvas.getContext('2d');
+            rendered.drawImage( this.image, 0, 0 );
+            TILE_CACHE[ this.image.src ] = rendered;
+        }
+
+        rendered = TILE_CACHE[ this.image.src ];
+        //rendered.save();
+        context.drawImage( 
+            rendered.canvas, 
+            0,
+            0, 
+            rendered.canvas.width, 
+            rendered.canvas.height, 
+            position.x, 
+            position.y, 
+            size.x, 
+            size.y 
+        );
+        //rendered.restore();
+
+        //context.restore();
     },
 
     /**
@@ -183,7 +209,7 @@ $.Tile.prototype = {
             this.element.parentNode.removeChild( this.element );
         }
 
-        this.element    = null;
+        this.element = null;
         this.image   = null;
         this.loaded  = false;
         this.loading = false;

@@ -1153,6 +1153,7 @@ function drawTiles( drawer, lastDrawn ){
 function drawDebugInfo( drawer, tile, count, i ){
 
     if ( USE_CANVAS ) {
+        drawer.context.save();
         drawer.context.lineWidth = 2;
         drawer.context.font = 'small-caps bold 13px ariel';
         drawer.context.strokeStyle = drawer.debugGridColor;
@@ -1205,6 +1206,7 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.position.x + 10, 
             tile.position.y + 70
         );
+        drawer.context.restore();
     }
 }
 
