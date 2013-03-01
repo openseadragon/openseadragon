@@ -242,9 +242,9 @@ $.extend( $.Button.prototype, $.EventHandler.prototype, {
 
 
 function scheduleFade( button ) {
-    window.setTimeout(function(){
+    $.requestAnimationFrame(function(){
         updateFade( button );
-    }, 20 );
+    });
 }
 
 function updateFade( button ) {

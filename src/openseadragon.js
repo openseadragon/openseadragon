@@ -500,7 +500,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
-
+            
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:          true, //promoted to default in 0.9.64
             navigatorElement:       null,
@@ -1678,6 +1678,71 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         error:  nullfunction
     };
         
+
+    // Adding support for HTML5's requestAnimationFrame as suggested by acdha
+    // implementation taken from matt synders post here:s
+    // http://mattsnider.com/cross-browser-and-legacy-supported-requestframeanimation/
+    (function( w ) {
+
+        // most browsers have an implementation
+        w.requestAnimationFrame = w.requestAnimationFrame ||
+            w.mozRequestAnimationFrame || 
+            w.webkitRequestAnimationFrame ||
+            w.msRequestAnimationFrame;
+
+        w.cancelAnimationFrame = w.cancelAnimationFrame ||
+            w.mozCancelAnimationFrame || 
+            w.webkitCancelAnimationFrame ||
+            w.msCancelAnimationFrame;
+
+
+        // polyfill, when necessary
+        if ( w.requestAnimationFrame ) {
+            //we cant assign window.requestAnimationFrame directly to $.requestAnimationFrame
+            //without getting Illegal Invocation errors in webkit so call in a
+            //wrapper
+            $.requestAnimationFrame = function( callback ){ 
+                return w.requestAnimationFrame( callback );
+            };
+            $.cancelAnimationFrame = function( requestId ){ 
+                return w.cancelAnimationFrame( requestId );
+            };
+        } else {
+            var aAnimQueue = [],
+                iRequestId = 0,
+                iIntervalId;
+
+            // create a mock requestAnimationFrame function
+            $.requestAnimationFrame = function( callback ) {
+                aAnimQueue.push( [ ++iRequestId, callback ] );
+
+                if ( !iIntervalId ) {
+                    iIntervalId = setInterval( function() {
+                        if ( aAnimQueue.length ) {
+                            aAnimQueue.shift( )[ 1 ](+new Date());
+                        } else {
+                            // don't continue the interval, if unnecessary
+                            clearInterval( iIntervalId );
+                            iIntervalId = undefined;
+                        }
+                    }, 1000 / 50);  // estimating support for 50 frames per second
+                }
+
+                return iRequestId;
+            };
+
+            // create a mock cancelAnimationFrame function
+            $.cancelAnimationFrame = function( requestId ) {
+                // find the request ID and remove it
+                for ( var i = 0, j = aAnimQueue.length; i < j; i += 1 ) {
+                    if ( aAnimQueue[ i ][ 0 ] === requestId ) {
+                        aAnimQueue.splice( i, 1 );
+                        return;
+                    }
+                }
+            };
+        }
+    })( window );
 
     /**
      * @private
