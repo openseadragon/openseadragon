@@ -141,7 +141,19 @@ $.TileSource.prototype = {
      * @param {Number} level
      */
     getLevelScale: function( level ) {
-        return 1 / ( 1 << ( this.maxLevel - level ) );
+
+        // see https://github.com/openseadragon/openseadragon/issues/22
+        // we use the tilesources implementation of getLevelScale to generate
+        // a memoized re-implementation
+        var levelScaleCache = {},
+            i;
+        for( i = 0; i <= this.maxLevel; i++ ){
+            levelScaleCache[ i ] = 1 / Math.pow(2, this.maxLevel - i);
+        }
+        this.getLevelScale = function( _level ){
+            return levelScaleCache[ _level ];
+        };
+        return this.getLevelScale( level );
     },
 
     /**
