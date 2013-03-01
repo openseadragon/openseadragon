@@ -2,7 +2,7 @@
   "name": "OpenSeadragon",
   "version": "0.9.122",
   "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
-  "dependencies": {
+  "devDependencies": {
     "grunt": "~0.4.0",
     "grunt-contrib-compress": "~0.4.0",
     "grunt-contrib-concat": "~0.1.2",
