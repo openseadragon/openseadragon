@@ -1,0 +1,296 @@
+<html>
+    <head>
+    <title>OpenSeadragon Expose Origina Event Demo</title>
+    <script type="text/javascript" src='openseadragon/build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+      .openseadragon
+      {
+	  width:      800px;
+	  height:     600px;
+	  border:     1px solid black;
+	  color:      #333; /* text color for messages */
+	  background-color: black;
+      }
+      .openseadragon-small
+      {
+	  width:      40px;
+	  height:     30px;
+	  border:     1px solid black;
+	  color:      #333; /* text color for messages */
+	  background-color: black;
+      }
+      
+    </style>
+</head>
+<body>
+    <div class="demoarea">
+	<div>
+	   Simple demo page to verify that event handlers pass along the original source event
+	</div>
+	<div id="contentDiv" class="openseadragon"></div>
+	<div>
+	    <span id='consolelog'></span>
+	</div>
+    </div>
+
+    <script type="text/javascript">
+    var viewer = OpenSeadragon({
+	id:"contentDiv",
+	prefixUrl:"openseadragon/build/openseadragon/images/",
+        tileSources:{
+             Image:{
+		xmlns:"http://schemas.microsoft.com/deepzoom/2008",
+		Url:"example-images/highsmith/highsmith_files/",
+		Format:"jpg",
+		Overlap:"2",
+		TileSize:"256",
+		Size:{  
+		    Height:"9221",
+	            Width:"7026"
+	        }
+            }
+	}
+    });
+
+    var demoMessageLog = "";
+    var screenConsole = document.getElementById('consolelog');
+    
+    function checkIfEventWasPassed(event)
+    {
+        if(typeof event === 'undefined')
+        {
+ 	    demoMessageLog += "PROBLEM EVENT WAS UNDEFINED:" + event + "\n\n";        	
+        }
+    }
+
+    function updateDebugMessageOnScreenConsole()
+    {
+        screenConsole.innerHTML = demoMessageLog.replace(/\n/g, '<br />');
+    }
+
+    viewer.innerTracker.clickHandler = function(tracker, position, delta, shift,event)
+    {
+ 	demoMessageLog += "Altered version of original clickHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"    delta:" + delta + "\n" +
+	"    shift:" + shift + "\n" +
+	"    event:" + event + "\n\n";
+	checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+
+    }
+    
+    viewer.addHandler("click",  function(tracker, position, delta, shift,event)
+    {
+      demoMessageLog += "Additional clickHandler\n" +
+	  "    tracker:" + tracker + "\n" +
+	  "    position:" + position + "\n" +
+	  "    delta:" + delta + "\n" +
+	  "    shift:" + shift + "\n" +
+	  "    event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+     });
+
+    viewer.innerTracker.pressHandler = function(tracker, position, event)
+    {
+	demoMessageLog += "Altered version of original pressHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"    event:" + event + "\n\n";
+	checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    viewer.addHandler("press",  function(tracker, position,event)
+    {
+      demoMessageLog += "Additional pressHandler\n" +
+	  "    tracker:" + tracker + "\n" +
+	  "    position:" + position + "\n" +
+	  "    event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.releaseHandler = function(tracker, position,buttonDown,insideElementRelease,event)
+    {
+	demoMessageLog += "Altered version of original releaseHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"    buttonDown:" + buttonDown + "\n" +
+	"    insideElementRelease:" + insideElementRelease + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("release",  function(tracker, position ,buttonDown,insideElementRelease,event)
+   {
+      demoMessageLog += "Additional releaseHandler\n" +
+	  "    tracker:" + tracker + "\n" +
+	  "    position:" + position + "\n" +
+	  "    buttonDown:" + buttonDown + "\n" +
+	  "    insideElementRelease:" + insideElementRelease + "\n" +
+	  "    event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.keyHandler = function(tracker, keycode, shift,event)
+    {
+	demoMessageLog += "Altered version of original keyHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    keycode:" + keycode + "\n" +
+	"    shift:" + shift + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+        updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("keypress",  function(tracker, keycode, shift,event)
+    {
+       demoMessageLog += "Additional keyHandler\n" +
+       "    tracker:" + tracker + "\n" +
+       "    keycode:" + keycode + "\n" +
+       "    shift:" + shift + "\n" +
+       "    event:" + event + "\n\n";
+       checkIfEventWasPassed(event);
+       updateDebugMessageOnScreenConsole();
+    });
+
+
+    viewer.innerTracker.dragHandler = function(tracker, position, delta, shift,event)
+    {
+	demoMessageLog += "Altered version of original dragHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"    delta:" + delta + "\n" +
+	"    shift:" + shift + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("drag",  function(tracker, position, delta, shift,event)
+    {
+      demoMessageLog += "Additional dragHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   position:" + position + "\n" +
+	  "   delta:" + delta + "\n" +
+	  "   shift:" + shift + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.scrollHandler = function(tracker, position, scroll, shift,event)
+    {
+	demoMessageLog += "Altered version of original scrollHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"    scroll:" + scroll + "\n" +
+	"    shift:" + shift + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("scroll",  function(tracker, position, scroll, shift,event)
+    {
+      demoMessageLog += "Additional scrollHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   position:" + position + "\n" +
+	  "   scroll:" + scroll + "\n" +
+	  "   shift:" + shift + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.enterHandler =  function(tracker, position, buttonDown, buttonDownAny,event)
+    {
+	demoMessageLog += "Altered version of original enterHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"   buttonDown:" + buttonDown + "\n" +
+	"   buttonDownAny:" + buttonDownAny + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("enter",  function(tracker, position, buttonDown, buttonDownAny,event)
+    {
+      demoMessageLog += "Additional enterHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   position:" + position + "\n" +
+	  "   buttonDown:" + buttonDown + "\n" +
+	  "   buttonDownAny:" + buttonDownAny + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.exitHandler = function(tracker, position, buttonDown, buttonDownAny,event)
+    {
+	demoMessageLog += "Altered version of original exitHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    position:" + position + "\n" +
+	"   buttonDown:" + buttonDown + "\n" +
+	"   buttonDownAny:" + buttonDownAny + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("exit",  function(tracker, position, buttonDown, buttonDownAny,event)
+    {
+      demoMessageLog += "Additional exitHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   position:" + position + "\n" +
+	  "   buttonDown:" + buttonDown + "\n" +
+	  "   buttonDownAny:" + buttonDownAny + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+    viewer.innerTracker.focusHandler = function(tracker, event) 
+    {
+	demoMessageLog += "Altered version of original focusHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    event:" + event + "\n\n";
+        checkIfEventWasPassed(event);
+	updateDebugMessageOnScreenConsole();
+    };
+	
+    viewer.addHandler("focus",  function(tracker, event)
+    {
+      demoMessageLog += "Additional focusHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+     });
+
+    viewer.innerTracker.blurHandler = function(tracker, event)
+    {
+       demoMessageLog += "Altered version of original blurHandler\n" +
+	"    tracker:" + tracker + "\n" +
+	"    event:" + event + "\n\n";
+       checkIfEventWasPassed(event);
+       updateDebugMessageOnScreenConsole();
+    };
+    
+    viewer.addHandler("blur",  function(tracker, event)
+    {
+      demoMessageLog += "Additional blurHandler\n" +
+	  "   tracker:" + tracker + "\n" +
+	  "   event:" + event + "\n\n";
+      checkIfEventWasPassed(event);
+      updateDebugMessageOnScreenConsole();
+    });
+
+        </script>
+    </body>
+</html>
