@@ -136,7 +136,7 @@ module.exports = function(grunt) {
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
             var dest = "../site-build/"
-                + (subdir ? subdir + "/" : "")
+                + (subdir ? subdir + "/" : '/')
                 + filename;
 
             grunt.file.copy(abspath, dest);

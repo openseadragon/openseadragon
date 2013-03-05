@@ -146,7 +146,7 @@ $.Tile.prototype = {
             rendered,
             canvas;
 
-        if ( !this.loaded || !this.image ) {
+        if ( !this.loaded || !( this.image || TILE_CACHE[ this.url ] ) ){
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -161,7 +161,7 @@ $.Tile.prototype = {
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if( context.globalAlpha == 1 && this.image.src.match('.png') ){
+        if( context.globalAlpha == 1 && this.url.match('.png') ){
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect( 
@@ -173,16 +173,19 @@ $.Tile.prototype = {
 
         }
 
-        if( !TILE_CACHE[ this.image.src ] ){
+        if( !TILE_CACHE[ this.url ] ){
             canvas = document.createElement( 'canvas' );
             canvas.width = this.image.width;
             canvas.height = this.image.height;
             rendered = canvas.getContext('2d');
             rendered.drawImage( this.image, 0, 0 );
-            TILE_CACHE[ this.image.src ] = rendered;
+            TILE_CACHE[ this.url ] = rendered;
+            //since we are caching the prerendered image on a canvas
+            //allow the image to not be held in memory
+            this.image = null;
         }
 
-        rendered = TILE_CACHE[ this.image.src ];
+        rendered = TILE_CACHE[ this.url ];
         //rendered.save();
         context.drawImage( 
             rendered.canvas, 
@@ -207,6 +210,9 @@ $.Tile.prototype = {
     unload: function() {
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
+        } 
+        if ( TILE_CACHE[ this.url ]){
+            delete TILE_CACHE[ this.url ];
         }
 
         this.element = null;
