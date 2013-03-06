@@ -1,7 +1,5 @@
 (function( $ ){
-    var TILE_CACHE       = {},
-        TILE_CACHE_STACK = [],
-        TILE_CACHE_MAX   = 256;
+    var TILE_CACHE       = {};
 /**
  * @class
  * @param {Number} level The zoom level this tile belongs to.

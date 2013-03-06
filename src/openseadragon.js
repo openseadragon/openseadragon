@@ -473,25 +473,25 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             wrapHorizontal:         false,
             wrapVertical:           false,
             visibilityRatio:        0.5,
-            minPixelRatio:          0.5,
-            minZoomImageRatio:      0.8,
-            maxZoomPixelRatio:      2,
+            minPixelRatio:          0.9,
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null, 
 
             //UI RESPONSIVENESS AND FEEL
-            springStiffness:        5.0,
+            springStiffness:        7.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2.0,
             zoomPerScroll:          1.2,
             zoomPerSecond:          2.0,
-            animationTime:          1.5,
-            blendTime:              1.5,
+            animationTime:          1.0,
+            blendTime:              0,
             alwaysBlend:            false,
             autoHideControls:       true,
             immediateRender:        false,
+            minZoomImageRatio:      0.8,
+            maxZoomPixelRatio:      1.2,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
@@ -530,7 +530,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
-            timeout:                5000,
+            timeout:                30000,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
