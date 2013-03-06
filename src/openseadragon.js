@@ -1656,7 +1656,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     })();
 
     /**
-     * Determines the appropriate level of native full secreen support we can get 
+     * Determines the appropriate level of native full screen support we can get 
      * from the browser.
      * Thanks to John Dyer for the implementation and research
      * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
