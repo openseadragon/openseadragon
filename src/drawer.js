@@ -515,9 +515,15 @@ function updateViewport( drawer ) {
         ).x;
 
         zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
-            drawer.source.getPixelRatio( 0 ), 
+            drawer.source.getPixelRatio( 
+                Math.max(
+                    drawer.source.getClosestLevel( drawer.viewport.containerSize ) - 1,
+                    0
+                )
+            ), 
             false
         ).x;
+        console.log( "ZERO RATIO T %s", drawer.source.getClosestLevel( drawer.viewport.containerSize ) );
         
         optimalRatio    = drawer.immediateRender ? 
             1 : 
@@ -850,7 +856,7 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
     }
 
     deltaTime   = currentTime - tile.blendStart;
-    opacity     = Math.min( 1, deltaTime / ( blendTimeMillis || 1 ) );
+    opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
     
     if ( drawer.alwaysBlend ) {
         opacity *= levelOpacity;
@@ -1080,14 +1086,16 @@ function drawTiles( drawer, lastDrawn ){
                 //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
                     drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
-                        element:               $.makeNeutralElement( "div" ),
-                        mouseNavEnabled:       false,
-                        showNavigator:         false,
-                        showSequenceControl:   false,
-                        showNavigationControl: false,
-                        //visibilityRatio:       1,
-                        //debugMode:             true,
-                        //debugGridColor:        'red',
+                        element:                $.makeNeutralElement( "div" ),
+                        mouseNavEnabled:        false,
+                        showNavigator:          false,
+                        showSequenceControl:    false,
+                        showNavigationControl:  false,
+                        //visibilityRatio:        1,
+                        //debugMode:              true,
+                        //debugGridColor:         'red',
+                        animationTime:          0,
+                        blentTime:              0.1,
                         tileSources: [
                             tileSource
                         ]

@@ -377,11 +377,13 @@ function loadPanels(strip, viewerSize, scroll){
                 tileSources:            [ strip.viewer.tileSources[ i ] ],
                 element:                element,
                 navigatorSizeRatio:     strip.sizeRatio,
-                minPixelRatio:          strip.minPixelRatio, 
                 showNavigator:          false,
                 mouseNavEnabled:        false,
                 showNavigationControl:  false,
-                showSequenceControl:    false
+                showSequenceControl:    false,
+                immediateRender:        true,
+                blendTime:              0,
+                animationTime:          0
             } ); 
 
             miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
