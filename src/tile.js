@@ -184,6 +184,7 @@ $.Tile.prototype = {
         }
 
         rendered = TILE_CACHE[ this.url ];
+        
         //rendered.save();
         context.drawImage( 
             rendered.canvas, 
