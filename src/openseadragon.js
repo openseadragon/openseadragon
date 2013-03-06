@@ -492,8 +492,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             alwaysBlend:            false,
             autoHideControls:       true,
             immediateRender:        false,
-            minZoomImageRatio:      0.8,
-            maxZoomPixelRatio:      1.2,
+            minZoomImageRatio:      0.9,
+            maxZoomPixelRatio:      1.1,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
