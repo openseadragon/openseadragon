@@ -523,7 +523,6 @@ function updateViewport( drawer ) {
             ), 
             false
         ).x;
-        console.log( "ZERO RATIO T %s", drawer.source.getClosestLevel( drawer.viewport.containerSize ) );
         
         optimalRatio    = drawer.immediateRender ? 
             1 : 
