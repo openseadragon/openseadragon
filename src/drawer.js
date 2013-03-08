@@ -1090,11 +1090,6 @@ function drawTiles( drawer, lastDrawn ){
                         showNavigator:          false,
                         showSequenceControl:    false,
                         showNavigationControl:  false,
-                        //visibilityRatio:        1,
-                        //debugMode:              true,
-                        //debugGridColor:         'red',
-                        animationTime:          0,
-                        blentTime:              0.1,
                         tileSources: [
                             tileSource
                         ]
