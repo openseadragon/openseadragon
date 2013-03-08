@@ -128,7 +128,8 @@ $.Viewer = function( options ) {
         "lastZoomTime":      null,
         // did we decide this viewer has a sequence of tile sources
         "sequenced":         false,
-        "sequence":          0
+        "sequence":          0,
+        "onfullscreenchange": null
     };
 
     //Inherit some behaviors and properties
@@ -615,6 +616,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             docStyle        = document.documentElement.style,
             containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
+            _this           = this,
             oldBounds,
             newBounds,
             viewer,
@@ -626,6 +628,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         if ( fullPage == this.isFullPage() ) {
             return;
         }
+
 
         if ( fullPage ) {
             
@@ -674,28 +677,58 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     'class',
                     this.toolbar.element.className +" fullpage"
                 );
-                //this.toolbar.element.style.position = 'fixed';
-
-                //this.container.style.top = $.getElementSize(
-                //    this.toolbar.element
-                //).y + 'px';
             }
+            
             body.appendChild( this.element );
-            if( this.toolbar && this.toolbar.element ){
-                this.element.style.height = (
-                    $.getWindowSize().y - $.getElementSize( this.toolbar.element ).y
-                ) + 'px';
+            
+            if( $.supportsFullScreen ){
+                THIS[ this.hash ].onfullscreenchange = function( event ) {
+                    // The event object doesn't carry information about the 
+                    // fullscreen state of the browser, but it is possible to
+                    // retrieve it through the fullscreen API
+                    if( $.isFullScreen() ){
+                        _this.setFullPage( true );
+                    } else {
+                        _this.setFullPage( false );
+                    }
+                };
+
+                $.requestFullScreen( document.body );
+
+                // The target of the event is always the document,
+                // but it is possible to retrieve the fullscreen element through the API
+                // Note that the API is still vendor-prefixed in browsers implementing it
+                document.addEventListener(
+                    $.fullScreenEventName, 
+                    THIS[ this.hash ].onfullscreenchange
+                );
+                this.element.style.height = '100%';
+                this.element.style.width = '100%';
             }else{
                 this.element.style.height = $.getWindowSize().y + 'px';
+                this.element.style.width = $.getWindowSize().x + 'px';
             }
-            this.element.style.width = $.getWindowSize().x + 'px';
+
+            if( this.toolbar && this.toolbar.element ){
+                this.element.style.height = (
+                    $.getElementSize( this.element ).y - $.getElementSize( this.toolbar.element ).y
+                ) + 'px';
+            }
 
             // mouse will be inside container now
-            $.delegate( this, onContainerEnter )();    
+            $.delegate( this, onContainerEnter )();
 
 
         } else {
-            
+
+            if( $.supportsFullScreen ){
+                document.removeEventListener( 
+                    $.fullScreenEventName, 
+                    THIS[ this.hash ].onfullscreenchange
+                );
+                $.cancelFullScreen( document );
+            }
+
             bodyStyle.overflow  = this.bodyOverflow;
             docStyle.overflow   = this.docOverflow;
 
@@ -744,7 +777,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )();      
+            $.delegate( this, onContainerExit )();
+
 
         }
         this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );

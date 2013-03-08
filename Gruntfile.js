@@ -13,6 +13,7 @@ module.exports = function(grunt) {
         minified = "build/openseadragon/openseadragon.min.js",
         sources = [
             "src/openseadragon.js",
+            "src/fullscreen.js",
             "src/eventhandler.js",
             "src/mousetracker.js",
             "src/control.js",
