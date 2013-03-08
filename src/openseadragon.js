@@ -1655,8 +1655,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     })();
 
-    
-
 
     //TODO: $.console is often used inside a try/catch block which generally
     //      prevents allowings errors to occur with detection until a debugger

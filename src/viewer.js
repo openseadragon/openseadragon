@@ -1510,6 +1510,4 @@ function onNext(){
 }
 
 
-
-
 }( OpenSeadragon ));
