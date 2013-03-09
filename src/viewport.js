@@ -77,6 +77,13 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     resetContentSize: function( contentSize ){
+        if( this.viewer ){
+            if( false === this.viewer.raiseEvent( 'reset', { contentSize: contentSize } ) ){
+                //cancel event
+                return this;
+            }
+        }
+
         this.contentSize    = contentSize;
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
@@ -84,13 +91,6 @@ $.Viewport.prototype = {
         this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
-
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'reset-size', { 
-                contentSize: contentSize,
-                viewer: this.viewer
-            });
-        }
         
         return this;
     },
@@ -133,10 +133,10 @@ $.Viewport.prototype = {
      */
     goHome: function( immediately ) {
         if( this.viewer ){
-            this.viewer.raiseEvent( 'home', { 
-                immediately: immediately,
-                viewer: this.viewer
-            });
+            if( false === this.viewer.raiseEvent( 'home', { immediately: immediately } ) ){
+                //cancel event
+                return this;
+            }
         }
         return this.fitBounds( this.getHomeBounds(), immediately );
     },
@@ -280,6 +280,13 @@ $.Viewport.prototype = {
             dy = 0,
             dx1 = 0, dx2 = 0, dy1 = 0, dy2 = 0;
 
+        if( this.viewer ){
+            if( false === this.viewer.raiseEvent( 'constrain', { immediately: immediately } ) ){
+                //cancel event
+                return this;
+            }
+        }
+
         if ( actualZoom != constrainedZoom ) {
             this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
         }
@@ -330,13 +337,6 @@ $.Viewport.prototype = {
                 bounds.y = this.contentAspectY/2 - bounds.height/2;
             }
             this.fitBounds( bounds, immediately );
-        }
-
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'constrain', { 
-                immediately: immediately,
-                viewer: this.viewer
-            });
         }
 
         return this;
@@ -475,6 +475,18 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     panTo: function( center, immediately ) {
+        var stop;
+        if( this.viewer ){
+            stop = this.viewer.raiseEvent( 'pan', { 
+                center: center,
+                immediately: immediately
+            });
+            if( stop === false ){
+                //cancel event
+                return this;
+            }
+        }
+
         if ( immediately ) {
             this.centerSpringX.resetTo( center.x );
             this.centerSpringY.resetTo( center.y );
@@ -483,13 +495,6 @@ $.Viewport.prototype = {
             this.centerSpringY.springTo( center.y );
         }
 
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'pan', { 
-                center: center,
-                immediately: immediately,
-                viewer: this.viewer
-            });
-        }
 
         return this;
     },
@@ -507,6 +512,18 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomTo: function( zoom, refPoint, immediately ) {
+        var stop;
+        if( this.viewer ){
+            stop = this.viewer.raiseEvent( 'zoom', { 
+                zoom: zoom,
+                refPoint: refPoint,
+                immediately: immediately
+            });
+            if( stop === false ){
+                //cancel event;
+                return this;
+            }
+        }
 
         this.zoomPoint = refPoint instanceof $.Point ? 
             refPoint : 
@@ -518,14 +535,6 @@ $.Viewport.prototype = {
             this.zoomSpring.springTo( zoom );
         }
 
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'zoom', { 
-                zoom: zoom,
-                refPoint: refPoint,
-                immediately: immediately,
-                viewer: this.viewer
-            });
-        }
 
         return this;
     },
@@ -537,7 +546,19 @@ $.Viewport.prototype = {
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
-            widthDeltaFactor = newContainerSize.x / this.containerSize.x;
+            widthDeltaFactor = newContainerSize.x / this.containerSize.x,
+            stop;
+
+        if( this.viewer ){
+            stop = this.viewer.raiseEvent( 'resize', { 
+                newContainerSize: newContainerSize,
+                maintain: maintain
+            });
+            if( stop === false ){
+                //cancel event
+                return this;
+            }
+        }
 
         this.containerSize = new $.Point(
             newContainerSize.x, 
@@ -547,14 +568,6 @@ $.Viewport.prototype = {
         if (maintain) {
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
-        }
-
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'resize', { 
-                newContainerSize: newContainerSize,
-                maintain: maintain,
-                viewer: this.viewer
-            });
         }
 
         return this.fitBounds( newBounds, true );

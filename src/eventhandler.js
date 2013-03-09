@@ -81,10 +81,14 @@ $.EventHandler.prototype = {
             Array.apply( null, events );
         return function( source, args ) {
             var i, 
-                length = events.length;
+                length = events.length,
+                stop;
             for ( i = 0; i < length; i++ ) {
-                if( events[ i ] ){
-                    events[ i ]( source, args );
+                if( $.isFunction( events[ i ] ) {
+                    stop = events[ i ].apply( source, args );
+                    if( stop === false ){
+                        return stop;
+                    }
                 }
             }
         };
@@ -106,7 +110,7 @@ $.EventHandler.prototype = {
                 eventArgs = {};
             }
 
-            handler( this, eventArgs );
+            return handler( this, eventArgs );
         }
     }
 };

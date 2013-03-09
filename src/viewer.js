@@ -342,6 +342,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             overlay,
             i;
 
+        if( false === this.raiseEvent( 'open', { source: source } ) ){
+            //cancel open
+            return this;
+        }
+
         if ( this.source ) {
             this.close( );
         }
@@ -506,8 +511,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.navigator.open( source );
         }
 
-        this.raiseEvent( 'open', { source: source, viewer: this } );
-
         return this;
     },
 
@@ -517,6 +520,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
+        if( false === this.raiseEvent( 'close' ) ){
+            //cancel close
+            return this;
+        }
         
         if( this.drawer ){
             this.drawer.clearOverlays();
@@ -531,8 +538,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
-
-        this.raiseEvent( 'close', { viewer: this } );
         
         return this;
     },
@@ -553,8 +558,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setMouseNavEnabled: function( enabled ){
+        if( false === this.raiseEvent( enabled ? 'activate' : 'deactivate' ) ){
+            //cancel activation/deactivation of mouse/touch/keyboard interactive
+            return this;
+        }
         this.innerTracker.setTracking( enabled );
-        this.raiseEvent( 'mouse-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -580,12 +588,15 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setControlsEnabled: function( enabled ) {
+        if( false === this.raiseEvent( enabled ? 'showcontrols' : 'hidecontrols' ) ){
+            //cancel show/hide of controls
+            return this;
+        }
         if( enabled ){
             abortControlsAutoHide( this );
         } else {
             beginControlsAutoHide( this );
         }
-        this.raiseEvent( 'controls-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -622,6 +633,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             nodes,
             i;
         
+        if( false === this.raiseEvent( fullPage ? 'maximize' : 'minimize' ) ){
+            //cancel maximize/minimize
+            return this;
+        }
+
         //dont bother modifying the DOM if we are already in full page mode.
         if ( fullPage == this.isFullPage() ) {
             return;
@@ -747,7 +763,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $.delegate( this, onContainerExit )();      
 
         }
-        this.raiseEvent( 'fullpage', { fullpage: fullPage, viewer: this } );
 
         if ( this.viewport ) {
             oldBounds = this.viewport.getBounds();
@@ -806,8 +821,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setVisible: function( visible ){
+        if( false === this.raiseEvent( visible ? 'show' : 'hide' ) ){
+            //cancel show/hide
+            return this;
+        }
         this.container.style.visibility = visible ? "" : "hidden";
-        this.raiseEvent( 'visible', { visible: visible, viewer: this } );
         return this;
     },
 
@@ -1026,9 +1044,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     goToPage: function( page ){
-        //page is a 1 based index so normalize now
-        //page = page;
-        this.raiseEvent( 'page', { page: page, viewer: this } );
+
+        if( false === this.raiseEvent( 'page', { page: page }) ){
+            //cancel page change
+            return this;
+        }
 
         if( this.tileSources.length > page ){
             
@@ -1171,8 +1191,15 @@ function onBlur(){
 
 function onCanvasClick( tracker, position, quick, shift, event ) {
     var zoomPreClick,
-        factor;
-    if ( this.viewport && quick ) {    // ignore clicks where mouse moved         
+        factor,
+        stop = this.raiseEvent( 'click', { 
+            tracker: tracker,
+            position: position,
+            quick: quick,
+            shift: shift,
+            originalEvent: event 
+        });
+    if ( this.viewport && quick && stop !== false ) {    // ignore clicks where mouse moved         
         zoomPerClick = this.zoomPerClick;
         factor = shift ? 1.0 / zoomPerClick : zoomPerClick;
         this.viewport.zoomBy(
@@ -1181,17 +1208,17 @@ function onCanvasClick( tracker, position, quick, shift, event ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'click', { 
-        tracker: tracker,
-        position: position,
-        quick: quick,
-        shift: shift,
-        originalEvent: event 
-    });
 }
 
 function onCanvasDrag( tracker, position, delta, shift, event ) {
-    if ( this.viewport ) {
+    var stop = this.raiseEvent( 'drag', { 
+        tracker: tracker,
+        position: position,
+        delta: delta,
+        shift: shift,
+        originalEvent: event 
+    });
+    if ( this.viewport && stop !== false ) {
         if( !this.panHorizontal ){
             delta.x = 0;
         }
@@ -1207,91 +1234,91 @@ function onCanvasDrag( tracker, position, delta, shift, event ) {
             this.viewport.applyConstraints();
         }
     }
-    this.raiseEvent( 'drag', { 
-        tracker: tracker,
-        position: position,
-        delta: delta,
-        shift: shift,
-        originalEvent: event 
-    });
 }
 
 function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
-    if ( insideElementPress && this.viewport ) {
-        this.viewport.applyConstraints();
-    }
-    this.raiseEvent( 'release', { 
+    var stop = this.raiseEvent( 'release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
         insideElementRelease: insideElementRelease,
         originalEvent: event 
     });
+    if ( insideElementPress && this.viewport && stop !== false ) {
+        this.viewport.applyConstraints();
+    }
 }
 
 function onCanvasScroll( tracker, position, scroll, shift, event ) {
-    var factor;
-    if ( this.viewport ) {
+    var factor,
+        stop = this.raiseEvent( 'scroll', { 
+            tracker: tracker,
+            position: position,
+            scroll: scroll,
+            shift: shift,
+            originalEvent: event 
+        });
+
+    if ( this.viewport && stop !== false ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
         this.viewport.zoomBy( 
             factor, 
             this.viewport.pointFromPixel( position, true ) 
         );
         this.viewport.applyConstraints();
+        //cancels event
+        event.stopPropagation();
+        event.preventDefault();
+        return false;
     }
-    this.raiseEvent( 'scroll', { 
-        tracker: tracker,
-        position: position,
-        scroll: scroll,
-        shift: shift,
-        originalEvent: event 
-    });
-    //cancels event
-    return false;
 }
 
 function onContainerExit( tracker, position, buttonDownElement, buttonDownAny, event ) {
-    if ( !buttonDownElement ) {
-        THIS[ this.hash ].mouseInside = false;
-        if ( !THIS[ this.hash ].animating ) {
-            beginControlsAutoHide( this );
-        }
-    }
-    this.raiseEvent( 'exit', { 
+    var stop = this.raiseEvent( 'exit', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
         buttonDownAny: buttonDownAny,
         originalEvent: event 
     });
-}
-
-function onContainerRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
-    if ( !insideElementRelease ) {
+    if ( !buttonDownElement ) {
         THIS[ this.hash ].mouseInside = false;
-        if ( !THIS[ this.hash ].animating ) {
+        if ( !THIS[ this.hash ].animating && stop !== false ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'release', { 
+}
+
+function onContainerRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
+    var stop = this.raiseEvent( 'release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
         insideElementRelease: insideElementRelease,
         originalEvent: event 
     });
+
+    if ( !insideElementRelease ) {
+        THIS[ this.hash ].mouseInside = false;
+        if ( !THIS[ this.hash ].animating && stop !== false ) {
+            beginControlsAutoHide( this );
+        }
+    }
 }
 
 function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny, event ) {
+    var stop;
     THIS[ this.hash ].mouseInside = true;
-    abortControlsAutoHide( this );
-    this.raiseEvent( 'enter', { 
+    stop = this.raiseEvent( 'enter', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
         buttonDownAny: buttonDownAny,
         originalEvent: event 
     });
+    if( stop !== false ){
+        abortControlsAutoHide( this );
+    }
 }
 
 
@@ -1337,16 +1364,20 @@ function updateOnce( viewer ) {
     }
 
     if ( !THIS[ viewer.hash ].animating && animated ) {
-        viewer.raiseEvent( "animationstart" );
+        if( false === viewer.raiseEvent( "animationstart" ) ){
+            return;
+        }
         abortControlsAutoHide( viewer );
     }
 
     if ( animated ) {
+        if( false === viewer.raiseEvent( "animation" ) ){
+            return;
+        }
         viewer.drawer.update();
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
-        viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
         if( viewer.navigator ){
@@ -1356,7 +1387,9 @@ function updateOnce( viewer ) {
     } 
 
     if ( THIS[ viewer.hash ].animating && !animated ) {
-        viewer.raiseEvent( "animationfinish" );
+        if( false === viewer.raiseEvent( "animationfinish" ) ){
+            return;
+        }
 
         if ( !THIS[ viewer.hash ].mouseInside ) {
             beginControlsAutoHide( viewer );
