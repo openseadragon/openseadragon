@@ -2,9 +2,7 @@
 
 /**
  * For use by classes which want to support custom, non-browser events.
- * TODO: This is an aweful name!  This thing represents an "event source",
- *       not an "event handler".  PLEASE change the to EventSource. Also please 
- *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind', 
+ * TODO: Consider  mapping 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind', 
  *       'unbind', and 'trigger' respectively.  Finally add a method 'one' which
  *       automatically unbinds a listener after the first triggered event that 
  *       matches.
@@ -66,53 +64,87 @@ $.EventHandler.prototype = {
     }, 
 
 
-    /**
-     * Retrive the list of all handlers registered for a given event.
-     * @function
-     * @param {String} eventName - Name of event to get handlers for.
-     */
-    getHandler: function( eventName ) {
-        var events = this.events[ eventName ]; 
-        if ( !events || !events.length ){ 
-            return null; 
-        }
-        events = events.length === 1 ? 
-            [ events[ 0 ] ] : 
-            Array.apply( null, events );
-        return function( source, args ) {
-            var i, 
-                length = events.length,
-                stop;
-            for ( i = 0; i < length; i++ ) {
-                if( $.isFunction( events[ i ] ) {
-                    stop = events[ i ].apply( source, args );
-                    if( stop === false ){
-                        return stop;
-                    }
-                }
-            }
-        };
-    },
 
     /**
-     * Trigger an event, optionally passing additional information.
+     * Trigger an event, optionally passing additional information. 
      * @function
-     * @param {String} eventName - Name of event to register.
-     * @param {Function} handler - Function to call when event is triggered.
+     * @param {String} eventName - Name of event to trigger.
      */
-    raiseEvent: function( eventName, eventArgs ) {
+    raiseEvent: function( eventName ) {
         //uncomment if you want to get a log og all events
         //$.console.log( eventName );
-        var handler = this.getHandler( eventName );
+        var handler = getHandler( this, eventName ),
+            eventArg,
+            allArgs,
+            i;
 
         if ( handler ) {
-            if ( !eventArgs ) {
-                eventArgs = {};
+            if( arguments.length > 1 ){
+                eventArg = arguments[ 1 ];
+            } else {
+                eventArg = {};
+            }
+            allArgs = [ eventArg ];
+            if( arguments.length > 2 ){
+                for( i = 0; i < arguments.length; i++ ){
+                    allArgs[ i ] = arguments[ i + 2 ];
+                }
             }
 
-            return handler( this, eventArgs );
+            return handler( this, allArgs );
         }
     }
 };
+
+
+/**
+ * Retrive the list of all handlers registered for a given event.
+ * @private
+ * @inner
+ * @param {String} eventName - Name of event to get handlers for.
+ */
+function getHandler( handler, eventName ) {
+    var events = handler.events[ eventName ]; 
+    if ( !events || !events.length ){ 
+        return null; 
+    }
+
+    return function( source, allArgs ) {
+        var i, 
+            length = events.length,
+            stopPropagation,
+            preventDefault,
+            returnValue,
+            eventArg = arguments;
+        //Dress up the primary 'event' argument to provide the usual
+        //stopPropagation and preventDefault functions.
+        if( allArgs && allArgs.length ){
+            allArgs[0].stopProgagation = function(){
+                stopPropagation = true;
+            };
+            allArgs[0].preventDefault = function(){
+                preventDefault = true;
+            };
+        } else {
+            allArgs = [];
+        }
+        for ( i = 0; i < length; i++ ) {
+            if( $.isFunction( events[ i ] ) ) {
+                returnValue = events[ i ].apply( source, allArgs );
+                //stopping propagation isnt dom related, only implying that the chaing
+                //of registered event handlers for this event will be inturrupted.
+                if( stopPropagation === true || length === i + 1 ){
+                    if( preventDefault || false === returnValue ){
+                        //the implementing class that invoked raiseEvent may choose
+                        //to use the return value of false to prevent the default 
+                        //behavior that would normally occur after the event was invoked
+                        return false;
+                    }
+                }
+            }
+        }
+    };
+}
+
 
 }( OpenSeadragon ));

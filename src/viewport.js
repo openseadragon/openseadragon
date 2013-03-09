@@ -78,7 +78,7 @@ $.Viewport.prototype = {
      */
     resetContentSize: function( contentSize ){
         if( this.viewer ){
-            if( false === this.viewer.raiseEvent( 'reset', { contentSize: contentSize } ) ){
+            if( this.viewer.raiseEvent( 'reset', { contentSize: contentSize } ) ){
                 //cancel event
                 return this;
             }
@@ -133,7 +133,7 @@ $.Viewport.prototype = {
      */
     goHome: function( immediately ) {
         if( this.viewer ){
-            if( false === this.viewer.raiseEvent( 'home', { immediately: immediately } ) ){
+            if( this.viewer.raiseEvent( 'home', { immediately: immediately } ) ){
                 //cancel event
                 return this;
             }

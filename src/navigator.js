@@ -238,7 +238,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  * @inner
  * @function
  */
-function onCanvasClick( tracker, position, quick, shift ) {
+function onCanvasClick( tracker, position, quick, shift, originalEvent ) {
     this.displayRegion.focus();
 }
 
@@ -248,7 +248,7 @@ function onCanvasClick( tracker, position, quick, shift ) {
  * @inner
  * @function
  */
-function onCanvasDrag( tracker, position, delta, shift ) {
+function onCanvasDrag( tracker, position, delta, shift, originalEvent ) {
     if ( this.viewer.viewport ) {
         if( !this.panHorizontal ){
             delta.x = 0;
@@ -270,7 +270,7 @@ function onCanvasDrag( tracker, position, delta, shift ) {
  * @inner
  * @function
  */
-function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease, originalEvent ) {
     if ( insideElementPress && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
@@ -282,7 +282,7 @@ function onCanvasRelease( tracker, position, insideElementPress, insideElementRe
  * @inner
  * @function
  */
-function onCanvasScroll( tracker, position, scroll, shift ) {
+function onCanvasScroll( tracker, position, scroll, shift, originalEvent ) {
     var factor;
     if ( this.viewer.viewport ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
