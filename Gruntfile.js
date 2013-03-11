@@ -60,7 +60,10 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                banner: "/**\n * @version  <%= pkg.name %> <%= pkg.version %>\n */\n\n"
+                banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
+                    + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
+                    + "//! http://openseadragon.github.com\n\n",
+                process: true
             },
             dist: {
                 src:  [ "<banner>" ].concat(sources),
@@ -68,6 +71,9 @@ module.exports = function(grunt) {
             }
         },
         uglify: {
+            options: {
+                preserveComments: "some"
+            },
             openseadragon: {
                 src: [ distribution ],
                 dest: minified
