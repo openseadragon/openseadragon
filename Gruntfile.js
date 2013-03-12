@@ -113,7 +113,7 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            files: [ "grunt.js", "src/*.js" ],
+            files: [ "Gruntfile.js", "src/*.js", "images/*" ],
             tasks: "build"
         },
         jshint: {
