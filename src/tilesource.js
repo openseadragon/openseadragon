@@ -65,7 +65,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
             height: args[1],
             tileSize: args[2],
             tileOverlap: args[3],
-            minlevel: args[4],
+            minLevel: args[4],
             maxLevel: args[5]
         };
     }
