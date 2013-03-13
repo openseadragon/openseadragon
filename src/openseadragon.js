@@ -1,4 +1,6 @@
 /**
+ * @version  <%= pkg.name %> <%= pkg.version %>
+ * 
  * @fileOverview 
  * <h2>
  * <strong>
