@@ -474,8 +474,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             constrainDuringPan:     false,
             wrapHorizontal:         false,
             wrapVertical:           false,
-            visibilityRatio:        0.5,
-            minPixelRatio:          0.9,
+            visibilityRatio:        0.5, //-> how much of the viewer can be negative space
+            minPixelRatio:          1, //->closer to 0 draws tiles meant for a higher zoom at this zoom
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null, 
@@ -488,12 +488,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             zoomPerScroll:          1.2,
             zoomPerSecond:          1.0,
             animationTime:          1.2,
-            blendTime:              0.1,
+            blendTime:              0,
             alwaysBlend:            false,
             autoHideControls:       true,
             immediateRender:        false,
-            minZoomImageRatio:      0.9,
-            maxZoomPixelRatio:      1.1,
+            minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
+            maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
