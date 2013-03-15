@@ -503,7 +503,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:          true, //promoted to default in 0.9.64
-            navigatorElement:       null,
+            navigatorId:            null,
             navigatorHeight:        null,
             navigatorWidth:         null,
             navigatorPosition:      null,

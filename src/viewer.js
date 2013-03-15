@@ -230,7 +230,7 @@ $.Viewer = function( options ) {
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
             this.customControls[ i ].id, 
-            this.customControls[ i ].anchor
+            {anchor: this.customControls[ i ].anchor}
         );
     }
 
@@ -432,7 +432,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         //Instantiate a navigator if configured
         if ( this.showNavigator  && ! this.navigator && !this.collectionMode ){
             this.navigator = new $.Navigator({
-                id:          this.navigatorElement,
+                id:          this.navigatorId,
                 position:    this.navigatorPosition,
                 sizeRatio:   this.navigatorSizeRatio,
                 height:      this.navigatorHeight,
@@ -883,12 +883,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 if( this.toolbar ){
                     this.toolbar.addControl( 
                         this.pagingControl, 
-                        $.ControlAnchor.BOTTOM_RIGHT  
+                        {anchor: $.ControlAnchor.BOTTOM_RIGHT}
                     );
                 }else{
                     this.addControl( 
                         this.pagingControl, 
-                        $.ControlAnchor.TOP_LEFT 
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1005,12 +1005,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 if( this.toolbar ){
                     this.toolbar.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.TOP_LEFT  
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }else{
                     this.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.TOP_LEFT 
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1135,7 +1135,9 @@ function updateControlsFade( viewer ) {
         opacity = Math.max( 0.0, opacity );
 
         for ( i = viewer.controls.length - 1; i >= 0; i--) {
-            viewer.controls[ i ].setOpacity( opacity );
+            if (viewer.controls[ i ].autoFade) {
+                viewer.controls[ i ].setOpacity( opacity );
+            }
         }
 
         if ( opacity > 0 ) {

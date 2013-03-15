@@ -97,7 +97,7 @@ $.ReferenceStrip = function( options ){
         this.element.style.height = options.height + 'px';
         viewer.addControl( 
             this.element, 
-            $.ControlAnchor.BOTTOM_LEFT
+            {anchor: $.ControlAnchor.BOTTOM_LEFT}
         );
     } else {
         if( "horizontal" == options.scroll ){
@@ -114,7 +114,7 @@ $.ReferenceStrip = function( options ){
 
             viewer.addControl( 
                 this.element, 
-                $.ControlAnchor.BOTTOM_LEFT
+                {anchor: $.ControlAnchor.BOTTOM_LEFT}
             );
         }else {
             this.element.style.height = ( 
@@ -130,7 +130,7 @@ $.ReferenceStrip = function( options ){
 
             viewer.addControl( 
                 this.element, 
-                $.ControlAnchor.TOP_LEFT
+                {anchor: $.ControlAnchor.TOP_LEFT}
             );
 
         }

@@ -32,9 +32,12 @@ $.ControlAnchor = {
  * @property {Element} wrapper - a nuetral element surrounding the control 
  *  element.
  */
-$.Control = function ( element, anchor, container ) {
+$.Control = function ( element, options, container ) {
+    var parent = element.parentNode;
+    options.attachToViewer = (typeof options.attachToViewer === 'undefined') ? true : options.attachToViewer;
+    this.autoFade = (typeof options.autoFade === 'undefined') ? true : options.autoFade;
     this.element    = element;
-    this.anchor     = anchor;
+    this.anchor     = options.anchor;
     this.container  = container;
     this.wrapper    = $.makeNeutralElement( "span" );
     this.wrapper.style.display = "inline-block";
@@ -45,14 +48,18 @@ $.Control = function ( element, anchor, container ) {
         this.wrapper.style.width = this.wrapper.style.height = "100%";    
     }
 
-    if ( this.anchor == $.ControlAnchor.TOP_RIGHT || 
-         this.anchor == $.ControlAnchor.BOTTOM_RIGHT ) {
-        this.container.insertBefore( 
-            this.wrapper, 
-            this.container.firstChild 
-        );
+    if (options.attachToViewer ) {
+        if ( this.anchor == $.ControlAnchor.TOP_RIGHT ||
+             this.anchor == $.ControlAnchor.BOTTOM_RIGHT ) {
+            this.container.insertBefore(
+                this.wrapper,
+                this.container.firstChild
+            );
+        } else {
+            this.container.appendChild( this.wrapper );
+        }
     } else {
-        this.container.appendChild( this.wrapper );
+        parent.appendChild( this.wrapper );
     }
 };
 

@@ -24,9 +24,19 @@ $.Navigator = function( options ){
     if( !options.id ){
         options.id              = 'navigator-' + (+new Date());
         this.element            = $.makeNeutralElement( "div" );
-        this.element.id         = options.id;
-        this.element.className  = 'navigator';
+        options.controlOptions  = {anchor:           $.ControlAnchor.TOP_RIGHT,
+                                   attachToViewer:   true,
+                                   autoFade:         true};
     }
+    else
+    {
+        this.element            = document.getElementById( options.id );
+        options.controlOptions  = {anchor:           $.ControlAnchor.NONE,
+                                   attachToViewer:   false,
+                                   autoFade:         false};
+    }
+    this.element.id         = options.id;
+    this.element.className  += ' navigator';
 
     options = $.extend( true, {
         sizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
@@ -179,7 +189,7 @@ $.Navigator = function( options ){
 
     viewer.addControl( 
         this.element, 
-        $.ControlAnchor.TOP_RIGHT 
+        options.controlOptions
     );
 
     if( options.width && options.height ){

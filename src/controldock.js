@@ -54,7 +54,7 @@
         /**
          * @function
          */
-        addControl: function ( element, anchor ) {
+        addControl: function ( element, controlOptions ) {
             element = $.getElement( element );
             var div = null;
 
@@ -62,7 +62,7 @@
                 return;     // they're trying to add a duplicate control
             }
 
-            switch ( anchor ) {
+            switch ( controlOptions.anchor ) {
                 case $.ControlAnchor.TOP_RIGHT:
                     div = this.controls.topright;
                     element.style.position = "relative";
@@ -96,7 +96,7 @@
             }
 
             this.controls.push(
-                new $.Control( element, anchor, div )
+                new $.Control( element, controlOptions, div )
             );
             element.style.display = "inline-block";
         },
