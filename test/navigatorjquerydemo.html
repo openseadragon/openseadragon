@@ -1,0 +1,64 @@
+<html>
+    <head>
+    <title>OpenSeadragon Expose Origina Event Demo</title>
+    <script type="text/javascript" src='openseadragon/build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='jquery-1.9.1.min.js'></script>
+        <script type="text/javascript" src='jquery-ui-1.10.2.custom/js/jquery-ui-1.10.2.custom.min.js'></script>
+        <link rel="stylesheet" type="text/css" href="jquery-ui-1.10.2.custom/css/smoothness/jquery-ui-1.10.2.custom.min.css"/>
+    <style type="text/css">
+      .openseadragon
+      {
+      width:      800px;
+      height:     600px;
+      border:     1px solid black;
+      color:      #333; /* text color for messages */
+      background-color: black;
+      }
+      .openseadragon-small
+      {
+      width:      40px;
+      height:     30px;
+      border:     1px solid black;
+      color:      #333; /* text color for messages */
+      background-color: black;
+      }
+      
+    </style>
+</head>
+<body>
+    <div class="demoarea">
+    <div>
+       Simple demo page to verify that event handlers pass along the original source event
+    </div>
+    <div id="contentDiv" class="openseadragon"></div>
+        <div id="navigatorDialog">
+    <div id="navigatorDiv" class="findme"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+    $('#navigatorDialog').dialog();
+
+    var viewer = OpenSeadragon({
+        id:"contentDiv",
+        navigatorId: "navigatorDiv",
+        prefixUrl:"openseadragon/build/openseadragon/images/",
+        tileSources:{
+             Image:{
+                xmlns:"http://schemas.microsoft.com/deepzoom/2008",
+                Url:"example-images/highsmith/highsmith_files/",
+                Format:"jpg",
+                Overlap:"2",
+                TileSize:"256",
+                Size:{  
+                    Height:"9221",
+                    Width:"7026"
+                }
+            }
+        }
+    });
+
+        </script>
+    </body>
+</html>
