@@ -65,7 +65,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
             height: args[1],
             tileSize: args[2],
             tileOverlap: args[3],
-            minlevel: args[4],
+            minLevel: args[4],
             maxLevel: args[5]
         };
     }
@@ -178,6 +178,24 @@ $.TileSource.prototype = {
             ry = 1.0 / imageSizeScaled.y;
 
         return new $.Point(rx, ry);
+    },
+
+
+    /**
+     * @function
+     * @param {Number} level
+     */
+    getClosestLevel: function( rect ) {
+        var i,
+            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.tileSize ),
+            tiles;
+        for( i = this.minLevel; i < this.maxLevel; i++ ){
+            tiles = this.getNumTiles( i );
+            if( Math.max( tiles.x, tiles.y ) + 1 >= tilesPerSide ){
+                break;
+            }
+        }
+        return Math.max( 0, i - 1 );
     },
 
     /**

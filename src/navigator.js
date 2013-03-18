@@ -47,7 +47,10 @@ $.Navigator = function( options ){
         showNavigator:          false,
         mouseNavEnabled:        false,
         showNavigationControl:  false,
-        showSequenceControl:    false
+        showSequenceControl:    false,
+        immediateRender:        true,
+        blendTime:              0,
+        animationTime:          0
     });
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
@@ -247,6 +250,20 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
             }( this.displayRegion.style, this.borderWidth));
         } 
 
+    },
+
+    open: function( source ){
+        var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
+        if( source.tileSize > containerSize.x || 
+            source.tileSize > containerSize.y ){
+            this.minPixelRatio = Math.min( 
+                containerSize.x, 
+                containerSize.y 
+            ) / source.tileSize;
+        } else {
+            this.minPixelRatio = thie.viewer.minPixelRatio;
+        }
+        return $.Viewer.prototype.open.apply( this, [ source ] );
     }
 
 });
