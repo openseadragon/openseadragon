@@ -1,7 +1,7 @@
 <html>
     <head>
     <title>OpenSeadragon Expose Origina Event Demo</title>
-    <script type="text/javascript" src='openseadragon/build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../build/openseadragon/openseadragon.js'></script>
     <style type="text/css">
       .openseadragon
       {
@@ -37,11 +37,11 @@
 
     var viewer = OpenSeadragon({
         id:"contentDiv",
-        prefixUrl:"openseadragon/build/openseadragon/images/",
+        prefixUrl:"../build/openseadragon/images/",
         tileSources:{
              Image:{
                 xmlns:"http://schemas.microsoft.com/deepzoom/2008",
-                Url:"example-images/highsmith/highsmith_files/",
+                Url:"data/testpattern_files/",
                 Format:"jpg",
                 Overlap:"2",
                 TileSize:"256",

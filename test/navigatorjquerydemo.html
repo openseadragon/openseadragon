@@ -1,10 +1,10 @@
 <html>
     <head>
     <title>OpenSeadragon Expose Origina Event Demo</title>
-    <script type="text/javascript" src='openseadragon/build/openseadragon/openseadragon.js'></script>
-        <script type="text/javascript" src='jquery-1.9.1.min.js'></script>
-        <script type="text/javascript" src='jquery-ui-1.10.2.custom/js/jquery-ui-1.10.2.custom.min.js'></script>
-        <link rel="stylesheet" type="text/css" href="jquery-ui-1.10.2.custom/css/smoothness/jquery-ui-1.10.2.custom.min.css"/>
+    <script type="text/javascript" src='../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='lib/jquery-1.9.1.min.js'></script>
+        <script type="text/javascript" src='lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+        <link rel="stylesheet" type="text/css" href="lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css"/>
     <style type="text/css">
       .openseadragon
       {
@@ -43,17 +43,17 @@
     var viewer = OpenSeadragon({
         id:"contentDiv",
         navigatorId: "navigatorDiv",
-        prefixUrl:"openseadragon/build/openseadragon/images/",
+        prefixUrl:"../build/openseadragon/images/",
         tileSources:{
              Image:{
                 xmlns:"http://schemas.microsoft.com/deepzoom/2008",
-                Url:"example-images/highsmith/highsmith_files/",
+                Url:"data/testpattern_files/",
                 Format:"jpg",
                 Overlap:"2",
                 TileSize:"256",
                 Size:{  
-                    Height:"9221",
-                    Width:"7026"
+                    Height:"1000",
+                    Width:"1000"
                 }
             }
         }
