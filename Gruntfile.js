@@ -9,6 +9,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-git-describe");
 
     // ----------
     var distribution = "build/openseadragon/openseadragon.js",
@@ -65,6 +66,7 @@ module.exports = function(grunt) {
             options: {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
+                    + "//! <%= grunt.config.get('describeResult') %>\n"
                     + "//! http://openseadragon.github.com\n\n",
                 process: true
             },
@@ -130,6 +132,11 @@ module.exports = function(grunt) {
             },
             beforeconcat: sources,
             afterconcat: [ distribution ]
+        },
+        "git-describe": {
+            options: {
+                prop: "describeResult"
+            }
         }
     });
 
@@ -159,7 +166,7 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "jshint:beforeconcat", "concat", "jshint:afterconcat", "uglify", "copy:build"
+        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat", "uglify", "copy:build"
     ]);
 
     // ----------
