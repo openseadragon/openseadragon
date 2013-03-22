@@ -134,11 +134,10 @@ module.exports = function(grunt) {
             afterconcat: [ distribution ]
         },
         "git-describe": {
-            options: {
-                prop: "gitInfo"
-            },
             build: {
-                // Nothing here; we just need it in order to trigger this task
+                options: {
+                    prop: "gitInfo"
+                }
             }
         }
     });
