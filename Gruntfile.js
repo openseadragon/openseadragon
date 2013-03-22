@@ -66,7 +66,7 @@ module.exports = function(grunt) {
             options: {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
-                    + "//! <%= grunt.config.get('describeResult') %>\n"
+                    + "//! Git commit: <%= gitInfo %>\n"
                     + "//! http://openseadragon.github.com\n\n",
                 process: true
             },
@@ -135,7 +135,10 @@ module.exports = function(grunt) {
         },
         "git-describe": {
             options: {
-                prop: "describeResult"
+                prop: "gitInfo"
+            },
+            build: {
+                // Nothing here; we just need it in order to trigger this task
             }
         }
     });
