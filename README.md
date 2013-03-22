@@ -6,18 +6,6 @@ This project is a fork of the OpenSeadragon project at http://openseadragon.code
 
 http://openseadragon.github.com/
 
-## We've upgraded to Grunt 0.4.0! Please follow these directions if you've built OpenSeadragon prior to Feb 22, 2013:
-
-If you're new here, you can skip down to the "First Time Setup" section.
-
-1. If you had already installed Grunt globally, you now need to uninstall it: `npm uninstall -g grunt`
-1. Delete the `build` and `node_modules` folders in your openseadragon directory
-1. On the command line, go in to the openseadragon folder
-1. Run `npm install -g grunt-cli` (this will install the Grunt command line runner)
-1. Run `npm install`
-
-For more information on the upgrade, see http://gruntjs.com/upgrading-from-0.3-to-0.4
-
 ## First Time Setup
 
 All command-line operations are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). To get set up:
