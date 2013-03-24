@@ -24,11 +24,10 @@ QUnit.config.autostart = false;
 
         var displayRegion = $(theDisplayRegionSelector);
         var mainViewerBounds = theViewer.viewport.getBounds();
-        var borderSpaceInPixels = new OpenSeadragon.Point(theViewer.navigator.borderWidth * 2, theViewer.navigator.borderWidth * 2);
 
         var displayTopLeftLocationInPixels = new OpenSeadragon.Point(displayRegion.position().left, displayRegion.position().top);
         var displayRegionDimensionsInPixels = new OpenSeadragon.Point((displayRegion.width()),(displayRegion.height()))
-                                                               .plus(borderSpaceInPixels);
+                                                               .plus(theViewer.navigator.totalBorderWidths);
         var displayBottomRightLocationInPixels = displayTopLeftLocationInPixels.plus(displayRegionDimensionsInPixels);
 
         var displayLocationInPoints = theViewer.navigator.viewport.pointFromPixel(displayTopLeftLocationInPixels);

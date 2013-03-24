@@ -57,11 +57,15 @@ $.Navigator = function( options ){
 
     this.viewerDimensionsInPoints = viewer.viewport.deltaPointsFromPixels($.getElementSize( viewer.element));
     this.borderWidth = 2;
-    this.borderWidths = new $.Point(this.borderWidth, this.borderWidth);
+    //At some browser magnification levels the display regions lines up correctly, but at some there appears to
+    //be a one pixel gap.
+    this.fudge = new $.Point(1, 1);
+    this.totalBorderWidths = new $.Point(this.borderWidth*2, this.borderWidth*2).minus(this.fudge);
+
 
     (function( style, borderWidth ){
         style.margin        = '0px';
-        style.border        = borderWidth + 'px solid #555';
+        style.border        = borderWidth + 'px solid #FF0';
         style.padding       = '0px';
         style.background    = '#000';
         style.opacity       = 0.8;
@@ -114,80 +118,9 @@ $.Navigator = function( options ){
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
 
-
-//        clickHandler:       $.delegate( this, onCanvasClick ),
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:      $.delegate( this, onCanvasScroll )
-
-
-//        focusHandler:       function(){
-//            var point    = $.getElementPosition( _this.viewer.element );
-//
-//            window.scrollTo( 0, point.y );
-//
-////            _this.viewer.setControlsEnabled( true );
-//            (function( style ){
-//                style.border        = '2px solid #437AB2';
-//                //style.outline       = '2px auto #437AB2';
-//            }( this.element.style ));
-//
-//        },
-//        blurHandler:       function(){
-////            _this.viewer.setControlsEnabled( false );
-//            (function( style ){
-//                style.border        = '2px solid #900';
-//                //style.outline       = '2px auto #900';
-//            }( this.element.style ));
-//        },
-//        keyHandler:         function(tracker, keyCode, shiftKey){
-//            //console.log( keyCode );
-//            switch( keyCode ){
-//                case 61://=|+
-//                    _this.viewer.viewport.zoomBy(1.1);
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 45://-|_
-//                    _this.viewer.viewport.zoomBy(0.9);
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 48://0|)
-//                    _this.viewer.viewport.goHome();
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 119://w
-//                case 87://W
-//                case 38://up arrow
-//                    if (shiftKey)
-//                        _this.viewer.viewport.zoomBy(1.1);
-//                    else
-//                        _this.viewer.viewport.panBy(new $.Point(0, -0.05));
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 115://s
-//                case 83://S
-//                case 40://down arrow
-//                    if (shiftKey)
-//                        _this.viewer.viewport.zoomBy(0.9);
-//                    else
-//                        _this.viewer.viewport.panBy(new $.Point(0, 0.05));
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 97://a
-//                case 37://left arrow
-//                    _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                case 100://d
-//                case 39://right arrow
-//                    _this.viewer.viewport.panBy(new $.Point(0.05, 0));
-//                    _this.viewer.viewport.applyConstraints();
-//                    return false;
-//                default:
-//                    //console.log( 'navigator keycode %s', keyCode );
-//                    return true;
-//            }
-//        }
     }).setTracking( true ); // default state
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
@@ -234,7 +167,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
         if( viewport && this.viewport ){
             bounds      = viewport.getBounds( true );
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft());
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.borderWidths).minus(this.borderWidths);
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.totalBorderWidths);
 
             //update style for navigator-box    
             (function(style, borderWidth){
