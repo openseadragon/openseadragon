@@ -1,269 +1,353 @@
 QUnit.config.autostart = false;
-QUnit.config.testTimeout = 5000;
 
-(function() {
+(function () {
     var viewer = null;
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         start();
     });
 
-    var assessNumericValueWithSomeVariance = function (value1, value2, variance, message)
-    {
-        ok(Math.abs (value1 - value2) <= variance, message + " " + value1 + ":" + value2);
+    var assessNumericValueWithSomeVariance = function (value1, value2, variance, message) {
+        var varianceAsPortionOfTargetValue = Math.max(.03, Math.abs(value1 * variance));
+        ok(Math.abs(value1 - value2) <= varianceAsPortionOfTargetValue, message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + varianceAsPortionOfTargetValue);
     };
 
-    var assessNavigatorLocation = function (expectedX, expectedY)
-    {
-        var navigator =  $(".navigator");
+    var assessNavigatorLocation = function (expectedX, expectedY) {
+        var navigator = $(".navigator");
 
-        assessNumericValueWithSomeVariance(expectedX,navigator.offset().left,5,status + ' Navigator x position');
-        assessNumericValueWithSomeVariance(expectedY,navigator.offset().top,5,status +' Navigator y position');
+        assessNumericValueWithSomeVariance(expectedX, navigator.offset().left, .1, ' Navigator x position');
+        assessNumericValueWithSomeVariance(expectedY, navigator.offset().top, .1, ' Navigator y position');
     };
 
 
-    var assessNavigatorDisplayRegionAndMainViewerState = function (theViewer, theNavigatorSelector, theDisplayRegionSelector, status)
-    {
-        var navigator =  $(theNavigatorSelector);
-        var displayRegion =  $(theDisplayRegionSelector);
+    var assessNavigatorDisplayRegionAndMainViewerState = function (theViewer, theDisplayRegionSelector, status) {
+
+        var displayRegion = $(theDisplayRegionSelector);
         var mainViewerBounds = theViewer.viewport.getBounds();
+        var borderSpaceInPixels = new OpenSeadragon.Point(theViewer.navigator.borderWidth * 2, theViewer.navigator.borderWidth * 2);
 
-        //TODO These calculation need to be tweaked for non-square images
-        assessNumericValueWithSomeVariance(mainViewerBounds.width,displayRegion.width() / navigator.width(),.025,status + ' Width synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.height,displayRegion.height() / navigator.height(),.025,status +' Height synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.x,displayRegion.position().left / navigator.width(),.025,status + ' Left synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.y,displayRegion.position().top /navigator.height(),.025,status + ' Top synchronization');
+        var displayTopLeftLocationInPixels = new OpenSeadragon.Point(displayRegion.position().left, displayRegion.position().top);
+        var displayRegionDimensionsInPixels = new OpenSeadragon.Point((displayRegion.width()),(displayRegion.height()))
+                                                               .plus(borderSpaceInPixels);
+        var displayBottomRightLocationInPixels = displayTopLeftLocationInPixels.plus(displayRegionDimensionsInPixels);
+
+        var displayLocationInPoints = theViewer.navigator.viewport.pointFromPixel(displayTopLeftLocationInPixels);
+        var displayRegionDimensionsInPoints = theViewer.navigator.viewport.pointFromPixel(displayBottomRightLocationInPixels).minus(displayLocationInPoints);
+
+        assessNumericValueWithSomeVariance(mainViewerBounds.width, displayRegionDimensionsInPoints.x, .05, status + ' Width synchronization');
+        assessNumericValueWithSomeVariance(mainViewerBounds.height, displayRegionDimensionsInPoints.y, .05, status + ' Height synchronization');
+        assessNumericValueWithSomeVariance(mainViewerBounds.x, displayLocationInPoints.x, .05, status + ' Left synchronization');
+        assessNumericValueWithSomeVariance(mainViewerBounds.y, displayLocationInPoints.y, .05, status + ' Top synchronization');
     };
 
     var filterToDetectThatDisplayRegionHasBeenDrawn = function () {
         var self = $(this);
-        OpenSeadragon.console.log( "Checking:" + self.html + "\n");
         return self.width() > 0 &&
             self.height() > 0 &&
-           (typeof self.position !== 'undefined');
+            (typeof self.position() !== 'undefined');
     };
 
     var waitUntilFilterSatisfied = function () {
         return function () {
-            var found = false;
-            var cancel = false;
             return function (selector, filterfunction, handler, recursiveCall, count) {
-                if (recursiveCall !== true)
-                {
-                    found = false;
-                    cancel = false;
+                var found;
+                if (recursiveCall !== true) {
                     count = 0;
                 }
                 var $this = $(selector).filter(filterfunction);
                 found = found || $this.length > 0;
-                if (!found && !cancel && count < 20) {
+                if (!found && count < 20) {
                     setTimeout(function () {
                         count++;
                         waitUntilFilterSatisfied(selector, filterfunction, handler, true, count);
                     }, 50)
                 }
                 else {
-                    if (!cancel) {
-                        cancel = true;
-                        handler();
-                    }
-                    return $this;
+                    handler();
                 }
-                return $this;
             };
         }();
     }();
 
-    var waitForDrawer = function () {
+    var waitForViewer = function () {
         return function () {
-            var drawerDone = false;
-            var cancel = false;
-            return function (theViewer, handler, recursiveCall, count) {
-                if (recursiveCall !== true)
-                {
-                    drawerDone = false;
-                    cancel = false;
+            return function (theViewer, handler, targetPropery, viewportFunctionToInspectTargetProperty, recursiveCall, count) {
+                var propertyAchieved = false;
+                if (recursiveCall !== true) {
                     count = 0;
                 }
-                drawerDone = drawerDone || !theViewer.drawer.needsUpdate();
-                if (!drawerDone && !cancel && count < 20) {
+                if (typeof viewportFunctionToInspectTargetProperty === "function") {
+                    try
+                    {
+                        propertyAchieved = targetPropery === viewportFunctionToInspectTargetProperty.call(theViewer.viewport, true);
+                    }
+                    catch(err)
+                    {
+                        //Ignore.  Subsequent code will try again shortly
+                    }
+                }
+                if ((theViewer.drawer === null || theViewer.drawer.needsUpdate() || !propertyAchieved) && count < 40) {
                     count++;
-                        setTimeout(function () {
-                        waitForDrawer(theViewer, handler, true, count);
+                    setTimeout(function () {
+                        waitForViewer(theViewer, handler, targetPropery, viewportFunctionToInspectTargetProperty, true, count);
                     }, 50)
                 }
                 else {
-                    if (!cancel) {
-                        cancel = true;
-                        handler();
-                    }
-                    return;
+                    handler();
                 }
-                return;
             };
         }();
     }();
 
-    module( "navigator", {
-      setup: function() {
-          QUnit.config.testTimeout = 5000;
-          if ($('#exampleNavigator').is(':ui-dialog'))
-          {
-              $('#exampleNavigator').dialog('destroy');
-          }
-        $("#example").empty();
-        $("#exampleNavigator").empty();
-      }, teardown: function() {
-            viewer.removeAllHandlers('animationfinish');
-      }
+    var assessNavigatorViewerPlacement = function (seadragonProperties, testProperties) {
+        viewer = OpenSeadragon(seadragonProperties);
+
+        var assessNavigatorAfterDrag = function () {
+            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After pan");
+            start();
+        };
+
+        var assessNavigatorAfterZoom = function () {
+            var target = new OpenSeadragon.Point(0.4, 0.4);
+            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After image zoom");
+            viewer.viewport.panTo(target);
+            waitForViewer(viewer, assessNavigatorAfterDrag, target, viewer.viewport.getCenter);
+        };
+
+        var captureInitialStateAfterOpenAndThenAct = function () {
+            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After image load");
+
+            testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
+
+            viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
+            waitForViewer(viewer, assessNavigatorAfterZoom, 2, viewer.viewport.getZoom);
+        };
+
+        var proceedOnceTheIntialImagesAreLoaded = function () {
+            waitUntilFilterSatisfied(testProperties.displayRegionLocator, filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
+        };
+
+        var waitForNavigator = function () {
+            waitForViewer(viewer.navigator, proceedOnceTheIntialImagesAreLoaded);
+        };
+
+        var openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            waitForViewer(viewer, waitForNavigator);
+        };
+
+        viewer.addHandler('open', openHandler);
+
+    };
+
+    module("navigator", {
+        setup:function () {
+            //TODO This is alonger than is ideal so the tests will pass cleanly under Safari
+            QUnit.config.testTimeout = 20000;
+            if (viewer != null) {
+                viewer.close();
+            }
+            if ($('#exampleNavigator').is(':ui-dialog')) {
+                $('#exampleNavigator').dialog('destroy');
+            }
+            $("#exampleNavigator").remove();
+            $(".navigator").remove();
+            $("#example").empty();
+            $("#tallexample").empty();
+            $("#wideexample").empty();
+            $("#example").parent().append('<div id="exampleNavigator"></div>');
+
+        }
     });
 
     asyncTest('ZoomAndDragOnCustomNavigatorLocation', function () {
-        viewer = OpenSeadragon({
-            id:'example',
-            navigatorId:'exampleNavigator',
-            prefixUrl:'/build/openseadragon/images/',
-            tileSources:'/test/data/testpattern.dzi',
-            showNavigator:true
-        });
-
-        var assessNavigatorAfterDrag = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After pan");
-            start();
-        };
-
-        var assessNavigatorAfterZoom = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After image zoom");
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.1, 0.1));
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterDrag)},1000);
-        };
-
-        var captureInitialStateAfterOpenAndThenAct = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After image load");
-
-            var mainViewerElement = $('#example');
-            assessNavigatorLocation(mainViewerElement.offset().left,
-                                    mainViewerElement.offset().top + mainViewerElement.height() );
-
-            viewer.viewport.zoomTo(2);
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterZoom)},1000);
-        };
-
-        var proceedOnceTheIntialImagesAreLoaded = function () {
-            waitUntilFilterSatisfied('#exampleNavigator .displayregion', filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
-        };
-
-        var waitForNavigator = function () {
-            waitForDrawer(viewer.navigator, proceedOnceTheIntialImagesAreLoaded);
-        };
-
-        var openHandler = function () {
-            viewer.removeHandler('open',openHandler );
-            waitForDrawer(viewer, waitForNavigator);
-        };
-
-        viewer.addHandler('open', openHandler);
-
-    });
-
-    asyncTest('NavigatorOnJQueryDialog', function () {
-        $('#exampleNavigator').dialog();
-
-        viewer = OpenSeadragon({
-            id:'example',
-            navigatorId:'exampleNavigator',
-            prefixUrl:'/build/openseadragon/images/',
-            tileSources:'/test/data/testpattern.dzi',
-            showNavigator:true
-        });
-
-        var assessNavigatorAfterDrag = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After pan");
-            start();
-        };
-
-        var assessNavigatorAfterZoom = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After image zoom");
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.1, 0.1));
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterDrag)},1000);
-        };
-
-
-        var captureInitialStateAfterOpenAndThenAct = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,"#exampleNavigator",".displayregion", "After image load");
-
-            var jqueryDialog = $('#exampleNavigator');
-            assessNavigatorLocation(jqueryDialog.offset().left,
-                                    jqueryDialog.offset().top);
-
-
-            viewer.viewport.zoomTo(2);
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterZoom)},1000);
-        };
-
-        var proceedOnceTheIntialImagesAreLoaded = function () {
-            waitUntilFilterSatisfied('#exampleNavigator .displayregion', filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
-        };
-
-        var waitForNavigator = function () {
-            waitForDrawer(viewer.navigator, proceedOnceTheIntialImagesAreLoaded);
-        };
-
-        var openHandler = function () {
-            viewer.removeHandler('open',openHandler );
-            waitForDrawer(viewer, waitForNavigator);
-        };
-
-        viewer.addHandler('open', openHandler);
-
+        assessNavigatorViewerPlacement({
+                id:'example',
+                navigatorId:'exampleNavigator',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/testpattern.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'#exampleNavigator .displayregion',
+                navigatorLocator:'#exampleNavigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    assessNavigatorLocation(mainViewerElement.offset().left,
+                        mainViewerElement.offset().top + mainViewerElement.height());
+                }
+            });
     });
 
     asyncTest('DefaultNavigatorLocation', function () {
-        viewer = OpenSeadragon({
-            id:'example',
-            prefixUrl:'/build/openseadragon/images/',
-            tileSources:'/test/data/testpattern.dzi',
-            showNavigator:true
-        });
+        assessNavigatorViewerPlacement({
+                id:'example',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/testpattern.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-        var assessNavigatorAfterDrag = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,".navigator",".displayregion", "After pan");
-            start();
-        };
+    asyncTest('NavigatorOnJQueryDialog', function () {
+        assessNavigatorViewerPlacement({
+                id:'example',
+                navigatorId:'exampleNavigator',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/testpattern.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'#exampleNavigator .displayregion',
+                navigatorLocator:'#exampleNavigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var jqueryDialog = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(jqueryDialog.offset().left,
+                        jqueryDialog.offset().top);
+                }
+            });
+    });
 
-        var assessNavigatorAfterZoom = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,".navigator",".displayregion", "After image zoom");
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.1, 0.1));
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterDrag)},1000);
-        };
+    asyncTest('DefaultNavigatorLocationWithWideImageSquareViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'example',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/wide.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-        var captureInitialStateAfterOpenAndThenAct = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer,".navigator",".displayregion", "After image load");
+    asyncTest('DefaultNavigatorLocationWithWideImageTallViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'tallexample',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/wide.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-            var mainViewerElement = $('#example');
-            var navigatorElement = $('.navigator');
-            assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                                    mainViewerElement.offset().top);
+    asyncTest('DefaultNavigatorLocationWithWideImageWideViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'wideexample',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/wide.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-            viewer.viewport.zoomTo(2);
-            setTimeout(function() {waitForDrawer(viewer.navigator, assessNavigatorAfterZoom)},1000);
-        };
+    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'example',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/tall.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-        var proceedOnceTheIntialImagesAreLoaded = function () {
-            waitUntilFilterSatisfied('.navigator .displayregion', filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
-        };
+    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'example',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/tall.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-        var waitForNavigator = function () {
-            waitForDrawer(viewer.navigator, proceedOnceTheIntialImagesAreLoaded);
-        };
+    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'tallexample',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/tall.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
+    });
 
-        var openHandler = function () {
-            viewer.removeHandler('open',openHandler );
-            waitForDrawer(viewer, waitForNavigator);
-         };
-
-        viewer.addHandler('open', openHandler);
-
+    asyncTest('DefaultNavigatorLocationWithTallImageWideViewer', function () {
+        assessNavigatorViewerPlacement({
+                id:'wideexample',
+                prefixUrl:'/build/openseadragon/images/',
+                tileSources:'/test/data/tall.dzi',
+                showNavigator:true
+            },
+            {
+                displayRegionLocator:'.navigator .displayregion',
+                navigatorLocator:'.navigator',
+                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
+                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    var navigatorElement = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                        mainViewerElement.offset().top);
+                }
+            });
     });
 
 
@@ -273,7 +357,6 @@ QUnit.config.testTimeout = 5000;
 
     //Other tests that require additional sample images
     //Switch content, make sure things work
-    //Try images with different shapes (i.e. including wide and tall)
 
     //Other tests that require a reasonable event simulation approachj
     //Test autohide
