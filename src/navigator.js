@@ -57,6 +57,7 @@ $.Navigator = function( options ){
 
     this.viewerDimensionsInPoints = viewer.viewport.deltaPointsFromPixels($.getElementSize( viewer.element));
     this.borderWidth = 2;
+    this.borderWidths = new $.Point(this.borderWidth, this.borderWidth);
 
     (function( style, borderWidth ){
         style.margin        = '0px';
@@ -232,8 +233,8 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
         if( viewport && this.viewport ){
             bounds      = viewport.getBounds( true );
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight() );
+            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft());
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.borderWidths).minus(this.borderWidths);
 
             //update style for navigator-box    
             (function(style, borderWidth){
@@ -241,8 +242,8 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
 
-                var width = Math.abs( topleft.x - bottomright.x ) - (borderWidth);
-                var height = Math.abs( topleft.y - bottomright.y ) - (borderWidth);
+                var width = Math.abs( topleft.x - bottomright.x );
+                var height = Math.abs( topleft.y - bottomright.y );
                 // make sure width and height are non-negative so IE doesn't throw
                 style.width  = Math.max( width, 0 ) + 'px';
                 style.height = Math.max( height, 0 ) + 'px';
