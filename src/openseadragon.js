@@ -1850,10 +1850,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectNode,
             i;
 
-        if ( !imageFormatSupported( fileFormat ) ) {
-            throw new Error(
-                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
-            );
+        if (!$.imageFormatSupported(fileFormat)) {
+            throw new Error($.getString("Errors.ImageFormat", fileFormat.toUpperCase()));
         }
 
         for ( i = 0; i < dispRectNodes.length; i++ ) {
