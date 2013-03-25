@@ -12,6 +12,11 @@ QUnit.config.autostart = false;
         ok(Math.abs(value1 - value2) <= varianceAsPortionOfTargetValue, message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + varianceAsPortionOfTargetValue);
     };
 
+    var assessNumericValueWithFixedVariance = function (value1, value2, variance, message) {
+        ok(Math.abs(value1 - value2) <= variance, message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
+    };
+
+
     var assessNavigatorLocation = function (expectedX, expectedY) {
         var navigator = $(".navigator");
 
@@ -32,6 +37,58 @@ QUnit.config.autostart = false;
 
         var displayLocationInPoints = theViewer.navigator.viewport.pointFromPixel(displayTopLeftLocationInPixels);
         var displayRegionDimensionsInPoints = theViewer.navigator.viewport.pointFromPixel(displayBottomRightLocationInPixels).minus(displayLocationInPoints);
+
+        //Begin Experiment
+
+        var navigator = $(".navigator");
+        var mainContainer = $(theViewer.container);
+        var maxHeightFactor = 1;
+        var navigatorAspectRatio = navigator.height() /navigator.width();
+        var spaceFromLeftEdgeOfViewerToContentStart = 0;
+        var spaceFromTopEdgeOfViewerToContentStart = 0;
+        var leftScalingFactor = navigatorAspectRatio * theViewer.source.aspectRatio;
+        if (theViewer.source.aspectRatio < 1)
+        {
+            //TALL
+            if (theViewer.source.aspectRatio < navigatorAspectRatio)
+            {
+                maxHeightFactor =  theViewer.source.aspectRatio * navigatorAspectRatio;
+            }
+            else
+            {
+                maxHeightFactor =  theViewer.source.aspectRatio;
+            }
+            spaceFromLeftEdgeOfViewerToContentStart = ((1/maxHeightFactor)-1) / 2 * maxHeightFactor * navigator.width();
+        }
+        else
+        {
+            if (theViewer.source.aspectRatio < navigatorAspectRatio)
+            {
+                spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/theViewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
+            }
+            else
+            {
+                spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/theViewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
+                leftScalingFactor = 1;
+            }
+//            spaceFromTopEdgeOfViewerToContentStart =  (1 - (1/theViewer.source.aspectRatio)) / 2 * (1-(1/theViewer.source.aspectRatio)) * navigator.height();
+        }
+
+        var expectedDisplayRegionWidth = navigator.width() / theViewer.viewport.getZoom() * maxHeightFactor;
+        var expectedDisplayRegionHeight = navigator.height() / theViewer.viewport.getZoom() * maxHeightFactor;
+
+        var expectedDisplayRegionXLocation = mainViewerBounds.x * maxHeightFactor * navigator.width()   + spaceFromLeftEdgeOfViewerToContentStart;
+//        var expectedDisplayRegionYLocation = mainViewerBounds.y * (1/theViewer.source.aspectRatio) * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;
+        var expectedDisplayRegionYLocation = mainViewerBounds.y *  leftScalingFactor * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;        //navigatorAspectRatio * theViewer.source.aspectRatio
+
+        assessNumericValueWithFixedVariance(expectedDisplayRegionWidth, displayRegionDimensionsInPixels.x, 2, status + ' Experimental Width synchronization');
+        assessNumericValueWithFixedVariance(expectedDisplayRegionHeight, displayRegionDimensionsInPixels.y, 2, status + ' Experimental Height synchronization');
+
+        assessNumericValueWithFixedVariance(expectedDisplayRegionXLocation, displayTopLeftLocationInPixels.x, 2, status + ' Experimental Left synchronization');
+        assessNumericValueWithFixedVariance(expectedDisplayRegionYLocation, displayTopLeftLocationInPixels.y, 2, status + ' Experimental Top synchronization');
+
+
+        //End Experiment
 
         assessNumericValueWithSomeVariance(mainViewerBounds.width, displayRegionDimensionsInPoints.x, .05, status + ' Width synchronization');
         assessNumericValueWithSomeVariance(mainViewerBounds.height, displayRegionDimensionsInPoints.y, .05, status + ' Height synchronization');
@@ -292,26 +349,7 @@ QUnit.config.autostart = false;
             });
     });
 
-    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
-        assessNavigatorViewerPlacement({
-                id:'example',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/tall.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
-                }
-            });
-    });
-
-    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
+    asyncTest('DefaultNavigatorLocationWithTallImageTallViewer', function () {
         assessNavigatorViewerPlacement({
                 id:'tallexample',
                 prefixUrl:'/build/openseadragon/images/',
