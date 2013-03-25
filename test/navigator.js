@@ -2,54 +2,83 @@ QUnit.config.autostart = false;
 
 (function () {
     var viewer = null;
+    var displayRegion = null;
+    var navigator = null;
+    var navigatorAspectRatio = null;
+    var leftScalingFactor = null;
+
+    module("navigator", {
+        setup:function () {
+            //This is longer than is ideal so the tests will pass cleanly under Safari
+            QUnit.config.testTimeout = 20000;
+            resetDom();
+            resetTestVariables();
+        }
+    });
 
     $(document).ready(function () {
         start();
     });
 
-    var assessNumericValueWithSomeVariance = function (value1, value2, variance, message) {
-        var varianceAsPortionOfTargetValue = Math.max(.03, Math.abs(value1 * variance));
-        ok(Math.abs(value1 - value2) <= varianceAsPortionOfTargetValue, message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + varianceAsPortionOfTargetValue);
+    var resetTestVariables = function()
+    {
+         if (viewer != null) {
+             viewer.close();
+         }
+         displayRegion = null;
+         navigator = null;
+         navigatorAspectRatio = null;
+         leftScalingFactor = null;
     };
 
-    var assessNumericValueWithFixedVariance = function (value1, value2, variance, message) {
+    var resetDom = function()
+    {
+        if ($('#exampleNavigator').is(':ui-dialog')) {
+            $('#exampleNavigator').dialog('destroy');
+        }
+        $("#exampleNavigator").remove();
+        $(".navigator").remove();
+        $("#example").empty();
+        $("#tallexample").empty();
+        $("#wideexample").empty();
+        $("#example").parent().append('<div id="exampleNavigator"></div>');
+    };
+
+    var assessNumericValueWithSomeVariance = function (value1, value2, variance, message) {
         ok(Math.abs(value1 - value2) <= variance, message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
     };
-
 
     var assessNavigatorLocation = function (expectedX, expectedY) {
         var navigator = $(".navigator");
 
-        assessNumericValueWithSomeVariance(expectedX, navigator.offset().left, .1, ' Navigator x position');
-        assessNumericValueWithSomeVariance(expectedY, navigator.offset().top, .1, ' Navigator y position');
+        assessNumericValueWithSomeVariance(expectedX, navigator.offset().left, 4, ' Navigator x position');
+        assessNumericValueWithSomeVariance(expectedY, navigator.offset().top, 4, ' Navigator y position');
     };
 
 
     var assessNavigatorDisplayRegionAndMainViewerState = function (theViewer, theDisplayRegionSelector, status) {
 
-        var displayRegion = $(theDisplayRegionSelector);
-        var mainViewerBounds = theViewer.viewport.getBounds();
-
+        if (displayRegion === null)
+        {
+            displayRegion = $(theDisplayRegionSelector);
+        }
+        if (navigator === null)
+        {
+            navigator = $(".navigator");
+            navigatorAspectRatio = navigator.height() /navigator.width();
+            leftScalingFactor = navigatorAspectRatio * theViewer.source.aspectRatio;
+        }
         var displayTopLeftLocationInPixels = new OpenSeadragon.Point(displayRegion.position().left, displayRegion.position().top);
         var displayRegionDimensionsInPixels = new OpenSeadragon.Point((displayRegion.width()),(displayRegion.height()))
                                                                .plus(theViewer.navigator.totalBorderWidths);
-        var displayBottomRightLocationInPixels = displayTopLeftLocationInPixels.plus(displayRegionDimensionsInPixels);
 
-        var displayLocationInPoints = theViewer.navigator.viewport.pointFromPixel(displayTopLeftLocationInPixels);
-        var displayRegionDimensionsInPoints = theViewer.navigator.viewport.pointFromPixel(displayBottomRightLocationInPixels).minus(displayLocationInPoints);
+        var mainViewerBounds = theViewer.viewport.getBounds();
 
-        //Begin Experiment
-
-        var navigator = $(".navigator");
-        var mainContainer = $(theViewer.container);
         var maxHeightFactor = 1;
-        var navigatorAspectRatio = navigator.height() /navigator.width();
         var spaceFromLeftEdgeOfViewerToContentStart = 0;
         var spaceFromTopEdgeOfViewerToContentStart = 0;
-        var leftScalingFactor = navigatorAspectRatio * theViewer.source.aspectRatio;
         if (theViewer.source.aspectRatio < 1)
         {
-            //TALL
             if (theViewer.source.aspectRatio < navigatorAspectRatio)
             {
                 maxHeightFactor =  theViewer.source.aspectRatio * navigatorAspectRatio;
@@ -71,29 +100,17 @@ QUnit.config.autostart = false;
                 spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/theViewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
                 leftScalingFactor = 1;
             }
-//            spaceFromTopEdgeOfViewerToContentStart =  (1 - (1/theViewer.source.aspectRatio)) / 2 * (1-(1/theViewer.source.aspectRatio)) * navigator.height();
         }
 
         var expectedDisplayRegionWidth = navigator.width() / theViewer.viewport.getZoom() * maxHeightFactor;
         var expectedDisplayRegionHeight = navigator.height() / theViewer.viewport.getZoom() * maxHeightFactor;
-
         var expectedDisplayRegionXLocation = mainViewerBounds.x * maxHeightFactor * navigator.width()   + spaceFromLeftEdgeOfViewerToContentStart;
-//        var expectedDisplayRegionYLocation = mainViewerBounds.y * (1/theViewer.source.aspectRatio) * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;
-        var expectedDisplayRegionYLocation = mainViewerBounds.y *  leftScalingFactor * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;        //navigatorAspectRatio * theViewer.source.aspectRatio
+        var expectedDisplayRegionYLocation = mainViewerBounds.y *  leftScalingFactor * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;
 
-        assessNumericValueWithFixedVariance(expectedDisplayRegionWidth, displayRegionDimensionsInPixels.x, 2, status + ' Experimental Width synchronization');
-        assessNumericValueWithFixedVariance(expectedDisplayRegionHeight, displayRegionDimensionsInPixels.y, 2, status + ' Experimental Height synchronization');
-
-        assessNumericValueWithFixedVariance(expectedDisplayRegionXLocation, displayTopLeftLocationInPixels.x, 2, status + ' Experimental Left synchronization');
-        assessNumericValueWithFixedVariance(expectedDisplayRegionYLocation, displayTopLeftLocationInPixels.y, 2, status + ' Experimental Top synchronization');
-
-
-        //End Experiment
-
-        assessNumericValueWithSomeVariance(mainViewerBounds.width, displayRegionDimensionsInPoints.x, .05, status + ' Width synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.height, displayRegionDimensionsInPoints.y, .05, status + ' Height synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.x, displayLocationInPoints.x, .05, status + ' Left synchronization');
-        assessNumericValueWithSomeVariance(mainViewerBounds.y, displayLocationInPoints.y, .05, status + ' Top synchronization');
+        assessNumericValueWithSomeVariance(expectedDisplayRegionWidth, displayRegionDimensionsInPixels.x, 2, status + ' Width synchronization');
+        assessNumericValueWithSomeVariance(expectedDisplayRegionHeight, displayRegionDimensionsInPixels.y, 2, status + ' Height synchronization');
+        assessNumericValueWithSomeVariance(expectedDisplayRegionXLocation, displayTopLeftLocationInPixels.x, 2, status + ' Left synchronization');
+        assessNumericValueWithSomeVariance(expectedDisplayRegionYLocation, displayTopLeftLocationInPixels.y, 2, status + ' Top synchronization');
     };
 
     var filterToDetectThatDisplayRegionHasBeenDrawn = function () {
@@ -195,26 +212,6 @@ QUnit.config.autostart = false;
         viewer.addHandler('open', openHandler);
 
     };
-
-    module("navigator", {
-        setup:function () {
-            //TODO This is alonger than is ideal so the tests will pass cleanly under Safari
-            QUnit.config.testTimeout = 20000;
-            if (viewer != null) {
-                viewer.close();
-            }
-            if ($('#exampleNavigator').is(':ui-dialog')) {
-                $('#exampleNavigator').dialog('destroy');
-            }
-            $("#exampleNavigator").remove();
-            $(".navigator").remove();
-            $("#example").empty();
-            $("#tallexample").empty();
-            $("#wideexample").empty();
-            $("#example").parent().append('<div id="exampleNavigator"></div>');
-
-        }
-    });
 
     asyncTest('ZoomAndDragOnCustomNavigatorLocation', function () {
         assessNavigatorViewerPlacement({
@@ -395,7 +392,7 @@ QUnit.config.autostart = false;
     //Other tests that require additional sample images
     //Switch content, make sure things work
 
-    //Other tests that require a reasonable event simulation approachj
+    //Other tests that require a reasonable event simulation approach
     //Test autohide
     //Operate on the navigator
 
