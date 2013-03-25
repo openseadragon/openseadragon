@@ -79,7 +79,10 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                preserveComments: "some"
+                preserveComments: "some",
+                sourceMap: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map');
+                }
             },
             openseadragon: {
                 src: [ distribution ],
