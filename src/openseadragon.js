@@ -1389,12 +1389,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * and provides a callback hook for the resulting Document
          * @function
          * @name OpenSeadragon.createFromDZI
-         * @param {String} xmlUrl
-         * @param {String} xmlString
+         * @param {String} dziUrlOrString
          * @param {Function} callback
+         * @param {String} tileHostname
          * @deprecated
          */
-        createFromDZI: function( dzi, callback, tileHost ) {
+        createFromDZI: function( dzi, callback, tileHost) {
             var async       = typeof ( callback ) == "function",
                 dziUrl      = (
                     dzi.substring(0,1) != '<' && 
@@ -1408,13 +1408,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 tilesUrl,
                 callbackName;
 
-
-            if( tileHost ){
-
-                tilesUrl = tileHost + "/_files/";
-                
-            } else if( dziUrl ) {
-
+            if (tileHost) {
+                tilesUrl = tileHost + '/' + dziUrl.replace(/^.*\/(.*)\.dzi$/, '$1') + '_files/';
+            } else if (dziUrl) {
                 urlParts = dziUrl.split( '/' );
                 filename = urlParts[ urlParts.length - 1 ];
                 if( filename.match(/_dzi\.js$/) ){
@@ -1431,7 +1427,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
                 tilesUrl = urlParts.join( '/' ) + "_files/";
-
             }
 
             function finish( func, obj ) {
@@ -1449,7 +1444,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             if ( async ) {
                 if ( dziString ) {
                     window.setTimeout( function() {
-                        var source = finish( processDZIXml, $.parseXml( xmlString ) );
+                        var source = finish( processDZIXml, $.parseXml( dziString ) );
                         // call after finish sets error
                         callback( source, error );    
                     }, 1);
