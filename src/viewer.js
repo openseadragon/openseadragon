@@ -309,18 +309,24 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $TileSource,
             options;
 
+        //allow plain xml strings or json strings to be parsed here
+        if( $.type( tileSource ) == 'string' ){
+            if( tileSource.match(/\s*<.*/) ){
+                tileSource = $.parseXml( tileSource );
+            }else if( tileSource.match(/\s*[\{\[].*/) ){
+                /*jshint evil:true*/
+                tileSource = eval( '('+tileSource+')' );
+            }
+        }
+
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
-                //TODO: We cant assume a string implies a dzi since all 
-                //complete TileSource implementations should have a getInfo
-                //which allows them to be configured via AJAX.  Im not sure
-                //if its better to use file extension or url pattern, or to 
-                //inspect the resulting info object.
+                //If its still a string it means it must be a url at this point
                 tileSource = new $.TileSource( tileSource, function( readySource ){
                     openTileSource( _this, readySource );
                 });
 
-            } else if ( $.isPlainObject( tileSource ) ){
+            } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ){
                 if( $.isFunction( tileSource.getTileUrl ) ){
                     //Custom tile source
                     customTileSource = new $.TileSource(tileSource);

@@ -413,7 +413,7 @@ function processResponse( xhr ){
  * @eprivate
  * @inner
  * @function
- * @param {Object|Array} data - the tile source configuration object
+ * @param {Object|Array|Document} data - the tile source configuration object
  * @param {String} url - the url where the tile source configuration object was
  *      loaded from, if any.
  */

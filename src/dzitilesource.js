@@ -216,6 +216,7 @@ function configureFromXML( tileSource, xmlDoc ){
             configuration = {
                 Image: {
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
+                    Url:         root.getAttribute( "Url" ),
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
                     Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
@@ -314,8 +315,6 @@ function configureFromObject( tileSource, configuration ){
             parseInt( rectData.MaxLevel, 10 )
         ));
     }
-
-    delete configuration.Image;
 
     return $.extend(true, {
         width: width, /* width *required */
