@@ -82,7 +82,10 @@ module.exports = function(grunt) {
                 preserveComments: "some",
                 sourceMap: function (filename) {
                     return filename.replace(/\.js$/, '.js.map');
-                }
+                },
+                sourceMappingURL: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map').replace('build/openseadragon/', '');
+                },
             },
             openseadragon: {
                 src: [ distribution ],
