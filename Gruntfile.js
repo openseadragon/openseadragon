@@ -9,10 +9,12 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-git-describe");
 
     // ----------
     var distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
+        releaseRoot = "../site-build/built-openseadragon/",
         sources = [
             "src/openseadragon.js",
             "src/fullscreen.js",
@@ -51,11 +53,7 @@ module.exports = function(grunt) {
         clean: {
             build: ["build"],
             release: {
-                src: [
-                    "../site-build/openseadragon",
-                    "../site-build/openseadragon.zip",
-                    "../site-build/openseadragon.tar"
-                ],
+                src: [releaseRoot],
                 options: {
                     force: true
                 }
@@ -65,6 +63,7 @@ module.exports = function(grunt) {
             options: {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
+                    + "//! Git commit: <%= gitInfo %>\n"
                     + "//! http://openseadragon.github.com\n\n",
                 process: true
             },
@@ -130,6 +129,13 @@ module.exports = function(grunt) {
             },
             beforeconcat: sources,
             afterconcat: [ distribution ]
+        },
+        "git-describe": {
+            build: {
+                options: {
+                    prop: "gitInfo"
+                }
+            }
         }
     });
 
@@ -140,14 +146,16 @@ module.exports = function(grunt) {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
             grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);            
         });
+
+        grunt.file.copy("changelog.txt", "build/changelog.txt");
     });
 
     // ----------
     // Copy:release task.
-    // Copies the contents of the build folder into ../site-build.
+    // Copies the contents of the build folder into the release folder.
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
-            var dest = "../site-build/"
+            var dest = releaseRoot
                 + (subdir ? subdir + "/" : '/')
                 + filename;
 
@@ -159,7 +167,7 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "jshint:beforeconcat", "concat", "jshint:afterconcat", "uglify", "copy:build"
+        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat", "uglify", "copy:build"
     ]);
 
     // ----------
@@ -174,7 +182,7 @@ module.exports = function(grunt) {
 
     // ----------
     // Publish task.
-    // Cleans the built files out of ../site-build and copies newly built ones over.
+    // Cleans the built files out of the release folder and copies newly built ones over.
     grunt.registerTask("publish", ["package", "clean:release", "copy:release"]);
 
     // ----------

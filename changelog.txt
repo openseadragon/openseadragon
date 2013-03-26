@@ -1,0 +1,23 @@
+OPENSEADRAGON CHANGELOG
+=======================
+
+
+0.9.124:
+
+* Performance enhancements.
+
+
+0.9.123:
+
+* Real fullscreen support.
+
+
+0.9.122:
+
+* Performance enhancements.
+
+
+0.9.121:
+
+* Touch pan now works on Android.
+* Pinch zoom is better on all devices.
