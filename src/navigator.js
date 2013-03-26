@@ -242,7 +242,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 containerSize.y 
             ) / source.tileSize;
         } else {
-            this.minPixelRatio = thie.viewer.minPixelRatio;
+            this.minPixelRatio = this.viewer.minPixelRatio;
         }
         return $.Viewer.prototype.open.apply( this, [ source ] );
     }

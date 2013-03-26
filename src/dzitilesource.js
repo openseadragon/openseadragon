@@ -315,8 +315,9 @@ function configureFromObject( tileSource, configuration ){
         ));
     }
 
+    delete configuration.Image;
 
-    return {
+    return $.extend(true, {
         width: width, /* width *required */
         height: height, /* height *required */
         tileSize: tileSize, /* tileSize *required */
@@ -326,7 +327,7 @@ function configureFromObject( tileSource, configuration ){
         tilesUrl: tilesUrl, /* tilesUrl */
         fileFormat: fileFormat, /* fileFormat */
         displayRects: displayRects /* displayRects */
-    };
+    }, configuration );
 
 }
 

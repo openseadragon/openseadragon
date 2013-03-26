@@ -281,9 +281,7 @@ $.TileSource.prototype = {
                 callback: callback
             });
         } else {
-            //TODO: struggling a little with TileSource rewrite to make info
-            //      requests work asyncronously.  For now I'm opting to make
-            //      all xhr info request syncronous.
+            // request info via xhr asyncronously.
             $.makeAjaxRequest( url, function( xhr ) {
                 var data = processResponse( xhr );
                 callback( data );
