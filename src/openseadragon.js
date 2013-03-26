@@ -1385,17 +1385,16 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Loads a Deep Zoom Image description from a url, XML string or JSON string
-         * and provides a callback hook for the resulting Document
+         * Fully deprecated. Will throw an error.
          * @function
          * @name OpenSeadragon.createFromDZI
          * @param {String} xmlUrl
          * @param {String} xmlString
          * @param {Function} callback
-         * @deprecated - use Viewer.openTileSource
+         * @deprecated - use OpenSeadragon.Viewer.prototype.open
          */
         createFromDZI: function( dzi, callback, tileHost ) {
-            throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.openTileSource.";
+            throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";
         },
 
         /**
