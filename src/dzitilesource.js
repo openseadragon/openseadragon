@@ -108,19 +108,8 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             options = configureFromObject( this, data );
         }
 
-        if( url && !options.tilesUrl ){
-            if( 'http' !== url.substring( 0, 4 ) ){
-                host = location.protocol + '//' + location.host;
-            }
-            dziPath = url.split('/');
-            dziName = dziPath.pop();
-            dziName = dziName.substring(0, dziName.lastIndexOf('.'));
-            dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
-            tilesUrl = dziPath;
-            if( host ){
-                tilesUrl = host + tilesUrl;
-            }
-            options.tilesUrl = tilesUrl;
+        if (url && !options.tilesUrl) {
+            options.tilesUrl = url.replace(/([^\/]+)\.dzi$/, '$1_files/');
         }
 
         return options;
