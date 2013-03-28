@@ -15,6 +15,7 @@ module.exports = function(grunt) {
     var distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
         releaseRoot = "../site-build/built-openseadragon/",
+        license = grunt.file.read("licenses/new-bsd.txt"),
         sources = [
             "src/openseadragon.js",
             "src/fullscreen.js",
@@ -64,7 +65,9 @@ module.exports = function(grunt) {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
                     + "//! Git commit: <%= gitInfo %>\n"
-                    + "//! http://openseadragon.github.com\n\n",
+                    + "//! http://openseadragon.github.com\n"
+                    + license 
+                    + "\n\n",
                 process: true
             },
             dist: {
