@@ -54,6 +54,12 @@ If you wish to work interactively with the tests or test your changes:
 
 and open `http://localhost:8000/` in your browser
 
+## Contributing
+
+OpenSeadragon is truly a community project; we welcome your involvement!
+
+When contributing, please attempt to match the code style already in the codebase. Note that we use four spaces per indentation stop. For more thoughts on code style, see https://github.com/rwldrn/idiomatic.js/.
+
 ## Licenses
 
 OpenSeadragon was initially released with a New BSD License ( preserved below ), while work done by Chris Thatcher is additionally licensed under the MIT License.
