@@ -178,46 +178,20 @@ QUnit.config.autostart = false;
     }();
 
     var simulateNavigatorClick = function(viewer, locationX, locationY) {
-        var maxContentWidth = 1;
-        var maxContentHeight = 1/viewer.source.aspectRatio;
-        if (locationX === undefined) {
-            locationX = maxContentWidth/2;
-        }
-
-        if (locationY === undefined) {
-            locationY = maxContentHeight/2;
-        }
-
-        locationX = Math.min(maxContentWidth, Math.max(0, locationX));
-        locationY = Math.min(maxContentHeight, Math.max(0, locationY));
-
         var $canvas = $(viewer.element).find('.openseadragon-canvas');
         var offset = $canvas.offset();
         var event = {
-            clientX: offset.left + Math.floor($canvas.width() * locationX),
-            clientY: offset.top + Math.floor($canvas.height() * locationY)
+            clientX: offset.left +  locationX,
+            clientY: offset.top +  locationY
         };
 
         $canvas
             .simulate('mouseover', event)
             .simulate('mousedown', event)
             .simulate('mouseup', event);
-    }();
+    };
 
     var simulateNavigatorDrag = function(viewer, distanceX, distanceY) {
-        var maxContentWidth = 1;
-        var maxContentHeight = 1/viewer.source.aspectRatio;
-        if (distanceX === undefined) {
-            distanceX = maxContentWidth/4;
-        }
-
-        if (distanceY === undefined) {
-            distanceY = maxContentHeight/4;
-        }
-
-        distanceX = Math.min(maxContentWidth, Math.max(maxContentWidth * -1, distanceX));
-        distanceY = Math.min(maxContentHeight, Math.max(maxContentHeight * -1, distanceY));
-
         var $canvas = $(viewer.element).find('.displayregion');
         var event = {
             dx: Math.floor($canvas.width() * distanceX),
@@ -226,7 +200,7 @@ QUnit.config.autostart = false;
 
         $canvas
             .simulate('drag', event);
-    }();
+    };
 
     var clickOnNavigator = function(theContentCorner)
     {
@@ -252,7 +226,7 @@ QUnit.config.autostart = false;
            xPos = 1;
            yPos = 1;
        }
-        Util.simulateNavigatorClick(viewer.navigator, xPos, yPos);
+        simulateNavigatorClick(viewer.navigator, xPos, yPos);
     };
 
     var dragNavigatorBackToCenter = function()
@@ -260,7 +234,7 @@ QUnit.config.autostart = false;
         var start = viewer.viewport.getBounds().getTopLeft();
         var target = new OpenSeadragon.Point(0.5,1/viewer.source.aspectRatio/2);
         var delta = target.minus(start);
-        Util.simulateNavigatorDrag(viewer.navigator, delta.x, delta.y);
+        simulateNavigatorDrag(viewer.navigator, delta.x, delta.y);
     };
 
     var assessNavigatorViewerPlacement = function (seadragonProperties, testProperties) {
