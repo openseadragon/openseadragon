@@ -63,10 +63,6 @@ QUnit.config.autostart = false;
     var navigatorRegionBoundsInPoints = function (theDisplayRegionSelector)
     {
         var regionBoundsInPoints;
-        if (displayRegion === null)
-        {
-            displayRegion = $(theDisplayRegionSelector);
-        }
         if (navigator === null)
         {
             navigator = $(".navigator");
@@ -113,13 +109,13 @@ QUnit.config.autostart = false;
 
     };
 
-    var assessNavigatorDisplayRegionAndMainViewerState = function (theViewer, theDisplayRegionSelector, status) {
+    var assessNavigatorDisplayRegionAndMainViewerState = function (theDisplayRegionSelector, status) {
 
         var expectedBounds = navigatorRegionBoundsInPoints(theDisplayRegionSelector);
         assessNumericValueWithSomeVariance(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
         assessNumericValueWithSomeVariance(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
-        assessNumericValueWithSomeVariance(expectedBounds.x, displayRegion.position().left, 4, status + ' Left synchronization');
-        assessNumericValueWithSomeVariance(expectedBounds.y, displayRegion.position().top, 4, status + ' Top synchronization');
+        assessNumericValueWithSomeVariance(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
+        assessNumericValueWithSomeVariance(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
     };
 
     var filterToDetectThatDisplayRegionHasBeenDrawn = function () {
@@ -145,7 +141,10 @@ QUnit.config.autostart = false;
                     }, 50)
                 }
                 else {
-                    console.log( "waitUntilFilterSatisfied:" + found + ":" + $this.length + ":" + count );
+                    if (count === 20)
+                    {
+                        console.log( "waitUntilFilterSatisfied:" + found + ":" + $this.length + ":" + count );
+                    }
                     handler();
                 }
             };
@@ -154,7 +153,7 @@ QUnit.config.autostart = false;
 
     var waitForViewer = function () {
         return function () {
-            return function (theViewer, handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
+            return function (handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
                 var currentDisplayRegionLeft;
                 var currentDisplayWidth;
                 if (displayRegion === null)
@@ -167,36 +166,36 @@ QUnit.config.autostart = false;
                     lastDisplayRegionLeft = null;
                     lastDisplayWidth = null;
                 }
-                if (theViewer.drawer !== null) {
+                if (viewer.drawer !== null) {
                     try
                     {
                         currentDisplayRegionLeft =  displayRegion.position().left;
                         currentDisplayWidth =  displayRegion.width();
                         propertyAchieved = equalsWithSomeVariance(lastDisplayRegionLeft, currentDisplayRegionLeft,.0001) &&
-                            equalsWithSomeVariance(lastDisplayWidth,currentDisplayWidth,.0001) &&
-                            equalsWithSomeVariance(theViewer.viewport.getBounds(true).x,theViewer.viewport.getBounds().x,.0001) &&
-                                equalsWithSomeVariance(theViewer.viewport.getBounds(true).width,theViewer.viewport.getBounds().width,.0001);
+                                           equalsWithSomeVariance(lastDisplayWidth,currentDisplayWidth,.0001) &&
+                                           equalsWithSomeVariance(viewer.viewport.getBounds(true).x,viewer.viewport.getBounds().x,.0001) &&
+                                           equalsWithSomeVariance(viewer.viewport.getBounds(true).width,viewer.viewport.getBounds().width,.0001);
                     }
                     catch(err)
                     {
                         //Ignore.  Subsequent code will try again shortly
                     }
                 }
-                if ((theViewer.drawer === null || theViewer.drawer.needsUpdate() || !propertyAchieved) && count < 40) {
+                if ((viewer.drawer === null  || !propertyAchieved) && count < 40) {    //|| viewer.drawer.needsUpdate()
                     count++;
-                    setTimeout(function () {
-                        waitForViewer(theViewer, handler, count, currentDisplayRegionLeft, currentDisplayWidth);
-                    }, 100)
+                    setTimeout(function () {waitForViewer(handler, count, currentDisplayRegionLeft, currentDisplayWidth);}, 100)
                 }
                 else {
-                    try
+                    if (count === 40)
                     {
-                            console.log( "waitForViewer:" + theViewer.drawer + ":" + theViewer.drawer.needsUpdate()  + ":" + propertyAchieved + ":" + lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" + lastDisplayWidth + ":" + currentDisplayWidth + ":"  + count );
-
-                        }
-                    catch (err)
-                    {
-                        console.log( "stophere:");
+                    console.log( "waitForViewer:" +
+                                  viewer.drawer + ":" + viewer.drawer.needsUpdate()  + ":" +
+                                  propertyAchieved + ":" +
+                                  lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" +
+                                  lastDisplayWidth + ":" + currentDisplayWidth + ":"  +
+                                  viewer.viewport.getBounds(true).x + ":" + viewer.viewport.getBounds().x + ":" +
+                                  viewer.viewport.getBounds(true).width + ":" + viewer.viewport.getBounds().width + ":"  +
+                                  count );
                     }
                     handler();
                 }
@@ -243,53 +242,45 @@ QUnit.config.autostart = false;
         viewer = OpenSeadragon(seadragonProperties);
 
         var assessAfterDragNavigatorFromTopRight = function() {
-               assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After drag on navigator");
+               assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator + ":" + seadragonProperties.tileSources, "After drag on navigator");
                start();
        };
 
          var assessAfterClickOnNavigatorTopRight = function() {
-             var dragVector = new OpenSeadragon.Point(0.1,0.1);
-             var expectedCenter = new OpenSeadragon.Point(0.5, viewer.source.aspectRatio/2).plus(dragVector);
-             assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After click on navigator");
+             assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After click on navigator");
              dragNavigatorBackToCenter();
-             waitForViewer(viewer, assessAfterDragNavigatorFromTopRight);
+             waitForViewer(assessAfterDragNavigatorFromTopRight);
         };
 
         var assessAfterDragOnViewer = function () {
-            var navigatorCenter = viewer.navigator.viewport.getCenter();
-            var expectedCenter = new OpenSeadragon.Point(0.5, viewer.source.aspectRatio/2);
-            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After pan");
+            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After pan");
             clickOnNavigator("TOPRIGHT");
-            waitForViewer(viewer, assessAfterClickOnNavigatorTopRight);
+            waitForViewer(assessAfterClickOnNavigatorTopRight);
         };
 
         var assessAfterZoomOnViewer = function () {
             var target = new OpenSeadragon.Point(0.4, 0.4);
-            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After image zoom");
+            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After image zoom");
             viewer.viewport.panTo(target);
-            waitForViewer(viewer, assessAfterDragOnViewer);
+            waitForViewer(assessAfterDragOnViewer);
         };
 
         var captureInitialStateAfterOpenAndThenAct = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After image load");
+            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After image load");
 
             testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
 
             viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
-            waitForViewer(viewer, assessAfterZoomOnViewer);
+            waitForViewer(assessAfterZoomOnViewer);
         };
 
         var proceedOnceTheIntialImagesAreLoaded = function () {
             waitUntilFilterSatisfied(testProperties.displayRegionLocator, filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
         };
 
-        var waitForNavigator = function () {
-            waitForViewer(viewer.navigator, proceedOnceTheIntialImagesAreLoaded);
-        };
-
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
-            waitForViewer(viewer, waitForNavigator);
+            waitForViewer(proceedOnceTheIntialImagesAreLoaded);
         };
 
         viewer.addHandler('open', openHandler);
