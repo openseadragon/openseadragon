@@ -9,8 +9,6 @@ QUnit.config.autostart = false;
 
     module("navigator", {
         setup:function () {
-            //This is longer than is ideal so the tests will pass cleanly under Safari
-            QUnit.config.testTimeout = 20000;
             resetDom();
             resetTestVariables();
         }
@@ -118,13 +116,6 @@ QUnit.config.autostart = false;
         assessNumericValueWithSomeVariance(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
     };
 
-    var filterToDetectThatDisplayRegionHasBeenDrawn = function () {
-        var self = $(this);
-        return self.width() > 0 &&
-            self.height() > 0 &&
-            (typeof self.position() !== 'undefined');
-    };
-
     var waitUntilFilterSatisfied = function () {
         return function () {
             return function (selector, filterfunction, handler, recursiveCall, count) {
@@ -160,18 +151,19 @@ QUnit.config.autostart = false;
                 {
                     displayRegion = $(".displayregion");
                 }
-                var propertyAchieved = false;
+                var viewerAndNavigatorDisplayReady = false;
                 if (typeof count !== "number") {
                     count = 0;
                     lastDisplayRegionLeft = null;
                     lastDisplayWidth = null;
                 }
-                if (viewer.drawer !== null) {
                     try
                     {
                         currentDisplayRegionLeft =  displayRegion.position().left;
                         currentDisplayWidth =  displayRegion.width();
-                        propertyAchieved = equalsWithSomeVariance(lastDisplayRegionLeft, currentDisplayRegionLeft,.0001) &&
+                        viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
+                            currentDisplayWidth > 0 &&
+                            equalsWithSomeVariance(lastDisplayRegionLeft, currentDisplayRegionLeft,.0001) &&
                                            equalsWithSomeVariance(lastDisplayWidth,currentDisplayWidth,.0001) &&
                                            equalsWithSomeVariance(viewer.viewport.getBounds(true).x,viewer.viewport.getBounds().x,.0001) &&
                                            equalsWithSomeVariance(viewer.viewport.getBounds(true).width,viewer.viewport.getBounds().width,.0001);
@@ -180,8 +172,7 @@ QUnit.config.autostart = false;
                     {
                         //Ignore.  Subsequent code will try again shortly
                     }
-                }
-                if ((viewer.drawer === null  || !propertyAchieved) && count < 40) {    //|| viewer.drawer.needsUpdate()
+                if (( !viewerAndNavigatorDisplayReady) && count < 40) {
                     count++;
                     setTimeout(function () {waitForViewer(handler, count, currentDisplayRegionLeft, currentDisplayWidth);}, 100)
                 }
@@ -274,13 +265,9 @@ QUnit.config.autostart = false;
             waitForViewer(assessAfterZoomOnViewer);
         };
 
-        var proceedOnceTheIntialImagesAreLoaded = function () {
-            waitUntilFilterSatisfied(testProperties.displayRegionLocator, filterToDetectThatDisplayRegionHasBeenDrawn, captureInitialStateAfterOpenAndThenAct);
-        };
-
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
-            waitForViewer(proceedOnceTheIntialImagesAreLoaded);
+            waitForViewer(captureInitialStateAfterOpenAndThenAct);
         };
 
         viewer.addHandler('open', openHandler);
