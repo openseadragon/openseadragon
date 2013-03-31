@@ -6,6 +6,9 @@ QUnit.config.autostart = false;
     var navigator = null;
     var navigatorAspectRatio = null;
     var leftScalingFactor = null;
+    var maxHeightFactor = 1;
+    var spaceFromLeftEdgeOfViewerToContentStart = 0;
+    var spaceFromTopEdgeOfViewerToContentStart = 0;
 
     module("navigator", {
         setup:function () {
@@ -27,6 +30,9 @@ QUnit.config.autostart = false;
          navigator = null;
          navigatorAspectRatio = null;
          leftScalingFactor = null;
+         maxHeightFactor = 1;
+         spaceFromLeftEdgeOfViewerToContentStart = 0;
+         spaceFromTopEdgeOfViewerToContentStart = 0;
     };
 
     var resetDom = function()
@@ -58,7 +64,7 @@ QUnit.config.autostart = false;
         assessNumericValueWithSomeVariance(expectedY, navigator.offset().top, 4, ' Navigator y position');
     };
 
-    var navigatorRegionBoundsInPoints = function (theDisplayRegionSelector)
+    var navigatorRegionBoundsInPoints = function ()
     {
         var regionBoundsInPoints;
         if (navigator === null)
@@ -66,40 +72,36 @@ QUnit.config.autostart = false;
             navigator = $(".navigator");
             navigatorAspectRatio = navigator.height() /navigator.width();
             leftScalingFactor = navigatorAspectRatio * viewer.source.aspectRatio;
+            if (viewer.source.aspectRatio < 1)
+            {
+                if (viewer.source.aspectRatio < navigatorAspectRatio)
+                {
+                    maxHeightFactor =  viewer.source.aspectRatio * navigatorAspectRatio;
+                }
+                else
+                {
+                    maxHeightFactor =  viewer.source.aspectRatio;
+                }
+                spaceFromLeftEdgeOfViewerToContentStart = ((1/maxHeightFactor)-1) / 2 * maxHeightFactor * navigator.width();
+            }
+            else
+            {
+                if (viewer.source.aspectRatio < navigatorAspectRatio)
+                {
+                    spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/viewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
+                }
+                else
+                {
+                    spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/viewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
+                    leftScalingFactor = 1;
+                }
+            }
         }
-        var mainViewerBounds = viewer.viewport.getBounds();
 
-        var maxHeightFactor = 1;
-        var spaceFromLeftEdgeOfViewerToContentStart = 0;
-        var spaceFromTopEdgeOfViewerToContentStart = 0;
-        if (viewer.source.aspectRatio < 1)
-        {
-            if (viewer.source.aspectRatio < navigatorAspectRatio)
-            {
-                maxHeightFactor =  viewer.source.aspectRatio * navigatorAspectRatio;
-            }
-            else
-            {
-                maxHeightFactor =  viewer.source.aspectRatio;
-            }
-            spaceFromLeftEdgeOfViewerToContentStart = ((1/maxHeightFactor)-1) / 2 * maxHeightFactor * navigator.width();
-        }
-        else
-        {
-            if (viewer.source.aspectRatio < navigatorAspectRatio)
-            {
-                spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/viewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
-            }
-            else
-            {
-                spaceFromTopEdgeOfViewerToContentStart =  (navigatorAspectRatio - (1/viewer.source.aspectRatio)) / 2 /navigatorAspectRatio * navigator.height();
-                leftScalingFactor = 1;
-            }
-        }
         var expectedDisplayRegionWidth = navigator.width() / viewer.viewport.getZoom() * maxHeightFactor;
         var expectedDisplayRegionHeight = navigator.height() / viewer.viewport.getZoom() * maxHeightFactor;
-        var expectedDisplayRegionXLocation = mainViewerBounds.x * maxHeightFactor * navigator.width()   + spaceFromLeftEdgeOfViewerToContentStart;
-        var expectedDisplayRegionYLocation = mainViewerBounds.y *  leftScalingFactor * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;
+        var expectedDisplayRegionXLocation = viewer.viewport.getBounds().x * maxHeightFactor * navigator.width()   + spaceFromLeftEdgeOfViewerToContentStart;
+        var expectedDisplayRegionYLocation = viewer.viewport.getBounds().y *  leftScalingFactor * navigator.width()  + spaceFromTopEdgeOfViewerToContentStart ;
         regionBoundsInPoints = new OpenSeadragon.Rect(expectedDisplayRegionXLocation,expectedDisplayRegionYLocation,expectedDisplayRegionWidth,expectedDisplayRegionHeight);
 
 
@@ -107,40 +109,14 @@ QUnit.config.autostart = false;
 
     };
 
-    var assessNavigatorDisplayRegionAndMainViewerState = function (theDisplayRegionSelector, status) {
+    var assessNavigatorDisplayRegionAndMainViewerState = function (status) {
 
-        var expectedBounds = navigatorRegionBoundsInPoints(theDisplayRegionSelector);
+        var expectedBounds = navigatorRegionBoundsInPoints();
         assessNumericValueWithSomeVariance(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
         assessNumericValueWithSomeVariance(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
         assessNumericValueWithSomeVariance(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
         assessNumericValueWithSomeVariance(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
     };
-
-    var waitUntilFilterSatisfied = function () {
-        return function () {
-            return function (selector, filterfunction, handler, recursiveCall, count) {
-                var found;
-                if (recursiveCall !== true) {
-                    count = 0;
-                }
-                var $this = $(selector).filter(filterfunction);
-                found = found || $this.length > 0;
-                if (!found && count < 20) {
-                    setTimeout(function () {
-                        count++;
-                        waitUntilFilterSatisfied(selector, filterfunction, handler, true, count);
-                    }, 50)
-                }
-                else {
-                    if (count === 20)
-                    {
-                        console.log( "waitUntilFilterSatisfied:" + found + ":" + $this.length + ":" + count );
-                    }
-                    handler();
-                }
-            };
-        }();
-    }();
 
     var waitForViewer = function () {
         return function () {
@@ -233,31 +209,31 @@ QUnit.config.autostart = false;
         viewer = OpenSeadragon(seadragonProperties);
 
         var assessAfterDragNavigatorFromTopRight = function() {
-               assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator + ":" + seadragonProperties.tileSources, "After drag on navigator");
+               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigator");
                start();
        };
 
          var assessAfterClickOnNavigatorTopRight = function() {
-             assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After click on navigator");
+             assessNavigatorDisplayRegionAndMainViewerState("After click on navigator");
              dragNavigatorBackToCenter();
              waitForViewer(assessAfterDragNavigatorFromTopRight);
         };
 
         var assessAfterDragOnViewer = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After pan");
+            assessNavigatorDisplayRegionAndMainViewerState("After pan");
             clickOnNavigator("TOPRIGHT");
             waitForViewer(assessAfterClickOnNavigatorTopRight);
         };
 
         var assessAfterZoomOnViewer = function () {
             var target = new OpenSeadragon.Point(0.4, 0.4);
-            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After image zoom");
+            assessNavigatorDisplayRegionAndMainViewerState("After image zoom");
             viewer.viewport.panTo(target);
             waitForViewer(assessAfterDragOnViewer);
         };
 
         var captureInitialStateAfterOpenAndThenAct = function () {
-            assessNavigatorDisplayRegionAndMainViewerState(testProperties.displayRegionLocator, "After image load");
+            assessNavigatorDisplayRegionAndMainViewerState("After image load");
 
             testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
 
