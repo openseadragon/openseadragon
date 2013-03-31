@@ -154,7 +154,7 @@ QUnit.config.autostart = false;
 
     var waitForViewer = function () {
         return function () {
-            return function (theViewer, handler, targetPropery, viewportFunctionToInspectTargetProperty, recursiveCall, count, lastDisplayRegionLeft, lastDisplayWidth) {
+            return function (theViewer, handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
                 var currentDisplayRegionLeft;
                 var currentDisplayWidth;
                 if (displayRegion === null)
@@ -162,12 +162,12 @@ QUnit.config.autostart = false;
                     displayRegion = $(".displayregion");
                 }
                 var propertyAchieved = false;
-                if (recursiveCall !== true) {
+                if (typeof count !== "number") {
                     count = 0;
                     lastDisplayRegionLeft = null;
                     lastDisplayWidth = null;
                 }
-                if (typeof viewportFunctionToInspectTargetProperty === "function") {
+                if (theViewer.drawer !== null) {
                     try
                     {
                         currentDisplayRegionLeft =  displayRegion.position().left;
@@ -175,30 +175,24 @@ QUnit.config.autostart = false;
                         propertyAchieved = equalsWithSomeVariance(lastDisplayRegionLeft, currentDisplayRegionLeft,.0001) &&
                             equalsWithSomeVariance(lastDisplayWidth,currentDisplayWidth,.0001) &&
                             equalsWithSomeVariance(theViewer.viewport.getBounds(true).x,theViewer.viewport.getBounds().x,.0001) &&
-                                equalsWithSomeVariance(theViewer.viewport.getBounds(true).y,theViewer.viewport.getBounds().y,.0001);
+                                equalsWithSomeVariance(theViewer.viewport.getBounds(true).width,theViewer.viewport.getBounds().width,.0001);
                     }
                     catch(err)
                     {
                         //Ignore.  Subsequent code will try again shortly
                     }
                 }
-                if ((theViewer.drawer === null || theViewer.drawer.needsUpdate() || (typeof viewportFunctionToInspectTargetProperty === "function" && !propertyAchieved)) && count < 40) {
+                if ((theViewer.drawer === null || theViewer.drawer.needsUpdate() || !propertyAchieved) && count < 40) {
                     count++;
                     setTimeout(function () {
-                        waitForViewer(theViewer, handler, targetPropery, viewportFunctionToInspectTargetProperty, true, count, currentDisplayRegionLeft, currentDisplayWidth);
+                        waitForViewer(theViewer, handler, count, currentDisplayRegionLeft, currentDisplayWidth);
                     }, 100)
                 }
                 else {
                     try
                     {
-                        if (typeof viewportFunctionToInspectTargetProperty === "function") {
-                    console.log( "waitForViewer:" + theViewer.drawer + ":" + theViewer.drawer.needsUpdate()  + ":" + propertyAchieved + ":" + lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" + lastDisplayWidth + ":" + currentDisplayWidth + ":" + viewportFunctionToInspectTargetProperty.call(theViewer.viewport) + ":" + viewportFunctionToInspectTargetProperty.call(theViewer.viewport,true) + ":" + count );
-                        }
-                        else
-                        {
                             console.log( "waitForViewer:" + theViewer.drawer + ":" + theViewer.drawer.needsUpdate()  + ":" + propertyAchieved + ":" + lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" + lastDisplayWidth + ":" + currentDisplayWidth + ":"  + count );
 
-                        }
                         }
                     catch (err)
                     {
@@ -258,8 +252,7 @@ QUnit.config.autostart = false;
              var expectedCenter = new OpenSeadragon.Point(0.5, viewer.source.aspectRatio/2).plus(dragVector);
              assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After click on navigator");
              dragNavigatorBackToCenter();
-             //Util.simulateNavigatorDrag(viewer.navigator, dragVector.x, dragVector.y);
-             waitForViewer(viewer, assessAfterDragNavigatorFromTopRight, expectedCenter, viewer.viewport.getCenter);
+             waitForViewer(viewer, assessAfterDragNavigatorFromTopRight);
         };
 
         var assessAfterDragOnViewer = function () {
@@ -267,15 +260,14 @@ QUnit.config.autostart = false;
             var expectedCenter = new OpenSeadragon.Point(0.5, viewer.source.aspectRatio/2);
             assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After pan");
             clickOnNavigator("TOPRIGHT");
-            //Util.simulateNavigatorClick(viewer.navigator, navigatorCenter.x, navigatorCenter.y);
-            waitForViewer(viewer, assessAfterClickOnNavigatorTopRight, expectedCenter, viewer.viewport.getCenter);
+            waitForViewer(viewer, assessAfterClickOnNavigatorTopRight);
         };
 
         var assessAfterZoomOnViewer = function () {
             var target = new OpenSeadragon.Point(0.4, 0.4);
             assessNavigatorDisplayRegionAndMainViewerState(viewer, testProperties.displayRegionLocator, "After image zoom");
             viewer.viewport.panTo(target);
-            waitForViewer(viewer, assessAfterDragOnViewer, target, viewer.viewport.getCenter);
+            waitForViewer(viewer, assessAfterDragOnViewer);
         };
 
         var captureInitialStateAfterOpenAndThenAct = function () {
@@ -284,7 +276,7 @@ QUnit.config.autostart = false;
             testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
 
             viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
-            waitForViewer(viewer, assessAfterZoomOnViewer, 2, viewer.viewport.getZoom);
+            waitForViewer(viewer, assessAfterZoomOnViewer);
         };
 
         var proceedOnceTheIntialImagesAreLoaded = function () {
