@@ -218,8 +218,8 @@ function onCanvasClick( tracker, position, quick, shift ) {
             positionInPoints = this.viewport.deltaPointsFromPixels(position);
             dimensionsInPoints = this.viewer.viewport.getBounds().getSize();
             theNewBounds = new $.Rect(
-                positionInPoints.x,
-                positionInPoints.y,
+                positionInPoints.x - dimensionsInPoints.x/2,
+                positionInPoints.y - dimensionsInPoints.y/2,
                 dimensionsInPoints.x,
                 dimensionsInPoints.y
             );
@@ -231,6 +231,7 @@ function onCanvasClick( tracker, position, quick, shift ) {
                 theNewBounds.x = theNewBounds.x -  ((this.viewerDimensionsInPoints.x -1) /2 );
             }
             this.viewer.viewport.fitBounds(theNewBounds);
+            this.viewer.viewport.applyConstraints();
         }
     }
     else
