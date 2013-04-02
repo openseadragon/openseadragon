@@ -222,12 +222,12 @@ QUnit.config.autostart = false;
        else if (theContentCorner === "BOTTOMRIGHT")
        {
            expectedXCoordinate = 1-viewer.viewport.getBounds().width;
-           expecteYCoordinate = 1/viewer.source.aspectRatio/2 - viewer.viewport.getBounds().height;
+           expecteYCoordinate = 1/viewer.source.aspectRatio - viewer.viewport.getBounds().height;
        }
        else if (theContentCorner === "BOTTOMLEFT")
        {
            expectedXCoordinate = 0;
-           expecteYCoordinate = 1/viewer.source.aspectRatio/2 - viewer.viewport.getBounds().height;
+           expecteYCoordinate = 1/viewer.source.aspectRatio - viewer.viewport.getBounds().height;
        }
         if (viewer.viewport.getBounds().width < 1)
         {
@@ -296,14 +296,56 @@ QUnit.config.autostart = false;
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
 
-        var assessAfterDragNavigatorFromTopRight = function() {
-               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigator");
+        var assessAfterDragNavigatorFromTopLeft = function() {
+               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigator from top left");
                assessViewerInCenter();
                start();
        };
 
+        var assessAfterClickOnNavigatorTopLeft = function() {
+            assessNavigatorDisplayRegionAndMainViewerState("After click on navigator on top left");
+            assessViewerInCorner("TOPLEFT");
+            dragNavigatorBackToCenter();
+            waitForViewer(assessAfterDragNavigatorFromTopLeft);
+       };
+
+        var assessAfterDragNavigatorFromBottomRight = function() {
+               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigator from bottom right");
+               assessViewerInCenter();
+               clickOnNavigator("TOPLEFT");
+              waitForViewer(assessAfterClickOnNavigatorTopLeft);
+       };
+
+        var assessAfterClickOnNavigatorBottomRight = function() {
+            assessNavigatorDisplayRegionAndMainViewerState("After click on navigator on bottom right");
+            assessViewerInCorner("BOTTOMRIGHT");
+            dragNavigatorBackToCenter();
+            waitForViewer(assessAfterDragNavigatorFromBottomRight);
+       };
+
+        var assessAfterDragNavigatorFromBottomLeft = function() {
+               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigator from top left");
+               assessViewerInCenter();
+               clickOnNavigator("BOTTOMRIGHT");
+              waitForViewer(assessAfterClickOnNavigatorBottomRight);
+       };
+
+        var assessAfterClickOnNavigatorBottomLeft = function() {
+            assessNavigatorDisplayRegionAndMainViewerState("After click on navigator on bottom left");
+            assessViewerInCorner("BOTTOMLEFT");
+            dragNavigatorBackToCenter();
+            waitForViewer(assessAfterDragNavigatorFromBottomLeft);
+       };
+
+        var assessAfterDragNavigatorFromTopRight = function() {
+               assessNavigatorDisplayRegionAndMainViewerState("After drag on navigato from top rightr");
+               assessViewerInCenter();
+               clickOnNavigator("BOTTOMLEFT");
+              waitForViewer(assessAfterClickOnNavigatorBottomLeft);
+       };
+
          var assessAfterClickOnNavigatorTopRight = function() {
-             assessNavigatorDisplayRegionAndMainViewerState("After click on navigator");
+             assessNavigatorDisplayRegionAndMainViewerState("After click on navigator on top right");
              assessViewerInCorner("TOPRIGHT");
              dragNavigatorBackToCenter();
              waitForViewer(assessAfterDragNavigatorFromTopRight);
