@@ -158,7 +158,7 @@ QUnit.config.autostart = false;
                     {
                         //Ignore.  Subsequent code will try again shortly
                     }
-                if (( !viewerAndNavigatorDisplayReady) && count < 40) {
+                if (( !viewerAndNavigatorDisplayReady) && count < 50) {
                     count++;
                     setTimeout(function () {waitForViewer(handler, count, currentDisplayRegionLeft, currentDisplayWidth);}, 100)
                 }
@@ -167,7 +167,7 @@ QUnit.config.autostart = false;
                     {
                     console.log( "waitForViewer:" +
                                   viewer.drawer + ":" + viewer.drawer.needsUpdate()  + ":" +
-                                  propertyAchieved + ":" +
+                                  viewerAndNavigatorDisplayReady + ":" +
                                   lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" +
                                   lastDisplayWidth + ":" + currentDisplayWidth + ":"  +
                                   viewer.viewport.getBounds(true).x + ":" + viewer.viewport.getBounds().x + ":" +
@@ -379,6 +379,7 @@ QUnit.config.autostart = false;
     });
 
     asyncTest('NavigatorOnJQueryDialog', function () {
+        $('#exampleNavigator').dialog();
         assessNavigatorViewerPlacement({
                 id:'example',
                 navigatorId:'exampleNavigator',
