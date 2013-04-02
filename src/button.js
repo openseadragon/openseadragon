@@ -141,7 +141,7 @@ $.Button = function( options ) {
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
 
-        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
+        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny) {
             if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "enter", {
