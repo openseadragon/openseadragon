@@ -336,91 +336,43 @@ QUnit.config.autostart = false;
             waitForViewer(assessAfterZoomOnViewer);
         };
 
-        var openHandler = function () {
-            viewer.removeHandler('open', openHandler);
+        var assessAutohideTriggered = function () {
+            ok($(testProperties.navigatorLocator).parent().css("opacity") == 0);
             waitForViewer(captureInitialStateAfterOpenAndThenAct);
         };
 
+        var assessAutohideDisabled = function () {
+            ok($(testProperties.navigatorLocator).parent().css("opacity") > 0);
+            waitForViewer(captureInitialStateAfterOpenAndThenAct);
+        };
+
+
+        var openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            if (!testProperties.testAutohide)
+            {
+                waitForViewer(captureInitialStateAfterOpenAndThenAct);
+            }
+            else
+            {
+                ok($(testProperties.navigatorLocator).parent().css("opacity") > 0);
+                var event = {
+                     clientX:1,
+                     clientY:1
+                 };
+                 var body = $("body").simulate('mouseover', event);
+                if (testProperties.expectedAutoHide)
+                {
+                    setTimeout(assessAutohideTriggered,5000);
+                }
+                else
+                {
+                    setTimeout(assessAutohideDisabled,5000);
+                }
+            }
+        };
         viewer.addHandler('open', openHandler);
-
     };
-
-    asyncTest('ZoomAndDragOnCustomNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
-                id:'example',
-                navigatorId:'exampleNavigator',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/testpattern.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'#exampleNavigator .displayregion',
-                navigatorLocator:'#exampleNavigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    assessNavigatorLocation(mainViewerElement.offset().left,
-                        mainViewerElement.offset().top + mainViewerElement.height());
-                }
-            });
-    });
-
-    asyncTest('DefaultNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
-                id:'example',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/testpattern.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
-                }
-            });
-    });
-
-    asyncTest('NavigatorOnJQueryDialog', function () {
-        $('#exampleNavigator').dialog();
-        assessNavigatorViewerPlacement({
-                id:'example',
-                navigatorId:'exampleNavigator',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/testpattern.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'#exampleNavigator .displayregion',
-                navigatorLocator:'#exampleNavigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var jqueryDialog = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(jqueryDialog.offset().left,
-                        jqueryDialog.offset().top);
-                }
-            });
-    });
-
-    asyncTest('DefaultNavigatorLocationWithWideImageSquareViewer', function () {
-        assessNavigatorViewerPlacement({
-                id:'example',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/wide.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
-                }
-            });
-    });
 
     asyncTest('DefaultNavigatorLocationWithWideImageTallViewer', function () {
         assessNavigatorViewerPlacement({
@@ -432,6 +384,8 @@ QUnit.config.autostart = false;
             {
                 displayRegionLocator:'.navigator .displayregion',
                 navigatorLocator:'.navigator',
+                testAutohide: false,
+                expectedAutoHide: false,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id);
                     var navigatorElement = $(testProperties.navigatorLocator);
@@ -441,59 +395,46 @@ QUnit.config.autostart = false;
             });
     });
 
-    asyncTest('DefaultNavigatorLocationWithWideImageWideViewer', function () {
+    asyncTest('CustomNavigatorLocationWithWideImageWideViewer', function () {
         assessNavigatorViewerPlacement({
                 id:'wideexample',
+                navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
                 showNavigator:true
             },
             {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
+                displayRegionLocator:'#exampleNavigator .displayregion',
+                navigatorLocator:'#exampleNavigator',
+                testAutohide: false,
+                expectedAutoHide: true,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
+                    var navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
+                    assessNavigatorLocation(mainViewerElement.offset().left,
+                        mainViewerElement.offset().top - navigatorViewerElement.parent().height());
                 }
             });
     });
 
-    asyncTest('DefaultNavigatorLocationWithTallImageSquareViewer', function () {
-        assessNavigatorViewerPlacement({
-                id:'example',
-                prefixUrl:'/build/openseadragon/images/',
-                tileSources:'/test/data/tall.dzi',
-                showNavigator:true
-            },
-            {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
-                determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
-                }
-            });
-    });
-
-    asyncTest('DefaultNavigatorLocationWithTallImageTallViewer', function () {
+    asyncTest('CustomDialogNavigatorLocationWithTallImageTallViewer', function () {
+        $('#exampleNavigator').dialog();
         assessNavigatorViewerPlacement({
                 id:'tallexample',
+                navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
                 showNavigator:true
             },
             {
-                displayRegionLocator:'.navigator .displayregion',
-                navigatorLocator:'.navigator',
+                displayRegionLocator:'#exampleNavigator .displayregion',
+                navigatorLocator:'#exampleNavigator',
+                testAutohide: true,
+                expectedAutoHide: false,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
-                        mainViewerElement.offset().top);
+                    var jqueryDialog = $(testProperties.navigatorLocator);
+                    assessNavigatorLocation(jqueryDialog.offset().left,
+                        jqueryDialog.offset().top);
                 }
             });
     });
@@ -508,6 +449,8 @@ QUnit.config.autostart = false;
             {
                 displayRegionLocator:'.navigator .displayregion',
                 navigatorLocator:'.navigator',
+                testAutohide: true,
+                expectedAutoHide: true,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id);
                     var navigatorElement = $(testProperties.navigatorLocator);
@@ -516,18 +459,5 @@ QUnit.config.autostart = false;
                 }
             });
     });
-
-
-    //Try with different navigator locations, in a jquery dialog and in a default location
-    //Test whether showNavigator works
-    //Test whether the initial locations works
-
-    //Other tests that require additional sample images
-    //Switch content, make sure things work
-
-    //Other tests that require a reasonable event simulation approach
-    //Test autohide
-    //Operate on the navigator
-
 
 })();
