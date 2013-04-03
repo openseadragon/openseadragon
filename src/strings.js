@@ -45,12 +45,14 @@ $.extend( $, {
         var props   = prop.split('.'),
             string  = null,
             args    = arguments,
+            container = I18N,
             i;
 
-        for ( i = 0; i < props.length; i++ ) {
+        for ( i = 0; i < props.length-1; i++ ) {
             // in case not a subproperty
-            string = I18N[ props[ i ] ] || {};
+            container = container[ props[ i ] ] || {};
         }
+        string = container[ props[ i ] ];
 
         if ( typeof( string ) != "string" ) {
             string = "";
