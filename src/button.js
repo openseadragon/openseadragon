@@ -141,7 +141,7 @@ $.Button = function( options ) {
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
 
-        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny) {
+        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
             if ( buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "enter", {
@@ -149,25 +149,27 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     buttonDownElement: buttonDownElement,
-                    buttonDownAny: buttonDownAny
+                    buttonDownAny: buttonDownAny,
+                    originalEvent: event 
                 });
             } else if ( !buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
 
-        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
-            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny );
+        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
+            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny, event );
             _this.raiseEvent( "focus", {
                 button: _this,
                 tracker: tracker,
                 position: position,
                 buttonDownElement: buttonDownElement,
-                buttonDownAny: buttonDownAny
+                buttonDownAny: buttonDownAny,
+                originalEvent: event 
             });
         },
 
-        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElement ) {
                 _this.raiseEvent( "exit", {
@@ -175,32 +177,35 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     buttonDownElement: buttonDownElement,
-                    buttonDownAny: buttonDownAny
+                    buttonDownAny: buttonDownAny,
+                    originalEvent: event 
                 });
             }
         },
 
-        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
-            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny );
+        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
+            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny, event );
             _this.raiseEvent( "blur", {
                 button: _this,
                 tracker: tracker,
                 position: position,
                 buttonDownElement: buttonDownElement,
-                buttonDownAny: buttonDownAny
+                buttonDownAny: buttonDownAny,
+                originalEvent: event 
             });
         },
 
-        pressHandler: function( tracker, position ) {
+        pressHandler: function( tracker, position, event ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "press", {
                 button: _this,
                 tracker: tracker,
-                position: position
+                position: position,
+                originalEvent: event 
             });
         },
 
-        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
+        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease, event ) {
             if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "release", {
@@ -208,7 +213,8 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     insideElementPress: insideElementPress,
-                    insideElementRelease: insideElementRelease
+                    insideElementRelease: insideElementRelease,
+                    originalEvent: event 
                 });
             } else if ( insideElementPress ) {
                 outTo( _this, $.ButtonState.GROUP );
@@ -217,25 +223,27 @@ $.Button = function( options ) {
             }
         },
 
-        clickHandler: function( tracker, position, quick, shift ) {
+        clickHandler: function( tracker, position, quick, shift, event ) {
             if ( quick ) {
                 _this.raiseEvent("click", {
                     button: _this,
                     tracker: tracker,
                     position: position,
                     quick: quick,
-                    shift: shift
+                    shift: shift,
+                    originalEvent: event 
                 });
             }
         },
 
-        keyHandler: function( tracker, key ){
+        keyHandler: function( tracker, key, event ){
             //console.log( "%s : handling key %s!", _this.tooltip, key);
             if( 13 === key ){
                 _this.raiseEvent( "keypress", {
                     button: _this,
                     tracker: tracker,
-                    key: key
+                    key: key,
+                    originalEvent: event 
                 });
                 return false;
             }
