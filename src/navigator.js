@@ -28,8 +28,7 @@ $.Navigator = function( options ){
                                    attachToViewer:   true,
                                    autoFade:         true};
     }
-    else
-    {
+    else {
         this.element            = document.getElementById( options.id );
         options.controlOptions  = {anchor:           $.ControlAnchor.NONE,
                                    attachToViewer:   false,
@@ -65,7 +64,7 @@ $.Navigator = function( options ){
 
     (function( style, borderWidth ){
         style.margin        = '0px';
-        style.border        = borderWidth + 'px solid #FF0';
+        style.border        = borderWidth + 'px solid #555';
         style.padding       = '0px';
         style.background    = '#000';
         style.opacity       = 0.8;
@@ -208,34 +207,31 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  * @function
  */
 function onCanvasClick( tracker, position, quick, shift ) {
-    var theNewBounds;
-    var positionInPoints;
-    var dimensionsInPoints;
-    var contentAspectRatio = this.viewer.source.dimensions.x / this.viewer.source.dimensions.y;
-    if (! this.drag)
-    {
+    var newBounds,
+        positionInPoints,
+        dimensionsInPoints,
+        contentAspectRatio = this.viewer.source.dimensions.x / this.viewer.source.dimensions.y;
+    if (! this.drag) {
         if ( this.viewer.viewport ) {
             positionInPoints = this.viewport.deltaPointsFromPixels(position);
             dimensionsInPoints = this.viewer.viewport.getBounds().getSize();
-            theNewBounds = new $.Rect(
+            newBounds = new $.Rect(
                 positionInPoints.x - dimensionsInPoints.x/2,
                 positionInPoints.y - dimensionsInPoints.y/2,
                 dimensionsInPoints.x,
                 dimensionsInPoints.y
             );
-            if (contentAspectRatio > this.viewer.viewport.getAspectRatio())
-            {
-                theNewBounds.y = theNewBounds.y -  ((this.viewerDimensionsInPoints.y - (1/contentAspectRatio)) /2 );
+            if (contentAspectRatio > this.viewer.viewport.getAspectRatio()) {
+                newBounds.y = newBounds.y -  ((this.viewerDimensionsInPoints.y - (1/contentAspectRatio)) /2 );
             }
             else  {
-                theNewBounds.x = theNewBounds.x -  ((this.viewerDimensionsInPoints.x -1) /2 );
+                newBounds.x = newBounds.x -  ((this.viewerDimensionsInPoints.x -1) /2 );
             }
-            this.viewer.viewport.fitBounds(theNewBounds);
+            this.viewer.viewport.fitBounds(newBounds);
             this.viewer.viewport.applyConstraints();
         }
     }
-    else
-    {
+    else {
         this.drag = false;
     }
 }

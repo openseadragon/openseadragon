@@ -1,16 +1,16 @@
 QUnit.config.autostart = false;
 
 (function () {
-    var viewer = null;
-    var displayRegion = null;
-    var navigator = null;
-    var navigatorAspectRatio = null;
-    var leftScalingFactor = null;
-    var maxHeightFactor = null;
-    var spaceFromLeftEdgeOfViewerToContentStart = null;
-    var spaceFromTopEdgeOfViewerToContentStart = null;
-    var widthOfViewerContentOnNavigator = null;
-    var heightOfViewerContentOnNavigator = null;
+    var viewer,
+        displayRegion,
+        navigator,
+        navigatorAspectRatio,
+        leftScalingFactor,
+        maxHeightFactor,
+        spaceFromLeftEdgeOfViewerToContentStart,
+        spaceFromTopEdgeOfViewerToContentStart,
+        widthOfViewerContentOnNavigator,
+        heightOfViewerContentOnNavigator;
 
     module("navigator", {
         setup:function () {
@@ -67,7 +67,11 @@ QUnit.config.autostart = false;
     };
 
     var navigatorRegionBoundsInPoints = function () {
-        var regionBoundsInPoints;
+        var regionBoundsInPoints,
+            expectedDisplayRegionWidth,
+            expectedDisplayRegionHeight,
+            expectedDisplayRegionXLocation,
+            expectedDisplayRegionYLocation;
         if (navigator === null) {
             maxHeightFactor = 1;
             navigator = $(".navigator");
@@ -96,12 +100,11 @@ QUnit.config.autostart = false;
             heightOfViewerContentOnNavigator = navigator.height() - 2 * spaceFromTopEdgeOfViewerToContentStart;
         }
 
-        var expectedDisplayRegionWidth = navigator.width() / viewer.viewport.getZoom() * maxHeightFactor;
-        var expectedDisplayRegionHeight = navigator.height() / viewer.viewport.getZoom() * maxHeightFactor;
-        var expectedDisplayRegionXLocation = viewer.viewport.getBounds().x * maxHeightFactor * navigator.width() + spaceFromLeftEdgeOfViewerToContentStart;
-        var expectedDisplayRegionYLocation = viewer.viewport.getBounds().y * leftScalingFactor * navigator.width() + spaceFromTopEdgeOfViewerToContentStart;
+        expectedDisplayRegionWidth = navigator.width() / viewer.viewport.getZoom() * maxHeightFactor;
+        expectedDisplayRegionHeight = navigator.height() / viewer.viewport.getZoom() * maxHeightFactor;
+        expectedDisplayRegionXLocation = viewer.viewport.getBounds().x * maxHeightFactor * navigator.width() + spaceFromLeftEdgeOfViewerToContentStart;
+        expectedDisplayRegionYLocation = viewer.viewport.getBounds().y * leftScalingFactor * navigator.width() + spaceFromTopEdgeOfViewerToContentStart;
         regionBoundsInPoints = new OpenSeadragon.Rect(expectedDisplayRegionXLocation, expectedDisplayRegionYLocation, expectedDisplayRegionWidth, expectedDisplayRegionHeight);
-
 
         return regionBoundsInPoints;
 
@@ -118,13 +121,12 @@ QUnit.config.autostart = false;
 
     var waitForViewer = function () {
         return function (handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
-//            return function () {
-            var currentDisplayRegionLeft;
-            var currentDisplayWidth;
+            var viewerAndNavigatorDisplayReady = false,
+                currentDisplayRegionLeft,
+                currentDisplayWidth;
             if (displayRegion === null) {
                 displayRegion = $(".displayregion");
             }
-            var viewerAndNavigatorDisplayReady = false;
             if (typeof count !== "number") {
                 count = 0;
                 lastDisplayRegionLeft = null;
@@ -166,17 +168,15 @@ QUnit.config.autostart = false;
                 handler();
             }
         };
-//        }();
     }();
 
     var simulateNavigatorClick = function (viewer, locationX, locationY) {
-        var $canvas = $(viewer.element).find('.openseadragon-canvas');
-        var offset = $canvas.offset();
-        var event = {
-            clientX:offset.left + locationX,
-            clientY:offset.top + locationY
-        };
-
+        var $canvas = $(viewer.element).find('.openseadragon-canvas'),
+            offset = $canvas.offset(),
+            event = {
+                clientX:offset.left + locationX,
+                clientY:offset.top + locationY
+            };
         $canvas
             .simulate('mouseover', event)
             .simulate('mousedown', event)
@@ -184,12 +184,11 @@ QUnit.config.autostart = false;
     };
 
     var simulateNavigatorDrag = function (viewer, distanceX, distanceY) {
-        var $canvas = $(viewer.element).find('.displayregion');
-        var event = {
-            dx:Math.floor(distanceX),
-            dy:Math.floor(distanceY)
-        };
-
+        var $canvas = $(viewer.element).find('.displayregion'),
+            event = {
+                dx:Math.floor(distanceX),
+                dy:Math.floor(distanceY)
+            };
         $canvas
             .simulate('drag', event);
     };
@@ -231,10 +230,10 @@ QUnit.config.autostart = false;
         assessNumericValueWithSomeVariance(.5, viewer.viewport.getCenter().x, .4, ' Viewer at center, x coord');
     };
 
-
     var clickOnNavigator = function (theContentCorner) {
         return function () {
-            var xPos, yPos;
+            var xPos,
+                yPos;
             if (theContentCorner === "TOPLEFT") {
                 xPos = spaceFromLeftEdgeOfViewerToContentStart;
                 yPos = spaceFromTopEdgeOfViewerToContentStart;
@@ -256,22 +255,17 @@ QUnit.config.autostart = false;
     };
 
     var dragNavigatorBackToCenter = function () {
-        var start = viewer.viewport.getBounds().getTopLeft();
-        var target = new OpenSeadragon.Point(0.5 - viewer.viewport.getBounds().width / 2,
-            1 / viewer.source.aspectRatio / 2 - viewer.viewport.getBounds().height / 2);
-        var delta = target.minus(start);
+        var start = viewer.viewport.getBounds().getTopLeft(),
+            target = new OpenSeadragon.Point(0.5 - viewer.viewport.getBounds().width / 2,
+                     1 / viewer.source.aspectRatio / 2 - viewer.viewport.getBounds().height / 2),
+            delta = target.minus(start);
         if (viewer.source.aspectRatio < 1) {
-            {
                 delta.y = delta.y * viewer.source.aspectRatio;
-            }
         }
         simulateNavigatorDrag(viewer.navigator, delta.x * widthOfViewerContentOnNavigator, delta.y * heightOfViewerContentOnNavigator);
     };
 
     var assessNavigatorViewerPlacement = function (seadragonProperties, testProperties) {
-        seadragonProperties.visibilityRatio = 1;
-        viewer = OpenSeadragon(seadragonProperties);
-
         var navigatorOperationScenarios = [
             {interactionOperation:clickOnNavigator("TOPRIGHT"),
               assessmentOperation:assessViewerInCorner("TOPRIGHT"),
@@ -298,6 +292,9 @@ QUnit.config.autostart = false;
               assessmentOperation:assessViewerInCenter,
                 assessmentMessage:"After drag on navigator from top left"  }
         ];
+
+        seadragonProperties.visibilityRatio = 1;
+        viewer = OpenSeadragon(seadragonProperties);
 
         var assessNavigatorOperationAndTakeNextStep = function (step) {
             return function () {
@@ -346,27 +343,22 @@ QUnit.config.autostart = false;
             waitForViewer(captureInitialStateAfterOpenAndThenAct);
         };
 
-
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
-            if (!testProperties.testAutohide)
-            {
+            if (!testProperties.testAutohide) {
                 waitForViewer(captureInitialStateAfterOpenAndThenAct);
             }
-            else
-            {
+            else {
                 ok($(testProperties.navigatorLocator).parent().css("opacity") > 0);
                 var event = {
                      clientX:1,
                      clientY:1
                  };
                  var body = $("body").simulate('mouseover', event);
-                if (testProperties.expectedAutoHide)
-                {
+                if (testProperties.expectedAutoHide) {
                     setTimeout(assessAutohideTriggered,5000);
                 }
-                else
-                {
+                else {
                     setTimeout(assessAutohideDisabled,5000);
                 }
             }
@@ -387,8 +379,8 @@ QUnit.config.autostart = false;
                 testAutohide: false,
                 expectedAutoHide: false,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
+                    var mainViewerElement = $("#" + seadragonProperties.id),
+                        navigatorElement = $(testProperties.navigatorLocator);
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
                 }
@@ -409,8 +401,8 @@ QUnit.config.autostart = false;
                 testAutohide: false,
                 expectedAutoHide: true,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
+                    var mainViewerElement = $("#" + seadragonProperties.id),
+                        navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
                     assessNavigatorLocation(mainViewerElement.offset().left,
                         mainViewerElement.offset().top - navigatorViewerElement.parent().height());
                 }
@@ -452,8 +444,8 @@ QUnit.config.autostart = false;
                 testAutohide: true,
                 expectedAutoHide: true,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
-                    var navigatorElement = $(testProperties.navigatorLocator);
+                    var mainViewerElement = $("#" + seadragonProperties.id),
+                        navigatorElement = $(testProperties.navigatorLocator);
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
                 }
