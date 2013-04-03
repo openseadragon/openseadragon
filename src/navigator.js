@@ -54,7 +54,7 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
-    this.viewerDimensionsInPoints = viewer.viewport.deltaPointsFromPixels($.getElementSize( viewer.element));
+    this.viewerSizeInPoints = viewer.viewport.deltaPointsFromPixels(viewerSize);
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
@@ -208,24 +208,23 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  */
 function onCanvasClick( tracker, position, quick, shift ) {
     var newBounds,
-        positionInPoints,
-        dimensionsInPoints,
-        contentAspectRatio = this.viewer.source.dimensions.x / this.viewer.source.dimensions.y;
+        viewerPosition,
+        dimensions;
     if (! this.drag) {
         if ( this.viewer.viewport ) {
-            positionInPoints = this.viewport.deltaPointsFromPixels(position);
-            dimensionsInPoints = this.viewer.viewport.getBounds().getSize();
+            viewerPosition = this.viewport.deltaPointsFromPixels(position);
+            dimensions = this.viewer.viewport.getBounds().getSize();
             newBounds = new $.Rect(
-                positionInPoints.x - dimensionsInPoints.x/2,
-                positionInPoints.y - dimensionsInPoints.y/2,
-                dimensionsInPoints.x,
-                dimensionsInPoints.y
+                viewerPosition.x - dimensions.x/2,
+                viewerPosition.y - dimensions.y/2,
+                dimensions.x,
+                dimensions.y
             );
-            if (contentAspectRatio > this.viewer.viewport.getAspectRatio()) {
-                newBounds.y = newBounds.y -  ((this.viewerDimensionsInPoints.y - (1/contentAspectRatio)) /2 );
+            if (this.viewer.source.aspectRatio > this.viewer.viewport.getAspectRatio()) {
+                newBounds.y = newBounds.y -  ((this.viewerSizeInPoints.y - (1/this.viewer.source.aspectRatio)) /2 );
             }
             else  {
-                newBounds.x = newBounds.x -  ((this.viewerDimensionsInPoints.x -1) /2 );
+                newBounds.x = newBounds.x -  ((this.viewerSizeInPoints.x -1) /2 );
             }
             this.viewer.viewport.fitBounds(newBounds);
             this.viewer.viewport.applyConstraints();
@@ -282,7 +281,6 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
         this.viewer.viewport.zoomBy( 
             factor, 
-            //this.viewport.pointFromPixel( position, true ) 
             this.viewport.getCenter()
         );
         this.viewer.viewport.applyConstraints();
