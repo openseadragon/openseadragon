@@ -149,27 +149,25 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     buttonDownElement: buttonDownElement,
-                    buttonDownAny: buttonDownAny,
-                    originalEvent: event 
+                    buttonDownAny: buttonDownAny
                 });
             } else if ( !buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
 
-        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
-            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny, event );
+        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny );
             _this.raiseEvent( "focus", {
                 button: _this,
                 tracker: tracker,
                 position: position,
                 buttonDownElement: buttonDownElement,
-                buttonDownAny: buttonDownAny,
-                originalEvent: event 
+                buttonDownAny: buttonDownAny
             });
         },
 
-        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
+        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( buttonDownElement ) {
                 _this.raiseEvent( "exit", {
@@ -177,35 +175,32 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     buttonDownElement: buttonDownElement,
-                    buttonDownAny: buttonDownAny,
-                    originalEvent: event 
+                    buttonDownAny: buttonDownAny
                 });
             }
         },
 
-        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny, event ) {
-            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny, event );
+        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny );
             _this.raiseEvent( "blur", {
                 button: _this,
                 tracker: tracker,
                 position: position,
                 buttonDownElement: buttonDownElement,
-                buttonDownAny: buttonDownAny,
-                originalEvent: event 
+                buttonDownAny: buttonDownAny
             });
         },
 
-        pressHandler: function( tracker, position, event ) {
+        pressHandler: function( tracker, position ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "press", {
                 button: _this,
                 tracker: tracker,
-                position: position,
-                originalEvent: event 
+                position: position
             });
         },
 
-        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease, event ) {
+        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
             if ( insideElementPress && insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "release", {
@@ -213,8 +208,7 @@ $.Button = function( options ) {
                     tracker: tracker,
                     position: position,
                     insideElementPress: insideElementPress,
-                    insideElementRelease: insideElementRelease,
-                    originalEvent: event 
+                    insideElementRelease: insideElementRelease
                 });
             } else if ( insideElementPress ) {
                 outTo( _this, $.ButtonState.GROUP );
@@ -223,27 +217,25 @@ $.Button = function( options ) {
             }
         },
 
-        clickHandler: function( tracker, position, quick, shift, event ) {
+        clickHandler: function( tracker, position, quick, shift ) {
             if ( quick ) {
                 _this.raiseEvent("click", {
                     button: _this,
                     tracker: tracker,
                     position: position,
                     quick: quick,
-                    shift: shift,
-                    originalEvent: event 
+                    shift: shift
                 });
             }
         },
 
-        keyHandler: function( tracker, key, event ){
+        keyHandler: function( tracker, key ){
             //console.log( "%s : handling key %s!", _this.tooltip, key);
             if( 13 === key ){
                 _this.raiseEvent( "keypress", {
                     button: _this,
                     tracker: tracker,
-                    key: key,
-                    originalEvent: event 
+                    key: key
                 });
                 return false;
             }
