@@ -28,7 +28,29 @@
                 .simulate('mouseover', event)
                 .simulate('mousedown', event)
                 .simulate('mouseup', event);
+        },
+
+        resetDom: function () {
+            if ($('#exampleNavigator').is(':ui-dialog')) {
+                $('#exampleNavigator').dialog('destroy');
+            }
+            $("#exampleNavigator").remove();
+            $(".navigator").remove();
+            $("#example").empty();
+            $("#tallexample").empty();
+            $("#wideexample").empty();
+            $("#example").parent().append('<div id="exampleNavigator"></div>');
+        },
+
+        equalsWithVariance: function (value1, value2, variance) {
+            return Math.abs(value1 - value2) <= variance;
+        },
+
+
+        assessNumericValue: function (value1, value2, variance, message) {
+            ok(Util.equalsWithVariance(value1, value2, variance), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
         }
+
 
     };
 

@@ -129,6 +129,7 @@ $.Viewer = function( options ) {
         // did we decide this viewer has a sequence of tile sources
         "sequenced":         false,
         "sequence":          0,
+        "fullPage":          false, 
         "onfullscreenchange": null
     };
 
@@ -163,12 +164,12 @@ $.Viewer = function( options ) {
             initialTileSource = this.tileSources;
         }
 
-        this.openTileSource( initialTileSource );
+        this.open( initialTileSource );
     }
 
-    this.element        = this.element || document.getElementById( this.id );
-    this.canvas         = $.makeNeutralElement( "div" );
-    this.textAreaToReceiveKeyboardCommands         = $.makeNeutralElement( "textarea" );
+    this.element              = this.element || document.getElementById( this.id );
+    this.canvas               = $.makeNeutralElement( "div" );
+    this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
 
     this.canvas.className = "openseadragon-canvas";
     (function( style ){
@@ -179,17 +180,6 @@ $.Viewer = function( options ) {
         style.top      = "0px";
         style.left     = "0px";
     }(  this.canvas.style ));
-
-    this.textAreaToReceiveKeyboardCommands.className = "findmetoo";
-    (function( style ){
-        style.width    = "100%";
-        style.height   = "100%";
-        style.overflow = "hidden";
-        style.position = "absolute";
-        style.top      = "0px";
-        style.left     = "0px";
-    }(  this.textAreaToReceiveKeyboardCommands.style ));
-
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -203,8 +193,18 @@ $.Viewer = function( options ) {
         style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
 
+    this.keyboardCommandArea.className = "keyboard-command-area";
+    (function( style ){
+        style.width    = "100%";
+        style.height   = "100%";
+        style.overflow = "hidden";
+        style.position = "absolute";
+        style.top      = "0px";
+        style.left     = "0px";
+    }(  this.keyboardCommandArea.style ));
+
     this.container.insertBefore( this.canvas, this.container.firstChild );
-    this.container.insertBefore( this.textAreaToReceiveKeyboardCommands, this.container.firstChild );
+    this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
 
     //Used for toggling between fullscreen and default container size
@@ -215,62 +215,63 @@ $.Viewer = function( options ) {
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
 
-    this.textAreaToReceiveKeyboardCommands.innerTracker = new $.MouseTracker({
-        _this : this,
-        element:            this.textAreaToReceiveKeyboardCommands,
-        focusHandler:       function(){
-            var point    = $.getElementPosition( this.element );
-            window.scrollTo( 0, point.y );
-        },
+    this.keyboardCommandArea.innerTracker = new $.MouseTracker({
+            _this : this,
+            element:            this.keyboardCommandArea,
+            focusHandler:       function(){
+                var point    = $.getElementPosition( this.element );
+                window.scrollTo( 0, point.y );
+            },
 
-        keyHandler:         function(tracker, keyCode, shiftKey){
-            switch( keyCode ){
-                case 61://=|+
-                    _this.viewport.zoomBy(1.1);
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 45://-|_
-                    _this.viewport.zoomBy(0.9);
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 48://0|)
-                    _this.viewport.goHome();
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 119://w
-                case 87://W
-                case 38://up arrow
-                    if (shiftKey)
+            keyHandler:         function(tracker, keyCode, shiftKey){
+                switch( keyCode ){
+                    case 61://=|+
                         _this.viewport.zoomBy(1.1);
-                    else
-                        _this.viewport.panBy(new $.Point(0, -0.05));
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 115://s
-                case 83://S
-                case 40://down arrow
-                    if (shiftKey)
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 45://-|_
                         _this.viewport.zoomBy(0.9);
-                    else
-                        _this.viewport.panBy(new $.Point(0, 0.05));
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 97://a
-                case 37://left arrow
-                    _this.viewport.panBy(new $.Point(-0.05, 0));
-                    _this.viewport.applyConstraints();
-                    return false;
-                case 100://d
-                case 39://right arrow
-                    _this.viewport.panBy(new $.Point(0.05, 0));
-                    _this.viewport.applyConstraints();
-                    return false;
-                default:
-                    //console.log( 'navigator keycode %s', keyCode );
-                    return true;
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 48://0|)
+                        _this.viewport.goHome();
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 119://w
+                    case 87://W
+                    case 38://up arrow
+                        if (shiftKey)
+                            _this.viewport.zoomBy(1.1);
+                        else
+                            _this.viewport.panBy(new $.Point(0, -0.05));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 115://s
+                    case 83://S
+                    case 40://down arrow
+                        if (shiftKey)
+                            _this.viewport.zoomBy(0.9);
+                        else
+                            _this.viewport.panBy(new $.Point(0, 0.05));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 97://a
+                    case 37://left arrow
+                        _this.viewport.panBy(new $.Point(-0.05, 0));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 100://d
+                    case 39://right arrow
+                        _this.viewport.panBy(new $.Point(0.05, 0));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    default:
+                        //console.log( 'navigator keycode %s', keyCode );
+                        return true;
+                }
             }
-        }
-    }).setTracking( true ); // default state
+        }).setTracking( true ); // default state
+
 
     this.innerTracker = new $.MouseTracker({
         element:            this.canvas, 
@@ -324,29 +325,36 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     },
 
     /**
-     * If the string is xml is simply parsed and opened, otherwise the string 
-     * is treated as an URL and an xml document is requested via ajax, parsed 
-     * and then opened in the viewer.
+     * A deprecated function, renamed to 'open' to match event name and 
+     * match current 'close' method. 
      * @function
      * @name OpenSeadragon.Viewer.prototype.openDzi
-     * @param {String} dzi and xml string or the url to a DZI xml document.
+     * @param {String} dzi xml string or the url to a DZI xml document.
      * @return {OpenSeadragon.Viewer} Chainable.
      *
      * @deprecated - use 'open' instead.
      */
     openDzi: function ( dzi ) {
-        var _this = this;
-        $.createFromDZI(
-            dzi,
-            function( source ){
-               _this.open( source );
-            },
-            this.tileHost
-        );
-        return this;
+        return this.open( dzi );
     },
 
     /**
+     * A deprecated function, renamed to 'open' to match event name and 
+     * match current 'close' method.
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.openTileSource
+     * @param {String|Object|Function} See OpenSeadragon.Viewer.prototype.open
+     * @return {OpenSeadragon.Viewer} Chainable.
+     *
+     * @deprecated - use 'open' instead.
+     */
+    openTileSource: function ( tileSource ) {
+        return this.open( tileSource );
+    },
+
+    /**
+     * Open a TileSource object into the viewer.
+     *
      * tileSources is a complex option...
      * 
      * It can be a string, object, function, or an array of any of these:
@@ -361,227 +369,56 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @function
      * @name OpenSeadragon.Viewer.prototype.openTileSource
+     * @param {String|Object|Function}
      * @return {OpenSeadragon.Viewer} Chainable.
      */
-    openTileSource: function ( tileSource ) {
+    open: function ( tileSource ) {
         var _this = this,
             customTileSource,
             readySource,
             $TileSource,
             options;
 
+        //allow plain xml strings or json strings to be parsed here
+        if( $.type( tileSource ) == 'string' ){
+            if( tileSource.match(/\s*<.*/) ){
+                tileSource = $.parseXml( tileSource );
+            }else if( tileSource.match(/\s*[\{\[].*/) ){
+                /*jshint evil:true*/
+                tileSource = eval( '('+tileSource+')' );
+            }
+        }
+
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
-                //TODO: We cant assume a string implies a dzi since all 
-                //complete TileSource implementations should have a getInfo
-                //which allows them to be configured via AJAX.  Im not sure
-                //if its better to use file extension or url pattern, or to 
-                //inspect the resulting info object.
+                //If its still a string it means it must be a url at this point
                 tileSource = new $.TileSource( tileSource, function( readySource ){
-                    _this.open( readySource );
+                    openTileSource( _this, readySource );
                 });
 
-            } else if ( $.isPlainObject( tileSource ) ){
+            } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ){
                 if( $.isFunction( tileSource.getTileUrl ) ){
                     //Custom tile source
                     customTileSource = new $.TileSource(tileSource);
                     customTileSource.getTileUrl = tileSource.getTileUrl;
-                    _this.open( customTileSource );
+                    openTileSource( _this, customTileSource );
                 } else {
                     //inline configuration
                     $TileSource = $.TileSource.determineType( _this, tileSource );
                     options = $TileSource.prototype.configure.apply( _this, [ tileSource ]);
                     readySource = new $TileSource( options );
-                    _this.open( readySource );
+                    openTileSource( _this, readySource );
                 }
             } else {
                 //can assume it's already a tile source implementation
-                _this.open( tileSource );
+                openTileSource( _this, tileSource );
             }
         }, 1);
 
         return this;
     },
 
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.open
-     * @return {OpenSeadragon.Viewer} Chainable.
-     */
-    open: function( source ) {
-        var _this = this,
-            overlay,
-            i;
-
-        if ( this.source ) {
-            this.close( );
-        }
-        
-        // to ignore earlier opens
-        THIS[ this.hash ].lastOpenStartTime = +new Date();
-
-        window.setTimeout( function () {
-            if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
-                THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
-            }
-        }, 2000);
-
-        THIS[ this.hash ].lastOpenEndTime = +new Date();
-        this.canvas.innerHTML = "";
-        THIS[ this.hash ].prevContainerSize = $.getElementSize( this.container );
-
-
-        if( this.collectionMode ){
-            this.source = new $.TileSourceCollection({
-                rows: this.collectionRows,
-                layout: this.collectionLayout,
-                tileSize: this.collectionTileSize,
-                tileSources: this.tileSources,
-                tileMargin: this.collectionTileMargin
-            });
-            this.viewport = this.viewport ? this.viewport : new $.Viewport({
-                collectionMode:         true,
-                collectionTileSource:   this.source,
-                containerSize:          THIS[ this.hash ].prevContainerSize, 
-                contentSize:            this.source.dimensions, 
-                springStiffness:        this.springStiffness,
-                animationTime:          this.animationTime,
-                showNavigator:          false,
-                minZoomImageRatio:      1,
-                maxZoomPixelRatio:      1,
-                viewer:                 this //,
-                //TODO: figure out how to support these in a way that makes sense
-                //minZoomLevel:           this.minZoomLevel,
-                //maxZoomLevel:           this.maxZoomLevel
-            });
-        }else{
-            if( source ){
-                this.source = source;
-            }
-            this.viewport = this.viewport ? this.viewport : new $.Viewport({
-                containerSize:      THIS[ this.hash ].prevContainerSize, 
-                contentSize:        this.source.dimensions, 
-                springStiffness:    this.springStiffness,
-                animationTime:      this.animationTime,
-                minZoomImageRatio:  this.minZoomImageRatio,
-                maxZoomPixelRatio:  this.maxZoomPixelRatio,
-                visibilityRatio:    this.visibilityRatio,
-                wrapHorizontal:     this.wrapHorizontal,
-                wrapVertical:       this.wrapVertical,
-                defaultZoomLevel:   this.defaultZoomLevel,
-                minZoomLevel:       this.minZoomLevel,
-                maxZoomLevel:       this.maxZoomLevel,
-                viewer:             this
-            });
-        }
-        
-        if( this.preserveVewport ){
-            this.viewport.resetContentSize( this.source.dimensions );
-        } 
-
-        this.source.overlays = this.source.overlays || [];
-
-        this.drawer = new $.Drawer({
-            source:             this.source, 
-            viewport:           this.viewport, 
-            element:            this.canvas,
-            overlays:           [].concat( this.overlays ).concat( this.source.overlays ),
-            maxImageCacheCount: this.maxImageCacheCount,
-            imageLoaderLimit:   this.imageLoaderLimit,
-            minZoomImageRatio:  this.minZoomImageRatio,
-            wrapHorizontal:     this.wrapHorizontal,
-            wrapVertical:       this.wrapVertical,
-            immediateRender:    this.immediateRender,
-            blendTime:          this.blendTime,
-            alwaysBlend:        this.alwaysBlend,
-            minPixelRatio:      this.collectionMode ? 0 : this.minPixelRatio,
-            timeout:            this.timeout,
-            debugMode:          this.debugMode,
-            debugGridColor:     this.debugGridColor
-        });
-
-        //Instantiate a navigator if configured
-        if ( this.showNavigator  && ! this.navigator && !this.collectionMode ){
-            this.navigator = new $.Navigator({
-                id:          this.navigatorId,
-                position:    this.navigatorPosition,
-                sizeRatio:   this.navigatorSizeRatio,
-                height:      this.navigatorHeight,
-                width:       this.navigatorWidth,
-                tileSources: this.tileSources,
-                tileHost:    this.tileHost,
-                prefixUrl:   this.prefixUrl,
-                overlays:    this.overlays,
-                viewer:      this
-            });
-        }
-
-        //Instantiate a referencestrip if configured
-        if ( this.showReferenceStrip  && ! this.referenceStrip ){
-            this.referenceStrip = new $.ReferenceStrip({
-                id:          this.referenceStripElement,
-                position:    this.referenceStripPosition,
-                sizeRatio:   this.referenceStripSizeRatio,
-                scroll:      this.referenceStripScroll,
-                height:      this.referenceStripHeight,
-                width:       this.referenceStripWidth,
-                tileSources: this.tileSources,
-                tileHost:    this.tileHost,
-                prefixUrl:   this.prefixUrl,
-                overlays:    this.overlays,
-                viewer:      this
-            });
-        }
-
-        //this.profiler = new $.Profiler();
-
-        THIS[ this.hash ].animating = false;
-        THIS[ this.hash ].forceRedraw = true;
-        scheduleUpdate( this, updateMulti );
-
-        //Assuming you had programatically created a bunch of overlays
-        //and added them via configuration
-        for ( i = 0; i < this.overlayControls.length; i++ ) {
-            
-            overlay = this.overlayControls[ i ];
-            
-            if ( overlay.point ) {
-            
-                this.drawer.addOverlay(
-                    overlay.id, 
-                    new $.Point( 
-                        overlay.point.X, 
-                        overlay.point.Y 
-                    ), 
-                    $.OverlayPlacement.TOP_LEFT
-                );
-            
-            } else {
-            
-                this.drawer.addOverlay(
-                    overlay.id, 
-                    new $.Rect(
-                        overlay.rect.Point.X, 
-                        overlay.rect.Point.Y, 
-                        overlay.rect.Width, 
-                        overlay.rect.Height
-                    ), 
-                    overlay.placement
-                );
-            
-            }
-        }
-        VIEWERS[ this.hash ] = this;
-
-        if( this.navigator ){
-            this.navigator.open( source );
-        }
-
-        this.raiseEvent( 'open', { source: source, viewer: this } );
-
-        return this;
-    },
-
+    
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.close
@@ -667,7 +504,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {Boolean}
      */
     isFullPage: function () {
-        return this.element.parentNode == document.body;
+        return THIS[ this.hash ].fullPage;
     },
 
 
@@ -724,7 +561,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             //the bodies elements and replace them when we leave full screen.
             this.previousBody = [];
             THIS[ this.hash ].prevElementParent = this.element.parentNode;
-            THIS[ this.hash ].prevNextSibling = this.element.prevNextSibling;
+            THIS[ this.hash ].prevNextSibling = this.element.nextSibling;
             THIS[ this.hash ].prevElementSize = $.getElementSize( this.element );
             nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
@@ -784,6 +621,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     $.getElementSize( this.element ).y - $.getElementSize( this.toolbar.element ).y
                 ) + 'px';
             }
+
+            THIS[ this.hash ].fullPage = true;
 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )();
@@ -845,6 +684,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             this.element.style.height = THIS[ this.hash ].prevElementSize.y + 'px';
             this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
+
+            THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )();
@@ -1155,7 +996,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 }
             }
 
-            this.openTileSource( this.tileSources[ page ] );
+            this.open( this.tileSources[ page ] );
         }
 
         if( $.isFunction( this.onPageChange ) ){
@@ -1171,6 +1012,185 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     }
 
 });
+
+/**
+ * @function
+ * @private
+ */
+function openTileSource( viewer, source ) {
+    var _this = viewer,
+        overlay,
+        i;
+
+    if ( _this.source ) {
+        _this.close( );
+    }
+    
+    // to ignore earlier opens
+    THIS[ _this.hash ].lastOpenStartTime = +new Date();
+
+    window.setTimeout( function () {
+        if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
+            THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
+        }
+    }, 2000);
+
+    THIS[ _this.hash ].lastOpenEndTime = +new Date();
+    _this.canvas.innerHTML = "";
+    THIS[ _this.hash ].prevContainerSize = $.getElementSize( _this.container );
+
+
+    if( _this.collectionMode ){
+        _this.source = new $.TileSourceCollection({
+            rows: _this.collectionRows,
+            layout: _this.collectionLayout,
+            tileSize: _this.collectionTileSize,
+            tileSources: _this.tileSources,
+            tileMargin: _this.collectionTileMargin
+        });
+        _this.viewport = _this.viewport ? _this.viewport : new $.Viewport({
+            collectionMode:         true,
+            collectionTileSource:   _this.source,
+            containerSize:          THIS[ _this.hash ].prevContainerSize, 
+            contentSize:            _this.source.dimensions, 
+            springStiffness:        _this.springStiffness,
+            animationTime:          _this.animationTime,
+            showNavigator:          false,
+            minZoomImageRatio:      1,
+            maxZoomPixelRatio:      1,
+            viewer:                 _this //,
+            //TODO: figure out how to support these in a way that makes sense
+            //minZoomLevel:           this.minZoomLevel,
+            //maxZoomLevel:           this.maxZoomLevel
+        });
+    }else{
+        if( source ){
+            _this.source = source;
+        }
+        _this.viewport = _this.viewport ? _this.viewport : new $.Viewport({
+            containerSize:      THIS[ _this.hash ].prevContainerSize, 
+            contentSize:        _this.source.dimensions, 
+            springStiffness:    _this.springStiffness,
+            animationTime:      _this.animationTime,
+            minZoomImageRatio:  _this.minZoomImageRatio,
+            maxZoomPixelRatio:  _this.maxZoomPixelRatio,
+            visibilityRatio:    _this.visibilityRatio,
+            wrapHorizontal:     _this.wrapHorizontal,
+            wrapVertical:       _this.wrapVertical,
+            defaultZoomLevel:   _this.defaultZoomLevel,
+            minZoomLevel:       _this.minZoomLevel,
+            maxZoomLevel:       _this.maxZoomLevel,
+            viewer:             _this
+        });
+    }
+    
+    if( _this.preserveVewport ){
+        _this.viewport.resetContentSize( _this.source.dimensions );
+    } 
+
+    _this.source.overlays = _this.source.overlays || [];
+
+    _this.drawer = new $.Drawer({
+        source:             _this.source, 
+        viewport:           _this.viewport, 
+        element:            _this.canvas,
+        overlays:           [].concat( _this.overlays ).concat( _this.source.overlays ),
+        maxImageCacheCount: _this.maxImageCacheCount,
+        imageLoaderLimit:   _this.imageLoaderLimit,
+        minZoomImageRatio:  _this.minZoomImageRatio,
+        wrapHorizontal:     _this.wrapHorizontal,
+        wrapVertical:       _this.wrapVertical,
+        immediateRender:    _this.immediateRender,
+        blendTime:          _this.blendTime,
+        alwaysBlend:        _this.alwaysBlend,
+        minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
+        timeout:            _this.timeout,
+        debugMode:          _this.debugMode,
+        debugGridColor:     _this.debugGridColor
+    });
+
+    //Instantiate a navigator if configured
+    if ( _this.showNavigator  && ! _this.navigator && !_this.collectionMode ){
+        _this.navigator = new $.Navigator({
+            id:          _this.navigatorId,
+            position:    _this.navigatorPosition,
+            sizeRatio:   _this.navigatorSizeRatio,
+            height:      _this.navigatorHeight,
+            width:       _this.navigatorWidth,
+            tileSources: _this.tileSources,
+            tileHost:    _this.tileHost,
+            prefixUrl:   _this.prefixUrl,
+            overlays:    _this.overlays,
+            viewer:      _this
+        });
+    }
+
+    //Instantiate a referencestrip if configured
+    if ( _this.showReferenceStrip  && !_this.referenceStrip ){
+        _this.referenceStrip = new $.ReferenceStrip({
+            id:          _this.referenceStripElement,
+            position:    _this.referenceStripPosition,
+            sizeRatio:   _this.referenceStripSizeRatio,
+            scroll:      _this.referenceStripScroll,
+            height:      _this.referenceStripHeight,
+            width:       _this.referenceStripWidth,
+            tileSources: _this.tileSources,
+            tileHost:    _this.tileHost,
+            prefixUrl:   _this.prefixUrl,
+            overlays:    _this.overlays,
+            viewer:      _this
+        });
+    }
+
+    //this.profiler = new $.Profiler();
+
+    THIS[ _this.hash ].animating = false;
+    THIS[ _this.hash ].forceRedraw = true;
+    scheduleUpdate( _this, updateMulti );
+
+    //Assuming you had programatically created a bunch of overlays
+    //and added them via configuration
+    for ( i = 0; i < _this.overlayControls.length; i++ ) {
+        
+        overlay = _this.overlayControls[ i ];
+        
+        if ( overlay.point ) {
+        
+            _this.drawer.addOverlay(
+                overlay.id, 
+                new $.Point( 
+                    overlay.point.X, 
+                    overlay.point.Y 
+                ), 
+                $.OverlayPlacement.TOP_LEFT
+            );
+        
+        } else {
+        
+            _this.drawer.addOverlay(
+                overlay.id, 
+                new $.Rect(
+                    overlay.rect.Point.X, 
+                    overlay.rect.Point.Y, 
+                    overlay.rect.Width, 
+                    overlay.rect.Height
+                ), 
+                overlay.placement
+            );
+        
+        }
+    }
+    VIEWERS[ _this.hash ] = _this;
+
+    if( _this.navigator ){
+        _this.navigator.open( source );
+    }
+
+    _this.raiseEvent( 'open', { source: source, viewer: _this } );
+
+    return _this;
+}
+
 
 
 
@@ -1275,7 +1295,7 @@ function onBlur(){
     
 }
 
-function onCanvasClick( tracker, position, quick, shift, event ) {
+function onCanvasClick( tracker, position, quick, shift ) {
     var zoomPreClick,
         factor;
     if ( this.viewport && quick ) {    // ignore clicks where mouse moved         
@@ -1287,16 +1307,15 @@ function onCanvasClick( tracker, position, quick, shift, event ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'click', { 
+    this.raiseEvent( 'canvas-click', { 
         tracker: tracker,
         position: position,
         quick: quick,
-        shift: shift,
-        originalEvent: event 
+        shift: shift
     });
 }
 
-function onCanvasDrag( tracker, position, delta, shift, event ) {
+function onCanvasDrag( tracker, position, delta, shift ) {
     if ( this.viewport ) {
         if( !this.panHorizontal ){
             delta.x = 0;
@@ -1313,29 +1332,27 @@ function onCanvasDrag( tracker, position, delta, shift, event ) {
             this.viewport.applyConstraints();
         }
     }
-    this.raiseEvent( 'drag', { 
+    this.raiseEvent( 'canvas-click', { 
         tracker: tracker,
         position: position,
         delta: delta,
-        shift: shift,
-        originalEvent: event 
+        shift: shift
     });
 }
 
-function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'release', { 
+    this.raiseEvent( 'canvas-release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease,
-        originalEvent: event 
+        insideElementRelease: insideElementRelease
     });
 }
 
-function onCanvasScroll( tracker, position, scroll, shift, event ) {
+function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
     if ( this.viewport ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
@@ -1345,58 +1362,54 @@ function onCanvasScroll( tracker, position, scroll, shift, event ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'scroll', { 
+    this.raiseEvent( 'canvas-scroll', { 
         tracker: tracker,
         position: position,
         scroll: scroll,
-        shift: shift,
-        originalEvent: event 
+        shift: shift
     });
     //cancels event
     return false;
 }
 
-function onContainerExit( tracker, position, buttonDownElement, buttonDownAny, event ) {
+function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
     if ( !buttonDownElement ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'exit', { 
+    this.raiseEvent( 'container-exit', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny,
-        originalEvent: event 
+        buttonDownAny: buttonDownAny
     });
 }
 
-function onContainerRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
+function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
     if ( !insideElementRelease ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'release', { 
+    this.raiseEvent( 'container-release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease,
-        originalEvent: event 
+        insideElementRelease: insideElementRelease
     });
 }
 
-function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny, event ) {
+function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
-    this.raiseEvent( 'enter', { 
+    this.raiseEvent( 'container-enter', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny,
-        originalEvent: event 
+        buttonDownAny: buttonDownAny
     });
 }
 

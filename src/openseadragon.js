@@ -1385,108 +1385,16 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Loads a Deep Zoom Image description from a url, XML string or JSON string
-         * and provides a callback hook for the resulting Document
+         * Fully deprecated. Will throw an error.
          * @function
          * @name OpenSeadragon.createFromDZI
          * @param {String} xmlUrl
          * @param {String} xmlString
          * @param {Function} callback
-         * @deprecated
+         * @deprecated - use OpenSeadragon.Viewer.prototype.open
          */
         createFromDZI: function( dzi, callback, tileHost ) {
-            var async       = typeof ( callback ) == "function",
-                dziUrl      = (
-                    dzi.substring(0,1) != '<' && 
-                    dzi.substring(0,1) != '{' 
-                ) ? dzi : null,
-                dziString   = dziUrl ? null : dzi,
-                error       = null,
-                urlParts,
-                filename,
-                lastDot,
-                tilesUrl,
-                callbackName;
-
-
-            if( tileHost ){
-
-                tilesUrl = tileHost + "/_files/";
-                
-            } else if( dziUrl ) {
-
-                urlParts = dziUrl.split( '/' );
-                filename = urlParts[ urlParts.length - 1 ];
-                if( filename.match(/_dzi\.js$/) ){
-                    //for jsonp dzi specification, the '_dzi' needs to be removed
-                    //from the filename to be consistent with the spec
-                    filename = filename.replace('_dzi.js', '.js');
-                }
-
-                lastDot  = filename.lastIndexOf( '.' );
-
-                if ( lastDot > -1 ) {
-                    urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
-                }
-
-
-                tilesUrl = urlParts.join( '/' ) + "_files/";
-
-            }
-
-            function finish( func, obj ) {
-                try {
-                    return func( obj, tilesUrl );
-                } catch ( e ) {
-                    if ( async ) {
-                        return null;
-                    } else {
-                        throw e;
-                    }
-                }
-            }
-
-            if ( async ) {
-                if ( dziString ) {
-                    window.setTimeout( function() {
-                        var source = finish( processDZIXml, $.parseXml( xmlString ) );
-                        // call after finish sets error
-                        callback( source, error );    
-                    }, 1);
-                } else {
-                    if( dziUrl.match(/_dzi\.js$/) ){
-                        callbackName = dziUrl.split( '/' ).pop().replace('.js','');
-                        $.jsonp({
-                            url: dziUrl,
-                            callbackName: callbackName,
-                            callback: function( imageData ){
-                                var source = finish( processDZIJSON, imageData.Image );
-                                callback( source );
-                            }
-                        });
-                    } else {
-                        $.makeAjaxRequest( dziUrl, function( xhr ) {
-                            var source = finish( processDZIResponse, xhr );
-                            // call after finish sets error
-                            callback( source, error );
-                        });
-                    }
-                }
-
-                return null;
-            }
-
-            if ( dziString ) {
-                return finish( 
-                    processDZIXml,
-                    $.parseXml( dziString ) 
-                );
-            } else {
-                return finish( 
-                    processDZIResponse, 
-                    $.makeAjaxRequest( dziUrl )
-                );
-            }
+            throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";
         },
 
         /**

@@ -108,19 +108,8 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
             options = configureFromObject( this, data );
         }
 
-        if( url && !options.tilesUrl ){
-            if( 'http' !== url.substring( 0, 4 ) ){
-                host = location.protocol + '//' + location.host;
-            }
-            dziPath = url.split('/');
-            dziName = dziPath.pop();
-            dziName = dziName.substring(0, dziName.lastIndexOf('.'));
-            dziPath = '/' + dziPath.join('/') + '/' + dziName + '_files/';
-            tilesUrl = dziPath;
-            if( host ){
-                tilesUrl = host + tilesUrl;
-            }
-            options.tilesUrl = tilesUrl;
+        if (url && !options.tilesUrl) {
+            options.tilesUrl = url.replace(/([^\/]+)\.dzi$/, '$1_files/');
         }
 
         return options;
@@ -216,6 +205,7 @@ function configureFromXML( tileSource, xmlDoc ){
             configuration = {
                 Image: {
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
+                    Url:         root.getAttribute( "Url" ),
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
                     Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
@@ -315,8 +305,7 @@ function configureFromObject( tileSource, configuration ){
         ));
     }
 
-
-    return {
+    return $.extend(true, {
         width: width, /* width *required */
         height: height, /* height *required */
         tileSize: tileSize, /* tileSize *required */
@@ -326,7 +315,7 @@ function configureFromObject( tileSource, configuration ){
         tilesUrl: tilesUrl, /* tilesUrl */
         fileFormat: fileFormat, /* fileFormat */
         displayRects: displayRects /* displayRects */
-    };
+    }, configuration );
 
 }
 

@@ -1,0 +1,29 @@
+OPENSEADRAGON CHANGELOG
+=======================
+
+0.9.125: In Progress
+
+* Fully deprecated OpenSeadragon.createFromDZI, safely deprecated Viewer.openTileSource and 
+  Viewer.openDZI to use Viewer.open internally. (#53 & #54).
+* Full page bug fix for when viewer is child of document body (#43).
+* Overlays for DZI bug fix (#45). 
+
+0.9.124:
+
+* Performance enhancements.
+
+
+0.9.123:
+
+* Real fullscreen support.
+
+
+0.9.122:
+
+* Performance enhancements.
+
+
+0.9.121:
+
+* Touch pan now works on Android.
+* Pinch zoom is better on all devices.

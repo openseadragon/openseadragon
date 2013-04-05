@@ -17,7 +17,8 @@ $.Navigator = function( options ){
 
     var _this       = this,
         viewer      = options.viewer,
-        viewerSize  = $.getElementSize( viewer.element );
+        viewerSize  = $.getElementSize( viewer.element),
+        unneededElement;
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
@@ -148,6 +149,10 @@ $.Navigator = function( options ){
     $.Viewer.apply( this, [ options ] ); 
 
     this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
+    unneededElement = this.element.getElementsByTagName('textarea')[0];
+    if (unneededElement) {
+        unneededElement.parentNode.removeChild(unneededElement);
+    }
 
 };
 
@@ -194,7 +199,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 containerSize.y 
             ) / source.tileSize;
         } else {
-            this.minPixelRatio = thie.viewer.minPixelRatio;
+            this.minPixelRatio = this.viewer.minPixelRatio;
         }
         return $.Viewer.prototype.open.apply( this, [ source ] );
     }

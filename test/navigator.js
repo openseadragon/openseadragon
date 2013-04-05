@@ -14,7 +14,7 @@ QUnit.config.autostart = false;
 
     module("navigator", {
         setup:function () {
-            resetDom();
+            Util.resetDom();
             resetTestVariables();
         }
     });
@@ -38,32 +38,11 @@ QUnit.config.autostart = false;
         displayRegionHeight = null;
     };
 
-    var resetDom = function () {
-        if ($('#exampleNavigator').is(':ui-dialog')) {
-            $('#exampleNavigator').dialog('destroy');
-        }
-        $("#exampleNavigator").remove();
-        $(".navigator").remove();
-        $("#example").empty();
-        $("#tallexample").empty();
-        $("#wideexample").empty();
-        $("#example").parent().append('<div id="exampleNavigator"></div>');
-    };
-
-    var equalsWithVariance = function (value1, value2, variance) {
-        return Math.abs(value1 - value2) <= variance;
-    };
-
-
-    var assessNumericValue = function (value1, value2, variance, message) {
-        ok(equalsWithVariance(value1, value2, variance), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
-    };
-
     var assessNavigatorLocation = function (expectedX, expectedY) {
         var navigator = $(".navigator");
 
-        assessNumericValue(expectedX, navigator.offset().left, 4, ' Navigator x position');
-        assessNumericValue(expectedY, navigator.offset().top, 4, ' Navigator y position');
+        Util.assessNumericValue(expectedX, navigator.offset().left, 4, ' Navigator x position');
+        Util.assessNumericValue(expectedY, navigator.offset().top, 4, ' Navigator y position');
     };
 
     var navigatorRegionBoundsInPoints = function () {
@@ -113,10 +92,10 @@ QUnit.config.autostart = false;
     var assessDisplayRegion = function (status) {
 
         var expectedBounds = navigatorRegionBoundsInPoints();
-        assessNumericValue(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
-        assessNumericValue(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
-        assessNumericValue(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
-        assessNumericValue(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
+        Util.assessNumericValue(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
+        Util.assessNumericValue(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
+        Util.assessNumericValue(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
+        Util.assessNumericValue(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
     };
 
     var waitForViewer = function () {
@@ -138,11 +117,11 @@ QUnit.config.autostart = false;
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
                     !viewer.drawer.needsUpdate() &&
                     currentDisplayWidth > 0 &&
-                    equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, .0001) &&
-                    equalsWithVariance(lastDisplayWidth, currentDisplayWidth, .0001) &&
-                    equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, .0001) &&
-                    equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, .0001) &&
-                    equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, .0001);
+                    Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, .0001) &&
+                    Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, .0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, .0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, .0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, .0001);
             }
             catch (err) {
                 //Ignore.  Subsequent code will try again shortly
@@ -213,10 +192,10 @@ QUnit.config.autostart = false;
                 expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             if (viewer.viewport.getBounds().width < 1) {
-                assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, .04, ' Viewer at ' + theContentCorner + ', x coord');
+                Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, .04, ' Viewer at ' + theContentCorner + ', x coord');
             }
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
-                assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, .04, ' Viewer at ' + theContentCorner + ', y coord');
+                Util.assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, .04, ' Viewer at ' + theContentCorner + ', y coord');
             }
         }
     };
@@ -226,8 +205,8 @@ QUnit.config.autostart = false;
         if (viewer.source.aspectRatio < 1) {
             yPositionVariance = yPositionVariance / viewer.source.aspectRatio;
         }
-        assessNumericValue(1 / viewer.source.aspectRatio / 2, viewer.viewport.getCenter().y, yPositionVariance, ' Viewer at center, y coord');
-        assessNumericValue(.5, viewer.viewport.getCenter().x, .4, ' Viewer at center, x coord');
+        Util.assessNumericValue(1 / viewer.source.aspectRatio / 2, viewer.viewport.getCenter().y, yPositionVariance, ' Viewer at center, y coord');
+        Util.assessNumericValue(.5, viewer.viewport.getCenter().x, .4, ' Viewer at center, x coord');
     };
 
     var clickOnNavigator = function (theContentCorner) {
