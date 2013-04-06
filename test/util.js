@@ -46,11 +46,9 @@
             return Math.abs(value1 - value2) <= variance;
         },
 
-
         assessNumericValue: function (value1, value2, variance, message) {
             ok(Util.equalsWithVariance(value1, value2, variance), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
         }
-
 
     };
 
