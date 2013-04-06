@@ -1,0 +1,48 @@
+<html>
+    <head>
+    <title>OpenSeadragon Navigator in a custom location Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+
+    <style type="text/css">
+      .openseadragon1
+      {
+      width:      800px;
+      height:     600px;
+      border:     1px solid black;
+      color:      #333; /* text color for messages */
+      background-color: black;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show how to put the navigator in a custom location
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <div id="navigatorDiv" class="findme"></div>
+
+    <script type="text/javascript">
+
+    var viewer = OpenSeadragon({
+        id:"contentDiv",
+        navigatorId: "navigatorDiv",
+        prefixUrl:"../../build/openseadragon/images/",
+        tileSources:{
+             Image:{
+                xmlns:"http://schemas.microsoft.com/deepzoom/2008",
+                Url:"../data/testpattern_files/",
+                Format:"jpg",
+                Overlap:"2",
+                TileSize:"256",
+                Size:{  
+                    Height:"1000",
+                    Width:"1000"
+                }
+            }
+        }
+    });
+
+        </script>
+    </body>
+</html>

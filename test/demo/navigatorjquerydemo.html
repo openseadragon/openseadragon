@@ -1,10 +1,11 @@
 <html>
     <head>
-    <title>OpenSeadragon Expose Origina Event Demo</title>
-    <script type="text/javascript" src='../build/openseadragon/openseadragon.js'></script>
-        <script type="text/javascript" src='lib/jquery-1.9.1.min.js'></script>
-        <script type="text/javascript" src='lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
-        <link rel="stylesheet" type="text/css" href="lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css"/>
+    <title>OpenSeadragon Navigator in a JQuery UI Dialog Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+        <link rel="stylesheet" type="text/css" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css"/>
+
     <style type="text/css">
       .openseadragon
       {
@@ -14,27 +15,17 @@
       color:      #333; /* text color for messages */
       background-color: black;
       }
-      .openseadragon-small
-      {
-      width:      40px;
-      height:     30px;
-      border:     1px solid black;
-      color:      #333; /* text color for messages */
-      background-color: black;
-      }
-      
+
     </style>
 </head>
 <body>
-    <div class="demoarea">
     <div>
-       Simple demo page to verify that event handlers pass along the original source event
+       Simple demo page to show how to put the navigator in a moveable JQuery UI dialog.
     </div>
     <div id="contentDiv" class="openseadragon"></div>
         <div id="navigatorDialog">
-    <div id="navigatorDiv" class="findme"></div>
+    <div id="navigatorDiv"></div>
         </div>
-    </div>
 
     <script type="text/javascript">
 
@@ -43,11 +34,11 @@
     var viewer = OpenSeadragon({
         id:"contentDiv",
         navigatorId: "navigatorDiv",
-        prefixUrl:"../build/openseadragon/images/",
+        prefixUrl:"../../build/openseadragon/images/",
         tileSources:{
              Image:{
                 xmlns:"http://schemas.microsoft.com/deepzoom/2008",
-                Url:"data/testpattern_files/",
+                Url:"../data/testpattern_files/",
                 Format:"jpg",
                 Overlap:"2",
                 TileSize:"256",
