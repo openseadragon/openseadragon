@@ -64,7 +64,7 @@ module.exports = function(grunt) {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
                     + "//! Git commit: <%= gitInfo %>\n"
-                    + "//! http://openseadragon.github.com\n\n",
+                    + "//! http://openseadragon.github.io\n\n",
                 process: true
             },
             dist: {

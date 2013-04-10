@@ -4,7 +4,7 @@ This project is a fork of the OpenSeadragon project at http://openseadragon.code
 
 ## On the Web
 
-http://openseadragon.github.com/
+http://openseadragon.github.io/
 
 ## First Time Setup
 
