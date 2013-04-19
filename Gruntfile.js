@@ -166,6 +166,9 @@ module.exports = function(grunt) {
                 + filename;
             grunt.file.copy(abspath, dest);
         });
+        grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
+        grunt.file.copy("licenses/mit.txt", packageDir + "licenses/mit.txt");
+        grunt.file.copy("licenses/new-bsd.txt", packageDir + "licenses/new-bsd.txt");
     });
 
     // ----------
