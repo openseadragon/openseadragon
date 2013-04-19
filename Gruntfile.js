@@ -84,7 +84,8 @@ module.exports = function(grunt) {
         compress: {
             zip: {
                 options: {
-                    archive: "build/openseadragon.zip"
+                    archive: "build/openseadragon.zip",
+                    level: 9
                 },
                 files: [
                    { expand: true, cwd: "build/", src: ["openseadragon/**"] }
@@ -92,7 +93,8 @@ module.exports = function(grunt) {
             },
             tar: {
                 options: {
-                    archive: "build/openseadragon.tar.gz"
+                    archive: "build/openseadragon.tar.gz",
+                    level: 9
                 },
                 files: [
                    { expand: true, cwd: "build/", src: [ "openseadragon/**" ] }
