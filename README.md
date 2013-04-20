@@ -1,6 +1,6 @@
 # OpenSeadragon 
 
-This project is a fork of the OpenSeadragon project at http://openseadragon.codeplex.com/
+An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
 ## On the Web
 
