@@ -2,13 +2,11 @@
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
-Find examples, documentation, and builds at http://openseadragon.github.io/.
+See it in action at http://openseadragon.github.io/.
 
 ## Stable Build
 
-[Zip](http://openseadragon.github.io/openseadragon.zip)
-
-[Tar](http://openseadragon.github.io/openseadragon.tar)
+The latest stable builds are here: [Zip](http://openseadragon.github.io/openseadragon.zip) or [Tar](http://openseadragon.github.io/openseadragon.tar).
 
 ## First Time Setup
 
