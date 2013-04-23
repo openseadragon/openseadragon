@@ -4,9 +4,10 @@ An open-source, web-based viewer for zoomable images, implemented in pure JavaSc
 
 See it in action at http://openseadragon.github.io/.
 
-## Stable Build
+## Stable Builds
 
-The latest stable builds are here: [Zip](http://openseadragon.github.io/openseadragon.zip) or [Tar](http://openseadragon.github.io/openseadragon.tar.gz).
+Stable builds of OpenSeadragon releases are available
+[here](http://openseadragon.github.io/releases/).
 
 ## First Time Setup
 

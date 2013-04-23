@@ -57,7 +57,7 @@ module.exports = function(grunt) {
             build: ["build"],
             "package": [packageDir],
             release: {
-                src: [releaseRoot],
+                src: [releaseRoot + '*', '!' + releaseRoot + 'releases'],
                 options: {
                     force: true
                 }
@@ -88,7 +88,7 @@ module.exports = function(grunt) {
         compress: {
             zip: {
                 options: {
-                    archive: "build/" + packageDirName + ".zip",
+                    archive: "build/releases/" + packageDirName + ".zip",
                     level: 9
                 },
                 files: [
@@ -97,7 +97,7 @@ module.exports = function(grunt) {
             },
             tar: {
                 options: {
-                    archive: "build/" + packageDirName + ".tar.gz",
+                    archive: "build/releases/" + packageDirName + ".tar.gz",
                     level: 9
                 },
                 files: [
