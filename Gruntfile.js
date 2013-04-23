@@ -92,7 +92,7 @@ module.exports = function(grunt) {
             },
             tar: {
                 options: {
-                    archive: "build/openseadragon.tar"
+                    archive: "build/openseadragon.tar.gz"
                 },
                 files: [
                    { expand: true, cwd: "build/", src: [ "openseadragon/**" ] }
@@ -177,7 +177,7 @@ module.exports = function(grunt) {
 
     // ----------
     // Package task.
-    // Builds and creates the .zip and .tar files.
+    // Builds and creates the .zip and .tar.gz files.
     grunt.registerTask("package", ["build", "compress"]);
 
     // ----------

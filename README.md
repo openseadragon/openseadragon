@@ -6,7 +6,7 @@ See it in action at http://openseadragon.github.io/.
 
 ## Stable Build
 
-The latest stable builds are here: [Zip](http://openseadragon.github.io/openseadragon.zip) or [Tar](http://openseadragon.github.io/openseadragon.tar).
+The latest stable builds are here: [Zip](http://openseadragon.github.io/openseadragon.zip) or [Tar](http://openseadragon.github.io/openseadragon.tar.gz).
 
 ## First Time Setup
 
@@ -42,7 +42,7 @@ You can also publish the built version to the site-build repository. This assume
 
     grunt publish
 
-... which will delete the existing openseadragon folder, along with the .zip and .tar files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
+... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
 
 ## Testing
 
