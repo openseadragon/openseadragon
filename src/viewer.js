@@ -1014,7 +1014,7 @@ function openTileSource( viewer, source ) {
         });
     }
     
-    if( _this.preserveVewport ){
+    if( _this.preserveViewport ){
         _this.viewport.resetContentSize( _this.source.dimensions );
     } 
 
