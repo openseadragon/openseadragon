@@ -6,8 +6,7 @@ See it in action at http://openseadragon.github.io/.
 
 ## Stable Builds
 
-Stable builds of OpenSeadragon releases are available
-[here](http://openseadragon.github.io/releases/).
+See our [releases page](http://openseadragon.github.io/releases/).
 
 ## First Time Setup
 
