@@ -55,7 +55,7 @@ module.exports = function(grunt) {
         pkg: packageJson,
         clean: {
             build: ["build"],
-            "package": [packageDir],
+            package: [packageDir],
             release: {
                 src: [releaseRoot + '*', '!' + releaseRoot + 'releases'],
                 options: {
