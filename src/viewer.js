@@ -115,6 +115,7 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
+        "closeCount":        0,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -367,6 +368,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
+
+        THIS[ this.hash ].closeCount++;
 
         this.raiseEvent( 'close', { viewer: this } );
         
@@ -948,6 +951,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 function openTileSource( viewer, source ) {
     var _this = viewer,
         overlay,
+        closeCount,
         i;
 
     if ( _this.source ) {
@@ -1064,7 +1068,12 @@ function openTileSource( viewer, source ) {
 
     THIS[ _this.hash ].animating = false;
     THIS[ _this.hash ].forceRedraw = true;
-    scheduleUpdate( _this, updateMulti );
+
+    // Use local copy in closure
+    closeCount = THIS[ _this.hash ].closeCount;
+    scheduleUpdate( _this, function(){
+        updateMulti( _this, closeCount );
+    } );
 
     //Assuming you had programatically created a bunch of overlays
     //and added them via configuration
@@ -1121,9 +1130,7 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
         deltaTime;
 
     if ( THIS[ viewer.hash ].animating ) {
-        return $.requestAnimationFrame( function(){
-            updateFunc( viewer );
-        } );
+        return $.requestAnimationFrame( updateFunc );
     }
 
     currentTime     = +new Date();
@@ -1132,9 +1139,7 @@ function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
     targetTime      = prevUpdateTime + 1000 / 60;
     deltaTime       = Math.max( 1, targetTime - currentTime );
     
-    return $.requestAnimationFrame( function(){
-        updateFunc( viewer );
-    } );
+    return $.requestAnimationFrame( updateFunc );
 }
 
 
@@ -1334,17 +1339,19 @@ function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny )
 // Page update routines ( aka Views - for future reference )
 ///////////////////////////////////////////////////////////////////////////////
 
-function updateMulti( viewer ) {
+function updateMulti( viewer, closeCount ) {
 
     var beginTime;
 
-    if ( !viewer.source ) {
+    if ( closeCount !== THIS[ viewer.hash ].closeCount ) {
         return;
     }
 
     beginTime = +new Date();
     updateOnce( viewer );
-    scheduleUpdate( viewer, arguments.callee, beginTime );
+    scheduleUpdate( viewer, function(){
+        updateMulti( viewer, closeCount );
+    }, beginTime );
 }
 
 function updateOnce( viewer ) {
