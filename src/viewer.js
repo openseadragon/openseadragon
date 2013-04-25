@@ -115,8 +115,6 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
-        "lastOpenStartTime": 0,
-        "lastOpenEndTime":   0,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -956,16 +954,6 @@ function openTileSource( viewer, source ) {
         _this.close( );
     }
     
-    // to ignore earlier opens
-    THIS[ _this.hash ].lastOpenStartTime = +new Date();
-
-    window.setTimeout( function () {
-        if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
-            THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
-        }
-    }, 2000);
-
-    THIS[ _this.hash ].lastOpenEndTime = +new Date();
     _this.canvas.innerHTML = "";
     THIS[ _this.hash ].prevContainerSize = $.getElementSize( _this.container );
 
