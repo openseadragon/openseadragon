@@ -75,7 +75,7 @@ $.extend( $, {
     setString: function( prop, value ) {
 
         var props     = prop.split('.'),
-            container = $.Strings,
+            container = I18N,
             i;
 
         for ( i = 0; i < props.length - 1; i++ ) {
