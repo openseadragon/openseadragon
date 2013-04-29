@@ -115,8 +115,7 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
-        "lastOpenStartTime": 0,
-        "lastOpenEndTime":   0,
+        "updateRequestId":   null,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -355,7 +354,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
-        
+        if ( THIS[ this.hash ].updateRequestId !== null ){
+            $.cancelAnimationFrame( THIS[ this.hash ].updateRequestId );
+            THIS[ this.hash ].updateRequestId = null;
+        }
+
         if( this.drawer ){
             this.drawer.clearOverlays();
         }
@@ -956,16 +959,6 @@ function openTileSource( viewer, source ) {
         _this.close( );
     }
     
-    // to ignore earlier opens
-    THIS[ _this.hash ].lastOpenStartTime = +new Date();
-
-    window.setTimeout( function () {
-        if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
-            THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
-        }
-    }, 2000);
-
-    THIS[ _this.hash ].lastOpenEndTime = +new Date();
     _this.canvas.innerHTML = "";
     THIS[ _this.hash ].prevContainerSize = $.getElementSize( _this.container );
 
@@ -1076,7 +1069,7 @@ function openTileSource( viewer, source ) {
 
     THIS[ _this.hash ].animating = false;
     THIS[ _this.hash ].forceRedraw = true;
-    scheduleUpdate( _this, updateMulti );
+    THIS[ _this.hash ].updateRequestId = scheduleUpdate( _this, updateMulti );
 
     //Assuming you had programatically created a bunch of overlays
     //and added them via configuration
@@ -1351,12 +1344,15 @@ function updateMulti( viewer ) {
     var beginTime;
 
     if ( !viewer.source ) {
+        THIS[ viewer.hash ].updateRequestId = null;
         return;
     }
 
     beginTime = +new Date();
     updateOnce( viewer );
-    scheduleUpdate( viewer, arguments.callee, beginTime );
+
+    THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
+        arguments.callee, beginTime );
 }
 
 function updateOnce( viewer ) {
