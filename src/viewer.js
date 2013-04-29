@@ -1343,6 +1343,11 @@ function updateMulti( viewer ) {
 
     var beginTime;
 
+    if ( !viewer.source ) {
+        THIS[ viewer.hash ].updateRequestId = null;
+        return;
+    }
+
     beginTime = +new Date();
     updateOnce( viewer );
 
