@@ -31,95 +31,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @version  <%= pkg.name %> <%= pkg.version %>
- * 
- * @fileOverview 
- * <h2>
- * <strong>
- * OpenSeadragon - Javascript Deep Zooming
- * </strong>
- * </h2> 
- * <p>
- * OpenSeadragon is provides an html interface for creating 
- * deep zoom user interfaces.  The simplest examples include deep 
- * zoom for large resolution images, and complex examples include
- * zoomable map interfaces driven by SVG files.
- * </p>
- * 
- * @author <br/>(c) 2011, 2012 Christopher Thatcher 
- * @author <br/>(c) 2010 OpenSeadragon Team 
- * @author <br/>(c) 2010 CodePlex Foundation 
- * 
- * <p>
- * <strong>Original license preserved below: </strong><br/>
- * <pre>
- * ----------------------------------------------------------------------------
- * 
- *  License: New BSD License (BSD)
- *  Copyright (c) 2010, OpenSeadragon
- *  All rights reserved.
- * 
- *  Redistribution and use in source and binary forms, with or without 
- *  modification, are permitted provided that the following conditions are met:
- *  
- *  * Redistributions of source code must retain the above copyright notice, this 
- *    list of conditions and the following disclaimer.
- *  
- *  * Redistributions in binary form must reproduce the above copyright notice, 
- *    this list of conditions and the following disclaimer in the documentation 
- *    and/or other materials provided with the distribution.
- * 
- *  * Neither the name of OpenSeadragon nor the names of its contributors may be 
- *    used to endorse or promote products derived from this software without 
- *    specific prior written permission.
- * 
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
- *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
- *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- *  POSSIBILITY OF SUCH DAMAGE.
- * 
- * ---------------------------------------------------------------------------
- * </pre>
- * </p>
- * <p>
- * <strong> Work done by Chris Thatcher adds an MIT license </strong><br/>
- * <pre>
- * ----------------------------------------------------------------------------
- * (c) Christopher Thatcher 2011, 2012. All rights reserved.
- * 
- * Licensed with the MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * ---------------------------------------------------------------------------
- * </pre>
- * </p>
- **/
-
- /** 
+ /**
+  * @version  <%= pkg.name %> <%= pkg.version %>
+  * 
+  * @fileOverview 
+  * <h2>
+  * <strong>
+  * OpenSeadragon - Javascript Deep Zooming
+  * </strong>
+  * </h2> 
+  * <p>
+  * OpenSeadragon is provides an html interface for creating 
+  * deep zoom user interfaces.  The simplest examples include deep 
+  * zoom for large resolution images, and complex examples include
+  * zoomable map interfaces driven by SVG files.
+  * </p>
+  * 
   * The root namespace for OpenSeadragon, this function also serves as a single
   * point of instantiation for an {@link OpenSeadragon.Viewer}, including all 
   * combinations of out-of-the-box configurable features.  All utility methods 
