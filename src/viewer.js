@@ -24,9 +24,9 @@ var THIS = {},
  * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
  * @param {String} options.prefixUrl  Url used to prepend to paths, eg button 
  *  images, etc.
- * @param {Seadragon.Controls[]} options.controls Array of Seadragon.Controls,
- * @param {Seadragon.Overlays[]} options.overlays Array of Seadragon.Overlays,
- * @param {Seadragon.Controls[]} options.overlayControls An Array of ( TODO: 
+ * @param {OpenSeadragon.Control[]} options.controls Array of OpenSeadragon.Control,
+ * @param {OpenSeadragon.Overlay[]} options.overlays Array of OpenSeadragon.Overlay,
+ * @param {OpenSeadragon.Control[]} options.overlayControls An Array of ( TODO: 
  *  not sure! )
  * @property {OpenSeadragon.Viewport} viewport The viewer's viewport, where you 
  *  can access zoom, pan, etc.
