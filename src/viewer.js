@@ -28,6 +28,8 @@ var THIS = {},
  * @param {Seadragon.Overlays[]} options.overlays Array of Seadragon.Overlays,
  * @param {Seadragon.Controls[]} options.overlayControls An Array of ( TODO: 
  *  not sure! )
+ * @property {OpenSeadragon.Viewport} viewport The viewer's viewport, where you 
+ *  can access zoom, pan, etc.
  *
  **/    
 $.Viewer = function( options ) {
