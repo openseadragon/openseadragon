@@ -66,7 +66,7 @@ When fixing bugs and adding features, when appropriate please also:
 
 * Update changelog.txt
 * Add/update related unit tests
-* Update related doc comments
+* Update related doc comments 
 
 If you're new to the project, check out our [good first bug](https://github.com/openseadragon/openseadragon/issues?labels=good+first+bug&page=1&state=open) issues for some places to dip your toe in the water.
 
