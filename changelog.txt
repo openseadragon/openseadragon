@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+0.9.127: (in progress)
+
 0.9.126:
 
 * DZI JSONp was broken; fixed.
