@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+0.9.126: (in progress)
+
 0.9.125:
 
 * Fully deprecated OpenSeadragon.createFromDZI, safely deprecated Viewer.openTileSource and 
