@@ -228,8 +228,7 @@ $.Drawer.prototype = {
         }
         if( this.viewer ){
             this.viewer.raiseEvent( 'clear-overlay', { 
-                viewer: this.viewer,
-                element: element
+                viewer: this.viewer
             });
         }
         return this;
@@ -583,8 +582,8 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
             level: level, 
             opacity: levelOpacity,
             visibility: levelVisibility, 
-            topleft: viewportTopLeft, 
-            bottomright: viewportBottomRight, 
+            topleft: viewportTL, 
+            bottomright: viewportBR, 
             currenttime: currentTime, 
             best: best
         });
