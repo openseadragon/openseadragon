@@ -1,10 +1,12 @@
 # OpenSeadragon 
 
-This project is a fork of the OpenSeadragon project at http://openseadragon.codeplex.com/
+An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
-## On the Web
+See it in action at http://openseadragon.github.io/.
 
-http://openseadragon.github.io/
+## Stable Builds
+
+See our [releases page](http://openseadragon.github.io/releases/).
 
 ## First Time Setup
 
@@ -40,7 +42,7 @@ You can also publish the built version to the site-build repository. This assume
 
     grunt publish
 
-... which will delete the existing openseadragon folder, along with the .zip and .tar files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
+... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
 
 ## Testing
 
@@ -59,6 +61,14 @@ and open `http://localhost:8000/` in your browser
 OpenSeadragon is truly a community project; we welcome your involvement!
 
 When contributing, please attempt to match the code style already in the codebase. Note that we use four spaces per indentation stop. For more thoughts on code style, see https://github.com/rwldrn/idiomatic.js/.
+
+When fixing bugs and adding features, when appropriate please also:
+
+* Update changelog.txt
+* Add/update related unit tests
+* Update related doc comments
+
+If you're new to the project, check out our [good first bug](https://github.com/openseadragon/openseadragon/issues?labels=good+first+bug&page=1&state=open) issues for some places to dip your toe in the water.
 
 ## Licenses
 

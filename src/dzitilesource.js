@@ -109,7 +109,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
         }
 
         if (url && !options.tilesUrl) {
-            options.tilesUrl = url.replace(/([^\/]+)\.dzi$/, '$1_files/');
+            options.tilesUrl = url.replace(/([^\/]+)\.(dzi|xml|js)$/, '$1_files/');
         }
 
         return options;

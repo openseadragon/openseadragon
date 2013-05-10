@@ -1,5 +1,7 @@
 (function() {
 
+    module('Basic');
+    
     // TODO: Tighten up springs and use "immediate" where possible, so tests run faster
     // TODO: Test drag
 
@@ -104,6 +106,7 @@
     asyncTest('Close', function() {
         var closeHandler = function() {
             viewer.removeHandler('close', closeHandler);
+            $('#example').empty();
             ok(true, 'Close event was sent');
             start();
         };
