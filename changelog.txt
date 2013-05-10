@@ -3,6 +3,9 @@ OPENSEADRAGON CHANGELOG
 
 0.9.127: (in progress)
 
+* Fixed a problem with getString when the string property is a sub-property. (#64)
+* Cleaned up some diagnostic code that was broken.
+
 0.9.126:
 
 * DZI JSONp was broken; fixed.
