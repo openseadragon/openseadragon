@@ -1,8 +1,5 @@
 (function() {
 
-    // TODO: How to know if a tile has been drawn? The tile-drawn event used below
-    // is defunct.
-
     module('DZI JSONp');
 
     var viewer = null;
@@ -22,12 +19,20 @@
                 viewer.removeHandler('open', openHandler);
                 ok(true, 'Open event was sent');
                 viewer.drawer.viewer = viewer;
+
+                timeout = setTimeout(function() {
+                    viewer.removeHandler('tile-drawn', tileDrawnHandler);
+                    ok(false, 'taking too long');
+                    start();
+                }, 2000);
+
                 viewer.addHandler('tile-drawn', tileDrawnHandler);
             };
 
             var tileDrawnHandler = function(eventSender, eventData) {
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 ok(true, 'A tile has been drawn');
+                clearTimeout(timeout);
                 start();
             };
 
@@ -36,16 +41,16 @@
     });
 
     // ----------
-    // asyncTest('Close', function() {
-    //     var closeHandler = function() {
-    //         viewer.removeHandler('close', closeHandler);
-    //         $('#example').empty();
-    //         ok(true, 'Close event was sent');
-    //         start();
-    //     };
+    asyncTest('Close', function() {
+        var closeHandler = function() {
+            viewer.removeHandler('close', closeHandler);
+            $('#example').empty();
+            ok(true, 'Close event was sent');
+            start();
+        };
 
-    //     viewer.addHandler('close', closeHandler);
-    //     viewer.close();
-    // });
+        viewer.addHandler('close', closeHandler);
+        viewer.close();
+    });
   
 })();
