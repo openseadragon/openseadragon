@@ -26,6 +26,29 @@
                 .simulate('mouseover', event)
                 .simulate('mousedown', event)
                 .simulate('mouseup', event);
+        },
+
+        // ----------
+        timeWatcher: function(time) {
+            time = time || 2000;
+            var finished = false;
+
+            setTimeout(function() {
+                if (!finished) {
+                    finished = true;
+                    ok(false, 'finishes in ' + time + 'ms');
+                    start();
+                }
+            }, time);
+
+            return {
+                done: function() {
+                    if (!finished) {
+                        finished = true;
+                        start();
+                    }
+                }
+            };
         }
     };
 

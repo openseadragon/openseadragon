@@ -7,6 +7,8 @@
     // ----------
     asyncTest('Open', function() {
         $(document).ready(function() {
+            var timeWatcher = Util.timeWatcher();
+
             viewer = OpenSeadragon({
                 id:            'example',
                 prefixUrl:     '/build/openseadragon/images/',
@@ -19,21 +21,13 @@
                 viewer.removeHandler('open', openHandler);
                 ok(true, 'Open event was sent');
                 viewer.drawer.viewer = viewer;
-
-                timeout = setTimeout(function() {
-                    viewer.removeHandler('tile-drawn', tileDrawnHandler);
-                    ok(false, 'taking too long');
-                    start();
-                }, 2000);
-
                 viewer.addHandler('tile-drawn', tileDrawnHandler);
             };
 
             var tileDrawnHandler = function(eventSender, eventData) {
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 ok(true, 'A tile has been drawn');
-                clearTimeout(timeout);
-                start();
+                timeWatcher.done();
             };
 
             viewer.addHandler('open', openHandler);
