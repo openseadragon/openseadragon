@@ -32,11 +32,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Derived from the OSM tile source in Rainer Simon's seajax-utils project
+ * <http://github.com/rsimon/seajax-utils>.  Rainer Simon has contributed
+ * the included code to the OpenSeadragon project under the New BSD license;
+ * see #58.
+ */
+
+
 (function( $ ){
     
 /**
- * A tilesource implementation for OpenStreetMap. Adopted from Rainer Simon
- * project http://github.com/rsimon/seajax-utils.
+ * A tilesource implementation for OpenStreetMap.
  *
  * Note 1. Zoomlevels. Deep Zoom and OSM define zoom levels differently. In  Deep 
  * Zoom, level 0 equals an image of 1x1 pixels. In OSM, level 0 equals an image of

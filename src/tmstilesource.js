@@ -32,13 +32,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Derived from the TMS tile source in Rainer Simon's seajax-utils project
+ * <http://github.com/rsimon/seajax-utils>.  Rainer Simon has contributed
+ * the included code to the OpenSeadragon project under the New BSD license;
+ * see #58.
+ */
+
+
 (function( $ ){
     
 /**
- * A tilesource implementation for Tiled Map Services (TMS). Adopted from Rainer Simon
- * project http://github.com/rsimon/seajax-utils. TMS tile
- * scheme ( [ as supported by OpenLayers ] is described here 
- * ( http://openlayers.org/dev/examples/tms.html ) )
+ * A tilesource implementation for Tiled Map Services (TMS).
+ * TMS tile scheme ( [ as supported by OpenLayers ] is described here
+ * ( http://openlayers.org/dev/examples/tms.html ).
  *
  * @class
  * @extends OpenSeadragon.TileSource
