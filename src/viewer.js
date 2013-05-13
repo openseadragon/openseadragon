@@ -515,12 +515,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 //Make sure the user has some ability to style the toolbar based
                 //on the mode
-                this.toolbar.element.setAttribute( 
-                    'class',
-                    this.toolbar.element.className +" fullpage"
-                );
+                $.addClass( this.toolbar.element, 'fullpage' );
             }
             
+            $.addClass( this.element, 'fullpage' );
             body.appendChild( this.element );
             
             if( $.supportsFullScreen ){
@@ -590,6 +588,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             for ( i = 0; i < nodes; i++ ){
                 body.appendChild( this.previousBody.shift() );
             }
+
+            $.removeClass( this.element, 'fullpage' );
             THIS[ this.hash ].prevElementParent.insertBefore(
                 this.element,
                 THIS[ this.hash ].prevNextSibling
@@ -602,10 +602,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 //Make sure the user has some ability to style the toolbar based
                 //on the mode
-                this.toolbar.element.setAttribute( 
-                    'class',
-                    this.toolbar.element.className.replace('fullpage','')
-                );
+                $.removeClass( this.toolbar.element, 'fullpage' );
                 //this.toolbar.element.style.position = 'relative';
                 this.toolbar.parentNode.insertBefore( 
                     this.toolbar.element,

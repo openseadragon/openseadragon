@@ -377,7 +377,7 @@ $.Drawer.prototype = {
         element.href    = "#/overlay/"+id;
     }
     element.id        = id;
-    element.className = element.className + " " + ( overlay.className ?
+    $.addClass( element, overlay.className ?
         overlay.className :
         "openseadragon-overlay"
     );
