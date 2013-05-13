@@ -1026,6 +1026,48 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
+         * Add the specified CSS class to the element if not present.
+         * @name $.addClass
+         * @function
+         * @param {Element|String} element
+         * @param {String} className
+         */
+        addClass: function( element, className ) {
+            element = $.getElement( element );
+
+            if ( ! element.className ) {
+                element.className = className;
+            } else if ( ( ' ' + element.className + ' ' ).
+                indexOf( ' ' + className + ' ' ) === -1 ) {
+                element.className += ' ' + className;
+            }
+        },
+
+
+        /**
+         * Remove the specified CSS class from the element.
+         * @name $.removeClass
+         * @function
+         * @param {Element|String} element
+         * @param {String} className
+         */
+        removeClass: function( element, className ) {
+            var oldClasses,
+                newClasses = [],
+                i;
+
+            element = $.getElement( element );
+            oldClasses = element.className.split( /\s+/ );
+            for ( i = 0; i < oldClasses.length; i++ ) {
+                if ( oldClasses[ i ] && oldClasses[ i ] !== className ) {
+                    newClasses.push( oldClasses[ i ] );
+                }
+            }
+            element.className = newClasses.join(' ');
+        },
+
+
+        /**
          * Adds an event listener for the given element, eventName and handler.
          * @function
          * @name OpenSeadragon.addEvent
