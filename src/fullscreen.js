@@ -32,14 +32,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Implementation and research by John Dyer in:
+ * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
+ * John Dyer has released this fullscreen code under the MIT license; see #81.
+ *
+ * Copyright (C) 2011 John Dyer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
+ * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 
 /**
  * Determines the appropriate level of native full screen support we can get 
  * from the browser.
- * Thanks to John Dyer for the implementation and research
- * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
- * Also includes older IE support based on
- * http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760
  * @name $.supportsFullScreen
  */
 (function( $ ) {
@@ -95,7 +117,8 @@
                 document[this.prefix + 'CancelFullScreen']();
         };
     } else if ( typeof window.ActiveXObject !== "undefined" ){
-        // Older IE.
+        // Older IE.  Support based on:
+        // http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760
         fullScreenApi.requestFullScreen = function(){
             var wscript = new ActiveXObject("WScript.Shell");
             if ( wscript !== null ) {
