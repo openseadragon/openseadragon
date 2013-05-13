@@ -2,15 +2,19 @@
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
-See it in action at http://openseadragon.github.io/.
+See it in action and get started using it at http://openseadragon.github.io/.
 
 ## Stable Builds
 
 See our [releases page](http://openseadragon.github.io/releases/).
 
-## First Time Setup
+## Development
 
-All command-line operations are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). To get set up:
+If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at http://openseadragon.github.io/. If you want to modify OpenSeadragon and/or contribute to its development, read on.
+
+### First Time Setup
+
+All command-line operations for building and testing OpenSeadragon are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). To get set up:
 
 1. Install Node, if you haven't already (available at the link above)
 1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli`
@@ -20,7 +24,7 @@ All command-line operations are scripted using [Grunt](http://gruntjs.com/) whic
 
 You're set... continue reading for build and test instructions.
 
-## Building from Source
+### Building from Source
 
 To build, just run (on the command line, in the openseadragon folder):
 
@@ -44,7 +48,7 @@ You can also publish the built version to the site-build repository. This assume
 
 ... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
 
-## Testing
+### Testing
 
 Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phantomjs.org/); they're both installed when you run `npm install`. At the moment we don't have much in the way of tests, but we're working to fix that. To run on the command line:
 
@@ -56,7 +60,7 @@ If you wish to work interactively with the tests or test your changes:
 
 and open `http://localhost:8000/` in your browser
 
-## Contributing
+### Contributing
 
 OpenSeadragon is truly a community project; we welcome your involvement!
 
