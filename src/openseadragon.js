@@ -98,7 +98,9 @@
   * zoom for large resolution images, and complex examples include
   * zoomable map interfaces driven by SVG files.
   * </p>
-  * 
+  */
+
+ /**
   * The root namespace for OpenSeadragon, this function also serves as a single
   * point of instantiation for an {@link OpenSeadragon.Viewer}, including all 
   * combinations of out-of-the-box configurable features.  All utility methods 
