@@ -103,6 +103,23 @@
     });
 
     // ----------
+    test('Fullscreen', function() {
+        ok(!viewer.isFullPage(), 'Started out not fullpage');
+        ok(!$(viewer.element).hasClass('fullpage'),
+            'No fullpage class on div');
+
+        viewer.setFullPage(true);
+        ok(viewer.isFullPage(), 'Enabled fullpage');
+        ok($(viewer.element).hasClass('fullpage'),
+            'Fullpage class added to div');
+
+        viewer.setFullPage(false);
+        ok(!viewer.isFullPage(), 'Disabled fullpage');
+        ok(!$(viewer.element).hasClass('fullpage'),
+            'Fullpage class removed from div');
+    });
+
+    // ----------
     asyncTest('Close', function() {
         var closeHandler = function() {
             viewer.removeHandler('close', closeHandler);
