@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+0.9.128: (in progress)
+
 0.9.127:
 
 * Fixed a problem with getString when the string property is a sub-property. (#64)
