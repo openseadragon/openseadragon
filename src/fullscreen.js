@@ -35,7 +35,8 @@
 /*
  * Implementation and research by John Dyer in:
  * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
- * John Dyer has released this fullscreen code under the MIT license; see #81.
+ * John Dyer has released this fullscreen code under the MIT license; see
+ * <https://github.com/openseadragon/openseadragon/issues/81>.
  *
  * Copyright (C) 2011 John Dyer
  *

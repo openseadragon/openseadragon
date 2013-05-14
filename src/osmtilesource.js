@@ -36,7 +36,7 @@
  * Derived from the OSM tile source in Rainer Simon's seajax-utils project
  * <http://github.com/rsimon/seajax-utils>.  Rainer Simon has contributed
  * the included code to the OpenSeadragon project under the New BSD license;
- * see #58.
+ * see <https://github.com/openseadragon/openseadragon/issues/58>.
  */
 
 
