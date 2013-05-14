@@ -68,7 +68,8 @@ module.exports = function(grunt) {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
                     + "//! Git commit: <%= gitInfo %>\n"
-                    + "//! http://openseadragon.github.io\n\n",
+                    + "//! http://openseadragon.github.io\n"
+                    + "//! License: http://openseadragon.github.io/license/\n\n",
                 process: true
             },
             dist: {
@@ -167,8 +168,7 @@ module.exports = function(grunt) {
             grunt.file.copy(abspath, dest);
         });
         grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
-        grunt.file.copy("licenses/mit.txt", packageDir + "licenses/mit.txt");
-        grunt.file.copy("licenses/new-bsd.txt", packageDir + "licenses/new-bsd.txt");
+        grunt.file.copy("LICENSE.txt", packageDir + "LICENSE.txt");
     });
 
     // ----------
