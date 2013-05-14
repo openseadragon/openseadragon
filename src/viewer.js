@@ -1249,7 +1249,7 @@ function onBlur(){
     
 }
 
-function onCanvasClick( tracker, position, quick, shift ) {
+function onCanvasClick( tracker, position, quick, shift, event ) {
     var zoomPreClick,
         factor;
     if ( this.viewport && quick ) {    // ignore clicks where mouse moved         
@@ -1261,15 +1261,16 @@ function onCanvasClick( tracker, position, quick, shift ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvas-click', { 
+    this.raiseEvent( 'click', { 
         tracker: tracker,
         position: position,
         quick: quick,
-        shift: shift
+        shift: shift,
+        originalEvent: event 
     });
 }
 
-function onCanvasDrag( tracker, position, delta, shift ) {
+function onCanvasDrag( tracker, position, delta, shift, event ) {
     if ( this.viewport ) {
         if( !this.panHorizontal ){
             delta.x = 0;
@@ -1286,27 +1287,29 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             this.viewport.applyConstraints();
         }
     }
-    this.raiseEvent( 'canvas-click', { 
+    this.raiseEvent( 'drag', { 
         tracker: tracker,
         position: position,
         delta: delta,
-        shift: shift
+        shift: shift,
+        originalEvent: event 
     });
 }
 
-function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
+function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
     if ( insideElementPress && this.viewport ) {
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvas-release', { 
+    this.raiseEvent( 'release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease
+        insideElementRelease: insideElementRelease,
+        originalEvent: event 
     });
 }
 
-function onCanvasScroll( tracker, position, scroll, shift ) {
+function onCanvasScroll( tracker, position, scroll, shift, event ) {
     var factor;
     if ( this.viewport ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
@@ -1316,54 +1319,58 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvas-scroll', { 
+    this.raiseEvent( 'scroll', { 
         tracker: tracker,
         position: position,
         scroll: scroll,
-        shift: shift
+        shift: shift,
+        originalEvent: event 
     });
     //cancels event
     return false;
 }
 
-function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
+function onContainerExit( tracker, position, buttonDownElement, buttonDownAny, event ) {
     if ( !buttonDownElement ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'container-exit', { 
+    this.raiseEvent( 'exit', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny
+        buttonDownAny: buttonDownAny,
+        originalEvent: event 
     });
 }
 
-function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
+function onContainerRelease( tracker, position, insideElementPress, insideElementRelease, event ) {
     if ( !insideElementRelease ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'container-release', { 
+    this.raiseEvent( 'release', { 
         tracker: tracker,
         position: position,
         insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease
+        insideElementRelease: insideElementRelease,
+        originalEvent: event 
     });
 }
 
-function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
+function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny, event ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
-    this.raiseEvent( 'container-enter', { 
+    this.raiseEvent( 'enter', { 
         tracker: tracker,
         position: position,
         buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny
+        buttonDownAny: buttonDownAny,
+        originalEvent: event 
     });
 }
 

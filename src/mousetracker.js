@@ -210,6 +210,8 @@
          *      initiated inside the tracked element, otherwise false.
          * @param {Boolean} buttonDownAny
          *      Was the button down anywhere in the screen during the event.
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         enterHandler: function(){},
 
@@ -226,6 +228,8 @@
          *      initiated inside the tracked element, otherwise false.
          * @param {Boolean} buttonDownAny
          *      Was the button down anywhere in the screen during the event.
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         exitHandler: function(){},
 
@@ -237,6 +241,8 @@
          *      A reference to the tracker instance.
          * @param {OpenSeadragon.Point} position
          *      The poistion of the event on the screen.
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         pressHandler: function(){},
 
@@ -254,6 +260,8 @@
          * @param {Boolean} insideElementRelease
          *      Was the mouse still inside the tracked element when the button
          *      was released.
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         releaseHandler: function(){},
 
@@ -269,6 +277,8 @@
          *      The scroll delta for the event.
          * @param {Boolean} shift
          *      Was the shift key being pressed during this event?
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         scrollHandler: function(){},
 
@@ -285,6 +295,8 @@
          *      both pased. Useful for ignoring events.
          * @param {Boolean} shift
          *      Was the shift key being pressed during this event?
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         clickHandler: function(){},
 
@@ -301,6 +313,8 @@
          *      end drag.  Usefule for ignoring or weighting the events.
          * @param {Boolean} shift
          *      Was the shift key being pressed during this event?
+         * @param {Event} event
+         *      The original mouse or wheel event that triggered this handler
          */
         dragHandler: function(){},
 
@@ -314,6 +328,8 @@
          *      The key code that was pressed.
          * @param {Boolean} shift
          *      Was the shift key being pressed during this event?
+         * @param {MouseEvent} event
+         *      The original mouse event that triggered this handler
          */
         keyHandler: function(){},
 
@@ -555,7 +571,8 @@
             propagate = tracker.keyHandler( 
                 tracker, 
                 event.keyCode ? event.keyCode : event.charCode,
-                event.shiftKey
+                event.shiftKey,
+                event
             );
             if( !propagate ){
                 $.cancelEvent( event );
@@ -602,7 +619,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ),
                 delegate.buttonDown, 
-                IS_BUTTON_DOWN
+                IS_BUTTON_DOWN,
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -649,7 +667,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ),
                 delegate.buttonDown, 
-                IS_BUTTON_DOWN
+                IS_BUTTON_DOWN,
+                event
             );
 
             if( propagate === false ){
@@ -682,7 +701,8 @@
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler( 
                 tracker, 
-                getMouseRelative( event, tracker.element )
+                getMouseRelative( event, tracker.element ),
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -717,7 +737,16 @@
             event.targetTouches.length == 1 && 
             event.changedTouches.length == 1 ){
             
-            THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];  
+            THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];
+            
+//DWK So onMouseOver and onMouseDown are both expecting an event for the second
+//DWK parameter.  This is passing a Touch point instead.  Although a Touch
+//DWK object is very similar to an event object that are not identical.  
+//DWK not sure if this is a problem.  May need to include a comment in the
+//DWK API notes, since this object as passed here is getting passed along.
+//DWK Alternately, should there be some way to still pass the original
+//DWK touch event along.
+
             onMouseOver( tracker, event.changedTouches[ 0 ] );
             onMouseDown( tracker, event.touches[ 0 ] );
         }
@@ -765,7 +794,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ),
                 insideElementPress, 
-                insideElementRelease
+                insideElementRelease,
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -789,6 +819,7 @@
             event.changedTouches.length == 1 ){
 
             THIS[ tracker.hash ].lastTouch = null;
+//DWK See comment in onTouchStart            
             onMouseUp( tracker, event.changedTouches[ 0 ] );
             onMouseOut( tracker, event.changedTouches[ 0 ] );
         }
@@ -897,7 +928,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ), 
                 nDelta, 
-                event.shiftKey
+                event.shiftKey,
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -931,7 +963,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ),
                 quick, 
-                event.shiftKey
+                event.shiftKey,
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -961,7 +994,8 @@
                 tracker, 
                 getMouseRelative( event, tracker.element ),
                 delta, 
-                event.shiftKey
+                event.shiftKey,
+                event
             );
             if( propagate === false ){
                 $.cancelEvent( event );
@@ -983,7 +1017,7 @@
             event.targetTouches.length === 1 && 
             event.changedTouches.length === 1 && 
             THIS[ tracker.hash ].lastTouch.identifier === event.touches[ 0 ].identifier){
-
+//DWK See comment in onTouchStart
             onMouseMove( tracker, event.touches[ 0 ] );
 
         } else if (  event.touches.length === 2 ){
@@ -998,6 +1032,8 @@
             if( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ){
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
+//DWK This is a variant on the onTouchStart comment, but instead of a Touch
+//DWK object, a generic object with a handful of properties is passed
                 onMouseWheelSpin( tracker, {
                     shift: false,
                     pageX: THIS[ tracker.hash ].pinchMidpoint.x,

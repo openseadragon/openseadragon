@@ -1,0 +1,180 @@
+<html>
+    <head>
+    <title>OpenSeadragon Expose Origina Event Demo</title>
+    <script type="text/javascript" src='openseadragon/build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+      .openseadragon
+      {
+      width:      800px;
+      height:     600px;
+      border:     1px solid black;
+      color:      #333; /* text color for messages */
+      background-color: black;
+      }
+      .openseadragon-small
+      {
+      width:      40px;
+      height:     30px;
+      border:     1px solid black;
+      color:      #333; /* text color for messages */
+      background-color: black;
+      }
+      
+    </style>
+</head>
+<body>
+    <div class="demoarea">
+    <div>
+       Simple demo page to verify that event handlers pass along the original source event
+    </div>
+    <div id="contentDiv" class="openseadragon"></div>
+    <div>
+        <span id='consolelog'></span>
+    </div>
+    </div>
+
+    <script type="text/javascript">
+    var viewer = OpenSeadragon({
+        id:"contentDiv",
+        prefixUrl:"openseadragon/build/openseadragon/images/",
+        tileSources:{
+             Image:{
+                xmlns:"http://schemas.microsoft.com/deepzoom/2008",
+                Url:"example-images/highsmith/highsmith_files/",
+                Format:"jpg",
+                Overlap:"2",
+                TileSize:"256",
+                Size:{  
+                    Height:"9221",
+                    Width:"7026"
+                }
+            }
+        }
+    });
+
+    var demoMessageLog = "";
+    var screenConsole = document.getElementById('consolelog');
+    
+    function checkIfEventWasPassed(event){
+        if(typeof event === 'undefined'){
+            demoMessageLog += "PROBLEM EVENT WAS UNDEFINED:" + event + "\n\n";          
+        }
+    }
+
+    function logMessage(){
+        screenConsole.innerHTML = demoMessageLog.replace(/\n/g, '<br />');
+    }
+
+    
+    viewer.addHandler("click",  function( event ){
+        demoMessageLog += "Additional clickHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    delta:" + event.delta + "\n" +
+        "    shift:" + event.shift + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    viewer.addHandler("press",  function( event ){
+        demoMessageLog += "Additional pressHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("release",  function( event ){
+        demoMessageLog += "Additional releaseHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    buttonDown:" + event.buttonDown + "\n" +
+        "    insideElementRelease:" + event.insideElementRelease + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("keypress",  function( event ){
+        demoMessageLog += "Additional keyHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    keycode:" + event.keycode + "\n" +
+        "    shift:" + event.shift + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("drag",  function( event ){
+        demoMessageLog += "Additional dragHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    delta:" + event.delta + "\n" +
+        "    shift:" + event.shift + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("scroll",  function( event ){
+        demoMessageLog += "Additional scrollHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    scroll:" + event.scroll + "\n" +
+        "    shift:" + event.shift + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("enter",  function( event ){
+        demoMessageLog += "Additional enterHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    buttonDown:" + event.buttonDown + "\n" +
+        "    buttonDownAny:" + event..buttonDownAny + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("exit",  function( event ){
+        demoMessageLog += "Additional exitHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    position:" + event.position + "\n" +
+        "    buttonDown:" + event.buttonDown + "\n" +
+        "    buttonDownAny:" + event.buttonDownAny + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("focus",  function( event ){
+        demoMessageLog += "Additional focusHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+    
+    viewer.addHandler("blur",  function( event ){
+        demoMessageLog += "Additional blurHandler\n" +
+        "    tracker:" + event.tracker + "\n" +
+        "    originalEvent:" + event.originalEvent + "\n\n";
+        checkIfEventWasPassed( event.originalEvent );
+        logMessage();
+    });
+
+        </script>
+    </body>
+</html>
