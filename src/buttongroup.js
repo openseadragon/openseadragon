@@ -1,5 +1,5 @@
 /*
- * OpenSeadragon
+ * OpenSeadragon - ButtonGroup
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2013 OpenSeadragon contributors
