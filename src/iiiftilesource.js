@@ -32,15 +32,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * The getTileUrl implementation is based on Jon Stroop's Python version,
+ * which is released under the New BSD license:
+ * https://gist.github.com/jpstroop/4624253
+ */
+
+
 (function( $ ){
     
 /**
  * A client implementation of the International Image Interoperability 
  * Format: Image API Draft 0.2 - Please read more about the specification
  * at 
- *
- * The getTileUrl implementation is based on the gist from:
- * https://gist.github.com/jpstroop/4624253
  *
  * @class
  * @extends OpenSeadragon.TileSource
