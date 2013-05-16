@@ -94,6 +94,7 @@ $.Drawer = function( options ) {
     $.extend( true, this, {
 
         //internal state properties
+        viewer:         null,
         downloading:    0,
         tilesMatrix:    {},
         tilesLoaded:    [],
