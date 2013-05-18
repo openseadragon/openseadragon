@@ -1,6 +1,7 @@
 (function() {
 
-    // TODO: Tighten up springs and use "immediate" where possible, so tests run faster
+    module('Basic');
+    
     // TODO: Test drag
 
     var viewer = null;
@@ -11,7 +12,8 @@
             viewer = OpenSeadragon({
                 id:            'example',
                 prefixUrl:     '/build/openseadragon/images/',
-                tileSources:   '/test/data/testpattern.dzi', 
+                tileSources:   '/test/data/testpattern.dzi',
+                springStiffness: 100, // Faster animation = faster tests
                 showNavigator:  true
             });
 
@@ -101,9 +103,27 @@
     });
 
     // ----------
+    test('Fullscreen', function() {
+        ok(!viewer.isFullPage(), 'Started out not fullpage');
+        ok(!$(viewer.element).hasClass('fullpage'),
+            'No fullpage class on div');
+
+        viewer.setFullPage(true);
+        ok(viewer.isFullPage(), 'Enabled fullpage');
+        ok($(viewer.element).hasClass('fullpage'),
+            'Fullpage class added to div');
+
+        viewer.setFullPage(false);
+        ok(!viewer.isFullPage(), 'Disabled fullpage');
+        ok(!$(viewer.element).hasClass('fullpage'),
+            'Fullpage class removed from div');
+    });
+
+    // ----------
     asyncTest('Close', function() {
         var closeHandler = function() {
             viewer.removeHandler('close', closeHandler);
+            $('#example').empty();
             ok(true, 'Close event was sent');
             start();
         };

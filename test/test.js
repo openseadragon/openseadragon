@@ -48,6 +48,28 @@
 
         assessNumericValue: function (value1, value2, variance, message) {
             ok(Util.equalsWithVariance(value1, value2, variance), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance);
+        },
+
+        timeWatcher: function(time) {
+            time = time || 2000;
+            var finished = false;
+
+            setTimeout(function() {
+                if (!finished) {
+                    finished = true;
+                    ok(false, 'finishes in ' + time + 'ms');
+                    start();
+                }
+            }, time);
+
+            return {
+                done: function() {
+                    if (!finished) {
+                        finished = true;
+                        start();
+                    }
+                }
+            };
         }
 
     };

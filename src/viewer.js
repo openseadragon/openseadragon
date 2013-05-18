@@ -1,3 +1,37 @@
+/*
+ * OpenSeadragon - Viewer
+ *
+ * Copyright (C) 2009 CodePlex Foundation
+ * Copyright (C) 2010-2013 OpenSeadragon contributors
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ *
+ * - Neither the name of CodePlex Foundation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 (function( $ ){
      
 // dictionary from hash to private properties
@@ -24,10 +58,12 @@ var THIS = {},
  * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
  * @param {String} options.prefixUrl  Url used to prepend to paths, eg button 
  *  images, etc.
- * @param {Seadragon.Controls[]} options.controls Array of Seadragon.Controls,
- * @param {Seadragon.Overlays[]} options.overlays Array of Seadragon.Overlays,
- * @param {Seadragon.Controls[]} options.overlayControls An Array of ( TODO: 
+ * @param {OpenSeadragon.Control[]} options.controls Array of OpenSeadragon.Control,
+ * @param {OpenSeadragon.Overlay[]} options.overlays Array of OpenSeadragon.Overlay,
+ * @param {OpenSeadragon.Control[]} options.overlayControls An Array of ( TODO: 
  *  not sure! )
+ * @property {OpenSeadragon.Viewport} viewport The viewer's viewport, where you 
+ *  can access zoom, pan, etc.
  *
  **/    
 $.Viewer = function( options ) {
@@ -115,8 +151,7 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
-        "lastOpenStartTime": 0,
-        "lastOpenEndTime":   0,
+        "updateRequestId":   null,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -368,7 +403,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      *      implementation. If the object has a property which is a function
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.openTileSource
+     * @name OpenSeadragon.Viewer.prototype.open
      * @param {String|Object|Function}
      * @return {OpenSeadragon.Viewer} Chainable.
      */
@@ -425,7 +460,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
-        
+        if ( THIS[ this.hash ].updateRequestId !== null ){
+            $.cancelAnimationFrame( THIS[ this.hash ].updateRequestId );
+            THIS[ this.hash ].updateRequestId = null;
+        }
+
         if( this.drawer ){
             this.drawer.clearOverlays();
         }
@@ -580,12 +619,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 //Make sure the user has some ability to style the toolbar based
                 //on the mode
-                this.toolbar.element.setAttribute( 
-                    'class',
-                    this.toolbar.element.className +" fullpage"
-                );
+                $.addClass( this.toolbar.element, 'fullpage' );
             }
             
+            $.addClass( this.element, 'fullpage' );
             body.appendChild( this.element );
             
             if( $.supportsFullScreen ){
@@ -655,6 +692,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             for ( i = 0; i < nodes; i++ ){
                 body.appendChild( this.previousBody.shift() );
             }
+
+            $.removeClass( this.element, 'fullpage' );
             THIS[ this.hash ].prevElementParent.insertBefore(
                 this.element,
                 THIS[ this.hash ].prevNextSibling
@@ -667,10 +706,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
                 //Make sure the user has some ability to style the toolbar based
                 //on the mode
-                this.toolbar.element.setAttribute( 
-                    'class',
-                    this.toolbar.element.className.replace('fullpage','')
-                );
+                $.removeClass( this.toolbar.element, 'fullpage' );
                 //this.toolbar.element.style.position = 'relative';
                 this.toolbar.parentNode.insertBefore( 
                     this.toolbar.element,
@@ -1026,16 +1062,6 @@ function openTileSource( viewer, source ) {
         _this.close( );
     }
     
-    // to ignore earlier opens
-    THIS[ _this.hash ].lastOpenStartTime = +new Date();
-
-    window.setTimeout( function () {
-        if ( THIS[ _this.hash ].lastOpenStartTime > THIS[ _this.hash ].lastOpenEndTime ) {
-            THIS[ _this.hash ].setMessage( $.getString( "Messages.Loading" ) );
-        }
-    }, 2000);
-
-    THIS[ _this.hash ].lastOpenEndTime = +new Date();
     _this.canvas.innerHTML = "";
     THIS[ _this.hash ].prevContainerSize = $.getElementSize( _this.container );
 
@@ -1084,7 +1110,7 @@ function openTileSource( viewer, source ) {
         });
     }
     
-    if( _this.preserveVewport ){
+    if( _this.preserveViewport ){
         _this.viewport.resetContentSize( _this.source.dimensions );
     } 
 
@@ -1146,7 +1172,7 @@ function openTileSource( viewer, source ) {
 
     THIS[ _this.hash ].animating = false;
     THIS[ _this.hash ].forceRedraw = true;
-    scheduleUpdate( _this, updateMulti );
+    THIS[ _this.hash ].updateRequestId = scheduleUpdate( _this, updateMulti );
 
     //Assuming you had programatically created a bunch of overlays
     //and added them via configuration
@@ -1423,12 +1449,15 @@ function updateMulti( viewer ) {
     var beginTime;
 
     if ( !viewer.source ) {
+        THIS[ viewer.hash ].updateRequestId = null;
         return;
     }
 
     beginTime = +new Date();
     updateOnce( viewer );
-    scheduleUpdate( viewer, arguments.callee, beginTime );
+
+    THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
+        arguments.callee, beginTime );
 }
 
 function updateOnce( viewer ) {

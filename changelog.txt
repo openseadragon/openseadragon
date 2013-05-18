@@ -1,12 +1,30 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.125: In Progress
+0.9.128: (in progress)
+
+0.9.127:
+
+* Fixed a problem with getString when the string property is a sub-property. (#64)
+* Fixed: Tooltips for Navigation Controls not displaying (#63)
+* Cleaned up some diagnostic code that was broken.
+* Added fullpage class to viewer element when in fullpage mode (#61)
+* Reverted to original New BSD license; cleaned up license declarations (#89)
+
+0.9.126:
+
+* DZI JSONp was broken; fixed.
+
+0.9.125:
 
 * Fully deprecated OpenSeadragon.createFromDZI, safely deprecated Viewer.openTileSource and 
   Viewer.openDZI to use Viewer.open internally. (#53 & #54).
 * Full page bug fix for when viewer is child of document body (#43).
 * Overlays for DZI bug fix (#45). 
+* DziTileSource: avoid changing relative paths (#56).
+* Fix typo in preserveViewport handling (#77).
+* Fix updateMulti timer leak after multiple Viewer.open() calls (#76).
+* Minor documentation fixes.
 
 0.9.124:
 
