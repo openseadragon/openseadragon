@@ -82,7 +82,7 @@ $.EventHandler.prototype = {
         if( $.isArray( events ) ){
             for( i = 0; i < events.length; i++ ){
                 if( events[ i ] !== handler ){
-                    handlers.push( handler );
+                    handlers.push( events[ i ] );
                 }
             } 
             this.events[ eventName ] = handlers;

@@ -202,32 +202,44 @@ $.Viewer = function( options ) {
         this.open( initialTileSource );
     }
 
-    this.element        = this.element || document.getElementById( this.id );
-    this.canvas         = $.makeNeutralElement( "div" );
+    this.element              = this.element || document.getElementById( this.id );
+    this.canvas               = $.makeNeutralElement( "div" );
+    this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
 
     this.canvas.className = "openseadragon-canvas";
-    (function( canvas ){
-        canvas.width    = "100%";
-        canvas.height   = "100%";
-        canvas.overflow = "hidden";
-        canvas.position = "absolute";
-        canvas.top      = "0px";
-        canvas.left     = "0px";
+    (function( style ){
+        style.width    = "100%";
+        style.height   = "100%";
+        style.overflow = "hidden";
+        style.position = "absolute";
+        style.top      = "0px";
+        style.left     = "0px";
     }(  this.canvas.style ));
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
-    (function( container ){
-        container.width     = "100%";
-        container.height    = "100%";
-        container.position  = "relative";
-        container.overflow  = "hidden";
-        container.left      = "0px";
-        container.top       = "0px";
-        container.textAlign = "left";  // needed to protect against
+    (function( style ){
+        style.width     = "100%";
+        style.height    = "100%";
+        style.position  = "relative";
+        style.overflow  = "hidden";
+        style.left      = "0px";
+        style.top       = "0px";
+        style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
 
+    this.keyboardCommandArea.className = "keyboard-command-area";
+    (function( style ){
+        style.width    = "100%";
+        style.height   = "100%";
+        style.overflow = "hidden";
+        style.position = "absolute";
+        style.top      = "0px";
+        style.left     = "0px";
+    }(  this.keyboardCommandArea.style ));
+
     this.container.insertBefore( this.canvas, this.container.firstChild );
+    this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
 
     //Used for toggling between fullscreen and default container size
@@ -237,6 +249,64 @@ $.Viewer = function( options ) {
     this.bodyHeight     = document.body.style.height;
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
+
+    this.keyboardCommandArea.innerTracker = new $.MouseTracker({
+            _this : this,
+            element:            this.keyboardCommandArea,
+            focusHandler:       function(){
+                var point    = $.getElementPosition( this.element );
+                window.scrollTo( 0, point.y );
+            },
+
+            keyHandler:         function(tracker, keyCode, shiftKey){
+                switch( keyCode ){
+                    case 61://=|+
+                        _this.viewport.zoomBy(1.1);
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 45://-|_
+                        _this.viewport.zoomBy(0.9);
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 48://0|)
+                        _this.viewport.goHome();
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 119://w
+                    case 87://W
+                    case 38://up arrow
+                        if (shiftKey)
+                            _this.viewport.zoomBy(1.1);
+                        else
+                            _this.viewport.panBy(new $.Point(0, -0.05));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 115://s
+                    case 83://S
+                    case 40://down arrow
+                        if (shiftKey)
+                            _this.viewport.zoomBy(0.9);
+                        else
+                            _this.viewport.panBy(new $.Point(0, 0.05));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 97://a
+                    case 37://left arrow
+                        _this.viewport.panBy(new $.Point(-0.05, 0));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    case 100://d
+                    case 39://right arrow
+                        _this.viewport.panBy(new $.Point(0.05, 0));
+                        _this.viewport.applyConstraints();
+                        return false;
+                    default:
+                        //console.log( 'navigator keycode %s', keyCode );
+                        return true;
+                }
+            }
+        }).setTracking( true ); // default state
+
 
     this.innerTracker = new $.MouseTracker({
         element:            this.canvas, 
@@ -267,7 +337,7 @@ $.Viewer = function( options ) {
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
             this.customControls[ i ].id, 
-            this.customControls[ i ].anchor
+            {anchor: this.customControls[ i ].anchor}
         );
     }
 
@@ -794,12 +864,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 if( this.toolbar ){
                     this.toolbar.addControl( 
                         this.pagingControl, 
-                        $.ControlAnchor.BOTTOM_RIGHT  
+                        {anchor: $.ControlAnchor.BOTTOM_RIGHT}
                     );
                 }else{
                     this.addControl( 
                         this.pagingControl, 
-                        $.ControlAnchor.TOP_LEFT 
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -916,12 +986,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 if( this.toolbar ){
                     this.toolbar.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.TOP_LEFT  
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }else{
                     this.addControl( 
                         this.navControl, 
-                        $.ControlAnchor.TOP_LEFT 
+                        {anchor: $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1069,7 +1139,7 @@ function openTileSource( viewer, source ) {
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && ! _this.navigator && !_this.collectionMode ){
         _this.navigator = new $.Navigator({
-            id:          _this.navigatorElement,
+            id:          _this.navigatorId,
             position:    _this.navigatorPosition,
             sizeRatio:   _this.navigatorSizeRatio,
             height:      _this.navigatorHeight,
@@ -1216,7 +1286,9 @@ function updateControlsFade( viewer ) {
         opacity = Math.max( 0.0, opacity );
 
         for ( i = viewer.controls.length - 1; i >= 0; i--) {
-            viewer.controls[ i ].setOpacity( opacity );
+            if (viewer.controls[ i ].autoFade) {
+                viewer.controls[ i ].setOpacity( opacity );
+            }
         }
 
         if ( opacity > 0 ) {

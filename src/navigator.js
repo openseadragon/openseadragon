@@ -51,16 +51,26 @@ $.Navigator = function( options ){
 
     var _this       = this,
         viewer      = options.viewer,
-        viewerSize  = $.getElementSize( viewer.element );
-    
+        viewerSize  = $.getElementSize( viewer.element),
+        unneededElement;
+
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
         options.id              = 'navigator-' + (+new Date());
         this.element            = $.makeNeutralElement( "div" );
-        this.element.id         = options.id;
-        this.element.className  = 'navigator';
+        options.controlOptions  = {anchor:           $.ControlAnchor.TOP_RIGHT,
+                                   attachToViewer:   true,
+                                   autoFade:         true};
     }
+    else {
+        this.element            = document.getElementById( options.id );
+        options.controlOptions  = {anchor:           $.ControlAnchor.NONE,
+                                   attachToViewer:   false,
+                                   autoFade:         false};
+    }
+    this.element.id         = options.id;
+    this.element.className  += ' navigator';
 
     options = $.extend( true, {
         sizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
@@ -79,29 +89,36 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
-    (function( style ){
-        style.marginTop     = '0px';
-        style.marginRight   = '0px';
-        style.marginBottom  = '0px';
-        style.marginLeft    = '0px';
-        style.border        = '2px solid #555';
+    this.viewerSizeInPoints = viewer.viewport.deltaPointsFromPixels(viewerSize);
+    this.borderWidth = 2;
+    //At some browser magnification levels the display regions lines up correctly, but at some there appears to
+    //be a one pixel gap.
+    this.fudge = new $.Point(1, 1);
+    this.totalBorderWidths = new $.Point(this.borderWidth*2, this.borderWidth*2).minus(this.fudge);
+
+
+    (function( style, borderWidth ){
+        style.margin        = '0px';
+        style.border        = borderWidth + 'px solid #555';
+        style.padding       = '0px';
         style.background    = '#000';
         style.opacity       = 0.8;
         style.overflow      = 'hidden';
-    }( this.element.style ));
+    }( this.element.style, this.borderWidth));
 
-    this.displayRegion           = $.makeNeutralElement( "textarea" );
+    this.displayRegion           = $.makeNeutralElement( "div" );
     this.displayRegion.id        = this.element.id + '-displayregion';
     this.displayRegion.className = 'displayregion';
 
-    (function( style ){
+    (function( style, borderWidth ){
         style.position      = 'relative';
         style.top           = '0px';
         style.left          = '0px';
         style.fontSize      = '0px';
         style.overflow      = 'hidden';
-        style.border        = '2px solid #900';
-        
+        style.border        = borderWidth + 'px solid #900';
+        style.margin        = '0px';
+        style.padding       = '0px';
         //TODO: IE doesnt like this property being set
         //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
         
@@ -116,10 +133,13 @@ $.Navigator = function( options ){
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
         style.cursor        = 'default';
-    }( this.displayRegion.style ));
+    }( this.displayRegion.style, this.borderWidth ));
+
 
     this.element.innerTracker = new $.MouseTracker({
         element:        this.element,
+        clickHandler:       $.delegate( this, onCanvasClick ),
+        releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:  function(){
             //dont scroll the page up and down if the user is scrolling
             //in the navigator
@@ -131,77 +151,10 @@ $.Navigator = function( options ){
         element:            this.displayRegion, 
         clickTimeThreshold: this.clickTimeThreshold, 
         clickDistThreshold: this.clickDistThreshold,
-        clickHandler:       $.delegate( this, onCanvasClick ),
+
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
-        scrollHandler:      $.delegate( this, onCanvasScroll ),
-        focusHandler:       function(){
-            var point    = $.getElementPosition( _this.viewer.element );
-
-            window.scrollTo( 0, point.y );
-
-            _this.viewer.setControlsEnabled( true );
-            (function( style ){
-                style.border        = '2px solid #437AB2';
-                //style.outline       = '2px auto #437AB2';
-            }( this.element.style ));
-
-        },
-        blurHandler:       function(){
-            _this.viewer.setControlsEnabled( false );
-            (function( style ){
-                style.border        = '2px solid #900';
-                //style.outline       = '2px auto #900';
-            }( this.element.style ));
-        },
-        keyHandler:         function(tracker, keyCode, shiftKey){
-            //console.log( keyCode );
-            switch( keyCode ){
-                case 61://=|+
-                    _this.viewer.viewport.zoomBy(1.1);
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 45://-|_
-                    _this.viewer.viewport.zoomBy(0.9);
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 48://0|)
-                    _this.viewer.viewport.goHome();
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 119://w
-                case 87://W
-                case 38://up arrow
-                    if (shiftKey) 
-                        _this.viewer.viewport.zoomBy(1.1);
-                    else
-                        _this.viewer.viewport.panBy(new $.Point(0, -0.05));
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 115://s
-                case 83://S
-                case 40://down arrow
-                    if (shiftKey)
-                        _this.viewer.viewport.zoomBy(0.9);
-                    else
-                        _this.viewer.viewport.panBy(new $.Point(0, 0.05));
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 97://a
-                case 37://left arrow
-                    _this.viewer.viewport.panBy(new $.Point(-0.05, 0));
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                case 100://d
-                case 39://right arrow
-                    _this.viewer.viewport.panBy(new $.Point(0.05, 0));  
-                    _this.viewer.viewport.applyConstraints();
-                    return false;
-                default:
-                    //console.log( 'navigator keycode %s', keyCode );
-                    return true;
-            }
-        }
+        scrollHandler:      $.delegate( this, onCanvasScroll )
     }).setTracking( true ); // default state
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
@@ -216,7 +169,7 @@ $.Navigator = function( options ){
 
     viewer.addControl( 
         this.element, 
-        $.ControlAnchor.TOP_RIGHT 
+        options.controlOptions
     );
 
     if( options.width && options.height ){
@@ -230,6 +183,10 @@ $.Navigator = function( options ){
     $.Viewer.apply( this, [ options ] ); 
 
     this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
+    unneededElement = this.element.getElementsByTagName('textarea')[0];
+    if (unneededElement) {
+        unneededElement.parentNode.removeChild(unneededElement);
+    }
 
 };
 
@@ -247,22 +204,22 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
         if( viewport && this.viewport ){
             bounds      = viewport.getBounds( true );
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft() );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight() );
+            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft());
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.totalBorderWidths);
 
             //update style for navigator-box    
-            (function(style){
+            (function(style, borderWidth){
 
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
 
-                var width = Math.abs( topleft.x - bottomright.x ) - 3; // TODO: What does this magic number mean?
-                var height = Math.abs( topleft.y - bottomright.y ) - 3;
+                var width = Math.abs( topleft.x - bottomright.x );
+                var height = Math.abs( topleft.y - bottomright.y );
                 // make sure width and height are non-negative so IE doesn't throw
                 style.width  = Math.max( width, 0 ) + 'px';
                 style.height = Math.max( height, 0 ) + 'px';
 
-            }( this.displayRegion.style ));  
+            }( this.displayRegion.style, this.borderWidth));
         } 
 
     },
@@ -283,16 +240,39 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
 });
 
-
 /**
  * @private
  * @inner
  * @function
  */
 function onCanvasClick( tracker, position, quick, shift ) {
-    this.displayRegion.focus();
+    var newBounds,
+        viewerPosition,
+        dimensions;
+    if (! this.drag) {
+        if ( this.viewer.viewport ) {
+            viewerPosition = this.viewport.deltaPointsFromPixels(position);
+            dimensions = this.viewer.viewport.getBounds().getSize();
+            newBounds = new $.Rect(
+                viewerPosition.x - dimensions.x/2,
+                viewerPosition.y - dimensions.y/2,
+                dimensions.x,
+                dimensions.y
+            );
+            if (this.viewer.source.aspectRatio > this.viewer.viewport.getAspectRatio()) {
+                newBounds.y = newBounds.y -  ((this.viewerSizeInPoints.y - (1/this.viewer.source.aspectRatio)) /2 );
+            }
+            else  {
+                newBounds.x = newBounds.x -  ((this.viewerSizeInPoints.x -1) /2 );
+            }
+            this.viewer.viewport.fitBounds(newBounds);
+            this.viewer.viewport.applyConstraints();
+        }
+    }
+    else {
+        this.drag = false;
+    }
 }
-
 
 /**
  * @private
@@ -301,6 +281,7 @@ function onCanvasClick( tracker, position, quick, shift ) {
  */
 function onCanvasDrag( tracker, position, delta, shift ) {
     if ( this.viewer.viewport ) {
+        this.drag = true;
         if( !this.panHorizontal ){
             delta.x = 0;
         }
@@ -339,7 +320,6 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
         this.viewer.viewport.zoomBy( 
             factor, 
-            //this.viewport.pointFromPixel( position, true ) 
             this.viewport.getCenter()
         );
         this.viewer.viewport.applyConstraints();
