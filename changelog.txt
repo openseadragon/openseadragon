@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * You can now click in the navigator to go to a new location (#46)
 * Keyboard handling is now done in the viewer rather than navigator (#46)
 * Additional navigator fixes (#46)
+* Fixed an error in EventHandler.removeHandler() (#48)
 
 0.9.127:
 
