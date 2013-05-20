@@ -131,7 +131,7 @@ $.EventHandler.prototype = {
      * @param {Function} handler - Function to call when event is triggered.
      */
     raiseEvent: function( eventName, eventArgs ) {
-        //uncomment if you want to get a log og all events
+        //uncomment if you want to get a log of all events
         //$.console.log( eventName );
         var handler = this.getHandler( eventName );
 

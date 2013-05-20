@@ -53,7 +53,7 @@ $.Viewport = function( options ) {
 
     //options.config and the general config argument are deprecated
     //in favor of the more direct specification of optional settings
-    //being pass directly on the options object
+    //being passed directly on the options object
     if ( options.config ){
         $.extend( true, options, options.config );
         delete options.config;
