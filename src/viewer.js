@@ -1047,6 +1047,7 @@ function openTileSource( viewer, source ) {
     _this.source.overlays = _this.source.overlays || [];
 
     _this.drawer = new $.Drawer({
+        viewer:             _this,
         source:             _this.source, 
         viewport:           _this.viewport, 
         element:            _this.canvas,

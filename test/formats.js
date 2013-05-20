@@ -23,7 +23,6 @@
             var openHandler = function(eventSender, eventData) {
                 viewer.removeHandler('open', openHandler);
                 ok(true, 'Open event was sent');
-                viewer.drawer.viewer = viewer;
                 viewer.addHandler('tile-drawn', tileDrawnHandler);
             };
 
