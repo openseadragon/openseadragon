@@ -1,0 +1,29 @@
+<html>
+<head>
+    <title>OpenSeadragon Basic Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.min.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show a default OpenSeadragon viewer.
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            id:"contentDiv",
+            prefixUrl:"../../build/openseadragon/images/",
+            tileSources:   '/test/data/testpattern.dzi'
+        });
+
+    </script>
+</body>
+</html>
