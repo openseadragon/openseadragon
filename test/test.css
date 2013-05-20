@@ -2,3 +2,14 @@
     height: 500px;
     width: 500px;
 }
+
+#wideexample {
+    height: 300px;
+    width: 700px;
+}
+
+#tallexample {
+    height: 700px;
+    width: 300px;
+}
+

@@ -10,7 +10,7 @@
     // ----------
     var testOpen = function(name) {
         $(document).ready(function() {
-            var timeWatcher = Util.timeWatcher();
+            var timeWatcher = Util.timeWatcher(7000);
 
             viewer = OpenSeadragon({
                 id:            'example',
