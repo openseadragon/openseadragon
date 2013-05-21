@@ -1,6 +1,8 @@
 (function() {
+
     module("utils");
 
+    // ----------
     test("addRemoveClass", function() {
         var div = OpenSeadragon.makeNeutralElement('div');
         strictEqual(div.className, '',
@@ -49,4 +51,15 @@
         strictEqual(div.className, '',
             "Removed only class");
     });
+
+    // ----------
+    asyncTest("makeAjaxRequest", function() {
+        var timeWatcher = Util.timeWatcher();
+
+        OpenSeadragon.makeAjaxRequest('data/testpattern.dzi', function(xhr) {
+            ok(/deepzoom/.test(xhr.response), 'file loaded');
+            timeWatcher.done();
+        });
+    });
+
 })();
