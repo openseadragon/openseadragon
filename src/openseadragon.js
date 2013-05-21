@@ -1265,11 +1265,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         createAjaxRequest: function(){
             var request;
 
-            if ( window.ActiveXObject ) {
-                //TODO: very bad...Why check every time using try/catch when
-                //      we could determine once at startup which activeX object
-                //      was supported.  This will have significant impact on 
-                //      performance for IE Browsers DONE
+            if ( window.XMLHttpRequest ) {
+                $.createAjaxRequest = function( ){
+                    return new XMLHttpRequest();
+                };
+                request = new XMLHttpRequest();
+            } else if ( window.ActiveXObject ) {
                 /*jshint loopfunc:true*/
                 for ( i = 0; i < ACTIVEX.length; i++ ) {
                     try {
@@ -1282,11 +1283,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                         continue;
                     }
                 }
-            } else if ( window.XMLHttpRequest ) {
-                $.createAjaxRequest = function( ){
-                    return new XMLHttpRequest();
-                };
-                request = new XMLHttpRequest();
             }
 
             if ( !request ) {
@@ -1295,6 +1291,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             return request;
         },
+
+        
         /**
          * Makes an AJAX request.
          * @function
