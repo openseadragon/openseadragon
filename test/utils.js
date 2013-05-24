@@ -62,4 +62,30 @@
         });
     });
 
+    // ----------
+    asyncTest("requestAnimationFrame", function() {
+        var timeWatcher = Util.timeWatcher();
+
+        OpenSeadragon.requestAnimationFrame(function() {
+            ok(true, 'frame fired');
+            timeWatcher.done();
+        });
+    });
+
+    // ----------
+    asyncTest("cancelAnimationFrame", function() {
+        var frameFired = false;
+
+        setTimeout(function() {
+            strictEqual(frameFired, false, 'the frame never fired');
+            start();
+        }, 150);
+
+        var frameId = OpenSeadragon.requestAnimationFrame(function() {
+            frameFired = true;
+        });
+
+        OpenSeadragon.cancelAnimationFrame(frameId);
+    });
+
 })();
