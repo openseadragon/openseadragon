@@ -1664,10 +1664,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         if ( requestAnimationFrame && cancelAnimationFrame ) {
             // We can't assign these window methods directly to $ because they
             // expect their "this" to be "window", so we call them in wrappers.
-            $.requestAnimationFrame = function(){ 
+            $.requestAnimationFrame = function(){
                 return requestAnimationFrame.apply( w, arguments );
             };
-            $.cancelAnimationFrame = function(){ 
+            $.cancelAnimationFrame = function(){
                 return cancelAnimationFrame.apply( w, arguments );
             };
         } else {
