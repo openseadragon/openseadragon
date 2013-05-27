@@ -208,6 +208,13 @@
   * @param {Boolean} [options.showNavigationControl=true]
   *     Set to false to prevent the appearance of the default navigation controls.
   *
+  * @param {Boolean} [options.showNavigator=false]
+  *     Set to true to make the navigator minimap appear.
+  *
+  * @param {Boolean} [options.navigatorId=navigator-GENERATED DATE]
+  *     Set the ID of a div to hold the navigator minimap.  If one is not specified,
+  *     one will be generated and placed on top of the main image
+  *
   * @param {Number} [options.controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -518,7 +525,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
             
             //VIEWPORT NAVIGATOR SETTINGS
-            showNavigator:          true, //promoted to default in 0.9.64
+            showNavigator:          false,
             navigatorId:            null,
             navigatorHeight:        null,
             navigatorWidth:         null,
