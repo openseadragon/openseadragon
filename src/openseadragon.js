@@ -1651,33 +1651,31 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
         
 
-    // Adding support for HTML5's requestAnimationFrame as suggested by acdha
-    // implementation taken from matt synders post here:s
+    // Adding support for HTML5's requestAnimationFrame as suggested by acdha.
+    // Implementation taken from matt synder's post here:
     // http://mattsnider.com/cross-browser-and-legacy-supported-requestframeanimation/
     (function( w ) {
 
         // most browsers have an implementation
-        w.requestAnimationFrame = w.requestAnimationFrame ||
+        var requestAnimationFrame = w.requestAnimationFrame ||
             w.mozRequestAnimationFrame || 
             w.webkitRequestAnimationFrame ||
             w.msRequestAnimationFrame;
 
-        w.cancelAnimationFrame = w.cancelAnimationFrame ||
+        var cancelAnimationFrame = w.cancelAnimationFrame ||
             w.mozCancelAnimationFrame || 
             w.webkitCancelAnimationFrame ||
             w.msCancelAnimationFrame;
 
-
         // polyfill, when necessary
-        if ( w.requestAnimationFrame ) {
-            //we cant assign window.requestAnimationFrame directly to $.requestAnimationFrame
-            //without getting Illegal Invocation errors in webkit so call in a
-            //wrapper
-            $.requestAnimationFrame = function( callback ){ 
-                return w.requestAnimationFrame( callback );
+        if ( requestAnimationFrame && cancelAnimationFrame ) {
+            // We can't assign these window methods directly to $ because they
+            // expect their "this" to be "window", so we call them in wrappers.
+            $.requestAnimationFrame = function(){
+                return requestAnimationFrame.apply( w, arguments );
             };
-            $.cancelAnimationFrame = function( requestId ){ 
-                return w.cancelAnimationFrame( requestId );
+            $.cancelAnimationFrame = function(){
+                return cancelAnimationFrame.apply( w, arguments );
             };
         } else {
             var aAnimQueue = [],
