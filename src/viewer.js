@@ -522,8 +522,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
 
     /**
+     * Shows or hides the controls (e.g. the default navigation buttons).
+     * 
      * @function
      * @name OpenSeadragon.Viewer.prototype.setControlsEnabled
+     * @param {Boolean} true to show, false to hide.
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setControlsEnabled: function( enabled ) {
