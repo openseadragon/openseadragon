@@ -523,7 +523,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
+     * @name OpenSeadragon.Viewer.prototype.setControlsEnabled
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setControlsEnabled: function( enabled ) {
