@@ -345,6 +345,10 @@ $.Viewer = function( options ) {
         beginControlsAutoHide( _this );
     } );    // initial fade out
 
+    if(this.navPrevNextWrap){
+        this.previousButton.enable();
+    }
+
 };
 
 $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype, {
@@ -1021,7 +1025,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             if( this.nextButton ){
                 if( ( this.tileSources.length - 1 ) === page  ){
                     //Disable next button
-                    this.nextButton.disable();
+                    if(!this.navPrevNextWrap){
+                        this.nextButton.disable();
+                    }
                 } else {
                     this.nextButton.enable();
                 }
@@ -1031,7 +1037,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     //Enable previous button
                     this.previousButton.enable();
                 } else {
-                    this.previousButton.disable();
+                    if(!this.navPrevNextWrap){
+                        this.previousButton.disable();
+                    }
                 }
             }
 
@@ -1625,12 +1633,18 @@ function onFullPage() {
 
 function onPrevious(){
     var previous = THIS[ this.hash ].sequence - 1;
+    if(this.navPrevNextWrap && previous < 0){
+        previous += this.tileSources.length;
+    }
     this.goToPage( previous );
 }
 
 
 function onNext(){
     var next = THIS[ this.hash ].sequence + 1;
+    if(this.navPrevNextWrap && next >= this.tileSources.length){
+        next = 0;
+    }
     this.goToPage( next );
 }
 

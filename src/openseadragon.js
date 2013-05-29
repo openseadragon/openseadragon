@@ -588,6 +588,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     DOWN:   'next_pressed.png'
                 }
             },
+            navPrevNextWrap:        false,
 
             //DEVELOPER SETTINGS
             debugMode:              false,

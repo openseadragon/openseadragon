@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Keyboard handling is now done in the viewer rather than navigator (#46)
 * Additional navigator fixes (#46)
 * Fixed an error in EventHandler.removeHandler() (#48)
+* You can now choose to have previous and next buttons wrap using the config.navPrevNextWrap.
 
 0.9.127:
 
