@@ -709,8 +709,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
     );
 
     if ( tile.loaded ) {
-        
-        drawer.updateAgain = blendTile(
+        var needsUpdate = blendTile(
             drawer,
             tile, 
             x, y,
@@ -718,6 +717,10 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             levelOpacity, 
             currentTime 
         );
+
+        if ( needsUpdate ) {
+            drawer.updateAgain = true;
+        }
     } else if ( tile.loading ) {
         // the tile is already in the download queue 
         // thanks josh1093 for finally translating this typo
