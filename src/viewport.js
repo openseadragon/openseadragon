@@ -577,6 +577,7 @@ $.Viewport.prototype = {
      */
     resize: function( newContainerSize, maintain ) {
         //Set current size to 1 if 0 (hidden div)
+        var currentsize = this.containerSize.x === 0 ? 1 : this.containerSize.x;
 
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
