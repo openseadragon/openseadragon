@@ -251,6 +251,11 @@
   *     these paths, prefer setting the option.prefixUrl rather than overriding 
   *     every image path directly through this setting.
   *
+  * @param {Boolean} [options.navPrevNextWrap=false]
+  *     If the 'previous' button will wrap to the last image when viewing the first
+  *     image and if the 'next' button will wrap to the first image when viewing
+  *     the last image.
+  *
   * @returns {OpenSeadragon.Viewer}
   */
 window.OpenSeadragon = window.OpenSeadragon || function( options ){
