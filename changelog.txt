@@ -9,6 +9,9 @@ OPENSEADRAGON CHANGELOG
 * Keyboard handling is now done in the viewer rather than navigator (#46)
 * Additional navigator fixes (#46)
 * Fixed an error in EventHandler.removeHandler() (#48)
+* Better requestAnimationFrame detection on older Firefox (#103)
+* More efficient navigator loading (#115)
+* Sometimes tiles wouldn't resolve if you used the blendTime option; fixed. (#95)
 
 0.9.127:
 
