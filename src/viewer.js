@@ -1147,7 +1147,10 @@ function openTileSource( viewer, source ) {
             sizeRatio:   _this.navigatorSizeRatio,
             height:      _this.navigatorHeight,
             width:       _this.navigatorWidth,
-            tileSources: _this.tileSources,
+            // By passing the fully parsed source here, the navigator doesn't
+            // have to load it again. Additionally, we don't have to call
+            // navigator.open, as it's implicitly called in the ctor.
+            tileSources: source,
             tileHost:    _this.tileHost,
             prefixUrl:   _this.prefixUrl,
             overlays:    _this.overlays,
@@ -1211,10 +1214,6 @@ function openTileSource( viewer, source ) {
         }
     }
     VIEWERS[ _this.hash ] = _this;
-
-    if( _this.navigator ){
-        _this.navigator.open( source );
-    }
 
     _this.raiseEvent( 'open', { source: source, viewer: _this } );
 
