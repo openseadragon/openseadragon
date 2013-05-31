@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * Better requestAnimationFrame detection on older Firefox (#103)
 * More efficient navigator loading (#115)
 * Sometimes tiles wouldn't resolve if you used the blendTime option; fixed. (#95)
+* You can now choose to have previous and next buttons wrap using the config.navPrevNextWrap.
 
 0.9.127:
 
