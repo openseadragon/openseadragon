@@ -16,6 +16,10 @@ QUnit.config.autostart = false;
         setup:function () {
             Util.resetDom();
             resetTestVariables();
+        },
+        teardown:function () {
+            Util.resetDom();
+            resetTestVariables();
         }
     });
 
@@ -271,7 +275,7 @@ QUnit.config.autostart = false;
               assessmentOperation:assessViewerInCenter,
                 assessmentMessage:"After drag on navigator from top left"  }
         ],
-            autoHideWaitTime = 7500;
+            autoHideWaitTime = 3000;
 
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
@@ -351,7 +355,9 @@ QUnit.config.autostart = false;
                 id:'tallexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0
             },
             {
                 displayRegionLocator:'.navigator .displayregion',
@@ -373,7 +379,9 @@ QUnit.config.autostart = false;
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0
             },
             {
                 displayRegionLocator:'#exampleNavigator .displayregion',
@@ -396,7 +404,9 @@ QUnit.config.autostart = false;
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0
             },
             {
                 displayRegionLocator:'#exampleNavigator .displayregion',
@@ -416,7 +426,9 @@ QUnit.config.autostart = false;
                 id:'wideexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0
             },
             {
                 displayRegionLocator:'.navigator .displayregion',
