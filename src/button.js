@@ -57,7 +57,7 @@ $.ButtonState = {
  * @param {String} options.srcRest URL of image to use in 'rest' state
  * @param {String} options.srcGroup URL of image to use in 'up' state
  * @param {String} options.srcHover URL of image to use in 'hover' state
- * @param {String} options.srcDown URL of image to use in 'domn' state
+ * @param {String} options.srcDown URL of image to use in 'down' state
  * @param {Element} [options.element] Element to use as a container for the 
  *  button.
  * @property {String} tooltip Provides context help for the button we the
@@ -65,7 +65,7 @@ $.ButtonState = {
  * @property {String} srcRest URL of image to use in 'rest' state
  * @property {String} srcGroup URL of image to use in 'up' state
  * @property {String} srcHover URL of image to use in 'hover' state
- * @property {String} srcDown URL of image to use in 'domn' state
+ * @property {String} srcDown URL of image to use in 'down' state
  * @property {Object} config Configurable settings for this button. DEPRECATED.
  * @property {Element} [element] Element to use as a container for the 
  *  button.

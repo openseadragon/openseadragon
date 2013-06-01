@@ -346,6 +346,10 @@ $.Viewer = function( options ) {
         beginControlsAutoHide( _this );
     } );    // initial fade out
 
+    if(this.navPrevNextWrap){
+        this.previousButton.enable();
+    }
+
 };
 
 $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype, {
@@ -523,8 +527,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
 
     /**
+     * Shows or hides the controls (e.g. the default navigation buttons).
+     * 
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setDashboardEnabled
+     * @name OpenSeadragon.Viewer.prototype.setControlsEnabled
+     * @param {Boolean} true to show, false to hide.
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setControlsEnabled: function( enabled ) {
@@ -1019,7 +1026,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             if( this.nextButton ){
                 if( ( this.tileSources.length - 1 ) === page  ){
                     //Disable next button
-                    this.nextButton.disable();
+                    if(!this.navPrevNextWrap){
+                        this.nextButton.disable();
+                    }
                 } else {
                     this.nextButton.enable();
                 }
@@ -1029,7 +1038,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                     //Enable previous button
                     this.previousButton.enable();
                 } else {
-                    this.previousButton.disable();
+                    if(!this.navPrevNextWrap){
+                        this.previousButton.disable();
+                    }
                 }
             }
 
@@ -1145,7 +1156,10 @@ function openTileSource( viewer, source ) {
             sizeRatio:   _this.navigatorSizeRatio,
             height:      _this.navigatorHeight,
             width:       _this.navigatorWidth,
-            tileSources: _this.tileSources,
+            // By passing the fully parsed source here, the navigator doesn't
+            // have to load it again. Additionally, we don't have to call
+            // navigator.open, as it's implicitly called in the ctor.
+            tileSources: source,
             tileHost:    _this.tileHost,
             prefixUrl:   _this.prefixUrl,
             overlays:    _this.overlays,
@@ -1209,10 +1223,6 @@ function openTileSource( viewer, source ) {
         }
     }
     VIEWERS[ _this.hash ] = _this;
-
-    if( _this.navigator ){
-        _this.navigator.open( source );
-    }
 
     _this.raiseEvent( 'open', { source: source, viewer: _this } );
 
@@ -1623,12 +1633,18 @@ function onFullPage() {
 
 function onPrevious(){
     var previous = THIS[ this.hash ].sequence - 1;
+    if(this.navPrevNextWrap && previous < 0){
+        previous += this.tileSources.length;
+    }
     this.goToPage( previous );
 }
 
 
 function onNext(){
     var next = THIS[ this.hash ].sequence + 1;
+    if(this.navPrevNextWrap && next >= this.tileSources.length){
+        next = 0;
+    }
     this.goToPage( next );
 }
 
