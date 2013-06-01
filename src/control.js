@@ -53,17 +53,23 @@ $.ControlAnchor = {
  * to interact with the zoomable interface. Any control can be anchored to any 
  * element.
  * @class
- * @param {Element} element - the contol element to be anchored in the container.
- * @param {OpenSeadragon.ControlAnchor} anchor - the location to anchor at.
+ * @param {Element} element - the control element to be anchored in the container.
+ * @param {Object} options - All required and optional settings for configuring a control element
+ * @param {OpenSeadragon.ControlAnchor} [options.anchor=OpenSeadragon.ControlAnchor.NONE] - the position of the control
+ *  relative to the container.
+ * @param {Boolean} [options.attachToViewer=true] - Whether the control should be added directly to the viewer, or
+ *  directly to the container
+ * @param {Boolean} [options.autoFade=true] - Whether the control should have the autofade behavior
  * @param {Element} container - the element to control will be anchored too.
- * 
- * @property {Element} element - the element providing the user interface with 
+ *
+ * @property {Element} element - the element providing the user interface with
  *  some type of control. Eg a zoom-in button
  * @property {OpenSeadragon.ControlAnchor} anchor - the position of the control 
  *  relative to the container.
- * @property {Element} container - the element within with the control is 
+ * @property {Boolean} autoFade - Whether the control should have the autofade behavior
+ * @property {Element} container - the element within with the control is
  *  positioned.
- * @property {Element} wrapper - a nuetral element surrounding the control 
+ * @property {Element} wrapper - a neutral element surrounding the control
  *  element.
  */
 $.Control = function ( element, options, container ) {
