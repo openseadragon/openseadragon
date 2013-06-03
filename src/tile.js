@@ -110,9 +110,6 @@ $.Tile.prototype = {
      * @param {Element} container
      */
     drawHTML: function( container ) {
-
-        var containerSize = $.getElementSize( container );
-
         if ( !this.loaded || !this.image ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
@@ -121,29 +118,9 @@ $.Tile.prototype = {
             return;
         }
 
-        /* EXISTING IMPLEMENTATION
-        if ( !this.element ) {
-            this.element              = $.makeNeutralElement("img");
-            this.element.src          = this.url;
-
-            this.style                     = this.element.style;
-            this.style.position            = "absolute";
-            this.style.msInterpolationMode = "nearest-neighbor";
-        }
-
-        if ( this.element.parentNode != container ) {
-            container.appendChild( this.element );
-        }
-
-        this.style.top     = position.y + "px";
-        this.style.left    = position.x + "px";
-        this.style.height  = size.y + "px";
-        this.style.width   = size.x + "px";
-        */
-
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
-        
+
         if ( !this.element ) {
             this.element              = $.makeNeutralElement("img");
             this.element.src          = this.url;
@@ -156,14 +133,12 @@ $.Tile.prototype = {
             container.appendChild( this.element );
         }
 
-        this.style.top     = 100 * ( this.position.y / containerSize.y ) + "%";
-        this.style.left    = 100 * ( this.position.x / containerSize.x ) + "%";
-        this.style.height  = 100 * ( this.size.y / containerSize.y ) + "%";
-        this.style.width   = 100 * ( this.size.x / containerSize.x ) + "%";
-        
+        this.style.top     = this.position.y + "px";
+        this.style.left    = this.position.x + "px";
+        this.style.height  = this.size.y + "px";
+        this.style.width   = this.size.x + "px";
+
         $.setElementOpacity( this.element, this.opacity );
-
-
     },
 
     /**
