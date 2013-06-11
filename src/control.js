@@ -54,9 +54,7 @@ $.ControlAnchor = {
  * element.
  * @class
  * @param {Element} element - the control element to be anchored in the container.
- * @param {Object | OpenSeadragon.ControlAnchor } options - All required and optional settings for configuring a control element.  A deprecated
- * alternative to passing an object with properties is to just pass an OpenSeadragon.ControlAnchor.  The target
- * removal date for this deprecated alternative is December 2013.
+ * @param {Object } options - All required and optional settings for configuring a control element.
  * @param {OpenSeadragon.ControlAnchor} [options.anchor=OpenSeadragon.ControlAnchor.NONE] - the position of the control
  *  relative to the container.
  * @param {Boolean} [options.attachToViewer=true] - Whether the control should be added directly to the viewer, or
@@ -76,9 +74,11 @@ $.ControlAnchor = {
  */
 $.Control = function ( element, options, container ) {
     var parent = element.parentNode;
-    //Deprecated.  Target removal date is December 2013
     if (typeof options === 'number')
     {
+        $.console.error("Passing an anchor directly into the OpenSeadragon.Control constructor is deprecated; " +
+                        "please use an options object instead.  " +
+                        "Support for this deprecated variant is scheduled for removal in December 2013");
          options = {anchor: options};
     }
     options.attachToViewer = (typeof options.attachToViewer === 'undefined') ? true : options.attachToViewer;
