@@ -82,6 +82,8 @@
  *      The minimum pyramid level this tile source supports or should attempt to load.
  * @property {Number} maxLevel
  *      The maximum pyramid level this tile source supports or should attempt to load.
+ * @propert                 yr} maxLevel
+ *      The maximum pyramid level this tile source supports or should attempt to load.
  */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     var _this = this,
