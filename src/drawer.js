@@ -48,10 +48,6 @@ var DEVICE_SCREEN       = $.getWindowSize(),
 
     // always use canvas when it is available.
     USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext );
-    //USE_CANVAS = SUBPIXEL_RENDERING &&
-    //    !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
-    //    !( navigator.appVersion.match( 'Mobile' ) ) &&
-    //    $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
