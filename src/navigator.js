@@ -102,7 +102,7 @@ $.Navigator = function( options ){
         style.border        = borderWidth + 'px solid #555';
         style.padding       = '0px';
         style.background    = '#000';
-        style.opacity       = 1.0;
+            style.opacity = 0.8;
         style.overflow      = 'hidden';
     }( this.element.style, this.borderWidth));
 
