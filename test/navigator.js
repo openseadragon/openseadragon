@@ -10,7 +10,8 @@ QUnit.config.autostart = false;
         contentStartFromLeft,
         contentStartFromTop,
         displayRegionWidth,
-        displayRegionHeight;
+        displayRegionHeight,
+        topNavigatorClickAdjustment;
 
     module("navigator", {
         setup:function () {
@@ -42,6 +43,7 @@ QUnit.config.autostart = false;
         contentStartFromTop = null;
         displayRegionWidth = null;
         displayRegionHeight = null;
+        topNavigatorClickAdjustment = 0;
     };
 
     var assessNavigatorLocation = function (expectedX, expectedY) {
@@ -222,11 +224,11 @@ QUnit.config.autostart = false;
                 yPos;
             if (theContentCorner === "TOPLEFT") {
                 xPos = contentStartFromLeft;
-                yPos = contentStartFromTop;
+                yPos = contentStartFromTop + topNavigatorClickAdjustment;
             }
             else if (theContentCorner === "TOPRIGHT") {
                 xPos = contentStartFromLeft + displayRegionWidth;
-                yPos = contentStartFromTop;
+                yPos = contentStartFromTop+ topNavigatorClickAdjustment;
             }
             else if (theContentCorner === "BOTTOMRIGHT") {
                 xPos = contentStartFromLeft + displayRegionWidth;
@@ -283,6 +285,11 @@ QUnit.config.autostart = false;
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
 
+        if ($.isNumeric(testProperties.topNavigatorClickAdjustment))
+        {
+            topNavigatorClickAdjustment = testProperties.topNavigatorClickAdjustment;
+        }
+
         var assessNavigatorOperationAndTakeNextStep = function (step) {
             return function () {
                 var nextStep = step + 1;
@@ -298,10 +305,16 @@ QUnit.config.autostart = false;
             };
         };
 
-        var assessAfterDragOnViewer = function () {
-            assessDisplayRegion("After pan");
+        var assessAfterSnapback = function () {
+            assessDisplayRegion("After snapback");
             navigatorOperationScenarios[0].interactionOperation();
             waitForViewer(assessNavigatorOperationAndTakeNextStep(0));
+        };
+
+        var assessAfterDragOnViewer = function () {
+            assessDisplayRegion("After pan");
+            viewer.viewport.applyConstraints();
+            waitForViewer(assessAfterSnapback);
         };
 
         var assessAfterZoomOnViewer = function () {
@@ -413,6 +426,9 @@ QUnit.config.autostart = false;
                 navigatorLocator:'#exampleNavigator',
                 testAutoFade: true,
                 expectedAutoFade: false,
+                //On Firefox at some screen size/resolution/magnification combinations, there is an issue with the
+                //simulated click.  This property is a work around for that problem
+                topNavigatorClickAdjustment: 15,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var jqueryDialog = $(testProperties.navigatorLocator);
                     assessNavigatorLocation(jqueryDialog.offset().left,
