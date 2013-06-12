@@ -10,10 +10,17 @@ QUnit.config.autostart = false;
         contentStartFromLeft,
         contentStartFromTop,
         displayRegionWidth,
-        displayRegionHeight;
+        displayRegionHeight,
+        topNavigatorClickAdjustment;
 
     module("navigator", {
         setup:function () {
+            Util.resetDom();
+            resetTestVariables();
+            $(document).scrollTop(0);
+            $(document).scrollLeft(0);
+        },
+        teardown:function () {
             Util.resetDom();
             resetTestVariables();
         }
@@ -36,6 +43,7 @@ QUnit.config.autostart = false;
         contentStartFromTop = null;
         displayRegionWidth = null;
         displayRegionHeight = null;
+        topNavigatorClickAdjustment = 0;
     };
 
     var assessNavigatorLocation = function (expectedX, expectedY) {
@@ -150,6 +158,7 @@ QUnit.config.autostart = false;
     }();
 
     var simulateNavigatorClick = function (viewer, locationX, locationY) {
+        //Assumes that the page has not been scrolled from the top or left
         var $canvas = $(viewer.element).find('.openseadragon-canvas'),
             offset = $canvas.offset(),
             event = {
@@ -215,11 +224,11 @@ QUnit.config.autostart = false;
                 yPos;
             if (theContentCorner === "TOPLEFT") {
                 xPos = contentStartFromLeft;
-                yPos = contentStartFromTop;
+                yPos = contentStartFromTop + topNavigatorClickAdjustment;
             }
             else if (theContentCorner === "TOPRIGHT") {
                 xPos = contentStartFromLeft + displayRegionWidth;
-                yPos = contentStartFromTop;
+                yPos = contentStartFromTop+ topNavigatorClickAdjustment;
             }
             else if (theContentCorner === "BOTTOMRIGHT") {
                 xPos = contentStartFromLeft + displayRegionWidth;
@@ -271,10 +280,15 @@ QUnit.config.autostart = false;
               assessmentOperation:assessViewerInCenter,
                 assessmentMessage:"After drag on navigator from top left"  }
         ],
-            autoHideWaitTime = 7500;
+            autoFadeWaitTime = 100;
 
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
+
+        if ($.isNumeric(testProperties.topNavigatorClickAdjustment))
+        {
+            topNavigatorClickAdjustment = testProperties.topNavigatorClickAdjustment;
+        }
 
         var assessNavigatorOperationAndTakeNextStep = function (step) {
             return function () {
@@ -291,10 +305,16 @@ QUnit.config.autostart = false;
             };
         };
 
-        var assessAfterDragOnViewer = function () {
-            assessDisplayRegion("After pan");
+        var assessAfterSnapback = function () {
+            assessDisplayRegion("After snapback");
             navigatorOperationScenarios[0].interactionOperation();
             waitForViewer(assessNavigatorOperationAndTakeNextStep(0));
+        };
+
+        var assessAfterDragOnViewer = function () {
+            assessDisplayRegion("After pan");
+            viewer.viewport.applyConstraints();
+            waitForViewer(assessAfterSnapback);
         };
 
         var assessAfterZoomOnViewer = function () {
@@ -313,12 +333,12 @@ QUnit.config.autostart = false;
             waitForViewer(assessAfterZoomOnViewer);
         };
 
-        var assessAutohideTriggered = function () {
-            ok($(testProperties.navigatorLocator).parent().css("opacity") == 0, "Expecting navigator to be autohide when in the default location");
+        var assessAutoFadeTriggered = function () {
+            ok($(testProperties.navigatorLocator).parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
             waitForViewer(captureInitialStateThenAct);
         };
 
-        var assessAutohideDisabled = function () {
+        var assessAutoFadeDisabled = function () {
             ok($(testProperties.navigatorLocator).parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
             waitForViewer(captureInitialStateThenAct);
         };
@@ -334,12 +354,12 @@ QUnit.config.autostart = false;
                      clientX:1,
                      clientY:1
                  };
-                 var body = $("body").simulate('mouseover', event);
-                if (testProperties.expectedAutoHide) {
-                    setTimeout(assessAutohideTriggered,autoHideWaitTime);
+                mainViewerElement.simulate('blur', event);
+                if (testProperties.expectedAutoFade) {
+                    setTimeout(assessAutoFadeTriggered,autoFadeWaitTime);
                 }
                 else {
-                    setTimeout(assessAutohideDisabled,autoHideWaitTime);
+                    setTimeout(assessAutoFadeDisabled,autoFadeWaitTime);
                 }
             }
         };
@@ -351,13 +371,13 @@ QUnit.config.autostart = false;
                 id:'tallexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0
             },
             {
                 displayRegionLocator:'.navigator .displayregion',
                 navigatorLocator:'.navigator',
-                testAutohide: false,
-                expectedAutoHide: false,
+                testAutoFade: false,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
@@ -373,13 +393,13 @@ QUnit.config.autostart = false;
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0
             },
             {
                 displayRegionLocator:'#exampleNavigator .displayregion',
                 navigatorLocator:'#exampleNavigator',
-                testAutohide: false,
-                expectedAutoHide: true,
+                testAutoFade: false,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
@@ -396,13 +416,19 @@ QUnit.config.autostart = false;
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0,
+                controlsFadeLength:1
             },
             {
                 displayRegionLocator:'#exampleNavigator .displayregion',
                 navigatorLocator:'#exampleNavigator',
-                testAutohide: true,
-                expectedAutoHide: false,
+                testAutoFade: true,
+                expectedAutoFade: false,
+                //On Firefox at some screen size/resolution/magnification combinations, there is an issue with the
+                //simulated click.  This property is a work around for that problem
+                topNavigatorClickAdjustment: 15,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var jqueryDialog = $(testProperties.navigatorLocator);
                     assessNavigatorLocation(jqueryDialog.offset().left,
@@ -416,13 +442,16 @@ QUnit.config.autostart = false;
                 id:'wideexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
-                showNavigator:true
+                showNavigator:true,
+                animationTime:0,
+                controlsFadeDelay:0,
+                controlsFadeLength:1
             },
             {
                 displayRegionLocator:'.navigator .displayregion',
                 navigatorLocator:'.navigator',
-                testAutohide: true,
-                expectedAutoHide: true,
+                testAutoFade: true,
+                expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
