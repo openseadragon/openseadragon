@@ -501,7 +501,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             wrapHorizontal:         false,
             wrapVertical:           false,
             visibilityRatio:        0.5, //-> how much of the viewer can be negative space
-            minPixelRatio:          1, //->closer to 0 draws tiles meant for a higher zoom at this zoom
+            minPixelRatio:          0.5, //->closer to 0 draws tiles meant for a higher zoom at this zoom
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null, 
