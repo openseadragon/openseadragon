@@ -46,10 +46,8 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
     ), 
 
-    USE_CANVAS = SUBPIXEL_RENDERING &&
-        !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
-        !( navigator.appVersion.match( 'Mobile' ) ) &&
-        $.isFunction( document.createElement( "canvas" ).getContext );
+    // always use canvas when it is available.
+    USE_CANVAS = $.isFunction( document.createElement( "canvas" ).getContext );
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
@@ -777,6 +775,10 @@ function loadTile( drawer, tile, time ) {
     if( drawer.viewport.collectionMode ){
         drawer.midUpdate = false;
         onTileLoad( drawer, tile, time );
+    } else if ( drawer.source.virtualMode ) {
+        tile.loading = true;
+        tile.loaded = false;
+        tile.image = null;
     } else {
         tile.loading = drawer.loadImage(
             tile.url,
@@ -805,19 +807,22 @@ function onTileLoad( drawer, tile, time, image ) {
         $.console.warn( "Tile load callback in middle of drawing routine." );
         return;
     } else if ( !image  && !drawer.viewport.collectionMode ) {
-        $.console.log( "Tile %s failed to load: %s", tile, tile.url );
+        $.console.log( "Tile " + tile + " failed to load: " + tile.url );
         if( !drawer.debugMode ){
             tile.exists = false;
             return;
         }
     } else if ( time < drawer.lastResetTime ) {
-        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        $.console.log( "Ignoring tile " + tile + " loaded before reset: " + tile.url );
         return;
     }
 
     tile.loaded = true;
     tile.image  = image;
-
+    // give the application an opportunity to modify the just-loaded tile.
+    if ( drawer.fixTile ) {
+        drawer.fixTile( drawer, tile );
+    }
 
     insertionIndex = drawer.tilesLoaded.length;
 
@@ -987,10 +992,7 @@ function isCovered( coverage, level, x, y ) {
  */
 function setCoverage( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
-        $.console.warn(
-            "Setting coverage for a tile before its level's coverage has been reset: %s", 
-            level
-        );
+        $.console.warn( "Setting coverage for a tile before its level's coverage has been reset: " + level );
         return;
     }
 
@@ -1162,7 +1164,7 @@ function drawTiles( drawer, lastDrawn ){
         } else {
 
             if ( USE_CANVAS ) {
-                tile.drawCanvas( drawer.context );
+                tile.drawCanvas( drawer.context, drawer.source );
             } else {
                 tile.drawHTML( drawer.canvas );
             }

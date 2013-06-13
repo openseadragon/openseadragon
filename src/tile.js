@@ -111,10 +111,7 @@ $.Tile.prototype = {
      */
     drawHTML: function( container ) {
         if ( !this.loaded || !this.image ) {
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
+            $.console.warn("Attempting to draw tile " + this.toString() + " when it's not yet loaded.");
             return;
         }
 
@@ -146,7 +143,7 @@ $.Tile.prototype = {
      * @function
      * @param {Canvas} context
      */
-    drawCanvas: function( context ) {
+    drawCanvas: function (context, tileSource) {
 
         var position = this.position,
             size     = this.size,
@@ -154,10 +151,7 @@ $.Tile.prototype = {
             canvas;
 
         if ( !this.loaded || !( this.image || TILE_CACHE[ this.url ] ) ){
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
+            $.console.warn("Attempting to draw tile " + this.toString() + " when it's not yet loaded.");
             return;
         }
         context.globalAlpha = this.opacity;
@@ -181,12 +175,21 @@ $.Tile.prototype = {
         }
 
         if( !TILE_CACHE[ this.url ] ){
-            canvas = document.createElement( 'canvas' );
-            canvas.width = this.image.width;
-            canvas.height = this.image.height;
-            rendered = canvas.getContext('2d');
-            rendered.drawImage( this.image, 0, 0 );
+            // Is this already a canvas context ?
+            if ( this.image && this.image.lineTo ) {
+                rendered = this.image;
+            } else {
+                canvas = document.createElement( 'canvas' );
+                canvas.width = this.image.width;
+                canvas.height = this.image.height;
+                rendered = canvas.getContext( '2d' );
+                rendered.drawImage( this.image, 0, 0 );
+            }
             TILE_CACHE[ this.url ] = rendered;
+            // give the application the opportunity to cache this tile
+            if ( this.cacheTile ) {
+                this.cacheTile( TILE_CACHE, this.url, tileSource, this );
+            }
             //since we are caching the prerendered image on a canvas
             //allow the image to not be held in memory
             this.image = null;
@@ -201,10 +204,10 @@ $.Tile.prototype = {
             0, 
             rendered.canvas.width, 
             rendered.canvas.height, 
-            position.x, 
-            position.y, 
-            size.x, 
-            size.y 
+            this.position.x, 
+            this.position.y, 
+            this.size.x, 
+            this.size.y 
         );
         //rendered.restore();
 

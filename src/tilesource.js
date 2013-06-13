@@ -82,6 +82,8 @@
  *      The minimum pyramid level this tile source supports or should attempt to load.
  * @property {Number} maxLevel
  *      The maximum pyramid level this tile source supports or should attempt to load.
+  * @property {Boolean} virtualMode
+  *      Indicates, that the tiles are not retrieved from a server but provided on the client side.
  */ 
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     var _this = this,

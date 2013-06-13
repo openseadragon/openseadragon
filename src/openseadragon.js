@@ -1348,11 +1348,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.open( "GET", options.url, options.async );
                 request.send( null );
             } catch (e) {
-                $.console.log(
-                    "%s while making AJAX request: %s",
-                    e.name, 
-                    e.message
-                );
+                $.console.log(e.name + " while making AJAX request: " + e.message);
 
                 request.onreadystatechange = null;
                 request = null;
@@ -1644,18 +1640,19 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @static
      * @private
      */
-    var nullfunction = function( msg ){
-            //document.location.hash = msg;
-        };
-
-    $.console = window.console || {
-        log:    nullfunction,
-        debug:  nullfunction,
-        info:   nullfunction,
-        warn:   nullfunction,
-        error:  nullfunction
+    // modified to make it easy to break into the debugger when errors happen.
+    var logfunction = function (msg) {
+        if (window.console) return window.console.log(msg);
+        window.alert(msg);
     };
-        
+    $.console = {
+        log: function (msg) { logfunction(msg); },
+        debug: function (msg) { logfunction(msg); },
+        info: function (msg) { logfunction(msg); },
+        warn: function (msg) { logfunction(msg); },
+        error: function (msg) { logfunction(msg); }
+    };
+
 
     // Adding support for HTML5's requestAnimationFrame as suggested by acdha.
     // Implementation taken from matt synder's post here:

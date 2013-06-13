@@ -1456,7 +1456,8 @@ function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny )
 // Page update routines ( aka Views - for future reference )
 ///////////////////////////////////////////////////////////////////////////////
 
-function updateMulti( viewer ) {
+// TODO: this is called about once every 15 ms. Is this correct?
+function updateMulti(viewer) {
 
     var beginTime;
 
