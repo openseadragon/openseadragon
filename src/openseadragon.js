@@ -1013,8 +1013,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         setElementOpacity: function( element, opacity, usesAlpha ) {
 
-            var previousFilter,
-                ieOpacity,
+            var ieOpacity,
                 ieFilter;
 
             element = $.getElement( element );
@@ -1023,31 +1022,16 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 opacity = Math.round( opacity );
             }
 
-            if ( opacity < 1 ) {
-                element.style.opacity = opacity;
+            if ( $.Browser.opacity ) {
+                element.style.opacity = opacity < 1 ? opacity : "";
             } else {
-                element.style.opacity = "";
-            }
-
-            if ( opacity == 1 ) {
-                prevFilter = element.style.filter || "";
-                element.style.filter = prevFilter.replace(/alpha\(.*?\)/g, "");
-                return;
-            }
-
-            ieOpacity = Math.round( 100 * opacity );
-            ieFilter  = " alpha(opacity=" + ieOpacity + ") ";
-
-            //TODO: find out why this uses a try/catch instead of a predetermined
-            //      routine or at least an if/elseif/else
-            try {
-                if ( element.filters && element.filters.alpha ) {
-                    element.filters.alpha.opacity = ieOpacity;
+                if ( opacity < 1 ) {
+                    ieOpacity = Math.round( 100 * opacity );
+                    ieFilter  = "alpha(opacity=" + ieOpacity + ")";
+                    element.style.filter = ieFilter;
                 } else {
-                    element.style.filter += ieFilter;
+                    element.style.filter = "";
                 }
-            } catch ( e ) {
-                element.style.filter += ieFilter;
             }
         },
 
@@ -1628,6 +1612,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 $.Browser.vendor == $.BROWSERS.CHROME && 
                 $.Browser.version < 2
             )
+        );
+
+        //determine if this browser supports element.style.opacity
+        $.Browser.opacity = !(
+            $.Browser.vendor == $.BROWSERS.IE &&
+            $.Browser.version < 9
         );
 
     })();
