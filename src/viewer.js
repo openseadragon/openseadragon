@@ -236,6 +236,7 @@ $.Viewer = function( options ) {
         style.position = "absolute";
         style.top      = "0px";
         style.left     = "0px";
+        style.resize   = "none";
     }(  this.keyboardCommandArea.style ));
 
     this.container.insertBefore( this.canvas, this.container.firstChild );

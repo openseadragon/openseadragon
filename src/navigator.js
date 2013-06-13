@@ -138,6 +138,7 @@ $.Navigator = function( options ){
 
     this.element.innerTracker = new $.MouseTracker({
         element:        this.element,
+        dragHandler:        $.delegate( this, onCanvasDrag ),
         clickHandler:       $.delegate( this, onCanvasClick ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:  function(){
@@ -146,16 +147,6 @@ $.Navigator = function( options ){
             return false;
         }
     }).setTracking( true );
-
-    this.displayRegion.innerTracker = new $.MouseTracker({
-        element:            this.displayRegion, 
-        clickTimeThreshold: this.clickTimeThreshold, 
-        clickDistThreshold: this.clickDistThreshold,
-
-        dragHandler:        $.delegate( this, onCanvasDrag ),
-        releaseHandler:     $.delegate( this, onCanvasRelease ),
-        scrollHandler:      $.delegate( this, onCanvasScroll )
-    }).setTracking( true ); // default state
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
         element:            this.container, 

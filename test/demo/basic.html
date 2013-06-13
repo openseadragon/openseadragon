@@ -1,7 +1,8 @@
 <html>
 <head>
     <title>OpenSeadragon Basic Demo</title>
-    <script type="text/javascript" src='../../build/openseadragon/openseadragon.min.js'></script>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
     <style type="text/css">
 
       .openseadragon1 {
@@ -22,7 +23,8 @@
             // debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
-            tileSources: "/test/data/testpattern.dzi"
+            tileSources: "../data/testpattern.dzi",
+            showNavigator:true
         });
 
     </script>
