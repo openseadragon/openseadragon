@@ -3,16 +3,18 @@ OPENSEADRAGON CHANGELOG
 
 0.9.128: (in progress)
 
-* Drawer events now fire properly (#94)
+* The navigator is now off by default (#102)
+* Reverted minPixelRatio to 0.5 for better quality (#116)
+* Sometimes tiles wouldn't resolve if you used the blendTime option; fixed. (#95)
+* You can now choose to have previous and next buttons wrap using the config.navPrevNextWrap. (#114)
 * You can now specify an ID for a div to hold the navigator (#46)
 * You can now click in the navigator to go to a new location (#46)
 * Keyboard handling is now done in the viewer rather than navigator (#46)
 * Additional navigator fixes (#46)
+* Drawer events now fire properly (#94)
 * Fixed an error in EventHandler.removeHandler() (#48)
 * Better requestAnimationFrame detection on older Firefox (#103)
 * More efficient navigator loading (#115)
-* Sometimes tiles wouldn't resolve if you used the blendTime option; fixed. (#95)
-* You can now choose to have previous and next buttons wrap using the config.navPrevNextWrap. (#114)
 
 0.9.127:
 
