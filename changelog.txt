@@ -15,6 +15,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an error in EventHandler.removeHandler() (#48)
 * Better requestAnimationFrame detection on older Firefox (#103)
 * More efficient navigator loading (#115)
+* Simplified element opacity setting implementation (#123)
 
 0.9.127:
 
