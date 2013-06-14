@@ -1,4 +1,4 @@
-# OpenSeadragon 
+# OpenSeadragon [![Stories in Ready](http://githubkanban.herokuapp.com/huboard/openseadragon/openseadragon.png)](http://huboard.com/openseadragon/openseadragon/board)
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
