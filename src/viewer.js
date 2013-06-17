@@ -470,7 +470,11 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             THIS[ this.hash ].updateRequestId = null;
         }
 
-        if( this.drawer ){
+        if ( this.navigator ) {
+            this.navigator.close();
+        }
+
+        if ( this.drawer ) {
             this.drawer.clearOverlays();
         }
 
