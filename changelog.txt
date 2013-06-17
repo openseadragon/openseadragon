@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.128: (in progress)
+0.9.128:
 
 * The navigator is now off by default (#102)
 * Reverted minPixelRatio to 0.5 for better quality (#116)
