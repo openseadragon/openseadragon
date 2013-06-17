@@ -711,8 +711,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             element = $.getElement( element );
 
             return new $.Point(
-                element.clientWidth, 
-                element.clientHeight
+              // By refusing to return 0 for either width or height, later operations do not resolve to NaN.
+                (element.clientWidth === 0 ? 1 : element.clientWidth),
+                (element.clientHeight === 0 ? 1 : element.clientHeight)
             );
         },
 
