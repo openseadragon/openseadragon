@@ -1153,22 +1153,25 @@ function openTileSource( viewer, source ) {
     });
 
     //Instantiate a navigator if configured
-    if ( _this.showNavigator  && ! _this.navigator && !_this.collectionMode ){
-        _this.navigator = new $.Navigator({
-            id:          _this.navigatorId,
-            position:    _this.navigatorPosition,
-            sizeRatio:   _this.navigatorSizeRatio,
-            height:      _this.navigatorHeight,
-            width:       _this.navigatorWidth,
-            // By passing the fully parsed source here, the navigator doesn't
-            // have to load it again. Additionally, we don't have to call
-            // navigator.open, as it's implicitly called in the ctor.
-            tileSources: source,
-            tileHost:    _this.tileHost,
-            prefixUrl:   _this.prefixUrl,
-            overlays:    _this.overlays,
-            viewer:      _this
-        });
+    if ( _this.showNavigator  && !_this.collectionMode ){
+        // Note: By passing the fully parsed source, the navigator doesn't
+        // have to load it again.
+        if ( _this.navigator ) {
+            _this.navigator.open( source );
+        } else {
+            _this.navigator = new $.Navigator({
+                id:          _this.navigatorId,
+                position:    _this.navigatorPosition,
+                sizeRatio:   _this.navigatorSizeRatio,
+                height:      _this.navigatorHeight,
+                width:       _this.navigatorWidth,
+                tileSources: source,
+                tileHost:    _this.tileHost,
+                prefixUrl:   _this.prefixUrl,
+                overlays:    _this.overlays,
+                viewer:      _this
+            });
+        }
     }
 
     //Instantiate a referencestrip if configured
