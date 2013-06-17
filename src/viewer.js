@@ -1468,8 +1468,11 @@ function updateMulti( viewer ) {
     beginTime = +new Date();
     updateOnce( viewer );
 
-    THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
-        arguments.callee, beginTime );
+    // Request the next frame, unless we've been closed during the updateOnce()
+    if ( viewer.source ) {
+        THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
+            arguments.callee, beginTime );
+    }
 }
 
 function updateOnce( viewer ) {
