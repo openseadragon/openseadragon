@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+0.9.129: (In Progress)
+
 0.9.128:
 
 * The navigator is now off by default (#102)
