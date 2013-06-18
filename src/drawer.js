@@ -672,8 +672,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             numberOfTiles,
             drawer.normHeight
         ),
-        drawTile = drawLevel,
-        newbest;
+        drawTile = drawLevel;
 
     if( drawer.viewer ){
         drawer.viewer.raiseEvent( 'update-tile', {

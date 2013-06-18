@@ -111,7 +111,6 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
      */
     configure: function( data, url ){
         var service,
-            identifier,
             options,
             host;
 
@@ -236,11 +235,7 @@ function configureFromXml( tileSource, xmlDoc ){
 
     var root            = xmlDoc.documentElement,
         rootName        = root.tagName,
-        configuration   = null,
-        scale_factors,
-        formats,
-        qualities,
-        i;
+        configuration   = null;
 
     if ( rootName == "info" ) {
 

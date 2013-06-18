@@ -112,7 +112,7 @@
                 element[this.prefix + 'RequestFullScreen']();
 
         };
-        fullScreenApi.cancelFullScreen = function( element ) {
+        fullScreenApi.cancelFullScreen = function() {
             return (this.prefix === '') ?
                 document.cancelFullScreen() :
                 document[this.prefix + 'CancelFullScreen']();
@@ -129,7 +129,6 @@
         };
         fullScreenApi.cancelFullScreen = fullScreenApi.requestFullScreen;
     }
-
 
     // export api
     $.extend( $, fullScreenApi );

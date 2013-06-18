@@ -174,8 +174,7 @@ $.Viewer = function( options ) {
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
-    var initialTileSource,
-        customTileSource;
+    var initialTileSource;
 
     if ( this.xmlPath  ){
         //Deprecated option.  Now it is preferred to use the tileSources option
@@ -569,7 +568,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         var body            = document.body,
             bodyStyle       = body.style,
             docStyle        = document.documentElement.style,
-            containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
             _this           = this,
             oldBounds,
@@ -635,7 +633,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             body.appendChild( this.element );
 
             if( $.supportsFullScreen ){
-                THIS[ this.hash ].onfullscreenchange = function( event ) {
+                THIS[ this.hash ].onfullscreenchange = function() {
                     // The event object doesn't carry information about the
                     // fullscreen state of the browser, but it is possible to
                     // retrieve it through the fullscreen API
@@ -817,7 +815,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             onNextHandler           = $.delegate( this, onNext ),
             onPreviousHandler       = $.delegate( this, onPrevious ),
             navImages               = this.navImages,
-            buttons                 = [],
             useGroup                = true ;
 
         if( this.showSequenceControl && THIS[ this.hash ].sequenced ){

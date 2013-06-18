@@ -747,11 +747,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         getEvent: function( event ) {
             if( event ){
-                $.getEvent = function( event ){
+                $.getEvent = function( event ) {
                     return event;
                 };
             } else {
-                $.getEvent = function( event ){
+                $.getEvent = function() {
                     return window.event;
                 };
             }
@@ -1283,7 +1283,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request = new XMLHttpRequest();
             } else if ( window.ActiveXObject ) {
                 /*jshint loopfunc:true*/
-                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                for ( var i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
                         $.createAjaxRequest = function( ){
@@ -1316,9 +1316,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             var async   = true,
                 request = $.createAjaxRequest(),
-                actual,
-                options,
-                i;
+                options;
 
 
             if( $.isPlainObject( url ) ){
@@ -1453,12 +1451,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Fully deprecated. Will throw an error.
          * @function
          * @name OpenSeadragon.createFromDZI
-         * @param {String} xmlUrl
-         * @param {String} xmlString
-         * @param {Function} callback
          * @deprecated - use OpenSeadragon.Viewer.prototype.open
          */
-        createFromDZI: function( dzi, callback, tileHost ) {
+        createFromDZI: function() {
             throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";
         },
 
@@ -1476,8 +1471,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             if ( window.ActiveXObject ) {
 
                 $.parseXml = function( string ){
-                    var xmlDoc = null,
-                        parser;
+                    var xmlDoc = null;
 
                     xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
                     xmlDoc.async = false;

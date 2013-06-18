@@ -126,11 +126,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
      */
     configure: function( data, url ){
 
-        var dziPath,
-            dziName,
-            tilesUrl,
-            options,
-            host;
+        var options;
 
         if( !$.isPlainObject(data) ){
 
