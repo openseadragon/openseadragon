@@ -13,8 +13,7 @@
                 id:            'example',
                 prefixUrl:     '/build/openseadragon/images/',
                 tileSources:   '/test/data/testpattern.dzi',
-                springStiffness: 100, // Faster animation = faster tests
-                showNavigator:  true
+                springStiffness: 100 // Faster animation = faster tests
             });
 
             ok(viewer, 'Viewer exists');
