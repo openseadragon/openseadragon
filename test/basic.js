@@ -24,6 +24,8 @@
                 equal(eventSender, viewer, 'Sender of open event was viewer');
                 ok(eventData, 'Handler also received event data');
                 ok(viewer.viewport, 'Viewport exists');
+                ok(viewer.source, 'source exists');
+                ok(viewer._updateRequestId, 'timer is on');
                 start();
             };
 
@@ -122,9 +124,14 @@
     asyncTest('Close', function() {
         var closeHandler = function() {
             viewer.removeHandler('close', closeHandler);
+            ok(!viewer.source, 'no source');
             $('#example').empty();
             ok(true, 'Close event was sent');
-            start();
+            ok(!viewer._updateRequestId, 'timer is off');
+            setTimeout(function() {
+                ok(!viewer._updateRequestId, 'timer is still off');
+                start();
+            }, 100);
         };
 
         viewer.addHandler('close', closeHandler);
