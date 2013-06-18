@@ -399,7 +399,7 @@ function loadPanels(strip, viewerSize, scroll){
     activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
     for( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ){
-        element = strip.panels[ i ];
+        var element = strip.panels[ i ];
         if ( !element.activePanel ){
             miniViewer = new $.Viewer( {
                 id:                     element.id,
