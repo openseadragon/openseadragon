@@ -148,9 +148,14 @@ module.exports = function(grunt) {
         jshint: {
             options: {
                 browser: true,
+                curly: true,
                 eqeqeq: false,
                 loopfunc: false,
+                noarg: true,
                 trailing: true,
+                undef: true,
+                unused: true,
+
                 globals: {
                     OpenSeadragon: true
                 }
