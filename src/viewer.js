@@ -151,7 +151,6 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
-        "updateRequestId":   null,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -167,6 +166,8 @@ $.Viewer = function( options ) {
         "fullPage":          false, 
         "onfullscreenchange": null
     };
+
+    this._updateRequestId = null;
 
     //Inherit some behaviors and properties
     $.EventHandler.call( this );
@@ -465,9 +466,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
-        if ( THIS[ this.hash ].updateRequestId !== null ){
-            $.cancelAnimationFrame( THIS[ this.hash ].updateRequestId );
-            THIS[ this.hash ].updateRequestId = null;
+        if ( this._updateRequestId !== null ) {
+            $.cancelAnimationFrame( this._updateRequestId );
+            this._updateRequestId = null;
         }
 
         if ( this.navigator ) {
@@ -1195,7 +1196,7 @@ function openTileSource( viewer, source ) {
 
     THIS[ _this.hash ].animating = false;
     THIS[ _this.hash ].forceRedraw = true;
-    THIS[ _this.hash ].updateRequestId = scheduleUpdate( _this, updateMulti );
+    _this._updateRequestId = scheduleUpdate( _this, updateMulti );
 
     //Assuming you had programatically created a bunch of overlays
     //and added them via configuration
@@ -1468,7 +1469,7 @@ function updateMulti( viewer ) {
     var beginTime;
 
     if ( !viewer.source ) {
-        THIS[ viewer.hash ].updateRequestId = null;
+        viewer._updateRequestId = null;
         return;
     }
 
@@ -1477,7 +1478,7 @@ function updateMulti( viewer ) {
 
     // Request the next frame, unless we've been closed during the updateOnce()
     if ( viewer.source ) {
-        THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
+        viewer._updateRequestId = scheduleUpdate( viewer,
             arguments.callee, beginTime );
     }
 }
