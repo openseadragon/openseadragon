@@ -1283,6 +1283,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request = new XMLHttpRequest();
             } else if ( window.ActiveXObject ) {
                 /*jshint loopfunc:true*/
+                /* global ActiveXObject:true */
                 for ( var i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
@@ -1832,6 +1833,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @deprecated
      */
     function processDZI( imageNode, tilesUrl ) {
+        /* global imageFormatSupported:true */
+
         var fileFormat    = imageNode.getAttribute( "Format" ),
             sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
             dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
@@ -1883,6 +1886,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @deprecated
      */
     function processDZIJSON( imageData, tilesUrl ) {
+        /* global imageFormatSupported:true */
+
         var fileFormat    = imageData.Format,
             sizeData      = imageData.Size,
             dispRectData  = imageData.DisplayRect || [],
