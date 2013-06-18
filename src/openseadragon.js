@@ -291,11 +291,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     },
     // Save a reference to some core methods
     toString    = Object.prototype.toString,
-    hasOwn      = Object.prototype.hasOwnProperty,
-    push        = Array.prototype.push,
-    slice       = Array.prototype.slice,
-    trim        = String.prototype.trim,
-    indexOf     = Array.prototype.indexOf;
+    hasOwn      = Object.prototype.hasOwnProperty;
 
 
     /**
