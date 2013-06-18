@@ -1112,11 +1112,13 @@ function drawTiles( drawer, lastDrawn ){
 
                 position = collectionTileSource.layout == 'horizontal' ?
                     tile.y + ( tile.x * collectionTileSource.rows ) :
-                    tile.x + ( tile.y * collectionTileSource.rows ),
+                    tile.x + ( tile.y * collectionTileSource.rows );
 
-                tileSource = position < collectionTileSource.tileSources.length ?
-                    collectionTileSource.tileSources[ position ] :
-                    null;
+                if (position < collectionTileSource.tileSources.length) {
+                    tileSource = collectionTileSource.tileSources[ position ];
+                } else {
+                    tileSource = null;
+                }
 
                 //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
