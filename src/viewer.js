@@ -276,19 +276,21 @@ $.Viewer = function( options ) {
                     case 119://w
                     case 87://W
                     case 38://up arrow
-                        if (shiftKey)
+                        if (shiftKey) {
                             _this.viewport.zoomBy(1.1);
-                        else
+                        } else {
                             _this.viewport.panBy(new $.Point(0, -0.05));
+                        }
                         _this.viewport.applyConstraints();
                         return false;
                     case 115://s
                     case 83://S
                     case 40://down arrow
-                        if (shiftKey)
+                        if (shiftKey) {
                             _this.viewport.zoomBy(0.9);
-                        else
+                        } else {
                             _this.viewport.panBy(new $.Point(0, 0.05));
+                        }
                         _this.viewport.applyConstraints();
                         return false;
                     case 97://a
