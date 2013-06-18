@@ -1323,7 +1323,7 @@ function onBlur(){
 }
 
 function onCanvasClick( tracker, position, quick, shift ) {
-    var zoomPreClick,
+    var zoomPerClick,
         factor;
     if ( this.viewport && quick ) {    // ignore clicks where mouse moved
         zoomPerClick = this.zoomPerClick;
@@ -1555,7 +1555,7 @@ function scheduleZoom( viewer ) {
 function doZoom() {
     var currentTime,
         deltaTime,
-        adjustFactor;
+        adjustedFactor;
 
     if ( THIS[ this.hash ].zooming && this.viewport) {
         currentTime     = +new Date();
