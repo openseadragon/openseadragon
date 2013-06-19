@@ -6,7 +6,7 @@
     "noarg": true,
     "trailing": true,
     "undef": true,
-    "unused": true,
+    "unused": false,
 
     "globals": {
         "OpenSeadragon": true
