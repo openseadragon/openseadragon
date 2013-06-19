@@ -33,14 +33,14 @@
  */
 
 (function( $ ){
-    
+
 /**
  * The Navigator provides a small view of the current image as fixed
  * while representing the viewport as a moving box serving as a frame
  * of reference in the larger viewport as to which portion of the image
  * is currently being examined.  The navigator's viewport can be interacted
  * with using the keyboard or the mouse.
- * @class 
+ * @class
  * @name OpenSeadragon.Navigator
  * @extends OpenSeadragon.Viewer
  * @extends OpenSeadragon.EventHandler
@@ -121,14 +121,14 @@ $.Navigator = function( options ){
         style.padding       = '0px';
         //TODO: IE doesnt like this property being set
         //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
-        
+
         style.background    = 'transparent';
 
         // We use square bracket notation on the statement below, because float is a keyword.
         // This is important for the Google Closure compiler, if nothing else.
-        /*jshint sub:true */ 
+        /*jshint sub:true */
         style['float']      = 'left'; //Webkit
-        
+
         style.cssFloat      = 'left'; //Firefox
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
@@ -149,8 +149,8 @@ $.Navigator = function( options ){
     }).setTracking( true );
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
-        element:            this.container, 
-        clickTimeThreshold: this.clickTimeThreshold, 
+        element:            this.container,
+        clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
         enterHandler:       $.delegate( this, onContainerEnter ),
         exitHandler:        $.delegate( this, onContainerExit ),
@@ -158,8 +158,8 @@ $.Navigator = function( options ){
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
 
 
-    viewer.addControl( 
-        this.element, 
+    viewer.addControl(
+        this.element,
         options.controlOptions
     );
 
@@ -171,7 +171,7 @@ $.Navigator = function( options ){
         this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
     }
 
-    $.Viewer.apply( this, [ options ] ); 
+    $.Viewer.apply( this, [ options ] );
 
     this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
     unneededElement = this.element.getElementsByTagName('textarea')[0];
@@ -198,7 +198,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft());
             bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.totalBorderWidths);
 
-            //update style for navigator-box    
+            //update style for navigator-box
             (function(style, borderWidth){
 
                 style.top    = topleft.y + 'px';
@@ -211,17 +211,17 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 style.height = Math.max( height, 0 ) + 'px';
 
             }( this.displayRegion.style, this.borderWidth));
-        } 
+        }
 
     },
 
     open: function( source ){
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
-        if( source.tileSize > containerSize.x || 
+        if( source.tileSize > containerSize.x ||
             source.tileSize > containerSize.y ){
-            this.minPixelRatio = Math.min( 
-                containerSize.x, 
-                containerSize.y 
+            this.minPixelRatio = Math.min(
+                containerSize.x,
+                containerSize.y
             ) / source.tileSize;
         } else {
             this.minPixelRatio = this.viewer.minPixelRatio;
@@ -279,10 +279,10 @@ function onCanvasDrag( tracker, position, delta, shift ) {
         if( !this.panVertical ){
             delta.y = 0;
         }
-        this.viewer.viewport.panBy( 
-            this.viewport.deltaPointsFromPixels( 
+        this.viewer.viewport.panBy(
+            this.viewport.deltaPointsFromPixels(
                 delta
-            ) 
+            )
         );
     }
 }
@@ -309,8 +309,8 @@ function onCanvasScroll( tracker, position, scroll, shift ) {
     var factor;
     if ( this.viewer.viewport ) {
         factor = Math.pow( this.zoomPerScroll, scroll );
-        this.viewer.viewport.zoomBy( 
-            factor, 
+        this.viewer.viewport.zoomBy(
+            factor,
             this.viewport.getCenter()
         );
         this.viewer.viewport.applyConstraints();

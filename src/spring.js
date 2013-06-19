@@ -33,20 +33,20 @@
  */
 
 (function( $ ){
-    
+
 /**
  * @class
  * @param {Object} options - Spring configuration settings.
- * @param {Number} options.initial - Initial value of spring, default to 0 so 
+ * @param {Number} options.initial - Initial value of spring, default to 0 so
  *  spring is not in motion initally by default.
  * @param {Number} options.springStiffness - Spring stiffness.
  * @param {Number} options.animationTime - Animation duration per spring.
- * 
- * @property {Number} initial - Initial value of spring, default to 0 so 
+ *
+ * @property {Number} initial - Initial value of spring, default to 0 so
  *  spring is not in motion initally by default.
  * @property {Number} springStiffness - Spring stiffness.
  * @property {Number} animationTime - Animation duration per spring.
- * @property {Object} current 
+ * @property {Object} current
  * @property {Number} start
  * @property {Number} target
  */
@@ -54,17 +54,17 @@ $.Spring = function( options ) {
     var args = arguments;
 
     if( typeof( options ) != 'object' ){
-        //allows backward compatible use of ( initialValue, config ) as 
+        //allows backward compatible use of ( initialValue, config ) as
         //constructor parameters
         options = {
-            initial: args.length && typeof ( args[ 0 ] ) == "number" ? 
-                args[ 0 ] : 
+            initial: args.length && typeof ( args[ 0 ] ) == "number" ?
+                args[ 0 ] :
                 0,
-            springStiffness: args.length > 1 ? 
-                args[ 1 ].springStiffness : 
+            springStiffness: args.length > 1 ?
+                args[ 1 ].springStiffness :
                 5.0,
-            animationTime: args.length > 1 ? 
-                args[ 1 ].animationTime : 
+            animationTime: args.length > 1 ?
+                args[ 1 ].animationTime :
                 1.5
         };
     }
@@ -73,8 +73,8 @@ $.Spring = function( options ) {
 
 
     this.current = {
-        value: typeof ( this.initial ) == "number" ? 
-            this.initial : 
+        value: typeof ( this.initial ) == "number" ?
+            this.initial :
             0,
         time:  new Date().getTime() // always work in milliseconds
     };
@@ -128,13 +128,13 @@ $.Spring.prototype = {
      */
     update: function() {
         this.current.time  = new Date().getTime();
-        this.current.value = (this.current.time >= this.target.time) ? 
+        this.current.value = (this.current.time >= this.target.time) ?
             this.target.value :
-            this.start.value + 
+            this.start.value +
                 ( this.target.value - this.start.value ) *
-                transform( 
-                    this.springStiffness, 
-                    ( this.current.time - this.start.time ) / 
+                transform(
+                    this.springStiffness,
+                    ( this.current.time - this.start.time ) /
                     ( this.target.time  - this.start.time )
                 );
     }
@@ -144,7 +144,7 @@ $.Spring.prototype = {
  * @private
  */
 function transform( stiffness, x ) {
-    return ( 1.0 - Math.exp( stiffness * -x ) ) / 
+    return ( 1.0 - Math.exp( stiffness * -x ) ) /
         ( 1.0 - Math.exp( -stiffness ) );
 }
 

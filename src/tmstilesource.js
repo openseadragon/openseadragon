@@ -41,7 +41,7 @@
 
 
 (function( $ ){
-    
+
 /**
  * A tilesource implementation for Tiled Map Services (TMS).
  * TMS tile scheme ( [ as supported by OpenLayers ] is described here
@@ -55,7 +55,7 @@
  * @param {Number} tileSize
  * @param {Number} tileOverlap
  * @param {String} tilesUrl
- */ 
+ */
 $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     var options;
 
@@ -86,7 +86,7 @@ $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     options.tileSize = 256;
     options.width = bufferedWidth;
     options.height = bufferedHeight;
-    
+
     $.TileSource.apply( this, [ options ] );
 
 };
@@ -107,12 +107,12 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.TmsTileSource.prototype.configure
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( data, url ){

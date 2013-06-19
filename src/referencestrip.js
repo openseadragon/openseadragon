@@ -33,16 +33,16 @@
  */
 
 (function( $ ){
-    
+
 // dictionary from id to private properties
 var THIS = {};
 
 /**
  *  The CollectionDrawer is a reimplementation if the Drawer API that
- *  focuses on allowing a viewport to be redefined as a collection 
+ *  focuses on allowing a viewport to be redefined as a collection
  *  of smaller viewports, defined by a clear number of rows and / or
  *  columns of which each item in the matrix of viewports has its own
- *  source.  
+ *  source.
  *
  *  This idea is a reexpression of the idea of dzi collections
  *  which allows a clearer algorithm to reuse the tile sources already
@@ -51,8 +51,8 @@ var THIS = {};
  *  for the purpose of image sequnces.
  *
  *  TODO:   The difficult part of this feature is figuring out how to express
- *          this functionality as a combination of the functionality already 
- *          provided by Drawer, Viewport, TileSource, and Navigator.  It may 
+ *          this functionality as a combination of the functionality already
+ *          provided by Drawer, Viewport, TileSource, and Navigator.  It may
  *          require better abstraction at those points in order to effeciently
  *          reuse those paradigms.
  */
@@ -66,7 +66,7 @@ $.ReferenceStrip = function( options ){
         element,
         style,
         i;
-    
+
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
@@ -123,46 +123,46 @@ $.ReferenceStrip = function( options ){
         keyHandler:     $.delegate( this, onKeyPress )
     }).setTracking( true );
 
-    //Controls the position and orientation of the reference strip and sets the  
+    //Controls the position and orientation of the reference strip and sets the
     //appropriate width and height
     if( options.width && options.height ){
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
-        viewer.addControl( 
-            this.element, 
+        viewer.addControl(
+            this.element,
             {anchor: $.ControlAnchor.BOTTOM_LEFT}
         );
     } else {
         if( "horizontal" == options.scroll ){
-            this.element.style.width = ( 
-                viewerSize.x * 
-                options.sizeRatio * 
+            this.element.style.width = (
+                viewerSize.x *
+                options.sizeRatio *
                 viewer.tileSources.length
             ) + ( 12 * viewer.tileSources.length ) + 'px';
 
-            this.element.style.height  = ( 
-                viewerSize.y * 
-                options.sizeRatio 
+            this.element.style.height  = (
+                viewerSize.y *
+                options.sizeRatio
             ) + 'px';
 
-            viewer.addControl( 
-                this.element, 
+            viewer.addControl(
+                this.element,
                 {anchor: $.ControlAnchor.BOTTOM_LEFT}
             );
         }else {
-            this.element.style.height = ( 
-                viewerSize.y * 
-                options.sizeRatio * 
+            this.element.style.height = (
+                viewerSize.y *
+                options.sizeRatio *
                 viewer.tileSources.length
             ) + ( 12 * viewer.tileSources.length ) + 'px';
 
-            this.element.style.width  = ( 
-                viewerSize.x * 
-                options.sizeRatio 
+            this.element.style.width  = (
+                viewerSize.x *
+                options.sizeRatio
             ) + 'px';
 
-            viewer.addControl( 
-                this.element, 
+            viewer.addControl(
+                this.element,
                 {anchor: $.ControlAnchor.TOP_LEFT}
             );
 
@@ -175,7 +175,7 @@ $.ReferenceStrip = function( options ){
 
     /*jshint loopfunc:true*/
     for( i = 0; i < viewer.tileSources.length; i++ ){
-        
+
         element = $.makeNeutralElement('div');
         element.id = this.element.id + "-" + i;
 
@@ -189,7 +189,7 @@ $.ReferenceStrip = function( options ){
 
         element.innerTracker = new $.MouseTracker({
             element:            element,
-            clickTimeThreshold: this.clickTimeThreshold, 
+            clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             pressHandler: function( tracker ){
                 tracker.dragging = +new Date();
@@ -198,9 +198,9 @@ $.ReferenceStrip = function( options ){
                 var id = tracker.element.id,
                     page = Number( id.split( '-' )[ 2 ] ),
                     now = +new Date();
-                
-                if ( insideElementPress && 
-                     insideElementRelease && 
+
+                if ( insideElementPress &&
+                     insideElementRelease &&
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ){
                     tracker.dragging = null;
@@ -294,7 +294,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
  * @function
  */
 function onStripDrag( tracker, position, delta, shift ) {
-    
+
     var offsetLeft = Number(this.element.style.marginLeft.replace('px','')),
         offsetTop = Number(this.element.style.marginTop.replace('px','')),
         scrollWidth = Number(this.element.style.width.replace('px','')),
@@ -417,7 +417,7 @@ function loadPanels(strip, viewerSize, scroll){
                 immediateRender:        true,
                 blendTime:              0,
                 animationTime:          0
-            } ); 
+            } );
 
             miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
             miniViewer.displayRegion.id        = element.id + '-displayregion';
@@ -441,8 +441,8 @@ function loadPanels(strip, viewerSize, scroll){
                 element:        miniViewer.displayRegion
             });
 
-            element.getElementsByTagName('form')[ 0 ].appendChild( 
-                miniViewer.displayRegion 
+            element.getElementsByTagName('form')[ 0 ].appendChild(
+                miniViewer.displayRegion
             );
 
             element.activePanel = true;
@@ -469,7 +469,7 @@ function onStripEnter( tracker ) {
         tracker.element.style.marginBottom = "0px";
 
     } else {
-        
+
         //tracker.element.style.paddingRight = "0px";
         tracker.element.style.marginLeft = "0px";
 
@@ -490,18 +490,18 @@ function onStripExit( tracker ) {
     //$.setElementOpacity(tracker.element, 0.4);
     //tracker.element.style.border = 'none';
     //tracker.element.style.background = '#fff';
-    
+
 
     if( 'horizontal' == this.scroll ){
-    
+
         //tracker.element.style.paddingTop = "10px";
         tracker.element.style.marginBottom = "-" + ( $.getElementSize( tracker.element ).y / 2 ) + "px";
-    
+
     } else {
-    
+
         //tracker.element.style.paddingRight = "10px";
         tracker.element.style.marginLeft = "-" + ( $.getElementSize( tracker.element ).x / 2 )+ "px";
-    
+
     }
     return false;
 }

@@ -37,22 +37,22 @@
 
 /**
  * The TileSource contains the most basic implementation required to create a
- * smooth transition between layer in an image pyramid. It has only a single key 
- * interface that must be implemented to complete it key functionality: 
- * 'getTileUrl'.  It also has several optional interfaces that can be 
+ * smooth transition between layer in an image pyramid. It has only a single key
+ * interface that must be implemented to complete it key functionality:
+ * 'getTileUrl'.  It also has several optional interfaces that can be
  * implemented if a new TileSource wishes to support configuration via a simple
- * object or array ('configure') and if the tile source supports or requires 
- * configuration via retreival of a document on the network ala AJAX or JSONP, 
+ * object or array ('configure') and if the tile source supports or requires
+ * configuration via retreival of a document on the network ala AJAX or JSONP,
  * ('getImageInfo').
  * <br/>
  * By default the image pyramid is split into N layers where the images longest
- * side in M (in pixels), where N is the smallest integer which satisfies 
+ * side in M (in pixels), where N is the smallest integer which satisfies
  *      <strong>2^(N+1) >= M</strong>.
  * @class
  * @extends OpenSeadragon.EventHandler
- * @param {Number|Object|Array|String} width 
- *      If more than a single argument is supplied, the traditional use of 
- *      positional parameters is supplied and width is expected to be the width 
+ * @param {Number|Object|Array|String} width
+ *      If more than a single argument is supplied, the traditional use of
+ *      positional parameters is supplied and width is expected to be the width
  *      source image at it's max resolution in pixels.  If a single argument is supplied and
  *      it is an Object or Array, the construction is assumed to occur through
  *      the extending classes implementation of 'configure'.  Finally if only a
@@ -62,7 +62,7 @@
  *      Width of the source image at max resolution in pixels.
  * @param {Number} tileSize
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
- *      Tile size determines the point at which the image pyramid must be 
+ *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
  * @param {Number} tileOverlap
  *      The number of pixels each tile is expected to overlap touching tiles.
@@ -82,7 +82,7 @@
  *      The minimum pyramid level this tile source supports or should attempt to load.
  * @property {Number} maxLevel
  *      The maximum pyramid level this tile source supports or should attempt to load.
- */ 
+ */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     var _this = this,
         callback = null,
@@ -137,26 +137,26 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.minLevel    = 0;
         this.maxLevel    = 0;
         this.ready       = false;
-        //configuration via url implies the extending class 
+        //configuration via url implies the extending class
         //implements and 'configure'
         this.getImageInfo( arguments[ 0 ] );
 
     } else {
-    
+
         //explicit configuration via positional args in constructor
         //or the more idiomatic 'options' object
         this.ready       = true;
-        this.aspectRatio = ( options.width && options.height ) ? 
+        this.aspectRatio = ( options.width && options.height ) ?
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
         this.tileSize    = options.tileSize ? options.tileSize : 0;
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
-        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ? 
+        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
             options.maxLevel : (
-                ( options.width && options.height ) ? Math.ceil( 
-                    Math.log( Math.max( options.width, options.height ) ) / 
-                    Math.log( 2 ) 
+                ( options.width && options.height ) ? Math.ceil(
+                    Math.log( Math.max( options.width, options.height ) ) /
+                    Math.log( 2 )
                 ) : 0
             );
         if( callback && $.isFunction( callback ) ){
@@ -169,7 +169,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
 
 $.TileSource.prototype = {
-    
+
     /**
      * @function
      * @param {Number} level
@@ -264,7 +264,7 @@ $.TileSource.prototype = {
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
     },
-    
+
 
     /**
      * Responsible for retrieving, and caching the
@@ -294,7 +294,7 @@ $.TileSource.prototype = {
                 urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
             }
         }
-    
+
         callback = function( data ){
             var $TileSource = $.TileSource.determineType( _this, data, url );
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
@@ -334,7 +334,7 @@ $.TileSource.prototype = {
      * and sufficient mechanisim for clear determination.
      * @function
      * @param {String|Object|Array|Document} data
-     * @param {String} url - the url the data was loaded 
+     * @param {String} url - the url the data was loaded
      *      from if any.
      * @return {Boolean}
      */
@@ -346,14 +346,14 @@ $.TileSource.prototype = {
      * Responsible for parsing and configuring the
      * image metadata pertinent to this TileSources implementation.
      * This method is not implemented by this class other than to throw an Error
-     * announcing you have to implement it.  Because of the variety of tile 
+     * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image
      * pyramids, this method is here to allow easy integration.
      * @function
      * @param {String|Object|Array|Document} data
-     * @param {String} url - the url the data was loaded 
+     * @param {String} url - the url the data was loaded
      *      from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      * @throws {Error}
      */
@@ -362,10 +362,10 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Responsible for retriving the url which will return an image for the 
+     * Responsible for retriving the url which will return an image for the
      * region speified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
-     * announcing you have to implement it.  Because of the variety of tile 
+     * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image
      * pyramids, this method is here to allow easy integration.
      * @function
@@ -386,11 +386,11 @@ $.TileSource.prototype = {
      */
     tileExists: function( level, x, y ) {
         var numTiles = this.getNumTiles( level );
-        return  level >= this.minLevel && 
+        return  level >= this.minLevel &&
                 level <= this.maxLevel &&
-                x >= 0 && 
-                y >= 0 && 
-                x < numTiles.x && 
+                x >= 0 &&
+                y >= 0 &&
+                x < numTiles.x &&
                 y < numTiles.y;
     }
 };
@@ -417,16 +417,16 @@ function processResponse( xhr ){
         throw new Error( $.getString( "Errors.Security" ) );
     } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
         status     = xhr.status;
-        statusText = ( status == 404 ) ? 
-            "Not Found" : 
+        statusText = ( status == 404 ) ?
+            "Not Found" :
             xhr.statusText;
         throw new Error( $.getString( "Errors.Status", status, statusText ) );
     }
 
     if( responseText.match(/\s*<.*/) ){
         try{
-        data = ( xhr.responseXML && xhr.responseXML.documentElement ) ? 
-            xhr.responseXML : 
+        data = ( xhr.responseXML && xhr.responseXML.documentElement ) ?
+            xhr.responseXML :
             $.parseXml( responseText );
         } catch (e){
             data = xhr.responseText;

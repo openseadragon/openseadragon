@@ -33,11 +33,11 @@
  */
 
 (function( $ ){
-    
+
 /**
  * A Rectangle really represents a 2x2 matrix where each row represents a
- * 2 dimensional vector component, the first is (x,y) and the second is 
- * (width, height).  The latter component implies the equation of a simple 
+ * 2 dimensional vector component, the first is (x,y) and the second is
+ * (width, height).  The latter component implies the equation of a simple
  * plane.
  *
  * @class
@@ -88,7 +88,7 @@ $.Rect.prototype = {
      */
     getBottomRight: function() {
         return new $.Point(
-            this.x + this.width, 
+            this.x + this.width,
             this.y + this.height
         );
     },
@@ -96,7 +96,7 @@ $.Rect.prototype = {
     /**
      * Computes the center of the rectangle.
      * @function
-     * @returns {OpenSeadragon.Point} The center of the rectangle as represnted 
+     * @returns {OpenSeadragon.Point} The center of the rectangle as represnted
      *  as represented by a 2-dimensional vector (x,y)
      */
     getCenter: function() {
@@ -117,31 +117,31 @@ $.Rect.prototype = {
     },
 
     /**
-     * Determines if two Rectanlges have equivalent components.  
+     * Determines if two Rectanlges have equivalent components.
      * @function
      * @param {OpenSeadragon.Rect} rectangle The Rectangle to compare to.
      * @return {Boolean} 'true' if all components are equal, otherwise 'false'.
      */
     equals: function( other ) {
         return ( other instanceof $.Rect ) &&
-            ( this.x === other.x ) && 
+            ( this.x === other.x ) &&
             ( this.y === other.y ) &&
-            ( this.width === other.width ) && 
+            ( this.width === other.width ) &&
             ( this.height === other.height );
     },
 
     /**
-     * Provides a string representation of the retangle which is useful for 
+     * Provides a string representation of the retangle which is useful for
      * debugging.
      * @function
      * @returns {String} A string representation of the rectangle.
      */
     toString: function() {
-        return "[" + 
-            Math.round(this.x*100) + "," + 
-            Math.round(this.y*100) + "," + 
+        return "[" +
+            Math.round(this.x*100) + "," +
+            Math.round(this.y*100) + "," +
             Math.round(this.width*100) + "x" +
-            Math.round(this.height*100) + 
+            Math.round(this.height*100) +
         "]";
     }
 };

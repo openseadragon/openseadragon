@@ -131,6 +131,7 @@ module.exports = function(grunt) {
                 browser: true,
                 eqeqeq: false,
                 loopfunc: false,
+                trailing: true,
                 globals: {
                     OpenSeadragon: true
                 }
@@ -152,7 +153,7 @@ module.exports = function(grunt) {
     // Copies the image files into the appropriate location in the build folder.
     grunt.registerTask("copy:build", function() {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
-            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);            
+            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
         });
 
         grunt.file.copy("changelog.txt", "build/changelog.txt");
