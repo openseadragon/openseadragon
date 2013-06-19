@@ -36,17 +36,17 @@
 /**
  * Manages events on groups of buttons.
  * @class
- * @param {Object} options - a dictionary of settings applied against the entire 
+ * @param {Object} options - a dictionary of settings applied against the entire
  * group of buttons
  * @param {Array}    options.buttons Array of buttons
  * @param {Element}  [options.group]   Element to use as the container,
- * @param {Object}   options.config  Object with Viewer settings ( TODO: is 
+ * @param {Object}   options.config  Object with Viewer settings ( TODO: is
  *  this actually used anywhere? )
- * @param {Function} [options.enter]   Function callback for when the mouse 
+ * @param {Function} [options.enter]   Function callback for when the mouse
  *  enters group
- * @param {Function} [options.exit]    Function callback for when mouse leaves 
+ * @param {Function} [options.exit]    Function callback for when mouse leaves
  *  the group
- * @param {Function} [options.release] Function callback for when mouse is 
+ * @param {Function} [options.release] Function callback for when mouse is
  *  released
  * @property {Array} buttons - An array containing the buttons themselves.
  * @property {Element} element - The shared container for the buttons.
@@ -64,12 +64,12 @@ $.ButtonGroup = function( options ) {
     }, options );
 
     // copy the botton elements
-    var buttons = this.buttons.concat([]),   
+    var buttons = this.buttons.concat([]),
         _this = this,
         i;
 
     this.element = options.element || $.makeNeutralElement( "fieldgroup" );
-    
+
     if( !options.group ){
         this.label   = $.makeNeutralElement( "label" );
         //TODO: support labels for ButtonGroups
@@ -82,8 +82,8 @@ $.ButtonGroup = function( options ) {
     }
 
     this.tracker = new $.MouseTracker({
-        element:            this.element, 
-        clickTimeThreshold: this.clickTimeThreshold, 
+        element:            this.element,
+        clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
         enterHandler: function() {
             var i;
@@ -93,8 +93,8 @@ $.ButtonGroup = function( options ) {
         },
         exitHandler: function() {
             var i,
-                buttonDownElement = arguments.length > 2 ? 
-                    arguments[ 2 ] : 
+                buttonDownElement = arguments.length > 2 ?
+                    arguments[ 2 ] :
                     null;
             if ( !buttonDownElement ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
@@ -104,8 +104,8 @@ $.ButtonGroup = function( options ) {
         },
         releaseHandler: function() {
             var i,
-                insideElementRelease = arguments.length > 3 ? 
-                    arguments[ 3 ] : 
+                insideElementRelease = arguments.length > 3 ?
+                    arguments[ 3 ] :
                     null;
             if ( !insideElementRelease ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {

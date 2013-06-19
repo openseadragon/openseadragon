@@ -1,7 +1,7 @@
 (function() {
 
     module('Basic');
-    
+
     // TODO: Test drag
 
     var viewer = null;
@@ -137,5 +137,5 @@
         viewer.addHandler('close', closeHandler);
         viewer.close();
     });
-  
+
 })();

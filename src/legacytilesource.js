@@ -38,7 +38,7 @@
  * The LegacyTileSource allows simple, traditional image pyramids to be loaded
  * into an OpenSeadragon Viewer.  Basically, this translates to the historically
  * common practice of starting with a 'master' image, maybe a tiff for example,
- * and generating a set of 'service' images like one or more thumbnails, a medium 
+ * and generating a set of 'service' images like one or more thumbnails, a medium
  * resolution image and a high resolution image in standard web formats like
  * png or jpg.
  * @class
@@ -55,7 +55,7 @@
  * @property {Number} minLevel
  * @property {Number} maxLevel
  * @property {Array}  levels
- */ 
+ */
 $.LegacyTileSource = function( levels ) {
 
     var options,
@@ -98,8 +98,8 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        return ( 
-            data.type && 
+        return (
+            data.type &&
             "legacy-image-pyramid" == data.type
         ) || (
             data.documentElement &&
@@ -109,12 +109,12 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
 
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.LegacyTileSource.prototype.configure
      * @param {Object|XMLDocument} configuration - the raw configuration
      * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( configuration, dataUrl ){
@@ -133,7 +133,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
         return options;
 
     },
-    
+
     /**
      * @function
      * @name OpenSeadragon.LegacyTileSource.prototype.getLevelScale
@@ -142,10 +142,10 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
     getLevelScale: function( level ) {
         var levelScale = NaN;
         if (  level >= this.minLevel && level <= this.maxLevel ){
-            levelScale = 
-                this.levels[ level ].width / 
+            levelScale =
+                this.levels[ level ].width /
                 this.levels[ this.maxLevel ].width;
-        } 
+        }
         return levelScale;
     },
 
@@ -176,7 +176,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * This method is not implemented by this class other than to throw an Error
-     * announcing you have to implement it.  Because of the variety of tile 
+     * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image
      * pyramids, this method is here to allow easy integration.
      * @function
@@ -188,7 +188,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
      */
     getTileUrl: function( level, x, y ) {
         var url = null;
-        if( level >= this.minLevel && level <= this.maxLevel ){   
+        if( level >= this.minLevel && level <= this.maxLevel ){
             url = this.levels[ level ].url;
         }
         return url;
@@ -208,12 +208,12 @@ function filterFiles( files ){
         i;
     for( i = 0; i < files.length; i++ ){
         file = files[ i ];
-        if( file.height && 
-            file.width && 
+        if( file.height &&
+            file.width &&
             file.url && (
                 file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)$/) || (
-                    file.mimetype && 
-                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/) 
+                    file.mimetype &&
+                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
                 )
             ) ){
             //This is sufficient to serve as a level
@@ -237,7 +237,7 @@ function filterFiles( files ){
  * @function
  */
 function configureFromXML( tileSource, xmlDoc ){
-    
+
     if ( !xmlDoc || !xmlDoc.documentElement ) {
         throw new Error( $.getString( "Errors.Xml" ) );
     }
@@ -250,13 +250,13 @@ function configureFromXML( tileSource, xmlDoc ){
         i;
 
     if ( rootName == "image" ) {
-        
+
         try {
             conf = {
                 type:        root.getAttribute( "type" ),
                 levels:      []
             };
-            
+
             levels = root.getElementsByTagName( "level" );
             for ( i = 0; i < levels.length; i++ ) {
                 level = levels[ i ];
@@ -271,8 +271,8 @@ function configureFromXML( tileSource, xmlDoc ){
             return configureFromObject( tileSource, conf );
 
         } catch ( e ) {
-            throw (e instanceof Error) ? 
-                e : 
+            throw (e instanceof Error) ?
+                e :
                 new Error( 'Unknown error parsing Legacy Image Pyramid XML.' );
         }
     } else if ( rootName == "collection" ) {
@@ -290,7 +290,7 @@ function configureFromXML( tileSource, xmlDoc ){
  * @function
  */
 function configureFromObject( tileSource, configuration ){
-    
+
     return configuration.levels;
 
 }

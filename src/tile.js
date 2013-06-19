@@ -39,18 +39,18 @@
  * @param {Number} level The zoom level this tile belongs to.
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
- * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized
  *      coordinates.
- * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
  *
  * @property {Number} level The zoom level this tile belongs to.
  * @property {Number} x The vector component 'x'.
  * @property {Number} y The vector component 'y'.
- * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized
  *      coordinates
- * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load?
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
@@ -93,9 +93,9 @@ $.Tile = function(level, x, y, bounds, exists, url) {
 };
 
 $.Tile.prototype = {
-    
+
     /**
-     * Provides a string representation of this tiles level and (x,y) 
+     * Provides a string representation of this tiles level and (x,y)
      * components.
      * @function
      * @returns {String}
@@ -171,11 +171,11 @@ $.Tile.prototype = {
         if( context.globalAlpha == 1 && this.url.match('.png') ){
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
-            context.clearRect( 
-                position.x+1, 
-                position.y+1, 
-                size.x-2, 
-                size.y-2 
+            context.clearRect(
+                position.x+1,
+                position.y+1,
+                size.x-2,
+                size.y-2
             );
 
         }
@@ -193,18 +193,18 @@ $.Tile.prototype = {
         }
 
         rendered = TILE_CACHE[ this.url ];
-        
+
         //rendered.save();
-        context.drawImage( 
-            rendered.canvas, 
+        context.drawImage(
+            rendered.canvas,
             0,
-            0, 
-            rendered.canvas.width, 
-            rendered.canvas.height, 
-            position.x, 
-            position.y, 
-            size.x, 
-            size.y 
+            0,
+            rendered.canvas.width,
+            rendered.canvas.height,
+            position.x,
+            position.y,
+            size.x,
+            size.y
         );
         //rendered.restore();
 
@@ -218,7 +218,7 @@ $.Tile.prototype = {
     unload: function() {
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
-        } 
+        }
         if ( TILE_CACHE[ this.url ]){
             delete TILE_CACHE[ this.url ];
         }
