@@ -1686,7 +1686,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( !iIntervalId ) {
                     iIntervalId = setInterval( function() {
                         if ( aAnimQueue.length ) {
-                            var time = (new Date()).getTime();
+                            var time = new Date().getTime();
                             // Process all of the currently outstanding frame
                             // requests, but none that get added during the 
                             // processing.
