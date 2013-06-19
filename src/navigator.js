@@ -209,7 +209,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 style.width  = Math.max( width, 0 ) + 'px';
                 style.height = Math.max( height, 0 ) + 'px';
 
-            }( this.displayRegion.style, this.borderWidth));
+            }( this.displayRegion.style ));
         }
 
     },
