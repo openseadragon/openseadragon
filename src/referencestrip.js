@@ -387,7 +387,8 @@ function loadPanels(strip, viewerSize, scroll){
         activePanelsEnd,
         miniViewer,
         style,
-        i;
+        i,
+        element;
     if( 'horizontal' == strip.scroll ){
         panelSize = strip.panelWidth;
     }else{
@@ -399,7 +400,7 @@ function loadPanels(strip, viewerSize, scroll){
     activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
     for( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ){
-        var element = strip.panels[ i ];
+        element = strip.panels[ i ];
         if ( !element.activePanel ){
             miniViewer = new $.Viewer( {
                 id:                     element.id,
