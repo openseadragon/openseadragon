@@ -40,7 +40,7 @@
  */
 $.Viewport = function( options ) {
 
-    //backward compatibility for positional args while prefering more 
+    //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
     var args = arguments;
     if(  args.length && args[ 0 ] instanceof $.Point ){
@@ -60,7 +60,7 @@ $.Viewport = function( options ) {
     }
 
     $.extend( true, this, {
-        
+
         //required settings
         containerSize:      null,
         contentSize:        null,
@@ -84,17 +84,17 @@ $.Viewport = function( options ) {
     }, options );
 
     this.centerSpringX = new $.Spring({
-        initial: 0, 
+        initial: 0,
         springStiffness: this.springStiffness,
         animationTime:   this.animationTime
     });
     this.centerSpringY = new $.Spring({
-        initial: 0, 
+        initial: 0,
         springStiffness: this.springStiffness,
         animationTime:   this.animationTime
     });
     this.zoomSpring    = new $.Spring({
-        initial: 1, 
+        initial: 1,
         springStiffness: this.springStiffness,
         animationTime:   this.animationTime
     });
@@ -120,12 +120,12 @@ $.Viewport.prototype = {
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'reset-size', { 
+            this.viewer.raiseEvent( 'reset-size', {
                 contentSize: contentSize,
                 viewer: this.viewer
             });
         }
-        
+
         return this;
     },
 
@@ -133,14 +133,14 @@ $.Viewport.prototype = {
      * @function
      */
     getHomeZoom: function() {
-        var aspectFactor = 
+        var aspectFactor =
             this.contentAspectX / this.getAspectRatio();
 
         if( this.defaultZoomLevel ){
             return this.defaultZoomLevel;
         } else {
-            return ( aspectFactor >= 1 ) ? 
-                1 : 
+            return ( aspectFactor >= 1 ) ?
+                1 :
                 aspectFactor;
         }
     },
@@ -154,9 +154,9 @@ $.Viewport.prototype = {
             height = width / this.getAspectRatio();
 
         return new $.Rect(
-            center.x - ( width / 2.0 ), 
+            center.x - ( width / 2.0 ),
             center.y - ( height / 2.0 ),
-            width, 
+            width,
             height
         );
     },
@@ -167,7 +167,7 @@ $.Viewport.prototype = {
      */
     goHome: function( immediately ) {
         if( this.viewer ){
-            this.viewer.raiseEvent( 'home', { 
+            this.viewer.raiseEvent( 'home', {
                 immediately: immediately,
                 viewer: this.viewer
             });
@@ -180,8 +180,8 @@ $.Viewport.prototype = {
      */
     getMinZoom: function() {
         var homeZoom = this.getHomeZoom(),
-            zoom = this.minZoomLevel ? 
-            this.minZoomLevel : 
+            zoom = this.minZoomLevel ?
+            this.minZoomLevel :
                 this.minZoomImageRatio * homeZoom;
 
         return Math.min( zoom, homeZoom );
@@ -210,7 +210,7 @@ $.Viewport.prototype = {
      */
     getContainerSize: function() {
         return new $.Point(
-            this.containerSize.x, 
+            this.containerSize.x,
             this.containerSize.y
         );
     },
@@ -224,9 +224,9 @@ $.Viewport.prototype = {
             height = width / this.getAspectRatio();
 
         return new $.Rect(
-            center.x - ( width / 2.0 ), 
+            center.x - ( width / 2.0 ),
             center.y - ( height / 2.0 ),
-            width, 
+            width,
             height
         );
     },
@@ -265,8 +265,8 @@ $.Viewport.prototype = {
         height  = width / this.getAspectRatio();
         bounds  = new $.Rect(
             centerCurrent.x - width / 2.0,
-            centerCurrent.y - height / 2.0, 
-            width, 
+            centerCurrent.y - height / 2.0,
+            width,
             height
         );
 
@@ -299,7 +299,7 @@ $.Viewport.prototype = {
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
             constrainedZoom = Math.max(
-                Math.min( actualZoom, this.getMaxZoom() ), 
+                Math.min( actualZoom, this.getMaxZoom() ),
                 this.getMinZoom()
             ),
             bounds,
@@ -333,9 +333,9 @@ $.Viewport.prototype = {
         } else {
             if ( left < horizontalThreshold ) {
                 dx = horizontalThreshold - left;
-            } 
+            }
             if ( right < horizontalThreshold ) {
-                dx = dx ? 
+                dx = dx ?
                     ( dx + right - horizontalThreshold ) / 2 :
                     ( right - horizontalThreshold );
             }
@@ -346,9 +346,9 @@ $.Viewport.prototype = {
         } else {
             if ( top < verticalThreshold ) {
                 dy = ( verticalThreshold - top );
-            } 
+            }
             if ( bottom < verticalThreshold ) {
-                dy =  dy ? 
+                dy =  dy ?
                     ( dy + bottom - verticalThreshold ) / 2 :
                     ( bottom - verticalThreshold );
             }
@@ -367,7 +367,7 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'constrain', { 
+            this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately,
                 viewer: this.viewer
             });
@@ -394,9 +394,9 @@ $.Viewport.prototype = {
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
             newBounds = new $.Rect(
-                bounds.x, 
-                bounds.y, 
-                bounds.width, 
+                bounds.x,
+                bounds.y,
+                bounds.width,
                 bounds.height
             ),
             oldBounds,
@@ -422,20 +422,20 @@ $.Viewport.prototype = {
             return this.panTo( center, immediately );
         }
 
-        referencePoint = oldBounds.getTopLeft().times( 
-            this.containerSize.x / oldBounds.width 
+        referencePoint = oldBounds.getTopLeft().times(
+            this.containerSize.x / oldBounds.width
         ).minus(
-            newBounds.getTopLeft().times( 
-                this.containerSize.x / newBounds.width 
+            newBounds.getTopLeft().times(
+                this.containerSize.x / newBounds.width
             )
         ).divide(
-            this.containerSize.x / oldBounds.width - 
+            this.containerSize.x / oldBounds.width -
             this.containerSize.x / newBounds.width
         );
 
         return this.zoomTo( newZoom, referencePoint, immediately );
     },
-    
+
 
     /**
      * @function
@@ -471,8 +471,8 @@ $.Viewport.prototype = {
         var center = this.getCenter();
 
         if ( this.wrapHorizontal ) {
-            center.x = ( 
-                this.contentAspectX + ( center.x % this.contentAspectX ) 
+            center.x = (
+                this.contentAspectX + ( center.x % this.contentAspectX )
             ) % this.contentAspectX;
             this.centerSpringX.resetTo( center.x );
             this.centerSpringX.update();
@@ -518,7 +518,7 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'pan', { 
+            this.viewer.raiseEvent( 'pan', {
                 center: center,
                 immediately: immediately,
                 viewer: this.viewer
@@ -542,18 +542,18 @@ $.Viewport.prototype = {
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
-        this.zoomPoint = refPoint instanceof $.Point ? 
-            refPoint : 
+        this.zoomPoint = refPoint instanceof $.Point ?
+            refPoint :
             null;
-            
+
         if ( immediately ) {
             this.zoomSpring.resetTo( zoom );
-        } else {        
+        } else {
             this.zoomSpring.springTo( zoom );
         }
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'zoom', { 
+            this.viewer.raiseEvent( 'zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
                 immediately: immediately,
@@ -574,7 +574,7 @@ $.Viewport.prototype = {
             widthDeltaFactor = newContainerSize.x / this.containerSize.x;
 
         this.containerSize = new $.Point(
-            newContainerSize.x, 
+            newContainerSize.x,
             newContainerSize.y
         );
 
@@ -584,7 +584,7 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'resize', { 
+            this.viewer.raiseEvent( 'resize', {
                 newContainerSize: newContainerSize,
                 maintain: maintain,
                 viewer: this.viewer
@@ -675,8 +675,8 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Translates from Seajax viewer coordinate 
-     * system to image coordinate system 
+     * Translates from Seajax viewer coordinate
+     * system to image coordinate system
      */
     viewportToImageCoordinates: function(viewerX, viewerY) {
        return new $.Point(viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX);
@@ -684,7 +684,7 @@ $.Viewport.prototype = {
 
     /**
      * Translates from image coordinate system to
-     * Seajax viewer coordinate system 
+     * Seajax viewer coordinate system
      */
     imageToViewportCoordinates: function( imageX, imageY ) {
        return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX);
@@ -710,7 +710,7 @@ $.Viewport.prototype = {
         coordB = this.imageToViewportCoordinates(
             pixelWidth, pixelHeight
         );
-        return new $.Rect( 
+        return new $.Rect(
             coordA.x,
             coordA.y,
             coordA.x + coordB.x,

@@ -40,11 +40,11 @@
 
 
 (function( $ ){
-    
+
 /**
- * A client implementation of the International Image Interoperability 
+ * A client implementation of the International Image Interoperability
  * Format: Image API Draft 0.2 - Please read more about the specification
- * at 
+ * at
  *
  * @class
  * @extends OpenSeadragon.TileSource
@@ -65,10 +65,10 @@ $.IIIFTileSource = function( options ){
     //      to preserve backward compatibility.
     options.tileSize = this.tile_width;
 
-    options.maxLevel = options.maxLevel ? options.maxLevel : Number( 
+    options.maxLevel = options.maxLevel ? options.maxLevel : Number(
         Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ) )
     );
-    
+
     $.TileSource.apply( this, [ options ] );
 };
 
@@ -82,15 +82,15 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        return ( 
-            data.ns && 
+        return (
+            data.ns &&
             "http://library.stanford.edu/iiif/image-api/ns/" == data.ns
         ) || (
             data.profile && (
                 "http://library.stanford.edu/iiif/image-api/compliance.html#level1" == data.profile ||
                 "http://library.stanford.edu/iiif/image-api/compliance.html#level2" == data.profile ||
                 "http://library.stanford.edu/iiif/image-api/compliance.html#level3" == data.profile ||
-                "http://library.stanford.edu/iiif/image-api/compliance.html" == data.profile 
+                "http://library.stanford.edu/iiif/image-api/compliance.html" == data.profile
             )
         ) || (
             data.documentElement &&
@@ -101,12 +101,12 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.IIIFTileSource.prototype.configure
      * @param {Object|XMLDocument} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile source via it's constructor.
      */
     configure: function( data, url ){
@@ -142,7 +142,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * Responsible for retreiving the url which will return an image for the 
+     * Responsible for retreiving the url which will return an image for the
      * region speified by the given x, y, and level components.
      * @function
      * @name OpenSeadragon.IIIFTileSource.prototype.getTileUrl
@@ -152,21 +152,21 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
      * @throws {Error}
      */
     getTileUrl: function( level, x, y ){
-         
+
         //# constants
         var IIIF_ROTATION = '0',
             IIIF_QUALITY = 'native.jpg',
-         
+
             //## get the scale (level as a decimal)
             scale = Math.pow( 0.5, this.maxLevel - level ),
-         
+
             //## get iiif size
             iiif_size = 'pct:' + ( scale * 100 ),
 
             //# image dimensions at this level
             level_width = Math.ceil( this.width * scale ),
             level_height = Math.ceil( this.height * scale ),
-         
+
             //## iiif region
             iiif_tile_size_width = Math.ceil( this.tileSize / scale ),
             iiif_tile_size_height = Math.ceil( this.tileSize / scale ),
@@ -175,8 +175,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             iiif_tile_y,
             iiif_tile_w,
             iiif_tile_h;
-         
-         
+
+
         if ( level_width < this.tile_width || level_height < this.tile_height ){
             iiif_region = 'full';
         } else {
@@ -186,14 +186,14 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
             iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
         }
-         
-        return [ 
-            this.tilesUrl, 
-            this.identifier, 
-            iiif_region, 
-            iiif_size, 
-            IIIF_ROTATION, 
-            IIIF_QUALITY 
+
+        return [
+            this.tilesUrl,
+            this.identifier,
+            iiif_region,
+            iiif_size,
+            IIIF_ROTATION,
+            IIIF_QUALITY
         ].join('/');
     }
 
@@ -204,7 +204,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
  * @private
  * @inner
  * @function
- * 
+ *
     <?xml version="1.0" encoding="UTF-8"?>
     <info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
       <identifier>1E34750D-38DB-4825-A38A-B60A345E591C</identifier>
@@ -243,7 +243,7 @@ function configureFromXml( tileSource, xmlDoc ){
         i;
 
     if ( rootName == "info" ) {
-        
+
         try {
 
             configuration = {
@@ -255,8 +255,8 @@ function configureFromXml( tileSource, xmlDoc ){
             return configureFromObject( tileSource, configuration );
 
         } catch ( e ) {
-            throw (e instanceof Error) ? 
-                e : 
+            throw (e instanceof Error) ?
+                e :
                 new Error( $.getString("Errors.IIIF") );
         }
     }
@@ -299,8 +299,8 @@ function parseXML( node, configuration, property ){
  * @private
  * @inner
  * @function
- * 
-    { 
+ *
+    {
         "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
         "identifier" : "1E34750D-38DB-4825-A38A-B60A345E591C",
         "width" : 6000,
@@ -310,7 +310,7 @@ function parseXML( node, configuration, property ){
         "tile_height" : 1024,
         "formats" : [ "jpg", "png" ],
         "quality" : [ "native", "grey" ]
-    } 
+    }
  */
 function configureFromObject( tileSource, configuration ){
     //the image_host property is not part of the iiif standard but is included here to
