@@ -1243,23 +1243,7 @@ function openTileSource( viewer, source ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
 ///////////////////////////////////////////////////////////////////////////////
-function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
-    var currentTime,
-        targetTime,
-        deltaTime;
-
-    if ( THIS[ viewer.hash ].animating ) {
-        return $.requestAnimationFrame( function(){
-            updateFunc( viewer );
-        } );
-    }
-
-    currentTime     = +new Date();
-    prevUpdateTime  = prevUpdateTime ? prevUpdateTime : currentTime;
-    // 60 frames per second is ideal
-    targetTime      = prevUpdateTime + 1000 / 60;
-    deltaTime       = Math.max( 1, targetTime - currentTime );
-    
+function scheduleUpdate( viewer, updateFunc ){
     return $.requestAnimationFrame( function(){
         updateFunc( viewer );
     } );
@@ -1465,21 +1449,16 @@ function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny )
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateMulti( viewer ) {
-
-    var beginTime;
-
     if ( !viewer.source ) {
         viewer._updateRequestId = null;
         return;
     }
 
-    beginTime = +new Date();
     updateOnce( viewer );
 
     // Request the next frame, unless we've been closed during the updateOnce()
     if ( viewer.source ) {
-        viewer._updateRequestId = scheduleUpdate( viewer,
-            arguments.callee, beginTime );
+        viewer._updateRequestId = scheduleUpdate( viewer, updateMulti );
     }
 }
 
