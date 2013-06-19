@@ -636,6 +636,20 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         
         
         /**
+         * Returns the current milliseconds, using Date.now() if available
+         * @name $.now
+         * @function
+         */
+        now: function( ) {
+          if (Date.now) {
+            return Date.now();
+          }
+
+          return new Date().getTime();
+        },
+        
+        
+        /**
          * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
          * SAFARI, CHROME, and OPERA.
          * @name $.BROWSERS
