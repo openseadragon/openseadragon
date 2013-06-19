@@ -1688,7 +1688,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                         if ( aAnimQueue.length ) {
                             var time = new Date().getTime();
                             // Process all of the currently outstanding frame
-                            // requests, but none that get added during the 
+                            // requests, but none that get added during the
                             // processing.
                             // Swap the arrays so we don't have to create a new
                             // array every frame.
@@ -1721,7 +1721,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 }
 
                 // If it's not in the queue, it may be in the set we're currently
-                // processing (if cancelAnimationFrame is called from within a 
+                // processing (if cancelAnimationFrame is called from within a
                 // requestAnimationFrame callback).
                 for ( i = 0, j = processing.length; i < j; i += 1 ) {
                     if ( processing[ i ][ 0 ] === requestId ) {
