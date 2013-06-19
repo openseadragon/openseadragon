@@ -347,10 +347,6 @@ $.Viewer = function( options ) {
         beginControlsAutoHide( _this );
     } );    // initial fade out
 
-    if(this.navPrevNextWrap){
-        this.previousButton.enable();
-    }
-
 };
 
 $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype, {
@@ -860,7 +856,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 onBlur:     onBlurHandler
             });
 
-            this.previousButton.disable();
+            if( !this.navPrevNextWrap ){
+                this.previousButton.disable();
+            }
 
             if( useGroup ){
                 this.paging = new $.ButtonGroup({
