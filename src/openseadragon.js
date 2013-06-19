@@ -1829,8 +1829,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @deprecated
      */
     function processDZI( imageNode, tilesUrl ) {
-        /* global imageFormatSupported:true */
-
         var fileFormat    = imageNode.getAttribute( "Format" ),
             sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
             dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
@@ -1843,7 +1841,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectNode,
             i;
 
-        if ( !imageFormatSupported( fileFormat ) ) {
+        if ( !$.imageFormatSupported( fileFormat ) ) {
             throw new Error(
                 $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
             );
@@ -1882,8 +1880,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @deprecated
      */
     function processDZIJSON( imageData, tilesUrl ) {
-        /* global imageFormatSupported:true */
-
         var fileFormat    = imageData.Format,
             sizeData      = imageData.Size,
             dispRectData  = imageData.DisplayRect || [],
@@ -1895,7 +1891,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectData,
             i;
 
-        if ( !imageFormatSupported( fileFormat ) ) {
+        if ( !$.imageFormatSupported( fileFormat ) ) {
             throw new Error(
                 $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
             );
