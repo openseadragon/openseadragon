@@ -37,10 +37,10 @@
 /**
  * For use by classes which want to support custom, non-browser events.
  * TODO: This is an aweful name!  This thing represents an "event source",
- *       not an "event handler".  PLEASE change the to EventSource. Also please 
- *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind', 
+ *       not an "event handler".  PLEASE change the to EventSource. Also please
+ *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind',
  *       'unbind', and 'trigger' respectively.  Finally add a method 'one' which
- *       automatically unbinds a listener after the first triggered event that 
+ *       automatically unbinds a listener after the first triggered event that
  *       matches.
  * @class
  */
@@ -76,15 +76,15 @@ $.EventHandler.prototype = {
         var events = this.events[ eventName ],
             handlers = [],
             i;
-        if ( !events ){ 
-            return; 
+        if ( !events ){
+            return;
         }
         if( $.isArray( events ) ){
             for( i = 0; i < events.length; i++ ){
                 if( events[ i ] !== handler ){
                     handlers.push( events[ i ] );
                 }
-            } 
+            }
             this.events[ eventName ] = handlers;
         }
     },
@@ -97,7 +97,7 @@ $.EventHandler.prototype = {
      */
     removeAllHandlers: function( eventName ){
         this.events[ eventName ] = [];
-    }, 
+    },
 
 
     /**
@@ -106,15 +106,15 @@ $.EventHandler.prototype = {
      * @param {String} eventName - Name of event to get handlers for.
      */
     getHandler: function( eventName ) {
-        var events = this.events[ eventName ]; 
-        if ( !events || !events.length ){ 
-            return null; 
+        var events = this.events[ eventName ];
+        if ( !events || !events.length ){
+            return null;
         }
-        events = events.length === 1 ? 
-            [ events[ 0 ] ] : 
+        events = events.length === 1 ?
+            [ events[ 0 ] ] :
             Array.apply( null, events );
         return function( source, args ) {
-            var i, 
+            var i,
                 length = events.length;
             for ( i = 0; i < length; i++ ) {
                 if( events[ i ] ){

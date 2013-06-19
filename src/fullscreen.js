@@ -61,7 +61,7 @@
 
 
 /**
- * Determines the appropriate level of native full screen support we can get 
+ * Determines the appropriate level of native full screen support we can get
  * from the browser.
  * @name $.supportsFullScreen
  */
@@ -75,7 +75,7 @@
             prefix: ''
         },
         browserPrefixes = 'webkit moz o ms khtml'.split(' ');
- 
+
     // check for native support
     if (typeof document.cancelFullScreen != 'undefined') {
         fullScreenApi.supportsFullScreen = true;
@@ -83,19 +83,19 @@
         // check for fullscreen support by vendor prefix
         for (var i = 0, il = browserPrefixes.length; i < il; i++ ) {
             fullScreenApi.prefix = browserPrefixes[i];
- 
+
             if (typeof document[fullScreenApi.prefix + 'CancelFullScreen' ] != 'undefined' ) {
                 fullScreenApi.supportsFullScreen = true;
- 
+
                 break;
             }
         }
     }
- 
+
     // update methods to do something useful
     if (fullScreenApi.supportsFullScreen) {
         fullScreenApi.fullScreenEventName = fullScreenApi.prefix + 'fullscreenchange';
- 
+
         fullScreenApi.isFullScreen = function() {
             switch (this.prefix) {
                 case '':
@@ -107,14 +107,14 @@
             }
         };
         fullScreenApi.requestFullScreen = function( element ) {
-            return (this.prefix === '') ? 
-                element.requestFullScreen() : 
+            return (this.prefix === '') ?
+                element.requestFullScreen() :
                 element[this.prefix + 'RequestFullScreen']();
 
         };
         fullScreenApi.cancelFullScreen = function( element ) {
-            return (this.prefix === '') ? 
-                document.cancelFullScreen() : 
+            return (this.prefix === '') ?
+                document.cancelFullScreen() :
                 document[this.prefix + 'CancelFullScreen']();
         };
     } else if ( typeof window.ActiveXObject !== "undefined" ){
@@ -130,7 +130,7 @@
         fullScreenApi.cancelFullScreen = fullScreenApi.requestFullScreen;
     }
 
- 
+
     // export api
     $.extend( $, fullScreenApi );
 

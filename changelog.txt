@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 0.9.129: (In Progress)
 
+* Fixed an error when using navPrevNextWrap on single images (#135)
+
 0.9.128:
 
 * The navigator is now off by default (#102)

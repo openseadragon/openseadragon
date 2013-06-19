@@ -33,7 +33,7 @@
  */
 
 (function( $ ){
-    
+
 /**
  * @class
  * @extends OpenSeadragon.TileSource
@@ -48,13 +48,13 @@
  * @property {String} tilesUrl
  * @property {String} fileFormat
  * @property {OpenSeadragon.DisplayRect[]} displayRects
- */ 
+ */
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects, minLevel, maxLevel ) {
     var i,
         rect,
         level,
         options;
-    
+
     if( $.isPlainObject( width ) ){
         options = width;
     }else{
@@ -66,7 +66,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             tilesUrl: arguments[ 4 ],
             fileFormat: arguments[ 5 ],
             displayRects: arguments[ 6 ],
-            minLevel: arguments[ 7 ], 
+            minLevel: arguments[ 7 ],
             maxLevel: arguments[ 8 ]
         };
     }
@@ -75,7 +75,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
     this.tilesUrl     = options.tilesUrl;
     this.fileFormat   = options.fileFormat;
     this.displayRects = options.displayRects;
-    
+
     if ( this.displayRects ) {
         for ( i = this.displayRects.length - 1; i >= 0; i-- ) {
             rect = this.displayRects[ i ];
@@ -87,7 +87,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             }
         }
     }
-    
+
     $.TileSource.apply( this, [ options ] );
 
 };
@@ -116,12 +116,12 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.DziTileSource.prototype.configure
      * @param {Object|XMLDocument} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( data, url ){
@@ -216,7 +216,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
  * @function
  */
 function configureFromXML( tileSource, xmlDoc ){
-    
+
     if ( !xmlDoc || !xmlDoc.documentElement ) {
         throw new Error( $.getString( "Errors.Xml" ) );
     }
@@ -232,7 +232,7 @@ function configureFromXML( tileSource, xmlDoc ){
         i;
 
     if ( rootName == "Image" ) {
-        
+
         try {
             sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
             configuration = {
@@ -241,7 +241,7 @@ function configureFromXML( tileSource, xmlDoc ){
                     Url:         root.getAttribute( "Url" ),
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
-                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ),
                     TileSize:    parseInt( root.getAttribute( "TileSize" ), 10 ),
                     Size: {
                         Height: parseInt( sizeNode.getAttribute( "Height" ), 10 ),
@@ -255,7 +255,7 @@ function configureFromXML( tileSource, xmlDoc ){
                     $.getString( "Errors.ImageFormat", configuration.Image.Format.toUpperCase() )
                 );
             }
-            
+
             dispRectNodes = root.getElementsByTagName( "DisplayRect" );
             for ( i = 0; i < dispRectNodes.length; i++ ) {
                 dispRectNode = dispRectNodes[ i ];
@@ -280,8 +280,8 @@ function configureFromXML( tileSource, xmlDoc ){
             return configureFromObject( tileSource, configuration );
 
         } catch ( e ) {
-            throw (e instanceof Error) ? 
-                e : 
+            throw (e instanceof Error) ?
+                e :
                 new Error( $.getString("Errors.Dzi") );
         }
     } else if ( rootName == "Collection" ) {
@@ -314,7 +314,7 @@ function configureFromObject( tileSource, configuration ){
 
     //TODO: need to figure out out to better handle image format compatibility
     //      which actually includes additional file formats like xml and pdf
-    //      and plain text for various tilesource implementations to avoid low 
+    //      and plain text for various tilesource implementations to avoid low
     //      level errors.
     //
     //      For now, just don't perform the check.

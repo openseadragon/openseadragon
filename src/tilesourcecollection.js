@@ -33,14 +33,14 @@
  */
 
 (function( $ ){
-    
+
 /**
  * @class
  * @extends OpenSeadragon.TileSource
- */ 
+ */
 $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
-    
-    
+
+
     if( $.isPlainObject( tileSize ) ){
         options = tileSize;
     }else{
@@ -85,7 +85,7 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
     options.minLevel = minLevel;
 
     //for( var name in options ){
-    //    $.console.log( 'Collection %s %s', name, options[ name ] ); 
+    //    $.console.log( 'Collection %s %s', name, options[ name ] );
     //}
 
     $.TileSource.apply( this, [ options ] );
@@ -116,7 +116,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.TileSourceCollection.prototype.configure
      */
@@ -138,7 +138,7 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
     }
 
 
-    
+
 });
 
 

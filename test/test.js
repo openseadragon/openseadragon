@@ -7,7 +7,7 @@
             if (widthFactor === undefined) {
                 widthFactor = 0.5;
             }
-            
+
             //TODO Redefine to be the middle by default
             if (heightFactor === undefined) {
                 heightFactor = 0.5;
