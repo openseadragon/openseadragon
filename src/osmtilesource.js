@@ -41,16 +41,16 @@
 
 
 (function( $ ){
-    
+
 /**
  * A tilesource implementation for OpenStreetMap.
  *
- * Note 1. Zoomlevels. Deep Zoom and OSM define zoom levels differently. In  Deep 
+ * Note 1. Zoomlevels. Deep Zoom and OSM define zoom levels differently. In  Deep
  * Zoom, level 0 equals an image of 1x1 pixels. In OSM, level 0 equals an image of
- * 256x256 levels (see http://gasi.ch/blog/inside-deep-zoom-2). I.e. there is a 
+ * 256x256 levels (see http://gasi.ch/blog/inside-deep-zoom-2). I.e. there is a
  * difference of log2(256)=8 levels.
  *
- * Note 2. Image dimension. According to the OSM Wiki 
+ * Note 2. Image dimension. According to the OSM Wiki
  * (http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Zoom_levels)
  * the highest Mapnik zoom level has 256.144x256.144 tiles, with a 256x256
  * pixel size. I.e. the Deep Zoom image dimension is 65.572.864x65.572.864
@@ -64,7 +64,7 @@
  * @param {Number} tileSize
  * @param {Number} tileOverlap
  * @param {String} tilesUrl
- */ 
+ */
 $.OsmTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     var options;
 
@@ -94,7 +94,7 @@ $.OsmTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
         options.tilesUrl = "http://tile.openstreetmap.org/";
     }
     options.minLevel = 8;
-    
+
     $.TileSource.apply( this, [ options ] );
 
 };
@@ -111,19 +111,19 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        return ( 
-            data.type && 
+        return (
+            data.type &&
             "openstreetmaps" == data.type
         );
     },
 
     /**
-     * 
+     *
      * @function
      * @name OpenSeadragon.OsmTileSource.prototype.configure
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( data, url ){

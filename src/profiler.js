@@ -35,7 +35,7 @@
 (function( $ ){
 
 /**
- * A utility class useful for developers to establish baseline performance 
+ * A utility class useful for developers to establish baseline performance
  * metrics of rendering routines.
  * @class
  * @property {Boolean} midUpdate

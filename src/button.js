@@ -46,7 +46,7 @@ $.ButtonState = {
 };
 
 /**
- * Manages events, hover states for individual buttons, tool-tips, as well 
+ * Manages events, hover states for individual buttons, tool-tips, as well
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
  * @class
@@ -58,7 +58,7 @@ $.ButtonState = {
  * @param {String} options.srcGroup URL of image to use in 'up' state
  * @param {String} options.srcHover URL of image to use in 'hover' state
  * @param {String} options.srcDown URL of image to use in 'down' state
- * @param {Element} [options.element] Element to use as a container for the 
+ * @param {Element} [options.element] Element to use as a container for the
  *  button.
  * @property {String} tooltip Provides context help for the button we the
  *  user hovers over it.
@@ -67,12 +67,12 @@ $.ButtonState = {
  * @property {String} srcHover URL of image to use in 'hover' state
  * @property {String} srcDown URL of image to use in 'down' state
  * @property {Object} config Configurable settings for this button. DEPRECATED.
- * @property {Element} [element] Element to use as a container for the 
+ * @property {Element} [element] Element to use as a container for the
  *  button.
  * @property {Number} fadeDelay How long to wait before fading
  * @property {Number} fadeLength How long should it take to fade the button.
  * @property {Number} fadeBeginTime When the button last began to fade.
- * @property {Boolean} shouldFade Whether this button should fade after user 
+ * @property {Boolean} shouldFade Whether this button should fade after user
  *  stops interacting with the viewport.
     this.fadeDelay      = 0;      // begin fading immediately
     this.fadeLength     = 2000;   // fade over a period of 2 seconds
@@ -86,7 +86,7 @@ $.Button = function( options ) {
     $.EventHandler.call( this );
 
     $.extend( true, this, {
-        
+
         tooltip:            null,
         srcRest:            null,
         srcGroup:           null,
@@ -95,8 +95,8 @@ $.Button = function( options ) {
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
         // begin fading immediately
-        fadeDelay:          0,  
-        // fade over a period of 2 seconds    
+        fadeDelay:          0,
+        // fade over a period of 2 seconds
         fadeLength:         2000,
         onPress:            null,
         onRelease:          null,
@@ -110,7 +110,7 @@ $.Button = function( options ) {
 
     this.element        = options.element   || $.makeNeutralElement( "button" );
     this.element.href   = this.element.href || '#';
-    
+
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
     if( !options.element ){
@@ -118,35 +118,35 @@ $.Button = function( options ) {
         this.imgGroup     = $.makeTransparentImage( this.srcGroup );
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
-        
+
         this.element.appendChild( this.imgRest );
         this.element.appendChild( this.imgGroup );
         this.element.appendChild( this.imgHover );
         this.element.appendChild( this.imgDown );
 
-        this.imgGroup.style.position = 
-        this.imgHover.style.position = 
-        this.imgDown.style.position  = 
+        this.imgGroup.style.position =
+        this.imgHover.style.position =
+        this.imgDown.style.position  =
             "absolute";
 
-        this.imgGroup.style.top = 
-        this.imgHover.style.top = 
-        this.imgDown.style.top  = 
+        this.imgGroup.style.top =
+        this.imgHover.style.top =
+        this.imgDown.style.top  =
             "0px";
 
-        this.imgGroup.style.left = 
-        this.imgHover.style.left = 
-        this.imgDown.style.left  = 
+        this.imgGroup.style.left =
+        this.imgHover.style.left =
+        this.imgDown.style.left  =
             "0px";
 
-        this.imgHover.style.visibility = 
-        this.imgDown.style.visibility  = 
+        this.imgHover.style.visibility =
+        this.imgDown.style.visibility  =
             "hidden";
 
         if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
-            this.imgGroup.style.top = 
-            this.imgHover.style.top = 
-            this.imgDown.style.top  = 
+            this.imgGroup.style.top =
+            this.imgHover.style.top =
+            this.imgDown.style.top  =
                 "";
         }
     }
@@ -171,8 +171,8 @@ $.Button = function( options ) {
 
     this.tracker = new $.MouseTracker({
 
-        element:            this.element, 
-        clickTimeThreshold: this.clickTimeThreshold, 
+        element:            this.element,
+        clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
@@ -306,7 +306,7 @@ function updateFade( button ) {
 function beginFading( button ) {
     button.shouldFade = true;
     button.fadeBeginTime = +new Date() + button.fadeDelay;
-    window.setTimeout( function(){ 
+    window.setTimeout( function(){
         scheduleFade( button );
     }, button.fadeDelay );
 }
@@ -324,13 +324,13 @@ function inTo( button, newState ) {
         return;
     }
 
-    if ( newState >= $.ButtonState.GROUP && 
+    if ( newState >= $.ButtonState.GROUP &&
          button.currentState == $.ButtonState.REST ) {
         stopFading( button );
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( newState >= $.ButtonState.HOVER && 
+    if ( newState >= $.ButtonState.HOVER &&
          button.currentState == $.ButtonState.GROUP ) {
         if( button.imgHover ){
             button.imgHover.style.visibility = "";
@@ -338,7 +338,7 @@ function inTo( button, newState ) {
         button.currentState = $.ButtonState.HOVER;
     }
 
-    if ( newState >= $.ButtonState.DOWN && 
+    if ( newState >= $.ButtonState.DOWN &&
          button.currentState == $.ButtonState.HOVER ) {
         if( button.imgDown ){
             button.imgDown.style.visibility = "";
@@ -354,7 +354,7 @@ function outTo( button, newState ) {
         return;
     }
 
-    if ( newState <= $.ButtonState.HOVER && 
+    if ( newState <= $.ButtonState.HOVER &&
          button.currentState == $.ButtonState.DOWN ) {
         if( button.imgDown ){
             button.imgDown.style.visibility = "hidden";
@@ -362,7 +362,7 @@ function outTo( button, newState ) {
         button.currentState = $.ButtonState.HOVER;
     }
 
-    if ( newState <= $.ButtonState.GROUP && 
+    if ( newState <= $.ButtonState.GROUP &&
          button.currentState == $.ButtonState.HOVER ) {
         if( button.imgHover ){
             button.imgHover.style.visibility = "hidden";
@@ -370,7 +370,7 @@ function outTo( button, newState ) {
         button.currentState = $.ButtonState.GROUP;
     }
 
-    if ( newState <= $.ButtonState.REST && 
+    if ( newState <= $.ButtonState.REST &&
          button.currentState == $.ButtonState.GROUP ) {
         beginFading( button );
         button.currentState = $.ButtonState.REST;

@@ -33,7 +33,7 @@
  */
 
 (function( $ ){
-    
+
 var DEVICE_SCREEN       = $.getWindowSize(),
     BROWSER             = $.Browser.vendor,
     BROWSER_VERSION     = $.Browser.version,
@@ -44,7 +44,7 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
-    ), 
+    ),
 
     USE_CANVAS = SUBPIXEL_RENDERING &&
         !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
@@ -77,8 +77,8 @@ var DEVICE_SCREEN       = $.getWindowSize(),
  * @property {Element} element - DEPRECATED Alias for container.
  */
 $.Drawer = function( options ) {
-    
-    //backward compatibility for positional args while prefering more 
+
+    //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
     var args  = arguments,
         i;
@@ -105,7 +105,7 @@ $.Drawer = function( options ) {
         updateAgain:    true,
 
 
-        //internal state / configurable settings 
+        //internal state / configurable settings
         overlays:           [],
         collectionOverlays: {},
 
@@ -130,11 +130,11 @@ $.Drawer = function( options ) {
     this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
     this.element    = this.container;
 
-    
+
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
-    
+
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
@@ -143,7 +143,7 @@ $.Drawer = function( options ) {
     //are not already OpenSeadragon.Overlays
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
-            
+
             this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ]);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
@@ -163,27 +163,27 @@ $.Drawer.prototype = {
      * @method
      * @param {Element|String} element - A reference to an element or an id for
      *      the element which will overlayed.
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
-     *      viewport which the location coordinates will be treated as relative 
-     *      to. 
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
      */
     addOverlay: function( element, location, placement ) {
         element = $.getElement( element );
 
         if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
-            return;     
+            return;
         }
 
         this.overlays.push( new $.Overlay( element, location, placement ) );
         this.updateAgain = true;
         if( this.viewer ){
-            this.viewer.raiseEvent( 'add-overlay', { 
+            this.viewer.raiseEvent( 'add-overlay', {
                 viewer: this.viewer,
-                element: element, 
-                location: location, 
+                element: element,
+                location: location,
                 placement: placement
             });
         }
@@ -191,14 +191,14 @@ $.Drawer.prototype = {
     },
 
     /**
-     * Updates the overlay represented by the reference to the element or  
+     * Updates the overlay represented by the reference to the element or
      * element id moving it to the new location, relative to the new placement.
      * @method
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or 
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the 
-     *      viewport which the location coordinates will be treated as relative 
-     *      to. 
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
      * @return {OpenSeadragon.Drawer} Chainable.
      */
     updateOverlay: function( element, location, placement ) {
@@ -212,10 +212,10 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'update-overlay', { 
+            this.viewer.raiseEvent( 'update-overlay', {
                 viewer: this.viewer,
-                element: element, 
-                location: location, 
+                element: element,
+                location: location,
                 placement: placement
             });
         }
@@ -223,10 +223,10 @@ $.Drawer.prototype = {
     },
 
     /**
-     * Removes and overlay identified by the reference element or element id 
+     * Removes and overlay identified by the reference element or element id
      *      and schedules and update.
      * @method
-     * @param {Element|String} element - A reference to the element or an 
+     * @param {Element|String} element - A reference to the element or an
      *      element id which represent the ovelay content to be removed.
      * @return {OpenSeadragon.Drawer} Chainable.
      */
@@ -242,7 +242,7 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'remove-overlay', { 
+            this.viewer.raiseEvent( 'remove-overlay', {
                 viewer: this.viewer,
                 element: element
             });
@@ -262,7 +262,7 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'clear-overlay', { 
+            this.viewer.raiseEvent( 'clear-overlay', {
                 viewer: this.viewer
             });
         }
@@ -271,10 +271,10 @@ $.Drawer.prototype = {
 
 
     /**
-     * Returns whether the Drawer is scheduled for an update at the 
+     * Returns whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
      * @method
-     * @returns {Boolean} - Whether the Drawer is scheduled for an update at the 
+     * @returns {Boolean} - Whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
      */
     needsUpdate: function() {
@@ -284,7 +284,7 @@ $.Drawer.prototype = {
     /**
      * Returns the total number of tiles that have been loaded by this Drawer.
      * @method
-     * @returns {Number} - The total number of tiles that have been loaded by 
+     * @returns {Number} - The total number of tiles that have been loaded by
      *      this Drawer.
      */
     numTilesLoaded: function() {
@@ -292,7 +292,7 @@ $.Drawer.prototype = {
     },
 
     /**
-     * Clears all tiles and triggers an update on the next call to 
+     * Clears all tiles and triggers an update on the next call to
      * Drawer.prototype.update().
      * @method
      * @return {OpenSeadragon.Drawer} Chainable.
@@ -319,12 +319,12 @@ $.Drawer.prototype = {
     },
 
     /**
-     * Used internally to load images when required.  May also be used to 
-     * preload a set of images so the browser will have them available in 
+     * Used internally to load images when required.  May also be used to
+     * preload a set of images so the browser will have them available in
      * the local cache to optimize user experience in certain cases. Because
      * the number of parallel image loads is configurable, if too many images
-     * are currently being loaded, the request will be ignored.  Since by 
-     * default drawer.imageLoaderLimit is 0, the native browser parallel 
+     * are currently being loaded, the request will be ignored.  Since by
+     * default drawer.imageLoaderLimit is 0, the native browser parallel
      * image loading policy will be used.
      * @method
      * @param {String} src - The url of the image to load.
@@ -341,10 +341,10 @@ $.Drawer.prototype = {
             image,
             jobid,
             complete;
-        
-        if ( !this.imageLoaderLimit || 
+
+        if ( !this.imageLoaderLimit ||
               this.downloading < this.imageLoaderLimit ) {
-            
+
             this.downloading++;
 
             image = new Image();
@@ -356,7 +356,7 @@ $.Drawer.prototype = {
                         callback( resultingImage );
                     } catch ( e ) {
                         $.console.error(
-                            "%s while executing %s callback: %s", 
+                            "%s while executing %s callback: %s",
                             e.name,
                             src,
                             e.message,
@@ -391,21 +391,21 @@ $.Drawer.prototype = {
  * @inner
  */
  function addOverlayFromConfiguration( drawer, overlay ){
-                
+
     var element  = null,
         rect = ( overlay.height && overlay.width ) ? new $.Rect(
-            overlay.x || overlay.px, 
-            overlay.y || overlay.py, 
-            overlay.width, 
+            overlay.x || overlay.px,
+            overlay.y || overlay.py,
+            overlay.width,
             overlay.height
         ) : new $.Point(
-            overlay.x || overlay.px, 
+            overlay.x || overlay.px,
             overlay.y || overlay.py
         ),
-        id = overlay.id ? 
+        id = overlay.id ?
             overlay.id :
             "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
-    
+
     element = $.getElement(overlay.id);
     if( !element ){
         element         = document.createElement("a");
@@ -424,9 +424,9 @@ $.Drawer.prototype = {
         rect = drawer.viewport.imageToViewportRectangle( rect );
     }
     if( overlay.placement ){
-        return new $.Overlay( 
-            element, 
-            drawer.viewport.pointFromPixel(rect), 
+        return new $.Overlay(
+            element,
+            drawer.viewport.pointFromPixel(rect),
             $.OverlayPlacement[overlay.placement.toUpperCase()]
         );
     }else{
@@ -443,11 +443,11 @@ $.Drawer.prototype = {
  * why there are so many TODO's inside this function.
  */
 function updateViewport( drawer ) {
-    
+
     drawer.updateAgain = false;
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-viewport', { 
+        drawer.viewer.raiseEvent( 'update-viewport', {
             viewer: drawer.viewer
         });
     }
@@ -461,21 +461,21 @@ function updateViewport( drawer ) {
         viewportBounds  = drawer.viewport.getBounds( true ),
         viewportTL      = viewportBounds.getTopLeft(),
         viewportBR      = viewportBounds.getBottomRight(),
-        zeroRatioC      = drawer.viewport.deltaPixelsFromPoints( 
-            drawer.source.getPixelRatio( 0 ), 
+        zeroRatioC      = drawer.viewport.deltaPixelsFromPoints(
+            drawer.source.getPixelRatio( 0 ),
             true
         ).x,
         lowestLevel     = Math.max(
-            drawer.source.minLevel, 
-            Math.floor( 
-                Math.log( drawer.minZoomImageRatio ) / 
+            drawer.source.minLevel,
+            Math.floor(
+                Math.log( drawer.minZoomImageRatio ) /
                 Math.log( 2 )
             )
         ),
         highestLevel    = Math.min(
             Math.abs(drawer.source.maxLevel),
-            Math.abs(Math.floor( 
-                Math.log( zeroRatioC / drawer.minPixelRatio ) / 
+            Math.abs(Math.floor(
+                Math.log( zeroRatioC / drawer.minPixelRatio ) /
                 Math.log( 2 )
             ))
         ),
@@ -504,10 +504,10 @@ function updateViewport( drawer ) {
     }
 
     //TODO
-    if  ( !drawer.wrapHorizontal && 
+    if  ( !drawer.wrapHorizontal &&
         ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
         return;
-    } else if 
+    } else if
         ( !drawer.wrapVertical &&
         ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
         return;
@@ -531,7 +531,7 @@ function updateViewport( drawer ) {
 
         //Avoid calculations for draw if we have already drawn this
         renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
-            drawer.source.getPixelRatio( level ), 
+            drawer.source.getPixelRatio( level ),
             true
         ).x;
 
@@ -544,41 +544,41 @@ function updateViewport( drawer ) {
         }
 
         renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
-            drawer.source.getPixelRatio( level ), 
+            drawer.source.getPixelRatio( level ),
             false
         ).x;
 
-        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints( 
-            drawer.source.getPixelRatio( 
+        zeroRatioT      = drawer.viewport.deltaPixelsFromPoints(
+            drawer.source.getPixelRatio(
                 Math.max(
                     drawer.source.getClosestLevel( drawer.viewport.containerSize ) - 1,
                     0
                 )
-            ), 
+            ),
             false
         ).x;
-        
-        optimalRatio    = drawer.immediateRender ? 
-            1 : 
+
+        optimalRatio    = drawer.immediateRender ?
+            1 :
             zeroRatioT;
 
         levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
-        
-        levelVisibility = optimalRatio / Math.abs( 
-            optimalRatio - renderPixelRatioT 
+
+        levelVisibility = optimalRatio / Math.abs(
+            optimalRatio - renderPixelRatioT
         );
 
         //TODO
         best = updateLevel(
-            drawer, 
+            drawer,
             haveDrawn,
-            level, 
+            level,
             levelOpacity,
             levelVisibility,
-            viewportTL, 
-            viewportBR, 
-            currentTime, 
-            best 
+            viewportTL,
+            viewportBR,
+            currentTime,
+            best
         );
 
         //TODO
@@ -595,14 +595,14 @@ function updateViewport( drawer ) {
     if ( best ) {
         loadTile( drawer, best, currentTime );
         // because we haven't finished drawing, so
-        drawer.updateAgain = true; 
+        drawer.updateAgain = true;
     }
 
 }
 
 
 function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
-    
+
     var x, y,
         tileTL,
         tileBR,
@@ -611,15 +611,15 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-level', { 
+        drawer.viewer.raiseEvent( 'update-level', {
             viewer: drawer.viewer,
             havedrawn: haveDrawn,
-            level: level, 
+            level: level,
             opacity: levelOpacity,
-            visibility: levelVisibility, 
-            topleft: viewportTL, 
-            bottomright: viewportBR, 
-            currenttime: currentTime, 
+            visibility: levelVisibility,
+            topleft: viewportTL,
+            bottomright: viewportBR,
+            currenttime: currentTime,
             best: best
         });
     }
@@ -641,7 +641,7 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
     for ( x = tileTL.x; x <= tileBR.x; x++ ) {
         for ( y = tileTL.y; y <= tileBR.y; y++ ) {
 
-            best = updateTile( 
+            best = updateTile(
                 drawer,
                 drawLevel,
                 haveDrawn,
@@ -662,21 +662,21 @@ function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, v
 }
 
 function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
-    
-    var tile = getTile( 
-            x, y, 
-            level, 
+
+    var tile = getTile(
+            x, y,
+            level,
             drawer.source,
             drawer.tilesMatrix,
-            currentTime, 
-            numberOfTiles, 
-            drawer.normHeight 
+            currentTime,
+            numberOfTiles,
+            drawer.normHeight
         ),
         drawTile = drawLevel,
         newbest;
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-tile', { 
+        drawer.viewer.raiseEvent( 'update-tile', {
             viewer: drawer.viewer,
             tile: tile
         });
@@ -700,29 +700,29 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         return best;
     }
 
-    positionTile( 
-        tile, 
+    positionTile(
+        tile,
         drawer.source.tileOverlap,
         drawer.viewport,
-        viewportCenter, 
-        levelVisibility 
+        viewportCenter,
+        levelVisibility
     );
 
     if ( tile.loaded ) {
         var needsUpdate = blendTile(
             drawer,
-            tile, 
+            tile,
             x, y,
             level,
-            levelOpacity, 
-            currentTime 
+            levelOpacity,
+            currentTime
         );
 
         if ( needsUpdate ) {
             drawer.updateAgain = true;
         }
     } else if ( tile.loading ) {
-        // the tile is already in the download queue 
+        // the tile is already in the download queue
         // thanks josh1093 for finally translating this typo
     } else {
         best = compareTiles( best, tile );
@@ -757,11 +757,11 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
         bounds.y += normHeight * ( y - yMod ) / numTiles.y;
 
         tilesMatrix[ level ][ x ][ y ] = new $.Tile(
-            level, 
-            x, 
-            y, 
-            bounds, 
-            exists, 
+            level,
+            x,
+            y,
+            bounds,
+            exists,
             url
         );
     }
@@ -843,7 +843,7 @@ function onTileLoad( drawer, tile, time, image ) {
             prevLevel   = prevTile.level;
             worstLevel  = worstTile.level;
 
-            if ( prevTime < worstTime || 
+            if ( prevTime < worstTime ||
                ( prevTime == worstTime && prevLevel > worstLevel ) ) {
                 worstTile       = prevTile;
                 worstTileIndex  = i;
@@ -893,7 +893,7 @@ function blendTile( drawer, tile, x, y, level, levelOpacity, currentTime ){
 
     deltaTime   = currentTime - tile.blendStart;
     opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
-    
+
     if ( drawer.alwaysBlend ) {
         opacity *= levelOpacity;
     }
@@ -923,7 +923,7 @@ function clearTiles( drawer ) {
  * Returns true if the given tile provides coverage to lower-level tiles of
  * lower resolution representing the same content. If neither x nor y is
  * given, returns true if the entire visible level provides coverage.
- * 
+ *
  * Note that out-of-bounds tiles provide coverage in this sense, since
  * there's no content that they would need to cover. Tiles at non-existent
  * levels that are within the image bounds, however, do not.
@@ -988,7 +988,7 @@ function isCovered( coverage, level, x, y ) {
 function setCoverage( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
         $.console.warn(
-            "Setting coverage for a tile before its level's coverage has been reset: %s", 
+            "Setting coverage for a tile before its level's coverage has been reset: %s",
             level
         );
         return;
@@ -1006,7 +1006,7 @@ function setCoverage( coverage, level, x, y, covers ) {
  * @inner
  * Resets coverage information for the given level. This should be called
  * after every draw routine. Note that at the beginning of the next draw
- * routine, coverage for every visible tile should be explicitly set. 
+ * routine, coverage for every visible tile should be explicitly set.
  */
 function resetCoverage( coverage, level ) {
     coverage[ level ] = {};
@@ -1032,7 +1032,7 @@ function getOverlayIndex( overlays, element ) {
 /**
  * @private
  * @inner
- * Determines whether the 'last best' tile for the area is better than the 
+ * Determines whether the 'last best' tile for the area is better than the
  * tile in question.
  */
 function compareTiles( previousBest, tile ) {
@@ -1078,18 +1078,18 @@ function drawOverlays( viewport, overlays, container ){
 function drawOverlay( viewport, overlay, container ){
 
     overlay.position = viewport.pixelFromPoint(
-        overlay.bounds.getTopLeft(), 
+        overlay.bounds.getTopLeft(),
         true
     );
     overlay.size     = viewport.deltaPixelsFromPoints(
-        overlay.bounds.getSize(), 
+        overlay.bounds.getSize(),
         true
     );
     overlay.drawHTML( container );
 }
 
 function drawTiles( drawer, lastDrawn ){
-    var i, 
+    var i,
         tile,
         tileKey,
         viewer,
@@ -1100,21 +1100,21 @@ function drawTiles( drawer, lastDrawn ){
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        
+
         //We dont actually 'draw' a collection tile, rather its used to house
         //an overlay which does the drawing in its own viewport
         if( drawer.viewport.collectionMode ){
-            
+
             tileKey = tile.x + '/' + tile.y;
             viewport = drawer.viewport;
             collectionTileSource = viewport.collectionTileSource;
-            
+
             if( !drawer.collectionOverlays[ tileKey ] ){
-                
-                position = collectionTileSource.layout == 'horizontal' ? 
+
+                position = collectionTileSource.layout == 'horizontal' ?
                     tile.y + ( tile.x * collectionTileSource.rows ) :
                     tile.x + ( tile.y * collectionTileSource.rows ),
-                
+
                 tileSource = position < collectionTileSource.tileSources.length ?
                     collectionTileSource.tileSources[ position ] :
                     null;
@@ -1131,24 +1131,24 @@ function drawTiles( drawer, lastDrawn ){
                             tileSource
                         ]
                     });
-                    
+
                     //TODO: IE seems to barf on this, not sure if its just the border
-                    //      but we probably need to clear this up with a better 
+                    //      but we probably need to clear this up with a better
                     //      test of support for various css features
                     if( SUBPIXEL_RENDERING ){
                         viewer.element.style.border = '1px solid rgba(255,255,255,0.38)';
-                        viewer.element.style['-webkit-box-reflect'] = 
+                        viewer.element.style['-webkit-box-reflect'] =
                             'below 0px -webkit-gradient('+
                                 'linear,left '+
                                 'top,left '+
                                 'bottom,from(transparent),color-stop(62%,transparent),to(rgba(255,255,255,0.62))'+
                             ')';
-                    } 
+                    }
 
                     drawer.addOverlay(
                         viewer.element,
                         tile.bounds
-                    );  
+                    );
                 }
 
             }else{
@@ -1180,7 +1180,7 @@ function drawTiles( drawer, lastDrawn ){
         }
 
         if( drawer.viewer ){
-            drawer.viewer.raiseEvent( 'tile-drawn', { 
+            drawer.viewer.raiseEvent( 'tile-drawn', {
                 viewer: drawer.viewer,
                 tile: tile
             });
@@ -1197,52 +1197,52 @@ function drawDebugInfo( drawer, tile, count, i ){
         drawer.context.font = 'small-caps bold 13px ariel';
         drawer.context.strokeStyle = drawer.debugGridColor;
         drawer.context.fillStyle = drawer.debugGridColor;
-        drawer.context.strokeRect( 
-            tile.position.x, 
-            tile.position.y, 
-            tile.size.x, 
-            tile.size.y 
+        drawer.context.strokeRect(
+            tile.position.x,
+            tile.position.y,
+            tile.size.x,
+            tile.size.y
         );
         if( tile.x === 0 && tile.y === 0 ){
             drawer.context.fillText(
                 "Zoom: " + drawer.viewport.getZoom(),
-                tile.position.x, 
+                tile.position.x,
                 tile.position.y - 30
             );
             drawer.context.fillText(
-                "Pan: " + drawer.viewport.getBounds().toString(), 
-                tile.position.x, 
+                "Pan: " + drawer.viewport.getBounds().toString(),
+                tile.position.x,
                 tile.position.y - 20
             );
         }
         drawer.context.fillText(
             "Level: " + tile.level,
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 20
         );
         drawer.context.fillText(
             "Column: " + tile.x,
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 30
         );
         drawer.context.fillText(
             "Row: " + tile.y,
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 40
         );
         drawer.context.fillText(
             "Order: " + i + " of " + count,
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 50
         );
         drawer.context.fillText(
             "Size: " + tile.size.toString(),
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 60
         );
         drawer.context.fillText(
             "Position: " + tile.position.toString(),
-            tile.position.x + 10, 
+            tile.position.x + 10,
             tile.position.y + 70
         );
         drawer.context.restore();
