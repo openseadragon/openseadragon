@@ -959,10 +959,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         now: function( ) {
           if (Date.now) {
-            return Date.now();
+            $.now = Date.now;
+          } else {
+            $.now = function() { return new Date().getTime(); }
           }
-
-          return new Date().getTime();
         },
 
 
