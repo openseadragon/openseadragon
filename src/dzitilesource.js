@@ -31,7 +31,6 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* global processDZIError:true */
 
 (function( $ ){
 
@@ -284,7 +283,7 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName == "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName == "Error" ) {
-        return processDZIError( root );
+        return $._processDZIError( root );
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );

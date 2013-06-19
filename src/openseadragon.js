@@ -1934,5 +1934,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         throw new Error(message);
     }
+    // Add an alias so this is in-scope for dzitilesource but obviously not a blessed public method:
+    $._processDZIError = processDZIError;
 
 }( OpenSeadragon ));
