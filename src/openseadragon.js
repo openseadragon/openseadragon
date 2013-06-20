@@ -961,7 +961,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
           if (Date.now) {
             $.now = Date.now;
           } else {
-            $.now = function() { return new Date().getTime(); }
+            $.now = function() { return new Date().getTime(); };
           }
         },
 
