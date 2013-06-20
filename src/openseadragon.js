@@ -1386,7 +1386,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 head    = document.head ||
                     document.getElementsByTagName( "head" )[ 0 ] ||
                     document.documentElement,
-                jsonpCallback = options.callbackName || 'openseadragon' + ($.now),
+                jsonpCallback = options.callbackName || 'openseadragon' + $.now(),
                 previous      = window[ jsonpCallback ],
                 replace       = "$1" + jsonpCallback + "$2",
                 callbackParam = options.param || 'callback',
