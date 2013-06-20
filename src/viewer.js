@@ -597,11 +597,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             bodyStyle.width     = "100%";
             bodyStyle.height    = "100%";
 
-            //canvasStyle.backgroundColor = "black";
-            //canvasStyle.color           = "white";
-
-            //containerStyle.position = "fixed";
-
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would
             //respond to touch events on the canvas, while the bottom half treated
@@ -692,9 +687,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             canvasStyle.backgroundColor = "";
             canvasStyle.color           = "";
-
-            //containerStyle.position = "relative";
-            //containerStyle.zIndex   = "";
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
