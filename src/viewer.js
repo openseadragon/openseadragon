@@ -631,9 +631,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             if( $.supportsFullScreen ){
                 THIS[ this.hash ].onfullscreenchange = function() {
-                    // The event object doesn't carry information about the
-                    // fullscreen state of the browser, but it is possible to
-                    // retrieve it through the fullscreen API
+                    /*
+                        fullscreenchange events don't include the new fullscreen status so we need to
+                        retrieve the current status from the fullscreen API. See:
+                        https://developer.mozilla.org/en-US/docs/Web/Reference/Events/fullscreenchange
+                    */
+
                     if( $.isFullScreen() ){
                         _this.setFullPage( true );
                     } else {
