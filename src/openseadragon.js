@@ -1689,6 +1689,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             };
         } else {
             var aAnimQueue = [],
+                processing = [],
                 iRequestId = 0,
                 iIntervalId;
 
@@ -1699,7 +1700,18 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( !iIntervalId ) {
                     iIntervalId = setInterval( function() {
                         if ( aAnimQueue.length ) {
-                            aAnimQueue.shift( )[ 1 ](+new Date());
+                            var time = new Date().getTime();
+                            // Process all of the currently outstanding frame
+                            // requests, but none that get added during the
+                            // processing.
+                            // Swap the arrays so we don't have to create a new
+                            // array every frame.
+                            var temp = processing;
+                            processing = aAnimQueue;
+                            aAnimQueue = temp;
+                            while ( processing.length ) {
+                                processing.shift()[ 1 ]( time );
+                            }
                         } else {
                             // don't continue the interval, if unnecessary
                             clearInterval( iIntervalId );
@@ -1714,9 +1726,20 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             // create a mock cancelAnimationFrame function
             $.cancelAnimationFrame = function( requestId ) {
                 // find the request ID and remove it
-                for ( var i = 0, j = aAnimQueue.length; i < j; i += 1 ) {
+                var i, j;
+                for ( i = 0, j = aAnimQueue.length; i < j; i += 1 ) {
                     if ( aAnimQueue[ i ][ 0 ] === requestId ) {
                         aAnimQueue.splice( i, 1 );
+                        return;
+                    }
+                }
+
+                // If it's not in the queue, it may be in the set we're currently
+                // processing (if cancelAnimationFrame is called from within a
+                // requestAnimationFrame callback).
+                for ( i = 0, j = processing.length; i < j; i += 1 ) {
+                    if ( processing[ i ][ 0 ] === requestId ) {
+                        processing.splice( i, 1 );
                         return;
                     }
                 }
