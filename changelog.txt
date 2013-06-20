@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 0.9.129: (In Progress)
 
 * Fixed an error when using navPrevNextWrap on single images (#135)
+* Various fixes to our timer handling (#133)
 
 0.9.128:
 

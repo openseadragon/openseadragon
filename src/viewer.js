@@ -151,7 +151,6 @@ $.Viewer = function( options ) {
     THIS[ this.hash ] = {
         "fsBoundsDelta":     new $.Point( 1, 1 ),
         "prevContainerSize": null,
-        "updateRequestId":   null,
         "animating":         false,
         "forceRedraw":       false,
         "mouseInside":       false,
@@ -167,6 +166,8 @@ $.Viewer = function( options ) {
         "fullPage":          false,
         "onfullscreenchange": null
     };
+
+    this._updateRequestId = null;
 
     //Inherit some behaviors and properties
     $.EventHandler.call( this );
@@ -461,12 +462,16 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     close: function ( ) {
-        if ( THIS[ this.hash ].updateRequestId !== null ){
-            $.cancelAnimationFrame( THIS[ this.hash ].updateRequestId );
-            THIS[ this.hash ].updateRequestId = null;
+        if ( this._updateRequestId !== null ) {
+            $.cancelAnimationFrame( this._updateRequestId );
+            this._updateRequestId = null;
         }
 
-        if( this.drawer ){
+        if ( this.navigator ) {
+            this.navigator.close();
+        }
+
+        if ( this.drawer ) {
             this.drawer.clearOverlays();
         }
 
@@ -1147,22 +1152,25 @@ function openTileSource( viewer, source ) {
     });
 
     //Instantiate a navigator if configured
-    if ( _this.showNavigator  && ! _this.navigator && !_this.collectionMode ){
-        _this.navigator = new $.Navigator({
-            id:          _this.navigatorId,
-            position:    _this.navigatorPosition,
-            sizeRatio:   _this.navigatorSizeRatio,
-            height:      _this.navigatorHeight,
-            width:       _this.navigatorWidth,
-            // By passing the fully parsed source here, the navigator doesn't
-            // have to load it again. Additionally, we don't have to call
-            // navigator.open, as it's implicitly called in the ctor.
-            tileSources: source,
-            tileHost:    _this.tileHost,
-            prefixUrl:   _this.prefixUrl,
-            overlays:    _this.overlays,
-            viewer:      _this
-        });
+    if ( _this.showNavigator  && !_this.collectionMode ){
+        // Note: By passing the fully parsed source, the navigator doesn't
+        // have to load it again.
+        if ( _this.navigator ) {
+            _this.navigator.open( source );
+        } else {
+            _this.navigator = new $.Navigator({
+                id:          _this.navigatorId,
+                position:    _this.navigatorPosition,
+                sizeRatio:   _this.navigatorSizeRatio,
+                height:      _this.navigatorHeight,
+                width:       _this.navigatorWidth,
+                tileSources: source,
+                tileHost:    _this.tileHost,
+                prefixUrl:   _this.prefixUrl,
+                overlays:    _this.overlays,
+                viewer:      _this
+            });
+        }
     }
 
     //Instantiate a referencestrip if configured
@@ -1186,7 +1194,7 @@ function openTileSource( viewer, source ) {
 
     THIS[ _this.hash ].animating = false;
     THIS[ _this.hash ].forceRedraw = true;
-    THIS[ _this.hash ].updateRequestId = scheduleUpdate( _this, updateMulti );
+    _this._updateRequestId = scheduleUpdate( _this, updateMulti );
 
     //Assuming you had programatically created a bunch of overlays
     //and added them via configuration
@@ -1233,23 +1241,7 @@ function openTileSource( viewer, source ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
 ///////////////////////////////////////////////////////////////////////////////
-function scheduleUpdate( viewer, updateFunc, prevUpdateTime ){
-    var currentTime,
-        targetTime,
-        deltaTime;
-
-    if ( THIS[ viewer.hash ].animating ) {
-        return $.requestAnimationFrame( function(){
-            updateFunc( viewer );
-        } );
-    }
-
-    currentTime     = +new Date();
-    prevUpdateTime  = prevUpdateTime ? prevUpdateTime : currentTime;
-    // 60 frames per second is ideal
-    targetTime      = prevUpdateTime + 1000 / 60;
-    deltaTime       = Math.max( 1, targetTime - currentTime );
-
+function scheduleUpdate( viewer, updateFunc ){
     return $.requestAnimationFrame( function(){
         updateFunc( viewer );
     } );
@@ -1455,19 +1447,17 @@ function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny )
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateMulti( viewer ) {
-
-    var beginTime;
-
     if ( !viewer.source ) {
-        THIS[ viewer.hash ].updateRequestId = null;
+        viewer._updateRequestId = null;
         return;
     }
 
-    beginTime = +new Date();
     updateOnce( viewer );
 
-    THIS[ viewer.hash ].updateRequestId = scheduleUpdate( viewer,
-        arguments.callee, beginTime );
+    // Request the next frame, unless we've been closed during the updateOnce()
+    if ( viewer.source ) {
+        viewer._updateRequestId = scheduleUpdate( viewer, updateMulti );
+    }
 }
 
 function updateOnce( viewer ) {

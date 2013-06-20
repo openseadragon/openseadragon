@@ -461,4 +461,59 @@ QUnit.config.autostart = false;
             });
     });
 
+    asyncTest('Viewer closing one image and opening another', function() {
+        var timeWatcher = Util.timeWatcher();
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true
+        });
+
+        var openHandler1 = function(eventSender, eventData) {
+            viewer.removeHandler('open', openHandler1);
+            ok(viewer.navigator, 'navigator exists');
+            viewer.navigator.addHandler('open', navOpenHandler1);
+        };
+
+        var navOpenHandler1 = function(eventSender, eventData) {
+            viewer.navigator.removeHandler('open', navOpenHandler1);
+            equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
+            ok(viewer.navigator._updateRequestId, 'navigator timer is on');
+            viewer.addHandler('close', closeHandler1);
+            viewer.addHandler('open', openHandler2);
+            viewer.open('/test/data/tall.dzi');
+        };
+
+        var closeHandler1 = function() {
+            viewer.removeHandler('close', closeHandler1);
+            ok(true, 'calling open closes the old one');
+            equal(viewer.navigator.source, null, 'navigator source has been cleared');
+        };
+
+        var openHandler2 = function(eventSender, eventData) {
+            viewer.removeHandler('open', openHandler2);
+            viewer.navigator.addHandler('open', navOpenHandler2);
+        };
+
+        var navOpenHandler2 = function(eventSender, eventData) {
+            viewer.navigator.removeHandler('open', navOpenHandler2);
+            equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
+            viewer.addHandler('close', closeHandler2);
+            viewer.close();
+        };
+
+        var closeHandler2 = function() {
+            viewer.removeHandler('close', closeHandler2);
+            ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
+            setTimeout(function() {
+                ok(!viewer.navigator._updateRequestId, 'navigator timer is still off');
+                timeWatcher.done();
+            }, 100);
+        };
+
+        viewer.addHandler('open', openHandler1);
+    });
 })();
