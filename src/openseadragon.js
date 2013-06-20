@@ -953,6 +953,20 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
+         * Returns the current milliseconds, using Date.now() if available
+         * @name $.now
+         * @function
+         */
+        now: function( ) {
+          if (Date.now) {
+            $.now = Date.now;
+          } else {
+            $.now = function() { return new Date().getTime(); };
+          }
+        },
+
+
+        /**
          * Ensures an image is loaded correctly to support alpha transparency.
          * Generally only IE has issues doing this correctly for formats like
          * png.
