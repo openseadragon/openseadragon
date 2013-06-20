@@ -70,7 +70,7 @@ $.ReferenceStrip = function( options ){
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
-        options.id              = 'referencestrip-' + (+new Date());
+        options.id              = 'referencestrip-' + ($.now());
         this.element            = $.makeNeutralElement( "div" );
         this.element.id         = options.id;
         this.element.className  = 'referencestrip';
@@ -192,12 +192,12 @@ $.ReferenceStrip = function( options ){
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
             pressHandler: function( tracker ){
-                tracker.dragging = +new Date();
+                tracker.dragging = $.now();
             },
             releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ){
                 var id = tracker.element.id,
                     page = Number( id.split( '-' )[ 2 ] ),
-                    now = +new Date();
+                    now = $.now();
 
                 if ( insideElementPress &&
                      insideElementRelease &&

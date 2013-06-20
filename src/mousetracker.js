@@ -677,7 +677,7 @@
 
         delegate.lastPoint = getMouseAbsolute( event );
         delegate.lastMouseDownPoint = delegate.lastPoint;
-        delegate.lastMouseDownTime = +new Date();
+        delegate.lastMouseDownTime = $.now();
 
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler(
@@ -920,7 +920,7 @@
             return;
         }
 
-        var time     = +new Date() - delegate.lastMouseDownTime,
+        var time     = $.now() - delegate.lastMouseDownTime,
             point    = getMouseAbsolute( event ),
             distance = delegate.lastMouseDownPoint.distanceTo( point ),
             quick    = time     <= tracker.clickTimeThreshold &&

@@ -287,7 +287,7 @@ function updateFade( button ) {
         opacity;
 
     if ( button.shouldFade ) {
-        currentTime = +new Date();
+        currentTime = $.now();
         deltaTime   = currentTime - button.fadeBeginTime;
         opacity     = 1.0 - deltaTime / button.fadeLength;
         opacity     = Math.min( 1.0, opacity );
@@ -305,7 +305,7 @@ function updateFade( button ) {
 
 function beginFading( button ) {
     button.shouldFade = true;
-    button.fadeBeginTime = +new Date() + button.fadeDelay;
+    button.fadeBeginTime = $.now() + button.fadeDelay;
     window.setTimeout( function(){
         scheduleFade( button );
     }, button.fadeDelay );
