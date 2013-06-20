@@ -10,6 +10,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-git-describe");
+    grunt.loadNpmTasks('grunt-text-replace');
 
     // ----------
     var packageJson = grunt.file.readJSON("package.json"),
@@ -77,9 +78,27 @@ module.exports = function(grunt) {
                 dest: distribution
             }
         },
+        replace: {
+            cleanPaths: {
+                src: ['build/openseadragon/*.map'],
+                overwrite: true,
+                replacements: [
+                    {
+                        from: /build\/openseadragon\//g,
+                        to: ''
+                    }
+                ]
+            }
+        },
         uglify: {
             options: {
-                preserveComments: "some"
+                preserveComments: "some",
+                sourceMap: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map');
+                },
+                sourceMappingURL: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map').replace('build/openseadragon/', '');
+                },
             },
             openseadragon: {
                 src: [ distribution ],
@@ -190,7 +209,8 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat", "uglify", "copy:build"
+        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat",
+        "uglify", "replace:cleanPaths", "copy:build"
     ]);
 
     // ----------
