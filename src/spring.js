@@ -76,7 +76,7 @@ $.Spring = function( options ) {
         value: typeof ( this.initial ) == "number" ?
             this.initial :
             0,
-        time:  new Date().getTime() // always work in milliseconds
+        time:  $.now() // always work in milliseconds
     };
 
     this.start = {
@@ -127,7 +127,7 @@ $.Spring.prototype = {
      * @function
      */
     update: function() {
-        this.current.time  = new Date().getTime();
+        this.current.time  = $.now();
         this.current.value = (this.current.time >= this.target.time) ?
             this.target.value :
             this.start.value +

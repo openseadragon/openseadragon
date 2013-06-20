@@ -1263,7 +1263,7 @@ function beginControlsAutoHide( viewer ) {
     }
     viewer.controlsShouldFade = true;
     viewer.controlsFadeBeginTime =
-        +new Date() +
+        $.now() +
         viewer.controlsFadeDelay;
 
     window.setTimeout( function(){
@@ -1279,7 +1279,7 @@ function updateControlsFade( viewer ) {
         opacity,
         i;
     if ( viewer.controlsShouldFade ) {
-        currentTime = new Date().getTime();
+        currentTime = $.now();
         deltaTime = currentTime - viewer.controlsFadeBeginTime;
         opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
 
@@ -1528,7 +1528,7 @@ function resolveUrl( prefix, url ) {
 
 
 function beginZoomingIn() {
-    THIS[ this.hash ].lastZoomTime = +new Date();
+    THIS[ this.hash ].lastZoomTime = $.now();
     THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
@@ -1536,7 +1536,7 @@ function beginZoomingIn() {
 
 
 function beginZoomingOut() {
-    THIS[ this.hash ].lastZoomTime = +new Date();
+    THIS[ this.hash ].lastZoomTime = $.now();
     THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
     THIS[ this.hash ].zooming = true;
     scheduleZoom( this );
@@ -1559,7 +1559,7 @@ function doZoom() {
         adjustFactor;
 
     if ( THIS[ this.hash ].zooming && this.viewport) {
-        currentTime     = +new Date();
+        currentTime     = $.now();
         deltaTime       = currentTime - THIS[ this.hash ].lastZoomTime;
         adjustedFactor  = Math.pow( THIS[ this.hash ].zoomFactor, deltaTime / 1000 );
 

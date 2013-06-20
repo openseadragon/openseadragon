@@ -1386,7 +1386,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 head    = document.head ||
                     document.getElementsByTagName( "head" )[ 0 ] ||
                     document.documentElement,
-                jsonpCallback = options.callbackName || 'openseadragon' + (+new Date()),
+                jsonpCallback = options.callbackName || 'openseadragon' + $.now(),
                 previous      = window[ jsonpCallback ],
                 replace       = "$1" + jsonpCallback + "$2",
                 callbackParam = options.param || 'callback',
@@ -1700,7 +1700,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( !iIntervalId ) {
                     iIntervalId = setInterval( function() {
                         if ( aAnimQueue.length ) {
-                            var time = new Date().getTime();
+                            var time = $.now();
                             // Process all of the currently outstanding frame
                             // requests, but none that get added during the
                             // processing.
