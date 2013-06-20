@@ -57,7 +57,7 @@ $.Navigator = function( options ){
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
-        options.id              = 'navigator-' + ($.now());
+        options.id              = 'navigator-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
         options.controlOptions  = {anchor:           $.ControlAnchor.TOP_RIGHT,
                                    attachToViewer:   true,

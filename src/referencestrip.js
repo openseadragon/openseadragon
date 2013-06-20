@@ -70,7 +70,7 @@ $.ReferenceStrip = function( options ){
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
-        options.id              = 'referencestrip-' + ($.now());
+        options.id              = 'referencestrip-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
         this.element.id         = options.id;
         this.element.className  = 'referencestrip';
