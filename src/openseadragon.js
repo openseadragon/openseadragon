@@ -1814,7 +1814,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         } else if ( rootName == "Collection" ) {
             throw new Error( $.getString( "Errors.Dzc" ) );
         } else if ( rootName == "Error" ) {
-            return processDZIError( root );
+            return $._processDZIError( root );
         }
 
         throw new Error( $.getString( "Errors.Dzi" ) );
@@ -1928,13 +1928,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @throws {Error}
      * @deprecated
      */
-    function processDZIError( errorNode ) {
+    $._processDZIError = function ( errorNode ) {
         var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
             message     = messageNode.firstChild.nodeValue;
 
         throw new Error(message);
-    }
-    // Add an alias so this is in-scope for dzitilesource but obviously not a blessed public method:
-    $._processDZIError = processDZIError;
+    };
 
 }( OpenSeadragon ));
