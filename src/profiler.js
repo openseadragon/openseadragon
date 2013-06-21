@@ -77,7 +77,7 @@ $.Profiler.prototype = {
         }
 
         this.midUpdate = true;
-        this.lastBeginTime = new Date().getTime();
+        this.lastBeginTime = $.now();
 
         if (this.numUpdates < 1) {
             return;     // this is the first update
@@ -103,7 +103,7 @@ $.Profiler.prototype = {
             return;
         }
 
-        this.lastEndTime = new Date().getTime();
+        this.lastEndTime = $.now();
         this.midUpdate = false;
 
         var time = this.lastEndTime - this.lastBeginTime;

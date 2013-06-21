@@ -299,7 +299,7 @@ $.Drawer.prototype = {
      */
     reset: function() {
         clearTiles( this );
-        this.lastResetTime = +new Date();
+        this.lastResetTime = $.now();
         this.updateAgain = true;
         return this;
     },
@@ -456,7 +456,7 @@ function updateViewport( drawer ) {
         level,
         best            = null,
         haveDrawn       = false,
-        currentTime     = +new Date(),
+        currentTime     = $.now(),
         viewportSize    = drawer.viewport.getContainerSize(),
         viewportBounds  = drawer.viewport.getBounds( true ),
         viewportTL      = viewportBounds.getTopLeft(),
