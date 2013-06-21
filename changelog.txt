@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an error when using navPrevNextWrap on single images (#135)
 * Various fixes to our timer handling (#133)
 * Now generating source map for openseadragon.min.js (#51)
+* Faster and more consistent millisecond getter (#138)
 
 0.9.128:
 
