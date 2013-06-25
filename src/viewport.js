@@ -713,8 +713,8 @@ $.Viewport.prototype = {
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordA.x + coordB.x,
-            coordA.y + coordB.y
+            coordB.x,
+            coordB.y
         );
     }
 };
