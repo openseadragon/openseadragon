@@ -527,7 +527,9 @@ function updateViewport( drawer ) {
     lowestLevel = Math.min( lowestLevel, highestLevel );
 
     //TODO
+    var drawLevel; // FIXME: drawLevel should have a more explanatory name
     for ( level = highestLevel; level >= lowestLevel; level-- ) {
+        drawLevel = false;
 
         //Avoid calculations for draw if we have already drawn this
         renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
@@ -572,6 +574,7 @@ function updateViewport( drawer ) {
         best = updateLevel(
             drawer,
             haveDrawn,
+            drawLevel,
             level,
             levelOpacity,
             levelVisibility,
@@ -601,7 +604,7 @@ function updateViewport( drawer ) {
 }
 
 
-function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
+function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
 
     var x, y,
         tileTL,
