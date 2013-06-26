@@ -1335,6 +1335,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             if ( options.async ) {
                 /** @ignore */
                 request.onreadystatechange = function() {
+                    // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
                     if ( request.readyState == 4) {
                         request.onreadystatechange = function(){};
                         options.success( request );
@@ -1352,7 +1353,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     e.message
                 );
 
-                request.onreadystatechange = null;
+                request.onreadystatechange = function(){};
                 request = null;
 
                 if ( options.error && $.isFunction( options.error ) ) {
