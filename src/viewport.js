@@ -691,7 +691,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Translates from a rectanlge which describes a portion of
+     * Translates from a rectangle which describes a portion of
      * the image in pixel coordinates to OpenSeadragon viewport
      * rectangle coordinates.
      */

@@ -419,7 +419,7 @@ $.Drawer.prototype = {
 
 
     if(overlay.px !== undefined){
-        //if they specified 'px' so its in pixel coordinates so
+        //if they specified 'px' so it's in pixel coordinates so
         //we need to translate to viewport coordinates
         rect = drawer.viewport.imageToViewportRectangle( rect );
     }
@@ -438,7 +438,7 @@ $.Drawer.prototype = {
 /**
  * @private
  * @inner
- * Pretty much every other line in this needs to be documented so its clear
+ * Pretty much every other line in this needs to be documented so it's clear
  * how each piece of this routine contributes to the drawing process.  That's
  * why there are so many TODO's inside this function.
  */
