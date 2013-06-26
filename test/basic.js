@@ -1,3 +1,5 @@
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+
 (function() {
 
     module('Basic');
@@ -86,8 +88,9 @@
 
     // ----------
     asyncTest('Click', function() {
-        var viewport = viewer.viewport;
-        center = viewport.getCenter();
+        var viewport = viewer.viewport,
+            center = viewport.getCenter();
+
         ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
         equal(viewport.getZoom(), 1, 'We start out unzoomed');
 
