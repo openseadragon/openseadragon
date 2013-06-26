@@ -1315,10 +1315,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             request.onreadystatechange = function() {
                 // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
-                if ( request.readyState == 4) {
+                if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    if (request.status == 200) {
+                    if ( request.status == 200 ) {
                         onSuccess( request );
                     } else {
                         onError( request );
@@ -1335,7 +1335,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.onreadystatechange = function(){};
                 request = null;
 
-                onError(request, e);
+                onError( request, e );
             }
         },
 
