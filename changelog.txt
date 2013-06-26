@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Faster and more consistent millisecond getter (#138)
 * Fix for calculating overlay width / height (#142)
 * On IE, ajax errors would cause an exception to be thrown; fixed (#144)
+* JSHint tidying (#136)
 
 0.9.128:
 
