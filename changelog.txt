@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Various fixes to our timer handling (#133)
 * Now generating source map for openseadragon.min.js (#51)
 * Faster and more consistent millisecond getter (#138)
+* Fix for calculating overlay width / height (#142)
 
 0.9.128:
 
