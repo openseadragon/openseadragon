@@ -1321,7 +1321,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     if ( request.status == 200 ) {
                         onSuccess( request );
                     } else {
-                        onError( request );
+                        $.console.log("AJAX request returned %s: %s", request.status, url);
+
+                        if ($.isFunction(onError)) {
+                            onError( request );
+                        }
                     }
                 }
             };
@@ -1335,7 +1339,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.onreadystatechange = function(){};
                 request = null;
 
-                onError( request, e );
+                if ($.isFunction(onError)) {
+                    onError( request, e );
+                }
             }
         },
 
