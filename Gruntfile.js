@@ -147,13 +147,7 @@ module.exports = function(grunt) {
         },
         jshint: {
             options: {
-                browser: true,
-                eqeqeq: false,
-                loopfunc: false,
-                trailing: true,
-                globals: {
-                    OpenSeadragon: true
-                }
+                jshintrc: '.jshintrc'
             },
             beforeconcat: sources,
             afterconcat: [ distribution ]

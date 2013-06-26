@@ -33,10 +33,6 @@
  */
 
 (function( $ ){
-
-    //id hash for private properties;
-    var THIS = {};
-
     /**
      * @class
      */

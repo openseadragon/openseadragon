@@ -309,10 +309,8 @@ $.Viewport.prototype = {
             right,
             top,
             bottom,
-            center,
             dx = 0,
-            dy = 0,
-            dx1 = 0, dx2 = 0, dy1 = 0, dy2 = 0;
+            dy = 0;
 
         if ( actualZoom != constrainedZoom ) {
             this.zoomTo( constrainedZoom, this.zoomPoint, immediately );

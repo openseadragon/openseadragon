@@ -126,11 +126,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
      */
     configure: function( data, url ){
 
-        var dziPath,
-            dziName,
-            tilesUrl,
-            options,
-            host;
+        var options;
 
         if( !$.isPlainObject(data) ){
 
@@ -287,7 +283,7 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName == "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName == "Error" ) {
-        return processDZIError( root );
+        return $._processDZIError( root );
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );

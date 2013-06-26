@@ -84,9 +84,7 @@
  *      The maximum pyramid level this tile source supports or should attempt to load.
  */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
-    var _this = this,
-        callback = null,
-        readyHandler = null,
+    var callback = null,
         args = arguments,
         options,
         i;
@@ -274,16 +272,14 @@ $.TileSource.prototype = {
      * @throws {Error}
      */
     getImageInfo: function( url ) {
-        var _this   = this,
-            error,
+        var _this = this,
             callbackName,
             callback,
             readySource,
             options,
             urlParts,
             filename,
-            lastDot,
-            tilesUrl;
+            lastDot;
 
 
         if( url ) {

@@ -291,11 +291,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     },
     // Save a reference to some core methods
     toString    = Object.prototype.toString,
-    hasOwn      = Object.prototype.hasOwnProperty,
-    push        = Array.prototype.push,
-    slice       = Array.prototype.slice,
-    trim        = String.prototype.trim,
-    indexOf     = Array.prototype.indexOf;
+    hasOwn      = Object.prototype.hasOwnProperty;
 
 
     /**
@@ -747,11 +743,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         getEvent: function( event ) {
             if( event ){
-                $.getEvent = function( event ){
+                $.getEvent = function( event ) {
                     return event;
                 };
             } else {
-                $.getEvent = function( event ){
+                $.getEvent = function() {
                     return window.event;
                 };
             }
@@ -1283,7 +1279,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request = new XMLHttpRequest();
             } else if ( window.ActiveXObject ) {
                 /*jshint loopfunc:true*/
-                for ( i = 0; i < ACTIVEX.length; i++ ) {
+                /* global ActiveXObject:true */
+                for ( var i = 0; i < ACTIVEX.length; i++ ) {
                     try {
                         request = new ActiveXObject( ACTIVEX[ i ] );
                         $.createAjaxRequest = function( ){
@@ -1316,9 +1313,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             var async   = true,
                 request = $.createAjaxRequest(),
-                actual,
-                options,
-                i;
+                options;
 
 
             if( $.isPlainObject( url ) ){
@@ -1454,12 +1449,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Fully deprecated. Will throw an error.
          * @function
          * @name OpenSeadragon.createFromDZI
-         * @param {String} xmlUrl
-         * @param {String} xmlString
-         * @param {Function} callback
          * @deprecated - use OpenSeadragon.Viewer.prototype.open
          */
-        createFromDZI: function( dzi, callback, tileHost ) {
+        createFromDZI: function() {
             throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";
         },
 
@@ -1477,8 +1469,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             if ( window.ActiveXObject ) {
 
                 $.parseXml = function( string ){
-                    var xmlDoc = null,
-                        parser;
+                    var xmlDoc = null;
 
                     xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
                     xmlDoc.async = false;
@@ -1824,7 +1815,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         } else if ( rootName == "Collection" ) {
             throw new Error( $.getString( "Errors.Dzc" ) );
         } else if ( rootName == "Error" ) {
-            return processDZIError( root );
+            return $._processDZIError( root );
         }
 
         throw new Error( $.getString( "Errors.Dzi" ) );
@@ -1851,7 +1842,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectNode,
             i;
 
-        if ( !imageFormatSupported( fileFormat ) ) {
+        if ( !$.imageFormatSupported( fileFormat ) ) {
             throw new Error(
                 $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
             );
@@ -1901,7 +1892,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             rectData,
             i;
 
-        if ( !imageFormatSupported( fileFormat ) ) {
+        if ( !$.imageFormatSupported( fileFormat ) ) {
             throw new Error(
                 $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
             );
@@ -1938,11 +1929,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @throws {Error}
      * @deprecated
      */
-    function processDZIError( errorNode ) {
+    $._processDZIError = function ( errorNode ) {
         var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
             message     = messageNode.firstChild.nodeValue;
 
         throw new Error(message);
-    }
+    };
 
 }( OpenSeadragon ));

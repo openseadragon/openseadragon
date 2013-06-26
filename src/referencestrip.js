@@ -61,8 +61,6 @@ $.ReferenceStrip = function( options ){
     var _this       = this,
         viewer      = options.viewer,
         viewerSize  = $.getElementSize( viewer.element ),
-        miniViewer,
-        minPixelRatio,
         element,
         style,
         i;
@@ -273,14 +271,12 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
      * @function
      * @name OpenSeadragon.ReferenceStrip.prototype.update
      */
-    update: function( viewport ){
-
-        if( THIS[ this.id ].animating ){
+    update: function() {
+        if ( THIS[ this.id ].animating ) {
             $.console.log('image reference strip update');
             return true;
         }
         return false;
-
     }
 
 });
@@ -391,7 +387,8 @@ function loadPanels(strip, viewerSize, scroll){
         activePanelsEnd,
         miniViewer,
         style,
-        i;
+        i,
+        element;
     if( 'horizontal' == strip.scroll ){
         panelSize = strip.panelWidth;
     }else{
@@ -484,15 +481,7 @@ function onStripEnter( tracker ) {
  * @function
  */
 function onStripExit( tracker ) {
-
-    var viewerSize = $.getElementSize( this.viewer.element );
-
-    //$.setElementOpacity(tracker.element, 0.4);
-    //tracker.element.style.border = 'none';
-    //tracker.element.style.background = '#fff';
-
-
-    if( 'horizontal' == this.scroll ){
+    if ( 'horizontal' == this.scroll ) {
 
         //tracker.element.style.paddingTop = "10px";
         tracker.element.style.marginBottom = "-" + ( $.getElementSize( tracker.element ).y / 2 ) + "px";

@@ -39,7 +39,7 @@
  * @extends OpenSeadragon.TileSource
  */
 $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
-
+    var options;
 
     if( $.isPlainObject( tileSize ) ){
         options = tileSize;
