@@ -174,8 +174,7 @@ $.Viewer = function( options ) {
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
-    var initialTileSource,
-        customTileSource;
+    var initialTileSource;
 
     if ( this.xmlPath  ){
         //Deprecated option.  Now it is preferred to use the tileSources option
@@ -277,19 +276,21 @@ $.Viewer = function( options ) {
                     case 119://w
                     case 87://W
                     case 38://up arrow
-                        if (shiftKey)
+                        if (shiftKey) {
                             _this.viewport.zoomBy(1.1);
-                        else
+                        } else {
                             _this.viewport.panBy(new $.Point(0, -0.05));
+                        }
                         _this.viewport.applyConstraints();
                         return false;
                     case 115://s
                     case 83://S
                     case 40://down arrow
-                        if (shiftKey)
+                        if (shiftKey) {
                             _this.viewport.zoomBy(0.9);
-                        else
+                        } else {
                             _this.viewport.panBy(new $.Point(0, 0.05));
+                        }
                         _this.viewport.applyConstraints();
                         return false;
                     case 97://a
@@ -569,7 +570,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         var body            = document.body,
             bodyStyle       = body.style,
             docStyle        = document.documentElement.style,
-            containerStyle  = this.element.style,
             canvasStyle     = this.canvas.style,
             _this           = this,
             oldBounds,
@@ -596,11 +596,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.bodyHeight     = bodyStyle.height;
             bodyStyle.width     = "100%";
             bodyStyle.height    = "100%";
-
-            //canvasStyle.backgroundColor = "black";
-            //canvasStyle.color           = "white";
-
-            //containerStyle.position = "fixed";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would
@@ -635,10 +630,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             body.appendChild( this.element );
 
             if( $.supportsFullScreen ){
-                THIS[ this.hash ].onfullscreenchange = function( event ) {
-                    // The event object doesn't carry information about the
-                    // fullscreen state of the browser, but it is possible to
-                    // retrieve it through the fullscreen API
+                THIS[ this.hash ].onfullscreenchange = function() {
+                    /*
+                        fullscreenchange events don't include the new fullscreen status so we need to
+                        retrieve the current status from the fullscreen API. See:
+                        https://developer.mozilla.org/en-US/docs/Web/Reference/Events/fullscreenchange
+                    */
+
                     if( $.isFullScreen() ){
                         _this.setFullPage( true );
                     } else {
@@ -692,9 +690,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
             canvasStyle.backgroundColor = "";
             canvasStyle.color           = "";
-
-            //containerStyle.position = "relative";
-            //containerStyle.zIndex   = "";
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
@@ -817,7 +812,6 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             onNextHandler           = $.delegate( this, onNext ),
             onPreviousHandler       = $.delegate( this, onPrevious ),
             navImages               = this.navImages,
-            buttons                 = [],
             useGroup                = true ;
 
         if( this.showSequenceControl && THIS[ this.hash ].sequenced ){
@@ -1324,7 +1318,7 @@ function onBlur(){
 }
 
 function onCanvasClick( tracker, position, quick, shift ) {
-    var zoomPreClick,
+    var zoomPerClick,
         factor;
     if ( this.viewport && quick ) {    // ignore clicks where mouse moved
         zoomPerClick = this.zoomPerClick;
@@ -1556,7 +1550,7 @@ function scheduleZoom( viewer ) {
 function doZoom() {
     var currentTime,
         deltaTime,
-        adjustFactor;
+        adjustedFactor;
 
     if ( THIS[ this.hash ].zooming && this.viewport) {
         currentTime     = $.now();

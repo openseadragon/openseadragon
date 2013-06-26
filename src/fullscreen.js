@@ -112,7 +112,7 @@
                 element[this.prefix + 'RequestFullScreen']();
 
         };
-        fullScreenApi.cancelFullScreen = function( element ) {
+        fullScreenApi.cancelFullScreen = function() {
             return (this.prefix === '') ?
                 document.cancelFullScreen() :
                 document[this.prefix + 'CancelFullScreen']();
@@ -121,6 +121,7 @@
         // Older IE.  Support based on:
         // http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760
         fullScreenApi.requestFullScreen = function(){
+            /* global ActiveXObject:true */
             var wscript = new ActiveXObject("WScript.Shell");
             if ( wscript !== null ) {
                 wscript.SendKeys("{F11}");
@@ -129,7 +130,6 @@
         };
         fullScreenApi.cancelFullScreen = fullScreenApi.requestFullScreen;
     }
-
 
     // export api
     $.extend( $, fullScreenApi );

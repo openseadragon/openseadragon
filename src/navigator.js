@@ -49,8 +49,7 @@
  */
 $.Navigator = function( options ){
 
-    var _this       = this,
-        viewer      = options.viewer,
+    var viewer      = options.viewer,
         viewerSize  = $.getElementSize( viewer.element),
         unneededElement;
 
@@ -199,7 +198,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
             bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.totalBorderWidths);
 
             //update style for navigator-box
-            (function(style, borderWidth){
+            (function(style) {
 
                 style.top    = topleft.y + 'px';
                 style.left   = topleft.x + 'px';
@@ -210,7 +209,7 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
                 style.width  = Math.max( width, 0 ) + 'px';
                 style.height = Math.max( height, 0 ) + 'px';
 
-            }( this.displayRegion.style, this.borderWidth));
+            }( this.displayRegion.style ));
         }
 
     },

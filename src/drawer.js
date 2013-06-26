@@ -527,7 +527,9 @@ function updateViewport( drawer ) {
     lowestLevel = Math.min( lowestLevel, highestLevel );
 
     //TODO
+    var drawLevel; // FIXME: drawLevel should have a more explanatory name
     for ( level = highestLevel; level >= lowestLevel; level-- ) {
+        drawLevel = false;
 
         //Avoid calculations for draw if we have already drawn this
         renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
@@ -572,6 +574,7 @@ function updateViewport( drawer ) {
         best = updateLevel(
             drawer,
             haveDrawn,
+            drawLevel,
             level,
             levelOpacity,
             levelVisibility,
@@ -601,7 +604,7 @@ function updateViewport( drawer ) {
 }
 
 
-function updateLevel( drawer, haveDrawn, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
+function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
 
     var x, y,
         tileTL,
@@ -672,8 +675,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             numberOfTiles,
             drawer.normHeight
         ),
-        drawTile = drawLevel,
-        newbest;
+        drawTile = drawLevel;
 
     if( drawer.viewer ){
         drawer.viewer.raiseEvent( 'update-tile', {
@@ -1113,11 +1115,13 @@ function drawTiles( drawer, lastDrawn ){
 
                 position = collectionTileSource.layout == 'horizontal' ?
                     tile.y + ( tile.x * collectionTileSource.rows ) :
-                    tile.x + ( tile.y * collectionTileSource.rows ),
+                    tile.x + ( tile.y * collectionTileSource.rows );
 
-                tileSource = position < collectionTileSource.tileSources.length ?
-                    collectionTileSource.tileSources[ position ] :
-                    null;
+                if (position < collectionTileSource.tileSources.length) {
+                    tileSource = collectionTileSource.tileSources[ position ];
+                } else {
+                    tileSource = null;
+                }
 
                 //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
