@@ -1313,6 +1313,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var request = $.createAjaxRequest();
 
+            if (!$.isFunction(onSuccess)) {
+                throw new Error( "makeAjaxRequest requires a success callback" );
+            }
+
             request.onreadystatechange = function() {
                 // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
                 if ( request.readyState == 4 ) {
