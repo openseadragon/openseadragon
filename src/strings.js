@@ -80,7 +80,8 @@ $.extend( $, {
         string = container[ props[ i ] ];
 
         if ( typeof( string ) != "string" ) {
-            string = "";
+            $.console.debug( "Untranslated source string:", prop );
+            string = ""; // FIXME: this breaks gettext()-style convention, which would return source
         }
 
         return string.replace(/\{\d+\}/g, function(capture) {
