@@ -171,6 +171,12 @@ $.Viewer = function( options ) {
 
     //Inherit some behaviors and properties
     $.EventHandler.call( this );
+
+    this.addHandler( 'open-failed', function (source, args) {
+        var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
+        window.alert( msg );
+    });
+
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
@@ -433,6 +439,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 tileSource = new $.TileSource( tileSource, function( readySource ){
                     openTileSource( _this, readySource );
                 });
+                tileSource.addHandler( 'open-failed', function ( name, args ) {
+                    _this.raiseEvent( 'open-failed', args );
+                });
 
             } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ){
                 if( $.isFunction( tileSource.getTileUrl ) ){
@@ -443,6 +452,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 } else {
                     //inline configuration
                     $TileSource = $.TileSource.determineType( _this, tileSource );
+                    if ( !$TileSource ) {
+                        _this.raiseEvent( 'open-failed', {
+                            message: "Unable to load TileSource",
+                            source: tileSource
+                        });
+                        return;
+                    }
                     options = $TileSource.prototype.configure.apply( _this, [ tileSource ]);
                     readySource = new $TileSource( options );
                     openTileSource( _this, readySource );
