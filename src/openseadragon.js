@@ -1313,7 +1313,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var request = $.createAjaxRequest();
 
-            if (!$.isFunction(onSuccess)) {
+            if ( !$.isFunction( onSuccess ) ) {
                 throw new Error( "makeAjaxRequest requires a success callback" );
             }
 
@@ -1327,7 +1327,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     } else {
                         $.console.log("AJAX request returned %s: %s", request.status, url);
 
-                        if ($.isFunction(onError)) {
+                        if ( $.isFunction( onError ) ) {
                             onError( request );
                         }
                     }
@@ -1342,7 +1342,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
                 request.onreadystatechange = function(){};
 
-                if ($.isFunction(onError)) {
+                if ( $.isFunction( onError ) ) {
                     onError( request, e );
                 }
             }
