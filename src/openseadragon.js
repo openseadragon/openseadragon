@@ -882,47 +882,49 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Wraps the given element in a nest of divs so that the element can
-         * be easily centered.
+         * be easily centered using CSS tables
          * @function
          * @name OpenSeadragon.makeCenteredNode
          * @param {Element|String} element
-         * @returns {Element}
+         * @returns {Element} outermost wrapper element
          */
         makeCenteredNode: function( element ) {
-
-            var div      = $.makeNeutralElement( "div" ),
-                html     = [],
-                innerDiv,
-                innerDivs;
-
+            // Convert a possible ID to an actual HTMLElement
             element = $.getElement( element );
 
-            //TODO: I dont understand the use of # inside the style attributes
-            //      below.  Invetigate the results of the constructed html in
-            //      the browser and clean up the mark-up to make this clearer.
-            html.push('<div style="display:table; height:100%; width:100%;');
-            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-            html.push('#position:relative; overflow:hidden; text-align:left;">');
-            html.push('<div style="#position:absolute; #top:50%; width:100%; ');
-            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-            html.push('display:table-cell; vertical-align:middle;">');
-            html.push('<div style="#position:relative; #top:-50%; width:100%; ');
-            html.push('border:none; margin:0px; padding:0px;'); // neutralizing
-            html.push('text-align:center;"></div></div></div>');
+            /*
+                CSS tables require you to have a display:table/row/cell hierarchy so we need to create
+                three nested wrapper divs:
+             */
 
-            div.innerHTML = html.join( '' );
-            div           = div.firstChild;
+            var wrappers = [
+                $.makeNeutralElement( 'div' ),
+                $.makeNeutralElement( 'div' ),
+                $.makeNeutralElement( 'div' )
+            ];
 
-            innerDiv    = div;
-            innerDivs   = div.getElementsByTagName( "div" );
-            while ( innerDivs.length > 0 ) {
-                innerDiv  = innerDivs[ 0 ];
-                innerDivs = innerDiv.getElementsByTagName( "div" );
-            }
+            // It feels like we should be able to pass style dicts to makeNeutralElement:
+            $.extend(wrappers[0].style, {
+                display: "table",
+                height: "100%",
+                width: "100%"
+            });
 
-            innerDiv.appendChild( element );
+            $.extend(wrappers[1].style, {
+                display: "table-row"
+            });
 
-            return div;
+            $.extend(wrappers[2].style, {
+                display: "table-cell",
+                verticalAlign: "middle",
+                textAlign: "center"
+            });
+
+            wrappers[0].appendChild(wrappers[1]);
+            wrappers[1].appendChild(wrappers[2]);
+            wrappers[2].appendChild(element);
+
+            return wrappers[0];
         },
 
 
