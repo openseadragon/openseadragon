@@ -1341,7 +1341,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 $.console.log("%s while making AJAX request: %s", e.name, e.message);
 
                 request.onreadystatechange = function(){};
-                request = null;
 
                 if ($.isFunction(onError)) {
                     onError( request, e );
