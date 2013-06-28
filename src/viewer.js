@@ -179,7 +179,7 @@ $.Viewer = function( options ) {
         $.addClass( errorDiv, "modal-dialog error" );
         errorDiv.appendChild( document.createTextNode( msg ) );
 
-        _this.container.appendChild( $.makeCenteredNode(errorDiv) );
+        _this.container.appendChild( $.makeCenteredNode( errorDiv ) );
     });
 
     $.ControlDock.call( this, options );
@@ -428,10 +428,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $TileSource,
             options;
 
-        if (this.container) {
-            var dialogs = this.container.querySelectorAll(".modal-dialog");
-            for (var i = 0; i < dialogs.length; i++) {
-                dialogs[i].parentNode.remove(dialogs[i]);
+        if ( this.container ) {
+            var dialogs = this.container.querySelectorAll( ".modal-dialog" );
+            for ( var i = 0; i < dialogs.length; i++ ) {
+                dialogs[i].parentNode.remove( dialogs[i] );
             }
         }
 

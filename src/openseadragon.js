@@ -1325,7 +1325,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     if ( request.status == 200 ) {
                         onSuccess( request );
                     } else {
-                        $.console.log("AJAX request returned %s: %s", request.status, url);
+                        $.console.log( "AJAX request returned %s: %s", request.status, url );
 
                         if ( $.isFunction( onError ) ) {
                             onError( request );
@@ -1338,7 +1338,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.open( "GET", url, true );
                 request.send( null );
             } catch (e) {
-                $.console.log("%s while making AJAX request: %s", e.name, e.message);
+                $.console.log( "%s while making AJAX request: %s", e.name, e.message );
 
                 request.onreadystatechange = function(){};
 
