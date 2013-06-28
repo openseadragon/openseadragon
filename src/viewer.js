@@ -174,7 +174,12 @@ $.Viewer = function( options ) {
 
     this.addHandler( 'open-failed', function (source, args) {
         var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
-        window.alert( msg );
+
+        var errorDiv = $.makeNeutralElement( "div" );
+        $.addClass( errorDiv, "modal-dialog error" );
+        errorDiv.appendChild( document.createTextNode( msg ) );
+
+        _this.container.appendChild( $.makeCenteredNode(errorDiv) );
     });
 
     $.ControlDock.call( this, options );
@@ -422,6 +427,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             readySource,
             $TileSource,
             options;
+
+        if (this.container) {
+            var dialogs = this.container.querySelectorAll(".modal-dialog");
+            for (var i = 0; i < dialogs.length; i++) {
+                dialogs[i].parentNode.remove(dialogs[i]);
+            }
+        }
 
         //allow plain xml strings or json strings to be parsed here
         if( $.type( tileSource ) == 'string' ){
