@@ -174,12 +174,7 @@ $.Viewer = function( options ) {
 
     this.addHandler( 'open-failed', function (source, args) {
         var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
-
-        var errorDiv = $.makeNeutralElement( "div" );
-        $.addClass( errorDiv, "modal-dialog error" );
-        errorDiv.appendChild( document.createTextNode( msg ) );
-
-        _this.container.appendChild( $.makeCenteredNode( errorDiv ) );
+        _this.showMessage( msg );
     });
 
     $.ControlDock.call( this, options );
@@ -428,12 +423,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $TileSource,
             options;
 
-        if ( this.container ) {
-            var dialogs = this.container.querySelectorAll( ".modal-dialog" );
-            for ( var i = 0; i < dialogs.length; i++ ) {
-                dialogs[i].parentNode.remove( dialogs[i] );
-            }
-        }
+        _this.hideMessage();
 
         //allow plain xml strings or json strings to be parsed here
         if( $.type( tileSource ) == 'string' ){
@@ -1082,8 +1072,31 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.referenceStrip.setFocus( page );
         }
         return this;
-    }
+    },
 
+    /**
+     * Display a message in the viewport
+     * @function
+     * @param {String} text message
+     */
+    showMessage: function ( message ) {
+        var div = this.messageDiv = $.makeNeutralElement( "div" );
+        div.appendChild( document.createTextNode( message ) );
+
+        this.container.appendChild( $.makeCenteredNode( div ) );
+    },
+
+    /**
+     * Hide any currently displayed viewport message
+     * @function
+     */
+    hideMessage: function () {
+        var div = this.messageDiv;
+        if (div) {
+            div.parentNode.remove(div);
+            delete this.messageDiv;
+        }
+    }
 });
 
 /**
