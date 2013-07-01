@@ -1088,6 +1088,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         this.messageDiv = $.makeCenteredNode( div );
 
+        $.addClass(this.messageDiv, "openseadragon-message");
+
         this.container.appendChild( this.messageDiv );
     },
 
