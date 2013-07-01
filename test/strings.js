@@ -1,10 +1,17 @@
 (function() {
 
     module("strings");
+
     test("getSubString", function() {
         equal(OpenSeadragon.getString("Errors.Dzi"),
             "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
             "Read sub-string");
+    });
+
+    test("getStringWithPlaceholders", function() {
+        equal(OpenSeadragon.getString("Errors.Open-Failed", "foo", "bar"),
+              "Unable to open foo: bar",
+              "String placeholder replacement");
     });
 
     test("getInvalidString", function() {
