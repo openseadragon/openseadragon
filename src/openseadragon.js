@@ -1306,63 +1306,47 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @function
          * @name OpenSeadragon.makeAjaxRequest
          * @param {String} url - the url to request
-         * @param {Function} [callback] - a function to call when complete
+         * @param {Function} onSuccess - a function to call on a successful response
+         * @param {Function} onError - a function to call on when an error occurs
          * @throws {Error}
          */
-        makeAjaxRequest: function( url, callback ) {
+        makeAjaxRequest: function( url, onSuccess, onError ) {
+            var request = $.createAjaxRequest();
 
-            var async   = true,
-                request = $.createAjaxRequest(),
-                options;
-
-
-            if( $.isPlainObject( url ) ){
-                options.async = options.async || async;
-            }else{
-                options = {
-                    url: url,
-                    async: $.isFunction( callback ),
-                    success: callback,
-                    error: null
-                };
+            if (!$.isFunction(onSuccess)) {
+                throw new Error( "makeAjaxRequest requires a success callback" );
             }
 
-            if ( options.async ) {
-                /** @ignore */
-                request.onreadystatechange = function() {
-                    // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
-                    if ( request.readyState == 4) {
-                        request.onreadystatechange = function(){};
-                        options.success( request );
+            request.onreadystatechange = function() {
+                // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
+                if ( request.readyState == 4 ) {
+                    request.onreadystatechange = function(){};
+
+                    if ( request.status == 200 ) {
+                        onSuccess( request );
+                    } else {
+                        $.console.log("AJAX request returned %s: %s", request.status, url);
+
+                        if ($.isFunction(onError)) {
+                            onError( request );
+                        }
                     }
-                };
-            }
+                }
+            };
 
             try {
-                request.open( "GET", options.url, options.async );
+                request.open( "GET", url, true );
                 request.send( null );
             } catch (e) {
-                $.console.log(
-                    "%s while making AJAX request: %s",
-                    e.name,
-                    e.message
-                );
+                $.console.log("%s while making AJAX request: %s", e.name, e.message);
 
                 request.onreadystatechange = function(){};
-                request = null;
 
-                if ( options.error && $.isFunction( options.error ) ) {
-                    options.error( request );
+                if ($.isFunction(onError)) {
+                    onError( request, e );
                 }
             }
-
-            if( !options.async && $.isFunction( options.success ) ){
-                options.success( request );
-            }
-
-            return options.async ? null : request;
         },
-
 
         /**
          * Taken from jQuery 1.6.1
