@@ -174,7 +174,7 @@ $.Viewer = function( options ) {
 
     this.addHandler( 'open-failed', function (source, args) {
         var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
-        _this.showMessage( msg );
+        _this._showMessage( msg );
     });
 
     $.ControlDock.call( this, options );
@@ -423,7 +423,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             $TileSource,
             options;
 
-        _this.hideMessage();
+        _this._hideMessage();
 
         //allow plain xml strings or json strings to be parsed here
         if( $.type( tileSource ) == 'string' ){
@@ -1077,25 +1077,29 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     /**
      * Display a message in the viewport
      * @function
+     * @private
      * @param {String} text message
      */
-    showMessage: function ( message ) {
-        this.hideMessage();
+    _showMessage: function ( message ) {
+        this._hideMessage();
 
-        var div = this.messageDiv = $.makeNeutralElement( "div" );
+        var div = $.makeNeutralElement( "div" );
         div.appendChild( document.createTextNode( message ) );
 
-        this.container.appendChild( $.makeCenteredNode( div ) );
+        this.messageDiv = $.makeCenteredNode( div );
+
+        this.container.appendChild( this.messageDiv );
     },
 
     /**
      * Hide any currently displayed viewport message
      * @function
+     * @private
      */
-    hideMessage: function () {
+    _hideMessage: function () {
         var div = this.messageDiv;
         if (div) {
-            div.parentNode.remove(div);
+            div.parentNode.removeChild(div);
             delete this.messageDiv;
         }
     }
