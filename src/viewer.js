@@ -1080,6 +1080,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
      * @param {String} text message
      */
     showMessage: function ( message ) {
+        this.hideMessage();
+
         var div = this.messageDiv = $.makeNeutralElement( "div" );
         div.appendChild( document.createTextNode( message ) );
 
