@@ -3,7 +3,13 @@
     // This module tests whether our various file formats can be opened.
     // TODO: Add more file formats (with corresponding test data).
 
-    module('Formats');
+    module('Formats', {
+        setup: function () {
+            var example = document.createElement("div");
+            example.id = "example";
+            document.getElementById("qunit-fixture").appendChild(example);
+        }
+    });
 
     var viewer = null;
 

@@ -1,3 +1,5 @@
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+
 (function() {
 
     // ----------
@@ -30,16 +32,11 @@
                 .simulate('mouseup', event);
         },
 
-        resetDom: function () {
-            if ($('#exampleNavigator').is(':ui-dialog')) {
-                $('#exampleNavigator').dialog('destroy');
-            }
-            $("#exampleNavigator").remove();
-            $(".navigator").remove();
-            $("#example").empty();
-            $("#tallexample").empty();
-            $("#wideexample").empty();
-            $("#example").parent().append('<div id="exampleNavigator"></div>');
+        initializeTestDOM: function () {
+            $("#qunit-fixture")
+                .append('<div><div id="example"></div><div id="exampleNavigator"></div></div>')
+                .append('<div id="wideexample"></div>')
+                .append('<div id="tallexample"></div>');
         },
 
         equalsWithVariance: function (value1, value2, variance) {
