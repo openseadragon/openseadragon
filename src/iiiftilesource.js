@@ -72,7 +72,7 @@ $.IIIFTileSource = function( options ){
         for ( var i = 0; i < this.scale_factor.length; i++ )
         {
             var cf = Number( this.scale_factor[i] );
-            if ( !isNaN( cf ) && cf > mf ) { 
+            if ( (! isNaN( cf )) && ( cf > mf )) { 
                 mf = cf; 
             }
         }
