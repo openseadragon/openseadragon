@@ -14,7 +14,7 @@
             });
         },
         teardown: function () {
-            if (!!viewer && viewer.close) {
+            if (viewer && viewer.close) {
                 viewer.close();
             }
 
@@ -189,7 +189,6 @@
             var closeHandler = function() {
                 viewer.removeHandler('close', closeHandler);
                 ok(!viewer.source, 'no source');
-                $('#example').empty();
                 ok(true, 'Close event was sent');
                 ok(!viewer._updateRequestId, 'timer is off');
                 setTimeout(function() {
