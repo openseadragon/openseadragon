@@ -74,11 +74,8 @@ $.IIIFTileSource = function( options ){
                 if (!isNaN(cf) && cf > mf) { mf = cf; }
             }
         }
-        if ( mf < 0 ) {
-           options.maxLevel = Number(Math.ceil(Math.log(Math.max(this.width, this.height ), 2)));
-        } else { 
-           options.maxLevel = mf; 
-        }
+        if ( mf < 0 ) { options.maxLevel = Number(Math.ceil(Math.log(Math.max(this.width, this.height ), 2))); }
+        else { options.maxLevel = mf; }
     }   
      
     $.TileSource.apply( this, [ options ] );
