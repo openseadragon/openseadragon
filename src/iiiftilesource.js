@@ -65,16 +65,16 @@ $.IIIFTileSource = function( options ){
     //      to preserve backward compatibility.
     options.tileSize = this.tile_width;
 
-    if (! options.maxLevel) {
+    if (! options.maxLevel ) {
         var mf = -1;
-        if (this.scale_factor instanceof Array) {
-            for (var i = 0;i < this.scale_factor.length;i++)
+        if ( this.scale_factor instanceof Array ) {
+            for ( var i = 0; i < this.scale_factor.length; i++ )
             {
-                var cf = Number(this.scale_factor[i]);
-                if (!isNaN(cf) && cf > mf) { mf = cf; }
+                var cf = Number( this.scale_factor[i] );
+                if ( !isNaN(cf) && cf > mf ) { mf = cf; }
             }
         }
-        if ( mf < 0 ) { options.maxLevel = Number(Math.ceil(Math.log(Math.max(this.width, this.height ), 2))); }
+        if ( mf < 0 ) { options.maxLevel = Number( Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ))); }
         else { options.maxLevel = mf; }
     }
 
