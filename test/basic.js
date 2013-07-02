@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
 
 (function() {
     var viewer;
@@ -6,6 +6,8 @@
     module('Basic', {
         setup: function () {
             var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+
+            testLog.reset();
 
             viewer = OpenSeadragon({
                 id:            'example',
@@ -53,6 +55,9 @@
             ok(true, "The open-failed event should be fired when the source 404s");
 
             equal($(".openseadragon-message").length, 1, "Open failures should display a message");
+
+            ok(testLog.log.contains('["AJAX request returned %s: %s",404,"/test/data/not-a-real-file"]'),
+               "AJAX failures should be logged to the console");
 
             start();
         });
