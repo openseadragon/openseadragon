@@ -89,7 +89,7 @@
             error:  [],
             reset: function () {
                 for (var i in testLog) {
-                    if (testLog.hasOwnProperty(i) && 'length' in testLog[i]) {
+                    if (testLog.hasOwnProperty(i) && 'length' in testLog[i] && 'push' in testLog[i]) {
                         testLog[i].length = 0;
                     }
                 }
