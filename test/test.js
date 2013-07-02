@@ -106,7 +106,12 @@
             })(testLog[i]);
 
             testLog[i].contains = function (needle) {
-                return this.indexOf(needle) > -1;
+                for (var i = 0; i < this.length; i++) {
+                    if (this[i] == needle) {
+                        return true;
+                    }
+                }
+                return false;
             };
         }
     }
