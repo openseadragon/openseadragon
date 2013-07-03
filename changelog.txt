@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * JSHint tidying (#136)
 * Improved Ajax method (#149)
 * Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
+* Overhauled AJAX error reporting (#151)
 
 0.9.128:
 
