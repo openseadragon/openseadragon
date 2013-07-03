@@ -1,3 +1,5 @@
+/* global module, asyncTest, $, ok, equal, strictEqual, notEqual, start, test, Util, testLog */
+
 (function() {
 
     module("utils");
@@ -56,10 +58,33 @@
     asyncTest("makeAjaxRequest", function() {
         var timeWatcher = Util.timeWatcher();
 
-        OpenSeadragon.makeAjaxRequest('data/testpattern.dzi', function(xhr) {
-            ok(/deepzoom/.test(xhr.response), 'file loaded');
-            timeWatcher.done();
-        });
+        OpenSeadragon.makeAjaxRequest('data/testpattern.dzi',
+            function(xhr) {
+                equal(xhr.status, 200, 'Success callback called for HTTP 200');
+                ok(/deepzoom/.test(xhr.responseText), 'Success function called');
+                timeWatcher.done();
+            },
+            function(xhr) {
+                ok(false, 'Error callback should not be called');
+                timeWatcher.done();
+            }
+        );
+    });
+
+    asyncTest("makeAjaxRequest for invalid file", function() {
+        var timeWatcher = Util.timeWatcher();
+
+        OpenSeadragon.makeAjaxRequest('not-a-real-dzi-file',
+            function(xhr) {
+                ok(false, 'Success function should not be called for errors');
+                timeWatcher.done();
+            },
+            function(xhr) {
+                equal(xhr.status, 404, 'Error callback called for HTTP 404');
+                ok(true, 'Error function should be called for errors');
+                timeWatcher.done();
+            }
+        );
     });
 
     // ----------

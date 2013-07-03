@@ -1,17 +1,33 @@
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+
 (function() {
 
-    module("strings");
+    module("strings", {
+        setup: function () {
+            testLog.reset();
+        }
+    });
+
     test("getSubString", function() {
         equal(OpenSeadragon.getString("Errors.Dzi"),
             "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
             "Read sub-string");
     });
 
+    test("getStringWithPlaceholders", function() {
+        equal(OpenSeadragon.getString("Errors.Open-Failed", "foo", "bar"),
+              "Unable to open foo: bar",
+              "String placeholder replacement");
+    });
+
     test("getInvalidString", function() {
-        equal(OpenSeadragon.getString("Greeting"), "",
-            "Handled unset string key");
-        equal(OpenSeadragon.getString("Errors"), "",
-            "Handled requesting parent key");
+        equal(OpenSeadragon.getString("Greeting"), "", "Handled unset string key");
+        ok(testLog.debug.contains('["Untranslated source string:","Greeting"]'),
+                                  'Invalid string keys are logged');
+
+        equal(OpenSeadragon.getString("Errors"), "", "Handled requesting parent key");
+        ok(testLog.debug.contains('["Untranslated source string:","Errors"]'),
+                                  'Invalid string parent keys are logged');
     });
 
     test("setString", function() {

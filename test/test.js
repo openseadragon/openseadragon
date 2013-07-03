@@ -1,3 +1,5 @@
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+
 (function() {
 
     // ----------
@@ -30,16 +32,11 @@
                 .simulate('mouseup', event);
         },
 
-        resetDom: function () {
-            if ($('#exampleNavigator').is(':ui-dialog')) {
-                $('#exampleNavigator').dialog('destroy');
-            }
-            $("#exampleNavigator").remove();
-            $(".navigator").remove();
-            $("#example").empty();
-            $("#tallexample").empty();
-            $("#wideexample").empty();
-            $("#example").parent().append('<div id="exampleNavigator"></div>');
+        initializeTestDOM: function () {
+            $("#qunit-fixture")
+                .append('<div><div id="example"></div><div id="exampleNavigator"></div></div>')
+                .append('<div id="wideexample"></div>')
+                .append('<div id="tallexample"></div>');
         },
 
         equalsWithVariance: function (value1, value2, variance) {
@@ -74,5 +71,51 @@
 
     };
 
+    /*
+        Test console log capture
+
+        1. Only the OpenSeadragon.console logger is touched
+        2. All log messages are stored in window.testLog in arrays keyed on the logger name (e.g. log,
+           warning, error, etc.) as JSON-serialized strings to simplify comparisons
+        3. The captured log arrays have a custom contains() method for ease of testing
+        4. testLog.reset() will clear all of the message arrays, intended for use in test setup routines
+     */
+    var testConsole = window.testConsole = {},
+        testLog = window.testLog = {
+            log:    [],
+            debug:  [],
+            info:   [],
+            warn:   [],
+            error:  [],
+            reset: function () {
+                for (var i in testLog) {
+                    if (testLog.hasOwnProperty(i) && 'length' in testLog[i] && 'push' in testLog[i]) {
+                        testLog[i].length = 0;
+                    }
+                }
+            }
+        };
+
+    for (var i in testLog) {
+        if (testLog.hasOwnProperty(i) && testLog[i].push) {
+            testConsole[i] = (function (arr) {
+                return function () {
+                    var args = Array.prototype.slice.call(arguments, 0); // Coerce to true Array
+                    arr.push(JSON.stringify(args)); // Store as JSON to avoid tedious array-equality tests
+                };
+            })(testLog[i]);
+
+            testLog[i].contains = function (needle) {
+                for (var i = 0; i < this.length; i++) {
+                    if (this[i] == needle) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+        }
+    }
+
+    OpenSeadragon.console = testConsole;
 })();
 
