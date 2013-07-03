@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * On IE, ajax errors would cause an exception to be thrown; fixed (#144)
 * JSHint tidying (#136)
 * Improved Ajax method (#149)
+* Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
 
 0.9.128:
 
