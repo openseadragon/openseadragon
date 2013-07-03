@@ -293,6 +293,11 @@ $.TileSource.prototype = {
 
         callback = function( data ){
             var $TileSource = $.TileSource.determineType( _this, data, url );
+            if ( !$TileSource ) {
+                _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
+                return;
+            }
+
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
             readySource = new $TileSource( options );
             _this.ready = true;
@@ -315,6 +320,11 @@ $.TileSource.prototype = {
             $.makeAjaxRequest( url, function( xhr ) {
                 var data = processResponse( xhr );
                 callback( data );
+            }, function ( xhr ) {
+                _this.raiseEvent( 'open-failed', {
+                    message: "HTTP " + xhr.status + " attempting to load TileSource",
+                    source: url
+                });
             });
         }
 
@@ -458,6 +468,8 @@ $.TileSource.determineType = function( tileSource, data, url ){
             return OpenSeadragon[ property ];
         }
     }
+
+    $.console.error( "No TileSource was able to open %s %s", url, data );
 };
 
 

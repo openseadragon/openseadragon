@@ -1,3 +1,5 @@
+/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
+
 QUnit.config.autostart = false;
 
 (function () {
@@ -14,14 +16,18 @@ QUnit.config.autostart = false;
         topNavigatorClickAdjustment;
 
     module("navigator", {
-        setup:function () {
-            Util.resetDom();
+        setup: function () {
+            Util.initializeTestDOM();
             resetTestVariables();
             $(document).scrollTop(0);
             $(document).scrollLeft(0);
         },
-        teardown:function () {
-            Util.resetDom();
+        teardown: function () {
+            // jQuery UI creates its controls outside the normal DOM hierarchy which QUnit cleans up:
+            if ($('#exampleNavigator').is(':ui-dialog')) {
+                $('#exampleNavigator').dialog('destroy');
+            }
+
             resetTestVariables();
         }
     });
@@ -31,7 +37,7 @@ QUnit.config.autostart = false;
     });
 
     var resetTestVariables = function () {
-        if (viewer != null) {
+        if (viewer) {
             viewer.close();
         }
         displayRegion = null;
@@ -125,11 +131,11 @@ QUnit.config.autostart = false;
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
                     !viewer.drawer.needsUpdate() &&
                     currentDisplayWidth > 0 &&
-                    Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, .0001) &&
-                    Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, .0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, .0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, .0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, .0001);
+                    Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
+                    Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, 0.0001);
             }
             catch (err) {
                 //Ignore.  Subsequent code will try again shortly
@@ -138,7 +144,7 @@ QUnit.config.autostart = false;
                 count++;
                 setTimeout(function () {
                     waitForViewer(handler, count, currentDisplayRegionLeft, currentDisplayWidth);
-                }, 100)
+                }, 100);
             }
             else {
                 if (count === 40) {
@@ -201,21 +207,21 @@ QUnit.config.autostart = false;
                 expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             if (viewer.viewport.getBounds().width < 1) {
-                Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, .04, ' Viewer at ' + theContentCorner + ', x coord');
+                Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, 0.04, ' Viewer at ' + theContentCorner + ', x coord');
             }
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
-                Util.assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, .04, ' Viewer at ' + theContentCorner + ', y coord');
+                Util.assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
             }
-        }
+        };
     };
 
     var assessViewerInCenter = function () {
-        var yPositionVariance = .04;
+        var yPositionVariance = 0.04;
         if (viewer.source.aspectRatio < 1) {
             yPositionVariance = yPositionVariance / viewer.source.aspectRatio;
         }
         Util.assessNumericValue(1 / viewer.source.aspectRatio / 2, viewer.viewport.getCenter().y, yPositionVariance, ' Viewer at center, y coord');
-        Util.assessNumericValue(.5, viewer.viewport.getCenter().x, .4, ' Viewer at center, x coord');
+        Util.assessNumericValue(0.5, viewer.viewport.getCenter().x, 0.4, ' Viewer at center, x coord');
     };
 
     var clickOnNavigator = function (theContentCorner) {
@@ -239,7 +245,7 @@ QUnit.config.autostart = false;
                 yPos = contentStartFromTop + displayRegionHeight;
             }
             simulateNavigatorClick(viewer.navigator, xPos, yPos);
-        }
+        };
     };
 
     var dragNavigatorBackToCenter = function () {
@@ -354,11 +360,12 @@ QUnit.config.autostart = false;
                      clientX:1,
                      clientY:1
                  };
-                mainViewerElement.simulate('blur', event);
+
+                $("#" + seadragonProperties.id).simulate('blur', event);
+
                 if (testProperties.expectedAutoFade) {
                     setTimeout(assessAutoFadeTriggered,autoFadeWaitTime);
-                }
-                else {
+                } else {
                     setTimeout(assessAutoFadeDisabled,autoFadeWaitTime);
                 }
             }
