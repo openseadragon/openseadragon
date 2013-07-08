@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Improved Ajax method (#149)
 * Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
 * Overhauled AJAX error reporting (#151)
+* Fixed: navigator image not updating when base zoom image is changed (#147)
 
 0.9.128:
 
