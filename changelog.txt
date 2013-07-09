@@ -1,19 +1,19 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.129: (In Progress)
+0.9.129:
 
+* Fixed: navigator image not updating when base zoom image is changed (#147)
+* Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
+* On IE, ajax errors would cause an exception to be thrown; fixed (#144)
+* Faster and more consistent millisecond getter (#138)
 * Fixed an error when using navPrevNextWrap on single images (#135)
 * Various fixes to our timer handling (#133)
 * Now generating source map for openseadragon.min.js (#51)
-* Faster and more consistent millisecond getter (#138)
 * Fix for calculating overlay width / height (#142)
-* On IE, ajax errors would cause an exception to be thrown; fixed (#144)
 * JSHint tidying (#136)
 * Improved Ajax method (#149)
-* Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
 * Overhauled AJAX error reporting (#151)
-* Fixed: navigator image not updating when base zoom image is changed (#147)
 
 0.9.128:
 
