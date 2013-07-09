@@ -789,7 +789,13 @@
             event.changedTouches.length == 1 ){
 
             THIS[ tracker.hash ].lastTouch = null;
-            onMouseUp( tracker, event.changedTouches[ 0 ] );
+            
+            if ($.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9) {
+                onMouseUpIE(tracker, event);
+            } else {
+                onMouseUpWindow(tracker, event);
+            }
+            
             onMouseOut( tracker, event.changedTouches[ 0 ] );
         }
         if( event.touches.length + event.changedTouches.length == 2 ){
