@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 0.9.130: (In progress)
 
+* OpenSeadragon.now() returned undefined the first time; fixed
+
 0.9.129:
 
 * Fixed: navigator image not updating when base zoom image is changed (#147)
