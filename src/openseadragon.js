@@ -961,6 +961,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
           } else {
             $.now = function() { return new Date().getTime(); };
           }
+
+          return $.now();
         },
 
 
