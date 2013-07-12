@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 0.9.130: (In progress)
 
 * OpenSeadragon.now() returned undefined the first time; fixed
+* onTouchEnd did not call the correct mouse up handler; fixed (#159)
 
 0.9.129:
 
