@@ -176,6 +176,11 @@
                 this.size = $.getElementSize( element );
             }
 
+            if (this.zoomHandler) {
+                this.zoomHandler(this.position, this.size, element);
+                return;
+            }
+
             position = this.position;
             size     = this.size;
 

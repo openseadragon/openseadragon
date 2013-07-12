@@ -430,7 +430,10 @@ $.Drawer.prototype = {
             $.OverlayPlacement[overlay.placement.toUpperCase()]
         );
     }else{
-        return new $.Overlay( element, rect );
+        var newOverlay = new $.Overlay(element, rect);
+        if (overlay.zoomHandler)
+            newOverlay.zoomHandler = overlay.zoomHandler;
+        return newOverlay;
     }
 
 }
