@@ -144,7 +144,7 @@ $.Drawer = function( options ) {
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
 
-            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ]);
+            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ], this.source.dimensions);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
             //TODO
@@ -168,8 +168,12 @@ $.Drawer.prototype = {
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
+     * @param {function} onDraw - A callback that is called when the overlay 
+     *      needs to be drawn. It is passed position, size and element.
+     * @param {boolean} useTransform - Overlay will be scaled and moved using 
+     *      the SVG transform argument. Overlay should be a SVG g element.
      */
-    addOverlay: function( element, location, placement ) {
+    addOverlay: function( element, location, placement, onDraw, useTransform ) {
         element = $.getElement( element );
 
         if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
@@ -177,7 +181,14 @@ $.Drawer.prototype = {
             return;
         }
 
-        this.overlays.push( new $.Overlay( element, location, placement ) );
+        this.overlays.push( new $.Overlay({
+            element: element,
+            location: location,
+            placement: placement,
+            onDraw: onDraw,
+            useTransform: useTransform,
+            imageFullSize: this.source.dimensions
+        }) );
         this.updateAgain = true;
         if( this.viewer ){
             this.viewer.raiseEvent( 'add-overlay', {
@@ -390,7 +401,7 @@ $.Drawer.prototype = {
  * @private
  * @inner
  */
- function addOverlayFromConfiguration( drawer, overlay ){
+ function addOverlayFromConfiguration( drawer, overlay, dimensions ){
 
     var element  = null,
         rect = ( overlay.height && overlay.width ) ? new $.Rect(
@@ -423,17 +434,24 @@ $.Drawer.prototype = {
         //we need to translate to viewport coordinates
         rect = drawer.viewport.imageToViewportRectangle( rect );
     }
+    
     if( overlay.placement ){
-        return new $.Overlay(
-            element,
-            drawer.viewport.pointFromPixel(rect),
-            $.OverlayPlacement[overlay.placement.toUpperCase()]
-        );
+        return new $.Overlay({
+            element: element,
+            location: drawer.viewport.pointFromPixel(rect),
+            placement: $.OverlayPlacement[overlay.placement.toUpperCase()],
+            onDraw: overlay.onDraw,
+            useTransform: overlay.useTransform,
+            imageFullSize: dimensions
+        });
     }else{
-        var newOverlay = new $.Overlay(element, rect);
-        if (overlay.zoomHandler)
-            newOverlay.zoomHandler = overlay.zoomHandler;
-        return newOverlay;
+        return new $.Overlay({
+            element: element,
+            location: rect,
+            onDraw: overlay.onDraw,
+            useTransform: overlay.useTransform,
+            imageFullSize: dimensions
+        });
     }
 
 }

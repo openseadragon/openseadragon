@@ -57,27 +57,42 @@
      * @class
      */
     $.Overlay = function( element, location, placement ) {
-        this.element    = element;
-        this.scales     = location instanceof $.Rect;
+
+        var options;
+        if( $.isPlainObject( element ) ){
+            options = element;
+        } else{
+            options = {
+                element: element,
+                location: location,
+                placement: placement
+            };
+        }
+        
+        this.element    = options.element;
+        this.scales     = options.location instanceof $.Rect;
         this.bounds     = new $.Rect(
-            location.x,
-            location.y,
-            location.width,
-            location.height
+            options.location.x,
+            options.location.y,
+            options.location.width,
+            options.location.height
         );
         this.position   = new $.Point(
-            location.x,
-            location.y
+            options.location.x,
+            options.location.y
         );
         this.size       = new $.Point(
-            location.width,
-            location.height
+            options.location.width,
+            options.location.height
         );
-        this.style      = element.style;
+        this.style      = options.element.style;
         // rects are always top-left
-        this.placement  = location instanceof $.Point ?
-            placement :
+        this.placement  = options.location instanceof $.Point ?
+            options.placement :
             $.OverlayPlacement.TOP_LEFT;
+        this.onDraw = options.onDraw;
+        this.useTransform = options.useTransform;
+        this.imageFullSize = options.imageFullSize;
     };
 
     $.Overlay.prototype = {
@@ -176,27 +191,35 @@
                 this.size = $.getElementSize( element );
             }
 
-            if (this.zoomHandler) {
-                this.zoomHandler(this.position, this.size, element);
-                return;
-            }
-
             position = this.position;
             size     = this.size;
 
             this.adjust( position, size );
 
-            position = position.apply( Math.floor );
-            size     = size.apply( Math.ceil );
+            if(this.useTransform){
+                var scale = Math.min(this.size.x / this.imageFullSize.x, this.size.y / this.imageFullSize.y);
 
-            style.left     = position.x + "px";
-            style.top      = position.y + "px";
-            style.position = "absolute";
-            style.display  = 'block';
+                var attrValue = 'translate(' + position.x + ', ' + position.y + ') scale(' + scale + ')';
+                // we expect the first element to be the g element of the SVG element that we can transform
+                element.firstElementChild.setAttribute('transform', attrValue);
+            }else{
+                position = position.apply( Math.floor );
+                size     = size.apply( Math.ceil );
 
-            if ( scales ) {
-                style.width  = size.x + "px";
-                style.height = size.y + "px";
+                style.left     = position.x + "px";
+                style.top      = position.y + "px";
+                style.position = "absolute";
+                style.display  = 'block';
+
+                if ( scales ) {
+                    style.width  = size.x + "px";
+                    style.height = size.y + "px";
+                }
+            }
+
+            // call the onDraw callback if there is one to allow them to dping 
+            if (this.onDraw) {
+                this.onDraw(this.position, this.size, element);
             }
         },
 
