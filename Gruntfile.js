@@ -191,6 +191,10 @@ module.exports = function(grunt) {
     // Copies the contents of the build folder into the release folder.
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
+            if (subdir === 'releases') {
+                return;
+            }
+
             var dest = releaseRoot
                 + (subdir ? subdir + "/" : '/')
                 + filename;
