@@ -168,8 +168,6 @@ module.exports = function(grunt) {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
             grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
         });
-
-        grunt.file.copy("changelog.txt", "build/changelog.txt");
     });
 
     // ----------
