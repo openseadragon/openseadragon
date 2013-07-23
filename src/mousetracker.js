@@ -663,7 +663,7 @@
      * @private
      * @inner
      */
-    function onMouseDown( tracker, event ) {
+    function onMouseDown( tracker, event, noCapture ) {
         var delegate = THIS[ tracker.hash ],
             propagate;
 
@@ -693,6 +693,10 @@
             $.cancelEvent( event );
         }
 
+        if ( noCapture ) {
+            return;
+        }
+            
         if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
              !IS_CAPTURING ) {
             captureMouse( tracker );
@@ -719,7 +723,9 @@
 
             THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];
             onMouseOver( tracker, event.changedTouches[ 0 ] );
-            onMouseDown( tracker, event.touches[ 0 ] );
+            // call with no capture as the onMouseMove will 
+            // be triggered by onTouchMove
+            onMouseDown( tracker, event.touches[ 0 ], true );
         }
 
         if( event.touches.length == 2 ){
@@ -790,7 +796,9 @@
 
             THIS[ tracker.hash ].lastTouch = null;
             
-            onMouseUpWindow( tracker, event.changedTouches[ 0 ] );
+            // call with no release, as the mouse events are 
+            // not registered in onTouchStart
+            onMouseUpWindow( tracker, event.changedTouches[ 0 ], true );
             onMouseOut( tracker, event.changedTouches[ 0 ] );
         }
         if( event.touches.length + event.changedTouches.length == 2 ){
@@ -849,10 +857,15 @@
      * @private
      * @inner
      */
-    function onMouseUpWindow( tracker, event ) {
+    function onMouseUpWindow( tracker, event, noRelease ) {
         if ( ! THIS[ tracker.hash ].insideElement ) {
             onMouseUp( tracker, event );
         }
+
+        if (noRelease) {
+            return;
+        }
+
         releaseMouse( tracker );
     }
 
