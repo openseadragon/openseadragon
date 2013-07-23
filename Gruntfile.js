@@ -58,7 +58,7 @@ module.exports = function(grunt) {
             build: ["build"],
             package: [packageDir],
             release: {
-                src: [releaseRoot + '*', '!' + releaseRoot + 'releases'],
+                src: [releaseRoot],
                 options: {
                     force: true
                 }
