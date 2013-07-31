@@ -1132,7 +1132,7 @@ function openTileSource( viewer, source ) {
     }
 
     _this.canvas.innerHTML = "";
-    THIS[ _this.hash ].prevContainerSize = $._getSafeElemSize( _this.container );
+    THIS[ _this.hash ].prevContainerSize = _getSafeElemSize( _this.container );
 
 
     if( _this.collectionMode ){
@@ -1525,7 +1525,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    containerSize = $._getSafeElemSize( viewer.container );
+    containerSize = _getSafeElemSize( viewer.container );
     if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
         // maintain image position
         viewer.viewport.resize( containerSize, true );
