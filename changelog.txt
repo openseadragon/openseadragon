@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * OpenSeadragon.now() returned undefined the first time; fixed
 * onTouchEnd did not call the correct mouse up handler; fixed (#159)
+* Touch events no longer capture mouse (was causing issues on devices that support both) (#168)
 
 0.9.129:
 
