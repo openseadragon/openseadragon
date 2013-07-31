@@ -1113,9 +1113,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
  * @return {[NaN]}
  * @private
  */
-function _getSafeElemSize () {
-        var _nElementSize = $.getElementSize();
-        return isNaN(_nElementSize) ? 0 : _nElementSize;
+function _getSafeElemSize (oElement) {
+        var _oElementSize = $.getElementSize(oElement);
+
+        return new $.Point (
+            ( _oElementSize.x === 0 ? 1 : _oElementSize.x ),
+            ( _oElementSize.y === 0 ? 1 : _oElementSize.y )
+        );
 }
 
 /**
