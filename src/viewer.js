@@ -1114,12 +1114,12 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
  * @private
  */
 function _getSafeElemSize (oElement) {
-        var _oElementSize = $.getElementSize(oElement);
+        oElement = $.getElement( oElement );
 
-        return new $.Point (
-            ( _oElementSize.x === 0 ? 1 : _oElementSize.x ),
-            ( _oElementSize.y === 0 ? 1 : _oElementSize.y )
-        );
+        return new $.Point(
+                (oElement.clientWidth === 0 ? 1 : oElement.clientWidth),
+                (oElement.clientHeight === 0 ? 1 : oElement.clientHeight)
+                );
 }
 
 /**
