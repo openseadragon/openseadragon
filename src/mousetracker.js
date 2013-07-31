@@ -789,7 +789,8 @@
             event.changedTouches.length == 1 ){
 
             THIS[ tracker.hash ].lastTouch = null;
-            onMouseUp( tracker, event.changedTouches[ 0 ] );
+            
+            onMouseUpWindow( tracker, event.changedTouches[ 0 ] );
             onMouseOut( tracker, event.changedTouches[ 0 ] );
         }
         if( event.touches.length + event.changedTouches.length == 2 ){
