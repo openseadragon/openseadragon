@@ -91,7 +91,6 @@
             options.placement :
             $.OverlayPlacement.TOP_LEFT;
         this.onDraw = options.onDraw;
-        this.useTransform = options.useTransform;
         this.imageFullSize = options.imageFullSize;
     };
 
@@ -196,16 +195,13 @@
 
             this.adjust( position, size );
 
-            if(this.useTransform){
-                var scale = Math.min(this.size.x / this.imageFullSize.x, this.size.y / this.imageFullSize.y);
+            position = position.apply( Math.floor );
+            size     = size.apply( Math.ceil );
 
-                var attrValue = 'translate(' + position.x + ', ' + position.y + ') scale(' + scale + ')';
-                // we expect the first element to be the g element of the SVG element that we can transform
-                element.firstElementChild.setAttribute('transform', attrValue);
-            }else{
-                position = position.apply( Math.floor );
-                size     = size.apply( Math.ceil );
-
+            // call the onDraw callback if there is one to allow them to dping 
+            if (this.onDraw) {
+                this.onDraw(this.position, this.size, element);
+            } else {
                 style.left     = position.x + "px";
                 style.top      = position.y + "px";
                 style.position = "absolute";
@@ -215,11 +211,6 @@
                     style.width  = size.x + "px";
                     style.height = size.y + "px";
                 }
-            }
-
-            // call the onDraw callback if there is one to allow them to dping 
-            if (this.onDraw) {
-                this.onDraw(this.position, this.size, element);
             }
         },
 

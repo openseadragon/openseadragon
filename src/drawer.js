@@ -144,7 +144,7 @@ $.Drawer = function( options ) {
     for( i = 0; i < this.overlays.length; i++ ){
         if( $.isPlainObject( this.overlays[ i ] ) ){
 
-            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ], this.source.dimensions);
+            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ]);
 
         } else if ( $.isFunction( this.overlays[ i ] ) ){
             //TODO
@@ -161,20 +161,31 @@ $.Drawer.prototype = {
      * highlighting words or areas of interest on an image or other zoomable
      * interface.
      * @method
-     * @param {Element|String} element - A reference to an element or an id for
-     *      the element which will overlayed.
+     * @param {Element|String|Object} element - A reference to an element or an id for
+     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
-     * @param {function} onDraw - A callback that is called when the overlay 
-     *      needs to be drawn. It is passed position, size and element.
-     * @param {boolean} useTransform - Overlay will be scaled and moved using 
-     *      the SVG transform argument. Overlay should be a SVG g element.
+     * @param {function} onDraw - If supplied the callback is called when the overlay 
+     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      It is passed position, size and element.
      */
-    addOverlay: function( element, location, placement, onDraw, useTransform ) {
-        element = $.getElement( element );
+    addOverlay: function( element, location, placement, onDraw ) {
+        var options;
+        if( $.isPlainObject( element ) ){
+            options = element;
+        } else {
+            options = {
+                element: element,
+                location: location,
+                placement: placement,
+                onDraw: onDraw
+            };
+        }
+
+        element = $.getElement(options.element);
 
         if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
@@ -183,19 +194,17 @@ $.Drawer.prototype = {
 
         this.overlays.push( new $.Overlay({
             element: element,
-            location: location,
-            placement: placement,
-            onDraw: onDraw,
-            useTransform: useTransform,
-            imageFullSize: this.source.dimensions
+            location: options.location,
+            placement: options.placement,
+            onDraw: onDraw
         }) );
         this.updateAgain = true;
         if( this.viewer ){
             this.viewer.raiseEvent( 'add-overlay', {
                 viewer: this.viewer,
                 element: element,
-                location: location,
-                placement: placement
+                location: options.location,
+                placement: options.placement
             });
         }
         return this;
@@ -401,7 +410,7 @@ $.Drawer.prototype = {
  * @private
  * @inner
  */
- function addOverlayFromConfiguration( drawer, overlay, dimensions ){
+ function addOverlayFromConfiguration( drawer, overlay ){
 
     var element  = null,
         rect = ( overlay.height && overlay.width ) ? new $.Rect(
@@ -440,17 +449,13 @@ $.Drawer.prototype = {
             element: element,
             location: drawer.viewport.pointFromPixel(rect),
             placement: $.OverlayPlacement[overlay.placement.toUpperCase()],
-            onDraw: overlay.onDraw,
-            useTransform: overlay.useTransform,
-            imageFullSize: dimensions
+            onDraw: overlay.onDraw
         });
     }else{
         return new $.Overlay({
             element: element,
             location: rect,
-            onDraw: overlay.onDraw,
-            useTransform: overlay.useTransform,
-            imageFullSize: dimensions
+            onDraw: overlay.onDraw
         });
     }
 
