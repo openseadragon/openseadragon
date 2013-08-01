@@ -1109,17 +1109,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
 
 /**
- * [_getSafeElemSize returns getElementSize(), but refuses to return NaN]
- * @return {[NaN]}
+ * _getSafeElemSize returns getElementSize(), but refuses to return 0 for X or y,
+ * which was causing some calling operations in updateOnve and openTileSource to
+ * return NaN.
+ * @returns {point}
  * @private
  */
 function _getSafeElemSize (oElement) {
-        oElement = $.getElement( oElement );
+    oElement = $.getElement( oElement );
 
-        return new $.Point(
-                (oElement.clientWidth === 0 ? 1 : oElement.clientWidth),
-                (oElement.clientHeight === 0 ? 1 : oElement.clientHeight)
-                );
+    return new $.Point(
+        (oElement.clientWidth === 0 ? 1 : oElement.clientWidth),
+        (oElement.clientHeight === 0 ? 1 : oElement.clientHeight)
+    );
 }
 
 /**
