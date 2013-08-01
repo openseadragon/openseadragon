@@ -58,7 +58,7 @@ module.exports = function(grunt) {
             build: ["build"],
             package: [packageDir],
             release: {
-                src: [releaseRoot + '*', '!' + releaseRoot + 'releases'],
+                src: [releaseRoot],
                 options: {
                     force: true
                 }
@@ -168,8 +168,6 @@ module.exports = function(grunt) {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
             grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
         });
-
-        grunt.file.copy("changelog.txt", "build/changelog.txt");
     });
 
     // ----------
@@ -191,6 +189,10 @@ module.exports = function(grunt) {
     // Copies the contents of the build folder into the release folder.
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
+            if (subdir === 'releases') {
+                return;
+            }
+
             var dest = releaseRoot
                 + (subdir ? subdir + "/" : '/')
                 + filename;

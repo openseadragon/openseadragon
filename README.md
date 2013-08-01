@@ -6,7 +6,7 @@ See it in action and get started using it at http://openseadragon.github.io/.
 
 ## Stable Builds
 
-See our [releases page](http://openseadragon.github.io/releases/).
+See the [GitHub releases page](https://github.com/openseadragon/openseadragon/releases).
 
 ## Development
 
