@@ -161,30 +161,50 @@ $.Drawer.prototype = {
      * highlighting words or areas of interest on an image or other zoomable
      * interface.
      * @method
-     * @param {Element|String} element - A reference to an element or an id for
-     *      the element which will overlayed.
+     * @param {Element|String|Object} element - A reference to an element or an id for
+     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
+     * @param {function} onDraw - If supplied the callback is called when the overlay 
+     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      It is passed position, size and element.
      */
-    addOverlay: function( element, location, placement ) {
-        element = $.getElement( element );
+    addOverlay: function( element, location, placement, onDraw ) {
+        var options;
+        if( $.isPlainObject( element ) ){
+            options = element;
+        } else {
+            options = {
+                element: element,
+                location: location,
+                placement: placement,
+                onDraw: onDraw
+            };
+        }
+
+        element = $.getElement(options.element);
 
         if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
             return;
         }
 
-        this.overlays.push( new $.Overlay( element, location, placement ) );
+        this.overlays.push( new $.Overlay({
+            element: element,
+            location: options.location,
+            placement: options.placement,
+            onDraw: options.onDraw
+        }) );
         this.updateAgain = true;
         if( this.viewer ){
             this.viewer.raiseEvent( 'add-overlay', {
                 viewer: this.viewer,
                 element: element,
-                location: location,
-                placement: placement
+                location: options.location,
+                placement: options.placement
             });
         }
         return this;
@@ -423,14 +443,20 @@ $.Drawer.prototype = {
         //we need to translate to viewport coordinates
         rect = drawer.viewport.imageToViewportRectangle( rect );
     }
+    
     if( overlay.placement ){
-        return new $.Overlay(
-            element,
-            drawer.viewport.pointFromPixel(rect),
-            $.OverlayPlacement[overlay.placement.toUpperCase()]
-        );
+        return new $.Overlay({
+            element: element,
+            location: drawer.viewport.pointFromPixel(rect),
+            placement: $.OverlayPlacement[overlay.placement.toUpperCase()],
+            onDraw: overlay.onDraw
+        });
     }else{
-        return new $.Overlay( element, rect );
+        return new $.Overlay({
+            element: element,
+            location: rect,
+            onDraw: overlay.onDraw
+        });
     }
 
 }

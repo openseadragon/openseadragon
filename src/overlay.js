@@ -57,27 +57,40 @@
      * @class
      */
     $.Overlay = function( element, location, placement ) {
-        this.element    = element;
-        this.scales     = location instanceof $.Rect;
+
+        var options;
+        if( $.isPlainObject( element ) ){
+            options = element;
+        } else{
+            options = {
+                element: element,
+                location: location,
+                placement: placement
+            };
+        }
+        
+        this.element    = options.element;
+        this.scales     = options.location instanceof $.Rect;
         this.bounds     = new $.Rect(
-            location.x,
-            location.y,
-            location.width,
-            location.height
+            options.location.x,
+            options.location.y,
+            options.location.width,
+            options.location.height
         );
         this.position   = new $.Point(
-            location.x,
-            location.y
+            options.location.x,
+            options.location.y
         );
         this.size       = new $.Point(
-            location.width,
-            location.height
+            options.location.width,
+            options.location.height
         );
-        this.style      = element.style;
+        this.style      = options.element.style;
         // rects are always top-left
-        this.placement  = location instanceof $.Point ?
-            placement :
+        this.placement  = options.location instanceof $.Point ?
+            options.placement :
             $.OverlayPlacement.TOP_LEFT;
+        this.onDraw = options.onDraw;
     };
 
     $.Overlay.prototype = {
@@ -184,14 +197,20 @@
             position = position.apply( Math.floor );
             size     = size.apply( Math.ceil );
 
-            style.left     = position.x + "px";
-            style.top      = position.y + "px";
-            style.position = "absolute";
-            style.display  = 'block';
+            // call the onDraw callback if there is one to allow, this allows someone to overwrite
+            // the drawing/positioning/sizing of the overlay
+            if (this.onDraw) {
+                this.onDraw(position, size, element);
+            } else {
+                style.left     = position.x + "px";
+                style.top      = position.y + "px";
+                style.position = "absolute";
+                style.display  = 'block';
 
-            if ( scales ) {
-                style.width  = size.x + "px";
-                style.height = size.y + "px";
+                if ( scales ) {
+                    style.width  = size.x + "px";
+                    style.height = size.y + "px";
+                }
             }
         },
 
