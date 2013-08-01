@@ -196,7 +196,7 @@ $.Drawer.prototype = {
             element: element,
             location: options.location,
             placement: options.placement,
-            onDraw: onDraw
+            onDraw: options.onDraw
         }) );
         this.updateAgain = true;
         if( this.viewer ){

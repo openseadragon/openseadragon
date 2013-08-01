@@ -91,7 +91,6 @@
             options.placement :
             $.OverlayPlacement.TOP_LEFT;
         this.onDraw = options.onDraw;
-        this.imageFullSize = options.imageFullSize;
     };
 
     $.Overlay.prototype = {
@@ -198,9 +197,10 @@
             position = position.apply( Math.floor );
             size     = size.apply( Math.ceil );
 
-            // call the onDraw callback if there is one to allow them to dping 
+            // call the onDraw callback if there is one to allow, this allows someone to overwrite
+            // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
-                this.onDraw(this.position, this.size, element);
+                this.onDraw(position, size, element);
             } else {
                 style.left     = position.x + "px";
                 style.top      = position.y + "px";
