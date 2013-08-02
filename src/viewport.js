@@ -235,6 +235,13 @@ $.Viewport.prototype = {
      * @function
      */
     getCenter: function( current ) {
+        //Patch: if centerspring is NaN use home bonds center instead. Only used if container div is hidden.
+        //To Do: Make it smarter by storing last good position or refactoring so hidden div doesn't return NaN
+        //results
+        homeCenter = this.homeBounds.getCenter();
+        currentX = isNaN(this.centerSpringX.current.value) ? homeCenter.x : this.centerSpringX.current.value;
+        currentY = isNaN(this.centerSpringY.current.value) ? homeCenter.y : this.centerSpringY.current.value;
+
         var centerCurrent = new $.Point(
                 this.centerSpringX.current.value,
                 this.centerSpringY.current.value
@@ -567,9 +574,12 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     resize: function( newContainerSize, maintain ) {
+        //Set current size to 1 if 0 (hidden div)
+        var currentsize = this.containerSize.x === 0 ? 1 : this.containerSize.x;
+
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
-            widthDeltaFactor = newContainerSize.x / this.containerSize.x;
+            widthDeltaFactor = newContainerSize.x / currentsize;
 
         this.containerSize = new $.Point(
             newContainerSize.x,
@@ -577,8 +587,14 @@ $.Viewport.prototype = {
         );
 
         if (maintain) {
-            newBounds.width  = oldBounds.width * widthDeltaFactor;
-            newBounds.height = newBounds.width / this.getAspectRatio();
+            newBounds.width  = isNaN(oldBounds.width * widthDeltaFactor) ? 0 : oldBounds.width * widthDeltaFactor;
+            newBounds.height = isNaN(newBounds.width / this.getAspectRatio()) ? 0 : newBounds.width / this.getAspectRatio();
+        }
+
+        //Still getting NaN results when restoring from hidden div, this resets to homebounds.
+        //ToDo: figure out how to stop NaN results when div is hidden.
+        if(isNaN(newBounds.width) || isNaN(newBounds.height) || isNaN(newBounds.x) || isNaN(newBounds.y)){
+            newBounds = this.getHomeBounds();
         }
 
         if( this.viewer ){
