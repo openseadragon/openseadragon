@@ -1109,10 +1109,10 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
 
 /**
- * _getSafeElemSize returns getElementSize(), but refuses to return 0 for X or y,
- * which was causing some calling operations in updateOnve and openTileSource to
+ * _getSafeElemSize is like getElementSize(), but refuses to return 0 for x or y,
+ * which was causing some calling operations in updateOnce and openTileSource to
  * return NaN.
- * @returns {point}
+ * @returns {Point}
  * @private
  */
 function _getSafeElemSize (oElement) {

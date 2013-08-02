@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * onTouchEnd did not call the correct mouse up handler; fixed (#159)
 * Touch events no longer capture mouse (was causing issues on devices that support both) (#168)
 * You can now provide an onDraw function for overlays to do custom overlay manipulation (#160)
+* Hiding and restoring broke the viewer; fixed (#177)
 
 0.9.129:
 
