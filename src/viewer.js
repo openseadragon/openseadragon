@@ -1107,6 +1107,23 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     }
 });
 
+
+/**
+ * _getSafeElemSize returns getElementSize(), but refuses to return 0 for X or y,
+ * which was causing some calling operations in updateOnve and openTileSource to
+ * return NaN.
+ * @returns {point}
+ * @private
+ */
+function _getSafeElemSize (oElement) {
+    oElement = $.getElement( oElement );
+
+    return new $.Point(
+        (oElement.clientWidth === 0 ? 1 : oElement.clientWidth),
+        (oElement.clientHeight === 0 ? 1 : oElement.clientHeight)
+    );
+}
+
 /**
  * @function
  * @private
@@ -1121,7 +1138,7 @@ function openTileSource( viewer, source ) {
     }
 
     _this.canvas.innerHTML = "";
-    THIS[ _this.hash ].prevContainerSize = $.getElementSize( _this.container );
+    THIS[ _this.hash ].prevContainerSize = _getSafeElemSize( _this.container );
 
 
     if( _this.collectionMode ){
@@ -1514,7 +1531,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    containerSize = $.getElementSize( viewer.container );
+    containerSize = _getSafeElemSize( viewer.container );
     if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
         // maintain image position
         viewer.viewport.resize( containerSize, true );
