@@ -157,6 +157,9 @@
                 }
             }
 
+            // clear the onDraw callback
+            this.onDraw = null;
+
             style.top = "";
             style.left = "";
             style.position = "";

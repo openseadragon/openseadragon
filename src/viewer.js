@@ -509,6 +509,38 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         return this;
     },
 
+    
+    /**
+     * Function to destroy the viewer and clean up everything created by Open Seadragon
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.destroy
+     */
+    destroy: function( ) {
+        this.close();
+
+        this.removeAllHandlersForAllEvents();
+
+        // Go through top element (passed to us) and remove all children
+        // Use removeChild to make sure it handles SVG or any non-html
+        // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
+        while (this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild);
+        }
+
+        // remove the mouse trackers - should we be cleaning up their callbacks?
+        delete this.keyboardCommandArea.innerTracker;
+        delete this.innerTracker;
+        delete this.outerTracker;
+
+        // clear all our references to dom objects
+        this.canvas = null;
+        this.keyboardCommandArea = null;
+        this.container = null;
+
+        // clear our reference to the main element - they will need to pass it in again, creating a new viewer
+        this.element = null;
+    },
+
 
     /**
      * @function
