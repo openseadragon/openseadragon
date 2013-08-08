@@ -58,15 +58,31 @@ $.Navigator = function( options ){
     if( !options.id ){
         options.id              = 'navigator-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
-        options.controlOptions  = {anchor:           $.ControlAnchor.TOP_RIGHT,
-                                   attachToViewer:   true,
-                                   autoFade:         true};
-    }
-    else {
+        options.controlOptions  = {
+            anchor:           $.ControlAnchor.TOP_RIGHT,
+            attachToViewer:   true,
+            autoFade:         true
+        };
+
+        if( options.position ){
+            if( 'BOTTOM_RIGHT' == options.position ){
+               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
+            } else if( 'BOTTOM_LEFT' == options.position ){
+               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
+            } else if( 'TOP_RIGHT' == options.position ){
+               options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
+            } else if( 'TOP_LEFT' == options.position ){
+               options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
+            }
+        }
+        
+    } else {
         this.element            = document.getElementById( options.id );
-        options.controlOptions  = {anchor:           $.ControlAnchor.NONE,
-                                   attachToViewer:   false,
-                                   autoFade:         false};
+        options.controlOptions  = {
+            anchor:           $.ControlAnchor.NONE,
+            attachToViewer:   false,
+            autoFade:         false
+        };
     }
     this.element.id         = options.id;
     this.element.className  += ' navigator';
