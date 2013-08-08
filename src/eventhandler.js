@@ -91,25 +91,19 @@ $.EventHandler.prototype = {
 
 
     /**
-     * Remove all event handler for a given event type.
+     * Remove all event handler for a given event type. If no type is given all event handlers for every event type is removed
      * @function
      * @param {String} eventName - Name of event for which all handlers are to be removed.
      */
     removeAllHandlers: function( eventName ) {
-        this.events[ eventName ] = [];
-    },
-
-
-    /**
-     * Remove every event handler for all event types
-     * @function
-     */
-     removeAllHandlersForAllEvents: function( ) {
-        for (var eventType in this.events) {
-            this.events[eventType] = [];
+        if (eventName){
+            this.events[ eventName ] = [];
+        } else{
+            for (var eventType in this.events) {
+                this.events[eventType] = [];
+            }
         }
-     },
-
+    },
 
     /**
      * Retrive the list of all handlers registered for a given event.

@@ -499,7 +499,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
         //this.profiler   = null;
-        this.canvas.innerHTML = "";
+        if (this.canvas){
+            this.canvas.innerHTML = "";
+        }
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
@@ -518,19 +520,27 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     destroy: function( ) {
         this.close();
 
-        this.removeAllHandlersForAllEvents();
+        this.removeAllHandlers();
 
         // Go through top element (passed to us) and remove all children
         // Use removeChild to make sure it handles SVG or any non-html
         // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
-        while (this.element.firstChild) {
-            this.element.removeChild(this.element.firstChild);
+        if (this.element){
+            while (this.element.firstChild) {
+                this.element.removeChild(this.element.firstChild);
+            }
         }
 
-        // remove the mouse trackers - should we be cleaning up their callbacks?
-        delete this.keyboardCommandArea.innerTracker;
-        delete this.innerTracker;
-        delete this.outerTracker;
+        // destroy the mouse trackers
+        if (this.keyboardCommandArea){
+            this.keyboardCommandArea.innerTracker.destroy();
+        }
+        if (this.innerTracker){
+            this.innerTracker.destroy();
+        }
+        if (this.outerTracker){
+            this.outerTracker.destroy();
+        }
 
         // clear all our references to dom objects
         this.canvas = null;

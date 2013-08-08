@@ -172,6 +172,15 @@
     $.MouseTracker.prototype = {
 
         /**
+         * Clean up any events or objects created the mouse tracker
+         * @function
+         */
+        destroy: function() {
+            stopTracking( this );
+            this.element = null;
+        },
+
+        /**
          * Are we currently tracking events on this element.
          * @deprecated Just use this.tracking
          * @function
