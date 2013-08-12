@@ -513,7 +513,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
     
     /**
-     * Function to destroy the viewer and clean up everything created by Open Seadragon
+     * Function to destroy the viewer and clean up everything created by
+     * OpenSeadragon.
      * @function
      * @name OpenSeadragon.Viewer.prototype.destroy
      */

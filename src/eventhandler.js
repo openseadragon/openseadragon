@@ -91,7 +91,8 @@ $.EventHandler.prototype = {
 
 
     /**
-     * Remove all event handler for a given event type. If no type is given all event handlers for every event type is removed
+     * Remove all event handlers for a given event type. If no type is given all
+     * event handlers for every event type is removed.
      * @function
      * @param {String} eventName - Name of event for which all handlers are to be removed.
      */

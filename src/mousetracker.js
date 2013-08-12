@@ -172,7 +172,7 @@
     $.MouseTracker.prototype = {
 
         /**
-         * Clean up any events or objects created the mouse tracker
+         * Clean up any events or objects created by the mouse tracker.
          * @function
          */
         destroy: function() {
