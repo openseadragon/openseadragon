@@ -211,13 +211,13 @@
     // ----------
     asyncTest('Destroy', function() {
         viewer.addHandler("open", function () {
-            start();
             // Check that the DOM has been modified
             notEqual(0, $('#example').children().length);
 
+            var closeCalled = false;
             var closeHandler = function() {
                 viewer.removeHandler('close', closeHandler);
-                ok(true, 'Close event was sent on Destroy');
+                closeCalled = true;
             };
 
             viewer.addHandler('close', closeHandler);
@@ -229,6 +229,8 @@
             equal(null, viewer.keyboardCommandArea);
             equal(null, viewer.container);
             equal(null, viewer.element);
+            equal(true, closeCalled);
+            start();
         });
         viewer.open('/test/data/testpattern.dzi');
     });
