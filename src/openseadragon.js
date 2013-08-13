@@ -533,6 +533,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
 
+            // INITIAL ROTATION
+            degrees:                0,
+
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
             referenceStripScroll:       'horizontal',
@@ -1922,6 +1925,25 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             message     = messageNode.firstChild.nodeValue;
 
         throw new Error(message);
+    };
+
+    /**
+     * http://stackoverflow.com/questions/246193
+     *  /how-do-i-round-a-number-in-javascript
+     * @private
+     * @inner
+     * @function
+     * @param {Number} num
+     * @param {Number} decimals
+     * @return {Number}
+     */
+    $._round = function ( num, decimals ) {
+      var coefficient;
+
+      decimals = decimals || 10;
+      coefficient = Math.pow( 10, decimals );
+
+      return Math.round( num * coefficient ) / coefficient;
     };
 
 }( OpenSeadragon ));

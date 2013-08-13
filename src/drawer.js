@@ -505,6 +505,7 @@ function updateViewport( drawer ) {
                 Math.log( 2 )
             ))
         ),
+        degrees         = drawer.viewport.degrees,
         renderPixelRatioC,
         renderPixelRatioT,
         zeroRatioT,
@@ -529,7 +530,14 @@ function updateViewport( drawer ) {
         drawer.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
     }
 
-    //TODO
+    //Change bounds for rotation
+    if (degrees === 90 || degrees === 270) {
+        var rotatedBounds = viewportBounds.rotate( degrees );
+        viewportTL = rotatedBounds.getTopLeft();
+        viewportBR = rotatedBounds.getBottomRight();
+    }
+
+    //Don't draw if completely outside of the viewport
     if  ( !drawer.wrapHorizontal &&
         ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
         return;
@@ -571,6 +579,7 @@ function updateViewport( drawer ) {
             continue;
         }
 
+        //Perform calculations for draw if we haven't drawn this
         renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
             drawer.source.getPixelRatio( level ),
             false
@@ -1192,7 +1201,11 @@ function drawTiles( drawer, lastDrawn ){
         } else {
 
             if ( USE_CANVAS ) {
+                // TODO do this in a more performant way
+                // specifically, don't save,rotate,restore every time we draw a tile
+                offsetForRotation( tile, drawer.canvas, drawer.context, drawer.viewport.degrees );
                 tile.drawCanvas( drawer.context );
+                restoreRotationChanges( tile, drawer.canvas, drawer.context );
             } else {
                 tile.drawHTML( drawer.canvas );
             }
@@ -1216,6 +1229,32 @@ function drawTiles( drawer, lastDrawn ){
             });
         }
     }
+}
+
+function offsetForRotation( tile, canvas, context, degrees ){
+    var cx = canvas.width / 2,
+        cy = canvas.height / 2,
+        px = tile.position.x - cx,
+        py = tile.position.y - cy;
+
+    context.save();
+
+    context.translate(cx, cy);
+    context.rotate( Math.PI / 180 * degrees);
+    tile.position.x = px;
+    tile.position.y = py;
+}
+
+function restoreRotationChanges( tile, canvas, context ){
+    var cx = canvas.width / 2,
+        cy = canvas.height / 2,
+        px = tile.position.x + cx,
+        py = tile.position.y + cy;
+
+    tile.position.x = px;
+    tile.position.y = py;
+
+    context.restore();
 }
 
 

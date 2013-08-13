@@ -69,14 +69,17 @@ $.Rect.prototype = {
     },
 
     /**
-     * Provides the coordinates of the upper-left corner of the rectanglea s a
+     * Provides the coordinates of the upper-left corner of the rectangle as a
      * point.
      * @function
      * @returns {OpenSeadragon.Point} The coordinate of the upper-left corner of
      *  the rectangle.
      */
     getTopLeft: function() {
-        return new $.Point( this.x, this.y );
+        return new $.Point(
+            this.x,
+            this.y
+        );
     },
 
     /**
@@ -94,9 +97,37 @@ $.Rect.prototype = {
     },
 
     /**
+     * Provides the coordinates of the top-right corner of the rectangle as a
+     * point.
+     * @function
+     * @returns {OpenSeadragon.Point} The coordinate of the top-right corner of
+     *  the rectangle.
+     */
+    getTopRight: function() {
+        return new $.Point(
+            this.x + this.width,
+            this.y
+        );
+    },
+
+    /**
+     * Provides the coordinates of the bottom-left corner of the rectangle as a
+     * point.
+     * @function
+     * @returns {OpenSeadragon.Point} The coordinate of the bottom-left corner of
+     *  the rectangle.
+     */
+    getBottomLeft: function() {
+        return new $.Point(
+            this.x,
+            this.y + this.height
+        );
+    },
+
+    /**
      * Computes the center of the rectangle.
      * @function
-     * @returns {OpenSeadragon.Point} The center of the rectangle as represnted
+     * @returns {OpenSeadragon.Point} The center of the rectangle as represented
      *  as represented by a 2-dimensional vector (x,y)
      */
     getCenter: function() {
@@ -109,7 +140,7 @@ $.Rect.prototype = {
     /**
      * Returns the width and height component as a vector OpenSeadragon.Point
      * @function
-     * @returns {OpenSeadragon.Point} The 2 dimensional vector represnting the
+     * @returns {OpenSeadragon.Point} The 2 dimensional vector representing the
      *  the width and height of the rectangle.
      */
     getSize: function() {
@@ -117,7 +148,7 @@ $.Rect.prototype = {
     },
 
     /**
-     * Determines if two Rectanlges have equivalent components.
+     * Determines if two Rectangles have equivalent components.
      * @function
      * @param {OpenSeadragon.Rect} rectangle The Rectangle to compare to.
      * @return {Boolean} 'true' if all components are equal, otherwise 'false'.
@@ -131,7 +162,48 @@ $.Rect.prototype = {
     },
 
     /**
-     * Provides a string representation of the retangle which is useful for
+     * Rotates a rectangle around a point. Currently only 90, 180, and 270
+     * degrees are supported.
+     * @function
+     * @param {Number} degrees The angle in degrees to rotate.
+     * @param {OpenSeadragon.Point} pivot The point about which to rotate.
+     * Defaults to the center of the rectangle.
+     * @return {OpenSeadragon.Rect}
+     */
+    rotate: function( degrees, pivot ) {
+        // TODO support arbitrary rotation
+        var width = this.width,
+            height = this.height,
+            newTopLeft;
+
+        pivot = pivot || this.getCenter();
+
+        switch ( degrees ) {
+            case 90:
+                newTopLeft = this.getBottomLeft();
+                width = this.height;
+                height = this.width;
+                break;
+            case 180:
+                newTopLeft = this.getBottomRight();
+                break;
+            case 270:
+                newTopLeft = this.getTopRight();
+                width = this.height;
+                height = this.width;
+                break;
+            default:
+                newTopLeft = this.getTopLeft();
+                break;
+        }
+
+        newTopLeft = newTopLeft.rotate(degrees, pivot);
+
+        return new $.Rect(newTopLeft.x, newTopLeft.y, width, height);
+    },
+
+    /**
+     * Provides a string representation of the rectangle which is useful for
      * debugging.
      * @function
      * @returns {String} A string representation of the rectangle.

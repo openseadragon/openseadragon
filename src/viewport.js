@@ -79,7 +79,8 @@ $.Viewport = function( options ) {
         wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
         defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
-        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel
+        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
+        degrees:            $.DEFAULT_SETTINGS.degrees
 
     }, options );
 
@@ -497,6 +498,7 @@ $.Viewport.prototype = {
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
         );
+        delta = delta.rotate( -this.degrees, new $.Point( 0, 0 ) );
         return this.panTo( center.plus( delta ), immediately );
     },
 
@@ -531,6 +533,12 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
+        if( typeof refPoint != 'undefined' ) {
+            refPoint = refPoint.rotate(
+                -this.degrees,
+                new $.Point( this.centerSpringX.target.value, this.centerSpringY.target.value )
+            );
+        }
         return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 

@@ -1075,6 +1075,19 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
     },
 
     /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.rotate
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    rotate: function(clockwise){
+        clockwise = clockwise || true;
+        this.viewport.degrees = ( this.viewport.degrees + (clockwise ? 90 : -90 ) + 360 ) % 360;
+        //this.raiseEvent( 'rotate', { viewer: this } );
+        this.drawer.update();
+        return this;
+    },
+
+    /**
      * Display a message in the viewport
      * @function
      * @private
@@ -1694,6 +1707,10 @@ function onNext(){
         next = 0;
     }
     this.goToPage( next );
+}
+
+function onRotate(){
+    this.rotate();
 }
 
 
