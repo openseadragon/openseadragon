@@ -47,6 +47,12 @@
             controls: []
         }, options );
 
+        // Disable the form's submit; otherwise button clicks and return keys
+        // can trigger it.
+        this.container.onsubmit = function() {
+            return false;
+        };
+
         if( this.element ){
             this.element = $.getElement( this.element );
             this.element.appendChild( this.container );
