@@ -1122,7 +1122,7 @@ function drawOverlay( viewport, overlay, container ){
         overlay.bounds.getSize(),
         true
     );
-    overlay.drawHTML( container );
+    overlay.drawHTML( container, viewport );
 }
 
 function drawTiles( drawer, lastDrawn ){

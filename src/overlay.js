@@ -171,12 +171,18 @@
          * @function
          * @param {Element} container
          */
-        drawHTML: function( container ) {
+        drawHTML: function( container, viewport ) {
             var element = this.element,
                 style   = this.style,
                 scales  = this.scales,
+                drawerCenter = new $.Point(
+                    viewport.viewer.drawer.canvas.width / 2,
+                    viewport.viewer.drawer.canvas.height / 2
+                ),
+                degrees = viewport.degrees,
                 position,
-                size;
+                size,
+                overlayCenter;
 
             if ( element.parentNode != container ) {
                 //save the source parent for later if we need it
@@ -196,6 +202,19 @@
 
             position = position.apply( Math.floor );
             size     = size.apply( Math.ceil );
+
+            // rotate the position of the overlay
+            if(this.scales){
+                overlayCenter = new $.Point( size.x / 2, size.y / 2 );
+
+                position = position.plus( overlayCenter ).rotate(
+                    degrees,
+                    drawerCenter
+                ).minus( overlayCenter );
+
+                size = size.rotate( degrees, new $.Point( 0, 0 ) );
+                size = new $.Point( Math.abs( size.x ), Math.abs( size.y ) );
+            }
 
             // call the onDraw callback if there is one to allow, this allows someone to overwrite
             // the drawing/positioning/sizing of the overlay
