@@ -1203,9 +1203,13 @@ function drawTiles( drawer, lastDrawn ){
             if ( USE_CANVAS ) {
                 // TODO do this in a more performant way
                 // specifically, don't save,rotate,restore every time we draw a tile
-                offsetForRotation( tile, drawer.canvas, drawer.context, drawer.viewport.degrees );
-                tile.drawCanvas( drawer.context );
-                restoreRotationChanges( tile, drawer.canvas, drawer.context );
+                if( drawer.viewport.degrees !== 0 ) {
+                    offsetForRotation( tile, drawer.canvas, drawer.context, drawer.viewport.degrees );
+                    tile.drawCanvas( drawer.context );
+                    restoreRotationChanges( tile, drawer.canvas, drawer.context );
+                } else {
+                    tile.drawCanvas( drawer.context );
+                }
             } else {
                 tile.drawHTML( drawer.canvas );
             }

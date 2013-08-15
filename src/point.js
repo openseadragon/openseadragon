@@ -170,14 +170,8 @@ $.Point.prototype = {
      */
     rotate: function ( degrees, pivot ) {
         var angle = degrees * Math.PI / 180.0,
-            x = $._round(
-                    Math.cos( angle ) * ( this.x - pivot.x ) -
-                    Math.sin( angle ) * ( this.y - pivot.y ) + pivot.x
-                ),
-            y = $._round(
-                    Math.sin( angle ) * ( this.x - pivot.x ) +
-                    Math.cos( angle ) * ( this.y - pivot.y ) + pivot.y
-                );
+            x = Math.cos( angle ) * ( this.x - pivot.x ) - Math.sin( angle ) * ( this.y - pivot.y ) + pivot.x,
+            y = Math.sin( angle ) * ( this.x - pivot.x ) + Math.cos( angle ) * ( this.y - pivot.y ) + pivot.y;
         return new $.Point( x, y );
     },
 

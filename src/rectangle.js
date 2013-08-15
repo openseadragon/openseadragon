@@ -176,6 +176,15 @@ $.Rect.prototype = {
             height = this.height,
             newTopLeft;
 
+        degrees = ( degrees + 360 ) % 360;
+        if( degrees % 90 !== 0 ) {
+            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
+        }
+
+        if( degrees === 0 ){
+            return this;
+        }
+
         pivot = pivot || this.getCenter();
 
         switch ( degrees ) {

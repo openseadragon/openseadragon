@@ -1927,23 +1927,4 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         throw new Error(message);
     };
 
-    /**
-     * http://stackoverflow.com/questions/246193
-     *  /how-do-i-round-a-number-in-javascript
-     * @private
-     * @inner
-     * @function
-     * @param {Number} num
-     * @param {Number} decimals
-     * @return {Number}
-     */
-    $._round = function ( num, decimals ) {
-      var coefficient;
-
-      decimals = decimals || 10;
-      coefficient = Math.pow( 10, decimals );
-
-      return Math.round( num * coefficient ) / coefficient;
-    };
-
 }( OpenSeadragon ));

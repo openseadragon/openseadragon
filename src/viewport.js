@@ -571,6 +571,23 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Currently only supports 90 degree rotation.
+     * Currently only works with canvas.
+     * @function
+     * @name OpenSeadragon.Viewport.prototype.rotate
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    setRotation: function(degrees){
+        degrees = ( degrees + 360 ) % 360;
+        if(degrees % 90 !== 0){
+            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
+        }
+        this.degrees = degrees;
+        this.viewer.drawer.update();
+        return this;
+    },
+
+    /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
      */

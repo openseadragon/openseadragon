@@ -204,7 +204,11 @@
             size     = size.apply( Math.ceil );
 
             // rotate the position of the overlay
-            if(this.scales){
+            // TODO only rotate overlays if in canvas mode
+            // TODO replace the size rotation with CSS3 transforms
+            // TODO add an option to overlays to not rotate with the image
+            // Currently only rotates position and size
+            if( degrees !== 0 && this.scales ) {
                 overlayCenter = new $.Point( size.x / 2, size.y / 2 );
 
                 position = position.plus( overlayCenter ).rotate(
