@@ -182,7 +182,12 @@ $.Rect.prototype = {
         }
 
         if( degrees === 0 ){
-            return this;
+            return new $.Rect(
+                this.x,
+                this.y,
+                this.width,
+                this.height
+            );
         }
 
         pivot = pivot || this.getCenter();

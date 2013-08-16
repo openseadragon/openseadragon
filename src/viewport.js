@@ -533,7 +533,7 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
-        if( typeof refPoint != 'undefined' ) {
+        if( refPoint ) {
             refPoint = refPoint.rotate(
                 -this.degrees,
                 new $.Point( this.centerSpringX.target.value, this.centerSpringY.target.value )
@@ -574,17 +574,33 @@ $.Viewport.prototype = {
      * Currently only supports 90 degree rotation.
      * Currently only works with canvas.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.rotate
+     * @name OpenSeadragon.Viewport.prototype.setRotation
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function(degrees){
+    setRotation: function( degrees ) {
+        if( !( this.viewer && this.viewer.drawer.canRotate() ) ) {
+            return this;
+        }
+
         degrees = ( degrees + 360 ) % 360;
-        if(degrees % 90 !== 0){
+        if( degrees % 90 !== 0 ) {
             throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
         }
         this.degrees = degrees;
-        this.viewer.drawer.update();
+        if( this.viewer ) {
+            this.viewer.drawer.update();
+        }
         return this;
+    },
+
+    /**
+     * Gets the current rotation in degrees.
+     * @function
+     * @name OpenSeadragon.Viewport.prototype.setRotation
+     * @return {Number} The current rotation in degrees.
+     */
+    getRotation: function() {
+        return this.degrees;
     },
 
     /**

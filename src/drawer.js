@@ -403,6 +403,10 @@ $.Drawer.prototype = {
         }
 
         return loading;
+    },
+
+    canRotate: function() {
+        return USE_CANVAS;
     }
 };
 
