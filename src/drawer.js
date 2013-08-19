@@ -130,6 +130,10 @@ $.Drawer = function( options ) {
     this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
     this.element    = this.container;
 
+    // We force our container to ltr because our drawing math doesn't work in rtl.
+    // This issue only affects our canvas renderer, but we do it always for consistency.
+    // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
+    this.container.dir = 'ltr';
 
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
