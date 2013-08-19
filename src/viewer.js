@@ -499,7 +499,9 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
         //this.profiler   = null;
-        this.canvas.innerHTML = "";
+        if (this.canvas){
+            this.canvas.innerHTML = "";
+        }
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
@@ -507,6 +509,47 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         this.raiseEvent( 'close', { viewer: this } );
 
         return this;
+    },
+
+    
+    /**
+     * Function to destroy the viewer and clean up everything created by
+     * OpenSeadragon.
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.destroy
+     */
+    destroy: function( ) {
+        this.close();
+
+        this.removeAllHandlers();
+
+        // Go through top element (passed to us) and remove all children
+        // Use removeChild to make sure it handles SVG or any non-html
+        // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
+        if (this.element){
+            while (this.element.firstChild) {
+                this.element.removeChild(this.element.firstChild);
+            }
+        }
+
+        // destroy the mouse trackers
+        if (this.keyboardCommandArea){
+            this.keyboardCommandArea.innerTracker.destroy();
+        }
+        if (this.innerTracker){
+            this.innerTracker.destroy();
+        }
+        if (this.outerTracker){
+            this.outerTracker.destroy();
+        }
+
+        // clear all our references to dom objects
+        this.canvas = null;
+        this.keyboardCommandArea = null;
+        this.container = null;
+
+        // clear our reference to the main element - they will need to pass it in again, creating a new viewer
+        this.element = null;
     },
 
 
