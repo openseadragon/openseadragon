@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * Hiding and restoring broke the viewer; fixed (#177)
 * Clicking on a button control no longer refreshes page (#184)
 * Drawer now works when the page is rtl (#187)
+* Fixed a situation that could throw errors in touch handling (#188)
 
 0.9.129:
 
