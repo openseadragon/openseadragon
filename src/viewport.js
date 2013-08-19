@@ -217,6 +217,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getBounds: function( current ) {
         var center = this.getCenter( current ),
@@ -233,6 +234,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getCenter: function( current ) {
         var centerCurrent = new $.Point(
@@ -283,6 +285,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getZoom: function( current ) {
         if ( current ) {
@@ -632,6 +635,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
@@ -641,6 +645,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
@@ -650,6 +655,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     pixelFromPoint: function( point, current ) {
         var bounds = this.getBounds( current );
@@ -662,6 +668,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
