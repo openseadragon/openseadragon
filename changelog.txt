@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * You can now provide an onDraw function for overlays to do custom overlay manipulation (#160)
 * Hiding and restoring broke the viewer; fixed (#177)
 * Clicking on a button control no longer refreshes page (#184)
+* Drawer now works when the page is rtl (#187)
 
 0.9.129:
 
