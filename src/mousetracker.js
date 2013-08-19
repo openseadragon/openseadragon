@@ -993,6 +993,10 @@
             touchB,
             pinchDelta;
 
+        if ( !THIS[ tracker.hash ].lastTouch ) {
+          return;
+        }
+
         if( event.touches.length === 1 &&
             event.targetTouches.length === 1 &&
             event.changedTouches.length === 1 &&
