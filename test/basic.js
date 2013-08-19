@@ -208,4 +208,31 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    // ----------
+    asyncTest('Destroy', function() {
+        viewer.addHandler("open", function () {
+            // Check that the DOM has been modified
+            notEqual(0, $('#example').children().length);
+
+            var closeCalled = false;
+            var closeHandler = function() {
+                viewer.removeHandler('close', closeHandler);
+                closeCalled = true;
+            };
+
+            viewer.addHandler('close', closeHandler);
+            viewer.destroy();
+
+            // Check that the DOM has been cleaned up
+            equal(0, $('#example').children().length);
+            equal(null, viewer.canvas);
+            equal(null, viewer.keyboardCommandArea);
+            equal(null, viewer.container);
+            equal(null, viewer.element);
+            equal(true, closeCalled);
+            start();
+        });
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
 })();
