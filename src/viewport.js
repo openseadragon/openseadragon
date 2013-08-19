@@ -79,7 +79,8 @@ $.Viewport = function( options ) {
         wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
         defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
-        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel
+        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
+        degrees:            $.DEFAULT_SETTINGS.degrees
 
     }, options );
 
@@ -500,6 +501,7 @@ $.Viewport.prototype = {
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
         );
+        delta = delta.rotate( -this.degrees, new $.Point( 0, 0 ) );
         return this.panTo( center.plus( delta ), immediately );
     },
 
@@ -534,6 +536,12 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
+        if( refPoint ) {
+            refPoint = refPoint.rotate(
+                -this.degrees,
+                new $.Point( this.centerSpringX.target.value, this.centerSpringY.target.value )
+            );
+        }
         return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
     },
 
@@ -563,6 +571,40 @@ $.Viewport.prototype = {
         }
 
         return this;
+    },
+
+    /**
+     * Currently only 90 degree rotation is supported and it only works
+     * with the canvas. Additionally, the navigator does not rotate yet,
+     * debug mode doesn't rotate yet, and overlay rotation is only
+     * partially supported.
+     * @function
+     * @name OpenSeadragon.Viewport.prototype.setRotation
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    setRotation: function( degrees ) {
+        if( !( this.viewer && this.viewer.drawer.canRotate() ) ) {
+            return this;
+        }
+
+        degrees = ( degrees + 360 ) % 360;
+        if( degrees % 90 !== 0 ) {
+            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
+        }
+        this.degrees = degrees;
+        this.viewer.drawer.update();
+        
+        return this;
+    },
+
+    /**
+     * Gets the current rotation in degrees.
+     * @function
+     * @name OpenSeadragon.Viewport.prototype.setRotation
+     * @return {Number} The current rotation in degrees.
+     */
+    getRotation: function() {
+        return this.degrees;
     },
 
     /**
