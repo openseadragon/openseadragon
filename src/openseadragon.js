@@ -533,6 +533,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorPosition:      null,
             navigatorSizeRatio:     0.2,
 
+            // INITIAL ROTATION
+            degrees:                0,
+
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
             referenceStripScroll:       'horizontal',
