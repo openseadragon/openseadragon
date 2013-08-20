@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Drawer now works when the page is rtl (#187)
 * Fixed a situation that could throw errors in touch handling (#188)
 * Added a destroy function on the viewer to clean up and remove elements (#179)
+* Added partial support for rotation (just 90 degree increments for now). (#185)
 
 0.9.129:
 
