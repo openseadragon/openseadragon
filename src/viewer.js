@@ -1463,7 +1463,7 @@ function onCanvasDrag( tracker, position, delta, shift ) {
             this.viewport.applyConstraints();
         }
     }
-    this.raiseEvent( 'canvas-click', {
+    this.raiseEvent( 'canvas-drag', {
         tracker: tracker,
         position: position,
         delta: delta,
