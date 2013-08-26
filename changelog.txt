@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+0.9.131: (in progress)
+
 0.9.130:
 
 * Added partial support for rotation (just 90 degree increments for now). (#185)
