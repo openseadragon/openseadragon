@@ -1,19 +1,19 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.130: (In progress)
+0.9.130:
 
+* Added partial support for rotation (just 90 degree increments for now). (#185)
+* Hiding and restoring broke the viewer; fixed (#177)
+* You can now provide an onDraw function for overlays to do custom overlay manipulation (#160)
+* Added a destroy function on the viewer to clean up and remove elements (#179)
 * Fixed: navigatorPosition option corrected. (#163)
 * OpenSeadragon.now() returned undefined the first time; fixed
 * onTouchEnd did not call the correct mouse up handler; fixed (#159)
 * Touch events no longer capture mouse (was causing issues on devices that support both) (#168)
-* You can now provide an onDraw function for overlays to do custom overlay manipulation (#160)
-* Hiding and restoring broke the viewer; fixed (#177)
 * Clicking on a button control no longer refreshes page (#184)
 * Drawer now works when the page is rtl (#187)
 * Fixed a situation that could throw errors in touch handling (#188)
-* Added a destroy function on the viewer to clean up and remove elements (#179)
-* Added partial support for rotation (just 90 degree increments for now). (#185)
 
 0.9.129:
 
