@@ -71,17 +71,25 @@ $.LegacyTileSource = function( levels ) {
 
     //clean up the levels to make sure we support all formats
     options.levels = filterFiles( options.levels );
-    width = options.levels[ options.levels.length - 1 ].width;
-    height = options.levels[ options.levels.length - 1 ].height;
 
-    $.extend( true,  options, {
-        width:       width,
-        height:      height,
-        tileSize:    Math.max( height, width ),
+    if ( options.levels.length > 0 ) {
+        width = options.levels[ options.levels.length - 1 ].width;
+        height = options.levels[ options.levels.length - 1 ].height;
+    }
+    else {
+        width = 0;
+        height = 0;
+        $.console.error( "No supported image formats found" );
+    }
+
+    $.extend( true, options, {
+        width: width,
+        height: height,
+        tileSize: Math.max( height, width ),
         tileOverlap: 0,
-        minLevel:    0,
-        maxLevel:    options.levels.length - 1
-    });
+        minLevel: 0,
+        maxLevel: options.levels.length > 0 ? options.levels.length - 1 : 0
+    } );
 
     $.TileSource.apply( this, [ options ] );
 
@@ -139,9 +147,9 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
      * @name OpenSeadragon.LegacyTileSource.prototype.getLevelScale
      * @param {Number} level
      */
-    getLevelScale: function( level ) {
+    getLevelScale: function ( level ) {
         var levelScale = NaN;
-        if (  level >= this.minLevel && level <= this.maxLevel ){
+        if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
             levelScale =
                 this.levels[ level ].width /
                 this.levels[ this.maxLevel ].width;
@@ -186,14 +194,14 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
      * @param {Number} y
      * @throws {Error}
      */
-    getTileUrl: function( level, x, y ) {
+    getTileUrl: function ( level, x, y ) {
         var url = null;
-        if( level >= this.minLevel && level <= this.maxLevel ){
+        if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
             url = this.levels[ level ].url;
         }
         return url;
     }
-});
+} );
 
 /**
  * This method removes any files from the Array which dont conform to our
@@ -222,6 +230,9 @@ function filterFiles( files ){
                 width: Number( file.width ),
                 height: Number( file.height )
             });
+        }
+        else {
+            $.console.error( 'Unsupported image format: %s', file.url ? file.url : '<no URL>' );
         }
     }
 

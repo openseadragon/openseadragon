@@ -114,12 +114,12 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
     //Any functions that are passed as arguments are bound to the ready callback
     /*jshint loopfunc:true*/
-    for( i = 0; i < arguments.length; i++ ){
-        if( $.isFunction( arguments[i] ) ){
+    for ( i = 0; i < arguments.length; i++ ) {
+        if ( $.isFunction( arguments[ i ] ) ) {
             callback = arguments[ i ];
-            this.addHandler( 'ready', function( placeHolderSource, readySource ){
-                callback( readySource );
-            });
+            this.addHandler( 'ready', function ( placeHolderSource, placeHolderArgs ) {
+                callback( placeHolderArgs.tileSource );
+            } );
             //only one callback per constructor
             break;
         }
@@ -301,7 +301,7 @@ $.TileSource.prototype = {
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
             readySource = new $TileSource( options );
             _this.ready = true;
-            _this.raiseEvent( 'ready', readySource );
+            _this.raiseEvent( 'ready', { tileSource: readySource } );
         };
 
         if( url.match(/\.js$/) ){
