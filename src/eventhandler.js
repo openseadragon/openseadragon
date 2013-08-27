@@ -36,7 +36,7 @@
 
 /**
  * For use by classes which want to support custom, non-browser events.
- * TODO: This is an aweful name!  This thing represents an "event source",
+ * TODO: This is an awful name!  This thing represents an "event source",
  *       not an "event handler".  PLEASE change the to EventSource. Also please
  *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind',
  *       'unbind', and 'trigger' respectively.  Finally add a method 'one' which
@@ -55,14 +55,15 @@ $.EventHandler.prototype = {
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Function} handler - Function to call when event is triggered.
+     * @param {Object} optional userData - Arbitrary object to be passed to the handler.
      */
-    addHandler: function( eventName, handler ) {
+    addHandler: function ( eventName, handler, userData ) {
         var events = this.events[ eventName ];
-        if( !events ){
+        if ( !events ) {
             this.events[ eventName ] = events = [];
         }
-        if( handler && $.isFunction( handler ) ){
-            events[ events.length ] = handler;
+        if ( handler && $.isFunction( handler ) ) {
+            events[ events.length ] = { handler: handler, userData: userData || null };
         }
     },
 
@@ -72,16 +73,16 @@ $.EventHandler.prototype = {
      * @param {String} eventName - Name of event for which the handler is to be removed.
      * @param {Function} handler - Function to be removed.
      */
-    removeHandler: function( eventName, handler ) {
+    removeHandler: function ( eventName, handler ) {
         var events = this.events[ eventName ],
             handlers = [],
             i;
-        if ( !events ){
+        if ( !events ) {
             return;
         }
-        if( $.isArray( events ) ){
-            for( i = 0; i < events.length; i++ ){
-                if( events[ i ] !== handler ){
+        if ( $.isArray( events ) ) {
+            for ( i = 0; i < events.length; i++ ) {
+                if ( events[i].handler !== handler ) {
                     handlers.push( events[ i ] );
                 }
             }
@@ -97,11 +98,11 @@ $.EventHandler.prototype = {
      * @param {String} eventName - Name of event for which all handlers are to be removed.
      */
     removeAllHandlers: function( eventName ) {
-        if (eventName){
+        if ( eventName ){
             this.events[ eventName ] = [];
         } else{
-            for (var eventType in this.events) {
-                this.events[eventType] = [];
+            for ( var eventType in this.events ) {
+                this.events[ eventType ] = [];
             }
         }
     },
@@ -111,20 +112,21 @@ $.EventHandler.prototype = {
      * @function
      * @param {String} eventName - Name of event to get handlers for.
      */
-    getHandler: function( eventName ) {
+    getHandler: function ( eventName ) {
         var events = this.events[ eventName ];
-        if ( !events || !events.length ){
+        if ( !events || !events.length ) {
             return null;
         }
         events = events.length === 1 ?
             [ events[ 0 ] ] :
             Array.apply( null, events );
-        return function( source, args ) {
+        return function ( source, args ) {
             var i,
                 length = events.length;
             for ( i = 0; i < length; i++ ) {
-                if( events[ i ] ){
-                    events[ i ]( source, args );
+                if ( events[ i ] ) {
+                    args.userData = events[ i ].userData;
+                    events[ i ].handler( source, args );
                 }
             }
         };
