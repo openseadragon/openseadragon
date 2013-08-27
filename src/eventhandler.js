@@ -122,9 +122,9 @@ $.EventHandler.prototype = {
             Array.apply( null, events );
         return function ( source, args ) {
             var i,
-            length = events.length;
+                length = events.length;
             for ( i = 0; i < length; i++ ) {
-                if (events[ i ]) {
+                if ( events[ i ] ) {
                     args.userData = events[ i ].userData;
                     events[ i ].handler( source, args );
                 }

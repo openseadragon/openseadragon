@@ -117,8 +117,15 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     for ( i = 0; i < arguments.length; i++ ) {
         if ( $.isFunction( arguments[ i ] ) ) {
             callback = arguments[ i ];
-            this.addHandler( 'ready', function ( placeHolderSource, placeHolderArgs ) {
-                callback( placeHolderArgs.tileSource );
+            // TODO Send generic object wrapping readySource as a property (breaking change)
+            // TODO Maybe placeHolderSource should be passed to callback as well for consistency
+            //      with event handler signature?
+            //  Should be this (although technically it works as-is):
+            //this.addHandler( 'ready', function ( placeHolderSource, placeHolderArgs ) {
+            //    callback( placeHolderArgs );
+            //} );
+            this.addHandler( 'ready', function ( placeHolderSource, readySource ) {
+                callback( readySource );
             } );
             //only one callback per constructor
             break;
@@ -301,7 +308,10 @@ $.TileSource.prototype = {
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
             readySource = new $TileSource( options );
             _this.ready = true;
-            _this.raiseEvent( 'ready', { tileSource: readySource } );
+            // TODO Send generic object wrapping readySource as a property (breaking change)
+            //  Should be this:
+            //_this.raiseEvent( 'ready', { tileSource: readySource } );
+            _this.raiseEvent( 'ready', readySource );
         };
 
         if( url.match(/\.js$/) ){
