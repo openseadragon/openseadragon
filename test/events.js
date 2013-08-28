@@ -5,12 +5,12 @@
 
     module( 'Events', {
         setup: function () {
-            var example = $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
+            var example = $( '<div id="eventsexample"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
 
             viewer = OpenSeadragon( {
-                id: 'example',
+                id: 'eventsexample',
                 prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             } );
@@ -57,6 +57,44 @@
         };
 
         viewer.addHandler( 'open', openHandler, userData );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    // ----------
+    asyncTest( 'canvas-drag canvas-release canvas-click', function () {
+        var dragMoves = 10;
+        var dragMovesHandled = 0;
+
+        var openHandler = function ( eventSender, eventData ) {
+            viewer.removeHandler( 'open', openHandler );
+
+            viewer.addHandler( 'canvas-drag', canvasDragHandler );
+            viewer.addHandler( 'canvas-release', canvasReleaseHandler );
+            viewer.addHandler( 'canvas-click', canvasClickHandler );
+
+            Util.simulateViewerDrag( viewer, 0.25, 0.25, 1, 1, dragMoves );
+        };
+
+        var canvasDragHandler = function ( eventSender, eventData ) {
+            dragMovesHandled += 1;
+            ok( true, 'canvas-drag event handled' );
+        };
+
+        var canvasReleaseHandler = function ( eventSender, eventData ) {
+            ok( true, 'canvas-release event handled' );
+        };
+
+        var canvasClickHandler = function ( eventSender, eventData ) {
+            viewer.removeHandler( 'canvas-drag', canvasDragHandler );
+            viewer.removeHandler( 'canvas-release', canvasReleaseHandler );
+            viewer.removeHandler( 'canvas-click', canvasClickHandler );
+            ok( true, 'canvas-click event handled' );
+            equal( dragMovesHandled, dragMoves, 'canvas-drag event count matches mousemove count' );
+            viewer.close();
+            start();
+        };
+
+        viewer.addHandler( 'open', openHandler );
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
