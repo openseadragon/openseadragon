@@ -3,6 +3,10 @@ OPENSEADRAGON CHANGELOG
 
 0.9.131: (in progress)
 
+* Fixed: canvas-click event shouldn't fire as you drag (#198)
+* Fixed: LegacyTileSource doesn't fail gracefully when no supported file formats are found (#202)
+* Added an optional userData argument to EventHandler.addHandler() which is passed unchanged to the handler method (#203)
+
 0.9.130:
 
 * Added partial support for rotation (just 90 degree increments for now). (#185)
