@@ -80,7 +80,8 @@ $.Viewport = function( options ) {
         defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
-        degrees:            $.DEFAULT_SETTINGS.degrees
+        degrees:            $.DEFAULT_SETTINGS.degrees,
+        invert:             $.DEFAULT_SETTINGS.invert
 
     }, options );
 
@@ -594,6 +595,17 @@ $.Viewport.prototype = {
         this.degrees = degrees;
         this.viewer.drawer.update();
         
+        return this;
+    },
+
+    toggleInvert: function() {
+        if( !( this.viewer && this.viewer.drawer.canInvert() ) ) {
+            return this;
+        }
+
+        this.invert = !this.invert;
+        this.viewer.drawer.update();
+
         return this;
     },
 

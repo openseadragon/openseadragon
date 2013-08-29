@@ -536,6 +536,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             // INITIAL ROTATION
             degrees:                0,
 
+            // INITIAL INVERT
+            invert:                 false,
+
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
             referenceStripScroll:       'horizontal',

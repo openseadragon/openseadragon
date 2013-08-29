@@ -411,6 +411,10 @@ $.Drawer.prototype = {
 
     canRotate: function() {
         return USE_CANVAS;
+    },
+
+    canInvert: function() {
+        return USE_CANVAS;
     }
 };
 
@@ -1240,6 +1244,26 @@ function drawTiles( drawer, lastDrawn ){
                 tile: tile
             });
         }
+    }
+
+    if ( USE_CANVAS && drawer.viewport.invert ) {
+        var x = 0,
+            y = 0,
+            width = drawer.canvas.width,
+            height = drawer.canvas.height,
+            imageData = drawer.context.getImageData(x, y, width, height),
+            data = imageData.data;
+
+        for ( i = 0; i < data.length; i += 4 ) {
+            // red
+            data[i] = 255 - data[i];
+            // green
+            data[i + 1] = 255 - data[i + 1];
+            // blue
+            data[i + 2] = 255 - data[i + 2];
+        }
+
+        drawer.context.putImageData(imageData, x, y);
     }
 }
 
