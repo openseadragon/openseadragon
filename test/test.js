@@ -5,68 +5,43 @@
     // ----------
     window.Util = {
         // ----------
-        simulateViewerClick: function ( viewer, widthFactor, heightFactor ) {
-            if ( widthFactor === undefined ) {
-                widthFactor = 0.5;
+        simulateViewerClickWithDrag: function ( args ) {
+            // args = { viewer, widthFactor, heightFactor, dragCount, dragDx, dragDy }
+
+            if ( args.hasOwnProperty( 'dragCount' ) ) {
+                args.dragDx = args.dragDx || 1;
+                args.dragDy = args.dragDy || 1;
+            }
+            else {
+                args.dragCount = 0;
+            }
+
+            if ( args.widthFactor === undefined ) {
+                args.widthFactor = 0.5;
             }
 
             //TODO Redefine to be the middle by default
-            if ( heightFactor === undefined ) {
-                heightFactor = 0.5;
+            if ( args.heightFactor === undefined ) {
+                args.heightFactor = 0.5;
             }
 
-            widthFactor = Math.min( 1, Math.max( 0, widthFactor ) );
+            args.widthFactor = Math.min( 1, Math.max( 0, args.widthFactor ) );
             //TODO Fix this.  The max height should be 1/AR
-            heightFactor = Math.min( 1, Math.max( 0, heightFactor ) );
+            args.heightFactor = Math.min( 1, Math.max( 0, args.heightFactor ) );
 
-            var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
+            var $canvas = $( args.viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
             var offset = $canvas.offset();
             var event = {
-                clientX: offset.left + Math.floor( $canvas.width() * widthFactor ),
-                clientY: offset.top + Math.floor( $canvas.height() * heightFactor )
-            };
-
-            $canvas
-                .simulate( 'mouseover', event )
-                .simulate( 'mousedown', event )
-                .simulate( 'mouseup', event );
-        },
-
-        simulateViewerDrag: function ( viewer, widthFactor, heightFactor, dx, dy, movecount ) {
-            dx = dx || 1;
-            dy = dy || 1;
-
-            movecount = movecount || 5;
-            if ( movecount < 1 ) {
-                movecount = 1;
-            }
-
-            if ( widthFactor === undefined ) {
-                widthFactor = 0.5;
-            }
-
-            //TODO Redefine to be the middle by default
-            if ( heightFactor === undefined ) {
-                heightFactor = 0.5;
-            }
-
-            widthFactor = Math.min( 1, Math.max( 0, widthFactor ) );
-            //TODO Fix this.  The max height should be 1/AR
-            heightFactor = Math.min( 1, Math.max( 0, heightFactor ) );
-
-            var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
-            var offset = $canvas.offset();
-            var event = {
-                clientX: offset.left + Math.floor( $canvas.width() * widthFactor ),
-                clientY: offset.top + Math.floor( $canvas.height() * heightFactor )
+                clientX: offset.left + Math.floor( $canvas.width() * args.widthFactor ),
+                clientY: offset.top + Math.floor( $canvas.height() * args.heightFactor )
             };
 
             $canvas
                 .simulate( 'mouseover', event )
                 .simulate( 'mousedown', event );
-            for ( var i = 0; i < movecount; i++ ) {
-                event.clientX += dx;
-                event.clientY += dy;
+            for ( var i = 0; i < args.dragCount; i++ ) {
+                event.clientX += args.dragDx;
+                event.clientY += args.dragDy;
                 $canvas
                     .simulate( "mousemove", event );
             }

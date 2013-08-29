@@ -62,7 +62,7 @@
 
     // ----------
     asyncTest( 'canvas-drag canvas-release canvas-click', function () {
-        var dragMoves = 10;
+        var dragCount = 10;
         var dragMovesHandled = 0;
 
         var openHandler = function ( eventSender, eventData ) {
@@ -72,12 +72,18 @@
             viewer.addHandler( 'canvas-release', canvasReleaseHandler );
             viewer.addHandler( 'canvas-click', canvasClickHandler );
 
-            Util.simulateViewerDrag( viewer, 0.25, 0.25, 1, 1, dragMoves );
+            Util.simulateViewerClickWithDrag( { 
+                viewer: viewer, 
+                widthFactor: 0.25, 
+                heightFactor: 0.25, 
+                dragCount: dragCount, 
+                dragDx: 1, 
+                dragDy: 1 
+            } );
         };
 
         var canvasDragHandler = function ( eventSender, eventData ) {
             dragMovesHandled += 1;
-            ok( true, 'canvas-drag event handled' );
         };
 
         var canvasReleaseHandler = function ( eventSender, eventData ) {
@@ -89,7 +95,7 @@
             viewer.removeHandler( 'canvas-release', canvasReleaseHandler );
             viewer.removeHandler( 'canvas-click', canvasClickHandler );
             ok( true, 'canvas-click event handled' );
-            equal( dragMovesHandled, dragMoves, 'canvas-drag event count matches mousemove count' );
+            equal( dragMovesHandled, dragCount, "'canvas-drag' event count matches 'mousemove' event count" );
             viewer.close();
             start();
         };
