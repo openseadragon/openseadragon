@@ -58,7 +58,9 @@ If you wish to work interactively with the tests or test your changes:
 
     grunt connect watch
 
-and open `http://localhost:8000/` in your browser
+and open `http://localhost:8000/test/test.html` in your browser. 
+
+Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
 ### Contributing
 
