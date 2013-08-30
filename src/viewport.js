@@ -726,7 +726,11 @@ $.Viewport.prototype = {
      * system to image coordinate system
      */
     viewportToImageCoordinates: function(viewerX, viewerY) {
-       return new $.Point(viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX);
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.viewportToImageCoordinates(viewerX.x, viewerX.y);
+        }
+        return new $.Point(viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX);
     },
 
     /**
@@ -734,7 +738,11 @@ $.Viewport.prototype = {
      * Seajax viewer coordinate system
      */
     imageToViewportCoordinates: function( imageX, imageY ) {
-       return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX);
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.imageToViewportCoordinates(imageX.x, imageX.y);
+        }
+        return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX);
     },
 
     /**
@@ -746,7 +754,7 @@ $.Viewport.prototype = {
         var coordA,
             coordB,
             rect;
-        if( arguments.length == 1 ){
+        if( arguments.length == 1 ) {
             //they passed a rectangle instead of individual components
             rect = imageX;
             return this.imageToViewportRectangle(rect.x, rect.y, rect.width, rect.height);
@@ -757,6 +765,29 @@ $.Viewport.prototype = {
         coordB = this.imageToViewportCoordinates(
             pixelWidth, pixelHeight
         );
+        return new $.Rect(
+            coordA.x,
+            coordA.y,
+            coordB.x,
+            coordB.y
+        );
+    },
+
+    /**
+     * Translates from a rectangle which describes a portion of
+     * the viewport in point coordinates to image rectangle coordinates.
+     */
+    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if ( arguments.length == 1 ) {
+            //they passed a rectangle instead of individual components
+            rect = viewerX;
+            return this.viewportToImageRectangle(rect.x, rect.y, rect.width, rect.height);
+        }
+        coordA = this.viewportToImageCoordinates(viewerX, viewerY);
+        coordB = this.viewportToImageCoordinates(pointWidth, pointHeight);
         return new $.Rect(
             coordA.x,
             coordA.y,
