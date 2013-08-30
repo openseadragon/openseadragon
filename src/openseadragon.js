@@ -1345,7 +1345,25 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 request.open( "GET", url, true );
                 request.send( null );
             } catch (e) {
-                $.console.log( "%s while making AJAX request: %s", e.name, e.message );
+                var msg = e.message;
+
+                /*
+                    IE < 10 does not support CORS and an XHR request to a different origin will fail as soon
+                    as send() is called. This is particularly easy to miss during development and appear in
+                    production if you use a CDN or domain sharding and the security policy is likely to break
+                    exception handlers since any attempt to access a property of the request object will
+                    raise an access denied TypeError inside the catch block.
+
+                    To be friendlier, we'll check for this specific error and add a documentation pointer
+                    to point developers in the right direction. We test the exception number because IE's
+                    error messages are localized.
+                */
+                var oldIE = $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 10;
+                if ( oldIE && typeof( e.number ) != "undefined" && e.number == -2147024891 ) {
+                    msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
+                }
+
+                $.console.log( "%s while making AJAX request: %s", e.name, msg );
 
                 request.onreadystatechange = function(){};
 
