@@ -330,9 +330,29 @@ $.TileSource.prototype = {
             $.makeAjaxRequest( url, function( xhr ) {
                 var data = processResponse( xhr );
                 callback( data );
-            }, function ( xhr ) {
+            }, function ( xhr, exc ) {
+                var msg;
+
+                /*
+                    IE < 10 will block XHR requests to different origins. Any property access on the request
+                    object will raise an exception which we'll attempt to handle by formatting the original
+                    exception rather than the second one raised when we try to access xhr.status
+                 */
+                try {
+                    msg = "HTTP " + xhr.status + " attempting to load TileSource";
+                } catch ( e ) {
+                    var formattedExc;
+                    if ( typeof( exc ) == "undefined" || !exc.toString ) {
+                        formattedExc = "Unknown error";
+                    } else {
+                        formattedExc = exc.toString();
+                    }
+
+                    msg = formattedExc + " attempting to load TileSource";
+                }
+
                 _this.raiseEvent( 'open-failed', {
-                    message: "HTTP " + xhr.status + " attempting to load TileSource",
+                    message: msg,
                     source: url
                 });
             });
