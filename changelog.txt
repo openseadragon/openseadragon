@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: canvas-click event shouldn't fire as you drag (#198)
 * Fixed: LegacyTileSource doesn't fail gracefully when no supported file formats are found (#202)
 * Added an optional userData argument to EventHandler.addHandler() which is passed unchanged to the handler method (#203)
+* Fixed AJAX error reporting on IE8 (#208)
 
 0.9.130:
 
