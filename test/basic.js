@@ -160,8 +160,15 @@
             };
 
             viewer.addHandler('animationfinish', clickHandler);
-            Util.simulateViewerClick(viewer, 0.25, 0.25);
-        });
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: 0,
+                dragDx: 0,
+                dragDy: 0
+            } );
+        } );
 
         viewer.open('/test/data/testpattern.dzi');
     });
