@@ -722,7 +722,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Translates from Seajax viewer coordinate system to image coordinate system.
+     * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
      * This method can be called either by passing X,Y coordinates or an
      * OpenSeadragon.Point
      * @function
@@ -740,7 +740,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Translates from image coordinate system to Seajax viewer coordinate system
+     * Translates from image coordinate system to OpenSeadragon viewer coordinate system
      * This method can be called either by passing X,Y coordinates or an
      * OpenSeadragon.Point
      * @function
