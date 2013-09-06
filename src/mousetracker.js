@@ -841,10 +841,10 @@
             event.changedTouches.length == 1 ) {
 
             THIS[tracker.hash].lastTouch = event.touches[0];
-            onMouseOver( tracker, event.changedTouches[0], true );
+            onMouseOver( tracker, event, true );
             // call with no capture as the onMouseMoveWindow will 
             // be triggered by onTouchMove
-            onMouseDown( tracker, event.touches[0], true, true );
+            onMouseDown( tracker, event, true, true );
         }
 
         if ( event.touches.length == 2 ) {
@@ -924,8 +924,8 @@
 
             // call with no release, as the mouse events are 
             // not registered in onTouchStart
-            onMouseUpWindow( tracker, event.changedTouches[0], true );
-            onMouseOut( tracker, event.changedTouches[0], true );
+            onMouseUpWindow( tracker, event, true, true );
+            onMouseOut( tracker, event, true );
         }
         if ( event.touches.length + event.changedTouches.length == 2 ) {
             THIS[tracker.hash].lastPinchDelta = null;
@@ -983,9 +983,11 @@
      * @private
      * @inner
      */
-    function onMouseUpWindow( tracker, event, noRelease ) {
+    function onMouseUpWindow( tracker, event, noRelease, isTouch ) {
+        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+
         if ( !THIS[tracker.hash].insideElement ) {
-            onMouseUp( tracker, event, false );
+            onMouseUp( tracker, event, isTouch );
         }
 
         if ( noRelease ) {
@@ -1171,7 +1173,7 @@
             event.changedTouches.length === 1 &&
             THIS[tracker.hash].lastTouch.identifier === event.touches[0].identifier ) {
 
-            onMouseMoveWindow( tracker, event.touches[0], true );
+            onMouseMoveWindow( tracker, event, true );
 
         } else if ( event.touches.length === 2 ) {
 
@@ -1185,15 +1187,14 @@
             if ( Math.abs( THIS[tracker.hash].lastPinchDelta - pinchDelta ) > 75 ) {
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
-                onMouseWheelSpin( tracker, {
-                    shift: false,
-                    shiftKey: false,
-                    pageX: THIS[tracker.hash].pinchMidpoint.x,
-                    pageY: THIS[tracker.hash].pinchMidpoint.y,
-                    detail: (
-                        THIS[tracker.hash].lastPinchDelta > pinchDelta
-                    ) ? 1 : -1
-                }, true );
+                // Adjust the original event enough to simulate a mouse wheel scroll
+                event.shift = false;
+                event.shiftKey = false;
+                event.pageX = THIS[tracker.hash].pinchMidpoint.x;
+                event.pageY = THIS[tracker.hash].pinchMidpoint.y;
+                event.detail = ( THIS[tracker.hash].lastPinchDelta > pinchDelta ) ? 1 : -1;
+
+                onMouseWheelSpin( tracker, event, true );
 
                 THIS[tracker.hash].lastPinchDelta = pinchDelta;
             }
