@@ -705,7 +705,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @name OpenSeadragon.getElementOffset
          * @param {Element|String} element - the element we want the position for.
          * @returns {Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
-         * Inspired by jQuery.fn.offset() (jquery 1.10.1)
          */
         getElementOffset: function( element ) {
             var doc = element && element.ownerDocument,
@@ -718,11 +717,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             }
 
             docElement = doc.documentElement;
-
-            // Make sure it's not a disconnected DOM node
-            //if ( !jQuery.contains( docElement, element ) ) {
-            //    return new $.Point();
-            //}
 
             if ( typeof element.getBoundingClientRect !== typeof undefined ) {
                 boundingRect = element.getBoundingClientRect();

@@ -184,9 +184,8 @@ $.Button = function( options ) {
             }
         },
 
-        // TODO: This didn't match handler signature in MouseTracker. Investigate!
-        focusHandler: function ( tracker, eventData ) { //position, buttonDownElement, buttonDownAny
-            //this.enterHandler( tracker, eventData ); //position, buttonDownElement, buttonDownAny
+        focusHandler: function ( tracker, eventData ) {
+            this.enterHandler( tracker, eventData );
             _this.raiseEvent( "onFocus", _this );
         },
 
@@ -197,9 +196,8 @@ $.Button = function( options ) {
             }
         },
 
-        // TODO: This didn't match handler signature in MouseTracker. Investigate!
-        blurHandler: function ( tracker, eventData ) { //position, buttonDownElement, buttonDownAny
-            //this.exitHandler( tracker, eventData ); //position, buttonDownElement, buttonDownAny
+        blurHandler: function ( tracker, eventData ) {
+            this.exitHandler( tracker, eventData );
             _this.raiseEvent( "onBlur", _this );
         },
 

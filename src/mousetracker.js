@@ -34,78 +34,78 @@
 
 (function ( $ ) {
 
-    // is any button currently being pressed while mouse events occur
+        // is any button currently being pressed while mouse events occur
     var IS_BUTTON_DOWN = false,
-    // is any tracker currently capturing?
-        IS_CAPTURING = false,
-    // dictionary from hash to MouseTracker
-        ACTIVE = {},
-    // list of trackers interested in capture
-        CAPTURING = [],
-    // dictionary from hash to private properties
-        THIS = {};
+        // is any tracker currently capturing?
+        IS_CAPTURING   = false,
+        // dictionary from hash to MouseTracker
+        ACTIVE         = {},
+        // list of trackers interested in capture
+        CAPTURING      = [],
+        // dictionary from hash to private properties
+        THIS           = {};
 
     /**
-    * The MouseTracker allows other classes to set handlers for common mouse
-    * events on a specific element like, 'enter', 'exit', 'press', 'release',
-    * 'scroll', 'click', and 'drag'.
-    * @class
-    * @param {Object} options
-    *      Allows configurable properties to be entirely specified by passing
-    *      an options object to the constructor.  The constructor also supports
-    *      the original positional arguments 'elements', 'clickTimeThreshold',
-    *      and 'clickDistThreshold' in that order.
-    * @param {Element|String} options.element
-    *      A reference to an element or an element id for which the mouse
-    *      events will be monitored.
-    * @param {Number} options.clickTimeThreshold
-    *      The number of milliseconds within which mutliple mouse clicks
-    *      will be treated as a single event.
-    * @param {Number} options.clickDistThreshold
-    *      The distance between mouse click within multiple mouse clicks
-    *      will be treated as a single event.
-    * @param {Function} options.enterHandler
-    *      An optional handler for mouse enter.
-    * @param {Function} options.exitHandler
-    *      An optional handler for mouse exit.
-    * @param {Function} options.pressHandler
-    *      An optional handler for mouse press.
-    * @param {Function} options.releaseHandler
-    *      An optional handler for mouse release.
-    * @param {Function} options.moveHandler
-    *      An optional handler for mouse move.
-    * @param {Function} options.scrollHandler
-    *      An optional handler for mouse scroll.
-    * @param {Function} options.clickHandler
-    *      An optional handler for mouse click.
-    * @param {Function} options.dragHandler
-    *      An optional handler for mouse drag.
-    * @param {Function} options.keyHandler
-    *      An optional handler for keypress.
-    * @param {Function} options.focusHandler
-    *      An optional handler for focus.
-    * @param {Function} options.blurHandler
-    *      An optional handler for blur.
-    * @property {Number} hash
-    *      An unique hash for this tracker.
-    * @property {Element} element
-    *      The element for which mouse event are being monitored.
-    * @property {Number} clickTimeThreshold
-    *      The number of milliseconds within which mutliple mouse clicks
-    *      will be treated as a single event.
-    * @property {Number} clickDistThreshold
-    *      The distance between mouse click within multiple mouse clicks
-    *      will be treated as a single event.
-    * @property {Object} optional userData
-    *      Arbitrary object to be passed unchanged to any attached handler methods.
-    */
+     * The MouseTracker allows other classes to set handlers for common mouse
+     * events on a specific element like, 'enter', 'exit', 'press', 'release',
+     * 'scroll', 'click', and 'drag'.
+     * @class
+     * @param {Object} options
+     *      Allows configurable properties to be entirely specified by passing
+     *      an options object to the constructor.  The constructor also supports
+     *      the original positional arguments 'elements', 'clickTimeThreshold',
+     *      and 'clickDistThreshold' in that order.
+     * @param {Element|String} options.element
+     *      A reference to an element or an element id for which the mouse
+     *      events will be monitored.
+     * @param {Number} options.clickTimeThreshold
+     *      The number of milliseconds within which mutliple mouse clicks
+     *      will be treated as a single event.
+     * @param {Number} options.clickDistThreshold
+     *      The distance between mouse click within multiple mouse clicks
+     *      will be treated as a single event.
+     * @param {Function} options.enterHandler
+     *      An optional handler for mouse enter.
+     * @param {Function} options.exitHandler
+     *      An optional handler for mouse exit.
+     * @param {Function} options.pressHandler
+     *      An optional handler for mouse press.
+     * @param {Function} options.releaseHandler
+     *      An optional handler for mouse release.
+     * @param {Function} options.moveHandler
+     *      An optional handler for mouse move.
+     * @param {Function} options.scrollHandler
+     *      An optional handler for mouse scroll.
+     * @param {Function} options.clickHandler
+     *      An optional handler for mouse click.
+     * @param {Function} options.dragHandler
+     *      An optional handler for mouse drag.
+     * @param {Function} options.keyHandler
+     *      An optional handler for keypress.
+     * @param {Function} options.focusHandler
+     *      An optional handler for focus.
+     * @param {Function} options.blurHandler
+     *      An optional handler for blur.
+     * @property {Number} hash
+     *      An unique hash for this tracker.
+     * @property {Element} element
+     *      The element for which mouse event are being monitored.
+     * @property {Number} clickTimeThreshold
+     *      The number of milliseconds within which mutliple mouse clicks
+     *      will be treated as a single event.
+     * @property {Number} clickDistThreshold
+     *      The distance between mouse click within multiple mouse clicks
+     *      will be treated as a single event.
+     * @property {Object} optional userData
+     *      Arbitrary object to be passed unchanged to any attached handler methods.
+     */
     $.MouseTracker = function ( options ) {
 
         var args = arguments;
 
         if ( !$.isPlainObject( options ) ) {
             options = {
-                element: args[0],
+                element:            args[0],
                 clickTimeThreshold: args[1],
                 clickDistThreshold: args[2]
             };
@@ -115,68 +115,68 @@
         this.element            = $.getElement( options.element );
         this.clickTimeThreshold = options.clickTimeThreshold;
         this.clickDistThreshold = options.clickDistThreshold;
-        this.userData           = options.userData || null;
+        this.userData           = options.userData       || null;
 
-        this.enterHandler       = options.enterHandler || null;
-        this.exitHandler        = options.exitHandler || null;
-        this.pressHandler       = options.pressHandler || null;
+        this.enterHandler       = options.enterHandler   || null;
+        this.exitHandler        = options.exitHandler    || null;
+        this.pressHandler       = options.pressHandler   || null;
         this.releaseHandler     = options.releaseHandler || null;
-        this.moveHandler        = options.moveHandler || null;
-        this.scrollHandler      = options.scrollHandler || null;
-        this.clickHandler       = options.clickHandler || null;
-        this.dragHandler        = options.dragHandler || null;
-        this.keyHandler         = options.keyHandler || null;
-        this.focusHandler       = options.focusHandler || null;
-        this.blurHandler        = options.blurHandler || null;
+        this.moveHandler        = options.moveHandler    || null;
+        this.scrollHandler      = options.scrollHandler  || null;
+        this.clickHandler       = options.clickHandler   || null;
+        this.dragHandler        = options.dragHandler    || null;
+        this.keyHandler         = options.keyHandler     || null;
+        this.focusHandler       = options.focusHandler   || null;
+        this.blurHandler        = options.blurHandler    || null;
 
         //Store private properties in a scope sealed hash map
         var _this = this;
 
         /**
-        * @private
-        * @property {Boolean} tracking
-        *      Are we currently tracking mouse events.
-        * @property {Boolean} capturing
-        *      Are we curruently capturing mouse events.
-        * @property {Boolean} buttonDownElement
-        *      True if the left mouse button is currently being pressed and was
-        *      initiated inside the tracked element, otherwise false.
-        * @property {Boolean} insideElement
-        *      Are we currently inside the screen area of the tracked element.
-        * @property {OpenSeadragon.Point} lastPoint
-        *      Position of last mouse down/move
-        * @property {Number} lastMouseDownTime
-        *      Time of last mouse down.
-        * @property {OpenSeadragon.Point} lastMouseDownPoint
-        *      Position of last mouse down
-        */
+         * @private
+         * @property {Boolean} tracking
+         *      Are we currently tracking mouse events.
+         * @property {Boolean} capturing
+         *      Are we curruently capturing mouse events.
+         * @property {Boolean} buttonDownElement
+         *      True if the left mouse button is currently being pressed and was
+         *      initiated inside the tracked element, otherwise false.
+         * @property {Boolean} insideElement
+         *      Are we currently inside the screen area of the tracked element.
+         * @property {OpenSeadragon.Point} lastPoint
+         *      Position of last mouse down/move
+         * @property {Number} lastMouseDownTime
+         *      Time of last mouse down.
+         * @property {OpenSeadragon.Point} lastMouseDownPoint
+         *      Position of last mouse down
+         */
         THIS[this.hash] = {
-            mouseover: function ( event ) { onMouseOver( _this, event, false ); },
-            mouseout: function ( event ) { onMouseOut( _this, event, false ); },
-            mousedown: function ( event ) { onMouseDown( _this, event ); },
-            mouseup: function ( event ) { onMouseUp( _this, event, false ); },
-            mousemove: function ( event ) { onMouseMove( _this, event ); },
-            click: function ( event ) { onMouseClick( _this, event ); },
-            DOMMouseScroll: function ( event ) { onMouseWheelSpin( _this, event, false ); },
-            mousewheel: function ( event ) { onMouseWheelSpin( _this, event, false ); },
-            mouseupie: function ( event ) { onMouseUpIE( _this, event ); },
-            mousemoveie: function ( event ) { onMouseMoveIE( _this, event ); },
-            mouseupwindow: function ( event ) { onMouseUpWindow( _this, event ); },
-            mousemovewindow: function ( event ) { onMouseMoveWindow( _this, event, false ); },
-            touchstart: function ( event ) { onTouchStart( _this, event ); },
-            touchmove: function ( event ) { onTouchMove( _this, event ); },
-            touchend: function ( event ) { onTouchEnd( _this, event ); },
-            keypress: function ( event ) { onKeyPress( _this, event ); },
-            focus: function ( event ) { onFocus( _this, event ); },
-            blur: function ( event ) { onBlur( _this, event ); },
-            tracking: false,
-            capturing: false,
-            buttonDownElement: false,
-            insideElement: false,
-            lastPoint: null,
-            lastMouseDownTime: null,
+            mouseover:          function ( event ) { onMouseOver( _this, event, false ); },
+            mouseout:           function ( event ) { onMouseOut( _this, event, false ); },
+            mousedown:          function ( event ) { onMouseDown( _this, event ); },
+            mouseup:            function ( event ) { onMouseUp( _this, event, false ); },
+            mousemove:          function ( event ) { onMouseMove( _this, event ); },
+            click:              function ( event ) { onMouseClick( _this, event ); },
+            DOMMouseScroll:     function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mousewheel:         function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mouseupie:          function ( event ) { onMouseUpIE( _this, event ); },
+            mousemoveie:        function ( event ) { onMouseMoveIE( _this, event ); },
+            mouseupwindow:      function ( event ) { onMouseUpWindow( _this, event ); },
+            mousemovewindow:    function ( event ) { onMouseMoveWindow( _this, event, false ); },
+            touchstart:         function ( event ) { onTouchStart( _this, event ); },
+            touchmove:          function ( event ) { onTouchMove( _this, event ); },
+            touchend:           function ( event ) { onTouchEnd( _this, event ); },
+            keypress:           function ( event ) { onKeyPress( _this, event ); },
+            focus:              function ( event ) { onFocus( _this, event ); },
+            blur:               function ( event ) { onBlur( _this, event ); },
+            tracking:           false,
+            capturing:          false,
+            buttonDownElement:  false,
+            insideElement:      false,
+            lastPoint:          null,
+            lastMouseDownTime:  null,
             lastMouseDownPoint: null,
-            lastPinchDelta: 0
+            lastPinchDelta:     0
         };
 
     };
@@ -184,30 +184,30 @@
     $.MouseTracker.prototype = {
 
         /**
-        * Clean up any events or objects created by the mouse tracker.
-        * @function
-        */
+         * Clean up any events or objects created by the mouse tracker.
+         * @function
+         */
         destroy: function () {
             stopTracking( this );
             this.element = null;
         },
 
         /**
-        * Are we currently tracking events on this element.
-        * @deprecated Just use this.tracking
-        * @function
-        * @returns {Boolean} Are we currently tracking events on this element.
-        */
+         * Are we currently tracking events on this element.
+         * @deprecated Just use this.tracking
+         * @function
+         * @returns {Boolean} Are we currently tracking events on this element.
+         */
         isTracking: function () {
             return THIS[this.hash].tracking;
         },
 
         /**
-        * Enable or disable whether or not we are tracking events on this element.
-        * @function
-        * @param {Boolean} track True to start tracking, false to stop tracking.
-        * @returns {OpenSeadragon.MouseTracker} Chainable.
-        */
+         * Enable or disable whether or not we are tracking events on this element.
+         * @function
+         * @param {Boolean} track True to start tracking, false to stop tracking.
+         * @returns {OpenSeadragon.MouseTracker} Chainable.
+         */
         setTracking: function ( track ) {
             if ( track ) {
                 startTracking( this );
@@ -219,198 +219,198 @@
         },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-        *     buttonDownAny: Was the button down anywhere in the screen during the event.
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     buttonDownAny: Was the button down anywhere in the screen during the event.
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         enterHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-        *     buttonDownAny: Was the button down anywhere in the screen during the event.
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     buttonDownAny: Was the button down anywhere in the screen during the event.
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         exitHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         pressHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     insideElementPress: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-        *     insideElementRelease: Was the mouse still inside the tracked element when the button was released.
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     insideElementPress: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     insideElementRelease: Was the mouse still inside the tracked element when the button was released.
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         releaseHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         moveHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     scroll: The scroll delta for the event.
-        *     shift: Was the shift key being pressed during this event?
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     scroll: The scroll delta for the event.
+         *     shift: Was the shift key being pressed during this event?
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         scrollHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     quick: True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
-        *     shift: Was the shift key being pressed during this event?
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     quick: True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
+         *     shift: Was the shift key being pressed during this event?
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         clickHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     position: The position of the event relative to the tracked element.
-        *     delta: The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
-        *     shift: Was the shift key being pressed during this event?
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     position: The position of the event relative to the tracked element.
+         *     delta: The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
+         *     shift: Was the shift key being pressed during this event?
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         dragHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     keyCode: The key code that was pressed.
-        *     shift: Was the shift key being pressed during this event?
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     keyCode: The key code that was pressed.
+         *     shift: Was the shift key being pressed during this event?
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         keyHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         focusHandler: function () { },
 
         /**
-        * Implement or assign implmentation to these handlers during or after
-        * calling the constructor.
-        * @function
-        * @param {OpenSeadragon.MouseTracker} tracker
-        *      A reference to the tracker instance.
-        * @param {Object} eventData
-        * {
-        *     isTouchEvent: True if the original event is a touch event, otherwise false.
-        *     originalEvent: The original event object. 
-        *     userData: Arbitrary user-defined object.
-        * }
-        */
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * {
+         *     isTouchEvent: True if the original event is a touch event, otherwise false.
+         *     originalEvent: The original event object. 
+         *     userData: Arbitrary user-defined object.
+         * }
+         */
         blurHandler: function () { }
     };
 
     /**
-    * Starts tracking mouse events on this element.
-    * @private
-    * @inner
-    */
+     * Starts tracking mouse events on this element.
+     * @private
+     * @inner
+     */
     function startTracking( tracker ) {
         var events = [
                 "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
@@ -440,10 +440,10 @@
     }
 
     /**
-    * Stops tracking mouse events on this element.
-    * @private
-    * @inner
-    */
+     * Stops tracking mouse events on this element.
+     * @private
+     * @inner
+     */
     function stopTracking( tracker ) {
         var events = [
                 "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
@@ -475,18 +475,18 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function hasMouse( tracker ) {
         return THIS[tracker.hash].insideElement;
     }
 
     /**
-    * Begin capturing mouse events on this element.
-    * @private
-    * @inner
-    */
+     * Begin capturing mouse events on this element.
+     * @private
+     * @inner
+     */
     function captureMouse( tracker ) {
         var delegate = THIS[tracker.hash];
         if ( !delegate.capturing ) {
@@ -530,10 +530,10 @@
 
 
     /**
-    * Stop capturing mouse events on this element.
-    * @private
-    * @inner
-    */
+     * Stop capturing mouse events on this element.
+     * @private
+     * @inner
+     */
     function releaseMouse( tracker ) {
         var delegate = THIS[tracker.hash];
         if ( delegate.capturing ) {
@@ -577,9 +577,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function triggerOthers( tracker, handler, event, isTouch ) {
         var otherHash;
         for ( otherHash in ACTIVE ) {
@@ -591,9 +591,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onFocus( tracker, event ) {
         //console.log( "focus %s", event );
         var propagate;
@@ -614,9 +614,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onBlur( tracker, event ) {
         //console.log( "blur %s", event );
         var propagate;
@@ -637,9 +637,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onKeyPress( tracker, event ) {
         //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
@@ -663,9 +663,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseOver( tracker, event, isTouch ) {
 
         var delegate = THIS[tracker.hash],
@@ -717,9 +717,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseOut( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
             propagate;
@@ -772,9 +772,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseDown( tracker, event, noCapture, isTouch ) {
         var delegate = THIS[tracker.hash],
             propagate;
@@ -829,9 +829,9 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onTouchStart( tracker, event ) {
         var touchA,
             touchB;
@@ -866,9 +866,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseUp( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
         //were we inside the tracked element when we were pressed
@@ -911,9 +911,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onTouchEnd( tracker, event ) {
 
         if ( event.touches.length === 0 &&
@@ -937,15 +937,15 @@
 
 
     /**
-    * Only triggered once by the deepest element that initially received
-    * the mouse down event. We want to make sure THIS event doesn't bubble.
-    * Instead, we want to trigger the elements that initially received the
-    * mouse down event (including this one) only if the mouse is no longer
-    * inside them. Then, we want to release capture, and emulate a regular
-    * mouseup on the event that this event was meant for.
-    * @private
-    * @inner
-    */
+     * Only triggered once by the deepest element that initially received
+     * the mouse down event. We want to make sure THIS event doesn't bubble.
+     * Instead, we want to trigger the elements that initially received the
+     * mouse down event (including this one) only if the mouse is no longer
+     * inside them. Then, we want to release capture, and emulate a regular
+     * mouseup on the event that this event was meant for.
+     * @private
+     * @inner
+     */
     function onMouseUpIE( tracker, event ) {
         var othertracker,
             i;
@@ -975,14 +975,14 @@
 
 
     /**
-    * Only triggered in W3C browsers by elements within which the mouse was
-    * initially pressed, since they are now listening to the window for
-    * mouseup during the capture phase. We shouldn't handle the mouseup
-    * here if the mouse is still inside this element, since the regular
-    * mouseup handler will still fire.
-    * @private
-    * @inner
-    */
+     * Only triggered in W3C browsers by elements within which the mouse was
+     * initially pressed, since they are now listening to the window for
+     * mouseup during the capture phase. We shouldn't handle the mouseup
+     * here if the mouse is still inside this element, since the regular
+     * mouseup handler will still fire.
+     * @private
+     * @inner
+     */
     function onMouseUpWindow( tracker, event, noRelease ) {
         if ( !THIS[tracker.hash].insideElement ) {
             onMouseUp( tracker, event, false );
@@ -997,9 +997,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseMove( tracker, event ) {
         if ( tracker.moveHandler ) {
             event = $.getEvent( event );
@@ -1021,9 +1021,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseClick( tracker, event ) {
         if ( tracker.clickHandler ) {
             $.cancelEvent( event );
@@ -1032,9 +1032,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseWheelSpin( tracker, event, isTouch ) {
         var nDelta = 0,
             propagate;
@@ -1078,9 +1078,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function handleMouseClick( tracker, event ) {
         var delegate = THIS[tracker.hash],
             propagate;
@@ -1117,9 +1117,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onMouseMoveWindow( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
             delta,
@@ -1154,9 +1154,9 @@
 
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onTouchMove( tracker, event ) {
         var touchA,
             touchB,
@@ -1202,14 +1202,14 @@
     }
 
     /**
-    * Only triggered once by the deepest element that initially received
-    * the mouse down event. Since no other element has captured the mouse,
-    * we want to trigger the elements that initially received the mouse
-    * down event (including this one). The the param tracker isn't used
-    * but for consistency with the other event handlers we include it.
-    * @private
-    * @inner
-    */
+     * Only triggered once by the deepest element that initially received
+     * the mouse down event. Since no other element has captured the mouse,
+     * we want to trigger the elements that initially received the mouse
+     * down event (including this one). The the param tracker isn't used
+     * but for consistency with the other event handlers we include it.
+     * @private
+     * @inner
+     */
     function onMouseMoveIE( tracker, event ) {
         var i;
         for ( i = 0; i < CAPTURING.length; i++ ) {
@@ -1220,17 +1220,17 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function getMouseAbsolute( event ) {
         return $.getMousePosition( event );
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function getMouseRelative( event, element ) {
         var mouse = $.getMousePosition( event ),
             offset = $.getElementOffset( element );
@@ -1239,10 +1239,10 @@
     }
 
     /**
-    * @private
-    * @inner
-    * Returns true if elementB is a child node of elementA, or if they're equal.
-    */
+     * @private
+     * @inner
+     * Returns true if elementB is a child node of elementA, or if they're equal.
+     */
     function isChild( elementA, elementB ) {
         var body = document.body;
         while ( elementB && elementA != elementB && body != elementB ) {
@@ -1256,17 +1256,17 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onGlobalMouseDown() {
         IS_BUTTON_DOWN = true;
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onGlobalMouseUp() {
         IS_BUTTON_DOWN = false;
     }
