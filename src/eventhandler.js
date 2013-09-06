@@ -55,7 +55,7 @@ $.EventHandler.prototype = {
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Function} handler - Function to call when event is triggered.
-     * @param {Object} optional userData - Arbitrary object to be passed to the handler.
+     * @param {Object} optional userData - Arbitrary object to be passed unchanged to the handler.
      */
     addHandler: function ( eventName, handler, userData ) {
         var events = this.events[ eventName ];

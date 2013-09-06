@@ -175,57 +175,59 @@ $.Button = function( options ) {
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
 
-        enterHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
-            if ( buttonDownElement ) {
+        enterHandler: function( tracker, eventData ) {
+            if ( eventData.buttonDownElement ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "onEnter", _this );
-            } else if ( !buttonDownAny ) {
+            } else if ( !eventData.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
 
-        focusHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
-            this.enterHandler( tracker, position, buttonDownElement, buttonDownAny );
+        // TODO: This didn't match handler signature in MouseTracker. Investigate!
+        focusHandler: function ( tracker, eventData ) { //position, buttonDownElement, buttonDownAny
+            //this.enterHandler( tracker, eventData ); //position, buttonDownElement, buttonDownAny
             _this.raiseEvent( "onFocus", _this );
         },
 
-        exitHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
+        exitHandler: function( tracker, eventData ) {
             outTo( _this, $.ButtonState.GROUP );
-            if ( buttonDownElement ) {
+            if ( eventData.buttonDownElement ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
 
-        blurHandler: function( tracker, position, buttonDownElement, buttonDownAny ) {
-            this.exitHandler( tracker, position, buttonDownElement, buttonDownAny );
+        // TODO: This didn't match handler signature in MouseTracker. Investigate!
+        blurHandler: function ( tracker, eventData ) { //position, buttonDownElement, buttonDownAny
+            //this.exitHandler( tracker, eventData ); //position, buttonDownElement, buttonDownAny
             _this.raiseEvent( "onBlur", _this );
         },
 
-        pressHandler: function( tracker, position ) {
+        pressHandler: function ( tracker, eventData ) {
             inTo( _this, $.ButtonState.DOWN );
             _this.raiseEvent( "onPress", _this );
         },
 
-        releaseHandler: function( tracker, position, insideElementPress, insideElementRelease ) {
-            if ( insideElementPress && insideElementRelease ) {
+        releaseHandler: function( tracker, eventData ) {
+            if ( eventData.insideElementPress && eventData.insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
-            } else if ( insideElementPress ) {
+            } else if ( eventData.insideElementPress ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
 
-        clickHandler: function( tracker, position, quick, shift ) {
-            if ( quick ) {
+        clickHandler: function( tracker, eventData ) {
+            if ( eventData.quick ) {
                 _this.raiseEvent("onClick", _this);
             }
         },
 
-        keyHandler: function( tracker, key ){
-            //console.log( "%s : handling key %s!", _this.tooltip, key);
-            if( 13 === key ){
+        keyHandler: function( tracker, eventData ){
+            //console.log( "%s : handling key %s!", _this.tooltip, eventData.keyCode);
+            if( 13 === eventData.keyCode ){
                 _this.raiseEvent( "onClick", _this );
                 _this.raiseEvent( "onRelease", _this );
                 return false;

@@ -85,29 +85,23 @@ $.ButtonGroup = function( options ) {
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
-        enterHandler: function() {
+        enterHandler: function ( tracker, eventData ) {
             var i;
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupEnter();
             }
         },
-        exitHandler: function() {
-            var i,
-                buttonDownElement = arguments.length > 2 ?
-                    arguments[ 2 ] :
-                    null;
-            if ( !buttonDownElement ) {
+        exitHandler: function ( tracker, eventData ) {
+            var i;
+            if ( !eventData.buttonDownElement ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }
             }
         },
-        releaseHandler: function() {
-            var i,
-                insideElementRelease = arguments.length > 3 ?
-                    arguments[ 3 ] :
-                    null;
-            if ( !insideElementRelease ) {
+        releaseHandler: function ( tracker, eventData ) {
+            var i;
+            if ( !eventData.insideElementRelease ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }
