@@ -119,7 +119,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
      */
     emulateEnter: function() {
-        this.tracker.enterHandler();
+        this.tracker.enterHandler( this.tracker, {} );
     },
 
     /**
@@ -129,7 +129,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
      */
     emulateExit: function() {
-        this.tracker.exitHandler();
+        this.tracker.exitHandler( this.tracker, {} );
     }
 };
 

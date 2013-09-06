@@ -730,7 +730,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             THIS[ this.hash ].fullPage = true;
 
             // mouse will be inside container now
-            $.delegate( this, onContainerEnter )();
+            $.delegate( this, onContainerEnter )( null, {} );
 
 
         } else {
@@ -789,7 +789,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )();
+            $.delegate( this, onContainerExit )( null, {} );
 
 
         }
