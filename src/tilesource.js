@@ -299,6 +299,10 @@ $.TileSource.prototype = {
         }
 
         callback = function( data ){
+            if( typeof(data) === "string" ) {
+                var tmp = new DOMParser();
+                data = tmp.parseFromString( data , "text/xml" );
+            }
             var $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
                 _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
