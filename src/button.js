@@ -176,7 +176,7 @@ $.Button = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( tracker, eventData ) {
-            if ( eventData.buttonDownElement ) {
+            if ( eventData.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 _this.raiseEvent( "onEnter", _this );
             } else if ( !eventData.buttonDownAny ) {
@@ -191,7 +191,7 @@ $.Button = function( options ) {
 
         exitHandler: function( tracker, eventData ) {
             outTo( _this, $.ButtonState.GROUP );
-            if ( eventData.buttonDownElement ) {
+            if ( eventData.insideElementPressed ) {
                 _this.raiseEvent( "onExit", _this );
             }
         },
@@ -207,10 +207,10 @@ $.Button = function( options ) {
         },
 
         releaseHandler: function( tracker, eventData ) {
-            if ( eventData.insideElementPress && eventData.insideElementRelease ) {
+            if ( eventData.insideElementPressed && eventData.insideElementRelease ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
-            } else if ( eventData.insideElementPress ) {
+            } else if ( eventData.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
                 inTo( _this, $.ButtonState.HOVER );

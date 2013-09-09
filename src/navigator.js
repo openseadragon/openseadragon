@@ -308,8 +308,8 @@ function onCanvasDrag( tracker, eventData ) {
  * @inner
  * @function
  */
-function onCanvasRelease( tracker, eventData ) {//position, insideElementPress, insideElementRelease
-    if ( eventData.insideElementPress && this.viewer.viewport ) {
+function onCanvasRelease( tracker, eventData ) {
+    if ( eventData.insideElementPressed && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
 }

@@ -93,7 +93,7 @@ $.ButtonGroup = function( options ) {
         },
         exitHandler: function ( tracker, eventData ) {
             var i;
-            if ( !eventData.buttonDownElement ) {
+            if ( !eventData.insideElementPressed ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }

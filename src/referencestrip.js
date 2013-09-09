@@ -193,11 +193,11 @@ $.ReferenceStrip = function ( options ) {
                 tracker.dragging = $.now();
             },
             releaseHandler: function ( tracker, eventData ) {
-                var id = tracker.element.id,
-                page = Number( id.split( '-' )[2] ),
-                now = $.now();
+                var id   = tracker.element.id,
+                    page = Number( id.split( '-' )[2] ),
+                    now  = $.now();
 
-                if ( eventData.insideElementPress &&
+                if ( eventData.insideElementPressed &&
                      eventData.insideElementRelease &&
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ) {
@@ -222,12 +222,12 @@ $.ReferenceStrip = function ( options ) {
 $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
 
     setFocus: function ( page ) {
-        var element = $.getElement( this.element.id + '-' + page ),
-            viewerSize = $.getElementSize( this.viewer.canvas ),
-            scrollWidth = Number( this.element.style.width.replace( 'px', '' ) ),
+        var element      = $.getElement( this.element.id + '-' + page ),
+            viewerSize   = $.getElementSize( this.viewer.canvas ),
+            scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
             scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-            offsetLeft = -Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-            offsetTop = -Number( this.element.style.marginTop.replace( 'px', '' ) ),
+            offsetLeft   = -Number( this.element.style.marginLeft.replace( 'px', '' ) ),
+            offsetTop    = -Number( this.element.style.marginTop.replace( 'px', '' ) ),
             offset;
 
         if ( this.currentSelected !== element ) {
@@ -291,11 +291,11 @@ $.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototy
  */
 function onStripDrag( tracker, eventData ) {
 
-    var offsetLeft = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth = Number( this.element.style.width.replace( 'px', '' ) ),
+    var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
+        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
+        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
         scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize = $.getElementSize( this.viewer.canvas );
+        viewerSize   = $.getElementSize( this.viewer.canvas );
     this.dragging = true;
     if ( this.element ) {
         if ( 'horizontal' == this.scroll ) {
@@ -340,11 +340,11 @@ function onStripDrag( tracker, eventData ) {
  * @function
  */
 function onStripScroll( tracker, eventData ) {
-    var offsetLeft = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth = Number( this.element.style.width.replace( 'px', '' ) ),
+    var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
+        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
+        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
         scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize = $.getElementSize( this.viewer.canvas );
+        viewerSize   = $.getElementSize( this.viewer.canvas );
     if ( this.element ) {
         if ( 'horizontal' == this.scroll ) {
             if ( eventData.scroll > 0 ) {

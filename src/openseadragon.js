@@ -707,6 +707,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
          */
         getElementOffset: function( element ) {
+            element = $.getElement( element );
+
             var doc = element && element.ownerDocument,
                 docElement,
                 win,

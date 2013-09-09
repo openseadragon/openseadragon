@@ -138,7 +138,7 @@
          *      Are we currently tracking mouse events.
          * @property {Boolean} capturing
          *      Are we curruently capturing mouse events.
-         * @property {Boolean} buttonDownElement
+         * @property {Boolean} insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
          * @property {Boolean} insideElement
@@ -151,32 +151,32 @@
          *      Position of last mouse down
          */
         THIS[this.hash] = {
-            mouseover:          function ( event ) { onMouseOver( _this, event, false ); },
-            mouseout:           function ( event ) { onMouseOut( _this, event, false ); },
-            mousedown:          function ( event ) { onMouseDown( _this, event ); },
-            mouseup:            function ( event ) { onMouseUp( _this, event, false ); },
-            mousemove:          function ( event ) { onMouseMove( _this, event ); },
-            click:              function ( event ) { onMouseClick( _this, event ); },
-            DOMMouseScroll:     function ( event ) { onMouseWheelSpin( _this, event, false ); },
-            mousewheel:         function ( event ) { onMouseWheelSpin( _this, event, false ); },
-            mouseupie:          function ( event ) { onMouseUpIE( _this, event ); },
-            mousemoveie:        function ( event ) { onMouseMoveIE( _this, event ); },
-            mouseupwindow:      function ( event ) { onMouseUpWindow( _this, event ); },
-            mousemovewindow:    function ( event ) { onMouseMoveWindow( _this, event, false ); },
-            touchstart:         function ( event ) { onTouchStart( _this, event ); },
-            touchmove:          function ( event ) { onTouchMove( _this, event ); },
-            touchend:           function ( event ) { onTouchEnd( _this, event ); },
-            keypress:           function ( event ) { onKeyPress( _this, event ); },
-            focus:              function ( event ) { onFocus( _this, event ); },
-            blur:               function ( event ) { onBlur( _this, event ); },
-            tracking:           false,
-            capturing:          false,
-            buttonDownElement:  false,
-            insideElement:      false,
-            lastPoint:          null,
-            lastMouseDownTime:  null,
-            lastMouseDownPoint: null,
-            lastPinchDelta:     0
+            mouseover:             function ( event ) { onMouseOver( _this, event, false ); },
+            mouseout:              function ( event ) { onMouseOut( _this, event, false ); },
+            mousedown:             function ( event ) { onMouseDown( _this, event ); },
+            mouseup:               function ( event ) { onMouseUp( _this, event, false ); },
+            mousemove:             function ( event ) { onMouseMove( _this, event ); },
+            click:                 function ( event ) { onMouseClick( _this, event ); },
+            DOMMouseScroll:        function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mousewheel:            function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mouseupie:             function ( event ) { onMouseUpIE( _this, event ); },
+            mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
+            mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
+            mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event, false ); },
+            touchstart:            function ( event ) { onTouchStart( _this, event ); },
+            touchmove:             function ( event ) { onTouchMove( _this, event ); },
+            touchend:              function ( event ) { onTouchEnd( _this, event ); },
+            keypress:              function ( event ) { onKeyPress( _this, event ); },
+            focus:                 function ( event ) { onFocus( _this, event ); },
+            blur:                  function ( event ) { onBlur( _this, event ); },
+            tracking:              false,
+            capturing:             false,
+            insideElementPressed:  false,
+            insideElement:         false,
+            lastPoint:             null,
+            lastMouseDownTime:     null,
+            lastMouseDownPoint:    null,
+            lastPinchDelta:        0
         };
 
     };
@@ -227,7 +227,7 @@
          * @param {Object} eventData
          * {
          *     position: The position of the event relative to the tracked element.
-         *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     insideElementPressed: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
          *     buttonDownAny: Was the button down anywhere in the screen during the event.
          *     isTouchEvent: True if the original event is a touch event, otherwise false.
          *     originalEvent: The original event object. 
@@ -245,7 +245,7 @@
          * @param {Object} eventData
          * {
          *     position: The position of the event relative to the tracked element.
-         *     buttonDownElement: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     insideElementPressed: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
          *     buttonDownAny: Was the button down anywhere in the screen during the event.
          *     isTouchEvent: True if the original event is a touch event, otherwise false.
          *     originalEvent: The original event object. 
@@ -279,7 +279,7 @@
          * @param {Object} eventData
          * {
          *     position: The position of the event relative to the tracked element.
-         *     insideElementPress: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+         *     insideElementPressed: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
          *     insideElementRelease: Was the mouse still inside the tracked element when the button was released.
          *     isTouchEvent: True if the original event is a touch event, otherwise false.
          *     originalEvent: The original event object. 
@@ -507,20 +507,20 @@
                 $.addEvent(
                     tracker.element,
                     "mousemove",
-                    delegate.mousemoveie,
+                    delegate.mousemovecapturedie,
                     true
                 );
             } else {
                 $.addEvent(
                     window,
                     "mouseup",
-                    delegate.mouseupwindow,
+                    delegate.mouseupcaptured,
                     true
                 );
                 $.addEvent(
                     window,
                     "mousemove",
-                    delegate.mousemovewindow,
+                    delegate.mousemovecaptured,
                     true
                 );
             }
@@ -542,7 +542,7 @@
                 $.removeEvent(
                     tracker.element,
                     "mousemove",
-                    delegate.mousemoveie,
+                    delegate.mousemovecapturedie,
                     true
                 );
                 $.removeEvent(
@@ -561,13 +561,13 @@
                 $.removeEvent(
                     window,
                     "mousemove",
-                    delegate.mousemovewindow,
+                    delegate.mousemovecaptured,
                     true
                 );
                 $.removeEvent(
                     window,
                     "mouseup",
-                    delegate.mouseupwindow,
+                    delegate.mouseupcaptured,
                     true
                 );
             }
@@ -671,7 +671,7 @@
         var delegate = THIS[tracker.hash],
             propagate;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
@@ -702,7 +702,7 @@
                 tracker,
                 {
                     position: getMouseRelative( event, tracker.element ),
-                    buttonDownElement: delegate.buttonDownElement,
+                    insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
                     isTouchEvent: isTouch,
                     originalEvent: event,
@@ -724,7 +724,7 @@
         var delegate = THIS[tracker.hash],
             propagate;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
@@ -756,7 +756,7 @@
                 tracker,
                 {
                     position: getMouseRelative( event, tracker.element ),
-                    buttonDownElement: delegate.buttonDownElement,
+                    insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
                     isTouchEvent: isTouch,
                     originalEvent: event,
@@ -779,7 +779,7 @@
         var delegate = THIS[tracker.hash],
             propagate;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
@@ -787,7 +787,7 @@
             return;
         }
 
-        delegate.buttonDownElement = true;
+        delegate.insideElementPressed = true;
 
         delegate.lastPoint = getMouseAbsolute( event );
         delegate.lastMouseDownPoint = delegate.lastPoint;
@@ -842,7 +842,7 @@
 
             THIS[tracker.hash].lastTouch = event.touches[0];
             onMouseOver( tracker, event, true );
-            // call with no capture as the onMouseMoveWindow will 
+            // call with no capture as the onMouseMoveCaptured will 
             // be triggered by onTouchMove
             onMouseDown( tracker, event, true, true );
         }
@@ -871,13 +871,13 @@
      */
     function onMouseUp( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
-        //were we inside the tracked element when we were pressed
-            insideElementPress = delegate.buttonDownElement,
-        //are we still inside the tracked element when we released
+            //were we inside the tracked element when we were pressed
+            insideElementPressed = delegate.insideElementPressed,
+            //are we still inside the tracked element when we released
             insideElementRelease = delegate.insideElement,
             propagate;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
@@ -885,14 +885,14 @@
             return;
         }
 
-        delegate.buttonDownElement = false;
+        delegate.insideElementPressed = false;
 
         if ( tracker.releaseHandler ) {
             propagate = tracker.releaseHandler(
                 tracker,
                 {
                     position: getMouseRelative( event, tracker.element ),
-                    insideElementPress: insideElementPress,
+                    insideElementPressed: insideElementPressed,
                     insideElementRelease: insideElementRelease,
                     isTouchEvent: isTouch,
                     originalEvent: event,
@@ -904,7 +904,7 @@
             }
         }
 
-        if ( insideElementPress && insideElementRelease ) {
+        if ( insideElementPressed && insideElementRelease ) {
             handleMouseClick( tracker, event );
         }
     }
@@ -924,7 +924,7 @@
 
             // call with no release, as the mouse events are 
             // not registered in onTouchStart
-            onMouseUpWindow( tracker, event, true, true );
+            onMouseUpCaptured( tracker, event, true, true );
             onMouseOut( tracker, event, true );
         }
         if ( event.touches.length + event.changedTouches.length == 2 ) {
@@ -983,8 +983,8 @@
      * @private
      * @inner
      */
-    function onMouseUpWindow( tracker, event, noRelease, isTouch ) {
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+    function onMouseUpCaptured( tracker, event, noRelease, isTouch ) {
+        isTouch = isTouch || false;
 
         if ( !THIS[tracker.hash].insideElement ) {
             onMouseUp( tracker, event, isTouch );
@@ -1041,7 +1041,7 @@
         var nDelta = 0,
             propagate;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         if ( !event ) { // For IE, access the global (window) event object
             event = window.event;
@@ -1122,13 +1122,13 @@
      * @private
      * @inner
      */
-    function onMouseMoveWindow( tracker, event, isTouch ) {
+    function onMouseMoveCaptured( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
             delta,
             propagate,
             point;
 
-        isTouch = ( isTouch !== undefined ) ? isTouch : false;
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
         point = getMouseAbsolute( event );
@@ -1173,7 +1173,7 @@
             event.changedTouches.length === 1 &&
             THIS[tracker.hash].lastTouch.identifier === event.touches[0].identifier ) {
 
-            onMouseMoveWindow( tracker, event, true );
+            onMouseMoveCaptured( tracker, event, true );
 
         } else if ( event.touches.length === 2 ) {
 
@@ -1188,8 +1188,7 @@
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
                 // Adjust the original event enough to simulate a mouse wheel scroll
-                event.shift = false;
-                event.shiftKey = false;
+                event.shiftKey = event.shiftKey || false;
                 event.pageX = THIS[tracker.hash].pinchMidpoint.x;
                 event.pageY = THIS[tracker.hash].pinchMidpoint.y;
                 event.detail = ( THIS[tracker.hash].lastPinchDelta > pinchDelta ) ? 1 : -1;
@@ -1211,10 +1210,10 @@
      * @private
      * @inner
      */
-    function onMouseMoveIE( tracker, event ) {
+    function onMouseMoveCapturedIE( tracker, event ) {
         var i;
         for ( i = 0; i < CAPTURING.length; i++ ) {
-            onMouseMoveWindow( CAPTURING[i], event, false );
+            onMouseMoveCaptured( CAPTURING[i], event, false );
         }
 
         $.stopEvent( event );
@@ -1233,7 +1232,7 @@
      * @inner
      */
     function getMouseRelative( event, element ) {
-        var mouse = $.getMousePosition( event ),
+        var mouse  = $.getMousePosition( event ),
             offset = $.getElementOffset( element );
 
         return mouse.minus( offset );

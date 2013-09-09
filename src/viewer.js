@@ -1472,13 +1472,13 @@ function onCanvasDrag( tracker, eventData ) {
 }
 
 function onCanvasRelease( tracker, eventData ) {
-    if ( eventData.insideElementPress && this.viewport ) {
+    if ( eventData.insideElementPressed && this.viewport ) {
         this.viewport.applyConstraints();
     }
     this.raiseEvent( 'canvas-release', {
         tracker: tracker,
         position: eventData.position,
-        insideElementPress: eventData.insideElementPress,
+        insideElementPressed: eventData.insideElementPressed,
         insideElementRelease: eventData.insideElementRelease
     });
 }
@@ -1504,7 +1504,7 @@ function onCanvasScroll( tracker, eventData ) {
 }
 
 function onContainerExit( tracker, eventData ) {
-    if ( !eventData.buttonDownElement ) {
+    if ( !eventData.insideElementPressed ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
@@ -1513,7 +1513,7 @@ function onContainerExit( tracker, eventData ) {
     this.raiseEvent( 'container-exit', {
         tracker: tracker,
         position: eventData.position,
-        buttonDownElement: eventData.buttonDownElement,
+        insideElementPressed: eventData.insideElementPressed,
         buttonDownAny: eventData.buttonDownAny
     });
 }
@@ -1528,7 +1528,7 @@ function onContainerRelease( tracker, eventData ) {
     this.raiseEvent( 'container-release', {
         tracker: tracker,
         position: eventData.position,
-        insideElementPress: eventData.insideElementPress,
+        insideElementPressed: eventData.insideElementPressed,
         insideElementRelease: eventData.insideElementRelease
     });
 }
@@ -1539,7 +1539,7 @@ function onContainerEnter( tracker, eventData ) {
     this.raiseEvent( 'container-enter', {
         tracker: tracker,
         position: eventData.position,
-        buttonDownElement: eventData.buttonDownElement,
+        insideElementPressed: eventData.insideElementPressed,
         buttonDownAny: eventData.buttonDownAny
     });
 }
