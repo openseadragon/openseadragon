@@ -675,24 +675,26 @@
 
         event = $.getEvent( event );
 
-        if ( $.Browser.vendor == $.BROWSERS.IE &&
-             $.Browser.version < 9 &&
-             delegate.capturing &&
-             !isChild( event.srcElement, tracker.element ) ) {
+        if ( !isTouch ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE &&
+                 $.Browser.version < 9 &&
+                 delegate.capturing &&
+                 !isChild( event.srcElement, tracker.element ) ) {
 
-            triggerOthers( tracker, onMouseOver, event, isTouch );
-        }
+                triggerOthers( tracker, onMouseOver, event, isTouch );
+            }
 
-        var to = event.target ?
-                event.target :
-                event.srcElement,
-            from = event.relatedTarget ?
-                event.relatedTarget :
-                event.fromElement;
+            var to = event.target ?
+                    event.target :
+                    event.srcElement,
+                from = event.relatedTarget ?
+                    event.relatedTarget :
+                    event.fromElement;
 
-        if ( !isChild( tracker.element, to ) ||
-              isChild( tracker.element, from ) ) {
-            return;
+            if ( !isChild( tracker.element, to ) ||
+                  isChild( tracker.element, from ) ) {
+                return;
+            }
         }
 
         delegate.insideElement = true;
@@ -701,7 +703,7 @@
             propagate = tracker.enterHandler(
                 tracker,
                 {
-                    position: getMouseRelative( event, tracker.element ),
+                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
                     isTouchEvent: isTouch,
@@ -728,25 +730,27 @@
 
         event = $.getEvent( event );
 
-        if ( $.Browser.vendor == $.BROWSERS.IE &&
-             $.Browser.version < 9 &&
-             delegate.capturing &&
-             !isChild( event.srcElement, tracker.element ) ) {
+        if ( !isTouch ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE &&
+                 $.Browser.version < 9 &&
+                 delegate.capturing &&
+                 !isChild( event.srcElement, tracker.element ) ) {
 
-            triggerOthers( tracker, onMouseOut, event, isTouch );
+                triggerOthers( tracker, onMouseOut, event, isTouch );
 
-        }
+            }
 
-        var from = event.target ?
-                event.target :
-                event.srcElement,
-            to = event.relatedTarget ?
-                event.relatedTarget :
-                event.toElement;
+            var from = event.target ?
+                    event.target :
+                    event.srcElement,
+                to = event.relatedTarget ?
+                    event.relatedTarget :
+                    event.toElement;
 
-        if ( !isChild( tracker.element, from ) ||
-              isChild( tracker.element, to ) ) {
-            return;
+            if ( !isChild( tracker.element, from ) ||
+                  isChild( tracker.element, to ) ) {
+                return;
+            }
         }
 
         delegate.insideElement = false;
@@ -755,7 +759,7 @@
             propagate = tracker.exitHandler(
                 tracker,
                 {
-                    position: getMouseRelative( event, tracker.element ),
+                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
                     isTouchEvent: isTouch,
@@ -781,7 +785,9 @@
 
         isTouch = isTouch || false;
 
-        event = $.getEvent( event );
+        var originalEvent = $.getEvent(event);
+    
+        event = isTouch ? event.touches[ 0 ] : event;
 
         if ( event.button == 2 ) {
             return;
@@ -799,24 +805,25 @@
                 {
                     position: getMouseRelative( event, tracker.element ),
                     isTouchEvent: isTouch,
-                    originalEvent: event,
+                    originalEvent: originalEvent,
                     userData: tracker.userData
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
 
         if ( tracker.pressHandler || tracker.dragHandler ) {
-            $.cancelEvent( event );
+            $.cancelEvent( originalEvent );
         }
 
         if ( noCapture ) {
             return;
         }
 
-        if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
+        if ( isTouch ||
+             !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
              !IS_CAPTURING ) {
             captureMouse( tracker );
             IS_CAPTURING = true;
@@ -879,7 +886,9 @@
 
         isTouch = isTouch || false;
 
-        event = $.getEvent( event );
+        var originalEvent = $.getEvent(event);
+
+        event = isTouch ? event.changedTouches[ 0 ] : event;
 
         if ( event.button == 2 ) {
             return;
@@ -895,17 +904,17 @@
                     insideElementPressed: insideElementPressed,
                     insideElementRelease: insideElementRelease,
                     isTouchEvent: isTouch,
-                    originalEvent: event,
+                    originalEvent: originalEvent,
                     userData: tracker.userData
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
 
         if ( insideElementPressed && insideElementRelease ) {
-            handleMouseClick( tracker, event );
+            handleMouseClick( tracker, originalEvent, isTouch );
         }
     }
 
@@ -1064,6 +1073,9 @@
             propagate = tracker.scrollHandler(
                 tracker,
                 {
+                    // Note: Ok to call getMouseRelative on passed event for isTouch==true since 
+                    //   event.pageX/event.pageY are added to the original touchmove event in
+                    //   onTouchMove().
                     position: getMouseRelative( event, tracker.element ),
                     scroll: nDelta,
                     shift: event.shiftKey,
@@ -1083,11 +1095,15 @@
      * @private
      * @inner
      */
-    function handleMouseClick( tracker, event ) {
+    function handleMouseClick( tracker, event, isTouch ) {
         var delegate = THIS[tracker.hash],
             propagate;
 
-        event = $.getEvent( event );
+        isTouch = isTouch || false;
+
+        var originalEvent = $.getEvent( event );
+
+        event = isTouch ? event.changedTouches[0] : event;
 
         if ( event.button == 2 ) {
             return;
@@ -1105,14 +1121,14 @@
                 {
                     position: getMouseRelative( event, tracker.element ),
                     quick: quick,
-                    shift: event.shiftKey,
-                    isTouchEvent: false,
-                    originalEvent: event,
+                    shift: originalEvent.shiftKey,
+                    isTouchEvent: isTouch,
+                    originalEvent: originalEvent,
                     userData: tracker.userData
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
     }
@@ -1130,7 +1146,8 @@
 
         isTouch = isTouch || false;
 
-        event = $.getEvent( event );
+        var originalEvent = $.getEvent(event);
+        event = isTouch ? event.touches[0] : event;
         point = getMouseAbsolute( event );
         delta = point.minus( delegate.lastPoint );
 
@@ -1142,14 +1159,14 @@
                 {
                     position: getMouseRelative( event, tracker.element ),
                     delta: delta,
-                    shift: event.shiftKey,
+                    shift: originalEvent.shiftKey,
                     isTouchEvent: isTouch,
-                    originalEvent: event,
+                    originalEvent: originalEvent,
                     userData: tracker.userData
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
     }
