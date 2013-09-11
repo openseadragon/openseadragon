@@ -86,7 +86,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.IIIFTileSource.prototype.supports
+     * @name OpenSeadragon.IIIF11TileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -138,7 +138,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
      * Responsible for retreiving the url which will return an image for the
      * region speified by the given x, y, and level components.
      * @function
-     * @name OpenSeadragon.IIIFTileSource.prototype.getTileUrl
+     * @name OpenSeadragon.IIIF11TileSource.prototype.getTileUrl
      * @param {Number} level - z index
      * @param {Number} x
      * @param {Number} y
@@ -153,12 +153,17 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
             //## get the scale (level as a decimal)
             scale = Math.pow( 0.5, this.maxLevel - level ),
 
-            //## get iiif size
-            iiif_size = 'pct:' + ( scale * 100 ),
-
             //# image dimensions at this level
             level_width = Math.ceil( this.width * scale ),
             level_height = Math.ceil( this.height * scale ),
+
+            //## get iiif size
+            // Note that this uses pixels rather than percents (as in 
+            // IIIF11TileSource), which will be more precise (i.e. the 'right 
+            // 50% of 11px' case') and easier to pre-bake without worring about 
+            // different browsers' decimal precision (if desired).
+            iiif_size = level_width + "," + level_height,
+
 
             //## iiif region
             iiif_tile_size_width = Math.ceil( this.tileSize / scale ),
@@ -169,6 +174,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
             iiif_tile_w,
             iiif_tile_h;
 
+        
 
         if ( level_width < this.tile_width && level_height < this.tile_height ){
             iiif_region = 'full';
