@@ -218,12 +218,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
 } 
  */
 function configureFromObject( tileSource, configuration ){
-    //the image_host property is not part of the iiif standard but is included here to
-    //allow the info.json and info.xml specify a different server to load the
-    //images from so we can test the implementation.
-    if( configuration.image_host ){
-        configuration.tilesUrl = configuration.image_host;
-    }
+    configuration.tilesUrl = configuration["@id"];
     return configuration;
 }
 
