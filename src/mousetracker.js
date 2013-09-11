@@ -280,7 +280,7 @@
          * {
          *     position: The position of the event relative to the tracked element.
          *     insideElementPressed: True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-         *     insideElementRelease: Was the mouse still inside the tracked element when the button was released.
+         *     insideElementReleased: Was the mouse still inside the tracked element when the button was released.
          *     isTouchEvent: True if the original event is a touch event, otherwise false.
          *     originalEvent: The original event object. 
          *     userData: Arbitrary user-defined object.
@@ -881,7 +881,7 @@
             //were we inside the tracked element when we were pressed
             insideElementPressed = delegate.insideElementPressed,
             //are we still inside the tracked element when we released
-            insideElementRelease = delegate.insideElement,
+            insideElementReleased = delegate.insideElement,
             propagate;
 
         isTouch = isTouch || false;
@@ -902,7 +902,7 @@
                 {
                     position: getMouseRelative( event, tracker.element ),
                     insideElementPressed: insideElementPressed,
-                    insideElementRelease: insideElementRelease,
+                    insideElementReleased: insideElementReleased,
                     isTouchEvent: isTouch,
                     originalEvent: originalEvent,
                     userData: tracker.userData
@@ -913,7 +913,7 @@
             }
         }
 
-        if ( insideElementPressed && insideElementRelease ) {
+        if ( insideElementPressed && insideElementReleased ) {
             handleMouseClick( tracker, originalEvent, isTouch );
         }
     }

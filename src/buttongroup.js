@@ -101,7 +101,7 @@ $.ButtonGroup = function( options ) {
         },
         releaseHandler: function ( tracker, eventData ) {
             var i;
-            if ( !eventData.insideElementRelease ) {
+            if ( !eventData.insideElementReleased ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }

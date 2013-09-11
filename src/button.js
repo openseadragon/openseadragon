@@ -207,7 +207,7 @@ $.Button = function( options ) {
         },
 
         releaseHandler: function( tracker, eventData ) {
-            if ( eventData.insideElementPressed && eventData.insideElementRelease ) {
+            if ( eventData.insideElementPressed && eventData.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
                 _this.raiseEvent( "onRelease", _this );
             } else if ( eventData.insideElementPressed ) {

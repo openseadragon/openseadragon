@@ -1479,7 +1479,7 @@ function onCanvasRelease( tracker, eventData ) {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
-        insideElementRelease: eventData.insideElementRelease
+        insideElementReleased: eventData.insideElementReleased
     });
 }
 
@@ -1519,7 +1519,7 @@ function onContainerExit( tracker, eventData ) {
 }
 
 function onContainerRelease( tracker, eventData ) {
-    if ( !eventData.insideElementRelease ) {
+    if ( !eventData.insideElementReleased ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
@@ -1529,7 +1529,7 @@ function onContainerRelease( tracker, eventData ) {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
-        insideElementRelease: eventData.insideElementRelease
+        insideElementReleased: eventData.insideElementReleased
     });
 }
 

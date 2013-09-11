@@ -198,7 +198,7 @@ $.ReferenceStrip = function ( options ) {
                     now  = $.now();
 
                 if ( eventData.insideElementPressed &&
-                     eventData.insideElementRelease &&
+                     eventData.insideElementReleased &&
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ) {
                     tracker.dragging = null;
