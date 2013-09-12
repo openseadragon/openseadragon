@@ -511,7 +511,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         return this;
     },
 
-    
+
     /**
      * Function to destroy the viewer and clean up everything created by
      * OpenSeadragon.
@@ -666,7 +666,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.previousBody = [];
             THIS[ this.hash ].prevElementParent = this.element.parentNode;
             THIS[ this.hash ].prevNextSibling = this.element.nextSibling;
-            THIS[ this.hash ].prevElementSize = $.getElementSize( this.element );
+            THIS[ this.hash ].prevElementWidth = this.element.style.width;
+            THIS[ this.hash ].prevElementHeight = this.element.style.height;
             nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
                 this.previousBody.push( body.childNodes[ 0 ] );
@@ -783,8 +784,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 //this.container.style.top = 'auto';
             }
 
-            this.element.style.height = THIS[ this.hash ].prevElementSize.y + 'px';
-            this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
+            this.element.style.width = THIS[ this.hash ].prevElementWidth;
+            this.element.style.height = THIS[ this.hash ].prevElementHeight;
 
             THIS[ this.hash ].fullPage = false;
 
