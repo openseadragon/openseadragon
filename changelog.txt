@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Added an optional userData argument to EventHandler.addHandler() which is passed unchanged to the handler method (#203)
 * Fixed AJAX error reporting on IE8 (#208)
 * Added viewportToImageRectangle method, and updated imageToViewportRectangle, imageToViewportCoordinates, and viewportToImageCoordinates to be more flexible with params (#212)
+* Fixed: Viewer is not responsive (css) after returning from full screen (#222)
 
 0.9.130:
 
