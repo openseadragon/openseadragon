@@ -162,8 +162,9 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
             // IIIF11TileSource), which will be more precise (i.e. the 'right 
             // 50% of 11px' case') and easier to pre-bake without worring about 
             // different browsers' decimal precision (if desired).
-            iiif_size = level_width + "," + level_height,
 
+            // iiif_size = level_width + "," + level_height,
+            iiif_size = this.tileSize + "," + this.tileSize,
 
             //## iiif region
             iiif_tile_size_width = Math.ceil( this.tileSize / scale ),
@@ -174,7 +175,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
             iiif_tile_w,
             iiif_tile_h;
 
-        
+
 
         if ( level_width < this.tile_width && level_height < this.tile_height ){
             iiif_region = 'full';
