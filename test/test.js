@@ -46,7 +46,8 @@
                     .simulate( "mousemove", event );
             }
             $canvas
-                .simulate( 'mouseup', event );
+                .simulate( 'mouseup', event )
+                .simulate( 'mouseout', event );
         },
 
         initializeTestDOM: function () {
