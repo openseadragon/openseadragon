@@ -5,7 +5,8 @@ OPENSEADRAGON CHANGELOG
 
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * Breaking change: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
-* MouseTracker now supports a 'moveHandler' method for tracking mousemove events (#215)
+* MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
+* Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
 
 0.9.130:
 
