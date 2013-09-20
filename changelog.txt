@@ -1,7 +1,13 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.130: (In progress)
+1.0.000: (In progress)
+
+* MouseTracker now passes the original event objects to its handler methods (#215)
+* MouseTracker now supports a 'moveHandler' method for tracking mousemove events (#215)
+* Breaking change: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#215)
+
+0.9.130:
 
 * Fixed: navigatorPosition option corrected. (#163)
 * OpenSeadragon.now() returned undefined the first time; fixed
