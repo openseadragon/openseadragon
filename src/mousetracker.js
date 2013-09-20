@@ -32,18 +32,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function ( $ ) {
 
         // is any button currently being pressed while mouse events occur
-    var IS_BUTTON_DOWN  = false,
+    var IS_BUTTON_DOWN = false,
         // is any tracker currently capturing?
-        IS_CAPTURING    = false,
+        IS_CAPTURING   = false,
         // dictionary from hash to MouseTracker
-        ACTIVE          = {},
+        ACTIVE         = {},
         // list of trackers interested in capture
-        CAPTURING       = [],
+        CAPTURING      = [],
         // dictionary from hash to private properties
-        THIS            = {};
+        THIS           = {};
 
     /**
      * The MouseTracker allows other classes to set handlers for common mouse
@@ -72,12 +72,22 @@
      *      An optional handler for mouse press.
      * @param {Function} options.releaseHandler
      *      An optional handler for mouse release.
+     * @param {Function} options.moveHandler
+     *      An optional handler for mouse move.
      * @param {Function} options.scrollHandler
      *      An optional handler for mouse scroll.
      * @param {Function} options.clickHandler
      *      An optional handler for mouse click.
      * @param {Function} options.dragHandler
      *      An optional handler for mouse drag.
+     * @param {Function} options.keyHandler
+     *      An optional handler for keypress.
+     * @param {Function} options.focusHandler
+     *      An optional handler for focus.
+     * @param {Function} options.blurHandler
+     *      An optional handler for blur.
+     * @param {Object} [options.userData=null]
+     *      Arbitrary object to be passed unchanged to any attached handler methods.
      * @property {Number} hash
      *      An unique hash for this tracker.
      * @property {Element} element
@@ -91,13 +101,13 @@
      */
     $.MouseTracker = function ( options ) {
 
-        var args  = arguments;
+        var args = arguments;
 
-        if( !$.isPlainObject( options ) ){
+        if ( !$.isPlainObject( options ) ) {
             options = {
-                element:            args[ 0 ],
-                clickTimeThreshold: args[ 1 ],
-                clickDistThreshold: args[ 2 ]
+                element:            args[0],
+                clickTimeThreshold: args[1],
+                clickDistThreshold: args[2]
             };
         }
 
@@ -105,12 +115,13 @@
         this.element            = $.getElement( options.element );
         this.clickTimeThreshold = options.clickTimeThreshold;
         this.clickDistThreshold = options.clickDistThreshold;
-
+        this.userData           = options.userData       || null;
 
         this.enterHandler       = options.enterHandler   || null;
         this.exitHandler        = options.exitHandler    || null;
         this.pressHandler       = options.pressHandler   || null;
         this.releaseHandler     = options.releaseHandler || null;
+        this.moveHandler        = options.moveHandler    || null;
         this.scrollHandler      = options.scrollHandler  || null;
         this.clickHandler       = options.clickHandler   || null;
         this.dragHandler        = options.dragHandler    || null;
@@ -127,7 +138,7 @@
          *      Are we currently tracking mouse events.
          * @property {Boolean} capturing
          *      Are we curruently capturing mouse events.
-         * @property {Boolean} buttonDown
+         * @property {Boolean} insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
          * @property {Boolean} insideElement
@@ -139,32 +150,33 @@
          * @property {OpenSeadragon.Point} lastMouseDownPoint
          *      Position of last mouse down
          */
-        THIS[ this.hash ] = {
-            mouseover:          function( event ){ onMouseOver( _this, event ); },
-            mouseout:           function( event ){ onMouseOut( _this, event ); },
-            mousedown:          function( event ){ onMouseDown( _this, event ); },
-            mouseup:            function( event ){ onMouseUp( _this, event ); },
-            click:              function( event ){ onMouseClick( _this, event ); },
-            DOMMouseScroll:     function( event ){ onMouseWheelSpin( _this, event ); },
-            mousewheel:         function( event ){ onMouseWheelSpin( _this, event ); },
-            mouseupie:          function( event ){ onMouseUpIE( _this, event ); },
-            mousemoveie:        function( event ){ onMouseMoveIE( _this, event ); },
-            mouseupwindow:      function( event ){ onMouseUpWindow( _this, event ); },
-            mousemove:          function( event ){ onMouseMove( _this, event ); },
-            touchstart:         function( event ){ onTouchStart( _this, event ); },
-            touchmove:          function( event ){ onTouchMove( _this, event ); },
-            touchend:           function( event ){ onTouchEnd( _this, event ); },
-            keypress:           function( event ){ onKeyPress( _this, event ); },
-            focus:              function( event ){ onFocus( _this, event ); },
-            blur:               function( event ){ onBlur( _this, event ); },
-            tracking:           false,
-            capturing:          false,
-            buttonDown:         false,
-            insideElement:      false,
-            lastPoint:          null,
-            lastMouseDownTime:  null,
-            lastMouseDownPoint: null,
-            lastPinchDelta:     0
+        THIS[this.hash] = {
+            mouseover:             function ( event ) { onMouseOver( _this, event, false ); },
+            mouseout:              function ( event ) { onMouseOut( _this, event, false ); },
+            mousedown:             function ( event ) { onMouseDown( _this, event ); },
+            mouseup:               function ( event ) { onMouseUp( _this, event, false ); },
+            mousemove:             function ( event ) { onMouseMove( _this, event ); },
+            click:                 function ( event ) { onMouseClick( _this, event ); },
+            DOMMouseScroll:        function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mousewheel:            function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            mouseupie:             function ( event ) { onMouseUpIE( _this, event ); },
+            mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
+            mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
+            mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event, false ); },
+            touchstart:            function ( event ) { onTouchStart( _this, event ); },
+            touchmove:             function ( event ) { onTouchMove( _this, event ); },
+            touchend:              function ( event ) { onTouchEnd( _this, event ); },
+            keypress:              function ( event ) { onKeyPress( _this, event ); },
+            focus:                 function ( event ) { onFocus( _this, event ); },
+            blur:                  function ( event ) { onBlur( _this, event ); },
+            tracking:              false,
+            capturing:             false,
+            insideElementPressed:  false,
+            insideElement:         false,
+            lastPoint:             null,
+            lastMouseDownTime:     null,
+            lastMouseDownPoint:    null,
+            lastPinchDelta:        0
         };
 
     };
@@ -175,7 +187,7 @@
          * Clean up any events or objects created by the mouse tracker.
          * @function
          */
-        destroy: function() {
+        destroy: function () {
             stopTracking( this );
             this.element = null;
         },
@@ -187,7 +199,7 @@
          * @returns {Boolean} Are we currently tracking events on this element.
          */
         isTracking: function () {
-            return THIS[ this.hash ].tracking;
+            return THIS[this.hash].tracking;
         },
 
         /**
@@ -212,15 +224,22 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {Boolean} buttonDown
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} eventData.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} buttonDownAny
+         * @param {Boolean} eventData.buttonDownAny
          *      Was the button down anywhere in the screen during the event.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        enterHandler: function(){},
+        enterHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -228,15 +247,22 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {Boolean} buttonDown
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} eventData.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} buttonDownAny
+         * @param {Boolean} eventData.buttonDownAny
          *      Was the button down anywhere in the screen during the event.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        exitHandler: function(){},
+        exitHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -244,10 +270,17 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        pressHandler: function(){},
+        pressHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -255,16 +288,22 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {Boolean} buttonDown
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} eventData.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} insideElementRelease
-         *      Was the mouse still inside the tracked element when the button
-         *      was released.
+         * @param {Boolean} eventData.insideElementReleased
+         *      True if the cursor still inside the tracked element when the button was released.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        releaseHandler: function(){},
+        releaseHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -272,14 +311,39 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {Number} scroll
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
+         */
+        moveHandler: function () { },
+
+        /**
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} eventData.scroll
          *      The scroll delta for the event.
-         * @param {Boolean} shift
-         *      Was the shift key being pressed during this event?
+         * @param {Boolean} eventData.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        scrollHandler: function(){},
+        scrollHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -287,15 +351,21 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {Boolean} quick
-         *      True only if the clickDistThreshold and clickDeltaThreshold are
-         *      both pased. Useful for ignoring events.
-         * @param {Boolean} shift
-         *      Was the shift key being pressed during this event?
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} eventData.quick
+         *      True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
+         * @param {Boolean} eventData.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        clickHandler: function(){},
+        clickHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -303,15 +373,21 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {OpenSeadragon.Point} position
-         *      The poistion of the event on the screen.
-         * @param {OpenSeadragon.Point} delta
-         *      The x,y components of the difference between start drag and
-         *      end drag.  Usefule for ignoring or weighting the events.
-         * @param {Boolean} shift
-         *      Was the shift key being pressed during this event?
+         * @param {Object} eventData
+         * @param {OpenSeadragon.Point} eventData.position
+         *      The position of the event relative to the tracked element.
+         * @param {OpenSeadragon.Point} eventData.delta
+         *      The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
+         * @param {Boolean} eventData.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} eventData.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        dragHandler: function(){},
+        dragHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -319,16 +395,45 @@
          * @function
          * @param {OpenSeadragon.MouseTracker} tracker
          *      A reference to the tracker instance.
-         * @param {Number} keyCode
+         * @param {Object} eventData
+         * @param {Number} eventData.keyCode
          *      The key code that was pressed.
-         * @param {Boolean} shift
-         *      Was the shift key being pressed during this event?
+         * @param {Boolean} eventData.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
          */
-        keyHandler: function(){},
+        keyHandler: function () { },
 
-        focusHandler: function(){},
+        /**
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
+         */
+        focusHandler: function () { },
 
-        blurHandler: function(){}
+        /**
+         * Implement or assign implmentation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {OpenSeadragon.MouseTracker} tracker
+         *      A reference to the tracker instance.
+         * @param {Object} eventData
+         * @param {Object} eventData.originalEvent
+         *      The original event object.
+         * @param {Object} eventData.userData
+         *      Arbitrary user-defined object.
+         */
+        blurHandler: function () { }
     };
 
     /**
@@ -338,29 +443,29 @@
      */
     function startTracking( tracker ) {
         var events = [
-                "mouseover", "mouseout", "mousedown", "mouseup",
+                "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
                 "click",
                 "DOMMouseScroll", "mousewheel",
                 "touchstart", "touchmove", "touchend",
                 "keypress",
                 "focus", "blur"
             ],
-            delegate = THIS[ tracker.hash ],
+            delegate = THIS[tracker.hash],
             event,
             i;
 
         if ( !delegate.tracking ) {
-            for( i = 0; i < events.length; i++ ){
-                event = events[ i ];
+            for ( i = 0; i < events.length; i++ ) {
+                event = events[i];
                 $.addEvent(
                     tracker.element,
                     event,
-                    delegate[ event ],
+                    delegate[event],
                     false
                 );
             }
             delegate.tracking = true;
-            ACTIVE[ tracker.hash ] = tracker;
+            ACTIVE[tracker.hash] = tracker;
         }
     }
 
@@ -371,31 +476,31 @@
      */
     function stopTracking( tracker ) {
         var events = [
-                "mouseover", "mouseout", "mousedown", "mouseup",
+                "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
                 "click",
                 "DOMMouseScroll", "mousewheel",
                 "touchstart", "touchmove", "touchend",
                 "keypress",
                 "focus", "blur"
             ],
-            delegate = THIS[ tracker.hash ],
+            delegate = THIS[tracker.hash],
             event,
             i;
 
         if ( delegate.tracking ) {
-            for( i = 0; i < events.length; i++ ){
-                event = events[ i ];
+            for ( i = 0; i < events.length; i++ ) {
+                event = events[i];
                 $.removeEvent(
                     tracker.element,
                     event,
-                    delegate[ event ],
+                    delegate[event],
                     false
                 );
             }
 
             releaseMouse( tracker );
             delegate.tracking = false;
-            delete ACTIVE[ tracker.hash ];
+            delete ACTIVE[tracker.hash];
         }
     }
 
@@ -404,7 +509,7 @@
      * @inner
      */
     function hasMouse( tracker ) {
-        return THIS[ tracker.hash ].insideElement;
+        return THIS[tracker.hash].insideElement;
     }
 
     /**
@@ -413,7 +518,7 @@
      * @inner
      */
     function captureMouse( tracker ) {
-        var delegate = THIS[ tracker.hash ];
+        var delegate = THIS[tracker.hash];
         if ( !delegate.capturing ) {
 
             if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -432,20 +537,20 @@
                 $.addEvent(
                     tracker.element,
                     "mousemove",
-                    delegate.mousemoveie,
+                    delegate.mousemovecapturedie,
                     true
                 );
             } else {
                 $.addEvent(
                     window,
                     "mouseup",
-                    delegate.mouseupwindow,
+                    delegate.mouseupcaptured,
                     true
                 );
                 $.addEvent(
                     window,
                     "mousemove",
-                    delegate.mousemove,
+                    delegate.mousemovecaptured,
                     true
                 );
             }
@@ -460,14 +565,14 @@
      * @inner
      */
     function releaseMouse( tracker ) {
-        var delegate = THIS[ tracker.hash ];
+        var delegate = THIS[tracker.hash];
         if ( delegate.capturing ) {
 
             if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
                 $.removeEvent(
                     tracker.element,
                     "mousemove",
-                    delegate.mousemoveie,
+                    delegate.mousemovecapturedie,
                     true
                 );
                 $.removeEvent(
@@ -486,13 +591,13 @@
                 $.removeEvent(
                     window,
                     "mousemove",
-                    delegate.mousemove,
+                    delegate.mousemovecaptured,
                     true
                 );
                 $.removeEvent(
                     window,
                     "mouseup",
-                    delegate.mouseupwindow,
+                    delegate.mouseupcaptured,
                     true
                 );
             }
@@ -505,11 +610,11 @@
      * @private
      * @inner
      */
-    function triggerOthers( tracker, handler, event ) {
+    function triggerOthers( tracker, handler, event, isTouch ) {
         var otherHash;
         for ( otherHash in ACTIVE ) {
             if ( ACTIVE.hasOwnProperty( otherHash ) && tracker.hash != otherHash ) {
-                handler( ACTIVE[ otherHash ], event );
+                handler( ACTIVE[otherHash], event, isTouch );
             }
         }
     }
@@ -519,15 +624,18 @@
      * @private
      * @inner
      */
-    function onFocus( tracker, event ){
+    function onFocus( tracker, event ) {
         //console.log( "focus %s", event );
         var propagate;
         if ( tracker.focusHandler ) {
             propagate = tracker.focusHandler(
                 tracker,
-                event
+                {
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -538,15 +646,18 @@
      * @private
      * @inner
      */
-    function onBlur( tracker, event ){
+    function onBlur( tracker, event ) {
         //console.log( "blur %s", event );
         var propagate;
         if ( tracker.blurHandler ) {
             propagate = tracker.blurHandler(
                 tracker,
-                event
+                {
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -557,16 +668,21 @@
      * @private
      * @inner
      */
-    function onKeyPress( tracker, event ){
+    function onKeyPress( tracker, event ) {
         //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
         if ( tracker.keyHandler ) {
             propagate = tracker.keyHandler(
                 tracker,
-                event.keyCode ? event.keyCode : event.charCode,
-                event.shiftKey
+                {
+                    position: getMouseRelative( event, tracker.element ),
+                    keyCode: event.keyCode ? event.keyCode : event.charCode,
+                    shift: event.shiftKey,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( !propagate ){
+            if ( !propagate ) {
                 $.cancelEvent( event );
             }
         }
@@ -577,31 +693,35 @@
      * @private
      * @inner
      */
-    function onMouseOver( tracker, event ) {
+    function onMouseOver( tracker, event, isTouch ) {
 
-        var delegate = THIS[ tracker.hash ],
+        var delegate = THIS[tracker.hash],
             propagate;
+
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
-        if ( $.Browser.vendor == $.BROWSERS.IE &&
-             $.Browser.version < 9 &&
-             delegate.capturing &&
-             !isChild( event.srcElement, tracker.element ) ) {
+        if ( !isTouch ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE &&
+                 $.Browser.version < 9 &&
+                 delegate.capturing &&
+                 !isChild( event.srcElement, tracker.element ) ) {
 
-            triggerOthers( tracker, onMouseOver, event );
-        }
+                triggerOthers( tracker, onMouseOver, event, isTouch );
+            }
 
-        var to = event.target ?
-                event.target :
-                event.srcElement,
-            from = event.relatedTarget ?
-                event.relatedTarget :
-                event.fromElement;
+            var to = event.target ?
+                    event.target :
+                    event.srcElement,
+                from = event.relatedTarget ?
+                    event.relatedTarget :
+                    event.fromElement;
 
-        if ( !isChild( tracker.element, to ) ||
-              isChild( tracker.element, from ) ) {
-            return;
+            if ( !isChild( tracker.element, to ) ||
+                  isChild( tracker.element, from ) ) {
+                return;
+            }
         }
 
         delegate.insideElement = true;
@@ -609,11 +729,16 @@
         if ( tracker.enterHandler ) {
             propagate = tracker.enterHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                delegate.buttonDown,
-                IS_BUTTON_DOWN
+                {
+                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    insideElementPressed: delegate.insideElementPressed,
+                    buttonDownAny: IS_BUTTON_DOWN,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -624,31 +749,35 @@
      * @private
      * @inner
      */
-    function onMouseOut( tracker, event ) {
-        var delegate = THIS[ tracker.hash ],
+    function onMouseOut( tracker, event, isTouch ) {
+        var delegate = THIS[tracker.hash],
             propagate;
+
+        isTouch = isTouch || false;
 
         event = $.getEvent( event );
 
-        if ( $.Browser.vendor == $.BROWSERS.IE &&
-             $.Browser.version < 9 &&
-             delegate.capturing &&
-             !isChild( event.srcElement, tracker.element ) ) {
+        if ( !isTouch ) {
+            if ( $.Browser.vendor == $.BROWSERS.IE &&
+                 $.Browser.version < 9 &&
+                 delegate.capturing &&
+                 !isChild( event.srcElement, tracker.element ) ) {
 
-            triggerOthers( tracker, onMouseOut, event );
+                triggerOthers( tracker, onMouseOut, event, isTouch );
 
-        }
+            }
 
-        var from = event.target ?
-                event.target :
-                event.srcElement,
-            to = event.relatedTarget ?
-                event.relatedTarget :
-                event.toElement;
+            var from = event.target ?
+                    event.target :
+                    event.srcElement,
+                to = event.relatedTarget ?
+                    event.relatedTarget :
+                    event.toElement;
 
-        if ( !isChild( tracker.element, from ) ||
-              isChild( tracker.element, to ) ) {
-            return;
+            if ( !isChild( tracker.element, from ) ||
+                  isChild( tracker.element, to ) ) {
+                return;
+            }
         }
 
         delegate.insideElement = false;
@@ -656,12 +785,17 @@
         if ( tracker.exitHandler ) {
             propagate = tracker.exitHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                delegate.buttonDown,
-                IS_BUTTON_DOWN
+                {
+                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    insideElementPressed: delegate.insideElementPressed,
+                    buttonDownAny: IS_BUTTON_DOWN,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
 
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -672,28 +806,37 @@
      * @private
      * @inner
      */
-    function onMouseDown( tracker, event, noCapture ) {
-        var delegate = THIS[ tracker.hash ],
+    function onMouseDown( tracker, event, noCapture, isTouch ) {
+        var delegate = THIS[tracker.hash],
             propagate;
 
-        event = $.getEvent( event );
+        isTouch = isTouch || false;
+
+        event = $.getEvent(event);
+
+        var eventOrTouchPoint = isTouch ? event.touches[ 0 ] : event;
 
         if ( event.button == 2 ) {
             return;
         }
 
-        delegate.buttonDown = true;
+        delegate.insideElementPressed = true;
 
-        delegate.lastPoint = getMouseAbsolute( event );
+        delegate.lastPoint = getMouseAbsolute( eventOrTouchPoint );
         delegate.lastMouseDownPoint = delegate.lastPoint;
         delegate.lastMouseDownTime = $.now();
 
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler(
                 tracker,
-                getMouseRelative( event, tracker.element )
+                {
+                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -705,14 +848,15 @@
         if ( noCapture ) {
             return;
         }
-            
-        if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
+
+        if ( isTouch ||
+             !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
              !IS_CAPTURING ) {
             captureMouse( tracker );
             IS_CAPTURING = true;
             // reset to empty & add us
-            CAPTURING = [ tracker ];
-        } else if ( $.Browser.vendor == $.BROWSERS.IE  && $.Browser.version < 9 ) {
+            CAPTURING = [tracker];
+        } else if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
             // add us to the list
             CAPTURING.push( tracker );
         }
@@ -726,26 +870,26 @@
         var touchA,
             touchB;
 
-        if( event.touches.length == 1 &&
+        if ( event.touches.length == 1 &&
             event.targetTouches.length == 1 &&
-            event.changedTouches.length == 1 ){
+            event.changedTouches.length == 1 ) {
 
-            THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];
-            onMouseOver( tracker, event.changedTouches[ 0 ] );
-            // call with no capture as the onMouseMove will 
+            THIS[tracker.hash].lastTouch = event.touches[0];
+            onMouseOver( tracker, event, true );
+            // call with no capture as the onMouseMoveCaptured will 
             // be triggered by onTouchMove
-            onMouseDown( tracker, event.touches[ 0 ], true );
+            onMouseDown( tracker, event, true, true );
         }
 
-        if( event.touches.length == 2 ){
+        if ( event.touches.length == 2 ) {
 
-            touchA = getMouseAbsolute( event.touches[ 0 ] );
-            touchB = getMouseAbsolute( event.touches[ 1 ] );
-            THIS[ tracker.hash ].lastPinchDelta =
+            touchA = getMouseAbsolute( event.touches[0] );
+            touchB = getMouseAbsolute( event.touches[1] );
+            THIS[tracker.hash].lastPinchDelta =
                 Math.abs( touchA.x - touchB.x ) +
                 Math.abs( touchA.y - touchB.y );
-            THIS[ tracker.hash ].pinchMidpoint = new $.Point(
-                ( touchA.x + touchB.x ) / 2 ,
+            THIS[tracker.hash].pinchMidpoint = new $.Point(
+                ( touchA.x + touchB.x ) / 2,
                 ( touchA.y + touchB.y ) / 2
             );
             //$.console.debug("pinch start : "+THIS[ tracker.hash ].lastPinchDelta);
@@ -759,36 +903,43 @@
      * @private
      * @inner
      */
-    function onMouseUp( tracker, event ) {
-        var delegate = THIS[ tracker.hash ],
+    function onMouseUp( tracker, event, isTouch ) {
+        var delegate = THIS[tracker.hash],
             //were we inside the tracked element when we were pressed
-            insideElementPress = delegate.buttonDown,
+            insideElementPressed = delegate.insideElementPressed,
             //are we still inside the tracked element when we released
-            insideElementRelease = delegate.insideElement,
+            insideElementReleased = delegate.insideElement,
             propagate;
 
-        event = $.getEvent( event );
+        isTouch = isTouch || false;
+
+        event = $.getEvent(event);
 
         if ( event.button == 2 ) {
             return;
         }
 
-        delegate.buttonDown = false;
+        delegate.insideElementPressed = false;
 
         if ( tracker.releaseHandler ) {
             propagate = tracker.releaseHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                insideElementPress,
-                insideElementRelease
+                {
+                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    insideElementPressed: insideElementPressed,
+                    insideElementReleased: insideElementReleased,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
 
-        if ( insideElementPress && insideElementRelease ) {
-            handleMouseClick( tracker, event );
+        if ( insideElementPressed && insideElementReleased ) {
+            handleMouseClick( tracker, event, isTouch );
         }
     }
 
@@ -799,20 +950,20 @@
      */
     function onTouchEnd( tracker, event ) {
 
-        if( event.touches.length === 0 &&
+        if ( event.touches.length === 0 &&
             event.targetTouches.length === 0 &&
-            event.changedTouches.length == 1 ){
+            event.changedTouches.length == 1 ) {
 
-            THIS[ tracker.hash ].lastTouch = null;
-            
+            THIS[tracker.hash].lastTouch = null;
+
             // call with no release, as the mouse events are 
             // not registered in onTouchStart
-            onMouseUpWindow( tracker, event.changedTouches[ 0 ], true );
-            onMouseOut( tracker, event.changedTouches[ 0 ] );
+            onMouseUpCaptured( tracker, event, true, true );
+            onMouseOut( tracker, event, true );
         }
-        if( event.touches.length + event.changedTouches.length == 2 ){
-            THIS[ tracker.hash ].lastPinchDelta = null;
-            THIS[ tracker.hash ].pinchMidpoint  = null;
+        if ( event.touches.length + event.changedTouches.length == 2 ) {
+            THIS[tracker.hash].lastPinchDelta = null;
+            THIS[tracker.hash].pinchMidpoint = null;
             //$.console.debug("pinch end");
         }
         event.preventDefault();
@@ -840,9 +991,9 @@
         }
 
         for ( i = 0; i < CAPTURING.length; i++ ) {
-            othertracker = CAPTURING[ i ];
+            othertracker = CAPTURING[i];
             if ( !hasMouse( othertracker ) ) {
-                onMouseUp( othertracker, event );
+                onMouseUp( othertracker, event, false );
             }
         }
 
@@ -866,16 +1017,42 @@
      * @private
      * @inner
      */
-    function onMouseUpWindow( tracker, event, noRelease ) {
-        if ( ! THIS[ tracker.hash ].insideElement ) {
-            onMouseUp( tracker, event );
+    function onMouseUpCaptured( tracker, event, noRelease, isTouch ) {
+        isTouch = isTouch || false;
+
+        if ( !THIS[tracker.hash].insideElement ) {
+            onMouseUp( tracker, event, isTouch );
         }
 
-        if (noRelease) {
+        if ( noRelease ) {
             return;
         }
 
         releaseMouse( tracker );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onMouseMove( tracker, event ) {
+        if ( tracker.moveHandler ) {
+            event = $.getEvent( event );
+
+            var propagate = tracker.moveHandler(
+                tracker,
+                {
+                    position: getMouseRelative( event, tracker.element ),
+                    isTouchEvent: false,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
+            );
+            if ( propagate === false ) {
+                $.cancelEvent( event );
+            }
+        }
     }
 
 
@@ -894,9 +1071,11 @@
      * @private
      * @inner
      */
-    function onMouseWheelSpin( tracker, event ) {
+    function onMouseWheelSpin( tracker, event, isTouch ) {
         var nDelta = 0,
             propagate;
+
+        isTouch = isTouch || false;
 
         if ( !event ) { // For IE, access the global (window) event object
             event = window.event;
@@ -907,7 +1086,7 @@
             if ( window.opera ) {  // Opera has the values reversed
                 nDelta = -nDelta;
             }
-        } else if (event.detail) { // Mozilla FireFox
+        } else if ( event.detail ) { // Mozilla FireFox
             nDelta = -event.detail;
         }
         //The nDelta variable is gated to provide smooth z-index scrolling
@@ -918,11 +1097,19 @@
         if ( tracker.scrollHandler ) {
             propagate = tracker.scrollHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                nDelta,
-                event.shiftKey
+                {
+                    // Note: Ok to call getMouseRelative on passed event for isTouch==true since 
+                    //   event.pageX/event.pageY are added to the original touchmove event in
+                    //   onTouchMove().
+                    position: getMouseRelative( event, tracker.element ),
+                    scroll: nDelta,
+                    shift: event.shiftKey,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -933,30 +1120,39 @@
      * @private
      * @inner
      */
-    function handleMouseClick( tracker, event ) {
-        var delegate = THIS[ tracker.hash ],
+    function handleMouseClick( tracker, event, isTouch ) {
+        var delegate = THIS[tracker.hash],
             propagate;
 
+        isTouch = isTouch || false;
+
         event = $.getEvent( event );
+
+        var eventOrTouchPoint = isTouch ? event.changedTouches[0] : event;
 
         if ( event.button == 2 ) {
             return;
         }
 
-        var time     = $.now() - delegate.lastMouseDownTime,
-            point    = getMouseAbsolute( event ),
+        var time = $.now() - delegate.lastMouseDownTime,
+            point = getMouseAbsolute( eventOrTouchPoint ),
             distance = delegate.lastMouseDownPoint.distanceTo( point ),
-            quick    = time     <= tracker.clickTimeThreshold &&
+            quick = time <= tracker.clickTimeThreshold &&
                        distance <= tracker.clickDistThreshold;
 
         if ( tracker.clickHandler ) {
             propagate = tracker.clickHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                quick,
-                event.shiftKey
+                {
+                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    quick: quick,
+                    shift: event.shiftKey,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -967,14 +1163,17 @@
      * @private
      * @inner
      */
-    function onMouseMove( tracker, event ) {
-        var delegate = THIS[ tracker.hash ],
+    function onMouseMoveCaptured( tracker, event, isTouch ) {
+        var delegate = THIS[tracker.hash],
             delta,
             propagate,
             point;
 
-        event = $.getEvent( event );
-        point = getMouseAbsolute( event );
+        isTouch = isTouch || false;
+
+        event = $.getEvent(event);
+        var eventOrTouchPoint = isTouch ? event.touches[0] : event;
+        point = getMouseAbsolute( eventOrTouchPoint );
         delta = point.minus( delegate.lastPoint );
 
         delegate.lastPoint = point;
@@ -982,11 +1181,16 @@
         if ( tracker.dragHandler ) {
             propagate = tracker.dragHandler(
                 tracker,
-                getMouseRelative( event, tracker.element ),
-                delta,
-                event.shiftKey
+                {
+                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    delta: delta,
+                    shift: event.shiftKey,
+                    isTouchEvent: isTouch,
+                    originalEvent: event,
+                    userData: tracker.userData
+                }
             );
-            if( propagate === false ){
+            if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
@@ -1002,39 +1206,38 @@
             touchB,
             pinchDelta;
 
-        if ( !THIS[ tracker.hash ].lastTouch ) {
-          return;
+        if ( !THIS[tracker.hash].lastTouch ) {
+            return;
         }
 
-        if( event.touches.length === 1 &&
+        if ( event.touches.length === 1 &&
             event.targetTouches.length === 1 &&
             event.changedTouches.length === 1 &&
-            THIS[ tracker.hash ].lastTouch.identifier === event.touches[ 0 ].identifier){
+            THIS[tracker.hash].lastTouch.identifier === event.touches[0].identifier ) {
 
-            onMouseMove( tracker, event.touches[ 0 ] );
+            onMouseMoveCaptured( tracker, event, true );
 
-        } else if (  event.touches.length === 2 ){
+        } else if ( event.touches.length === 2 ) {
 
-            touchA = getMouseAbsolute( event.touches[ 0 ] );
-            touchB = getMouseAbsolute( event.touches[ 1 ] );
+            touchA = getMouseAbsolute( event.touches[0] );
+            touchB = getMouseAbsolute( event.touches[1] );
             pinchDelta =
                 Math.abs( touchA.x - touchB.x ) +
                 Math.abs( touchA.y - touchB.y );
 
             //TODO: make the 75px pinch threshold configurable
-            if( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ){
+            if ( Math.abs( THIS[tracker.hash].lastPinchDelta - pinchDelta ) > 75 ) {
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
-                onMouseWheelSpin( tracker, {
-                    shift: false,
-                    pageX: THIS[ tracker.hash ].pinchMidpoint.x,
-                    pageY: THIS[ tracker.hash ].pinchMidpoint.y,
-                    detail:(
-                        THIS[ tracker.hash ].lastPinchDelta > pinchDelta
-                    ) ? 1 : -1
-                });
+                // Adjust the original event enough to simulate a mouse wheel scroll
+                event.shiftKey = event.shiftKey || false;
+                event.pageX = THIS[tracker.hash].pinchMidpoint.x;
+                event.pageY = THIS[tracker.hash].pinchMidpoint.y;
+                event.detail = ( THIS[tracker.hash].lastPinchDelta > pinchDelta ) ? 1 : -1;
 
-                THIS[ tracker.hash ].lastPinchDelta = pinchDelta;
+                onMouseWheelSpin( tracker, event, true );
+
+                THIS[tracker.hash].lastPinchDelta = pinchDelta;
             }
         }
         event.preventDefault();
@@ -1049,10 +1252,10 @@
      * @private
      * @inner
      */
-    function onMouseMoveIE( tracker, event ) {
+    function onMouseMoveCapturedIE( tracker, event ) {
         var i;
         for ( i = 0; i < CAPTURING.length; i++ ) {
-            onMouseMove( CAPTURING[ i ], event );
+            onMouseMoveCaptured( CAPTURING[i], event, false );
         }
 
         $.stopEvent( event );
@@ -1067,27 +1270,27 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function getMouseRelative( event, element ) {
-        var mouse   = $.getMousePosition( event ),
-            offset  = $.getElementPosition( element );
+        var mouse  = $.getMousePosition( event ),
+            offset = $.getElementOffset( element );
 
         return mouse.minus( offset );
     }
 
     /**
-    * @private
-    * @inner
-    * Returns true if elementB is a child node of elementA, or if they're equal.
-    */
+     * @private
+     * @inner
+     * Returns true if elementB is a child node of elementA, or if they're equal.
+     */
     function isChild( elementA, elementB ) {
         var body = document.body;
         while ( elementB && elementA != elementB && body != elementB ) {
             try {
                 elementB = elementB.parentNode;
-            } catch (e) {
+            } catch ( e ) {
                 return false;
             }
         }
@@ -1095,17 +1298,17 @@
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onGlobalMouseDown() {
         IS_BUTTON_DOWN = true;
     }
 
     /**
-    * @private
-    * @inner
-    */
+     * @private
+     * @inner
+     */
     function onGlobalMouseUp() {
         IS_BUTTON_DOWN = false;
     }
@@ -1119,6 +1322,6 @@
             $.addEvent( window, "mousedown", onGlobalMouseDown, true );
             $.addEvent( window, "mouseup", onGlobalMouseUp, true );
         }
-    })();
+    } )();
 
-}( OpenSeadragon ));
+} ( OpenSeadragon ) );
