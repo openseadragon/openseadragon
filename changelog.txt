@@ -3,9 +3,9 @@ OPENSEADRAGON CHANGELOG
 
 1.0.000: (In progress)
 
-* MouseTracker now passes the original event objects to its handler methods (#215)
+* MouseTracker now passes the original event objects to its handler methods (#23)
+* Breaking change: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
 * MouseTracker now supports a 'moveHandler' method for tracking mousemove events (#215)
-* Breaking change: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#215)
 
 0.9.130:
 
