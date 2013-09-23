@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.0.0: (in progress)
+
 0.9.131:
 
 * Fixed: canvas-click event shouldn't fire as you drag (#198)
