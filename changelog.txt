@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.131: (in progress)
+0.9.131:
 
 * Fixed: canvas-click event shouldn't fire as you drag (#198)
 * Fixed: LegacyTileSource doesn't fail gracefully when no supported file formats are found (#202)
