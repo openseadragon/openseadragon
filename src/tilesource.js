@@ -300,8 +300,7 @@ $.TileSource.prototype = {
 
         callback = function( data ){
             if( typeof(data) === "string" ) {
-                var tmp = new DOMParser();
-                data = tmp.parseFromString( data , "text/xml" );
+                data = $.parseXml( data ); 
             }
             var $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
