@@ -1,5 +1,5 @@
 /*
- * OpenSeadragon - EventHandler
+ * OpenSeadragon - EventSource
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2013 OpenSeadragon contributors
@@ -44,11 +44,11 @@
  *       matches.
  * @class
  */
-$.EventHandler = function() {
+$.EventSource = function() {
     this.events = {};
 };
 
-$.EventHandler.prototype = {
+$.EventSource.prototype = {
 
     /**
      * Add an event handler for a given event.

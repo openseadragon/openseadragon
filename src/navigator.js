@@ -43,7 +43,7 @@
  * @class
  * @name OpenSeadragon.Navigator
  * @extends OpenSeadragon.Viewer
- * @extends OpenSeadragon.EventHandler
+ * @extends OpenSeadragon.EventSource
  * @param {Object} options
  * @param {String} options.viewerId
  */
@@ -196,7 +196,7 @@ $.Navigator = function( options ){
 
 };
 
-$.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
+$.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
 
     /**
      * @function

@@ -22,7 +22,7 @@ module.exports = function(grunt) {
         sources = [
             "src/openseadragon.js",
             "src/fullscreen.js",
-            "src/eventhandler.js",
+            "src/eventsource.js",
             "src/mousetracker.js",
             "src/control.js",
             "src/controldock.js",

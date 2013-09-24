@@ -50,7 +50,7 @@ $.ButtonState = {
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
  * @class
- * @extends OpenSeadragon.EventHandler
+ * @extends OpenSeadragon.EventSource
  * @param {Object} options
  * @param {String} options.tooltip Provides context help for the button we the
  *  user hovers over it.
@@ -83,7 +83,7 @@ $.Button = function( options ) {
 
     var _this = this;
 
-    $.EventHandler.call( this );
+    $.EventSource.call( this );
 
     $.extend( true, this, {
 
@@ -238,7 +238,7 @@ $.Button = function( options ) {
     outTo( this, $.ButtonState.REST );
 };
 
-$.extend( $.Button.prototype, $.EventHandler.prototype, {
+$.extend( $.Button.prototype, $.EventSource.prototype, {
 
     /**
      * TODO: Determine what this function is intended to do and if it's actually
