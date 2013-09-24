@@ -51,7 +51,7 @@ var THIS = {},
  * as arguments and we translate a positional call into an idiomatic call.
  *
  * @class
- * @extends OpenSeadragon.EventHandler
+ * @extends OpenSeadragon.EventSource
  * @extends OpenSeadragon.ControlDock
  * @param {Object} options
  * @param {String} options.element Id of Element to attach to,
@@ -170,7 +170,7 @@ $.Viewer = function( options ) {
     this._updateRequestId = null;
 
     //Inherit some behaviors and properties
-    $.EventHandler.call( this );
+    $.EventSource.call( this );
 
     this.addHandler( 'open-failed', function (source, args) {
         var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
@@ -356,7 +356,7 @@ $.Viewer = function( options ) {
 
 };
 
-$.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype, {
+$.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, {
 
 
     /**

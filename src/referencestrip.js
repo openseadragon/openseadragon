@@ -219,7 +219,7 @@ $.ReferenceStrip = function ( options ) {
 
 };
 
-$.extend( $.ReferenceStrip.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
+$.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototype, {
 
     setFocus: function ( page ) {
         var element      = $.getElement( this.element.id + '-' + page ),
