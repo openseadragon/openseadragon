@@ -700,6 +700,44 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
+         * Determines the position of the upper-left corner of the element adjusted for current page and/or element scroll.
+         * @function
+         * @name OpenSeadragon.getElementOffset
+         * @param {Element|String} element - the element we want the position for.
+         * @returns {Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
+         */
+        getElementOffset: function( element ) {
+            element = $.getElement( element );
+
+            var doc = element && element.ownerDocument,
+                docElement,
+                win,
+                boundingRect = { top: 0, left: 0 };
+
+            if ( !doc ) {
+                return new $.Point();
+            }
+
+            docElement = doc.documentElement;
+
+            if ( typeof element.getBoundingClientRect !== typeof undefined ) {
+                boundingRect = element.getBoundingClientRect();
+            }
+
+            win = ( doc == doc.window ) ?
+                doc :
+                ( doc.nodeType === 9 ) ?
+                    doc.defaultView || doc.parentWindow :
+                    false;
+
+            return new $.Point(
+                boundingRect.left + ( win.pageXOffset || docElement.scrollLeft ) - ( docElement.clientLeft || 0 ),
+                boundingRect.top + ( win.pageYOffset || docElement.scrollTop ) - ( docElement.clientTop || 0 )
+            );
+        },
+
+
+        /**
          * Determines the height and width of the given element.
          * @function
          * @name OpenSeadragon.getElementSize

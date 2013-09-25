@@ -265,8 +265,8 @@ $.Viewer = function( options ) {
                 window.scrollTo( 0, point.y );
             },
 
-            keyHandler:         function(tracker, keyCode, shiftKey){
-                switch( keyCode ){
+            keyHandler:         function( tracker, eventData ){
+                switch( eventData.keyCode ){
                     case 61://=|+
                         _this.viewport.zoomBy(1.1);
                         _this.viewport.applyConstraints();
@@ -282,7 +282,7 @@ $.Viewer = function( options ) {
                     case 119://w
                     case 87://W
                     case 38://up arrow
-                        if (shiftKey) {
+                        if ( eventData.shift ) {
                             _this.viewport.zoomBy(1.1);
                         } else {
                             _this.viewport.panBy(new $.Point(0, -0.05));
@@ -292,7 +292,7 @@ $.Viewer = function( options ) {
                     case 115://s
                     case 83://S
                     case 40://down arrow
-                        if (shiftKey) {
+                        if ( eventData.shift ) {
                             _this.viewport.zoomBy(0.9);
                         } else {
                             _this.viewport.panBy(new $.Point(0, 0.05));
@@ -310,7 +310,7 @@ $.Viewer = function( options ) {
                         _this.viewport.applyConstraints();
                         return false;
                     default:
-                        //console.log( 'navigator keycode %s', keyCode );
+                        //console.log( 'navigator keycode %s', eventData.keyCode );
                         return true;
                 }
             }
@@ -511,7 +511,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
         return this;
     },
 
-    
+
     /**
      * Function to destroy the viewer and clean up everything created by
      * OpenSeadragon.
@@ -666,7 +666,8 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             this.previousBody = [];
             THIS[ this.hash ].prevElementParent = this.element.parentNode;
             THIS[ this.hash ].prevNextSibling = this.element.nextSibling;
-            THIS[ this.hash ].prevElementSize = $.getElementSize( this.element );
+            THIS[ this.hash ].prevElementWidth = this.element.style.width;
+            THIS[ this.hash ].prevElementHeight = this.element.style.height;
             nodes = body.childNodes.length;
             for ( i = 0; i < nodes; i ++ ){
                 this.previousBody.push( body.childNodes[ 0 ] );
@@ -730,7 +731,7 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
             THIS[ this.hash ].fullPage = true;
 
             // mouse will be inside container now
-            $.delegate( this, onContainerEnter )();
+            $.delegate( this, onContainerEnter )( null, {} );
 
 
         } else {
@@ -783,13 +784,13 @@ $.extend( $.Viewer.prototype, $.EventHandler.prototype, $.ControlDock.prototype,
                 //this.container.style.top = 'auto';
             }
 
-            this.element.style.height = THIS[ this.hash ].prevElementSize.y + 'px';
-            this.element.style.width = THIS[ this.hash ].prevElementSize.x + 'px';
+            this.element.style.width = THIS[ this.hash ].prevElementWidth;
+            this.element.style.height = THIS[ this.hash ].prevElementHeight;
 
             THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )();
+            $.delegate( this, onContainerExit )( null, {} );
 
 
         }
@@ -1426,37 +1427,37 @@ function onBlur(){
 
 }
 
-function onCanvasClick( tracker, position, quick, shift ) {
+function onCanvasClick( tracker, eventData ) {
     var zoomPerClick,
         factor;
-    if ( this.viewport && quick ) {    // ignore clicks where mouse moved
+    if ( this.viewport && eventData.quick ) {    // ignore clicks where mouse moved
         zoomPerClick = this.zoomPerClick;
-        factor = shift ? 1.0 / zoomPerClick : zoomPerClick;
+        factor = eventData.shift ? 1.0 / zoomPerClick : zoomPerClick;
         this.viewport.zoomBy(
             factor,
-            this.viewport.pointFromPixel( position, true )
+            this.viewport.pointFromPixel( eventData.position, true )
         );
         this.viewport.applyConstraints();
     }
     this.raiseEvent( 'canvas-click', {
         tracker: tracker,
-        position: position,
-        quick: quick,
-        shift: shift
+        position: eventData.position,
+        quick: eventData.quick,
+        shift: eventData.shift
     });
 }
 
-function onCanvasDrag( tracker, position, delta, shift ) {
+function onCanvasDrag( tracker, eventData ) {
     if ( this.viewport ) {
         if( !this.panHorizontal ){
-            delta.x = 0;
+            eventData.delta.x = 0;
         }
         if( !this.panVertical ){
-            delta.y = 0;
+            eventData.delta.y = 0;
         }
         this.viewport.panBy(
             this.viewport.deltaPointsFromPixels(
-                delta.negate()
+                eventData.delta.negate()
             )
         );
         if( this.constrainDuringPan ){
@@ -1465,46 +1466,46 @@ function onCanvasDrag( tracker, position, delta, shift ) {
     }
     this.raiseEvent( 'canvas-drag', {
         tracker: tracker,
-        position: position,
-        delta: delta,
-        shift: shift
+        position: eventData.position,
+        delta: eventData.delta,
+        shift: eventData.shift
     });
 }
 
-function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
-    if ( insideElementPress && this.viewport ) {
+function onCanvasRelease( tracker, eventData ) {
+    if ( eventData.insideElementPressed && this.viewport ) {
         this.viewport.applyConstraints();
     }
     this.raiseEvent( 'canvas-release', {
         tracker: tracker,
-        position: position,
-        insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease
+        position: eventData.position,
+        insideElementPressed: eventData.insideElementPressed,
+        insideElementReleased: eventData.insideElementReleased
     });
 }
 
-function onCanvasScroll( tracker, position, scroll, shift ) {
+function onCanvasScroll( tracker, eventData ) {
     var factor;
     if ( this.viewport ) {
-        factor = Math.pow( this.zoomPerScroll, scroll );
+        factor = Math.pow( this.zoomPerScroll, eventData.scroll );
         this.viewport.zoomBy(
             factor,
-            this.viewport.pointFromPixel( position, true )
+            this.viewport.pointFromPixel( eventData.position, true )
         );
         this.viewport.applyConstraints();
     }
     this.raiseEvent( 'canvas-scroll', {
         tracker: tracker,
-        position: position,
-        scroll: scroll,
-        shift: shift
+        position: eventData.position,
+        scroll: eventData.scroll,
+        shift: eventData.shift
     });
     //cancels event
     return false;
 }
 
-function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) {
-    if ( !buttonDownElement ) {
+function onContainerExit( tracker, eventData ) {
+    if ( !eventData.insideElementPressed ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
@@ -1512,14 +1513,14 @@ function onContainerExit( tracker, position, buttonDownElement, buttonDownAny ) 
     }
     this.raiseEvent( 'container-exit', {
         tracker: tracker,
-        position: position,
-        buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny
+        position: eventData.position,
+        insideElementPressed: eventData.insideElementPressed,
+        buttonDownAny: eventData.buttonDownAny
     });
 }
 
-function onContainerRelease( tracker, position, insideElementPress, insideElementRelease ) {
-    if ( !insideElementRelease ) {
+function onContainerRelease( tracker, eventData ) {
+    if ( !eventData.insideElementReleased ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
@@ -1527,20 +1528,20 @@ function onContainerRelease( tracker, position, insideElementPress, insideElemen
     }
     this.raiseEvent( 'container-release', {
         tracker: tracker,
-        position: position,
-        insideElementPress: insideElementPress,
-        insideElementRelease: insideElementRelease
+        position: eventData.position,
+        insideElementPressed: eventData.insideElementPressed,
+        insideElementReleased: eventData.insideElementReleased
     });
 }
 
-function onContainerEnter( tracker, position, buttonDownElement, buttonDownAny ) {
+function onContainerEnter( tracker, eventData ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
     this.raiseEvent( 'container-enter', {
         tracker: tracker,
-        position: position,
-        buttonDownElement: buttonDownElement,
-        buttonDownAny: buttonDownAny
+        position: eventData.position,
+        insideElementPressed: eventData.insideElementPressed,
+        buttonDownAny: eventData.buttonDownAny
     });
 }
 

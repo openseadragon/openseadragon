@@ -251,13 +251,13 @@ $.extend( $.Navigator.prototype, $.EventHandler.prototype, $.Viewer.prototype, {
  * @inner
  * @function
  */
-function onCanvasClick( tracker, position, quick, shift ) {
+function onCanvasClick( tracker, eventData ) {
     var newBounds,
         viewerPosition,
         dimensions;
     if (! this.drag) {
         if ( this.viewer.viewport ) {
-            viewerPosition = this.viewport.deltaPointsFromPixels(position);
+            viewerPosition = this.viewport.deltaPointsFromPixels( eventData.position );
             dimensions = this.viewer.viewport.getBounds().getSize();
             newBounds = new $.Rect(
                 viewerPosition.x - dimensions.x/2,
@@ -285,18 +285,18 @@ function onCanvasClick( tracker, position, quick, shift ) {
  * @inner
  * @function
  */
-function onCanvasDrag( tracker, position, delta, shift ) {
+function onCanvasDrag( tracker, eventData ) {
     if ( this.viewer.viewport ) {
         this.drag = true;
         if( !this.panHorizontal ){
-            delta.x = 0;
+            eventData.delta.x = 0;
         }
         if( !this.panVertical ){
-            delta.y = 0;
+            eventData.delta.y = 0;
         }
         this.viewer.viewport.panBy(
             this.viewport.deltaPointsFromPixels(
-                delta
+                eventData.delta
             )
         );
     }
@@ -308,8 +308,8 @@ function onCanvasDrag( tracker, position, delta, shift ) {
  * @inner
  * @function
  */
-function onCanvasRelease( tracker, position, insideElementPress, insideElementRelease ) {
-    if ( insideElementPress && this.viewer.viewport ) {
+function onCanvasRelease( tracker, eventData ) {
+    if ( eventData.insideElementPressed && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
 }
