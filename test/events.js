@@ -61,7 +61,7 @@
     } );
 
     // ----------
-    asyncTest( 'MouseTracker, EventSource canvas-drag canvas-release canvas-click', function () {
+    asyncTest( 'MouseTracker, EventSource canvasdrag canvasrelease canvasclick', function () {
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             mouseTracker = null,
             userData = { item1: 'Test user data', item2: Math.random() },
@@ -78,9 +78,9 @@
         var onOpen = function ( eventSender, eventData ) {
             viewer.removeHandler( 'open', onOpen );
 
-            viewer.addHandler( 'canvas-drag', onEventSourceDrag );
-            viewer.addHandler( 'canvas-release', onEventSourceRelease );
-            viewer.addHandler( 'canvas-click', onEventSourceClick );
+            viewer.addHandler( 'canvasdrag', onEventSourceDrag );
+            viewer.addHandler( 'canvasrelease', onEventSourceRelease );
+            viewer.addHandler( 'canvasclick', onEventSourceClick );
 
             mouseTracker = new OpenSeadragon.MouseTracker( {
                 element: $canvas[0],
@@ -172,13 +172,13 @@
             checkOriginalEventReceived( eventData );
 
             mouseTracker.destroy();
-            viewer.removeHandler( 'canvas-drag', onEventSourceDrag );
-            viewer.removeHandler( 'canvas-release', onEventSourceRelease );
-            viewer.removeHandler( 'canvas-click', onEventSourceClick );
+            viewer.removeHandler( 'canvasdrag', onEventSourceDrag );
+            viewer.removeHandler( 'canvasrelease', onEventSourceRelease );
+            viewer.removeHandler( 'canvasclick', onEventSourceClick );
 
-            equal( dragsHandledEventSource, dragCount, "'canvas-drag' event count matches 'mousemove' event count (" + dragCount + ")" );
-            equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
-            equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
+            equal( dragsHandledEventSource, dragCount, "'canvasdrag' event count matches 'mousemove' event count (" + dragCount + ")" );
+            equal( releasesHandledEventSource, releasesExpected, "'canvasrelease' event count matches expected (" + releasesExpected + ")" );
+            equal( clicksHandledEventSource, releasesExpected, "'canvasclick' event count matches expected (" + releasesExpected + ")" );
 
             equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );
             deepEqual( eventData.userData, originalUserData, 'MouseTracker userData was untouched' );

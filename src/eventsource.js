@@ -36,12 +36,8 @@
 
 /**
  * For use by classes which want to support custom, non-browser events.
- * TODO: This is an awful name!  This thing represents an "event source",
- *       not an "event handler".  PLEASE change the to EventSource. Also please
- *       change 'addHandler', 'removeHandler' and 'raiseEvent' to 'bind',
- *       'unbind', and 'trigger' respectively.  Finally add a method 'one' which
- *       automatically unbinds a listener after the first triggered event that
- *       matches.
+ * TODO: Add a method 'one' which automatically unbinds a listener after the 
+ *       first triggered event that matches.
  * @class
  */
 $.EventSource = function() {
