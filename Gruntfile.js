@@ -34,7 +34,7 @@ module.exports = function(grunt) {
             "src/tilesource.js",
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
-            "src/iiif11tilesource.js",
+            "src/iiif1_1tilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/legacytilesource.js",

@@ -65,4 +65,11 @@
         testOpen('testpattern.xml');
     });
 
+    // ----------
+    asyncTest('IIIF 1.1 JSON', function() {
+        testOpen('iiif1_1.json');
+    });
+
+
+
 })();

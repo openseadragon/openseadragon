@@ -1,5 +1,5 @@
 /*
- * OpenSeadragon - IIIF11TileSource
+ * OpenSeadragon - IIIF1_1TileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2013 OpenSeadragon contributors
@@ -43,7 +43,7 @@
  * @extends OpenSeadragon.TileSource
  * @see http://library.stanford.edu/iiif/image-api/
  */
-$.IIIF11TileSource = function( options ){
+$.IIIF1_1TileSource = function( options ){
 
     $.extend( true, this, options );
 
@@ -69,12 +69,12 @@ $.IIIF11TileSource = function( options ){
     $.TileSource.apply( this, [ options ] );
 };
 
-$.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
+$.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, {
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.IIIF11TileSource.prototype.supports
+     * @name OpenSeadragon.IIIF1_1TileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -91,7 +91,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
     /**
      *
      * @function
-     * @name OpenSeadragon.IIIF11TileSource.prototype.configure
+     * @name OpenSeadragon.IIIF1_1TileSource.prototype.configure
      * @param {Object} data - the raw configuration
      */
     // IIIF 1.1 Info Looks like this (XML syntax is no more):
@@ -114,7 +114,7 @@ $.extend( $.IIIF11TileSource.prototype, $.TileSource.prototype, {
      * Responsible for retreiving the url which will return an image for the
      * region specified by the given x, y, and level components.
      * @function
-     * @name OpenSeadragon.IIIF11TileSource.prototype.getTileUrl
+     * @name OpenSeadragon.IIIF1_1TileSource.prototype.getTileUrl
      * @param {Number} level - z index
      * @param {Number} x
      * @param {Number} y
