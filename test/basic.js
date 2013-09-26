@@ -51,7 +51,7 @@
             start();
         });
 
-        viewer.addHandler('open-failed', function(eventSender, eventData) {
+        viewer.addHandler('openfailed', function(eventSender, eventData) {
             ok(true, "The open-failed event should be fired when the source 404s");
 
             equal($(".openseadragon-message").length, 1, "Open failures should display a message");

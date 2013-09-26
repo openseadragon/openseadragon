@@ -204,7 +204,7 @@ $.Drawer.prototype = {
         }) );
         this.updateAgain = true;
         if( this.viewer ){
-            this.viewer.raiseEvent( 'add-overlay', {
+            this.viewer.raiseEvent( 'addoverlay', {
                 viewer: this.viewer,
                 element: element,
                 location: options.location,
@@ -236,7 +236,7 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'update-overlay', {
+            this.viewer.raiseEvent( 'updateoverlay', {
                 viewer: this.viewer,
                 element: element,
                 location: location,
@@ -266,7 +266,7 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'remove-overlay', {
+            this.viewer.raiseEvent( 'removeoverlay', {
                 viewer: this.viewer,
                 element: element
             });
@@ -286,7 +286,7 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
-            this.viewer.raiseEvent( 'clear-overlay', {
+            this.viewer.raiseEvent( 'clearoverlay', {
                 viewer: this.viewer
             });
         }
@@ -481,7 +481,7 @@ function updateViewport( drawer ) {
     drawer.updateAgain = false;
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-viewport', {
+        drawer.viewer.raiseEvent( 'updateviewport', {
             viewer: drawer.viewer
         });
     }
@@ -657,7 +657,7 @@ function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVi
 
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-level', {
+        drawer.viewer.raiseEvent( 'updatelevel', {
             viewer: drawer.viewer,
             havedrawn: haveDrawn,
             level: level,
@@ -721,7 +721,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         drawTile = drawLevel;
 
     if( drawer.viewer ){
-        drawer.viewer.raiseEvent( 'update-tile', {
+        drawer.viewer.raiseEvent( 'updatetile', {
             viewer: drawer.viewer,
             tile: tile
         });
@@ -1235,7 +1235,7 @@ function drawTiles( drawer, lastDrawn ){
         }
 
         if( drawer.viewer ){
-            drawer.viewer.raiseEvent( 'tile-drawn', {
+            drawer.viewer.raiseEvent( 'tiledrawn', {
                 viewer: drawer.viewer,
                 tile: tile
             });
