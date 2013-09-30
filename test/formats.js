@@ -66,10 +66,18 @@
     });
 
     // ----------
+    asyncTest('IIIF 1.0 JSON', function() {
+        testOpen('iiif1_0.json');
+    });
+
+    // ----------
+    asyncTest('IIIF 1.0 XML', function() {
+        testOpen('iiif1_0.xml');
+    });
+
+    // ----------
     asyncTest('IIIF 1.1 JSON', function() {
         testOpen('iiif1_1.json');
     });
-
-
 
 })();

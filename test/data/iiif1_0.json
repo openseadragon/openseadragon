@@ -1,5 +1,5 @@
 {
-  "identifier": "pudl0071/4055459/01/00000030",
+  "identifier": "pudl0001/4609321/s42/00000001",
   "width": 2584,
   "height": 3600,
   "scale_factors": [
@@ -22,5 +22,5 @@
     "color"
   ],
   "profile": "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
-  "image_host":   "http://img.princeton.edu/loris
+  "image_host":   "http://lorisimg.princeton.edu/loris"
 }
