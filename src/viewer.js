@@ -172,7 +172,7 @@ $.Viewer = function( options ) {
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
-    this.addHandler( 'openfailed', function (source, args) {
+    this.addHandler( 'open-failed', function (source, args) {
         var msg = $.getString( "Errors.OpenFailed", args.source, args.message);
         _this._showMessage( msg );
     });
@@ -441,8 +441,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 tileSource = new $.TileSource( tileSource, function( readySource ){
                     openTileSource( _this, readySource );
                 });
-                tileSource.addHandler( 'openfailed', function ( name, args ) {
-                    _this.raiseEvent( 'openfailed', args );
+                tileSource.addHandler( 'open-failed', function ( name, args ) {
+                    _this.raiseEvent( 'open-failed', args );
                 });
 
             } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ){
@@ -455,7 +455,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     //inline configuration
                     $TileSource = $.TileSource.determineType( _this, tileSource );
                     if ( !$TileSource ) {
-                        _this.raiseEvent( 'openfailed', {
+                        _this.raiseEvent( 'open-failed', {
                             message: "Unable to load TileSource",
                             source: tileSource
                         });
@@ -569,7 +569,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
-        this.raiseEvent( 'mouseenabled', { enabled: enabled, viewer: this } );
+        this.raiseEvent( 'mouse-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -603,7 +603,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } else {
             beginControlsAutoHide( this );
         }
-        this.raiseEvent( 'controlsenabled', { enabled: enabled, viewer: this } );
+        this.raiseEvent( 'controls-enabled', { enabled: enabled, viewer: this } );
         return this;
     },
 
@@ -1439,7 +1439,7 @@ function onCanvasClick( tracker, eventData ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvasclick', {
+    this.raiseEvent( 'canvas-click', {
         tracker: tracker,
         position: eventData.position,
         quick: eventData.quick,
@@ -1464,7 +1464,7 @@ function onCanvasDrag( tracker, eventData ) {
             this.viewport.applyConstraints();
         }
     }
-    this.raiseEvent( 'canvasdrag', {
+    this.raiseEvent( 'canvas-drag', {
         tracker: tracker,
         position: eventData.position,
         delta: eventData.delta,
@@ -1476,7 +1476,7 @@ function onCanvasRelease( tracker, eventData ) {
     if ( eventData.insideElementPressed && this.viewport ) {
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvasrelease', {
+    this.raiseEvent( 'canvas-release', {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
@@ -1494,7 +1494,7 @@ function onCanvasScroll( tracker, eventData ) {
         );
         this.viewport.applyConstraints();
     }
-    this.raiseEvent( 'canvasscroll', {
+    this.raiseEvent( 'canvas-scroll', {
         tracker: tracker,
         position: eventData.position,
         scroll: eventData.scroll,
@@ -1511,7 +1511,7 @@ function onContainerExit( tracker, eventData ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'containerexit', {
+    this.raiseEvent( 'container-exit', {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
@@ -1526,7 +1526,7 @@ function onContainerRelease( tracker, eventData ) {
             beginControlsAutoHide( this );
         }
     }
-    this.raiseEvent( 'containerrelease', {
+    this.raiseEvent( 'container-release', {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
@@ -1537,7 +1537,7 @@ function onContainerRelease( tracker, eventData ) {
 function onContainerEnter( tracker, eventData ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
-    this.raiseEvent( 'containerenter', {
+    this.raiseEvent( 'container-enter', {
         tracker: tracker,
         position: eventData.position,
         insideElementPressed: eventData.insideElementPressed,
@@ -1589,7 +1589,7 @@ function updateOnce( viewer ) {
     }
 
     if ( !THIS[ viewer.hash ].animating && animated ) {
-        viewer.raiseEvent( "animationstart" );
+        viewer.raiseEvent( "animation-start" );
         abortControlsAutoHide( viewer );
     }
 
@@ -1608,7 +1608,7 @@ function updateOnce( viewer ) {
     }
 
     if ( THIS[ viewer.hash ].animating && !animated ) {
-        viewer.raiseEvent( "animationfinish" );
+        viewer.raiseEvent( "animation-finish" );
 
         if ( !THIS[ viewer.hash ].mouseInside ) {
             beginControlsAutoHide( viewer );

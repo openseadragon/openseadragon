@@ -51,7 +51,7 @@
             start();
         });
 
-        viewer.addHandler('openfailed', function(eventSender, eventData) {
+        viewer.addHandler('open-failed', function(eventSender, eventData) {
             ok(true, "The open-failed event should be fired when the source 404s");
 
             equal($(".openseadragon-message").length, 1, "Open failures should display a message");
@@ -73,12 +73,12 @@
             equal(viewport.getZoom(), 1, 'We start out unzoomed');
 
             var zoomHandler = function() {
-                viewer.removeHandler('animationfinish', zoomHandler);
+                viewer.removeHandler('animation-finish', zoomHandler);
                 equal(viewport.getZoom(), 2, 'Zoomed correctly');
                 start();
             };
 
-            viewer.addHandler('animationfinish', zoomHandler);
+            viewer.addHandler('animation-finish', zoomHandler);
             viewport.zoomTo(2);
         });
         viewer.open('/test/data/testpattern.dzi');
@@ -93,13 +93,13 @@
             ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
 
             var panHandler = function() {
-                viewer.removeHandler('animationfinish', panHandler);
+                viewer.removeHandler('animation-finish', panHandler);
                 center = viewport.getCenter();
                 ok(center.x === 0.1 && center.y === 0.1, 'Panned correctly');
                 start();
             };
 
-            viewer.addHandler('animationfinish', panHandler);
+            viewer.addHandler('animation-finish', panHandler);
             viewport.panTo(new OpenSeadragon.Point(0.1, 0.1));
         });
 
@@ -119,25 +119,25 @@
             var viewport = viewer.viewport,
                 center = viewport.getCenter();
 
-            viewer.removeHandler('animationfinish', stage1);
+            viewer.removeHandler('animation-finish', stage1);
 
             ok(center.x !== 0.5 && center.y !== 0.5, 'We start out panned');
             notEqual(viewport.getZoom(), 1, 'We start out zoomed');
 
             var homeHandler = function() {
-                viewer.removeHandler('animationfinish', homeHandler);
+                viewer.removeHandler('animation-finish', homeHandler);
                 center = viewport.getCenter();
                 ok(center.x === 0.5 && center.y === 0.5, 'We end up unpanned');
                 equal(viewport.getZoom(), 1, 'We end up unzoomed');
                 start();
             };
 
-            viewer.addHandler('animationfinish', homeHandler);
+            viewer.addHandler('animation-finish', homeHandler);
             viewport.goHome(true);
         }
 
         viewer.addHandler("open", opener);
-        viewer.addHandler("animationfinish", stage1);
+        viewer.addHandler("animation-finish", stage1);
 
         viewer.open('/test/data/testpattern.dzi');
     });
@@ -152,14 +152,14 @@
             equal(viewport.getZoom(), 1, 'We start out unzoomed');
 
             var clickHandler = function() {
-                viewer.removeHandler('animationfinish', clickHandler);
+                viewer.removeHandler('animation-finish', clickHandler);
                 center = viewport.getCenter();
                 ok(center.x > 0.37 && center.x < 0.38 && center.y > 0.37 && center.y < 0.38, 'Panned correctly');
                 equal(viewport.getZoom(), 2, 'Zoomed correctly');
                 start();
             };
 
-            viewer.addHandler('animationfinish', clickHandler);
+            viewer.addHandler('animation-finish', clickHandler);
             Util.simulateViewerClickWithDrag( {
                 viewer: viewer,
                 widthFactor: 0.25,

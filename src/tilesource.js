@@ -301,7 +301,7 @@ $.TileSource.prototype = {
         callback = function( data ){
             var $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
-                _this.raiseEvent( 'openfailed', { message: "Unable to load TileSource", source: url } );
+                _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
                 return;
             }
 
@@ -351,7 +351,7 @@ $.TileSource.prototype = {
                     msg = formattedExc + " attempting to load TileSource";
                 }
 
-                _this.raiseEvent( 'openfailed', {
+                _this.raiseEvent( 'open-failed', {
                     message: msg,
                     source: url
                 });

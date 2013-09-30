@@ -121,7 +121,7 @@ $.Viewport.prototype = {
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         if( this.viewer ){
-            this.viewer.raiseEvent( 'resetsize', {
+            this.viewer.raiseEvent( 'reset-size', {
                 contentSize: contentSize,
                 viewer: this.viewer
             });

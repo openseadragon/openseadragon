@@ -29,11 +29,11 @@
             var openHandler = function(eventSender, eventData) {
                 viewer.removeHandler('open', openHandler);
                 ok(true, 'Open event was sent');
-                viewer.addHandler('tiledrawn', tileDrawnHandler);
+                viewer.addHandler('tile-drawn', tileDrawnHandler);
             };
 
             var tileDrawnHandler = function(eventSender, eventData) {
-                viewer.removeHandler('tiledrawn', tileDrawnHandler);
+                viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 ok(true, 'A tile has been drawn');
                 viewer.addHandler('close', closeHandler);
                 viewer.close();
