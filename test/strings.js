@@ -15,7 +15,7 @@
     });
 
     test("getStringWithPlaceholders", function() {
-        equal(OpenSeadragon.getString("Errors.Open-Failed", "foo", "bar"),
+        equal(OpenSeadragon.getString("Errors.OpenFailed", "foo", "bar"),
               "Unable to open foo: bar",
               "String placeholder replacement");
     });

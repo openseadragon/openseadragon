@@ -152,13 +152,13 @@ $.Button = function( options ) {
     }
 
 
-    this.addHandler( "onPress",     this.onPress );
-    this.addHandler( "onRelease",   this.onRelease );
-    this.addHandler( "onClick",     this.onClick );
-    this.addHandler( "onEnter",     this.onEnter );
-    this.addHandler( "onExit",      this.onExit );
-    this.addHandler( "onFocus",     this.onFocus );
-    this.addHandler( "onBlur",      this.onBlur );
+    this.addHandler( "press",     this.onPress );
+    this.addHandler( "release",   this.onRelease );
+    this.addHandler( "click",     this.onClick );
+    this.addHandler( "enter",     this.onEnter );
+    this.addHandler( "exit",      this.onExit );
+    this.addHandler( "focus",     this.onFocus );
+    this.addHandler( "blur",      this.onBlur );
 
     this.currentState = $.ButtonState.GROUP;
 
@@ -178,7 +178,7 @@ $.Button = function( options ) {
         enterHandler: function( tracker, eventData ) {
             if ( eventData.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
-                _this.raiseEvent( "onEnter", _this );
+                _this.raiseEvent( "enter", _this );
             } else if ( !eventData.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
@@ -186,30 +186,30 @@ $.Button = function( options ) {
 
         focusHandler: function ( tracker, eventData ) {
             this.enterHandler( tracker, eventData );
-            _this.raiseEvent( "onFocus", _this );
+            _this.raiseEvent( "focus", _this );
         },
 
         exitHandler: function( tracker, eventData ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( eventData.insideElementPressed ) {
-                _this.raiseEvent( "onExit", _this );
+                _this.raiseEvent( "exit", _this );
             }
         },
 
         blurHandler: function ( tracker, eventData ) {
             this.exitHandler( tracker, eventData );
-            _this.raiseEvent( "onBlur", _this );
+            _this.raiseEvent( "blur", _this );
         },
 
         pressHandler: function ( tracker, eventData ) {
             inTo( _this, $.ButtonState.DOWN );
-            _this.raiseEvent( "onPress", _this );
+            _this.raiseEvent( "press", _this );
         },
 
         releaseHandler: function( tracker, eventData ) {
             if ( eventData.insideElementPressed && eventData.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
-                _this.raiseEvent( "onRelease", _this );
+                _this.raiseEvent( "release", _this );
             } else if ( eventData.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -219,15 +219,15 @@ $.Button = function( options ) {
 
         clickHandler: function( tracker, eventData ) {
             if ( eventData.quick ) {
-                _this.raiseEvent("onClick", _this);
+                _this.raiseEvent("click", _this);
             }
         },
 
         keyHandler: function( tracker, eventData ){
             //console.log( "%s : handling key %s!", _this.tooltip, eventData.keyCode);
             if( 13 === eventData.keyCode ){
-                _this.raiseEvent( "onClick", _this );
-                _this.raiseEvent( "onRelease", _this );
+                _this.raiseEvent( "click", _this );
+                _this.raiseEvent( "release", _this );
                 return false;
             }
             return true;
