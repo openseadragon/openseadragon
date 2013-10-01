@@ -46,7 +46,7 @@ var I18N = {
         Security:       "It looks like a security restriction stopped us from " +
                         "loading this Deep Zoom Image.",
         Status:         "This space unintentionally left blank ({0} {1}).",
-        "Open-Failed":  "Unable to open {0}: {1}"
+        OpenFailed:     "Unable to open {0}: {1}"
     },
 
     Tooltips: {
