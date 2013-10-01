@@ -1,0 +1,27 @@
+{
+  "profile": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2",
+  "scale_factors": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "tile_height": 256,
+  "height": 3600,
+  "width": 2584,
+  "tile_width": 256,
+  "qualities": [
+    "native",
+    "bitonal",
+    "grey",
+    "color"
+  ],
+  "formats": [
+    "jpg",
+    "png",
+    "gif"
+  ],
+  "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+  "@id": "http://libimages.princeton.edu/loris/pudl0071%2F4055459%2F01%2F00000030.jp2"
+}
