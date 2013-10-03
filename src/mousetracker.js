@@ -1020,7 +1020,7 @@
     function onMouseUpCaptured( tracker, event, noRelease, isTouch ) {
         isTouch = isTouch || false;
 
-        if ( !THIS[ tracker.hash ].insideElement ) {
+        if ( !THIS[ tracker.hash ].insideElement || isTouch ) {
             onMouseUp( tracker, event, isTouch );
         }
 
