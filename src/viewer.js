@@ -438,8 +438,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
                 //If its still a string it means it must be a url at this point
-                tileSource = new $.TileSource( tileSource, function( readySource ){
-                    openTileSource( _this, readySource );
+                tileSource = new $.TileSource( tileSource, function( eventSource, eventData ){
+                    openTileSource( _this, eventData.tileSource );
                 });
                 tileSource.addHandler( 'open-failed', function ( name, args ) {
                     _this.raiseEvent( 'open-failed', args );
