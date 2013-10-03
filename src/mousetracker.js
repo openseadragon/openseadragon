@@ -1229,13 +1229,15 @@
             if ( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ) {
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
-                // Adjust the original event enough to simulate a mouse wheel scroll
-                event.shiftKey = event.shiftKey || false;
-                event.pageX = THIS[ tracker.hash ].pinchMidpoint.x;
-                event.pageY = THIS[ tracker.hash ].pinchMidpoint.y;
-                event.detail = ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1;
+                // Simulate a mouse wheel scroll event
+                var simulatedEvent = {
+                    shiftKey: event.shiftKey || false,
+                    pageX:    THIS[ tracker.hash ].pinchMidpoint.x,
+                    pageY:    THIS[ tracker.hash ].pinchMidpoint.y,
+                    detail:   ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1
+                };
 
-                onMouseWheelSpin( tracker, event, true );
+                onMouseWheelSpin( tracker, simulatedEvent, true );
 
                 THIS[ tracker.hash ].lastPinchDelta = pinchDelta;
             }
