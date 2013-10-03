@@ -18,6 +18,7 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
+* Fixed: Pinch zoom event issue, regressive issue from previous event system changes (#244)
 
 0.9.131:
 
