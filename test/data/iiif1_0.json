@@ -1,13 +1,14 @@
 {
-  "identifier": "pudl0001/4609321/s42/00000001",
-  "width": 2584,
-  "height": 3600,
+  "identifier": "iiif_1_0_files",
+  "width": 775,
+  "height": 1024,
   "scale_factors": [
     1,
     2,
     3,
     4,
-    5
+    5,
+    6
   ],
   "tile_width": 256,
   "tile_height": 256,
@@ -21,6 +22,5 @@
     "grey",
     "color"
   ],
-  "profile": "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
-  "image_host":   "http://lorisimg.princeton.edu/loris"
+  "profile": "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
 }
