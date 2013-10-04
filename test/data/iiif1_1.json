@@ -5,11 +5,12 @@
     2,
     4,
     8,
-    16
+    16,
+    32
   ],
   "tile_height": 256,
-  "height": 3600,
-  "width": 2584,
+  "height": 1024,
+  "width": 775,
   "tile_width": 256,
   "qualities": [
     "native",
@@ -23,5 +24,5 @@
     "gif"
   ],
   "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
-  "@id": "http://libimages.princeton.edu/loris/pudl0071%2F4055459%2F01%2F00000030.jp2"
+  "@id": "http://localhost:8000/test/data/iiif_1_1_files"
 }
