@@ -173,7 +173,7 @@ $.Viewer = function( options ) {
     $.EventSource.call( this );
 
     this.addHandler( 'open-failed', function (source, args) {
-        var msg = $.getString( "Errors.Open-Failed", args.source, args.message);
+        var msg = $.getString( "Errors.OpenFailed", args.source, args.message);
         _this._showMessage( msg );
     });
 
@@ -438,8 +438,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         setTimeout(function(){
             if ( $.type( tileSource ) == 'string') {
                 //If its still a string it means it must be a url at this point
-                tileSource = new $.TileSource( tileSource, function( readySource ){
-                    openTileSource( _this, readySource );
+                tileSource = new $.TileSource( tileSource, function( eventSource, eventData ){
+                    openTileSource( _this, eventData.tileSource );
                 });
                 tileSource.addHandler( 'open-failed', function ( name, args ) {
                     _this.raiseEvent( 'open-failed', args );
@@ -1589,7 +1589,7 @@ function updateOnce( viewer ) {
     }
 
     if ( !THIS[ viewer.hash ].animating && animated ) {
-        viewer.raiseEvent( "animationstart" );
+        viewer.raiseEvent( "animation-start" );
         abortControlsAutoHide( viewer );
     }
 
@@ -1608,7 +1608,7 @@ function updateOnce( viewer ) {
     }
 
     if ( THIS[ viewer.hash ].animating && !animated ) {
-        viewer.raiseEvent( "animationfinish" );
+        viewer.raiseEvent( "animation-finish" );
 
         if ( !THIS[ viewer.hash ].mouseInside ) {
             beginControlsAutoHide( viewer );

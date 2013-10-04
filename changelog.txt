@@ -3,12 +3,24 @@ OPENSEADRAGON CHANGELOG
 
 1.0.0: (in progress)
 
+* BREAKING CHANGE: TileSource 'ready' event handler signature changed for consistency to 'handlerMethod( eventSource, eventData)' (#239)
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
 * BREAKING CHANGE: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
+* BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
+*     Viewer "animationstart" changed to "animation-start"
+*     Viewer "animationfinish" changed to "animation-finish"
+*     Button "onPress" changed to "press"
+*     Button "onRelease" changed to "release"
+*     Button "onClick" changed to "click"
+*     Button "onEnter" changed to "enter"
+*     Button "onExit" changed to "exit"
+*     Button "onFocus" changed to "focus"
+*     Button "onBlur" changed to "blur"
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
 * Added IIIF Image API 1.1 Tile Source (#230)
+* Fixed: Touch event issue where no canvas-click events were being raised (#240)
 
 0.9.131:
 
