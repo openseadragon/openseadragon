@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 1.0.0: (in progress)
 
-* BREAKING CHANGE: TileSource 'ready' event handler signature changed for consistency to 'handlerMethod( eventSource, eventData)' where eventData == { tileSource } (#239)
+* BREAKING CHANGE: TileSource 'ready' event handler signature changed for consistency to 'handlerMethod( eventSource, eventData)' (#239)
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
 * BREAKING CHANGE: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
 * BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
