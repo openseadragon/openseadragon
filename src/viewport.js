@@ -551,7 +551,9 @@ $.Viewport.prototype = {
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
-        this.zoomPoint = refPoint instanceof $.Point ?
+        this.zoomPoint = refPoint instanceof $.Point &&
+            !isNaN(refPoint.x) &&
+            !isNaN(refPoint.y) ?
             refPoint :
             null;
 
