@@ -676,7 +676,7 @@ $.Viewport.prototype = {
 
 
     /**
-     * Convert a delta (translation vector) from image pixels coordinates to viewport coordinates
+     * Convert a delta (translation vector) from pixels coordinates to viewport coordinates
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -687,7 +687,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a delta (translation vector) from viewport coordinates to image pixels coordinates.
+     * Convert a delta (translation vector) from viewport coordinates to pixels coordinates.
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -836,7 +836,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a pixel coordinates relative to the viewer element to image
+     * Convert pixel coordinates relative to the viewer element to image
      * coordinates.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
@@ -847,7 +847,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a pixel coordinates relative to the image to
+     * Convert pixel coordinates relative to the image to
      * viewer element coordinates.
      * @param {OpenSeadragon.Point} point
      * @returns {OpenSeadragon.Point}
@@ -858,7 +858,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a pixel coordinates relative to the window to image coordinates.
+     * Convert pixel coordinates relative to the window to image coordinates.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -869,7 +869,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert an image coordinates to pixel coordinates relative to the window.
+     * Convert image coordinates to pixel coordinates relative to the window.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -880,7 +880,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a pixel coordinates relative to the viewer element to viewport
+     * Convert pixel coordinates relative to the viewer element to viewport
      * coordinates.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
@@ -890,7 +890,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert viewport coordinates to a pixel coordinates relative to the
+     * Convert viewport coordinates to pixel coordinates relative to the
      * viewer element.
      * @param {OpenSeadragon.Point} point
      * @returns {OpenSeadragon.Point}
@@ -900,7 +900,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert a pixel coordinates relative to the window to viewport coordinates.
+     * Convert pixel coordinates relative to the window to viewport coordinates.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -911,7 +911,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Convert viewport coordinates to a pixel coordinates relative to the window.
+     * Convert viewport coordinates to pixel coordinates relative to the window.
      * @param {OpenSeadragon.Point} point
      * @returns {OpenSeadragon.Point}
      */

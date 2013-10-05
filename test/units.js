@@ -106,6 +106,7 @@
 
             viewer.addHandler('animationfinish', zoomHandler);
             viewport.zoomTo(2);
+            start();
         });
 
         viewer.open('/test/data/testpattern.dzi');
