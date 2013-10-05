@@ -169,7 +169,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             scale = Math.pow( 0.5, this.maxLevel - level ),
 
             //## get iiif size
-            iiif_size = 'pct:' + ( scale * 100 ),
+            // iiif_size = 'pct:' + ( scale * 100 ),
 
             //# image dimensions at this level
             level_width = Math.ceil( this.width * scale ),
@@ -182,16 +182,19 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
             iiif_tile_x,
             iiif_tile_y,
             iiif_tile_w,
-            iiif_tile_h;
+            iiif_tile_h,
+            iiif_size;
 
 
         if ( level_width < this.tile_width && level_height < this.tile_height ){
+            iiif_size = level_width + ","; // + level_height; only one dim. for IIIF level 1 compliance
             iiif_region = 'full';
         } else {
             iiif_tile_x = x * iiif_tile_size_width;
             iiif_tile_y = y * iiif_tile_size_height;
             iiif_tile_w = Math.min( iiif_tile_size_width, this.width - iiif_tile_x );
             iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
+            iiif_size = Math.ceil(iiif_tile_w * scale) + ",";
             iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
         }
 
