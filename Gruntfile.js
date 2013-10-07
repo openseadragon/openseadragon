@@ -11,6 +11,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
+    grunt.loadNpmTasks('grunt-saucelabs');
 
     // ----------
     var packageJson = grunt.file.readJSON("package.json"),
@@ -159,7 +160,34 @@ module.exports = function(grunt) {
                     prop: "gitInfo"
                 }
             }
-        }
+        },
+        'saucelabs-qunit': {
+            all: {
+                options: {
+                    urls: ['http://localhost:8000/test/test.html'],
+                    detailedError: true,
+                    testname: "OpenSeadragon",
+                    concurrency: 2,
+                    tunnelled: true,
+                    browsers: [
+                        {browserName: 'firefox', platform: 'OSX'},
+                        {browserName: 'firefox', platform: 'WIN7'},
+                        {browserName: 'firefox', platform: 'XP'},
+                        {browserName: 'googlechrome', platform: 'OSX'},
+                        {browserName: 'googlechrome', platform: 'WIN7'},
+                        {browserName: 'googlechrome', platform: 'XP'},
+                        {browserName: 'iehta', platform: 'WIN7', version: '10'},
+                        {browserName: 'iehta', platform: 'WIN7', version: '8'},
+                        {browserName: 'iehta', platform: 'WIN7', version: '9'},
+                        {browserName: 'iehta', platform: 'XP', version: '8'},
+                        {browserName: 'ipad'},
+                        {browserName: 'iphone'},
+                        {browserName: 'opera'},
+                        {browserName: 'safari', platform: 'OSX'},
+                    ],
+                }
+            }
+        },
     });
 
     // ----------
@@ -214,6 +242,9 @@ module.exports = function(grunt) {
     // Test task.
     // Builds and runs unit tests.
     grunt.registerTask("test", ["build", "connect", "qunit"]);
+
+    // Run the test suite on different real browsers using Sauce Labs: https://saucelabs.com/opensauce
+    grunt.registerTask('test-saucelabs', ['test', 'saucelabs-qunit']);
 
     // ----------
     // Package task.
