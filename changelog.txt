@@ -3,6 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 1.0.0: (in progress)
 
+* BREAKING CHANGE: TileSource 'ready' event handler signature changed for consistency to 'handlerMethod( eventSource, eventData)' where eventData == { tileSource } (#239)
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
 * BREAKING CHANGE: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
 * BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
@@ -19,6 +20,8 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
 * Fixed: Pinch zoom event issue, regressive issue from previous event system changes (#244)
+* Added IIIF Image API 1.1 Tile Source (#230)
+* Fixed: Touch event issue where no canvas-click events were being raised (#240)
 
 0.9.131:
 
