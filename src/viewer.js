@@ -200,12 +200,14 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
-            initialTileSource = this.tileSources[ 0 ];
+            initialTileSource = this.tileSources[ this.initialPage ];
+            this.goToPage( this.initialPage );
         } else {
             initialTileSource = this.tileSources;
+            this.open( initialTileSource );
         }
 
-        this.open( initialTileSource );
+        
     }
 
     this.element              = this.element || document.getElementById( this.id );
@@ -1066,7 +1068,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         return this;
     },
-
+    
+      currentPage: function () {
+        return THIS[ this.hash ].sequence; 
+      },
 
     /**
      * @function
