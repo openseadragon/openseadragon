@@ -178,7 +178,7 @@ $.Button = function( options ) {
         enterHandler: function( tracker, eventData ) {
             if ( eventData.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
-                _this.raiseEvent( "enter", _this );
+                _this.raiseEvent( "enter", { button: _this } );
             } else if ( !eventData.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
@@ -186,30 +186,30 @@ $.Button = function( options ) {
 
         focusHandler: function ( tracker, eventData ) {
             this.enterHandler( tracker, eventData );
-            _this.raiseEvent( "focus", _this );
+            _this.raiseEvent( "focus", { button: _this } );
         },
 
         exitHandler: function( tracker, eventData ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( eventData.insideElementPressed ) {
-                _this.raiseEvent( "exit", _this );
+                _this.raiseEvent( "exit", { button: _this } );
             }
         },
 
         blurHandler: function ( tracker, eventData ) {
             this.exitHandler( tracker, eventData );
-            _this.raiseEvent( "blur", _this );
+            _this.raiseEvent( "blur", { button: _this } );
         },
 
         pressHandler: function ( tracker, eventData ) {
             inTo( _this, $.ButtonState.DOWN );
-            _this.raiseEvent( "press", _this );
+            _this.raiseEvent( "press", { button: _this } );
         },
 
         releaseHandler: function( tracker, eventData ) {
             if ( eventData.insideElementPressed && eventData.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
-                _this.raiseEvent( "release", _this );
+                _this.raiseEvent( "release", { button: _this } );
             } else if ( eventData.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -219,15 +219,15 @@ $.Button = function( options ) {
 
         clickHandler: function( tracker, eventData ) {
             if ( eventData.quick ) {
-                _this.raiseEvent("click", _this);
+                _this.raiseEvent("click", { button: _this });
             }
         },
 
         keyHandler: function( tracker, eventData ){
             //console.log( "%s : handling key %s!", _this.tooltip, eventData.keyCode);
             if( 13 === eventData.keyCode ){
-                _this.raiseEvent( "click", _this );
-                _this.raiseEvent( "release", _this );
+                _this.raiseEvent( "click", { button: _this } );
+                _this.raiseEvent( "release", { button: _this } );
                 return false;
             }
             return true;
