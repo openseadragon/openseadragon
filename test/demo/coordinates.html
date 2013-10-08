@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Basic Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show a default OpenSeadragon viewer.
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <div>
+        <table border="1">
+            <tr>
+                <th></th>
+                <th>Window (pixel)</th>
+                <th>Container (pixel)</th>
+                <th>Image (pixel)</th>
+                <th>Viewport (point)</th>
+            </tr>
+            <tr>
+                <th>Cursor position</th>
+                <td id="windowPosition"></td>
+                <td id="containerPosition"></td>
+                <td id="imagePosition"></td>
+                <td id="viewportPosition"></td>
+            <tr>
+        </table>
+    </div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator:true
+        });
+
+        function pointToString(point) {
+            return point.x.toPrecision(4) + "," + point.y.toPrecision(4);
+        }
+
+        var onMouseTrackerMove = function(eventSender, eventData) {
+            var viewerX = eventData.position.x;
+            var viewerY = eventData.position.y;
+            var windowPoint = new OpenSeadragon.Point(viewerX, viewerY);
+            $("#windowPosition").text( pointToString(windowPoint));
+
+            var containerPoint = windowPoint.minus(
+                    OpenSeadragon.getElementPosition(viewer.element));
+            $("#containerPosition").text( pointToString(containerPoint));
+
+            var imagePoint = viewer.viewport.windowToImageCoordinates(windowPoint);
+            $("#imagePosition").text( pointToString(imagePoint));
+
+            var viewportPoint = viewer.viewport.windowToViewportCoordinates(windowPoint);
+            $("#viewportPosition").text( pointToString(viewportPoint));
+        };
+
+        mouseTracker = new OpenSeadragon.MouseTracker({
+            element: document,
+            moveHandler: onMouseTrackerMove
+        }).setTracking(true);
+
+    </script>
+</body>
+</html>

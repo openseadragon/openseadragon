@@ -602,7 +602,7 @@ $.Viewport.prototype = {
     /**
      * Gets the current rotation in degrees.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.setRotation
+     * @name OpenSeadragon.Viewport.prototype.getRotation
      * @return {Number} The current rotation in degrees.
      */
     getRotation: function() {
@@ -678,6 +678,7 @@ $.Viewport.prototype = {
 
 
     /**
+     * Convert a delta (translation vector) from pixels coordinates to viewport coordinates
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -688,6 +689,7 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Convert a delta (translation vector) from viewport coordinates to pixels coordinates.
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -698,6 +700,7 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Convert image pixel coordinates to viewport coordinates.
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -711,6 +714,7 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Convert viewport coordinates to image pixel coordinates.
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
@@ -831,6 +835,106 @@ $.Viewport.prototype = {
             coordB.x,
             coordB.y
         );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the viewer element to image
+     * coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    viewerElementToImageCoordinates: function( pixel ) {
+        var point = this.pointFromPixel( pixel, true );
+        return this.viewportToImageCoordinates( point );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the image to
+     * viewer element coordinates.
+     * @param {OpenSeadragon.Point} point
+     * @returns {OpenSeadragon.Point}
+     */
+    imageToViewerElementCoordinates: function( point ) {
+        var pixel = this.pixelFromPoint( point, true );
+        return this.imageToViewportCoordinates( pixel );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the window to image coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    windowToImageCoordinates: function( pixel ) {
+        var viewerCoordinates = pixel.minus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+        return this.viewerElementToImageCoordinates( viewerCoordinates );
+    },
+
+    /**
+     * Convert image coordinates to pixel coordinates relative to the window.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    imageToWindowCoordinates: function( pixel ) {
+        var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
+        return viewerCoordinates.plus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+    },
+
+    /**
+     * Convert pixel coordinates relative to the viewer element to viewport
+     * coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    viewerElementToViewportCoordinates: function( pixel ) {
+        return this.pointFromPixel( pixel, true );
+    },
+
+    /**
+     * Convert viewport coordinates to pixel coordinates relative to the
+     * viewer element.
+     * @param {OpenSeadragon.Point} point
+     * @returns {OpenSeadragon.Point}
+     */
+    viewportToViewerElementCoordinates: function( point ) {
+        return this.pixelFromPoint( point, true );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the window to viewport coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    windowToViewportCoordinates: function( pixel ) {
+        var viewerCoordinates = pixel.minus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+        return this.viewerElementToViewportCoordinates( viewerCoordinates );
+    },
+
+    /**
+     * Convert viewport coordinates to pixel coordinates relative to the window.
+     * @param {OpenSeadragon.Point} point
+     * @returns {OpenSeadragon.Point}
+     */
+    viewportToWindowCoordinates: function( point ) {
+        var viewerCoordinates = this.viewportToViewerElementCoordinates( point );
+        return viewerCoordinates.plus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+    },
+
+    /**
+     * Get the zoom ratio of the image. 1 means original image size, 0.5 half size...
+     * @function
+     * @param {Boolean} current If true gives the current zoom otherwise gives the
+     * target zoom.
+     * @returns {Number}
+     */
+    getImageZoomRatio: function( current ) {
+        var imageWidth = this.viewer.source.dimensions.x;
+        var containerWidth = this.getContainerSize().x;
+        var zoomToZoomLevelRatio = containerWidth / imageWidth;
+        return this.getZoom( current ) * zoomToZoomLevelRatio;
     }
 };
 
