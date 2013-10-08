@@ -536,7 +536,7 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     zoomBy: function( factor, refPoint, immediately ) {
-        if( refPoint ) {
+        if( refPoint instanceof $.Point && !isNaN( refPoint.x ) && !isNaN( refPoint.y ) ) {
             refPoint = refPoint.rotate(
                 -this.degrees,
                 new $.Point( this.centerSpringX.target.value, this.centerSpringY.target.value )
@@ -551,7 +551,9 @@ $.Viewport.prototype = {
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
-        this.zoomPoint = refPoint instanceof $.Point ?
+        this.zoomPoint = refPoint instanceof $.Point &&
+            !isNaN(refPoint.x) &&
+            !isNaN(refPoint.y) ?
             refPoint :
             null;
 
