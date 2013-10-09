@@ -203,7 +203,8 @@ $.Viewer = function( options ) {
             //Keeps the initial page within bounds
             if ( this.initialPage > this.tileSources.length - 1){
                 this.initialPage = this.tileSources.length - 1
-
+            }
+            
             initialTileSource = this.tileSources[ this.initialPage ];
             
             //Update the sequence (aka currrent page) property
