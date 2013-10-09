@@ -208,7 +208,7 @@ $.Viewer = function( options ) {
             initialTileSource = this.tileSources[ this.initialPage ];
             
             //Update the sequence (aka currrent page) property
-            THIS[ this.hash ].sequence = this.initialPage; 
+            THIS[ this.hash ].sequence = this.initialPage;
         } else {
             initialTileSource = this.tileSources;
         }
@@ -1082,7 +1082,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
     
     currentPage: function () {
-        return THIS[ this.hash ].sequence; 
+        return THIS[ this.hash ].sequence;
       },
       
     sequenceButtons: function (page) {
@@ -1107,7 +1107,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
                 }
             }
-      },      
+      },
 
     /**
      * @function
