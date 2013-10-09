@@ -200,11 +200,14 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
+            //Keeps the initial page within bounds
+            if ( this.initialPage > this.tileSources.length - 1){
+                this.initialPage = this.tileSources.length - 1
+
             initialTileSource = this.tileSources[ this.initialPage ];
-            this.goToPage( this.initialPage );
+            THIS[ this.hash ].sequence = this.initialPage; 
         } else {
             initialTileSource = this.tileSources;
-            this.open( initialTileSource );
         }
 
         
@@ -345,6 +348,12 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
     this.bindSequenceControls();
 
+    this.open( initialTileSource );
+    
+    if (_this.tileSources.length > 1){
+        _this.sequenceButtons(_this.initialPage);
+    }
+            
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
             this.customControls[ i ].id,
@@ -1069,23 +1078,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
     
-      currentPage: function () {
+    currentPage: function () {
         return THIS[ this.hash ].sequence; 
       },
-
-    /**
-     * @function
-     * @name OpenSeadragon.Viewer.prototype.goToPage
-     * @return {OpenSeadragon.Viewer} Chainable.
-     */
-    goToPage: function( page ){
-        //page is a 1 based index so normalize now
-        //page = page;
-        this.raiseEvent( 'page', { page: page, viewer: this } );
-
-        if( this.tileSources.length > page ){
-
-            THIS[ this.hash ].sequence = page;
+      
+    sequenceButtons: function (page) {
 
             if( this.nextButton ){
                 if( ( this.tileSources.length - 1 ) === page  ){
@@ -1107,6 +1104,23 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
                 }
             }
+      },      
+
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.goToPage
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    goToPage: function( page ){
+        //page is a 1 based index so normalize now
+        //page = page;
+        this.raiseEvent( 'page', { page: page, viewer: this } );
+
+        if( this.tileSources.length > page ){
+
+            THIS[ this.hash ].sequence = page;
+
+            this.sequenceButtons(page);
 
             this.open( this.tileSources[ page ] );
         }
