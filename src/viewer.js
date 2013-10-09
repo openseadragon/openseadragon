@@ -11,7 +11,7 @@
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary form must reproduce the above copyright
+ * - Redistributions in binary form must reproduce the above copyrightthis
  *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
  *
@@ -201,8 +201,8 @@ $.Viewer = function( options ) {
                 THIS[ this.hash ].sequenced = true;
             }
             //Keeps the initial page within bounds
-            if ( this.initialPage > this.tileSources.length - 1){
-                this.initialPage = this.tileSources.length - 1
+            if ( this.initialPage > this.tileSources.length - 1 ){
+                this.initialPage = this.tileSources.length - 1;
             }
             
             initialTileSource = this.tileSources[ this.initialPage ];
@@ -353,8 +353,8 @@ $.Viewer = function( options ) {
 
     this.open( initialTileSource );
     
-    if (_this.tileSources.length > 1){
-        _this.sequenceButtons(_this.initialPage);
+    if (this.tileSources.length > 1){
+        this.sequenceButtons(this.initialPage);
     }
             
     for ( i = 0; i < this.customControls.length; i++ ) {
