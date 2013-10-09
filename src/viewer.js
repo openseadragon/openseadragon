@@ -205,6 +205,8 @@ $.Viewer = function( options ) {
                 this.initialPage = this.tileSources.length - 1
 
             initialTileSource = this.tileSources[ this.initialPage ];
+            
+            //Update the sequence (aka currrent page) property
             THIS[ this.hash ].sequence = this.initialPage; 
         } else {
             initialTileSource = this.tileSources;
