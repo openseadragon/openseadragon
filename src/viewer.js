@@ -200,6 +200,7 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
+            
             //Keeps the initial page within bounds
             if ( this.initialPage > this.tileSources.length - 1 ){
                 this.initialPage = this.tileSources.length - 1;
@@ -212,8 +213,6 @@ $.Viewer = function( options ) {
         } else {
             initialTileSource = this.tileSources;
         }
-
-        
     }
 
     this.element              = this.element || document.getElementById( this.id );
@@ -351,10 +350,12 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
     this.bindSequenceControls();
 
-    this.open( initialTileSource );
+    if ( initialTileSource ) {
+        this.open( initialTileSource );
+    }
     
-    if (this.tileSources.length > 1){
-        this.sequenceButtons(this.initialPage);
+    if ( this.tileSources.length > 1 ) {
+        this._updateSequenceButtons( this.initialPage );
     }
             
     for ( i = 0; i < this.customControls.length; i++ ) {
@@ -1081,11 +1082,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
     
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.currentPage
+     * @return {Number}
+     */
     currentPage: function () {
         return THIS[ this.hash ].sequence;
       },
-      
-    sequenceButtons: function (page) {
+    
+    /**
+     * Updates the sequence buttons.
+     * @function
+     * @private
+     * @param {Number} Sequence Value
+     */      
+    _updateSequenceButtons: function (page) {
 
             if( this.nextButton ){
                 if( ( this.tileSources.length - 1 ) === page  ){
@@ -1123,7 +1135,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             THIS[ this.hash ].sequence = page;
 
-            this.sequenceButtons(page);
+            this._updateSequenceButtons( page );
 
             this.open( this.tileSources[ page ] );
         }
