@@ -1083,42 +1083,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
     
     /**
+     * Gets the active page of a sequence
      * @function
      * @name OpenSeadragon.Viewer.prototype.currentPage
      * @return {Number}
      */
     currentPage: function () {
         return THIS[ this.hash ].sequence;
-      },
-    
-    /**
-     * Updates the sequence buttons.
-     * @function
-     * @private
-     * @param {Number} Sequence Value
-     */      
-    _updateSequenceButtons: function (page) {
-
-            if( this.nextButton ){
-                if( ( this.tileSources.length - 1 ) === page  ){
-                    //Disable next button
-                    if(!this.navPrevNextWrap){
-                        this.nextButton.disable();
-                    }
-                } else {
-                    this.nextButton.enable();
-                }
-            }
-            if( this.previousButton ){
-                if( page > 0 ){
-                    //Enable previous button
-                    this.previousButton.enable();
-                } else {
-                    if(!this.navPrevNextWrap){
-                        this.previousButton.disable();
-                    }
-                }
-            }
       },
 
     /**
@@ -1152,6 +1123,36 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
+    /**
+     * Updates the sequence buttons.
+     * @function
+     * @private
+     * @param {Number} Sequence Value
+     */      
+    _updateSequenceButtons: function (page) {
+
+            if( this.nextButton ){
+                if( ( this.tileSources.length - 1 ) === page  ){
+                    //Disable next button
+                    if(!this.navPrevNextWrap){
+                        this.nextButton.disable();
+                    }
+                } else {
+                    this.nextButton.enable();
+                }
+            }
+            if( this.previousButton ){
+                if( page > 0 ){
+                    //Enable previous button
+                    this.previousButton.enable();
+                } else {
+                    if(!this.navPrevNextWrap){
+                        this.previousButton.disable();
+                    }
+                }
+            }
+      },
+      
     /**
      * Display a message in the viewport
      * @function
