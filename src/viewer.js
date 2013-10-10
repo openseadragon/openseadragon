@@ -1128,7 +1128,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @private
      * @param {Number} Sequence Value
-     */      
+     */
     _updateSequenceButtons: function (page) {
 
             if( this.nextButton ){
