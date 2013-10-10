@@ -25,6 +25,7 @@ OPENSEADRAGON CHANGELOG
 * IIIF 1.0 now uses pixel based syntax (#249)
 * Fixed: Touch event issue where no canvas-click events were being raised (#240)
 * Check that zoom reference point is valid before using it in zoomTo and zoomBy (#247)
+* Added a number of easier coordinate conversion methods to viewport (#243)
 
 0.9.131:
 
