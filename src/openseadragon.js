@@ -489,7 +489,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             xmlPath:                null,
             tileSources:            null,
             tileHost:               null,
-
+            initialPage:            0,
+            
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
             panVertical:            true,
