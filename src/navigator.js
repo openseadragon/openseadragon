@@ -251,13 +251,13 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
  * @inner
  * @function
  */
-function onCanvasClick( tracker, eventData ) {
+function onCanvasClick( event ) {
     var newBounds,
         viewerPosition,
         dimensions;
     if (! this.drag) {
         if ( this.viewer.viewport ) {
-            viewerPosition = this.viewport.deltaPointsFromPixels( eventData.position );
+            viewerPosition = this.viewport.deltaPointsFromPixels( event.position );
             dimensions = this.viewer.viewport.getBounds().getSize();
             newBounds = new $.Rect(
                 viewerPosition.x - dimensions.x/2,
@@ -285,18 +285,18 @@ function onCanvasClick( tracker, eventData ) {
  * @inner
  * @function
  */
-function onCanvasDrag( tracker, eventData ) {
+function onCanvasDrag( event ) {
     if ( this.viewer.viewport ) {
         this.drag = true;
         if( !this.panHorizontal ){
-            eventData.delta.x = 0;
+            event.delta.x = 0;
         }
         if( !this.panVertical ){
-            eventData.delta.y = 0;
+            event.delta.y = 0;
         }
         this.viewer.viewport.panBy(
             this.viewport.deltaPointsFromPixels(
-                eventData.delta
+                event.delta
             )
         );
     }
@@ -308,8 +308,8 @@ function onCanvasDrag( tracker, eventData ) {
  * @inner
  * @function
  */
-function onCanvasRelease( tracker, eventData ) {
-    if ( eventData.insideElementPressed && this.viewer.viewport ) {
+function onCanvasRelease( event ) {
+    if ( event.insideElementPressed && this.viewer.viewport ) {
         this.viewer.viewport.applyConstraints();
     }
 }
@@ -320,10 +320,10 @@ function onCanvasRelease( tracker, eventData ) {
  * @inner
  * @function
  */
-function onCanvasScroll( tracker, position, scroll, shift ) {
+function onCanvasScroll( event ) {
     var factor;
     if ( this.viewer.viewport ) {
-        factor = Math.pow( this.zoomPerScroll, scroll );
+        factor = Math.pow( this.zoomPerScroll, event.scroll );
         this.viewer.viewport.zoomBy(
             factor,
             this.viewport.getCenter()

@@ -117,8 +117,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     for ( i = 0; i < arguments.length; i++ ) {
         if ( $.isFunction( arguments[ i ] ) ) {
             callback = arguments[ i ];
-            this.addHandler( 'ready', function ( placeHolderSource, placeHolderEventData ) {
-                callback( placeHolderSource, placeHolderEventData );
+            this.addHandler( 'ready', function ( event ) {
+                callback( event );
             } );
             //only one callback per constructor
             break;
