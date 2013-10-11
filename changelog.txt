@@ -26,6 +26,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Touch event issue where no canvas-click events were being raised (#240)
 * Check that zoom reference point is valid before using it in zoomTo and zoomBy (#247)
 * Added a number of easier coordinate conversion methods to viewport (#243)
+* Added the ability to create a viewer and start at a specified page (#252)
 
 0.9.131:
 
