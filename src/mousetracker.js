@@ -222,21 +222,21 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Boolean} eventData.insideElementPressed
+         * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} eventData.buttonDownAny
+         * @param {Boolean} event.buttonDownAny
          *      Was the button down anywhere in the screen during the event.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         enterHandler: function () { },
@@ -245,21 +245,21 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Boolean} eventData.insideElementPressed
+         * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} eventData.buttonDownAny
+         * @param {Boolean} event.buttonDownAny
          *      Was the button down anywhere in the screen during the event.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         exitHandler: function () { },
@@ -268,16 +268,16 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         pressHandler: function () { },
@@ -286,21 +286,21 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Boolean} eventData.insideElementPressed
+         * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
-         * @param {Boolean} eventData.insideElementReleased
+         * @param {Boolean} event.insideElementReleased
          *      True if the cursor still inside the tracked element when the button was released.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         releaseHandler: function () { },
@@ -309,16 +309,16 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         moveHandler: function () { },
@@ -327,20 +327,20 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Number} eventData.scroll
+         * @param {Number} event.scroll
          *      The scroll delta for the event.
-         * @param {Boolean} eventData.shift
+         * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         scrollHandler: function () { },
@@ -349,20 +349,20 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {Number} eventData.quick
+         * @param {Number} event.quick
          *      True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
-         * @param {Boolean} eventData.shift
+         * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         clickHandler: function () { },
@@ -371,20 +371,20 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {OpenSeadragon.Point} eventData.position
+         * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {OpenSeadragon.Point} eventData.delta
+         * @param {OpenSeadragon.Point} event.delta
          *      The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
-         * @param {Boolean} eventData.shift
+         * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
-         * @param {Boolean} eventData.isTouchEvent
+         * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         dragHandler: function () { },
@@ -393,16 +393,16 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {Number} eventData.keyCode
+         * @param {Number} event.keyCode
          *      The key code that was pressed.
-         * @param {Boolean} eventData.shift
+         * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         keyHandler: function () { },
@@ -411,12 +411,12 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         focusHandler: function () { },
@@ -425,12 +425,12 @@
          * Implement or assign implmentation to these handlers during or after
          * calling the constructor.
          * @function
-         * @param {OpenSeadragon.MouseTracker} tracker
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {Object} eventData
-         * @param {Object} eventData.originalEvent
+         * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Object} eventData.userData
+         * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         blurHandler: function () { }
@@ -629,8 +629,8 @@
         var propagate;
         if ( tracker.focusHandler ) {
             propagate = tracker.focusHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     originalEvent: event,
                     userData: tracker.userData
                 }
@@ -651,8 +651,8 @@
         var propagate;
         if ( tracker.blurHandler ) {
             propagate = tracker.blurHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     originalEvent: event,
                     userData: tracker.userData
                 }
@@ -673,8 +673,8 @@
         var propagate;
         if ( tracker.keyHandler ) {
             propagate = tracker.keyHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( event, tracker.element ),
                     keyCode: event.keyCode ? event.keyCode : event.charCode,
                     shift: event.shiftKey,
@@ -728,8 +728,8 @@
 
         if ( tracker.enterHandler ) {
             propagate = tracker.enterHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
@@ -784,8 +784,8 @@
 
         if ( tracker.exitHandler ) {
             propagate = tracker.exitHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
                     buttonDownAny: IS_BUTTON_DOWN,
@@ -828,8 +828,8 @@
 
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( eventOrTouchPoint, tracker.element ),
                     isTouchEvent: isTouch,
                     originalEvent: event,
@@ -923,8 +923,8 @@
 
         if ( tracker.releaseHandler ) {
             propagate = tracker.releaseHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: insideElementPressed,
                     insideElementReleased: insideElementReleased,
@@ -1041,8 +1041,8 @@
             event = $.getEvent( event );
 
             var propagate = tracker.moveHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( event, tracker.element ),
                     isTouchEvent: false,
                     originalEvent: event,
@@ -1096,8 +1096,8 @@
 
         if ( tracker.scrollHandler ) {
             propagate = tracker.scrollHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     // Note: Ok to call getMouseRelative on passed event for isTouch==true since 
                     //   event.pageX/event.pageY are added to the original touchmove event in
                     //   onTouchMove().
@@ -1142,8 +1142,8 @@
 
         if ( tracker.clickHandler ) {
             propagate = tracker.clickHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( eventOrTouchPoint, tracker.element ),
                     quick: quick,
                     shift: event.shiftKey,
@@ -1180,8 +1180,8 @@
 
         if ( tracker.dragHandler ) {
             propagate = tracker.dragHandler(
-                tracker,
                 {
+                    eventSource: tracker,
                     position: getMouseRelative( eventOrTouchPoint, tracker.element ),
                     delta: delta,
                     shift: event.shiftKey,

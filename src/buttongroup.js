@@ -85,23 +85,23 @@ $.ButtonGroup = function( options ) {
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
-        enterHandler: function ( tracker, eventData ) {
+        enterHandler: function ( event ) {
             var i;
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupEnter();
             }
         },
-        exitHandler: function ( tracker, eventData ) {
+        exitHandler: function ( event ) {
             var i;
-            if ( !eventData.insideElementPressed ) {
+            if ( !event.insideElementPressed ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }
             }
         },
-        releaseHandler: function ( tracker, eventData ) {
+        releaseHandler: function ( event ) {
             var i;
-            if ( !eventData.insideElementReleased ) {
+            if ( !event.insideElementReleased ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
                 }
@@ -119,7 +119,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
      */
     emulateEnter: function() {
-        this.tracker.enterHandler( this.tracker, {} );
+        this.tracker.enterHandler( { eventSource: this.tracker } );
     },
 
     /**
@@ -129,7 +129,7 @@ $.ButtonGroup.prototype = {
      * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
      */
     emulateExit: function() {
-        this.tracker.exitHandler( this.tracker, {} );
+        this.tracker.exitHandler( { eventSource: this.tracker } );
     }
 };
 

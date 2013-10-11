@@ -189,16 +189,17 @@ $.ReferenceStrip = function ( options ) {
             element:            element,
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
-            pressHandler: function ( tracker, eventData ) {
-                tracker.dragging = $.now();
+            pressHandler: function ( event ) {
+                event.eventSource.dragging = $.now();
             },
-            releaseHandler: function ( tracker, eventData ) {
-                var id   = tracker.element.id,
-                    page = Number( id.split( '-' )[2] ),
-                    now  = $.now();
+            releaseHandler: function ( event ) {
+                var tracker = event.eventSource,
+                    id      = tracker.element.id,
+                    page    = Number( id.split( '-' )[2] ),
+                    now     = $.now();
 
-                if ( eventData.insideElementPressed &&
-                     eventData.insideElementReleased &&
+                if ( event.insideElementPressed &&
+                     event.insideElementReleased &&
                      tracker.dragging &&
                      ( now - tracker.dragging ) < tracker.clickTimeThreshold ) {
                     tracker.dragging = null;
@@ -264,7 +265,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
 
             this.currentPage = page;
             $.getElement( element.id + '-displayregion' ).focus();
-            onStripEnter.call( this, this.innerTracker, {} );
+            onStripEnter.call( this, { eventSource: this.innerTracker } );
         }
     },
     /**
@@ -289,7 +290,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
  * @inner
  * @function
  */
-function onStripDrag( tracker, eventData ) {
+function onStripDrag( event ) {
 
     var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
         offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
@@ -299,31 +300,31 @@ function onStripDrag( tracker, eventData ) {
     this.dragging = true;
     if ( this.element ) {
         if ( 'horizontal' == this.scroll ) {
-            if ( -eventData.delta.x > 0 ) {
+            if ( -event.delta.x > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
-                    this.element.style.marginLeft = ( offsetLeft + ( eventData.delta.x * 2 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft + ( eventData.delta.x * 2 ) );
+                    this.element.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft + ( event.delta.x * 2 ) );
                 }
-            } else if ( -eventData.delta.x < 0 ) {
+            } else if ( -event.delta.x < 0 ) {
                 //reverse
                 if ( offsetLeft < 0 ) {
-                    this.element.style.marginLeft = ( offsetLeft + ( eventData.delta.x * 2 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft + ( eventData.delta.x * 2 ) );
+                    this.element.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft + ( event.delta.x * 2 ) );
                 }
             }
         } else {
-            if ( -eventData.delta.y > 0 ) {
+            if ( -event.delta.y > 0 ) {
                 //forward
                 if ( offsetTop > -( scrollHeight - viewerSize.y ) ) {
-                    this.element.style.marginTop = ( offsetTop + ( eventData.delta.y * 2 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( eventData.delta.y * 2 ) );
+                    this.element.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.delta.y * 2 ) );
                 }
-            } else if ( -eventData.delta.y < 0 ) {
+            } else if ( -event.delta.y < 0 ) {
                 //reverse
                 if ( offsetTop < 0 ) {
-                    this.element.style.marginTop = ( offsetTop + ( eventData.delta.y * 2 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( eventData.delta.y * 2 ) );
+                    this.element.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.delta.y * 2 ) );
                 }
             }
         }
@@ -339,7 +340,7 @@ function onStripDrag( tracker, eventData ) {
  * @inner
  * @function
  */
-function onStripScroll( tracker, eventData ) {
+function onStripScroll( event ) {
     var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
         offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
         scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
@@ -347,31 +348,31 @@ function onStripScroll( tracker, eventData ) {
         viewerSize   = $.getElementSize( this.viewer.canvas );
     if ( this.element ) {
         if ( 'horizontal' == this.scroll ) {
-            if ( eventData.scroll > 0 ) {
+            if ( event.scroll > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
-                    this.element.style.marginLeft = ( offsetLeft - ( eventData.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft - ( eventData.scroll * 60 ) );
+                    this.element.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
                 }
-            } else if ( eventData.scroll < 0 ) {
+            } else if ( event.scroll < 0 ) {
                 //reverse
                 if ( offsetLeft < 0 ) {
-                    this.element.style.marginLeft = ( offsetLeft - ( eventData.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft - ( eventData.scroll * 60 ) );
+                    this.element.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
                 }
             }
         } else {
-            if ( eventData.scroll < 0 ) {
+            if ( event.scroll < 0 ) {
                 //scroll up
                 if ( offsetTop > viewerSize.y - scrollHeight ) {
-                    this.element.style.marginTop = ( offsetTop + ( eventData.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( eventData.scroll * 60 ) );
+                    this.element.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
                 }
-            } else if ( eventData.scroll > 0 ) {
+            } else if ( event.scroll > 0 ) {
                 //scroll dowm
                 if ( offsetTop < 0 ) {
-                    this.element.style.marginTop = ( offsetTop + ( eventData.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( eventData.scroll * 60 ) );
+                    this.element.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
                 }
             }
         }
@@ -453,22 +454,23 @@ function loadPanels( strip, viewerSize, scroll ) {
  * @inner
  * @function
  */
-function onStripEnter( tracker, eventData ) {
+function onStripEnter( event ) {
+    var element = event.eventSource.element;
+    
+    //$.setElementOpacity(element, 0.8);
 
-    //$.setElementOpacity(tracker.element, 0.8);
-
-    //tracker.element.style.border = '1px solid #555';
-    //tracker.element.style.background = '#000';
+    //element.style.border = '1px solid #555';
+    //element.style.background = '#000';
 
     if ( 'horizontal' == this.scroll ) {
 
-        //tracker.element.style.paddingTop = "0px";
-        tracker.element.style.marginBottom = "0px";
+        //element.style.paddingTop = "0px";
+        element.style.marginBottom = "0px";
 
     } else {
 
-        //tracker.element.style.paddingRight = "0px";
-        tracker.element.style.marginLeft = "0px";
+        //element.style.paddingRight = "0px";
+        element.style.marginLeft = "0px";
 
     }
     return false;
@@ -480,16 +482,18 @@ function onStripEnter( tracker, eventData ) {
  * @inner
  * @function
  */
-function onStripExit( tracker, eventData ) {
+function onStripExit( event ) {
+    var element = event.eventSource.element;
+    
     if ( 'horizontal' == this.scroll ) {
 
-        //tracker.element.style.paddingTop = "10px";
-        tracker.element.style.marginBottom = "-" + ( $.getElementSize( tracker.element ).y / 2 ) + "px";
+        //element.style.paddingTop = "10px";
+        element.style.marginBottom = "-" + ( $.getElementSize( element ).y / 2 ) + "px";
 
     } else {
 
-        //tracker.element.style.paddingRight = "10px";
-        tracker.element.style.marginLeft = "-" + ( $.getElementSize( tracker.element ).x / 2 ) + "px";
+        //element.style.paddingRight = "10px";
+        element.style.marginLeft = "-" + ( $.getElementSize( element ).x / 2 ) + "px";
 
     }
     return false;
@@ -502,37 +506,37 @@ function onStripExit( tracker, eventData ) {
  * @inner
  * @function
  */
-function onKeyPress( tracker, eventData ) {
-    //console.log( eventData.keyCode );
+function onKeyPress( event ) {
+    //console.log( event.keyCode );
 
-    switch ( eventData.keyCode ) {
+    switch ( event.keyCode ) {
         case 61: //=|+
-            onStripScroll.call( this, this.tracker, { position: null, scroll: 1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
             return false;
         case 45: //-|_
-            onStripScroll.call( this, this.tracker, { position: null, scroll: -1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
             return false;
         case 48: //0|)
         case 119: //w
         case 87: //W
         case 38: //up arrow
-            onStripScroll.call( this, this.tracker, { position: null, scroll: 1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
             return false;
         case 115: //s
         case 83: //S
         case 40: //down arrow
-            onStripScroll.call( this, this.tracker, { position: null, scroll: -1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
             return false;
         case 97: //a
         case 37: //left arrow
-            onStripScroll.call( this, this.tracker, { position: null, scroll: -1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
             return false;
         case 100: //d
         case 39: //right arrow
-            onStripScroll.call( this, this.tracker, { position: null, scroll: 1, shift: null } );
+            onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
             return false;
         default:
-            //console.log( 'navigator keycode %s', eventData.keyCode );
+            //console.log( 'navigator keycode %s', event.keyCode );
             return true;
     }
 }

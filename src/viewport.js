@@ -122,8 +122,7 @@ $.Viewport.prototype = {
 
         if( this.viewer ){
             this.viewer.raiseEvent( 'reset-size', {
-                contentSize: contentSize,
-                viewer: this.viewer
+                contentSize: contentSize
             });
         }
 
@@ -169,8 +168,7 @@ $.Viewport.prototype = {
     goHome: function( immediately ) {
         if( this.viewer ){
             this.viewer.raiseEvent( 'home', {
-                immediately: immediately,
-                viewer: this.viewer
+                immediately: immediately
             });
         }
         return this.fitBounds( this.getHomeBounds(), immediately );
@@ -370,8 +368,7 @@ $.Viewport.prototype = {
 
         if( this.viewer ){
             this.viewer.raiseEvent( 'constrain', {
-                immediately: immediately,
-                viewer: this.viewer
+                immediately: immediately
             });
         }
 
@@ -523,8 +520,7 @@ $.Viewport.prototype = {
         if( this.viewer ){
             this.viewer.raiseEvent( 'pan', {
                 center: center,
-                immediately: immediately,
-                viewer: this.viewer
+                immediately: immediately
             });
         }
 
@@ -567,8 +563,7 @@ $.Viewport.prototype = {
             this.viewer.raiseEvent( 'zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
-                immediately: immediately,
-                viewer: this.viewer
+                immediately: immediately
             });
         }
 
@@ -631,8 +626,7 @@ $.Viewport.prototype = {
         if( this.viewer ){
             this.viewer.raiseEvent( 'resize', {
                 newContainerSize: newContainerSize,
-                maintain: maintain,
-                viewer: this.viewer
+                maintain: maintain
             });
         }
 

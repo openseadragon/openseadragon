@@ -121,8 +121,9 @@ $.EventSource.prototype = {
                 length = events.length;
             for ( i = 0; i < length; i++ ) {
                 if ( events[ i ] ) {
+                    args.eventSource = source;
                     args.userData = events[ i ].userData;
-                    events[ i ].handler( source, args );
+                    events[ i ].handler( args );
                 }
             }
         };

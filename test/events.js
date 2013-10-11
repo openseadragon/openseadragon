@@ -26,11 +26,12 @@
 
     // ----------
     asyncTest( 'addHandler without userData', function () {
-        var openHandler = function ( eventSender, eventData ) {
+        var openHandler = function ( event ) {
             viewer.removeHandler( 'open', openHandler );
-            ok( eventData, 'Event handler received event data' );
-            if ( eventData ) {
-                strictEqual( eventData.userData, null, 'User data defaulted to null' );
+            ok( event, 'Event handler received event data' );
+            if ( event ) {
+                strictEqual( event.eventSource, viewer, 'eventSource sent, eventSource is viewer' );
+                strictEqual( event.userData, null, 'User data defaulted to null' );
             }
             viewer.close();
             start();
@@ -45,12 +46,12 @@
         var userData = { item1: 'Test user data', item2: Math.random() },
             originalUserData = { item1: userData.item1, item2: userData.item2 };
 
-        var openHandler = function ( eventSender, eventData ) {
+        var openHandler = function ( event ) {
             viewer.removeHandler( 'open', openHandler );
-            ok( eventData, 'Event handler received event data' );
-            ok( eventData && eventData.userData, 'Event handler received user data' );
-            if ( eventData && eventData.userData ) {
-                deepEqual( eventData.userData, originalUserData, 'User data was untouched' );
+            ok( event, 'Event handler received event data' );
+            ok( event && event.userData, 'Event handler received user data' );
+            if ( event && event.userData ) {
+                deepEqual( event.userData, originalUserData, 'User data was untouched' );
             }
             viewer.close();
             start();
@@ -71,11 +72,12 @@
             releasesHandledEventSource = 0,
             clicksHandledEventSource = 0,
             eventsHandledMouseTracker = 0,
+            eventSourcePassedMouseTracker = 0,
             originalEventsPassedMouseTracker = 0,
             releasesExpected = 1,
             clicksExpected = 1;
 
-        var onOpen = function ( eventSender, eventData ) {
+        var onOpen = function ( event ) {
             viewer.removeHandler( 'open', onOpen );
 
             viewer.addHandler( 'canvas-drag', onEventSourceDrag );
@@ -115,61 +117,64 @@
             $canvas.simulate( 'blur', event );
         };
 
-        var onEventSourceDrag = function ( eventSender, eventData ) {
+        var onEventSourceDrag = function ( event ) {
             dragsHandledEventSource++;
         };
 
-        var onEventSourceRelease = function ( eventSender, eventData ) {
+        var onEventSourceRelease = function ( event ) {
             releasesHandledEventSource++;
         };
 
-        var onEventSourceClick = function ( eventSender, eventData ) {
+        var onEventSourceClick = function ( event ) {
             clicksHandledEventSource++;
         };
 
-        var checkOriginalEventReceived = function ( eventData ) {
+        var checkOriginalEventReceived = function ( event ) {
             eventsHandledMouseTracker++;
+            if ( event && event.eventSource === mouseTracker ) {
+                eventSourcePassedMouseTracker++;
+            }
             //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
             //   with arbitrary user data.
-            if ( eventData && eventData.originalEvent ) {
+            if ( event && event.originalEvent ) {
                 originalEventsPassedMouseTracker++;
             }
         };
 
-        var onMouseTrackerFocus = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerFocus = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerBlur = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerBlur = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerEnter = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerEnter = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerPress = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerPress = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerMove = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerMove = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerDrag = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerDrag = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerRelease = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerRelease = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerClick = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerClick = function ( event ) {
+            checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerExit = function ( tracker, eventData ) {
-            checkOriginalEventReceived( eventData );
+        var onMouseTrackerExit = function ( event ) {
+            checkOriginalEventReceived( event );
 
             mouseTracker.destroy();
             viewer.removeHandler( 'canvas-drag', onEventSourceDrag );
@@ -180,8 +185,9 @@
             equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
             equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
 
+            equal( eventSourcePassedMouseTracker, eventsHandledMouseTracker, "Event source received count matches expected (" + eventsHandledMouseTracker + ")" );
             equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );
-            deepEqual( eventData.userData, originalUserData, 'MouseTracker userData was untouched' );
+            deepEqual( event.userData, originalUserData, 'MouseTracker userData was untouched' );
 
             viewer.close();
             start();
