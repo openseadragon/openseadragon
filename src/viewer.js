@@ -200,12 +200,19 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
-            initialTileSource = this.tileSources[ 0 ];
+            
+            //Keeps the initial page within bounds
+            if ( this.initialPage > this.tileSources.length - 1 ){
+                this.initialPage = this.tileSources.length - 1;
+            }
+            
+            initialTileSource = this.tileSources[ this.initialPage ];
+            
+            //Update the sequence (aka currrent page) property
+            THIS[ this.hash ].sequence = this.initialPage;
         } else {
             initialTileSource = this.tileSources;
         }
-
-        this.open( initialTileSource );
     }
 
     this.element              = this.element || document.getElementById( this.id );
@@ -342,6 +349,14 @@ $.Viewer = function( options ) {
 
     this.bindStandardControls();
     this.bindSequenceControls();
+
+    if ( initialTileSource ) {
+        this.open( initialTileSource );
+
+        if ( this.tileSources.length > 1 ) {
+            this._updateSequenceButtons( this.initialPage );
+        }
+    }
 
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
@@ -1066,7 +1081,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         return this;
     },
-
+    
+    /**
+     * Gets the active page of a sequence
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.currentPage
+     * @return {Number}
+     */
+    currentPage: function () {
+        return THIS[ this.hash ].sequence;
+      },
 
     /**
      * @function
@@ -1081,6 +1105,31 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if( this.tileSources.length > page ){
 
             THIS[ this.hash ].sequence = page;
+
+            this._updateSequenceButtons( page );
+
+            this.open( this.tileSources[ page ] );
+        }
+
+        if( $.isFunction( this.onPageChange ) ){
+            this.onPageChange({
+                page: page,
+                viewer: this
+            });
+        }
+        if( this.referenceStrip ){
+            this.referenceStrip.setFocus( page );
+        }
+        return this;
+    },
+
+    /**
+     * Updates the sequence buttons.
+     * @function
+     * @private
+     * @param {Number} Sequence Value
+     */
+    _updateSequenceButtons: function (page) {
 
             if( this.nextButton ){
                 if( ( this.tileSources.length - 1 ) === page  ){
@@ -1102,22 +1151,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
                 }
             }
-
-            this.open( this.tileSources[ page ] );
-        }
-
-        if( $.isFunction( this.onPageChange ) ){
-            this.onPageChange({
-                page: page,
-                viewer: this
-            });
-        }
-        if( this.referenceStrip ){
-            this.referenceStrip.setFocus( page );
-        }
-        return this;
-    },
-
+      },
+      
     /**
      * Display a message in the viewport
      * @function
