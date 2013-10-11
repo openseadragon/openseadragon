@@ -26,20 +26,20 @@
 
             ok(viewer, 'Viewer exists');
 
-            var openHandler = function(eventSender, eventData) {
+            var openHandler = function(event) {
                 viewer.removeHandler('open', openHandler);
                 ok(true, 'Open event was sent');
                 viewer.addHandler('tile-drawn', tileDrawnHandler);
             };
 
-            var tileDrawnHandler = function(eventSender, eventData) {
+            var tileDrawnHandler = function(event) {
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 ok(true, 'A tile has been drawn');
                 viewer.addHandler('close', closeHandler);
                 viewer.close();
             };
 
-            var closeHandler = function() {
+            var closeHandler = function(event) {
                 viewer.removeHandler('close', closeHandler);
                 $('#example').empty();
                 ok(true, 'Close event was sent');

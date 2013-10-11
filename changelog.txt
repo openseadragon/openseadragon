@@ -3,8 +3,12 @@ OPENSEADRAGON CHANGELOG
 
 1.0.0: (in progress)
 
+* BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
+*     The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
+*     Where the event object duplicated the eventSource value, those properties have been removed. This effects the following events:
+*         All Button events - 'button' property removed
+*         All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
-* BREAKING CHANGE: MouseTracker event handler method signatures changed to 'handlerMethod( tracker, eventData)' (#23)
 * BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
 *     Viewer "animationstart" changed to "animation-start"
 *     Viewer "animationfinish" changed to "animation-finish"
@@ -15,8 +19,6 @@ OPENSEADRAGON CHANGELOG
 *     Button "onExit" changed to "exit"
 *     Button "onFocus" changed to "focus"
 *     Button "onBlur" changed to "blur"
-* BREAKING CHANGE: Button event handler method signatures changed to 'handlerMethod( eventSource, eventData)' where eventData == { button } (#224)
-* BREAKING CHANGE: TileSource 'ready' event handler signature changed to 'handlerMethod( eventSource, eventData)' where eventData == { tileSource } (#239)
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)

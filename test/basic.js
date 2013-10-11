@@ -28,11 +28,11 @@
     asyncTest('Open', function() {
         ok(viewer, 'Viewer exists');
 
-        var openHandler = function(eventSender, eventData) {
+        var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             ok(true, 'Open event was sent');
-            equal(eventSender, viewer, 'Sender of open event was viewer');
-            ok(eventData, 'Handler also received event data');
+            ok(event, 'Handler received event data');
+            equal(event.eventSource, viewer, 'Sender of open event was viewer');
             ok(viewer.viewport, 'Viewport exists');
             ok(viewer.source, 'source exists');
             ok(viewer._updateRequestId, 'timer is on');
@@ -46,12 +46,12 @@
     asyncTest('Open Error Handling', function() {
         ok(viewer, 'Viewer exists');
 
-        viewer.addHandler('open', function(eventSender, eventData) {
+        viewer.addHandler('open', function(event) {
             ok(false, "The open event should not fire for failed opens");
             start();
         });
 
-        viewer.addHandler('open-failed', function(eventSender, eventData) {
+        viewer.addHandler('open-failed', function(event) {
             ok(true, "The open-failed event should be fired when the source 404s");
 
             equal($(".openseadragon-message").length, 1, "Open failures should display a message");
