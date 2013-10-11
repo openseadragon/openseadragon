@@ -193,15 +193,16 @@ $.ReferenceStrip = function ( options ) {
                 event.eventSource.dragging = $.now();
             },
             releaseHandler: function ( event ) {
-                var id   = event.eventSource.element.id,
+                var tracker = event.eventSource,
+                    id   = tracker.element.id,
                     page = Number( id.split( '-' )[2] ),
                     now  = $.now();
 
                 if ( event.insideElementPressed &&
                      event.insideElementReleased &&
-                     event.eventSource.dragging &&
-                     ( now - event.eventSource.dragging ) < event.eventSource.clickTimeThreshold ) {
-                    event.eventSource.dragging = null;
+                     tracker.dragging &&
+                     ( now - tracker.dragging ) < tracker.clickTimeThreshold ) {
+                    tracker.dragging = null;
                     viewer.goToPage( page );
                 }
             }
@@ -454,21 +455,22 @@ function loadPanels( strip, viewerSize, scroll ) {
  * @function
  */
 function onStripEnter( event ) {
+    var element = event.eventSource.element;
+    
+    //$.setElementOpacity(element, 0.8);
 
-    //$.setElementOpacity(event.eventSource.element, 0.8);
-
-    //event.eventSource.element.style.border = '1px solid #555';
-    //event.eventSource.element.style.background = '#000';
+    //element.style.border = '1px solid #555';
+    //element.style.background = '#000';
 
     if ( 'horizontal' == this.scroll ) {
 
-        //event.eventSource.element.style.paddingTop = "0px";
-        event.eventSource.element.style.marginBottom = "0px";
+        //element.style.paddingTop = "0px";
+        element.style.marginBottom = "0px";
 
     } else {
 
-        //event.eventSource.element.style.paddingRight = "0px";
-        event.eventSource.element.style.marginLeft = "0px";
+        //element.style.paddingRight = "0px";
+        element.style.marginLeft = "0px";
 
     }
     return false;
@@ -481,15 +483,17 @@ function onStripEnter( event ) {
  * @function
  */
 function onStripExit( event ) {
+    var element = event.eventSource.element;
+    
     if ( 'horizontal' == this.scroll ) {
 
-        //event.eventSource.element.style.paddingTop = "10px";
-        event.eventSource.element.style.marginBottom = "-" + ( $.getElementSize( event.eventSource.element ).y / 2 ) + "px";
+        //element.style.paddingTop = "10px";
+        element.style.marginBottom = "-" + ( $.getElementSize( element ).y / 2 ) + "px";
 
     } else {
 
-        //event.eventSource.element.style.paddingRight = "10px";
-        event.eventSource.element.style.marginLeft = "-" + ( $.getElementSize( event.eventSource.element ).x / 2 ) + "px";
+        //element.style.paddingRight = "10px";
+        element.style.marginLeft = "-" + ( $.getElementSize( element ).x / 2 ) + "px";
 
     }
     return false;
