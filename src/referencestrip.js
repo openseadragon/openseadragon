@@ -194,9 +194,9 @@ $.ReferenceStrip = function ( options ) {
             },
             releaseHandler: function ( event ) {
                 var tracker = event.eventSource,
-                    id   = tracker.element.id,
-                    page = Number( id.split( '-' )[2] ),
-                    now  = $.now();
+                    id      = tracker.element.id,
+                    page    = Number( id.split( '-' )[2] ),
+                    now     = $.now();
 
                 if ( event.insideElementPressed &&
                      event.insideElementReleased &&
