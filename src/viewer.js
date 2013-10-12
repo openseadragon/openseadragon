@@ -100,7 +100,7 @@ $.Viewer = function( options ) {
 
         //internal state and dom identifiers
         id:             options.id,
-        hash:           options.id,
+        hash:           options.hash || options.id,
 
         //dom nodes
         element:        null,
@@ -146,6 +146,15 @@ $.Viewer = function( options ) {
         profiler:       null
 
     }, $.DEFAULT_SETTINGS, options );
+
+    if ( typeof( this.hash) === "undefined" ) {
+        throw new Error("A hash must be defined, either by specifying options.id or options.hash.");
+    }
+    if ( typeof( THIS[ this.hash ] ) !== "undefined" ) {
+        // We don't want to throw an error here, as the user might have discarded
+        // the previous viewer with the same hash and now want to recreate it.
+        $.console.warn("Hash " + this.hash + " has already been used.");
+    }
 
     //Private state properties
     THIS[ this.hash ] = {
