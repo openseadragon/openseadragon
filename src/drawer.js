@@ -1160,6 +1160,7 @@ function drawTiles( drawer, lastDrawn ){
                 //$.console.log("Rendering collection tile %s | %s | %s", tile.y, tile.y, position);
                 if( tileSource ){
                     drawer.collectionOverlays[ tileKey ] = viewer = new $.Viewer({
+                        hash:                   viewport.viewer.hash + "-" + tileKey,
                         element:                $.makeNeutralElement( "div" ),
                         mouseNavEnabled:        false,
                         showNavigator:          false,
