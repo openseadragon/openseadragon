@@ -648,9 +648,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             docStyle        = document.documentElement.style,
             canvasStyle     = this.canvas.style,
             _this           = this,
-            oldBounds,
-            newBounds,
-            viewer,
             hash,
             nodes,
             i;
@@ -659,7 +656,39 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if ( fullPage == this.isFullPage() ) {
             return;
         }
-
+        
+        if ( this.viewport ) {
+            var oldBounds = this.viewport.getBounds();
+            var oldCenter = this.viewport.getCenter();
+            
+            // This function recenter the image as it was before switching mode.
+            // TODO: better adjust width and height. The new width and height
+            // should depend on the image dimensions and on the dimensions
+            // of the viewport before and after switching mode.
+            var resizeAfterFullscreenHandler = function() {
+                _this.removeHandler( "animation-finish", resizeAfterFullscreenHandler );
+                
+                var viewport = _this.viewport;
+                if ( !viewport ) {
+                    return;
+                }
+                
+                // We try to remove blanks as much as possible
+                var imageHeight = 1 / _this.source.aspectRatio;
+                var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
+                var newHeight = oldBounds.height <= imageHeight ?
+                    oldBounds.height : imageHeight;
+                
+                var newBounds = new $.Rect(
+                        oldCenter.x - ( newWidth / 2.0 ),
+                        oldCenter.y - ( newHeight / 2.0 ),
+                        newWidth,
+                        newHeight
+                    );
+                viewport.fitBounds( newBounds, true );
+            };
+            this.addHandler( "animation-finish", resizeAfterFullscreenHandler );
+        }
 
         if ( fullPage ) {
 
@@ -811,43 +840,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         this.raiseEvent( 'fullpage', { fullpage: fullPage } );
 
-        if ( this.viewport ) {
-            oldBounds = this.viewport.getBounds();
-            this.viewport.resize( THIS[ this.hash ].prevContainerSize );
-            newBounds = this.viewport.getBounds();
-
-            if ( fullPage ) {
-                THIS[ this.hash ].fsBoundsDelta = new $.Point(
-                    newBounds.width  / oldBounds.width,
-                    newBounds.height / oldBounds.height
-                );
-            } else {
-                this.viewport.update();
-                this.viewport.zoomBy(
-                    Math.max(
-                        THIS[ this.hash ].fsBoundsDelta.x,
-                        THIS[ this.hash ].fsBoundsDelta.y
-                    ),
-                    null,
-                    true
-                );
-                //Ensures that if multiple viewers are on a page, the viewers that
-                //were hidden during fullpage are 'reopened'
-                for( hash in VIEWERS ){
-                    viewer = VIEWERS[ hash ];
-                    if( viewer !== this && viewer != this.navigator ){
-                        viewer.open( viewer.source );
-                        if( viewer.navigator ){
-                            viewer.navigator.open( viewer.source );
-                        }
-                    }
-                }
-            }
-
-            THIS[ this.hash ].forceRedraw = true;
-            updateOnce( this );
-
-        }
         return this;
     },
 
