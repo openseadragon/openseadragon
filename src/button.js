@@ -178,7 +178,7 @@ $.Button = function( options ) {
         enterHandler: function( event ) {
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
-                _this.raiseEvent( "enter", {} );
+                _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
             } else if ( !event.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
@@ -186,30 +186,30 @@ $.Button = function( options ) {
 
         focusHandler: function ( event ) {
             this.enterHandler( event );
-            _this.raiseEvent( "focus", {} );
+            _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
 
         exitHandler: function( event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
-                _this.raiseEvent( "exit", {} );
+                _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
             }
         },
 
         blurHandler: function ( event ) {
             this.exitHandler( event );
-            _this.raiseEvent( "blur", {} );
+            _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
         },
 
         pressHandler: function ( event ) {
             inTo( _this, $.ButtonState.DOWN );
-            _this.raiseEvent( "press", {} );
+            _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
         },
 
         releaseHandler: function( event ) {
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
-                _this.raiseEvent( "release", {} );
+                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
             } else if ( event.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -219,15 +219,15 @@ $.Button = function( options ) {
 
         clickHandler: function( event ) {
             if ( event.quick ) {
-                _this.raiseEvent("click", {});
+                _this.raiseEvent("click", { originalEvent: event.originalEvent });
             }
         },
 
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
             if( 13 === event.keyCode ){
-                _this.raiseEvent( "click", {} );
-                _this.raiseEvent( "release", {} );
+                _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
                 return false;
             }
             return true;
