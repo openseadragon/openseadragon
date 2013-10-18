@@ -91,9 +91,14 @@
 
             function checkZoom() {
                 var currentImageWidth = getCurrentImageWidth();
-                var expected = currentImageWidth / imageWidth;
-                var actual = viewport.getImageZoomRatio(true);
-                equal(actual, expected);
+                var expectedImageZoom = currentImageWidth / imageWidth;
+                var expectedViewportZoom = viewport.getZoom(true);
+                var actualImageZoom = viewport.viewportToImageZoom(
+                    expectedViewportZoom);
+                equal(actualImageZoom, expectedImageZoom);
+                
+                var actualViewportZoom = viewport.imageToViewportZoom(actualImageZoom);
+                equal(actualViewportZoom, expectedViewportZoom);
             }
 
             checkZoom();
