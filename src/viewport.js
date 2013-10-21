@@ -916,19 +916,41 @@ $.Viewport.prototype = {
         return viewerCoordinates.plus(
                 OpenSeadragon.getElementPosition( this.viewer.element ));
     },
-
+    
     /**
-     * Get the zoom ratio of the image. 1 means original image size, 0.5 half size...
+     * Convert a viewport zoom to an image zoom.
+     * Image zoom: ratio of the original image size to displayed image size.
+     * 1 means original image size, 0.5 half size...
+     * Viewport zoom: ratio of the displayed image's width to viewport's width.
+     * 1 means identical width, 2 means image's width is twice the viewport's width...
      * @function
-     * @param {Boolean} current If true gives the current zoom otherwise gives the
+     * @param {Number} viewportZoom The viewport zoom
      * target zoom.
-     * @returns {Number}
+     * @returns {Number} imageZoom The image zoom
      */
-    getImageZoomRatio: function( current ) {
+    viewportToImageZoom: function( viewportZoom ) {
         var imageWidth = this.viewer.source.dimensions.x;
         var containerWidth = this.getContainerSize().x;
-        var zoomToZoomLevelRatio = containerWidth / imageWidth;
-        return this.getZoom( current ) * zoomToZoomLevelRatio;
+        var viewportToImageZoomRatio = containerWidth / imageWidth;
+        return viewportZoom * viewportToImageZoomRatio;
+    },
+    
+    /**
+     * Convert an image zoom to a viewport zoom.
+     * Image zoom: ratio of the original image size to displayed image size.
+     * 1 means original image size, 0.5 half size...
+     * Viewport zoom: ratio of the displayed image's width to viewport's width.
+     * 1 means identical width, 2 means image's width is twice the viewport's width...
+     * @function
+     * @param {Number} imageZoom The image zoom
+     * target zoom.
+     * @returns {Number} viewportZoom The viewport zoom
+     */
+    imageToViewportZoom: function( imageZoom ) {
+        var imageWidth = this.viewer.source.dimensions.x;
+        var containerWidth = this.getContainerSize().x;
+        var viewportToImageZoomRatio = imageWidth / containerWidth;
+        return imageZoom * viewportToImageZoomRatio;
     }
 };
 
