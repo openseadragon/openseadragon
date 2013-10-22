@@ -211,14 +211,13 @@
             // TODO replace the size rotation with CSS3 transforms
             // TODO add an option to overlays to not rotate with the image
             // Currently only rotates position and size
-            if( degrees !== 0 ) {
-               overlayCenter = new $.Point( size.x / 2, size.y / 2 );
-               var overlayCenterAfterRotate = (degrees === 0 || degrees === 180) ? overlayCenter : new $.Point( size.y / 2, size.x / 2 );
-               
+            if( degrees !== 0 && this.scales ) {
+                overlayCenter = new $.Point( size.x / 2, size.y / 2 );
+
                 position = position.plus( overlayCenter ).rotate(
                     degrees,
                     drawerCenter
-                ).minus( overlayCenterAfterRotate );
+                ).minus( overlayCenter );
 
                 size = size.rotate( degrees, new $.Point( 0, 0 ) );
                 size = new $.Point( Math.abs( size.x ), Math.abs( size.y ) );
