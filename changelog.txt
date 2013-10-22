@@ -33,6 +33,7 @@ OPENSEADRAGON CHANGELOG
 * DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. Affects the following events:
 *     Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
 *     Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
+* Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 
 0.9.131:
 
