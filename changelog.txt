@@ -30,7 +30,7 @@ OPENSEADRAGON CHANGELOG
 * Added a number of easier coordinate conversion methods to viewport (#243)
 * Added the ability to create a viewer and start at a specified page (#252)
 * Fixed image resolve issue with collection mode (#255)
-* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. Effects the following events:
+* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. Affects the following events:
 *     Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
 *     Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 
