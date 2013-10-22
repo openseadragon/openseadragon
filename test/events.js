@@ -74,6 +74,8 @@
             eventsHandledMouseTracker = 0,
             eventSourcePassedMouseTracker = 0,
             originalEventsPassedMouseTracker = 0,
+            eventsHandledViewer = 0,
+            originalEventsPassedViewer = 0,
             releasesExpected = 1,
             clicksExpected = 1;
 
@@ -117,15 +119,27 @@
             $canvas.simulate( 'blur', event );
         };
 
+        var checkOriginalEventReceivedViewer = function ( event ) {
+            eventsHandledViewer++;
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //   with arbitrary user data.
+            if ( event && event.originalEvent ) {
+                originalEventsPassedViewer++;
+            }
+        };
+
         var onEventSourceDrag = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             dragsHandledEventSource++;
         };
 
         var onEventSourceRelease = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             releasesHandledEventSource++;
         };
 
         var onEventSourceClick = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             clicksHandledEventSource++;
         };
 
@@ -184,6 +198,7 @@
             equal( dragsHandledEventSource, dragCount, "'canvas-drag' event count matches 'mousemove' event count (" + dragCount + ")" );
             equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
             equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
+            equal( originalEventsPassedViewer, eventsHandledViewer, "Original event received count matches expected (" + eventsHandledViewer + ")" );
 
             equal( eventSourcePassedMouseTracker, eventsHandledMouseTracker, "Event source received count matches expected (" + eventsHandledMouseTracker + ")" );
             equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );

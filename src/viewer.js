@@ -530,7 +530,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
 
-        this.raiseEvent( 'close', {} );
+        this.raiseEvent( 'close' );
 
         return this;
     },
@@ -1487,7 +1487,8 @@ function onCanvasClick( event ) {
         tracker: event.eventSource,
         position: event.position,
         quick: event.quick,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1512,7 +1513,8 @@ function onCanvasDrag( event ) {
         tracker: event.eventSource,
         position: event.position,
         delta: event.delta,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1524,7 +1526,8 @@ function onCanvasRelease( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1542,7 +1545,8 @@ function onCanvasScroll( event ) {
         tracker: event.eventSource,
         position: event.position,
         scroll: event.scroll,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
     //cancels event
     return false;
@@ -1559,7 +1563,8 @@ function onContainerExit( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1574,7 +1579,8 @@ function onContainerRelease( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1585,7 +1591,8 @@ function onContainerEnter( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
     });
 }
 
