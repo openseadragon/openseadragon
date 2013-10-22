@@ -4,21 +4,21 @@ OPENSEADRAGON CHANGELOG
 1.0.0: (in progress)
 
 * BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
-*     The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
-*     Where the event object duplicated the eventSource value, those properties have been removed. This effects the following events:
-*         All Button events - 'button' property removed
-*         All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
+    * The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
+    * Where the event object duplicated the eventSource value, those properties have been removed. This effects the following events:
+        * All Button events - 'button' property removed
+        * All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
 * BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
-*     Viewer "animationstart" changed to "animation-start"
-*     Viewer "animationfinish" changed to "animation-finish"
-*     Button "onPress" changed to "press"
-*     Button "onRelease" changed to "release"
-*     Button "onClick" changed to "click"
-*     Button "onEnter" changed to "enter"
-*     Button "onExit" changed to "exit"
-*     Button "onFocus" changed to "focus"
-*     Button "onBlur" changed to "blur"
+    * Viewer "animationstart" changed to "animation-start"
+    * Viewer "animationfinish" changed to "animation-finish"
+    * Button "onPress" changed to "press"
+    * Button "onRelease" changed to "release"
+    * Button "onClick" changed to "click"
+    * Button "onEnter" changed to "enter"
+    * Button "onExit" changed to "exit"
+    * Button "onFocus" changed to "focus"
+    * Button "onBlur" changed to "blur"
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
@@ -31,8 +31,8 @@ OPENSEADRAGON CHANGELOG
 * Added the ability to create a viewer and start at a specified page (#252)
 * Fixed image resolve issue with collection mode (#255)
 * DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. Affects the following events:
-*     Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
-*     Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
+    * Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
+    * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 
 0.9.131:
