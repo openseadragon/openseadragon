@@ -59,11 +59,14 @@
      *      A reference to an element or an element id for which the mouse
      *      events will be monitored.
      * @param {Number} options.clickTimeThreshold
-     *      The number of milliseconds within which mutliple mouse clicks
+     *      The number of milliseconds within which multiple mouse clicks
      *      will be treated as a single event.
      * @param {Number} options.clickDistThreshold
      *      The distance between mouse click within multiple mouse clicks
      *      will be treated as a single event.
+     * @param {Number} options.stopDelay
+     *      The number of milliseconds without mouse move before the mouse stop
+     *      event is fired.
      * @param {Function} options.enterHandler
      *      An optional handler for mouse enter.
      * @param {Function} options.exitHandler
@@ -116,6 +119,7 @@
         this.clickTimeThreshold = options.clickTimeThreshold;
         this.clickDistThreshold = options.clickDistThreshold;
         this.userData           = options.userData       || null;
+        this.stopDelay          = options.stopDelay      || 50;
 
         this.enterHandler       = options.enterHandler   || null;
         this.exitHandler        = options.exitHandler    || null;
@@ -125,6 +129,7 @@
         this.scrollHandler      = options.scrollHandler  || null;
         this.clickHandler       = options.clickHandler   || null;
         this.dragHandler        = options.dragHandler    || null;
+        this.stopHandler        = options.stopHandler    || null;
         this.keyHandler         = options.keyHandler     || null;
         this.focusHandler       = options.focusHandler   || null;
         this.blurHandler        = options.blurHandler    || null;
@@ -388,6 +393,24 @@
          *      Arbitrary user-defined object.
          */
         dragHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        stopHandler: function () { },
 
         /**
          * Implement or assign implmentation to these handlers during or after
@@ -1053,8 +1076,34 @@
                 $.cancelEvent( event );
             }
         }
+        if ( tracker.stopHandler ) {
+            clearTimeout( tracker.stopTimeOut );
+            tracker.stopTimeOut = setTimeout( function() {
+                onMouseStop( tracker, event );
+            }, tracker.stopDelay );
+        }
     }
+    
+    /**
+     * @private
+     * @inner
+     */
+    function onMouseStop( tracker, event ) {
+        if ( tracker.stopHandler ) {
+            event = $.getEvent( event );
 
+            var propagate = tracker.stopHandler( {
+                eventSource: tracker,
+                position: getMouseRelative( event, tracker.element ),
+                isTouchEvent: false,
+                originalEvent: event,
+                userData: tracker.userData
+            } );
+            if ( propagate === false ) {
+                $.cancelEvent( event );
+            }
+        }
+    }
 
     /**
      * @private
