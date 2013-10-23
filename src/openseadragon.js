@@ -390,15 +390,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * Detect event model and create appropriate _addEvent/_removeEvent methods
      */
     if ( window.addEventListener ) {
-        //$._addEventListener = 'addEventListener';
-        //$._eventNamePrefix  = '';
         $._addEvent = function ( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
             element.addEventListener( eventName, handler, useCapture );
         };
     } else if ( window.attachEvent ) {
-        //$._addEventListener = 'attachEvent';
-        //$._eventNamePrefix  = 'on';
         $._addEvent = function ( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
             element.attachEvent( 'on' + eventName, handler );
@@ -411,13 +407,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     }
 
     if ( window.removeEventListener ) {
-        //$._removeEventListener = 'removeEventListener';
         $._removeEvent = function ( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
             element.removeEventListener( eventName, handler, useCapture );
         };
     } else if ( window.detachEvent ) {
-        //$._removeEventListener = 'detachEvent';
         $._removeEvent = function( element, eventName, handler, useCapture ) {
             element = $.getElement( element );
             element.detachEvent( 'on' + eventName, handler );

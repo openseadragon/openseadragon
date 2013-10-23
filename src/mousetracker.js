@@ -440,9 +440,10 @@
     /**
      * Detect available mouse wheel event.
      */
-    $.MouseTracker.wheelEventName = (($.Browser.vendor == $.BROWSERS.IE && $.Browser.version > 8) || ("onwheel" in document.createElement("div"))) ? "wheel" : // Modern browsers support "wheel"
-                                    document.onmousewheel !== undefined ? "mousewheel" :   // Webkit and IE support at least "mousewheel"
-                                    "DOMMouseScroll";                                      // Assume old Firefox
+    $.MouseTracker.wheelEventName = ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version > 8 ) ||
+                                                ( 'onwheel' in document.createElement( 'div' ) ) ? 'wheel' : // Modern browsers support 'wheel'
+                                    document.onmousewheel !== undefined ? 'mousewheel' :                     // Webkit and IE support at least 'mousewheel'
+                                    'DOMMouseScroll';                                                        // Assume old Firefox
 
     /**
      * Starts tracking mouse events on this element.
@@ -1088,39 +1089,32 @@
      * @private
      * @inner
      */
-    function onMouseWheel( tracker, originalEvent ) {
+    function onMouseWheel( tracker, event ) {
         // For legacy IE, access the global (window) event object
-        originalEvent = originalEvent || window.event;
+        event = event || window.event;
 
         // Simulate a 'wheel' event
-        var event = {
-            target:         originalEvent.target || originalEvent.srcElement,
-            type:           "wheel",
-            shiftKey:       originalEvent.shiftKey || false,
-            clientX:        originalEvent.clientX,
-            clientY:        originalEvent.clientY,
-            pageX:          originalEvent.pageX ? originalEvent.pageX : originalEvent.clientX,
-            pageY:          originalEvent.pageY ? originalEvent.pageY : originalEvent.clientY,
-            deltaMode:      originalEvent.type == "MozMousePixelScroll" ? 0 : 1, // 0=pixel, 1=line, 2=page
-            deltaX:         0,
-            deltaZ:         0,
-            preventDefault: function() {
-                if ( originalEvent.preventDefault ) {
-                    originalEvent.preventDefault();
-                } else {
-                    originalEvent.returnValue = false;
-                }
-            }
+        var simulatedEvent = {
+            target:     event.target || event.srcElement,
+            type:       "wheel",
+            shiftKey:   event.shiftKey || false,
+            clientX:    event.clientX,
+            clientY:    event.clientY,
+            pageX:      event.pageX ? event.pageX : event.clientX,
+            pageY:      event.pageY ? event.pageY : event.clientY,
+            deltaMode:  event.type == "MozMousePixelScroll" ? 0 : 1, // 0=pixel, 1=line, 2=page
+            deltaX:     0,
+            deltaZ:     0
         };
 
-        // Calculate event.deltaY
+        // Calculate deltaY
         if ( $.MouseTracker.wheelEventName == "mousewheel" ) {
-            event.deltaY = - 1 / $.DEFAULT_SETTINGS.pixelsPerWheelLine * originalEvent.wheelDelta;
+            simulatedEvent.deltaY = - 1 / $.DEFAULT_SETTINGS.pixelsPerWheelLine * event.wheelDelta;
         } else {
-            event.deltaY = originalEvent.detail;
+            simulatedEvent.deltaY = event.detail;
         }
 
-        handleWheelEvent( tracker, event, originalEvent, false );
+        handleWheelEvent( tracker, simulatedEvent, event, false );
     }
 
 
@@ -1157,7 +1151,7 @@
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
     }
@@ -1278,24 +1272,17 @@
 
                 // Simulate a 'wheel' event
                 var simulatedEvent = {
-                    target:         event.target || event.srcElement,
-                    type:           "wheel",
-                    shiftKey:       event.shiftKey || false,
-                    clientX:        event.clientX,
-                    clientY:        event.clientY,
-                    pageX:          event.pageX ? event.pageX : event.clientX,
-                    pageY:          event.pageY ? event.pageY : event.clientY,
-                    deltaMode:      1, // 0=pixel, 1=line, 2=page
-                    deltaX:         0,
-                    deltaY:         ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1,
-                    deltaZ:         0,
-                    preventDefault: function() {
-                        if ( event.preventDefault ) {
-                            event.preventDefault();
-                        } else {
-                            event.returnValue = false;
-                        }
-                    }
+                    target:     event.target || event.srcElement,
+                    type:       "wheel",
+                    shiftKey:   event.shiftKey || false,
+                    clientX:    THIS[ tracker.hash ].pinchMidpoint.x,
+                    clientY:    THIS[ tracker.hash ].pinchMidpoint.y,
+                    pageX:      THIS[ tracker.hash ].pinchMidpoint.x,
+                    pageY:      THIS[ tracker.hash ].pinchMidpoint.y,
+                    deltaMode:  1, // 0=pixel, 1=line, 2=page
+                    deltaX:     0,
+                    deltaY:     ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1,
+                    deltaZ:     0
                 };
 
                 handleWheelEvent( tracker, simulatedEvent, event, true );
