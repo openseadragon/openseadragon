@@ -692,10 +692,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         if ( fullPage ) {
 
-            this.bodyOverflow   = bodyStyle.overflow;
-            this.docOverflow    = docStyle.overflow;
-            bodyStyle.overflow  = "hidden";
-            docStyle.overflow   = "hidden";
+            this.bodyMargin     = bodyStyle.margin;
+            this.docMargin      = docStyle.margin;
+            bodyStyle.margin    = "0";
+            docStyle.margin     = "0";
+
+            this.bodyPadding    = bodyStyle.padding;
+            this.docPadding     = docStyle.padding;
+            bodyStyle.padding   = "0";
+            docStyle.padding    = "0";
 
             this.bodyWidth      = bodyStyle.width;
             this.bodyHeight     = bodyStyle.height;
@@ -761,7 +766,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 );
                 this.element.style.height = '100%';
                 this.element.style.width = '100%';
-            }else{
+            } else {
                 this.element.style.height = $.getWindowSize().y + 'px';
                 this.element.style.width = $.getWindowSize().x + 'px';
             }
@@ -788,8 +793,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 $.cancelFullScreen( document );
             }
 
-            bodyStyle.overflow  = this.bodyOverflow;
-            docStyle.overflow   = this.docOverflow;
+            bodyStyle.margin    = this.bodyMargin;
+            docStyle.margin     = this.docMargin;
+
+            bodyStyle.padding   = this.bodyPadding;
+            docStyle.padding    = this.docPadding;
 
             bodyStyle.width     = this.bodyWidth;
             bodyStyle.height    = this.bodyHeight;
