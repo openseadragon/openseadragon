@@ -160,6 +160,7 @@
             wheel:                 function ( event ) { onWheel( _this, event ); },
             mousewheel:            function ( event ) { onMouseWheel( _this, event ); },
             DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
+            MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
             mouseupie:             function ( event ) { onMouseUpIE( _this, event ); },
             mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
@@ -463,6 +464,11 @@
             event,
             i;
 
+        // Add 'MozMousePixelScroll' event handler for older Firefox
+        if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+            events.push( "MozMousePixelScroll" );
+        }
+
         if ( !delegate.tracking ) {
             for ( i = 0; i < events.length; i++ ) {
                 event = events[ i ];
@@ -495,6 +501,11 @@
             delegate = THIS[ tracker.hash ],
             event,
             i;
+
+        // Remove 'MozMousePixelScroll' event handler for older Firefox
+        if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+            events.push( "MozMousePixelScroll" );
+        }
 
         if ( delegate.tracking ) {
             for ( i = 0; i < events.length; i++ ) {
@@ -1077,6 +1088,8 @@
 
 
     /**
+     * Handler for 'wheel' events
+     *
      * @private
      * @inner
      */
@@ -1086,6 +1099,8 @@
 
 
     /**
+     * Handler for 'mousewheel', 'DOMMouseScroll', and 'MozMousePixelScroll' events
+     *
      * @private
      * @inner
      */
