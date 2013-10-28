@@ -234,11 +234,11 @@ $.Tile.prototype = {
             delete TILE_CACHE[ this.url ];
         }
 
-        this.element = null;
+        this.element    = null;
         this.imgElement = null;
-        this.image   = null;
-        this.loaded  = false;
-        this.loading = false;
+        this.image      = null;
+        this.loaded     = false;
+        this.loading    = false;
     }
 };
 
