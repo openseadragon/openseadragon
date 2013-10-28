@@ -55,7 +55,8 @@
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
  * @property {Boolean} loading Is this tile loading
- * @property {Element} element The HTML element for this tile
+ * @property {Element} element The HTML div element for this tile
+ * @property {Element} imgElement The HTML img element for this tile
  * @property {Image} image The Image object for this tile
  * @property {String} style The alias of this.element.style.
  * @property {String} position This tile's position on screen, in pixels.
@@ -78,6 +79,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.loading = false;
 
     this.element    = null;
+    this.imgElement = null;
     this.image      = null;
 
     this.style      = null;
@@ -122,15 +124,21 @@ $.Tile.prototype = {
         //               content during animation of the container size.
 
         if ( !this.element ) {
-            this.element              = $.makeNeutralElement("img");
-            this.element.src          = this.url;
-            this.element.style.msInterpolationMode = "nearest-neighbor";
+            this.element                              = $.makeNeutralElement( "div" );
+            this.imgElement                           = $.makeNeutralElement( "img" );
+            this.imgElement.src                       = this.url;
+            this.imgElement.style.msInterpolationMode = "nearest-neighbor";
+            this.imgElement.style.width               = "100%";
+            this.imgElement.style.height              = "100%";
 
             this.style                     = this.element.style;
             this.style.position            = "absolute";
         }
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
+        }
+        if ( this.imgElement.parentNode != this.element ) {
+            this.element.appendChild( this.imgElement );
         }
 
         this.style.top     = this.position.y + "px";
@@ -216,6 +224,9 @@ $.Tile.prototype = {
      * @function
      */
     unload: function() {
+        if ( this.imgElement && this.imgElement.parentNode ) {
+            this.imgElement.parentNode.removeChild( this.imgElement );
+        }
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
         }
@@ -224,6 +235,7 @@ $.Tile.prototype = {
         }
 
         this.element = null;
+        this.imgElement = null;
         this.image   = null;
         this.loaded  = false;
         this.loading = false;
