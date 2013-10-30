@@ -54,7 +54,7 @@
  *      this tile failed to load?
  * @property {String} url The URL of this tile's image.
  * @property {Boolean} loaded Is this tile loaded?
- * @property {Boolean} loading Is this tile loading
+ * @property {Boolean} loading Is this tile loading?
  * @property {Element} element The HTML div element for this tile
  * @property {Element} imgElement The HTML img element for this tile
  * @property {Image} image The Image object for this tile
