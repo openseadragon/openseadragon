@@ -1088,15 +1088,13 @@
      * @private
      * @inner
      */
-    function onMouseStop( tracker, event ) {
+    function onMouseStop( tracker, originalMoveEvent ) {
         if ( tracker.stopHandler ) {
-            event = $.getEvent( event );
-
             tracker.stopHandler( {
                 eventSource: tracker,
-                position: getMouseRelative( event, tracker.element ),
+                position: getMouseRelative( originalMoveEvent, tracker.element ),
                 isTouchEvent: false,
-                originalEvent: event,
+                originalEvent: originalMoveEvent,
                 userData: tracker.userData
             } );
         }
