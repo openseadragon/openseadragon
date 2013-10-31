@@ -35,6 +35,7 @@ OPENSEADRAGON CHANGELOG
     * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 * Added support for the 'wheel' DOM mousewheel event (#261)
+* Fix for non-canvas tile rendering at large size (#264)
 
 0.9.131:
 
