@@ -224,7 +224,7 @@
         },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -247,7 +247,7 @@
         enterHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -270,7 +270,7 @@
         exitHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -288,7 +288,7 @@
         pressHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -311,7 +311,7 @@
         releaseHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -329,7 +329,7 @@
         moveHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -351,7 +351,7 @@
         scrollHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -373,7 +373,7 @@
         clickHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -413,7 +413,7 @@
         stopHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -431,7 +431,7 @@
         keyHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -445,7 +445,7 @@
         focusHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -1092,16 +1092,13 @@
         if ( tracker.stopHandler ) {
             event = $.getEvent( event );
 
-            var propagate = tracker.stopHandler( {
+            tracker.stopHandler( {
                 eventSource: tracker,
                 position: getMouseRelative( event, tracker.element ),
                 isTouchEvent: false,
                 originalEvent: event,
                 userData: tracker.userData
             } );
-            if ( propagate === false ) {
-                $.cancelEvent( event );
-            }
         }
     }
 
