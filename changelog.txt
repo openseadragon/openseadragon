@@ -34,6 +34,7 @@ OPENSEADRAGON CHANGELOG
     * Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
     * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
+* Fix for non-canvas tile rendering at large size (#264)
 
 0.9.131:
 
