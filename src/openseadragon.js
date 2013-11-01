@@ -386,6 +386,44 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
 
 
+    /**
+     * Detect event model and create appropriate _addEvent/_removeEvent methods
+     */
+    if ( window.addEventListener ) {
+        $._addEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.addEventListener( eventName, handler, useCapture );
+        };
+    } else if ( window.attachEvent ) {
+        $._addEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.attachEvent( 'on' + eventName, handler );
+            if ( useCapture && element.setCapture ) {
+                element.setCapture();
+            }
+        };
+    } else {
+        throw new Error( "No known event model." );
+    }
+
+    if ( window.removeEventListener ) {
+        $._removeEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.removeEventListener( eventName, handler, useCapture );
+        };
+    } else if ( window.detachEvent ) {
+        $._removeEvent = function( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.detachEvent( 'on' + eventName, handler );
+            if ( useCapture && element.releaseCapture ) {
+                element.releaseCapture();
+            }
+        };
+    } else {
+        throw new Error( "No known event model." );
+    }
+
+
     /*
      * Detect canvas support
      */
@@ -530,6 +568,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             immediateRender:        false,
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
+            pixelsPerWheelLine:     40,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
@@ -1156,33 +1195,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {String} eventName
          * @param {Function} handler
          * @param {Boolean} [useCapture]
-         * @throws {Error}
          */
         addEvent: function( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-
-            //TODO: Why do this if/else on every method call instead of just
-            //      defining this function once based on the same logic
-            if ( element.addEventListener ) {
-                $.addEvent = function( element, eventName, handler, useCapture ){
-                    element = $.getElement( element );
-                    element.addEventListener( eventName, handler, useCapture );
-                };
-            } else if ( element.attachEvent ) {
-                $.addEvent = function( element, eventName, handler, useCapture ){
-                    element = $.getElement( element );
-                    element.attachEvent( "on" + eventName, handler );
-                    if ( useCapture && element.setCapture ) {
-                        element.setCapture();
-                    }
-                };
-            } else {
-                throw new Error(
-                    "Unable to attach event handler, no known technique."
-                );
-            }
-
-            return $.addEvent( element, eventName, handler, useCapture );
+            return $._addEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -1195,32 +1210,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {String} eventName
          * @param {Function} handler
          * @param {Boolean} [useCapture]
-         * @throws {Error}
          */
         removeEvent: function( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-
-            //TODO: Why do this if/else on every method call instead of just
-            //      defining this function once based on the same logic
-            if ( element.removeEventListener ) {
-                $.removeEvent = function( element, eventName, handler, useCapture ) {
-                    element = $.getElement( element );
-                    element.removeEventListener( eventName, handler, useCapture );
-                };
-            } else if ( element.detachEvent ) {
-                $.removeEvent = function( element, eventName, handler, useCapture ) {
-                    element = $.getElement( element );
-                    element.detachEvent("on" + eventName, handler);
-                    if ( useCapture && element.releaseCapture ) {
-                        element.releaseCapture();
-                    }
-                };
-            } else {
-                throw new Error(
-                    "Unable to detach event handler, no known technique."
-                );
-            }
-            return $.removeEvent( element, eventName, handler, useCapture );
+            return $._removeEvent( element, eventName, handler, useCapture );
         },
 
 
