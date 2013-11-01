@@ -46,10 +46,7 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
     ),
 
-    USE_CANVAS = SUBPIXEL_RENDERING &&
-        !( DEVICE_SCREEN.x <= 400 || DEVICE_SCREEN.y <= 400 ) &&
-        !( navigator.appVersion.match( 'Mobile' ) ) &&
-        $.isFunction( document.createElement( "canvas" ).getContext );
+    USE_CANVAS = $.supportsCanvas;
 
 //console.error( 'USE_CANVAS ' + USE_CANVAS );
 
@@ -123,6 +120,10 @@ $.Drawer = function( options ) {
         timeout:            $.DEFAULT_SETTINGS.timeout
 
     }, options );
+
+    if ( this.viewer ) {
+        USE_CANVAS = $.supportsCanvas && this.viewer.useCanvas;
+    }
 
     this.container  = $.getElement( this.element );
     this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );

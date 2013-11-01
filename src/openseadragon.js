@@ -386,6 +386,19 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
 
 
+    /*
+     * Detect canvas support
+     */
+    var canvasElement = document.createElement( 'canvas' );
+    /**
+     * True if the browser supports the HTML5 canvas element
+     * @name $.supportsCanvas
+     * @property
+     */
+    $.supportsCanvas = !!( $.isFunction( canvasElement.getContext ) &&
+                           canvasElement.getContext( '2d' ) );
+
+
 }( OpenSeadragon ));
 
 /**
@@ -559,6 +572,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
             timeout:                30000,
+            useCanvas:              true,  // Use canvas element for drawing if available
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",

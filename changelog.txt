@@ -35,6 +35,7 @@ OPENSEADRAGON CHANGELOG
     * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 * Fix for non-canvas tile rendering at large size (#264)
+* Drawer now uses an HTML5 canvas element if it's available. Can be overridden with Viewer.useCanvas option (#191)
 
 0.9.131:
 
