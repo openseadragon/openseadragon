@@ -843,7 +843,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Determines the pages current scroll position.
+         * Determines the page current scroll position.
          * @function
          * @name OpenSeadragon.getPageScroll
          * @returns {Point}
@@ -874,14 +874,64 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     );
                 };
             } else {
-                $.getPageScroll = function(){
-                    return new $.Point(0,0);
-                };
+                // We can't reassign the function yet, as there was no scroll.
+                return new $.Point(0,0);
             }
 
             return $.getPageScroll();
         },
 
+        /**
+         * Set the page scroll position.
+         * @function
+         * @name OpenSeadragon.getPageScroll
+         * @returns {Point}
+         */
+        setPageScroll: function( scroll ) {
+            if ( typeof ( window.scrollTo ) !== "undefined" ) {
+                $.setPageScroll = function( scroll ) {
+                    window.scrollTo( scroll.x, scroll.y );
+                };
+            } else {
+                var currentScroll = $.getPageScroll();
+                if ( currentScroll.x === scroll.x &&
+                    currentScroll.y === scroll.y ) {
+                    // We are already correctly positioned and there
+                    // is no way to detect the correct method.
+                    return;
+                }
+
+                document.body.scrollLeft = scroll.x;
+                document.body.scrollTop = scroll.y;
+                currentScroll = $.getPageScroll();
+                if ( currentScroll.x === scroll.x &&
+                    currentScroll.y === scroll.y ) {
+                    $.setPageScroll = function( scroll ) {
+                        document.body.scrollLeft = scroll.x;
+                        document.body.scrollTop = scroll.y;
+                    };
+                    return;
+                }
+
+                document.documentElement.scrollLeft = scroll.x;
+                document.documentElement.scrollTop = scroll.y;
+                currentScroll = $.getPageScroll();
+                if ( currentScroll.x === scroll.x &&
+                    currentScroll.y === scroll.y ) {
+                    $.setPageScroll = function( scroll ) {
+                        document.documentElement.scrollLeft = scroll.x;
+                        document.documentElement.scrollTop = scroll.y;
+                    };
+                    return;
+                }
+
+                // We can't find anything working, so we do nothing.
+                $.setPageScroll = function( scroll ) {
+                };
+            }
+
+            return $.setPageScroll( scroll );
+        },
 
         /**
          * Determines the size of the browsers window.

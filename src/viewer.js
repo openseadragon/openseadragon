@@ -646,7 +646,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var body            = document.body,
             bodyStyle       = body.style,
             docStyle        = document.documentElement.style,
-            canvasStyle     = this.canvas.style,
             _this           = this,
             hash,
             nodes,
@@ -657,40 +656,106 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
         
-        if ( this.viewport ) {
-            var oldBounds = this.viewport.getBounds();
-            var oldCenter = this.viewport.getCenter();
+        var recenterAfterFullPage = function() {
+            if ( _this.viewport ) {
+                var oldBounds = _this.viewport.getBounds();
+                var oldCenter = _this.viewport.getCenter();
+
+                // This function recenter the image as it was before switching mode.
+                // TODO: better adjust width and height. The new width and height
+                // should depend on the image dimensions and on the dimensions
+                // of the viewport before and after switching mode.
+                var resizeAfterFullscreenHandler = function() {
+                    _this.removeHandler( "animation-finish", resizeAfterFullscreenHandler );
+
+                    var viewport = _this.viewport;
+                    if ( !viewport ) {
+                        return;
+                    }
+
+                    // We try to remove blanks as much as possible
+                    var imageHeight = 1 / _this.source.aspectRatio;
+                    var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
+                    var newHeight = oldBounds.height <= imageHeight ?
+                        oldBounds.height : imageHeight;
+
+                    var newBounds = new $.Rect(
+                            oldCenter.x - ( newWidth / 2.0 ),
+                            oldCenter.y - ( newHeight / 2.0 ),
+                            newWidth,
+                            newHeight
+                        );
+                    viewport.fitBounds( newBounds, true );
+                };
+                _this.addHandler( "animation-finish", resizeAfterFullscreenHandler );
+            }
+        };
+
+        // On chrome, we need to restore the DOM after $.fullScreenEventName
+        // has been raised otherwise it won't restore the scroll position.
+        var exitFullPage = function() {
+            _this.raiseEvent( 'pre-full-page', { fullPage: false } );
             
-            // This function recenter the image as it was before switching mode.
-            // TODO: better adjust width and height. The new width and height
-            // should depend on the image dimensions and on the dimensions
-            // of the viewport before and after switching mode.
-            var resizeAfterFullscreenHandler = function() {
-                _this.removeHandler( "animation-finish", resizeAfterFullscreenHandler );
-                
-                var viewport = _this.viewport;
-                if ( !viewport ) {
-                    return;
-                }
-                
-                // We try to remove blanks as much as possible
-                var imageHeight = 1 / _this.source.aspectRatio;
-                var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
-                var newHeight = oldBounds.height <= imageHeight ?
-                    oldBounds.height : imageHeight;
-                
-                var newBounds = new $.Rect(
-                        oldCenter.x - ( newWidth / 2.0 ),
-                        oldCenter.y - ( newHeight / 2.0 ),
-                        newWidth,
-                        newHeight
-                    );
-                viewport.fitBounds( newBounds, true );
-            };
-            this.addHandler( "animation-finish", resizeAfterFullscreenHandler );
-        }
+            recenterAfterFullPage();
+
+            bodyStyle.margin    = _this.bodyMargin;
+            docStyle.margin     = _this.docMargin;
+
+            bodyStyle.padding   = _this.bodyPadding;
+            docStyle.padding    = _this.docPadding;
+
+            bodyStyle.width     = _this.bodyWidth;
+            bodyStyle.height    = _this.bodyHeight;
+
+            body.removeChild( _this.element );
+            nodes = _this.previousBody.length;
+            for ( i = 0; i < nodes; i++ ){
+                body.appendChild( _this.previousBody.shift() );
+            }
+
+            $.removeClass( _this.element, 'fullpage' );
+            THIS[ _this.hash ].prevElementParent.insertBefore(
+                _this.element,
+                THIS[ _this.hash ].prevNextSibling
+            );
+
+            //If we've got a toolbar, we need to enable the user to use css to
+            //reset it to its original state
+            if( _this.toolbar && _this.toolbar.element ){
+                body.removeChild( _this.toolbar.element );
+
+                //Make sure the user has some ability to style the toolbar based
+                //on the mode
+                $.removeClass( _this.toolbar.element, 'fullpage' );
+
+                _this.toolbar.parentNode.insertBefore(
+                    _this.toolbar.element,
+                    _this.toolbar.nextSibling
+                );
+                delete _this.toolbar.parentNode;
+                delete _this.toolbar.nextSibling;
+            }
+
+            _this.element.style.width = THIS[ _this.hash ].prevElementWidth;
+            _this.element.style.height = THIS[ _this.hash ].prevElementHeight;
+
+            $.setPageScroll(_this.pageScroll);
+
+            THIS[ _this.hash ].fullPage = false;
+
+            // mouse will likely be outside now
+            $.delegate( _this, onContainerExit )( {} );
+
+
+            _this.raiseEvent( 'full-page', { fullPage: false } );
+        };
 
         if ( fullPage ) {
+            this.raiseEvent( 'pre-full-page', { fullPage: true } );
+
+            recenterAfterFullPage();
+
+            this.pageScroll     = $.getPageScroll();
 
             this.bodyMargin     = bodyStyle.margin;
             this.docMargin      = docStyle.margin;
@@ -751,7 +816,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     if( $.isFullScreen() ){
                         _this.setFullPage( true );
                     } else {
-                        _this.setFullPage( false );
+                        document.removeEventListener(
+                            $.fullScreenEventName,
+                            THIS[ _this.hash ].onfullscreenchange
+                        );
+                        exitFullPage();
                     }
                 };
 
@@ -782,71 +851,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )( {} );
 
+            this.raiseEvent( 'full-page', { fullPage: true } );
 
         } else {
 
             if( $.supportsFullScreen ){
-                document.removeEventListener(
-                    $.fullScreenEventName,
-                    THIS[ this.hash ].onfullscreenchange
-                );
-                $.cancelFullScreen( document );
+                $.cancelFullScreen();
+            } else {
+                exitFullPage();
             }
-
-            bodyStyle.margin    = this.bodyMargin;
-            docStyle.margin     = this.docMargin;
-
-            bodyStyle.padding   = this.bodyPadding;
-            docStyle.padding    = this.docPadding;
-
-            bodyStyle.width     = this.bodyWidth;
-            bodyStyle.height    = this.bodyHeight;
-
-            canvasStyle.backgroundColor = "";
-            canvasStyle.color           = "";
-
-            body.removeChild( this.element );
-            nodes = this.previousBody.length;
-            for ( i = 0; i < nodes; i++ ){
-                body.appendChild( this.previousBody.shift() );
-            }
-
-            $.removeClass( this.element, 'fullpage' );
-            THIS[ this.hash ].prevElementParent.insertBefore(
-                this.element,
-                THIS[ this.hash ].prevNextSibling
-            );
-
-            //If we've got a toolbar, we need to enable the user to use css to
-            //reset it to its original state
-            if( this.toolbar && this.toolbar.element ){
-                body.removeChild( this.toolbar.element );
-
-                //Make sure the user has some ability to style the toolbar based
-                //on the mode
-                $.removeClass( this.toolbar.element, 'fullpage' );
-                //this.toolbar.element.style.position = 'relative';
-                this.toolbar.parentNode.insertBefore(
-                    this.toolbar.element,
-                    this.toolbar.nextSibling
-                );
-                delete this.toolbar.parentNode;
-                delete this.toolbar.nextSibling;
-
-                //this.container.style.top = 'auto';
-            }
-
-            this.element.style.width = THIS[ this.hash ].prevElementWidth;
-            this.element.style.height = THIS[ this.hash ].prevElementHeight;
-
-            THIS[ this.hash ].fullPage = false;
-
-            // mouse will likely be outside now
-            $.delegate( this, onContainerExit )( {} );
-
 
         }
-        this.raiseEvent( 'fullpage', { fullpage: fullPage } );
 
         return this;
     },
