@@ -656,7 +656,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
         
-        var recenterAfterFullPage = function() {
+        var registerRecenterAfterFullPageChange = function() {
             if ( _this.viewport ) {
                 var oldBounds = _this.viewport.getBounds();
                 var oldCenter = _this.viewport.getCenter();
@@ -696,7 +696,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var exitFullPage = function() {
             _this.raiseEvent( 'pre-full-page', { fullPage: false } );
             
-            recenterAfterFullPage();
+            registerRecenterAfterFullPageChange();
 
             bodyStyle.margin    = _this.bodyMargin;
             docStyle.margin     = _this.docMargin;
@@ -753,7 +753,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if ( fullPage ) {
             this.raiseEvent( 'pre-full-page', { fullPage: true } );
 
-            recenterAfterFullPage();
+            registerRecenterAfterFullPageChange();
 
             this.pageScroll     = $.getPageScroll();
 

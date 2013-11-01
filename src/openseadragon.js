@@ -843,7 +843,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Determines the page current scroll position.
+         * Determines the page's current scroll position.
          * @function
          * @name OpenSeadragon.getPageScroll
          * @returns {Point}
@@ -893,9 +893,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     window.scrollTo( scroll.x, scroll.y );
                 };
             } else {
-                var currentScroll = $.getPageScroll();
-                if ( currentScroll.x === scroll.x &&
-                    currentScroll.y === scroll.y ) {
+                var originalScroll = $.getPageScroll();
+                if ( originalScroll.x === scroll.x &&
+                    originalScroll.y === scroll.y ) {
                     // We are already correctly positioned and there
                     // is no way to detect the correct method.
                     return;
@@ -903,9 +903,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
                 document.body.scrollLeft = scroll.x;
                 document.body.scrollTop = scroll.y;
-                currentScroll = $.getPageScroll();
-                if ( currentScroll.x === scroll.x &&
-                    currentScroll.y === scroll.y ) {
+                var currentScroll = $.getPageScroll();
+                if ( currentScroll.x !== originalScroll.x &&
+                    currentScroll.y !== originalScroll.y ) {
                     $.setPageScroll = function( scroll ) {
                         document.body.scrollLeft = scroll.x;
                         document.body.scrollTop = scroll.y;
@@ -916,8 +916,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 document.documentElement.scrollLeft = scroll.x;
                 document.documentElement.scrollTop = scroll.y;
                 currentScroll = $.getPageScroll();
-                if ( currentScroll.x === scroll.x &&
-                    currentScroll.y === scroll.y ) {
+                if ( currentScroll.x !== originalScroll.x &&
+                    currentScroll.y !== originalScroll.y ) {
                     $.setPageScroll = function( scroll ) {
                         document.documentElement.scrollLeft = scroll.x;
                         document.documentElement.scrollTop = scroll.y;
