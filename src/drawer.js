@@ -44,11 +44,8 @@ var DEVICE_SCREEN       = $.getWindowSize(),
         ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
         ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
         ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
-    ),
+    );
 
-    USE_CANVAS = $.supportsCanvas;
-
-//console.error( 'USE_CANVAS ' + USE_CANVAS );
 
 /**
  * @class
@@ -92,6 +89,7 @@ $.Drawer = function( options ) {
 
         //internal state properties
         viewer:         null,
+        useCanvas:      $.supportsCanvas,
         downloading:    0,
         tilesMatrix:    {},
         tilesLoaded:    [],
@@ -121,13 +119,10 @@ $.Drawer = function( options ) {
 
     }, options );
 
-    if ( this.viewer ) {
-        USE_CANVAS = $.supportsCanvas && this.viewer.useCanvas;
-    }
-
+    this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
     this.container  = $.getElement( this.element );
-    this.canvas     = $.makeNeutralElement( USE_CANVAS ? "canvas" : "div" );
-    this.context    = USE_CANVAS ? this.canvas.getContext( "2d" ) : null;
+    this.canvas     = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
+    this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
     this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
     this.element    = this.container;
 
@@ -406,7 +401,7 @@ $.Drawer.prototype = {
     },
 
     canRotate: function() {
-        return USE_CANVAS;
+        return this.useCanvas;
     }
 };
 
@@ -523,7 +518,7 @@ function updateViewport( drawer ) {
 
     //TODO
     drawer.canvas.innerHTML   = "";
-    if ( USE_CANVAS ) {
+    if ( drawer.useCanvas ) {
         if( drawer.canvas.width  != viewportSize.x ||
             drawer.canvas.height != viewportSize.y ){
             drawer.canvas.width  = viewportSize.x;
@@ -1201,7 +1196,7 @@ function drawTiles( drawer, lastDrawn ){
 
         } else {
 
-            if ( USE_CANVAS ) {
+            if ( drawer.useCanvas ) {
                 // TODO do this in a more performant way
                 // specifically, don't save,rotate,restore every time we draw a tile
                 if( drawer.viewport.degrees !== 0 ) {
@@ -1264,7 +1259,7 @@ function restoreRotationChanges( tile, canvas, context ){
 
 function drawDebugInfo( drawer, tile, count, i ){
 
-    if ( USE_CANVAS ) {
+    if ( drawer.useCanvas ) {
         drawer.context.save();
         drawer.context.lineWidth = 2;
         drawer.context.font = 'small-caps bold 13px ariel';

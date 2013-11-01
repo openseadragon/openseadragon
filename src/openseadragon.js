@@ -226,6 +226,9 @@
   * @param {Number} [options.maxImageCacheCount=100]
   *     The max number of images we should keep in memory (per drawer).
   *
+  * @param {Boolean} [options.useCanvas=true]
+  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
+  *
   * @param {Number} [options.minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
@@ -293,6 +296,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     toString    = Object.prototype.toString,
     hasOwn      = Object.prototype.hasOwnProperty;
 
+    // Detects canvas support
+    function isCanvasSupported() {
+        var canvasElement = document.createElement( 'canvas' );
+        return !!( $.isFunction( canvasElement.getContext ) &&
+                   canvasElement.getContext( '2d' ) );
+    }
 
     /**
      * Taken from jQuery 1.6.1
@@ -387,6 +396,14 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
     /**
+     * True if the browser supports the HTML5 canvas element
+     * @name $.supportsCanvas
+     * @property
+     */
+    $.supportsCanvas = isCanvasSupported();
+
+
+    /**
      * Detect event model and create appropriate _addEvent/_removeEvent methods
      */
     if ( window.addEventListener ) {
@@ -422,19 +439,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     } else {
         throw new Error( "No known event model." );
     }
-
-
-    /*
-     * Detect canvas support
-     */
-    var canvasElement = document.createElement( 'canvas' );
-    /**
-     * True if the browser supports the HTML5 canvas element
-     * @name $.supportsCanvas
-     * @property
-     */
-    $.supportsCanvas = !!( $.isFunction( canvasElement.getContext ) &&
-                           canvasElement.getContext( '2d' ) );
 
 
 }( OpenSeadragon ));
