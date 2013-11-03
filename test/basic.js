@@ -174,7 +174,7 @@
     });
 
     // ----------
-    asyncTest('Fullscreen', function() {
+    asyncTest('FullPage', function() {
         viewer.addHandler("open", function () {
             ok(!viewer.isFullPage(), 'Started out not fullpage');
             ok(!$(viewer.element).hasClass('fullpage'),
@@ -210,16 +210,44 @@
 
                 viewer.addHandler("pre-full-page", checkExitingPreFullPage);
                 viewer.addHandler("full-page", checkExitingFullPage);
-
-                // Workaround: for some reason inside tests, the fullscreen
-                // mode is never activated, so disable it so that we can
-                // continue the tests.
-                OpenSeadragon.supportsFullScreen = false;
                 viewer.setFullPage(false);
             };
             viewer.addHandler("pre-full-page", checkEnteringPreFullPage);
             viewer.addHandler("full-page", checkEnteringFullPage);
             viewer.setFullPage(true);
+        });
+
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('FullScreen', function() {
+
+        if (!OpenSeadragon.supportsFullScreen) {
+            expect(0);
+            start();
+            return;
+        }
+
+        viewer.addHandler("open", function () {
+            ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
+
+            var checkEnteringPreFullScreen = function(event) {
+                viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
+                ok(event.fullScreen, 'Switching to fullscreen');
+                ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
+            };
+
+            // The fullscreen mode is always denied during tests so we are
+            // exiting directly.
+            var checkExitingFullScreen = function(event) {
+                viewer.removeHandler('full-screen', checkExitingFullScreen);
+                ok(!event.fullScreen, 'Exiting fullscreen');
+                ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
+                start();
+            };
+            viewer.addHandler("pre-full-screen", checkEnteringPreFullScreen);
+            viewer.addHandler("full-screen", checkExitingFullScreen);
+            viewer.setFullScreen(true);
         });
 
         viewer.open('/test/data/testpattern.dzi');

@@ -72,6 +72,7 @@
             requestFullScreen: function() {},
             cancelFullScreen: function() {},
             fullScreenEventName: '',
+            fullScreenErrorEventName: '',
             prefix: ''
         },
         browserPrefixes = 'webkit moz o ms khtml'.split(' ');
@@ -95,6 +96,7 @@
     // update methods to do something useful
     if (fullScreenApi.supportsFullScreen) {
         fullScreenApi.fullScreenEventName = fullScreenApi.prefix + 'fullscreenchange';
+        fullScreenApi.fullScreenErrorEventName = fullScreenApi.prefix + 'fullscreenerror';
 
         fullScreenApi.isFullScreen = function() {
             switch (this.prefix) {
