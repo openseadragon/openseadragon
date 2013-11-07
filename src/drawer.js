@@ -89,7 +89,6 @@ $.Drawer = function( options ) {
 
         //internal state properties
         viewer:         null,
-        useCanvas:      $.supportsCanvas,
         downloading:    0,
         tilesMatrix:    {},
         tilesLoaded:    [],
