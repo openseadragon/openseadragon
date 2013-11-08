@@ -243,6 +243,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -266,6 +268,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -284,6 +288,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -307,6 +313,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -325,6 +333,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -347,6 +357,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -369,6 +381,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -391,6 +405,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -409,6 +425,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -427,6 +445,8 @@
          *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -441,6 +461,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -455,6 +477,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -673,9 +697,10 @@
         if ( tracker.focusHandler ) {
             propagate = tracker.focusHandler(
                 {
-                    eventSource: tracker,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -695,9 +720,10 @@
         if ( tracker.blurHandler ) {
             propagate = tracker.blurHandler(
                 {
-                    eventSource: tracker,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -717,12 +743,13 @@
         if ( tracker.keyHandler ) {
             propagate = tracker.keyHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( event, tracker.element ),
-                    keyCode: event.keyCode ? event.keyCode : event.charCode,
-                    shift: event.shiftKey,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                    shift:                event.shiftKey,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( !propagate ) {
@@ -772,13 +799,14 @@
         if ( tracker.enterHandler ) {
             propagate = tracker.enterHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    eventSource:          tracker,
+                    position:             getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
-                    buttonDownAny: IS_BUTTON_DOWN,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    buttonDownAny:        IS_BUTTON_DOWN,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -828,13 +856,14 @@
         if ( tracker.exitHandler ) {
             propagate = tracker.exitHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    eventSource:          tracker,
+                    position:             getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
-                    buttonDownAny: IS_BUTTON_DOWN,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    buttonDownAny:        IS_BUTTON_DOWN,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
 
@@ -872,11 +901,12 @@
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -967,13 +997,14 @@
         if ( tracker.releaseHandler ) {
             propagate = tracker.releaseHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
-                    insideElementPressed: insideElementPressed,
+                    eventSource:           tracker,
+                    position:              getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    insideElementPressed:  insideElementPressed,
                     insideElementReleased: insideElementReleased,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    isTouchEvent:          isTouch,
+                    originalEvent:         event,
+                    preventDefaultAction:  false,
+                    userData:              tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1085,11 +1116,12 @@
 
             var propagate = tracker.moveHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( event, tracker.element ),
-                    isTouchEvent: false,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    isTouchEvent:         false,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1111,11 +1143,12 @@
     function onMouseStop( tracker, originalMoveEvent ) {
         if ( tracker.stopHandler ) {
             tracker.stopHandler( {
-                eventSource: tracker,
-                position: getMouseRelative( originalMoveEvent, tracker.element ),
-                isTouchEvent: false,
-                originalEvent: originalMoveEvent,
-                userData: tracker.userData
+                eventSource:          tracker,
+                position:             getMouseRelative( originalMoveEvent, tracker.element ),
+                isTouchEvent:         false,
+                originalEvent:        originalMoveEvent,
+                preventDefaultAction: false,
+                userData:             tracker.userData
             } );
         }
     }
@@ -1200,13 +1233,14 @@
         if ( tracker.scrollHandler ) {
             propagate = tracker.scrollHandler(
                 {
-                    eventSource:   tracker,
-                    position:      getMouseRelative( event, tracker.element ),
-                    scroll:        nDelta,
-                    shift:         event.shiftKey,
-                    isTouchEvent:  isTouch,
-                    originalEvent: originalEvent,
-                    userData:      tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    scroll:               nDelta,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        originalEvent,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1243,13 +1277,14 @@
         if ( tracker.clickHandler ) {
             propagate = tracker.clickHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    quick: quick,
-                    shift: event.shiftKey,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    quick:                quick,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1281,13 +1316,14 @@
         if ( tracker.dragHandler ) {
             propagate = tracker.dragHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    delta: delta,
-                    shift: event.shiftKey,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    delta:                delta,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {

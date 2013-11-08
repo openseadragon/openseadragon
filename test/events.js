@@ -212,4 +212,72 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
+    // ----------
+    asyncTest( 'MouseTracker preventDefaultAction', function () {
+        var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
+            tracker = viewer.innerTracker,
+            origClickHandler,
+            origDragHandler,
+            dragCount = 10,
+            originalZoom = 0,
+            originalBounds = null;
+
+        var onOpen = function ( event ) {
+            viewer.removeHandler( 'open', onOpen );
+
+            // Hook viewer events to set preventDefaultAction
+            origClickHandler = tracker.clickHandler;
+            tracker.clickHandler = function ( event ) {
+                event.preventDefaultAction = true;
+                return origClickHandler( event );
+            };
+            origDragHandler = tracker.dragHandler;
+            tracker.dragHandler = function ( event ) {
+                event.preventDefaultAction = true;
+                return origDragHandler( event );
+            };
+
+            originalZoom = viewer.viewport.getZoom();
+            originalBounds = viewer.viewport.getBounds();
+
+            var event = {
+                clientX:1,
+                clientY:1
+            };
+
+            $canvas.simulate( 'focus', event );
+            // Drag to pan
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: dragCount,
+                dragDx: 1,
+                dragDy: 1
+            } );
+            // Click to zoom
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: 0,
+                dragDx: 0,
+                dragDy: 0
+            } );
+            $canvas.simulate( 'blur', event );
+
+            var zoom = viewer.viewport.getZoom(),
+                bounds = viewer.viewport.getBounds();
+
+            equal( zoom, originalZoom, "Zoom prevented" );
+            ok( bounds.x == originalBounds.x && bounds.y == originalBounds.y, 'Pan prevented' );
+
+            viewer.close();
+            start();
+        };
+
+        viewer.addHandler( 'open', onOpen );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
 } )();
