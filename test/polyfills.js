@@ -2,30 +2,22 @@
 
 ( function() {
 
-    var origWidth, origHeight;
-
     module( 'Polyfills', {
         setup: function() {
-
-            origWidth = $( "body" ).width();
-            origHeight = $( "body" ).height();
-            $( "body" ).width( origWidth + 10000 );
-            $( "body" ).height( origHeight + 10000 );
-
-            $( document ).scrollLeft( 0 );
-            $( document ).scrollTop( 0 );
             testLog.reset();
-        },
-        teardown: function() {
-            $( "body" ).width( origWidth );
-            $( "body" ).height( origHeight );
-            $( document ).scrollLeft( 0 );
-            $( document ).scrollTop( 0 );
         }
     } );
 
     // ----------
     test( 'pageScroll', function() {
+        // Setup
+        var origWidth = $( "body" ).width(),
+            origHeight = $( "body" ).height();
+        $( "body" ).width( origWidth + 10000 );
+        $( "body" ).height( origHeight + 10000 );
+        $( document ).scrollLeft( 0 );
+        $( document ).scrollTop( 0 );
+        // End setup
 
         // Test get
         var originalGetPageScroll = OpenSeadragon.getPageScroll;
@@ -125,6 +117,12 @@
         equal( currentSetPageScroll, OpenSeadragon.setPageScroll,
             "OpenSeadragon.setPageScroll must not be reassigned after first call." );
 
+
+        // Teardown
+        $( "body" ).width( origWidth );
+        $( "body" ).height( origHeight );
+        $( document ).scrollLeft( 0 );
+        $( document ).scrollTop( 0 );
     } );
 
 } )();

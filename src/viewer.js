@@ -759,7 +759,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             THIS[ this.hash ].prevElementParent.insertBefore(
                 this.element,
                 THIS[ this.hash ].prevNextSibling
-                );
+            );
 
             //If we've got a toolbar, we need to enable the user to use css to
             //reset it to its original state
@@ -773,7 +773,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.toolbar.parentNode.insertBefore(
                     this.toolbar.element,
                     this.toolbar.nextSibling
-                    );
+                );
                 delete this.toolbar.parentNode;
                 delete this.toolbar.nextSibling;
             }
@@ -783,10 +783,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             // After exiting fullPage or fullScreen, it can take some time
             // before the browser can actually set the scroll.
+            var restoreScrollCounter = 0;
             var restoreScroll = function() {
                 $.setPageScroll( _this.pageScroll );
                 var pageScroll = $.getPageScroll();
-                if ( pageScroll.x !== _this.pageScroll.x ||
+                restoreScrollCounter++;
+                if ( restoreScrollCounter < 10 &&
+                    pageScroll.x !== _this.pageScroll.x ||
                     pageScroll.y !== _this.pageScroll.y ) {
                     $.requestAnimationFrame( restoreScroll );
                 }
@@ -975,7 +978,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
             doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
-            onFullPageHandler       = $.delegate( this, onFullScreen ),
+            onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1050,7 +1053,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
                 srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
                 srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
-                onRelease:  onFullPageHandler,
+                onRelease:  onFullScreenHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             }));
@@ -1665,7 +1668,7 @@ function updateOnce( viewer ) {
     //viewer.profiler.endUpdate();
 }
 
-// This function resize the viewport and recenter the image
+// This function resizes the viewport and recenters the image
 // as it was before resizing.
 // TODO: better adjust width and height. The new width and height
 // should depend on the image dimensions and on the dimensions
