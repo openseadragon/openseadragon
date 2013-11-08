@@ -31,14 +31,14 @@ OPENSEADRAGON CHANGELOG
 * Added a number of easier coordinate conversion methods to viewport (#243)
 * Added the ability to create a viewer and start at a specified page (#252)
 * Fixed image resolve issue with collection mode (#255)
-* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. Affects the following events:
+* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. (#257) Affects the following events:
     * Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
     * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 * Added support for the 'wheel' DOM mousewheel event (#261)
 * Fix for non-canvas tile rendering at large size (#264)
 * Drawer now uses an HTML5 canvas element whenever it's available. Can be overridden with the Viewer.useCanvas option (#191)
-* Added a boolean preventDefaultAction property (default false) to the event object passed to MouseTracker handler methods. Implemented in the following MouseTracker subscribers:
+* Added a boolean preventDefaultAction property (default false) to the event object passed to MouseTracker handler methods. (#270) Implemented in the following MouseTracker subscribers:
     * Viewer.keyboardCommandArea.innerTracker.focusHandler: preventDefaultAction == true prevents scrolling viewer into view
     * Viewer.keyboardCommandArea.innerTracker.keyHandler: preventDefaultAction == true prevents viewer keyboard navigation
     * Viewer.innerTracker.clickHandler: preventDefaultAction == true prevents viewer zoom on click
