@@ -38,6 +38,12 @@ OPENSEADRAGON CHANGELOG
 * Added support for the 'wheel' DOM mousewheel event (#261)
 * Fix for non-canvas tile rendering at large size (#264)
 * Drawer now uses an HTML5 canvas element whenever it's available. Can be overridden with the Viewer.useCanvas option (#191)
+* Added a boolean preventDefaultAction property (default false) to the event object passed to MouseTracker handler methods. Implemented in the following MouseTracker subscribers:
+    * Viewer.keyboardCommandArea.innerTracker.focusHandler: preventDefaultAction == true prevents scrolling viewer into view
+    * Viewer.keyboardCommandArea.innerTracker.keyHandler: preventDefaultAction == true prevents viewer keyboard navigation
+    * Viewer.innerTracker.clickHandler: preventDefaultAction == true prevents viewer zoom on click
+    * Viewer.innerTracker.dragHandler: preventDefaultAction == true prevents viewer panning with mouse/touch
+    * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
 
 0.9.131:
 
