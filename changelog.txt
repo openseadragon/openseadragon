@@ -37,6 +37,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
 * Added support for the 'wheel' DOM mousewheel event (#261)
 * Fix for non-canvas tile rendering at large size (#264)
+* Drawer now uses an HTML5 canvas element whenever it's available. Can be overridden with the Viewer.useCanvas option (#191)
 
 0.9.131:
 
