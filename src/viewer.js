@@ -669,12 +669,24 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        this.raiseEvent( 'pre-full-page', { fullPage: fullPage } );
+        var fullPageEventArgs = {
+            fullPage: fullPage,
+            preventDefaultAction: false
+        };
+        this.raiseEvent( 'pre-full-page', fullPageEventArgs );
+        if ( fullPageEventArgs.preventDefaultAction ) {
+            return this;
+        }
 
         if ( fullPage ) {
 
             this.elementSize = $.getElementSize( this.element );
             this.pageScroll = $.getPageScroll();
+
+            this.elementMargin = this.element.style.margin;
+            this.element.style.margin = "0";
+            this.elementPadding = this.element.style.padding;
+            this.element.style.padding = "0";
 
             this.bodyMargin = bodyStyle.margin;
             this.docMargin = docStyle.margin;
@@ -739,6 +751,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.delegate( this, onContainerEnter )( {} );
 
         } else {
+
+            this.element.style.margin = this.elementMargin;
+            this.element.style.padding = this.elementPadding;
 
             bodyStyle.margin = this.bodyMargin;
             docStyle.margin = this.docMargin;
@@ -827,10 +842,28 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        this.raiseEvent( 'pre-full-screen', { fullScreen: fullScreen } );
+        var fullScreeEventArgs = {
+            fullScreen: fullScreen,
+            preventDefaultAction: false
+        };
+        this.raiseEvent( 'pre-full-screen', fullScreeEventArgs );
+        if ( fullScreeEventArgs.preventDefaultAction ) {
+            return this;
+        }
+
         if ( fullScreen ) {
 
             this.setFullPage( true );
+            // If the full page mode is not actually entered, we need to prevent
+            // the full screen mode.
+            if ( !this.isFullPage() ) {
+                return this;
+            }
+
+            this.fullPageStyleWidth = this.element.style.width;
+            this.fullPageStyleHeight = this.element.style.height;
+            this.element.style.width = '100%';
+            this.element.style.height = '100%';
 
             var onFullScreenChange = function() {
                 var isFullScreen = $.isFullScreen();
@@ -839,6 +872,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
 
                     _this.setFullPage( false );
+                    if ( _this.isFullPage() ) {
+                        _this.element.style.width = _this.fullPageStyleWidth;
+                        _this.element.style.height = _this.fullPageStyleHeight;
+                    }
                 }
                 _this.raiseEvent( 'full-screen', { fullScreen: isFullScreen } );
             };
@@ -847,8 +884,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             $.requestFullScreen( document.body );
 
-            this.element.style.width = '100%';
-            this.element.style.height = '100%';
         } else {
             $.cancelFullScreen();
         }
