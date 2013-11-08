@@ -100,7 +100,7 @@ $.Viewer = function( options ) {
 
         //internal state and dom identifiers
         id:             options.id,
-        hash:           options.id,
+        hash:           options.hash || options.id,
 
         //dom nodes
         element:        null,
@@ -146,6 +146,15 @@ $.Viewer = function( options ) {
         profiler:       null
 
     }, $.DEFAULT_SETTINGS, options );
+
+    if ( typeof( this.hash) === "undefined" ) {
+        throw new Error("A hash must be defined, either by specifying options.id or options.hash.");
+    }
+    if ( typeof( THIS[ this.hash ] ) !== "undefined" ) {
+        // We don't want to throw an error here, as the user might have discarded
+        // the previous viewer with the same hash and now want to recreate it.
+        $.console.warn("Hash " + this.hash + " has already been used.");
+    }
 
     //Private state properties
     THIS[ this.hash ] = {
@@ -267,58 +276,62 @@ $.Viewer = function( options ) {
     this.keyboardCommandArea.innerTracker = new $.MouseTracker({
             _this : this,
             element:            this.keyboardCommandArea,
-            focusHandler:       function(){
-                var point    = $.getElementPosition( this.element );
-                window.scrollTo( 0, point.y );
+            focusHandler:       function( event ){
+                if ( !event.preventDefaultAction ) {
+                    var point    = $.getElementPosition( this.element );
+                    window.scrollTo( 0, point.y );
+                }
             },
 
             keyHandler:         function( event ){
-                switch( event.keyCode ){
-                    case 61://=|+
-                        _this.viewport.zoomBy(1.1);
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 45://-|_
-                        _this.viewport.zoomBy(0.9);
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 48://0|)
-                        _this.viewport.goHome();
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 119://w
-                    case 87://W
-                    case 38://up arrow
-                        if ( event.shift ) {
+                if ( !event.preventDefaultAction ) {
+                    switch( event.keyCode ){
+                        case 61://=|+
                             _this.viewport.zoomBy(1.1);
-                        } else {
-                            _this.viewport.panBy(new $.Point(0, -0.05));
-                        }
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 115://s
-                    case 83://S
-                    case 40://down arrow
-                        if ( event.shift ) {
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 45://-|_
                             _this.viewport.zoomBy(0.9);
-                        } else {
-                            _this.viewport.panBy(new $.Point(0, 0.05));
-                        }
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 97://a
-                    case 37://left arrow
-                        _this.viewport.panBy(new $.Point(-0.05, 0));
-                        _this.viewport.applyConstraints();
-                        return false;
-                    case 100://d
-                    case 39://right arrow
-                        _this.viewport.panBy(new $.Point(0.05, 0));
-                        _this.viewport.applyConstraints();
-                        return false;
-                    default:
-                        //console.log( 'navigator keycode %s', event.keyCode );
-                        return true;
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 48://0|)
+                            _this.viewport.goHome();
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 119://w
+                        case 87://W
+                        case 38://up arrow
+                            if ( event.shift ) {
+                                _this.viewport.zoomBy(1.1);
+                            } else {
+                                _this.viewport.panBy(new $.Point(0, -0.05));
+                            }
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 115://s
+                        case 83://S
+                        case 40://down arrow
+                            if ( event.shift ) {
+                                _this.viewport.zoomBy(0.9);
+                            } else {
+                                _this.viewport.panBy(new $.Point(0, 0.05));
+                            }
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 97://a
+                        case 37://left arrow
+                            _this.viewport.panBy(new $.Point(-0.05, 0));
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 100://d
+                        case 39://right arrow
+                            _this.viewport.panBy(new $.Point(0.05, 0));
+                            _this.viewport.applyConstraints();
+                            return false;
+                        default:
+                            //console.log( 'navigator keycode %s', event.keyCode );
+                            return true;
+                    }
                 }
             }
         }).setTracking( true ); // default state
@@ -521,7 +534,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
 
-        this.raiseEvent( 'close', {} );
+        this.raiseEvent( 'close' );
 
         return this;
     },
@@ -1452,7 +1465,7 @@ function onBlur(){
 function onCanvasClick( event ) {
     var zoomPerClick,
         factor;
-    if ( this.viewport && event.quick ) {    // ignore clicks where mouse moved
+    if ( !event.preventDefaultAction && this.viewport && event.quick ) {    // ignore clicks where mouse moved
         zoomPerClick = this.zoomPerClick;
         factor = event.shift ? 1.0 / zoomPerClick : zoomPerClick;
         this.viewport.zoomBy(
@@ -1465,12 +1478,13 @@ function onCanvasClick( event ) {
         tracker: event.eventSource,
         position: event.position,
         quick: event.quick,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
 }
 
 function onCanvasDrag( event ) {
-    if ( this.viewport ) {
+    if ( !event.preventDefaultAction && this.viewport ) {
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }
@@ -1490,7 +1504,8 @@ function onCanvasDrag( event ) {
         tracker: event.eventSource,
         position: event.position,
         delta: event.delta,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1502,13 +1517,14 @@ function onCanvasRelease( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
     });
 }
 
 function onCanvasScroll( event ) {
     var factor;
-    if ( this.viewport ) {
+    if ( !event.preventDefaultAction && this.viewport ) {
         factor = Math.pow( this.zoomPerScroll, event.scroll );
         this.viewport.zoomBy(
             factor,
@@ -1520,7 +1536,8 @@ function onCanvasScroll( event ) {
         tracker: event.eventSource,
         position: event.position,
         scroll: event.scroll,
-        shift: event.shift
+        shift: event.shift,
+        originalEvent: event.originalEvent
     });
     //cancels event
     return false;
@@ -1537,7 +1554,8 @@ function onContainerExit( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1552,7 +1570,8 @@ function onContainerRelease( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
     });
 }
 
@@ -1563,7 +1582,8 @@ function onContainerEnter( event ) {
         tracker: event.eventSource,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
     });
 }
 

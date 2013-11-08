@@ -59,11 +59,14 @@
      *      A reference to an element or an element id for which the mouse
      *      events will be monitored.
      * @param {Number} options.clickTimeThreshold
-     *      The number of milliseconds within which mutliple mouse clicks
+     *      The number of milliseconds within which multiple mouse clicks
      *      will be treated as a single event.
      * @param {Number} options.clickDistThreshold
      *      The distance between mouse click within multiple mouse clicks
      *      will be treated as a single event.
+     * @param {Number} options.stopDelay
+     *      The number of milliseconds without mouse move before the mouse stop
+     *      event is fired.
      * @param {Function} options.enterHandler
      *      An optional handler for mouse enter.
      * @param {Function} options.exitHandler
@@ -116,6 +119,7 @@
         this.clickTimeThreshold = options.clickTimeThreshold;
         this.clickDistThreshold = options.clickDistThreshold;
         this.userData           = options.userData       || null;
+        this.stopDelay          = options.stopDelay      || 50;
 
         this.enterHandler       = options.enterHandler   || null;
         this.exitHandler        = options.exitHandler    || null;
@@ -125,6 +129,7 @@
         this.scrollHandler      = options.scrollHandler  || null;
         this.clickHandler       = options.clickHandler   || null;
         this.dragHandler        = options.dragHandler    || null;
+        this.stopHandler        = options.stopHandler    || null;
         this.keyHandler         = options.keyHandler     || null;
         this.focusHandler       = options.focusHandler   || null;
         this.blurHandler        = options.blurHandler    || null;
@@ -157,8 +162,10 @@
             mouseup:               function ( event ) { onMouseUp( _this, event, false ); },
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             click:                 function ( event ) { onMouseClick( _this, event ); },
-            DOMMouseScroll:        function ( event ) { onMouseWheelSpin( _this, event, false ); },
-            mousewheel:            function ( event ) { onMouseWheelSpin( _this, event, false ); },
+            wheel:                 function ( event ) { onWheel( _this, event ); },
+            mousewheel:            function ( event ) { onMouseWheel( _this, event ); },
+            DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
+            MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
             mouseupie:             function ( event ) { onMouseUpIE( _this, event ); },
             mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
@@ -219,7 +226,7 @@
         },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -236,13 +243,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         enterHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -259,13 +268,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         exitHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -277,13 +288,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         pressHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -300,13 +313,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         releaseHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -318,13 +333,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         moveHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -340,13 +357,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         scrollHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -362,13 +381,15 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         clickHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -384,13 +405,35 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         dragHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false.
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        stopHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -402,13 +445,15 @@
          *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         keyHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -416,13 +461,15 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         focusHandler: function () { },
 
         /**
-         * Implement or assign implmentation to these handlers during or after
+         * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
          * @param {Object} event
@@ -430,11 +477,21 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} [event.preventDefaultAction=false]
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
         blurHandler: function () { }
     };
+
+    /**
+     * Detect available mouse wheel event.
+     */
+    $.MouseTracker.wheelEventName = ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version > 8 ) ||
+                                                ( 'onwheel' in document.createElement( 'div' ) ) ? 'wheel' : // Modern browsers support 'wheel'
+                                    document.onmousewheel !== undefined ? 'mousewheel' :                     // Webkit and IE support at least 'mousewheel'
+                                    'DOMMouseScroll';                                                        // Assume old Firefox
 
     /**
      * Starts tracking mouse events on this element.
@@ -445,7 +502,7 @@
         var events = [
                 "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
                 "click",
-                "DOMMouseScroll", "mousewheel",
+                $.MouseTracker.wheelEventName,
                 "touchstart", "touchmove", "touchend",
                 "keypress",
                 "focus", "blur"
@@ -453,6 +510,11 @@
             delegate = THIS[ tracker.hash ],
             event,
             i;
+
+        // Add 'MozMousePixelScroll' event handler for older Firefox
+        if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+            events.push( "MozMousePixelScroll" );
+        }
 
         if ( !delegate.tracking ) {
             for ( i = 0; i < events.length; i++ ) {
@@ -478,7 +540,7 @@
         var events = [
                 "mouseover", "mouseout", "mousedown", "mouseup", "mousemove",
                 "click",
-                "DOMMouseScroll", "mousewheel",
+                $.MouseTracker.wheelEventName,
                 "touchstart", "touchmove", "touchend",
                 "keypress",
                 "focus", "blur"
@@ -486,6 +548,11 @@
             delegate = THIS[ tracker.hash ],
             event,
             i;
+
+        // Remove 'MozMousePixelScroll' event handler for older Firefox
+        if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+            events.push( "MozMousePixelScroll" );
+        }
 
         if ( delegate.tracking ) {
             for ( i = 0; i < events.length; i++ ) {
@@ -630,9 +697,10 @@
         if ( tracker.focusHandler ) {
             propagate = tracker.focusHandler(
                 {
-                    eventSource: tracker,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -652,9 +720,10 @@
         if ( tracker.blurHandler ) {
             propagate = tracker.blurHandler(
                 {
-                    eventSource: tracker,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -674,12 +743,13 @@
         if ( tracker.keyHandler ) {
             propagate = tracker.keyHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( event, tracker.element ),
-                    keyCode: event.keyCode ? event.keyCode : event.charCode,
-                    shift: event.shiftKey,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                    shift:                event.shiftKey,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( !propagate ) {
@@ -729,13 +799,14 @@
         if ( tracker.enterHandler ) {
             propagate = tracker.enterHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    eventSource:          tracker,
+                    position:             getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
-                    buttonDownAny: IS_BUTTON_DOWN,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    buttonDownAny:        IS_BUTTON_DOWN,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -785,13 +856,14 @@
         if ( tracker.exitHandler ) {
             propagate = tracker.exitHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    eventSource:          tracker,
+                    position:             getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
                     insideElementPressed: delegate.insideElementPressed,
-                    buttonDownAny: IS_BUTTON_DOWN,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    buttonDownAny:        IS_BUTTON_DOWN,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
 
@@ -829,11 +901,12 @@
         if ( tracker.pressHandler ) {
             propagate = tracker.pressHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -924,13 +997,14 @@
         if ( tracker.releaseHandler ) {
             propagate = tracker.releaseHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
-                    insideElementPressed: insideElementPressed,
+                    eventSource:           tracker,
+                    position:              getMouseRelative( isTouch ? event.changedTouches[ 0 ] : event, tracker.element ),
+                    insideElementPressed:  insideElementPressed,
                     insideElementReleased: insideElementReleased,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    isTouchEvent:          isTouch,
+                    originalEvent:         event,
+                    preventDefaultAction:  false,
+                    userData:              tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1042,19 +1116,42 @@
 
             var propagate = tracker.moveHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( event, tracker.element ),
-                    isTouchEvent: false,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    isTouchEvent:         false,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
                 $.cancelEvent( event );
             }
         }
+        if ( tracker.stopHandler ) {
+            clearTimeout( tracker.stopTimeOut );
+            tracker.stopTimeOut = setTimeout( function() {
+                onMouseStop( tracker, event );
+            }, tracker.stopDelay );
+        }
     }
-
+    
+    /**
+     * @private
+     * @inner
+     */
+    function onMouseStop( tracker, originalMoveEvent ) {
+        if ( tracker.stopHandler ) {
+            tracker.stopHandler( {
+                eventSource:          tracker,
+                position:             getMouseRelative( originalMoveEvent, tracker.element ),
+                isTouchEvent:         false,
+                originalEvent:        originalMoveEvent,
+                preventDefaultAction: false,
+                userData:             tracker.userData
+            } );
+        }
+    }
 
     /**
      * @private
@@ -1068,49 +1165,86 @@
 
 
     /**
+     * Handler for 'wheel' events
+     *
      * @private
      * @inner
      */
-    function onMouseWheelSpin( tracker, event, isTouch ) {
+    function onWheel( tracker, event ) {
+        handleWheelEvent( tracker, event, event, false );
+    }
+
+
+    /**
+     * Handler for 'mousewheel', 'DOMMouseScroll', and 'MozMousePixelScroll' events
+     *
+     * @private
+     * @inner
+     */
+    function onMouseWheel( tracker, event ) {
+        // For legacy IE, access the global (window) event object
+        event = event || window.event;
+
+        // Simulate a 'wheel' event
+        var simulatedEvent = {
+            target:     event.target || event.srcElement,
+            type:       "wheel",
+            shiftKey:   event.shiftKey || false,
+            clientX:    event.clientX,
+            clientY:    event.clientY,
+            pageX:      event.pageX ? event.pageX : event.clientX,
+            pageY:      event.pageY ? event.pageY : event.clientY,
+            deltaMode:  event.type == "MozMousePixelScroll" ? 0 : 1, // 0=pixel, 1=line, 2=page
+            deltaX:     0,
+            deltaZ:     0
+        };
+
+        // Calculate deltaY
+        if ( $.MouseTracker.wheelEventName == "mousewheel" ) {
+            simulatedEvent.deltaY = - 1 / $.DEFAULT_SETTINGS.pixelsPerWheelLine * event.wheelDelta;
+        } else {
+            simulatedEvent.deltaY = event.detail;
+        }
+
+        handleWheelEvent( tracker, simulatedEvent, event, false );
+    }
+
+
+    /**
+     * Handles 'wheel' events. 
+     * The event may be simulated by the legacy mouse wheel event handler (onMouseWheel()) or onTouchMove().
+     *
+     * @private
+     * @inner
+     */
+    function handleWheelEvent( tracker, event, originalEvent, isTouch ) {
         var nDelta = 0,
             propagate;
 
         isTouch = isTouch || false;
 
-        if ( !event ) { // For IE, access the global (window) event object
-            event = window.event;
-        }
-
-        if ( event.wheelDelta ) { // IE and Opera
-            nDelta = event.wheelDelta;
-            if ( window.opera ) {  // Opera has the values reversed
-                nDelta = -nDelta;
-            }
-        } else if ( event.detail ) { // Mozilla FireFox
-            nDelta = -event.detail;
-        }
-        //The nDelta variable is gated to provide smooth z-index scrolling
-        //since the mouse wheel allows for substantial deltas meant for rapid
-        //y-index scrolling.
-        nDelta = nDelta > 0 ? 1 : -1;
+        // The nDelta variable is gated to provide smooth z-index scrolling
+        //   since the mouse wheel allows for substantial deltas meant for rapid
+        //   y-index scrolling.
+        // event.deltaMode: 0=pixel, 1=line, 2=page
+        // TODO: Deltas in pixel mode should be accumulated then a scroll value computed after $.DEFAULT_SETTINGS.pixelsPerWheelLine threshold reached
+        nDelta = event.deltaY < 0 ? 1 : -1;
 
         if ( tracker.scrollHandler ) {
             propagate = tracker.scrollHandler(
                 {
-                    eventSource: tracker,
-                    // Note: Ok to call getMouseRelative on passed event for isTouch==true since 
-                    //   event.pageX/event.pageY are added to the original touchmove event in
-                    //   onTouchMove().
-                    position: getMouseRelative( event, tracker.element ),
-                    scroll: nDelta,
-                    shift: event.shiftKey,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( event, tracker.element ),
+                    scroll:               nDelta,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        originalEvent,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
-                $.cancelEvent( event );
+                $.cancelEvent( originalEvent );
             }
         }
     }
@@ -1143,13 +1277,14 @@
         if ( tracker.clickHandler ) {
             propagate = tracker.clickHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    quick: quick,
-                    shift: event.shiftKey,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    quick:                quick,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1181,13 +1316,14 @@
         if ( tracker.dragHandler ) {
             propagate = tracker.dragHandler(
                 {
-                    eventSource: tracker,
-                    position: getMouseRelative( eventOrTouchPoint, tracker.element ),
-                    delta: delta,
-                    shift: event.shiftKey,
-                    isTouchEvent: isTouch,
-                    originalEvent: event,
-                    userData: tracker.userData
+                    eventSource:          tracker,
+                    position:             getMouseRelative( eventOrTouchPoint, tracker.element ),
+                    delta:                delta,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         isTouch,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
                 }
             );
             if ( propagate === false ) {
@@ -1229,15 +1365,22 @@
             if ( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ) {
                 //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
 
-                // Simulate a mouse wheel scroll event
+                // Simulate a 'wheel' event
                 var simulatedEvent = {
-                    shiftKey: event.shiftKey || false,
-                    pageX:    THIS[ tracker.hash ].pinchMidpoint.x,
-                    pageY:    THIS[ tracker.hash ].pinchMidpoint.y,
-                    detail:   ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1
+                    target:     event.target || event.srcElement,
+                    type:       "wheel",
+                    shiftKey:   event.shiftKey || false,
+                    clientX:    THIS[ tracker.hash ].pinchMidpoint.x,
+                    clientY:    THIS[ tracker.hash ].pinchMidpoint.y,
+                    pageX:      THIS[ tracker.hash ].pinchMidpoint.x,
+                    pageY:      THIS[ tracker.hash ].pinchMidpoint.y,
+                    deltaMode:  1, // 0=pixel, 1=line, 2=page
+                    deltaX:     0,
+                    deltaY:     ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1,
+                    deltaZ:     0
                 };
 
-                onMouseWheelSpin( tracker, simulatedEvent, true );
+                handleWheelEvent( tracker, simulatedEvent, event, true );
 
                 THIS[ tracker.hash ].lastPinchDelta = pinchDelta;
             }

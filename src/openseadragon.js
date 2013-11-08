@@ -226,6 +226,9 @@
   * @param {Number} [options.maxImageCacheCount=100]
   *     The max number of images we should keep in memory (per drawer).
   *
+  * @param {Boolean} [options.useCanvas=true]
+  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
+  *
   * @param {Number} [options.minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
@@ -293,6 +296,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     toString    = Object.prototype.toString,
     hasOwn      = Object.prototype.hasOwnProperty;
 
+    // Detects canvas support
+    function isCanvasSupported() {
+        var canvasElement = document.createElement( 'canvas' );
+        return !!( $.isFunction( canvasElement.getContext ) &&
+                   canvasElement.getContext( '2d' ) );
+    }
 
     /**
      * Taken from jQuery 1.6.1
@@ -384,6 +393,52 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         }
         return true;
     };
+
+
+    /**
+     * True if the browser supports the HTML5 canvas element
+     * @name $.supportsCanvas
+     * @property
+     */
+    $.supportsCanvas = isCanvasSupported();
+
+
+    /**
+     * Detect event model and create appropriate _addEvent/_removeEvent methods
+     */
+    if ( window.addEventListener ) {
+        $._addEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.addEventListener( eventName, handler, useCapture );
+        };
+    } else if ( window.attachEvent ) {
+        $._addEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.attachEvent( 'on' + eventName, handler );
+            if ( useCapture && element.setCapture ) {
+                element.setCapture();
+            }
+        };
+    } else {
+        throw new Error( "No known event model." );
+    }
+
+    if ( window.removeEventListener ) {
+        $._removeEvent = function ( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.removeEventListener( eventName, handler, useCapture );
+        };
+    } else if ( window.detachEvent ) {
+        $._removeEvent = function( element, eventName, handler, useCapture ) {
+            element = $.getElement( element );
+            element.detachEvent( 'on' + eventName, handler );
+            if ( useCapture && element.releaseCapture ) {
+                element.releaseCapture();
+            }
+        };
+    } else {
+        throw new Error( "No known event model." );
+    }
 
 
 }( OpenSeadragon ));
@@ -517,6 +572,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             immediateRender:        false,
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
+            pixelsPerWheelLine:     40,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
@@ -559,6 +615,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
             timeout:                30000,
+            useCanvas:              true,  // Use canvas element for drawing if available
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
@@ -1192,33 +1249,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {String} eventName
          * @param {Function} handler
          * @param {Boolean} [useCapture]
-         * @throws {Error}
          */
         addEvent: function( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-
-            //TODO: Why do this if/else on every method call instead of just
-            //      defining this function once based on the same logic
-            if ( element.addEventListener ) {
-                $.addEvent = function( element, eventName, handler, useCapture ){
-                    element = $.getElement( element );
-                    element.addEventListener( eventName, handler, useCapture );
-                };
-            } else if ( element.attachEvent ) {
-                $.addEvent = function( element, eventName, handler, useCapture ){
-                    element = $.getElement( element );
-                    element.attachEvent( "on" + eventName, handler );
-                    if ( useCapture && element.setCapture ) {
-                        element.setCapture();
-                    }
-                };
-            } else {
-                throw new Error(
-                    "Unable to attach event handler, no known technique."
-                );
-            }
-
-            return $.addEvent( element, eventName, handler, useCapture );
+            return $._addEvent( element, eventName, handler, useCapture );
         },
 
 
@@ -1231,32 +1264,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {String} eventName
          * @param {Function} handler
          * @param {Boolean} [useCapture]
-         * @throws {Error}
          */
         removeEvent: function( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-
-            //TODO: Why do this if/else on every method call instead of just
-            //      defining this function once based on the same logic
-            if ( element.removeEventListener ) {
-                $.removeEvent = function( element, eventName, handler, useCapture ) {
-                    element = $.getElement( element );
-                    element.removeEventListener( eventName, handler, useCapture );
-                };
-            } else if ( element.detachEvent ) {
-                $.removeEvent = function( element, eventName, handler, useCapture ) {
-                    element = $.getElement( element );
-                    element.detachEvent("on" + eventName, handler);
-                    if ( useCapture && element.releaseCapture ) {
-                        element.releaseCapture();
-                    }
-                };
-            } else {
-                throw new Error(
-                    "Unable to detach event handler, no known technique."
-                );
-            }
-            return $.removeEvent( element, eventName, handler, useCapture );
+            return $._removeEvent( element, eventName, handler, useCapture );
         },
 
 

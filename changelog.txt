@@ -4,23 +4,24 @@ OPENSEADRAGON CHANGELOG
 1.0.0: (in progress)
 
 * BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
-*     The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
-*     Where the event object duplicated the eventSource value, those properties have been removed. This effects the following events:
-*         All Button events - 'button' property removed
-*         All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
+    * The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
+    * Where the event object duplicated the eventSource value, those properties have been removed. This affects the following events:
+        * All Button events - 'button' property removed
+        * All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
 * BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
 * BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
-*     Viewer "animationstart" changed to "animation-start"
-*     Viewer "animationfinish" changed to "animation-finish"
-*     Button "onPress" changed to "press"
-*     Button "onRelease" changed to "release"
-*     Button "onClick" changed to "click"
-*     Button "onEnter" changed to "enter"
-*     Button "onExit" changed to "exit"
-*     Button "onFocus" changed to "focus"
-*     Button "onBlur" changed to "blur"
+    * Viewer "animationstart" changed to "animation-start"
+    * Viewer "animationfinish" changed to "animation-finish"
+    * Button "onPress" changed to "press"
+    * Button "onRelease" changed to "release"
+    * Button "onClick" changed to "click"
+    * Button "onEnter" changed to "enter"
+    * Button "onExit" changed to "exit"
+    * Button "onFocus" changed to "focus"
+    * Button "onBlur" changed to "blur"
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
+* Added stopHandler to MouseTracker. (#262)
 * Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
 * Fixed: Pinch zoom event issue, regressive issue from previous event system changes (#244)
 * Added IIIF Image API 1.1 Tile Source (#230)
@@ -29,6 +30,20 @@ OPENSEADRAGON CHANGELOG
 * Check that zoom reference point is valid before using it in zoomTo and zoomBy (#247)
 * Added a number of easier coordinate conversion methods to viewport (#243)
 * Added the ability to create a viewer and start at a specified page (#252)
+* Fixed image resolve issue with collection mode (#255)
+* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. (#257) Affects the following events:
+    * Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
+    * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
+* Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
+* Added support for the 'wheel' DOM mousewheel event (#261)
+* Fix for non-canvas tile rendering at large size (#264)
+* Drawer now uses an HTML5 canvas element whenever it's available. Can be overridden with the Viewer.useCanvas option (#191)
+* Added a boolean preventDefaultAction property (default false) to the event object passed to MouseTracker handler methods. (#270) Implemented in the following MouseTracker subscribers:
+    * Viewer.keyboardCommandArea.innerTracker.focusHandler: preventDefaultAction == true prevents scrolling viewer into view
+    * Viewer.keyboardCommandArea.innerTracker.keyHandler: preventDefaultAction == true prevents viewer keyboard navigation
+    * Viewer.innerTracker.clickHandler: preventDefaultAction == true prevents viewer zoom on click
+    * Viewer.innerTracker.dragHandler: preventDefaultAction == true prevents viewer panning with mouse/touch
+    * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
 
 0.9.131:
 

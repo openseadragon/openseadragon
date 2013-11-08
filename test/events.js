@@ -74,6 +74,8 @@
             eventsHandledMouseTracker = 0,
             eventSourcePassedMouseTracker = 0,
             originalEventsPassedMouseTracker = 0,
+            eventsHandledViewer = 0,
+            originalEventsPassedViewer = 0,
             releasesExpected = 1,
             clicksExpected = 1;
 
@@ -117,15 +119,27 @@
             $canvas.simulate( 'blur', event );
         };
 
+        var checkOriginalEventReceivedViewer = function ( event ) {
+            eventsHandledViewer++;
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //   with arbitrary user data.
+            if ( event && event.originalEvent ) {
+                originalEventsPassedViewer++;
+            }
+        };
+
         var onEventSourceDrag = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             dragsHandledEventSource++;
         };
 
         var onEventSourceRelease = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             releasesHandledEventSource++;
         };
 
         var onEventSourceClick = function ( event ) {
+            checkOriginalEventReceivedViewer( event );
             clicksHandledEventSource++;
         };
 
@@ -184,10 +198,79 @@
             equal( dragsHandledEventSource, dragCount, "'canvas-drag' event count matches 'mousemove' event count (" + dragCount + ")" );
             equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
             equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
+            equal( originalEventsPassedViewer, eventsHandledViewer, "Original event received count matches expected (" + eventsHandledViewer + ")" );
 
             equal( eventSourcePassedMouseTracker, eventsHandledMouseTracker, "Event source received count matches expected (" + eventsHandledMouseTracker + ")" );
             equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );
             deepEqual( event.userData, originalUserData, 'MouseTracker userData was untouched' );
+
+            viewer.close();
+            start();
+        };
+
+        viewer.addHandler( 'open', onOpen );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    // ----------
+    asyncTest( 'MouseTracker preventDefaultAction', function () {
+        var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
+            tracker = viewer.innerTracker,
+            origClickHandler,
+            origDragHandler,
+            dragCount = 10,
+            originalZoom = 0,
+            originalBounds = null;
+
+        var onOpen = function ( event ) {
+            viewer.removeHandler( 'open', onOpen );
+
+            // Hook viewer events to set preventDefaultAction
+            origClickHandler = tracker.clickHandler;
+            tracker.clickHandler = function ( event ) {
+                event.preventDefaultAction = true;
+                return origClickHandler( event );
+            };
+            origDragHandler = tracker.dragHandler;
+            tracker.dragHandler = function ( event ) {
+                event.preventDefaultAction = true;
+                return origDragHandler( event );
+            };
+
+            originalZoom = viewer.viewport.getZoom();
+            originalBounds = viewer.viewport.getBounds();
+
+            var event = {
+                clientX:1,
+                clientY:1
+            };
+
+            $canvas.simulate( 'focus', event );
+            // Drag to pan
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: dragCount,
+                dragDx: 1,
+                dragDy: 1
+            } );
+            // Click to zoom
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: 0,
+                dragDx: 0,
+                dragDy: 0
+            } );
+            $canvas.simulate( 'blur', event );
+
+            var zoom = viewer.viewport.getZoom(),
+                bounds = viewer.viewport.getBounds();
+
+            equal( zoom, originalZoom, "Zoom prevented" );
+            ok( bounds.x == originalBounds.x && bounds.y == originalBounds.y, 'Pan prevented' );
 
             viewer.close();
             start();
