@@ -656,35 +656,52 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     setFullPage: function( fullPage ) {
 
-        var body            = document.body,
-            bodyStyle       = body.style,
-            docStyle        = document.documentElement.style,
-            canvasStyle     = this.canvas.style,
-            _this           = this,
-            oldBounds,
-            newBounds,
-            viewer,
+        var body = document.body,
+            bodyStyle = body.style,
+            docStyle = document.documentElement.style,
+            _this = this,
             hash,
             nodes,
             i;
 
         //dont bother modifying the DOM if we are already in full page mode.
         if ( fullPage == this.isFullPage() ) {
-            return;
+            return this;
         }
 
+        var fullPageEventArgs = {
+            fullPage: fullPage,
+            preventDefaultAction: false
+        };
+        this.raiseEvent( 'pre-full-page', fullPageEventArgs );
+        if ( fullPageEventArgs.preventDefaultAction ) {
+            return this;
+        }
 
         if ( fullPage ) {
 
-            this.bodyOverflow   = bodyStyle.overflow;
-            this.docOverflow    = docStyle.overflow;
-            bodyStyle.overflow  = "hidden";
-            docStyle.overflow   = "hidden";
+            this.elementSize = $.getElementSize( this.element );
+            this.pageScroll = $.getPageScroll();
 
-            this.bodyWidth      = bodyStyle.width;
-            this.bodyHeight     = bodyStyle.height;
-            bodyStyle.width     = "100%";
-            bodyStyle.height    = "100%";
+            this.elementMargin = this.element.style.margin;
+            this.element.style.margin = "0";
+            this.elementPadding = this.element.style.padding;
+            this.element.style.padding = "0";
+
+            this.bodyMargin = bodyStyle.margin;
+            this.docMargin = docStyle.margin;
+            bodyStyle.margin = "0";
+            docStyle.margin = "0";
+
+            this.bodyPadding = bodyStyle.padding;
+            this.docPadding = docStyle.padding;
+            bodyStyle.padding = "0";
+            docStyle.padding = "0";
+
+            this.bodyWidth = bodyStyle.width;
+            this.bodyHeight = bodyStyle.height;
+            bodyStyle.width = "100%";
+            bodyStyle.height = "100%";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would
@@ -697,14 +714,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             THIS[ this.hash ].prevElementWidth = this.element.style.width;
             THIS[ this.hash ].prevElementHeight = this.element.style.height;
             nodes = body.childNodes.length;
-            for ( i = 0; i < nodes; i ++ ){
+            for ( i = 0; i < nodes; i++ ) {
                 this.previousBody.push( body.childNodes[ 0 ] );
                 body.removeChild( body.childNodes[ 0 ] );
             }
 
             //If we've got a toolbar, we need to enable the user to use css to
             //preserve it in fullpage mode
-            if( this.toolbar && this.toolbar.element ){
+            if ( this.toolbar && this.toolbar.element ) {
                 //save a reference to the parent so we can put it back
                 //in the long run we need a better strategy
                 this.toolbar.parentNode = this.toolbar.element.parentNode;
@@ -719,38 +736,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.addClass( this.element, 'fullpage' );
             body.appendChild( this.element );
 
-            if( $.supportsFullScreen ){
-                THIS[ this.hash ].onfullscreenchange = function() {
-                    /*
-                        fullscreenchange events don't include the new fullscreen status so we need to
-                        retrieve the current status from the fullscreen API. See:
-                        https://developer.mozilla.org/en-US/docs/Web/Reference/Events/fullscreenchange
-                    */
+            this.element.style.height = $.getWindowSize().y + 'px';
+            this.element.style.width = $.getWindowSize().x + 'px';
 
-                    if( $.isFullScreen() ){
-                        _this.setFullPage( true );
-                    } else {
-                        _this.setFullPage( false );
-                    }
-                };
-
-                $.requestFullScreen( document.body );
-
-                // The target of the event is always the document,
-                // but it is possible to retrieve the fullscreen element through the API
-                // Note that the API is still vendor-prefixed in browsers implementing it
-                document.addEventListener(
-                    $.fullScreenEventName,
-                    THIS[ this.hash ].onfullscreenchange
-                );
-                this.element.style.height = '100%';
-                this.element.style.width = '100%';
-            }else{
-                this.element.style.height = $.getWindowSize().y + 'px';
-                this.element.style.width = $.getWindowSize().x + 'px';
-            }
-
-            if( this.toolbar && this.toolbar.element ){
+            if ( this.toolbar && this.toolbar.element ) {
                 this.element.style.height = (
                     $.getElementSize( this.element ).y - $.getElementSize( this.toolbar.element ).y
                 ) + 'px';
@@ -761,29 +750,23 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             // mouse will be inside container now
             $.delegate( this, onContainerEnter )( {} );
 
-
         } else {
 
-            if( $.supportsFullScreen ){
-                document.removeEventListener(
-                    $.fullScreenEventName,
-                    THIS[ this.hash ].onfullscreenchange
-                );
-                $.cancelFullScreen( document );
-            }
+            this.element.style.margin = this.elementMargin;
+            this.element.style.padding = this.elementPadding;
 
-            bodyStyle.overflow  = this.bodyOverflow;
-            docStyle.overflow   = this.docOverflow;
+            bodyStyle.margin = this.bodyMargin;
+            docStyle.margin = this.docMargin;
 
-            bodyStyle.width     = this.bodyWidth;
-            bodyStyle.height    = this.bodyHeight;
+            bodyStyle.padding = this.bodyPadding;
+            docStyle.padding = this.docPadding;
 
-            canvasStyle.backgroundColor = "";
-            canvasStyle.color           = "";
+            bodyStyle.width = this.bodyWidth;
+            bodyStyle.height = this.bodyHeight;
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
-            for ( i = 0; i < nodes; i++ ){
+            for ( i = 0; i < nodes; i++ ) {
                 body.appendChild( this.previousBody.shift() );
             }
 
@@ -795,75 +778,117 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             //If we've got a toolbar, we need to enable the user to use css to
             //reset it to its original state
-            if( this.toolbar && this.toolbar.element ){
+            if ( this.toolbar && this.toolbar.element ) {
                 body.removeChild( this.toolbar.element );
 
                 //Make sure the user has some ability to style the toolbar based
                 //on the mode
                 $.removeClass( this.toolbar.element, 'fullpage' );
-                //this.toolbar.element.style.position = 'relative';
+
                 this.toolbar.parentNode.insertBefore(
                     this.toolbar.element,
                     this.toolbar.nextSibling
                 );
                 delete this.toolbar.parentNode;
                 delete this.toolbar.nextSibling;
-
-                //this.container.style.top = 'auto';
             }
 
             this.element.style.width = THIS[ this.hash ].prevElementWidth;
             this.element.style.height = THIS[ this.hash ].prevElementHeight;
 
+            // After exiting fullPage or fullScreen, it can take some time
+            // before the browser can actually set the scroll.
+            var restoreScrollCounter = 0;
+            var restoreScroll = function() {
+                $.setPageScroll( _this.pageScroll );
+                var pageScroll = $.getPageScroll();
+                restoreScrollCounter++;
+                if ( restoreScrollCounter < 10 &&
+                    pageScroll.x !== _this.pageScroll.x ||
+                    pageScroll.y !== _this.pageScroll.y ) {
+                    $.requestAnimationFrame( restoreScroll );
+                }
+            };
+            $.requestAnimationFrame( restoreScroll );
+
             THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )( {} );
-
-
-        }
-        this.raiseEvent( 'fullpage', { fullpage: fullPage } );
-
-        if ( this.viewport ) {
-            oldBounds = this.viewport.getBounds();
-            this.viewport.resize( THIS[ this.hash ].prevContainerSize );
-            newBounds = this.viewport.getBounds();
-
-            if ( fullPage ) {
-                THIS[ this.hash ].fsBoundsDelta = new $.Point(
-                    newBounds.width  / oldBounds.width,
-                    newBounds.height / oldBounds.height
-                );
-            } else {
-                this.viewport.update();
-                this.viewport.zoomBy(
-                    Math.max(
-                        THIS[ this.hash ].fsBoundsDelta.x,
-                        THIS[ this.hash ].fsBoundsDelta.y
-                    ),
-                    null,
-                    true
-                );
-                //Ensures that if multiple viewers are on a page, the viewers that
-                //were hidden during fullpage are 'reopened'
-                for( hash in VIEWERS ){
-                    viewer = VIEWERS[ hash ];
-                    if( viewer !== this && viewer != this.navigator ){
-                        viewer.open( viewer.source );
-                        if( viewer.navigator ){
-                            viewer.navigator.open( viewer.source );
-                        }
-                    }
-                }
-            }
-
-            THIS[ this.hash ].forceRedraw = true;
-            updateOnce( this );
+            $.delegate( this, onContainerExit )( { } );
 
         }
+
+        this.raiseEvent( 'full-page', { fullPage: fullPage } );
+
         return this;
     },
 
+    /**
+     * Toggle full screen mode if supported. Toggle full page mode otherwise.
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.setFullScreen
+     * @param {Boolean} fullScreen
+     *      If true, enter full screen mode.  If false, exit full screen mode.
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    setFullScreen: function( fullScreen ) {
+        var _this = this;
+
+        if ( !$.supportsFullScreen ) {
+            return this.setFullPage( fullScreen );
+        }
+
+        if ( $.isFullScreen() === fullScreen ) {
+            return this;
+        }
+
+        var fullScreeEventArgs = {
+            fullScreen: fullScreen,
+            preventDefaultAction: false
+        };
+        this.raiseEvent( 'pre-full-screen', fullScreeEventArgs );
+        if ( fullScreeEventArgs.preventDefaultAction ) {
+            return this;
+        }
+
+        if ( fullScreen ) {
+
+            this.setFullPage( true );
+            // If the full page mode is not actually entered, we need to prevent
+            // the full screen mode.
+            if ( !this.isFullPage() ) {
+                return this;
+            }
+
+            this.fullPageStyleWidth = this.element.style.width;
+            this.fullPageStyleHeight = this.element.style.height;
+            this.element.style.width = '100%';
+            this.element.style.height = '100%';
+
+            var onFullScreenChange = function() {
+                var isFullScreen = $.isFullScreen();
+                if ( !isFullScreen ) {
+                    $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
+                    $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
+
+                    _this.setFullPage( false );
+                    if ( _this.isFullPage() ) {
+                        _this.element.style.width = _this.fullPageStyleWidth;
+                        _this.element.style.height = _this.fullPageStyleHeight;
+                    }
+                }
+                _this.raiseEvent( 'full-screen', { fullScreen: isFullScreen } );
+            };
+            $.addEvent( document, $.fullScreenEventName, onFullScreenChange );
+            $.addEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
+
+            $.requestFullScreen( document.body );
+
+        } else {
+            $.cancelFullScreen();
+        }
+        return this;
+    },
 
     /**
      * @function
@@ -988,7 +1013,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
             doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
-            onFullPageHandler       = $.delegate( this, onFullPage ),
+            onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1063,7 +1088,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 srcGroup:   resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
                 srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
                 srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
-                onRelease:  onFullPageHandler,
+                onRelease:  onFullScreenHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             }));
@@ -1633,8 +1658,11 @@ function updateOnce( viewer ) {
     containerSize = _getSafeElemSize( viewer.container );
     if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
         // maintain image position
-        viewer.viewport.resize( containerSize, true );
+        var oldBounds = viewer.viewport.getBounds();
+        var oldCenter = viewer.viewport.getCenter();
+        resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
         THIS[ viewer.hash ].prevContainerSize = containerSize;
+        THIS[ viewer.hash ].forceRedraw = true;
     }
 
     animated = viewer.viewport.update();
@@ -1675,7 +1703,30 @@ function updateOnce( viewer ) {
     //viewer.profiler.endUpdate();
 }
 
+// This function resizes the viewport and recenters the image
+// as it was before resizing.
+// TODO: better adjust width and height. The new width and height
+// should depend on the image dimensions and on the dimensions
+// of the viewport before and after switching mode.
+function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter ) {
+    var viewport = viewer.viewport;
 
+    viewport.resize( containerSize, true );
+
+    // We try to remove blanks as much as possible
+    var imageHeight = 1 / viewer.source.aspectRatio;
+    var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
+    var newHeight = oldBounds.height <= imageHeight ?
+        oldBounds.height : imageHeight;
+
+    var newBounds = new $.Rect(
+        oldCenter.x - ( newWidth / 2.0 ),
+        oldCenter.y - ( newHeight / 2.0 ),
+        newWidth,
+        newHeight
+        );
+    viewport.fitBounds( newBounds, true );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Navigation Controls
@@ -1765,10 +1816,15 @@ function onHome() {
 }
 
 
-function onFullPage() {
-    this.setFullPage( !this.isFullPage() );
+function onFullScreen() {
+    if ( this.isFullPage() && !$.isFullScreen() ) {
+        // Is fullPage but not fullScreen
+        this.setFullPage( false );
+    } else {
+        this.setFullScreen( !this.isFullPage() );
+    }
     // correct for no mouseout event on change
-    if( this.buttons ){
+    if ( this.buttons ) {
         this.buttons.emulateExit();
     }
     this.fullPageButton.element.focus();

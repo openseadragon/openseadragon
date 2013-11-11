@@ -174,22 +174,80 @@
     });
 
     // ----------
-    asyncTest('Fullscreen', function() {
+    asyncTest('FullPage', function() {
         viewer.addHandler("open", function () {
             ok(!viewer.isFullPage(), 'Started out not fullpage');
             ok(!$(viewer.element).hasClass('fullpage'),
                 'No fullpage class on div');
 
-            viewer.setFullPage(true);
-            ok(viewer.isFullPage(), 'Enabled fullpage');
-            ok($(viewer.element).hasClass('fullpage'),
-                'Fullpage class added to div');
+            var checkEnteringPreFullPage = function(event) {
+                viewer.removeHandler('pre-full-page', checkEnteringPreFullPage);
+                ok(event.fullPage, 'Switching to fullpage');
+                ok(!viewer.isFullPage(), 'Not yet fullpage');
+            };
 
-            viewer.setFullPage(false);
-            ok(!viewer.isFullPage(), 'Disabled fullpage');
-            ok(!$(viewer.element).hasClass('fullpage'),
-                'Fullpage class removed from div');
+            var checkEnteringFullPage = function(event) {
+                viewer.removeHandler('full-page', checkEnteringFullPage);
+                ok(event.fullPage, 'Switched to fullpage');
+                ok(viewer.isFullPage(), 'Enabled fullpage');
+                ok($(viewer.element).hasClass('fullpage'),
+                    'Fullpage class added to div');
+
+                var checkExitingPreFullPage = function(event) {
+                    viewer.removeHandler('pre-full-page', checkExitingPreFullPage);
+                    ok(!event.fullPage, 'Exiting fullpage');
+                    ok(viewer.isFullPage(), 'Still fullpage');
+                };
+
+                var checkExitingFullPage = function(event) {
+                    viewer.removeHandler('full-page', checkExitingFullPage);
+                    ok(!event.fullPage, 'Exiting fullpage');
+                    ok(!viewer.isFullPage(), 'Disabled fullpage');
+                    ok(!$(viewer.element).hasClass('fullpage'),
+                        'Fullpage class removed from div');
+                    start();
+                };
+
+                viewer.addHandler("pre-full-page", checkExitingPreFullPage);
+                viewer.addHandler("full-page", checkExitingFullPage);
+                viewer.setFullPage(false);
+            };
+            viewer.addHandler("pre-full-page", checkEnteringPreFullPage);
+            viewer.addHandler("full-page", checkEnteringFullPage);
+            viewer.setFullPage(true);
+        });
+
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('FullScreen', function() {
+
+        if (!OpenSeadragon.supportsFullScreen) {
+            expect(0);
             start();
+            return;
+        }
+
+        viewer.addHandler("open", function () {
+            ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
+
+            var checkEnteringPreFullScreen = function(event) {
+                viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
+                ok(event.fullScreen, 'Switching to fullscreen');
+                ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
+            };
+
+            // The fullscreen mode is always denied during tests so we are
+            // exiting directly.
+            var checkExitingFullScreen = function(event) {
+                viewer.removeHandler('full-screen', checkExitingFullScreen);
+                ok(!event.fullScreen, 'Exiting fullscreen');
+                ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
+                start();
+            };
+            viewer.addHandler("pre-full-screen", checkEnteringPreFullScreen);
+            viewer.addHandler("full-screen", checkExitingFullScreen);
+            viewer.setFullScreen(true);
         });
 
         viewer.open('/test/data/testpattern.dzi');
