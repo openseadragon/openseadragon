@@ -19,6 +19,14 @@ OPENSEADRAGON CHANGELOG
     * Button "onExit" changed to "exit"
     * Button "onFocus" changed to "focus"
     * Button "onBlur" changed to "blur"
+* Numerous improvements to fullPage/fullScreen (#256):
+    * Retains zoom/pan position better when switching into and out of fullPage.
+    * Retains scroll position when switching back out.
+    * More resilient to styling variations on the page.
+    * BREAKING CHANGE: setFullPage no longer automatically engages fullScreen; there's now a separate setFullScreen.
+    * BREAKING CHANGE: 'fullpage' event is now 'full-page'.
+    * There is now a 'full-screen' event.
+    * There are now 'pre-full-page' and 'pre-full-screen' events that include a preventDefaultAction property you can set.
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Added stopHandler to MouseTracker. (#262)
