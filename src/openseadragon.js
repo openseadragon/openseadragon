@@ -296,13 +296,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     toString    = Object.prototype.toString,
     hasOwn      = Object.prototype.hasOwnProperty;
 
-    // Detects canvas support
-    function isCanvasSupported() {
-        var canvasElement = document.createElement( 'canvas' );
-        return !!( $.isFunction( canvasElement.getContext ) &&
-                   canvasElement.getContext( '2d' ) );
-    }
-
     /**
      * Taken from jQuery 1.6.1
      * @name $.isFunction
@@ -400,45 +393,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @name $.supportsCanvas
      * @property
      */
-    $.supportsCanvas = isCanvasSupported();
-
-
-    /**
-     * Detect event model and create appropriate _addEvent/_removeEvent methods
-     */
-    if ( window.addEventListener ) {
-        $._addEvent = function ( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-            element.addEventListener( eventName, handler, useCapture );
-        };
-    } else if ( window.attachEvent ) {
-        $._addEvent = function ( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-            element.attachEvent( 'on' + eventName, handler );
-            if ( useCapture && element.setCapture ) {
-                element.setCapture();
-            }
-        };
-    } else {
-        throw new Error( "No known event model." );
-    }
-
-    if ( window.removeEventListener ) {
-        $._removeEvent = function ( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-            element.removeEventListener( eventName, handler, useCapture );
-        };
-    } else if ( window.detachEvent ) {
-        $._removeEvent = function( element, eventName, handler, useCapture ) {
-            element = $.getElement( element );
-            element.detachEvent( 'on' + eventName, handler );
-            if ( useCapture && element.releaseCapture ) {
-                element.releaseCapture();
-            }
-        };
-    } else {
-        throw new Error( "No known event model." );
-    }
+    $.supportsCanvas = (function () {
+        var canvasElement = document.createElement( 'canvas' );
+        return !!( $.isFunction( canvasElement.getContext ) &&
+                    canvasElement.getContext( '2d' ) );
+    }());
 
 
 }( OpenSeadragon ));
@@ -1250,9 +1209,24 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Function} handler
          * @param {Boolean} [useCapture]
          */
-        addEvent: function( element, eventName, handler, useCapture ) {
-            return $._addEvent( element, eventName, handler, useCapture );
-        },
+        addEvent: (function () {
+            if ( window.addEventListener ) {
+                return function ( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.addEventListener( eventName, handler, useCapture );
+                };
+            } else if ( window.attachEvent ) {
+                return function ( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.attachEvent( 'on' + eventName, handler );
+                    if ( useCapture && element.setCapture ) {
+                        element.setCapture();
+                    }
+                };
+            } else {
+                throw new Error( "No known event model." );
+            }
+        }()),
 
 
         /**
@@ -1265,9 +1239,24 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @param {Function} handler
          * @param {Boolean} [useCapture]
          */
-        removeEvent: function( element, eventName, handler, useCapture ) {
-            return $._removeEvent( element, eventName, handler, useCapture );
-        },
+        removeEvent: (function () {
+            if ( window.removeEventListener ) {
+                return function ( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.removeEventListener( eventName, handler, useCapture );
+                };
+            } else if ( window.detachEvent ) {
+                return function( element, eventName, handler, useCapture ) {
+                    element = $.getElement( element );
+                    element.detachEvent( 'on' + eventName, handler );
+                    if ( useCapture && element.releaseCapture ) {
+                        element.releaseCapture();
+                    }
+                };
+            } else {
+                throw new Error( "No known event model." );
+            }
+        }()),
 
 
         /**
