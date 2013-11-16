@@ -38,6 +38,8 @@
      * An enumeration of positions that an overlay may be assigned relative
      * to the viewport including CENTER, TOP_LEFT (default), TOP, TOP_RIGHT,
      * RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, and LEFT.
+     * @member OverlayPlacement
+     * @memberof OpenSeadragon
      * @static
      */
     $.OverlayPlacement = {
@@ -54,7 +56,8 @@
 
     /**
      * An Overlay provides a
-     * @class
+     * @class Overlay
+     * @memberof OpenSeadragon
      */
     $.Overlay = function( element, location, placement ) {
 
@@ -93,7 +96,7 @@
         this.onDraw = options.onDraw;
     };
 
-    $.Overlay.prototype = {
+    $.Overlay.prototype = /** @lends OpenSeadragon.Overlay.prototype */{
 
         /**
          * @function

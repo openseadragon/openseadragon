@@ -41,7 +41,8 @@
  * and generating a set of 'service' images like one or more thumbnails, a medium
  * resolution image and a high resolution image in standard web formats like
  * png or jpg.
- * @class
+ * @class LegacyTileSource
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Array} levels An array of file descriptions, each is an object with
  *      a 'url', a 'width', and a 'height'.  Overriding classes can expect more
@@ -96,12 +97,11 @@ $.LegacyTileSource = function( levels ) {
     this.levels = options.levels;
 };
 
-$.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.LegacyTileSource.prototype */{
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -119,7 +119,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
     /**
      *
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.configure
      * @param {Object|XMLDocument} configuration - the raw configuration
      * @param {String} dataUrl - the url the data was retreived from if any.
      * @return {Object} options - A dictionary of keyword arguments sufficient
@@ -144,7 +143,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.getLevelScale
      * @param {Number} level
      */
     getLevelScale: function ( level ) {
@@ -159,7 +157,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.getNumTiles
      * @param {Number} level
      */
     getNumTiles: function( level ) {
@@ -173,7 +170,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.getTileAtPoint
      * @param {Number} level
      * @param {OpenSeadragon.Point} point
      */
@@ -188,7 +184,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
      * server technologies, and various specifications for building image
      * pyramids, this method is here to allow easy integration.
      * @function
-     * @name OpenSeadragon.LegacyTileSource.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

@@ -50,7 +50,8 @@ var THIS = {},
  * The options below are given in order that they appeared in the constructor
  * as arguments and we translate a positional call into an idiomatic call.
  *
- * @class
+ * @class Viewer
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @extends OpenSeadragon.ControlDock
  * @param {Object} options
@@ -384,12 +385,11 @@ $.Viewer = function( options ) {
 
 };
 
-$.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, {
+$.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, /** @lends OpenSeadragon.Viewer.prototype */{
 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isOpen
      * @return {Boolean}
      */
     isOpen: function () {
@@ -400,7 +400,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * A deprecated function, renamed to 'open' to match event name and
      * match current 'close' method.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.openDzi
      * @param {String} dzi xml string or the url to a DZI xml document.
      * @return {OpenSeadragon.Viewer} Chainable.
      *
@@ -470,6 +469,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     openTileSource( _this, event.tileSource );
                 });
                 tileSource.addHandler( 'open-failed', function ( event ) {
+                    /**
+                     * @event open-failed
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                     * @property {String} message
+                     * @property {String} source
+                     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                     */
                     _this.raiseEvent( 'open-failed', event );
                 });
 
@@ -483,6 +491,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     //inline configuration
                     $TileSource = $.TileSource.determineType( _this, tileSource );
                     if ( !$TileSource ) {
+                        /***
+                         * @event open-failed
+                         * @memberof OpenSeadragon.Viewer
+                         * @type {object}
+                         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                         * @property {String} message
+                         * @property {String} source
+                         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                         */
                         _this.raiseEvent( 'open-failed', {
                             message: "Unable to load TileSource",
                             source: tileSource
@@ -534,6 +551,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
 
+        /**
+         * @event close
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'close' );
 
         return this;
@@ -593,10 +617,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
+     * @param {Boolean} enabled - true to enable, false to disable
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setMouseNavEnabled: function( enabled ){
         this.innerTracker.setTracking( enabled );
+        /**
+         * @event mouse-enabled
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} enabled
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'mouse-enabled', { enabled: enabled } );
         return this;
     },
@@ -631,6 +664,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } else {
             beginControlsAutoHide( this );
         }
+        /**
+         * @event controls-enabled
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} enabled
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'controls-enabled', { enabled: enabled } );
         return this;
     },
@@ -673,6 +714,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             fullPage: fullPage,
             preventDefaultAction: false
         };
+        /**
+         * @event pre-full-page
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} fullPage - True if entering full-page mode, false if exiting full-page mode.
+         * @property {Boolean} preventDefaultAction - Set to true to prevent full-page mode change.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'pre-full-page', fullPageEventArgs );
         if ( fullPageEventArgs.preventDefaultAction ) {
             return this;
@@ -818,6 +868,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         }
 
+        /**
+         * @event full-page
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} fullPage - True if changed to full-page mode, false if exited full-page mode.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'full-page', { fullPage: fullPage } );
 
         return this;
@@ -846,6 +904,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             fullScreen: fullScreen,
             preventDefaultAction: false
         };
+        /**
+         * @event pre-full-screen
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} fullScreen - True if entering full-screen mode, false if exiting full-screen mode.
+         * @property {Boolean} preventDefaultAction - Set to true to prevent full-screen mode change.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'pre-full-screen', fullScreeEventArgs );
         if ( fullScreeEventArgs.preventDefaultAction ) {
             return this;
@@ -877,6 +944,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.element.style.height = _this.fullPageStyleHeight;
                     }
                 }
+                /**
+                 * @event full-screen
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                 * @property {Boolean} fullScreen - True if changed to full-screen mode, false if exited full-screen mode.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( 'full-screen', { fullScreen: isFullScreen } );
             };
             $.addEvent( document, $.fullScreenEventName, onFullScreenChange );
@@ -903,10 +978,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * @function
      * @name OpenSeadragon.Viewer.prototype.setVisible
+     * @param {Boolean} visible
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     setVisible: function( visible ){
         this.container.style.visibility = visible ? "" : "hidden";
+        /**
+         * @event visible
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} visible
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'visible', { visible: visible } );
         return this;
     },
@@ -1138,6 +1222,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     goToPage: function( page ){
         //page is a 1 based index so normalize now
         //page = page;
+        /**
+         * @event page
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Object} page - The page changed to (1-based).
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         this.raiseEvent( 'page', { page: page } );
 
         if( this.tileSources.length > page ){
@@ -1163,7 +1255,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Updates the sequence buttons.
-     * @function
+     * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
      * @private
      * @param {Number} Sequence Value
      */
@@ -1193,7 +1285,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
       
     /**
      * Display a message in the viewport
-     * @function
+     * @function OpenSeadragon.Viewer.prototype._showMessage
      * @private
      * @param {String} text message
      */
@@ -1212,7 +1304,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Hide any currently displayed viewport message
-     * @function
+     * @function OpenSeadragon.Viewer.prototype._hideMessage
      * @private
      */
     _hideMessage: function () {
@@ -1407,6 +1499,14 @@ function openTileSource( viewer, source ) {
     }
     VIEWERS[ _this.hash ] = _this;
 
+    /**
+     * @event open
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+     * @property {OpenSeadragon.TileSource} source
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     _this.raiseEvent( 'open', { source: source } );
 
     return _this;
@@ -1512,6 +1612,18 @@ function onCanvasClick( event ) {
         );
         this.viewport.applyConstraints();
     }
+    /**
+     * @event canvas-click
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} quick - True only if the clickDistThreshold and clickDeltaThreshold are both passed. Useful for differentiating between clicks and drags.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'canvas-click', {
         tracker: event.eventSource,
         position: event.position,
@@ -1538,6 +1650,18 @@ function onCanvasDrag( event ) {
             this.viewport.applyConstraints();
         }
     }
+    /**
+     * @event canvas-drag
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'canvas-drag', {
         tracker: event.eventSource,
         position: event.position,
@@ -1551,6 +1675,18 @@ function onCanvasRelease( event ) {
     if ( event.insideElementPressed && this.viewport ) {
         this.viewport.applyConstraints();
     }
+    /**
+     * @event canvas-release
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'canvas-release', {
         tracker: event.eventSource,
         position: event.position,
@@ -1570,6 +1706,18 @@ function onCanvasScroll( event ) {
         );
         this.viewport.applyConstraints();
     }
+    /**
+     * @event canvas-scroll
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} scroll - The scroll delta for the event.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'canvas-scroll', {
         tracker: event.eventSource,
         position: event.position,
@@ -1588,6 +1736,18 @@ function onContainerExit( event ) {
             beginControlsAutoHide( this );
         }
     }
+    /**
+     * @event container-exit
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'container-exit', {
         tracker: event.eventSource,
         position: event.position,
@@ -1604,6 +1764,18 @@ function onContainerRelease( event ) {
             beginControlsAutoHide( this );
         }
     }
+    /**
+     * @event container-release
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'container-release', {
         tracker: event.eventSource,
         position: event.position,
@@ -1616,6 +1788,18 @@ function onContainerRelease( event ) {
 function onContainerEnter( event ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
+    /**
+     * @event container-enter
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+     */
     this.raiseEvent( 'container-enter', {
         tracker: event.eventSource,
         position: event.position,
@@ -1672,6 +1856,13 @@ function updateOnce( viewer ) {
     }
 
     if ( !THIS[ viewer.hash ].animating && animated ) {
+        /**
+         * @event animation-start
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         viewer.raiseEvent( "animation-start" );
         abortControlsAutoHide( viewer );
     }
@@ -1681,6 +1872,13 @@ function updateOnce( viewer ) {
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
+        /**
+         * @event animation
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
         viewer.drawer.update();
@@ -1691,6 +1889,13 @@ function updateOnce( viewer ) {
     }
 
     if ( THIS[ viewer.hash ].animating && !animated ) {
+        /**
+         * @event animation-finish
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         viewer.raiseEvent( "animation-finish" );
 
         if ( !THIS[ viewer.hash ].mouseInside ) {

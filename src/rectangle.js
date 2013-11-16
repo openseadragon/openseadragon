@@ -40,7 +40,8 @@
  * (width, height).  The latter component implies the equation of a simple
  * plane.
  *
- * @class
+ * @class Rect
+ * @memberof OpenSeadragon
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
  * @param {Number} width The vector component 'height'.
@@ -57,7 +58,7 @@ $.Rect = function( x, y, width, height ) {
     this.height = typeof ( height ) == "number" ? height : 0;
 };
 
-$.Rect.prototype = {
+$.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
 
     /**
      * The aspect ratio is simply the ratio of width to height.

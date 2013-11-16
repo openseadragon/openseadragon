@@ -36,7 +36,8 @@
 
 
 /**
- * @class
+ * @class Viewport
+ * @memberof OpenSeadragon
  */
 $.Viewport = function( options ) {
 
@@ -105,7 +106,7 @@ $.Viewport = function( options ) {
     this.update();
 };
 
-$.Viewport.prototype = {
+$.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * @function
@@ -121,6 +122,14 @@ $.Viewport.prototype = {
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         if( this.viewer ){
+            /**
+             * @event reset-size
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} contentSize
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'reset-size', {
                 contentSize: contentSize
             });
@@ -167,6 +176,14 @@ $.Viewport.prototype = {
      */
     goHome: function( immediately ) {
         if( this.viewer ){
+            /**
+             * @event home
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Boolean} immediately
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'home', {
                 immediately: immediately
             });
@@ -367,6 +384,14 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * @event constrain
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Boolean} immediately
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
@@ -518,6 +543,15 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * @event pan
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} center
+             * @property {Boolean} immediately
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'pan', {
                 center: center,
                 immediately: immediately
@@ -560,6 +594,16 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * @event zoom
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Number} zoom
+             * @property {OpenSeadragon.Point} refPoint
+             * @property {Boolean} immediately
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
@@ -576,7 +620,6 @@ $.Viewport.prototype = {
      * debug mode doesn't rotate yet, and overlay rotation is only
      * partially supported.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.setRotation
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setRotation: function( degrees ) {
@@ -597,7 +640,6 @@ $.Viewport.prototype = {
     /**
      * Gets the current rotation in degrees.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.getRotation
      * @return {Number} The current rotation in degrees.
      */
     getRotation: function() {
@@ -624,6 +666,15 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * @event resize
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} newContainerSize
+             * @property {Boolean} maintain
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'resize', {
                 newContainerSize: newContainerSize,
                 maintain: maintain

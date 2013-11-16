@@ -35,7 +35,8 @@
 (function( $ ){
 
 /**
- * @class
+ * @class TileSourceCollection
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  */
 $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
@@ -92,11 +93,10 @@ $.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
 
 };
 
-$.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
+$.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.TileSourceCollection.prototype */{
 
     /**
      * @function
-     * @name OpenSeadragon.TileSourceCollection.prototype.getTileBounds
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
@@ -118,7 +118,6 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
     /**
      *
      * @function
-     * @name OpenSeadragon.TileSourceCollection.prototype.configure
      */
     configure: function( data, url ){
         return;
@@ -127,7 +126,6 @@ $.extend( $.TileSourceCollection.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.TileSourceCollection.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

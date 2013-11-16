@@ -35,7 +35,8 @@
 (function( $ ){
 
 /**
- * @class
+ * @class Spring
+ * @memberof OpenSeadragon
  * @param {Object} options - Spring configuration settings.
  * @param {Number} options.initial - Initial value of spring, default to 0 so
  *  spring is not in motion initally by default.
@@ -90,7 +91,7 @@ $.Spring = function( options ) {
     };
 };
 
-$.Spring.prototype = {
+$.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
 
     /**
      * @function

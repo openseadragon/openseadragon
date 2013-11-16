@@ -101,15 +101,15 @@
   */
 
  /**
-  * The root namespace for OpenSeadragon, this function also serves as a single
-  * point of instantiation for an {@link OpenSeadragon.Viewer}, including all
-  * combinations of out-of-the-box configurable features.  All utility methods
-  * and classes are defined on or below this namespace.
+  * @module OpenSeadragon
+  */
+
+ /**
+  * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
+  * combinations of out-of-the-box configurable features.
   *
-  * @namespace
-  * @function
-  * @name OpenSeadragon
-  * @exports $ as OpenSeadragon
+  * @function OpenSeadragon
+  * @memberof module:OpenSeadragon
   *
   * @param {Object} options All required and optional settings for instantiating
   *     a new instance of an OpenSeadragon image viewer.
@@ -274,6 +274,15 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 };
 
+
+/**
+ * The root namespace for OpenSeadragon.  All utility methods
+ * and classes are defined on or below this namespace.
+ *
+ * @namespace OpenSeadragon
+ */
+
+
 (function( $ ){
 
 
@@ -298,9 +307,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isFunction
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isFunction
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isFunction = function( obj ) {
         return $.type(obj) === "function";
@@ -309,9 +318,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isArray
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isArray
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isArray = Array.isArray || function( obj ) {
         return $.type(obj) === "array";
@@ -321,9 +330,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     /**
      * A crude way of determining if an object is a window.
      * Taken from jQuery 1.6.1
-     * @name $.isWindow
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isWindow
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isWindow = function( obj ) {
         return obj && typeof obj === "object" && "setInterval" in obj;
@@ -332,9 +341,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.type
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function type
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.type = function( obj ) {
         return ( obj === null ) || ( obj === undefined ) ?
@@ -345,9 +354,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isPlainObject
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isPlainObject
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isPlainObject = function( obj ) {
         // Must be an Object.
@@ -376,9 +385,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isEmptyObject
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isEmptyObject
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isEmptyObject = function( obj ) {
         for ( var name in obj ) {
@@ -390,8 +399,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * True if the browser supports the HTML5 canvas element
-     * @name $.supportsCanvas
-     * @property
+     * @member {Boolean} supportsCanvas
+     * @memberof OpenSeadragon
      */
     $.supportsCanvas = (function () {
         var canvasElement = document.createElement( 'canvas' );
@@ -418,7 +427,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function extend
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.extend = function() {
         var options,
@@ -491,7 +502,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
 
 
-    $.extend( $, {
+    $.extend( $, /** @lends OpenSeadragon */{
         /**
          * These are the default values for the optional settings documented
          * in the {@link OpenSeadragon} constructor detail.
@@ -1611,10 +1622,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * The current browser vendor, version, and related information regarding
-     * detected features.  Features include <br/>
-     *  <strong>'alpha'</strong> - Does the browser support image alpha
+     * detected features. Features include *'alpha'* - Does the browser support image alpha
      *  transparency.<br/>
-     * @name $.Browser
+     * @member {Object} Browser
+     * @memberof OpenSeadragon
      * @static
      */
     $.Browser = {

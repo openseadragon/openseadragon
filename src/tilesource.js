@@ -48,7 +48,8 @@
  * By default the image pyramid is split into N layers where the images longest
  * side in M (in pixels), where N is the smallest integer which satisfies
  *      <strong>2^(N+1) >= M</strong>.
- * @class
+ * @class TileSource
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Number|Object|Array|String} width
  *      If more than a single argument is supplied, the traditional use of
@@ -166,7 +167,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 };
 
 
-$.TileSource.prototype = {
+$.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
 
     /**
      * @function
@@ -297,6 +298,15 @@ $.TileSource.prototype = {
             }
             var $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
+                /**
+                 * @event open-failed
+                 * @memberof OpenSeadragon.TileSource
+                 * @type {object}
+                 * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
+                 * @property {String} message
+                 * @property {String} source
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
                 return;
             }
@@ -304,6 +314,14 @@ $.TileSource.prototype = {
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
             readySource = new $TileSource( options );
             _this.ready = true;
+            /**
+             * @event ready
+             * @memberof OpenSeadragon.TileSource
+             * @type {object}
+             * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
+             * @property {Object} tileSource
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( 'ready', { tileSource: readySource } );
         };
 
@@ -344,6 +362,15 @@ $.TileSource.prototype = {
                     msg = formattedExc + " attempting to load TileSource";
                 }
 
+                /***
+                 * @event open-failed
+                 * @memberof OpenSeadragon.TileSource
+                 * @type {object}
+                 * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
+                 * @property {String} message
+                 * @property {String} source
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( 'open-failed', {
                     message: msg,
                     source: url
@@ -431,7 +458,7 @@ $.extend( true, $.TileSource.prototype, $.EventSource.prototype );
 /**
  * Decides whether to try to process the response as xml, json, or hand back
  * the text
- * @eprivate
+ * @private
  * @inner
  * @function
  * @param {XMLHttpRequest} xhr - the completed network request
@@ -473,7 +500,7 @@ function processResponse( xhr ){
 /**
  * Determines the TileSource Implementation by introspection of OpenSeadragon
  * namespace, calling each TileSource implementation of 'isType'
- * @eprivate
+ * @private
  * @inner
  * @function
  * @param {Object|Array|Document} data - the tile source configuration object

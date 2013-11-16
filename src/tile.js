@@ -35,7 +35,8 @@
 (function( $ ){
     var TILE_CACHE       = {};
 /**
- * @class
+ * @class Tile
+ * @memberof OpenSeadragon
  * @param {Number} level The zoom level this tile belongs to.
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
@@ -94,7 +95,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.lastTouchTime  = 0;
 };
 
-$.Tile.prototype = {
+$.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
     /**
      * Provides a string representation of this tiles level and (x,y)

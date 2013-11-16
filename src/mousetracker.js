@@ -49,7 +49,8 @@
      * The MouseTracker allows other classes to set handlers for common mouse
      * events on a specific element like, 'enter', 'exit', 'press', 'release',
      * 'scroll', 'click', and 'drag'.
-     * @class
+     * @class MouseTracker
+     * @memberof OpenSeadragon
      * @param {Object} options
      *      Allows configurable properties to be entirely specified by passing
      *      an options object to the constructor.  The constructor also supports
@@ -67,27 +68,27 @@
      * @param {Number} options.stopDelay
      *      The number of milliseconds without mouse move before the mouse stop
      *      event is fired.
-     * @param {Function} options.enterHandler
+     * @param {OpenSeadragon.EventHandler} options.enterHandler
      *      An optional handler for mouse enter.
-     * @param {Function} options.exitHandler
+     * @param {OpenSeadragon.EventHandler} options.exitHandler
      *      An optional handler for mouse exit.
-     * @param {Function} options.pressHandler
+     * @param {OpenSeadragon.EventHandler} options.pressHandler
      *      An optional handler for mouse press.
-     * @param {Function} options.releaseHandler
+     * @param {OpenSeadragon.EventHandler} options.releaseHandler
      *      An optional handler for mouse release.
-     * @param {Function} options.moveHandler
+     * @param {OpenSeadragon.EventHandler} options.moveHandler
      *      An optional handler for mouse move.
-     * @param {Function} options.scrollHandler
+     * @param {OpenSeadragon.EventHandler} options.scrollHandler
      *      An optional handler for mouse scroll.
-     * @param {Function} options.clickHandler
+     * @param {OpenSeadragon.EventHandler} options.clickHandler
      *      An optional handler for mouse click.
-     * @param {Function} options.dragHandler
+     * @param {OpenSeadragon.EventHandler} options.dragHandler
      *      An optional handler for mouse drag.
-     * @param {Function} options.keyHandler
+     * @param {OpenSeadragon.EventHandler} options.keyHandler
      *      An optional handler for keypress.
-     * @param {Function} options.focusHandler
+     * @param {OpenSeadragon.EventHandler} options.focusHandler
      *      An optional handler for focus.
-     * @param {Function} options.blurHandler
+     * @param {OpenSeadragon.EventHandler} options.blurHandler
      *      An optional handler for blur.
      * @param {Object} [options.userData=null]
      *      Arbitrary object to be passed unchanged to any attached handler methods.
@@ -188,7 +189,7 @@
 
     };
 
-    $.MouseTracker.prototype = {
+    $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{
 
         /**
          * Clean up any events or objects created by the mouse tracker.
@@ -374,7 +375,7 @@
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
          * @param {Number} event.quick
-         *      True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
+         *      True only if the clickDistThreshold and clickDeltaThreshold are both passed. Useful for ignoring events.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
          * @param {Boolean} event.isTouchEvent

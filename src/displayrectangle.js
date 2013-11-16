@@ -38,7 +38,8 @@
  * A display rectanlge is very similar to the OpenSeadragon.Rect but adds two
  * fields, 'minLevel' and 'maxLevel' which denote the supported zoom levels
  * for this rectangle.
- * @class
+ * @class DisplayRect
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.Rect
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.

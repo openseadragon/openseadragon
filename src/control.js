@@ -52,7 +52,8 @@ $.ControlAnchor = {
  * A Control represents any interface element which is meant to allow the user
  * to interact with the zoomable interface. Any control can be anchored to any
  * element.
- * @class
+ * @class Control
+ * @memberof OpenSeadragon
  * @param {Element} element - the control element to be anchored in the container.
  * @param {Object } options - All required and optional settings for configuring a control element.
  * @param {OpenSeadragon.ControlAnchor} [options.anchor=OpenSeadragon.ControlAnchor.NONE] - the position of the control
@@ -110,7 +111,7 @@ $.Control = function ( element, options, container ) {
     }
 };
 
-$.Control.prototype = {
+$.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
 
     /**
      * Removes the control from the container.

@@ -40,8 +40,8 @@
  * of reference in the larger viewport as to which portion of the image
  * is currently being examined.  The navigator's viewport can be interacted
  * with using the keyboard or the mouse.
- * @class
- * @name OpenSeadragon.Navigator
+ * @class Navigator
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.Viewer
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
@@ -196,11 +196,10 @@ $.Navigator = function( options ){
 
 };
 
-$.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
+$.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
 
     /**
      * @function
-     * @name OpenSeadragon.Navigator.prototype.update
      */
     update: function( viewport ){
 

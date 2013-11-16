@@ -38,7 +38,8 @@
  * A Point is really used as a 2-dimensional vector, equally useful for
  * representing a point on a plane, or the height and width of a plane
  * not requiring any other frame of reference.
- * @class
+ * @class Point
+ * @memberof OpenSeadragon
  * @param {Number} [x] The vector component 'x'. Defaults to the origin at 0.
  * @param {Number} [y] The vector component 'y'. Defaults to the origin at 0.
  * @property {Number} [x] The vector component 'x'.
@@ -49,7 +50,7 @@ $.Point = function( x, y ) {
     this.y = typeof ( y ) == "number" ? y : 0;
 };
 
-$.Point.prototype = {
+$.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
 
     /**
      * Add another Point to this point and return a new Point.

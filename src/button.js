@@ -36,6 +36,8 @@
 
 /**
  * An enumeration of button states including, REST, GROUP, HOVER, and DOWN
+ * @member ButtonState
+ * @memberof OpenSeadragon
  * @static
  */
 $.ButtonState = {
@@ -49,7 +51,8 @@ $.ButtonState = {
  * Manages events, hover states for individual buttons, tool-tips, as well
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
- * @class
+ * @class Button
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
  * @param {String} options.tooltip Provides context help for the button we the
@@ -178,6 +181,14 @@ $.Button = function( options ) {
         enterHandler: function( event ) {
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
+                /**
+                 * @event enter
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
             } else if ( !event.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
@@ -186,29 +197,69 @@ $.Button = function( options ) {
 
         focusHandler: function ( event ) {
             this.enterHandler( event );
+            /**
+             * @event focus
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
 
         exitHandler: function( event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
+                /**
+                 * @event exit
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
             }
         },
 
         blurHandler: function ( event ) {
             this.exitHandler( event );
+            /**
+             * @event blur
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
         },
 
         pressHandler: function ( event ) {
             inTo( _this, $.ButtonState.DOWN );
+            /**
+             * @event press
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
         },
 
         releaseHandler: function( event ) {
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
+                /**
+                 * @event release
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
             } else if ( event.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
@@ -219,6 +270,14 @@ $.Button = function( options ) {
 
         clickHandler: function( event ) {
             if ( event.quick ) {
+                /**
+                 * @event click
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent("click", { originalEvent: event.originalEvent });
             }
         },
@@ -226,7 +285,23 @@ $.Button = function( options ) {
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
             if( 13 === event.keyCode ){
+                /***
+                 * @event click
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
+                /***
+                 * @event release
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
                 return false;
             }
@@ -238,13 +313,12 @@ $.Button = function( options ) {
     outTo( this, $.ButtonState.REST );
 };
 
-$.extend( $.Button.prototype, $.EventSource.prototype, {
+$.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.Button.prototype */{
 
     /**
      * TODO: Determine what this function is intended to do and if it's actually
      * useful as an API point.
      * @function
-     * @name OpenSeadragon.Button.prototype.notifyGroupEnter
      */
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
@@ -254,18 +328,23 @@ $.extend( $.Button.prototype, $.EventSource.prototype, {
      * TODO: Determine what this function is intended to do and if it's actually
      * useful as an API point.
      * @function
-     * @name OpenSeadragon.Button.prototype.notifyGroupExit
      */
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
     },
 
+    /**
+     * @function
+     */
     disable: function(){
         this.notifyGroupExit();
         this.element.disabled = true;
         $.setElementOpacity( this.element, 0.2, true );
     },
 
+    /**
+     * @function
+     */
     enable: function(){
         this.element.disabled = false;
         $.setElementOpacity( this.element, 1.0, true );

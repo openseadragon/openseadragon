@@ -48,7 +48,8 @@ var DEVICE_SCREEN       = $.getWindowSize(),
 
 
 /**
- * @class
+ * @class Drawer
+ * @memberof OpenSeadragon
  * @param {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
  * @param {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
  * @param {Element} element - Reference to Viewer 'canvas'.
@@ -153,7 +154,7 @@ $.Drawer = function( options ) {
     //this.profiler    = new $.Profiler();
 };
 
-$.Drawer.prototype = {
+$.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
      * Adds an html element as an overlay to the current viewport.  Useful for
@@ -199,6 +200,16 @@ $.Drawer.prototype = {
         }) );
         this.updateAgain = true;
         if( this.viewer ){
+            /**
+             * @event add-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Element} element
+             * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
+             * @property {OpenSeadragon.OverlayPlacement} placement
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'add-overlay', {
                 element: element,
                 location: options.location,
@@ -230,6 +241,16 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
+            /**
+             * @event update-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Element} element
+             * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
+             * @property {OpenSeadragon.OverlayPlacement} placement
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'update-overlay', {
                 element: element,
                 location: location,
@@ -259,6 +280,14 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
+            /**
+             * @event remove-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Element} element
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'remove-overlay', {
                 element: element
             });
@@ -278,6 +307,13 @@ $.Drawer.prototype = {
             this.updateAgain = true;
         }
         if( this.viewer ){
+            /**
+             * @event clear-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'clear-overlay', {} );
         }
         return this;
@@ -471,6 +507,13 @@ function updateViewport( drawer ) {
     drawer.updateAgain = false;
 
     if( drawer.viewer ){
+        /**
+         * @event update-viewport
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         drawer.viewer.raiseEvent( 'update-viewport', {} );
     }
 
@@ -645,6 +688,21 @@ function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVi
 
 
     if( drawer.viewer ){
+        /**
+         * @event update-level
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Object} havedrawn
+         * @property {Object} level
+         * @property {Object} opacity
+         * @property {Object} visibility
+         * @property {Object} topleft
+         * @property {Object} bottomright
+         * @property {Object} currenttime
+         * @property {Object} best
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         drawer.viewer.raiseEvent( 'update-level', {
             havedrawn: haveDrawn,
             level: level,
@@ -708,6 +766,14 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         drawTile = drawLevel;
 
     if( drawer.viewer ){
+        /**
+         * @event update-tile
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Object} tile
+         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         */
         drawer.viewer.raiseEvent( 'update-tile', {
             tile: tile
         });
@@ -1222,6 +1288,14 @@ function drawTiles( drawer, lastDrawn ){
         }
 
         if( drawer.viewer ){
+            /**
+             * @event tile-drawn
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Object} tile
+             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             */
             drawer.viewer.raiseEvent( 'tile-drawn', {
                 tile: tile
             });

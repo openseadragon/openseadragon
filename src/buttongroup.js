@@ -35,7 +35,8 @@
 (function( $ ){
 /**
  * Manages events on groups of buttons.
- * @class
+ * @class ButtonGroup
+ * @memberof OpenSeadragon
  * @param {Object} options - a dictionary of settings applied against the entire
  * group of buttons
  * @param {Array}    options.buttons Array of buttons
@@ -110,13 +111,12 @@ $.ButtonGroup = function( options ) {
     }).setTracking( true );
 };
 
-$.ButtonGroup.prototype = {
+$.ButtonGroup.prototype = /** @lends OpenSeadragon.ButtonGroup.prototype */{
 
     /**
      * TODO: Figure out why this is used on the public API and if a more useful
      * api can be created.
      * @function
-     * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
      */
     emulateEnter: function() {
         this.tracker.enterHandler( { eventSource: this.tracker } );
@@ -126,7 +126,6 @@ $.ButtonGroup.prototype = {
      * TODO: Figure out why this is used on the public API and if a more useful
      * api can be created.
      * @function
-     * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
      */
     emulateExit: function() {
         this.tracker.exitHandler( { eventSource: this.tracker } );
