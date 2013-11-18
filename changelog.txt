@@ -53,6 +53,7 @@ OPENSEADRAGON CHANGELOG
     * Viewer.innerTracker.clickHandler: preventDefaultAction == true prevents viewer zoom on click
     * Viewer.innerTracker.dragHandler: preventDefaultAction == true prevents viewer panning with mouse/touch
     * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
+* Fixed: IE8 error with custom buttons - "Object doesn't support this action" (#279)
 
 0.9.131:
 
