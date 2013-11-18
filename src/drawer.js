@@ -208,7 +208,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
              * @property {Element} element
              * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
              * @property {OpenSeadragon.OverlayPlacement} placement
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'add-overlay', {
                 element: element,
@@ -249,7 +249,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
              * @property {Element} element
              * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
              * @property {OpenSeadragon.OverlayPlacement} placement
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'update-overlay', {
                 element: element,
@@ -286,7 +286,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
              * @property {Element} element
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'remove-overlay', {
                 element: element
@@ -312,7 +312,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'clear-overlay', {} );
         }
@@ -512,7 +512,7 @@ function updateViewport( drawer ) {
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         drawer.viewer.raiseEvent( 'update-viewport', {} );
     }
@@ -701,7 +701,7 @@ function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVi
          * @property {Object} bottomright
          * @property {Object} currenttime
          * @property {Object} best
-         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         drawer.viewer.raiseEvent( 'update-level', {
             havedrawn: haveDrawn,
@@ -772,7 +772,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
          * @property {Object} tile
-         * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         drawer.viewer.raiseEvent( 'update-tile', {
             tile: tile
@@ -1294,7 +1294,7 @@ function drawTiles( drawer, lastDrawn ){
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
              * @property {Object} tile
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             drawer.viewer.raiseEvent( 'tile-drawn', {
                 tile: tile

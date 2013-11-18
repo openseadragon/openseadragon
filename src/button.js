@@ -187,7 +187,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
             } else if ( !event.buttonDownAny ) {
@@ -203,7 +203,7 @@ $.Button = function( options ) {
              * @type {object}
              * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
              * @property {Object} originalEvent - The original DOM event.
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
@@ -217,7 +217,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
             }
@@ -231,7 +231,7 @@ $.Button = function( options ) {
              * @type {object}
              * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
              * @property {Object} originalEvent - The original DOM event.
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
         },
@@ -244,7 +244,7 @@ $.Button = function( options ) {
              * @type {object}
              * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
              * @property {Object} originalEvent - The original DOM event.
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
         },
@@ -258,7 +258,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
             } else if ( event.insideElementPressed ) {
@@ -276,7 +276,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent("click", { originalEvent: event.originalEvent });
             }
@@ -291,7 +291,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
                 /***
@@ -300,7 +300,7 @@ $.Button = function( options ) {
                  * @type {object}
                  * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
                  * @property {Object} originalEvent - The original DOM event.
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
                 return false;

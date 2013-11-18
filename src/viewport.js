@@ -128,7 +128,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {OpenSeadragon.Point} contentSize
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'reset-size', {
                 contentSize: contentSize
@@ -182,7 +182,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {Boolean} immediately
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'home', {
                 immediately: immediately
@@ -390,7 +390,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {Boolean} immediately
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
@@ -550,7 +550,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {OpenSeadragon.Point} center
              * @property {Boolean} immediately
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'pan', {
                 center: center,
@@ -602,7 +602,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @property {Number} zoom
              * @property {OpenSeadragon.Point} refPoint
              * @property {Boolean} immediately
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'zoom', {
                 zoom: zoom,
@@ -673,7 +673,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {OpenSeadragon.Point} newContainerSize
              * @property {Boolean} maintain
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'resize', {
                 newContainerSize: newContainerSize,

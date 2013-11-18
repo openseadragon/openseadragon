@@ -244,8 +244,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -269,8 +269,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -289,8 +289,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -314,8 +314,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -334,8 +334,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -358,8 +358,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -382,8 +382,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -406,8 +406,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -426,8 +426,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -446,8 +446,8 @@
          *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -462,8 +462,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -478,8 +478,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */

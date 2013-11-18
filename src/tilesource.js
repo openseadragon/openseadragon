@@ -305,7 +305,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
                  * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                  * @property {String} message
                  * @property {String} source
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
                 return;
@@ -320,7 +320,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
              * @type {object}
              * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
              * @property {Object} tileSource
-             * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( 'ready', { tileSource: readySource } );
         };
@@ -369,7 +369,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
                  * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                  * @property {String} message
                  * @property {String} source
-                 * @property {Object} [userData=null] - Arbitrary subscriber-defined object.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( 'open-failed', {
                     message: msg,
