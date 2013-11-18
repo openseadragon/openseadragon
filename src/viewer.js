@@ -1220,14 +1220,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     goToPage: function( page ){
-        //page is a 1 based index so normalize now
-        //page = page;
         /**
          * @event page
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {Object} page - The page changed to (1-based).
+         * @property {Object} page - The page index to change to.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'page', { page: page } );

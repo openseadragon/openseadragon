@@ -114,11 +114,11 @@
   * @param {Object} options All required and optional settings for instantiating
   *     a new instance of an OpenSeadragon image viewer.
   *
-  * @param {String} options.xmlPath
+  * @param {String} [options.xmlPath=null]
   *     DEPRECATED. A relative path to load a DZI file from the server.
   *     Prefer the newer options.tileSources.
   *
-  * @param {Array|String|Function|Object[]|Array[]|String[]|Function[]} options.tileSources
+  * @param {Array|String|Function|Object[]|Array[]|String[]|Function[]} [options.tileSources=null]
   *     As an Array, the tileSource can hold either be all Objects or mixed
   *     types of Arrays of Objects, String, Function. When a value is a String,
   *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.
@@ -128,15 +128,19 @@
   *     is an Array of objects, it is used to create a
   *     {@link OpenSeadragon.LegacyTileSource}.
   *
-  * @param {Boolean} [options.debugMode=true]
-  *     Currently does nothing. TODO: provide an in-screen panel providing event
-  *     detail feedback.
+  * @param {Object} [options.tileHost=null]
+  *     TODO: Implement this. Currently not used.
   *
-  * @param {Number} [options.animationTime=1.5]
+  * @param {Boolean} [options.debugMode=false]
+  *     TODO: provide an in-screen panel providing event detail feedback.
+  *
+  * @param {String} [options.debugGridColor='#437AB2']
+  *
+  * @param {Number} [options.animationTime=1.2]
   *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
   *     which occur when the image is dragged or zoomed.
   *
-  * @param {Number} [options.blendTime=0.5]
+  * @param {Number} [options.blendTime=0]
   *     Specifies the duration of animation as higher or lower level tiles are
   *     replacing the existing tile.
   *
@@ -155,6 +159,25 @@
   *     provide the effect of very blurry to sharp. It is recommended to change
   *     setting to true for mobile devices.
   *
+  * @param {Number} [options.defaultZoomLevel=0]
+  *     Zoom level to use when image is first opened or the home button is clicked.
+  *     If 0, adjusts to fit viewer.
+  *
+  * @param {Number} [options.degrees=0]
+  *     Initial rotation.
+  *
+  * @param {Number} [options.minZoomLevel=null]
+  *
+  * @param {Number} [options.maxZoomLevel=null]
+  *
+  * @param {Boolean} [options.panHorizontal=true]
+  *     Allow horizontal pan.
+  *
+  * @param {Boolean} [options.panVertical=true]
+  *     Allow vertical pan.
+  *
+  * @param {Boolean} [options.constrainDuringPan=false]
+  *
   * @param {Boolean} [options.wrapHorizontal=false]
   *     Set to true to force the image to wrap horizontally within the viewport.
   *     Useful for maps or images representing the surface of a sphere or cylinder.
@@ -163,16 +186,19 @@
   *     Set to true to force the image to wrap vertically within the viewport.
   *     Useful for maps or images representing the surface of a sphere or cylinder.
   *
-  * @param {Number} [options.minZoomImageRatio=0.8]
+  * @param {Number} [options.minZoomImageRatio=0.9]
   *     The minimum percentage ( expressed as a number between 0 and 1 ) of
   *     the viewport height or width at which the zoom out will be constrained.
   *     Setting it to 0, for example will allow you to zoom out infinitly.
   *
-  * @param {Number} [options.maxZoomPixelRatio=2]
+  * @param {Number} [options.maxZoomPixelRatio=1.1]
   *     The maximum ratio to allow a zoom-in to affect the highest level pixel
   *     ratio. This can be set to Infinity to allow 'infinite' zooming into the
   *     image though it is less effective visually if the HTML5 Canvas is not
   *     availble on the viewing device.
+  *
+  * @param {Number} [options.pixelsPerWheelLine=40]
+  *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
   * @param {Number} [options.visibilityRatio=0.5]
   *     The percentage ( as a number from 0 to 1 ) of the source image which
@@ -181,14 +207,14 @@
   *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
   *     true will provide the effect of an infinitely scrolling viewport.
   *
-  * @param {Number} [options.springStiffness=5.0]
+  * @param {Number} [options.springStiffness=7.0]
   *
   * @param {Number} [options.imageLoaderLimit=0]
   *     The maximum number of image requests to make concurrently.  By default
   *     it is set to 0 allowing the browser to make the maximum number of
   *     image requests in parallel as allowed by the browsers policy.
   *
-  * @param {Number} [options.clickTimeThreshold=200]
+  * @param {Number} [options.clickTimeThreshold=300]
   *     If multiple mouse clicks occurs within less than this number of
   *     milliseconds, treat them as a single click.
   *
@@ -202,7 +228,7 @@
   * @param {Number} [options.zoomPerScroll=1.2]
   *     The "zoom distance" per mouse scroll or touch pinch.
   *
-  * @param {Number} [options.zoomPerSecond=2.0]
+  * @param {Number} [options.zoomPerSecond=1.0]
   *     The number of seconds to animate a single zoom event over.
   *
   * @param {Boolean} [options.showNavigationControl=true]
@@ -215,6 +241,18 @@
   *     Set the ID of a div to hold the navigator minimap.  If one is not specified,
   *     one will be generated and placed on top of the main image
   *
+  * @param {Number} [options.navigatorHeight=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @param {Number} [options.navigatorWidth=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @param {Number} [options.navigatorPosition=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @param {Number} [options.navigatorSizeRatio=0.2]
+  *     Ratio of navigator size to viewer size.
+  *
   * @param {Number} [options.controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -223,8 +261,10 @@
   * @param {Number} [options.controlsFadeLength=1500]
   *     The number of milliseconds to animate the controls fading out.
   *
-  * @param {Number} [options.maxImageCacheCount=100]
+  * @param {Number} [options.maxImageCacheCount=200]
   *     The max number of images we should keep in memory (per drawer).
+  *
+  * @param {Number} [options.timeout=30000]
   *
   * @param {Boolean} [options.useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
@@ -239,6 +279,13 @@
   *     Is the user able to interact with the image via mouse or touch. Default
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
+  *
+  * @param {Boolean} [options.showSequenceControl=true]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     provide buttons for navigating forward and backward through the images.
+  *
+  * @param {Number} [options.initialPage=0]
+  *     If the viewer has been configured with a sequence of tile sources, display this page initially.
   *
   * @param {Boolean} [options.preserveViewport=false]
   *     If the viewer has been configured with a sequence of tile sources, then
@@ -505,8 +552,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     $.extend( $, /** @lends OpenSeadragon */{
         /**
          * These are the default values for the optional settings documented
-         * in the {@link OpenSeadragon} constructor detail.
-         * @name $.DEFAULT_SETTINGS
+         * in the {@link module:OpenSeadragon} constructor detail.
+         * @member DEFAULT_SETTINGS
+         * @memberof OpenSeadragon
          * @static
          */
         DEFAULT_SETTINGS: {
@@ -646,7 +694,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Invokes the the method as if it where a method belonging to the object.
-         * @name $.delegate
          * @function
          * @param {Object} object
          * @param {Function} method
