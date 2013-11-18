@@ -109,7 +109,6 @@ $.Button = function( options ) {
     }, options );
 
     this.element        = options.element   || $.makeNeutralElement( "button" );
-    this.element.href   = this.element.href || '#';
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
