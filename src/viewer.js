@@ -54,7 +54,7 @@ var THIS = {},
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @extends OpenSeadragon.ControlDock
- * @param {Object} options
+ * @param {OpenSeadragon.Options} options
  * @param {String} options.element Id of Element to attach to,
  * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
  * @param {String} options.prefixUrl  Url used to prepend to paths, eg button
