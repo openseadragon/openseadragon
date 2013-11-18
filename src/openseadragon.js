@@ -557,7 +557,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     $.extend( $, /** @lends OpenSeadragon */{
         /**
          * These are the default values for the optional settings documented
-         * in the {@link module:OpenSeadragon} constructor detail.
+         * at {@link OpenSeadragon.Options}.
          * @member DEFAULT_SETTINGS
          * @memberof OpenSeadragon
          * @static
@@ -717,7 +717,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
          * SAFARI, CHROME, and OPERA.
-         * @name $.BROWSERS
          * @static
          */
         BROWSERS: {
@@ -733,7 +732,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Returns a DOM Element for the given id or element.
          * @function
-         * @name OpenSeadragon.getElement
          * @param {String|Element} element Accepts an id or element.
          * @returns {Element} The element with the given id, null, or the element itself.
          */
@@ -748,9 +746,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the position of the upper-left corner of the element.
          * @function
-         * @name OpenSeadragon.getElementPosition
          * @param {Element|String} element - the elemenet we want the position for.
-         * @returns {Point} - the position of the upper left corner of the element.
+         * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element.
          */
         getElementPosition: function( element ) {
             var result = new $.Point(),
@@ -782,9 +779,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the position of the upper-left corner of the element adjusted for current page and/or element scroll.
          * @function
-         * @name OpenSeadragon.getElementOffset
          * @param {Element|String} element - the element we want the position for.
-         * @returns {Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
+         * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
          */
         getElementOffset: function( element ) {
             element = $.getElement( element );
@@ -820,9 +816,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the height and width of the given element.
          * @function
-         * @name OpenSeadragon.getElementSize
          * @param {Element|String} element
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getElementSize: function( element ) {
             element = $.getElement( element );
@@ -837,7 +832,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Returns the CSSStyle object for the given element.
          * @function
-         * @name OpenSeadragon.getElementStyle
          * @param {Element|String} element
          * @returns {CSSStyle}
          */
@@ -858,7 +852,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * specific to IE behavior.  TODO: Deprecate this from the api and
          * use it internally.
          * @function
-         * @name OpenSeadragon.getEvent
          * @param {Event} [event]
          * @returns {Event}
          */
@@ -879,9 +872,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Gets the position of the mouse on the screen for a given event.
          * @function
-         * @name OpenSeadragon.getMousePosition
          * @param {Event} [event]
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getMousePosition: function( event ) {
 
@@ -924,8 +916,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the page's current scroll position.
          * @function
-         * @name OpenSeadragon.getPageScroll
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getPageScroll: function() {
             var docElement  = document.documentElement || {},
@@ -963,8 +954,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Set the page scroll position.
          * @function
-         * @name OpenSeadragon.getPageScroll
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         setPageScroll: function( scroll ) {
             if ( typeof ( window.scrollTo ) !== "undefined" ) {
@@ -1015,8 +1005,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the size of the browsers window.
          * @function
-         * @name OpenSeadragon.getWindowSize
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getWindowSize: function() {
             var docElement = document.documentElement || {},
@@ -1055,7 +1044,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Wraps the given element in a nest of divs so that the element can
          * be easily centered using CSS tables
          * @function
-         * @name OpenSeadragon.makeCenteredNode
          * @param {Element|String} element
          * @returns {Element} outermost wrapper element
          */
@@ -1103,7 +1091,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Creates an easily positionable element of the given type that therefor
          * serves as an excellent container element.
          * @function
-         * @name OpenSeadragon.makeNeutralElement
          * @param {String} tagName
          * @returns {Element}
          */
@@ -1123,7 +1110,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Returns the current milliseconds, using Date.now() if available
-         * @name $.now
          * @function
          */
         now: function( ) {
@@ -1142,7 +1128,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Generally only IE has issues doing this correctly for formats like
          * png.
          * @function
-         * @name OpenSeadragon.makeTransparentImage
          * @param {String} src
          * @returns {Element}
          */
@@ -1191,7 +1176,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Sets the opacity of the specified element.
          * @function
-         * @name OpenSeadragon.setElementOpacity
          * @param {Element|String} element
          * @param {Number} opacity
          * @param {Boolean} [usesAlpha]
@@ -1223,7 +1207,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Add the specified CSS class to the element if not present.
-         * @name $.addClass
          * @function
          * @param {Element|String} element
          * @param {String} className
@@ -1242,7 +1225,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Remove the specified CSS class from the element.
-         * @name $.removeClass
          * @function
          * @param {Element|String} element
          * @param {String} className
@@ -1266,7 +1248,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Adds an event listener for the given element, eventName and handler.
          * @function
-         * @name OpenSeadragon.addEvent
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
@@ -1296,7 +1277,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Remove a given event listener for the given element, event type and
          * handler.
          * @function
-         * @name OpenSeadragon.removeEvent
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
@@ -1326,7 +1306,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Cancels the default browser behavior had the event propagated all
          * the way up the DOM to the window object.
          * @function
-         * @name OpenSeadragon.cancelEvent
          * @param {Event} [event]
          */
         cancelEvent: function( event ) {
@@ -1353,7 +1332,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Stops the propagation of the event up the DOM.
          * @function
-         * @name OpenSeadragon.stopEvent
          * @param {Event} [event]
          */
         stopEvent: function( event ) {
@@ -1385,7 +1363,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * invocation, and each invocation can add additional arguments as well.
          *
          * @function
-         * @name OpenSeadragon.createCallback
          * @param {Object} object
          * @param {Function} method
          * @param [args] any additional arguments are passed as arguments to the
@@ -1417,7 +1394,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Retreives the value of a url parameter from the window.location string.
          * @function
-         * @name OpenSeadragon.getUrlParameter
          * @param {String} key
          * @returns {String} The value of the url parameter or null if no param matches.
          */
@@ -1462,7 +1438,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Makes an AJAX request.
          * @function
-         * @name OpenSeadragon.makeAjaxRequest
          * @param {String} url - the url to request
          * @param {Function} onSuccess - a function to call on a successful response
          * @param {Function} onError - a function to call on when an error occurs
@@ -1527,7 +1502,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Taken from jQuery 1.6.1
          * @function
-         * @name OpenSeadragon.jsonp
          * @param {Object} options
          * @param {String} options.url
          * @param {Function} options.callback
@@ -1608,7 +1582,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Fully deprecated. Will throw an error.
          * @function
-         * @name OpenSeadragon.createFromDZI
          * @deprecated - use OpenSeadragon.Viewer.prototype.open
          */
         createFromDZI: function() {
@@ -1618,7 +1591,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Parses an XML string into a DOM Document.
          * @function
-         * @name OpenSeadragon.parseXml
          * @param {String} string
          * @returns {Document}
          */
@@ -1660,7 +1632,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Reports whether the image format is supported for tiling in this
          * version.
          * @function
-         * @name OpenSeadragon.imageFormatSupported
          * @param {String} [extension]
          * @returns {Boolean}
          */
