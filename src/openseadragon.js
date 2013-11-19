@@ -82,37 +82,40 @@
  */
 
 
+/**
+ * @version  <%= pkg.name %> <%= pkg.version %>
+ *
+ * @file
+ * **OpenSeadragon - Javascript Deep Zooming**
+ *
+ * OpenSeadragon is provides an html interface for creating
+ * deep zoom user interfaces.  The simplest examples include deep
+ * zoom for large resolution images, and complex examples include
+ * zoomable map interfaces driven by SVG files.
+ *
+ */
 
- /**
-  * @version  <%= pkg.name %> <%= pkg.version %>
-  *
-  * @fileOverview
-  * <h2>
-  * <strong>
-  * OpenSeadragon - Javascript Deep Zooming
-  * </strong>
-  * </h2>
-  * <p>
-  * OpenSeadragon is provides an html interface for creating
-  * deep zoom user interfaces.  The simplest examples include deep
-  * zoom for large resolution images, and complex examples include
-  * zoomable map interfaces driven by SVG files.
-  * </p>
-  */
+/**
+ * @module OpenSeadragon
+ *
+ */
 
- /**
-  * @module OpenSeadragon
-  */
+/**
+ * The root namespace for OpenSeadragon.  All utility methods
+ * and classes are defined on or below this namespace.
+ *
+ * @namespace OpenSeadragon
+ *
+ */
+
+
+// Typedefs
 
  /**
   * All required and optional settings for instantiating a new instance of an OpenSeadragon image viewer.
   *
   * @typedef {Object} Options
   * @memberof OpenSeadragon
-  *
-  * @property {String} [xmlPath=null]
-  *     DEPRECATED. A relative path to load a DZI file from the server.
-  *     Prefer the newer Options.tileSources.
   *
   * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
   *     As an Array, the tileSource can hold either be all Objects or mixed
@@ -123,6 +126,25 @@
   *     getUrl( level, x, y ) is implemented by the function. Finally, when it
   *     is an Array of objects, it is used to create a
   *     {@link OpenSeadragon.LegacyTileSource}.
+  *
+  * @property {String} [xmlPath=null]
+  *     **DEPRECATED**. A relative path to load a DZI file from the server.
+  *     Prefer the newer Options.tileSources.
+  *
+  * @property {String} [prefixUrl='/images/']
+  *     Prepends the prefixUrl to navImages paths, which is very useful
+  *     since the default paths are rarely useful for production
+  *     environments.
+  *
+  * @property {OpenSeadragon.NavImages} [navImages]
+  *     An object with a property for each button or other built-in navigation
+  *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
+  *     Each of those in turn provides an image path for each state of the botton
+  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
+  *     image paths, by default assume there is a folder on the servers root path
+  *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
+  *     these paths, prefer setting the option.prefixUrl rather than overriding
+  *     every image path directly through this setting.
   *
   * @property {Object} [tileHost=null]
   *     TODO: Implement this. Currently not used.
@@ -276,6 +298,11 @@
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
   *
+  * @property {Boolean} [navPrevNextWrap=false]
+  *     If the 'previous' button will wrap to the last image when viewing the first
+  *     image and if the 'next' button will wrap to the first image when viewing
+  *     the last image.
+  *
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
   *     provide buttons for navigating forward and backward through the images.
@@ -289,27 +316,76 @@
   *     position.  If preserveViewport is set to true, then the viewport position
   *     is preserved when navigating between images in the sequence.
   *
-  * @property {String} [prefixUrl='/images/']
-  *     Prepends the prefixUrl to navImages paths, which is very useful
-  *     since the default paths are rarely useful for production
-  *     environments.
+  * @property {Boolean} [showReferenceStrip=false]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     display a scrolling strip of image thumbnails for navigating through the images.
   *
-  * @property {Object} [navImages=]
-  *     An object with a property for each button or other built-in navigation
-  *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
-  *     Each of those in turn provides an image path for each state of the botton
-  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
-  *     image paths, by default assume there is a folder on the servers root path
-  *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
-  *     these paths, prefer setting the option.prefixUrl rather than overriding
-  *     every image path directly through this setting.
+  * @property {String} [referenceStripScroll='horizontal']
   *
-  * @property {Boolean} [navPrevNextWrap=false]
-  *     If the 'previous' button will wrap to the last image when viewing the first
-  *     image and if the 'next' button will wrap to the first image when viewing
-  *     the last image.
+  * @property {Element} [referenceStripElement=null]
+  *
+  * @property {Number} [referenceStripHeight=null]
+  *
+  * @property {Number} [referenceStripWidth=null]
+  *
+  * @property {String} [referenceStripPosition='BOTTOM_LEFT']
+  *
+  * @property {Number} [referenceStripSizeRatio=0.2]
+  *
+  * @property {Boolean} [collectionMode=false]
+  *
+  * @property {Number} [collectionRows=3]
+  *
+  * @property {String} [collectionLayout='horizontal']
+  *
+  * @property {Number} [collectionTileSize=800]
   *
   */
+
+/**
+  * The names for the image resources used for the image navigation buttons.
+  *
+  * @typedef {Object} NavImages
+  * @memberof OpenSeadragon
+  *
+  * @property {Object} zoomIn - Images for the zoom-in button.
+  * @property {String} zoomIn.REST
+  * @property {String} zoomIn.GROUP
+  * @property {String} zoomIn.HOVER
+  * @property {String} zoomIn.DOWN
+  *
+  * @property {Object} zoomOut - Images for the zoom-out button.
+  * @property {String} zoomOut.REST
+  * @property {String} zoomOut.GROUP
+  * @property {String} zoomOut.HOVER
+  * @property {String} zoomOut.DOWN
+  *
+  * @property {Object} home - Images for the home button.
+  * @property {String} home.REST
+  * @property {String} home.GROUP
+  * @property {String} home.HOVER
+  * @property {String} home.DOWN
+  *
+  * @property {Object} fullpage - Images for the full-page button.
+  * @property {String} fullpage.REST
+  * @property {String} fullpage.GROUP
+  * @property {String} fullpage.HOVER
+  * @property {String} fullpage.DOWN
+  *
+  * @property {Object} previous - Images for the previous button.
+  * @property {String} previous.REST
+  * @property {String} previous.GROUP
+  * @property {String} previous.HOVER
+  * @property {String} previous.DOWN
+  *
+  * @property {Object} next - Images for the next button.
+  * @property {String} next.REST
+  * @property {String} next.GROUP
+  * @property {String} next.HOVER
+  * @property {String} next.DOWN
+  *
+  */
+
 
  /**
   * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
@@ -317,7 +393,7 @@
   *
   * @function OpenSeadragon
   * @memberof module:OpenSeadragon
-  * @param {OpenSeadragon.Options} options
+  * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
 window.OpenSeadragon = window.OpenSeadragon || function( options ){
@@ -325,14 +401,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     return new OpenSeadragon.Viewer( options );
 
 };
-
-
-/**
- * The root namespace for OpenSeadragon.  All utility methods
- * and classes are defined on or below this namespace.
- *
- * @namespace OpenSeadragon
- */
 
 
 (function( $ ){

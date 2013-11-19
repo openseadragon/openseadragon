@@ -181,6 +181,8 @@ $.Button = function( options ) {
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 /**
+                 * Raised when the cursor enters the Button element.
+                 *
                  * @event enter
                  * @memberof OpenSeadragon.Button
                  * @type {object}
@@ -197,6 +199,8 @@ $.Button = function( options ) {
         focusHandler: function ( event ) {
             this.enterHandler( event );
             /**
+             * Raised when the Button element receives focus.
+             *
              * @event focus
              * @memberof OpenSeadragon.Button
              * @type {object}
@@ -211,6 +215,8 @@ $.Button = function( options ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
+                 * Raised when the cursor leaves the Button element.
+                 *
                  * @event exit
                  * @memberof OpenSeadragon.Button
                  * @type {object}
@@ -225,6 +231,8 @@ $.Button = function( options ) {
         blurHandler: function ( event ) {
             this.exitHandler( event );
             /**
+             * Raised when the Button element loses focus.
+             *
              * @event blur
              * @memberof OpenSeadragon.Button
              * @type {object}
@@ -238,6 +246,8 @@ $.Button = function( options ) {
         pressHandler: function ( event ) {
             inTo( _this, $.ButtonState.DOWN );
             /**
+             * Raised when a mouse button is pressed or touch occurs in the Button element.
+             *
              * @event press
              * @memberof OpenSeadragon.Button
              * @type {object}
@@ -252,6 +262,8 @@ $.Button = function( options ) {
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
                 /**
+                 * Raised when the mouse button is released or touch ends in the Button element.
+                 *
                  * @event release
                  * @memberof OpenSeadragon.Button
                  * @type {object}
@@ -270,6 +282,8 @@ $.Button = function( options ) {
         clickHandler: function( event ) {
             if ( event.quick ) {
                 /**
+                 * Raised when a mouse button is pressed and released or touch is initiated end ended in the Button element within the time and distance threshold.
+                 *
                  * @event click
                  * @memberof OpenSeadragon.Button
                  * @type {object}
@@ -285,6 +299,8 @@ $.Button = function( options ) {
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
             if( 13 === event.keyCode ){
                 /***
+                 * Raised when a mouse button is pressed and released or touch is initiated end ended in the Button element within the time and distance threshold.
+                 *
                  * @event click
                  * @memberof OpenSeadragon.Button
                  * @type {object}
@@ -294,6 +310,8 @@ $.Button = function( options ) {
                  */
                 _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
                 /***
+                 * Raised when the mouse button is released or touch ends in the Button element.
+                 *
                  * @event release
                  * @memberof OpenSeadragon.Button
                  * @type {object}

@@ -54,17 +54,13 @@ var THIS = {},
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @extends OpenSeadragon.ControlDock
- * @param {OpenSeadragon.Options} options
- * @param {String} options.element Id of Element to attach to,
- * @param {String} options.xmlPath  Xpath ( TODO: not sure! ),
- * @param {String} options.prefixUrl  Url used to prepend to paths, eg button
- *  images, etc.
- * @param {OpenSeadragon.Control[]} options.controls Array of OpenSeadragon.Control,
- * @param {OpenSeadragon.Overlay[]} options.overlays Array of OpenSeadragon.Overlay,
- * @param {OpenSeadragon.Control[]} options.overlayControls An Array of ( TODO:
- *  not sure! )
- * @property {OpenSeadragon.Viewport} viewport The viewer's viewport, where you
- *  can access zoom, pan, etc.
+ * @param {OpenSeadragon.Options} [options] - Viewer options. If an {@link OpenSeadragon.Options} object is passed first, all other parameters are ignored. This is the preferred method of creating a viewer.
+ * @param {String} element - Id of Element to attach to,
+ * @param {String} xmlPath - Xpath ( TODO: not sure! ),
+ * @param {String} prefixUrl - Url used to prepend to paths, eg button images, etc.
+ * @param {OpenSeadragon.Control[]} controls - Array of OpenSeadragon.Control,
+ * @param {OpenSeadragon.Overlay[]} overlays - Array of OpenSeadragon.Overlay,
+ * @param {OpenSeadragon.Control[]} overlayControls - An Array of ( TODO: not sure! )
  *
  **/
 $.Viewer = function( options ) {
@@ -126,13 +122,26 @@ $.Viewer = function( options ) {
         //These are originally not part options but declared as members
         //in initialize.  Its still considered idiomatic to put them here
         source:         null,
+        /**
+         * @member {OpenSeadragon.Drawer} drawer
+         * @memberof OpenSeadragon.Viewer#
+         */
         drawer:         null,
         drawers:        [],
+        /**
+         * The viewer's viewport, where you can access zoom, pan, etc.
+         * @member {OpenSeadragon.Viewport} viewport
+         * @memberof OpenSeadragon.Viewer#
+         */
         viewport:       null,
+        /**
+         * @member {OpenSeadragon.Navigator} navigator
+         * @memberof OpenSeadragon.Viewer#
+         */
         navigator:      null,
 
-        //A collection viewport is a seperate viewport used to provide
-        //simultanious rendering of sets of tiless
+        //A collection viewport is a separate viewport used to provide
+        //simultanious rendering of sets of tiles
         collectionViewport:     null,
         collectionDrawer:       null,
 

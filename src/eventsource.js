@@ -39,7 +39,7 @@
  *
  * @callback EventHandler
  * @memberof OpenSeadragon
- * @param {Object} event - See individual events for event properties passed.
+ * @param {Object} event - See individual events for event-specific properties.
  */
 
 
