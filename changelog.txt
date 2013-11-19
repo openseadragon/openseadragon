@@ -54,6 +54,7 @@ OPENSEADRAGON CHANGELOG
     * Viewer.innerTracker.dragHandler: preventDefaultAction == true prevents viewer panning with mouse/touch
     * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
 * Fixed: IE8 error with custom buttons - "Object doesn't support this action" (#279)
+* Support IIIF servers that don't report tile dimensions (#286)
 
 0.9.131:
 

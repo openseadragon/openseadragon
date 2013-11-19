@@ -80,4 +80,9 @@
         testOpen('iiif1_1.json');
     });
 
+        // ----------
+    asyncTest('IIIF No Tiles', function() {
+        testOpen('iiif_no_tiles.json');
+    });
+
 })();
