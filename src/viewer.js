@@ -1136,28 +1136,30 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     goToPage: function( page ){
-        //page is a 1 based index so normalize now
-        //page = page;
-        this.raiseEvent( 'page', { page: page } );
-
-        if( this.tileSources.length > page ){
+        if( page >= 0 && page < this.tileSources.length ){
+            /**
+             * Raised when the page is changed on a viewer configured with multiple image sources.
+             *
+             * @event page
+             * @memberof OpenSeadragon.Viewer
+             * @type {Object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Number} page - The page index.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent( 'page', { page: page } );
 
             THIS[ this.hash ].sequence = page;
 
             this._updateSequenceButtons( page );
 
             this.open( this.tileSources[ page ] );
+
+            if( this.referenceStrip ){
+                this.referenceStrip.setFocus( page );
+            }
         }
 
-        if( $.isFunction( this.onPageChange ) ){
-            this.onPageChange({
-                page: page,
-                viewer: this
-            });
-        }
-        if( this.referenceStrip ){
-            this.referenceStrip.setFocus( page );
-        }
         return this;
     },
 

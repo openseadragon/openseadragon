@@ -567,9 +567,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             collectionMode:         false,
             collectionTileSize:     800,
 
-            //EVENT RELATED CALLBACKS
-            onPageChange:           null,
-
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
