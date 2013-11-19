@@ -51,7 +51,12 @@ $.IIIF1_1TileSource = function( options ){
         throw new Error('IIIF required parameters not provided.');
     }
 
-    options.tileSize = this.tile_width;
+    if ( !(this.tile_width && this.tile_height) ) {
+        // use the short dimension if there aren't tile sizes provided.
+        options.tileSize = Math.min(this.height, this.width);
+    } else {
+        options.tileSize = this.tile_width;
+    }
 
     if (! options.maxLevel ) {
         var mf = -1;
@@ -83,7 +88,6 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, {
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" == data.profile ||
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1" == data.profile ||
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2" == data.profile ||
-            "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level3" == data.profile ||
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html" == data.profile
         );
     },
