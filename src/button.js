@@ -282,7 +282,7 @@ $.Button = function( options ) {
         clickHandler: function( event ) {
             if ( event.quick ) {
                 /**
-                 * Raised when a mouse button is pressed and released or touch is initiated end ended in the Button element within the time and distance threshold.
+                 * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
                  *
                  * @event click
                  * @memberof OpenSeadragon.Button
@@ -299,7 +299,7 @@ $.Button = function( options ) {
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
             if( 13 === event.keyCode ){
                 /***
-                 * Raised when a mouse button is pressed and released or touch is initiated end ended in the Button element within the time and distance threshold.
+                 * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
                  *
                  * @event click
                  * @memberof OpenSeadragon.Button

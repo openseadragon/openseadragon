@@ -118,8 +118,8 @@
   * @memberof OpenSeadragon
   *
   * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
-  *     As an Array, the tileSource can hold either be all Objects or mixed
-  *     types of Arrays of Objects, String, Function. When a value is a String,
+  *     As an Array, the tileSource can hold either Objects or mixed
+  *     types of Arrays of Objects, Strings, or Functions. When a value is a String,
   *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.
   *     When a value is a Function, the function is used to create a new
   *     {@link OpenSeadragon.TileSource} whose abstract method
@@ -241,10 +241,10 @@
   *     point is less than this many pixels, ignore the drag event.
   *
   * @property {Number} [zoomPerClick=2.0]
-  *     The "zoom distance" per mouse click or touch tap.
+  *     The "zoom distance" per mouse click or touch tap. **Note:** Setting this to 1.0 effectively disables the click-to-zoom feature.
   *
   * @property {Number} [zoomPerScroll=1.2]
-  *     The "zoom distance" per mouse scroll or touch pinch.
+  *     The "zoom distance" per mouse scroll or touch pinch. **Note:** Setting this to 1.0 effectively disables the mouse-wheel zoom feature.
   *
   * @property {Number} [zoomPerSecond=1.0]
   *     The number of seconds to animate a single zoom event over.
