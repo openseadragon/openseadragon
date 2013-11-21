@@ -86,12 +86,13 @@
  * @version  <%= pkg.name %> <%= pkg.version %>
  *
  * @file
- * **OpenSeadragon - Javascript Deep Zooming**
- *
- * OpenSeadragon is provides an html interface for creating
+ * <h2><strong>OpenSeadragon - Javascript Deep Zooming</strong></h2>
+ * <p>
+ * OpenSeadragon provides an html interface for creating
  * deep zoom user interfaces.  The simplest examples include deep
  * zoom for large resolution images, and complex examples include
  * zoomable map interfaces driven by SVG files.
+ * </p>
  *
  */
 
@@ -128,7 +129,7 @@
   *     {@link OpenSeadragon.LegacyTileSource}.
   *
   * @property {String} [xmlPath=null]
-  *     **DEPRECATED**. A relative path to load a DZI file from the server.
+  *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
   *     Prefer the newer Options.tileSources.
   *
   * @property {String} [prefixUrl='/images/']
@@ -241,10 +242,10 @@
   *     point is less than this many pixels, ignore the drag event.
   *
   * @property {Number} [zoomPerClick=2.0]
-  *     The "zoom distance" per mouse click or touch tap. **Note:** Setting this to 1.0 effectively disables the click-to-zoom feature.
+  *     The "zoom distance" per mouse click or touch tap. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the click-to-zoom feature.</em>
   *
   * @property {Number} [zoomPerScroll=1.2]
-  *     The "zoom distance" per mouse scroll or touch pinch. **Note:** Setting this to 1.0 effectively disables the mouse-wheel zoom feature.
+  *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature.</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
   *     The number of seconds to animate a single zoom event over.
@@ -763,7 +764,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Invokes the the method as if it where a method belonging to the object.
+         * Invokes the method as if it where a method belonging to the object.
          * @function
          * @param {Object} object
          * @param {Function} method
@@ -780,9 +781,15 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
-         * SAFARI, CHROME, and OPERA.
+         * An enumeration of Browser vendors.
          * @static
+         * @type {Object}
+         * @property {Number} UNKNOWN
+         * @property {Number} IE
+         * @property {Number} FIREFOX
+         * @property {Number} SAFARI
+         * @property {Number} CHROME
+         * @property {Number} OPERA
          */
         BROWSERS: {
             UNKNOWN:    0,
@@ -919,6 +926,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @function
          * @param {Event} [event]
          * @returns {Event}
+         * @deprecated For internal use only
          */
         getEvent: function( event ) {
             if( event ){
@@ -1647,7 +1655,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Fully deprecated. Will throw an error.
          * @function
-         * @deprecated - use OpenSeadragon.Viewer.prototype.open
+         * @deprecated use {@link OpenSeadragon.Viewer#open}
          */
         createFromDZI: function() {
             throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";

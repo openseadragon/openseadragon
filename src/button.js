@@ -35,10 +35,15 @@
 (function( $ ){
 
 /**
- * An enumeration of button states including, REST, GROUP, HOVER, and DOWN
+ * An enumeration of button states
  * @member ButtonState
  * @memberof OpenSeadragon
  * @static
+ * @type {Object}
+ * @property {Number} REST
+ * @property {Number} GROUP
+ * @property {Number} HOVER
+ * @property {Number} DOWN
  */
 $.ButtonState = {
     REST:   0,

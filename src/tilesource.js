@@ -299,6 +299,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
             var $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
                 /**
+                 * Raised when an error occurs loading a TileSource.
+                 *
                  * @event open-failed
                  * @memberof OpenSeadragon.TileSource
                  * @type {object}
@@ -315,6 +317,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
             readySource = new $TileSource( options );
             _this.ready = true;
             /**
+             * Raised when a TileSource is opened and initialized.
+             *
              * @event ready
              * @memberof OpenSeadragon.TileSource
              * @type {object}
@@ -363,6 +367,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
                 }
 
                 /***
+                 * Raised when an error occurs loading a TileSource.
+                 *
                  * @event open-failed
                  * @memberof OpenSeadragon.TileSource
                  * @type {object}

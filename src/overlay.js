@@ -35,12 +35,20 @@
 (function( $ ){
 
     /**
-     * An enumeration of positions that an overlay may be assigned relative
-     * to the viewport including CENTER, TOP_LEFT (default), TOP, TOP_RIGHT,
-     * RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, and LEFT.
+     * An enumeration of positions that an overlay may be assigned relative to the viewport.
      * @member OverlayPlacement
      * @memberof OpenSeadragon
      * @static
+     * @type {Object}
+     * @property {Number} CENTER
+     * @property {Number} TOP_LEFT
+     * @property {Number} TOP
+     * @property {Number} TOP_RIGHT
+     * @property {Number} RIGHT
+     * @property {Number} BOTTOM_RIGHT
+     * @property {Number} BOTTOM
+     * @property {Number} BOTTOM_LEFT
+     * @property {Number} LEFT
      */
     $.OverlayPlacement = {
         CENTER:       0,

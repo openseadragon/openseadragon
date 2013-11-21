@@ -171,6 +171,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {function} onDraw - If supplied the callback is called when the overlay 
      *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
+     * @fires OpenSeadragon.Viewer.event:add-overlay
      */
     addOverlay: function( element, location, placement, onDraw ) {
         var options;
@@ -201,11 +202,13 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         this.updateAgain = true;
         if( this.viewer ){
             /**
+             * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Drawer#addOverlay}).
+             *
              * @event add-overlay
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Element} element
+             * @property {Element} element - The overlay element.
              * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
              * @property {OpenSeadragon.OverlayPlacement} placement
              * @property {?Object} userData - Arbitrary subscriber-defined object.
@@ -229,6 +232,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:update-overlay
      */
     updateOverlay: function( element, location, placement ) {
         var i;
@@ -242,6 +246,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
         if( this.viewer ){
             /**
+             * Raised when an overlay's location or placement changes (see {@link OpenSeadragon.Drawer#updateOverlay}).
+             *
              * @event update-overlay
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -267,6 +273,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {Element|String} element - A reference to the element or an
      *      element id which represent the ovelay content to be removed.
      * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:remove-overlay
      */
     removeOverlay: function( element ) {
         var i;
@@ -281,11 +288,13 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
         if( this.viewer ){
             /**
+             * Raised when an overlay is removed from the viewer (see {@link OpenSeadragon.Drawer#removeOverlay}).
+             *
              * @event remove-overlay
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Element} element
+             * @property {Element} element - The overlay element.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'remove-overlay', {
@@ -300,6 +309,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      and update.
      * @method
      * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:clear-overlay
      */
     clearOverlays: function() {
         while ( this.overlays.length > 0 ) {
@@ -308,6 +318,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
         if( this.viewer ){
             /**
+             * Raised when all overlays are removed from the viewer (see {@link OpenSeadragon.Drawer#clearOverlays}).
+             *
              * @event clear-overlay
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -508,6 +520,8 @@ function updateViewport( drawer ) {
 
     if( drawer.viewer ){
         /**
+         * <em>- Needs documentation -</em>
+         *
          * @event update-viewport
          * @memberof OpenSeadragon.Viewer
          * @type {object}
@@ -689,6 +703,8 @@ function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVi
 
     if( drawer.viewer ){
         /**
+         * <em>- Needs documentation -</em>
+         *
          * @event update-level
          * @memberof OpenSeadragon.Viewer
          * @type {object}
@@ -767,11 +783,13 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
 
     if( drawer.viewer ){
         /**
+         * <em>- Needs documentation -</em>
+         *
          * @event update-tile
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {Object} tile
+         * @property {OpenSeadragon.Tile} tile
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         drawer.viewer.raiseEvent( 'update-tile', {
@@ -1289,11 +1307,13 @@ function drawTiles( drawer, lastDrawn ){
 
         if( drawer.viewer ){
             /**
+             * <em>- Needs documentation -</em>
+             *
              * @event tile-drawn
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Object} tile
+             * @property {OpenSeadragon.Tile} tile
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             drawer.viewer.raiseEvent( 'tile-drawn', {

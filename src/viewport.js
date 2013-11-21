@@ -111,6 +111,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:reset-size
      */
     resetContentSize: function( contentSize ){
         this.contentSize    = contentSize;
@@ -123,6 +124,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
+             * Raised when the viewer's content size is reset (see {@link OpenSeadragon.Viewport#resetContentSize}).
+             *
              * @event reset-size
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -173,10 +176,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @param {Boolean} immediately
+     * @fires OpenSeadragon.Viewer.event:home
      */
     goHome: function( immediately ) {
         if( this.viewer ){
             /**
+             * Raised when the "home" operation occurs (see {@link OpenSeadragon.Viewport#goHome}).
+             *
              * @event home
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -314,6 +320,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
@@ -385,6 +392,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
+             * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
+             *
              * @event constrain
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -532,6 +541,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {OpenSeadragon.Point} center
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:pan
      */
     panTo: function( center, immediately ) {
         if ( immediately ) {
@@ -544,6 +554,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
+             * Raised when the viewport is panned (see {@link OpenSeadragon.Viewport#panTo}).
+             *
              * @event pan
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -564,6 +576,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomBy: function( factor, refPoint, immediately ) {
         if( refPoint instanceof $.Point && !isNaN( refPoint.x ) && !isNaN( refPoint.y ) ) {
@@ -578,6 +591,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
@@ -595,6 +609,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
+             * Raised when the viewport zoom level changes (see {@link OpenSeadragon.Viewport#zoomBy} and {@link OpenSeadragon.Viewport#zoomTo}).
+             *
              * @event zoom
              * @memberof OpenSeadragon.Viewer
              * @type {object}
@@ -649,6 +665,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:resize
      */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
@@ -667,6 +684,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
+             * Raised when the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             *
              * @event resize
              * @memberof OpenSeadragon.Viewer
              * @type {object}
