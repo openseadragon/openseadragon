@@ -526,6 +526,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:pan
      */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
@@ -554,7 +555,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         if( this.viewer ){
             /**
-             * Raised when the viewport is panned (see {@link OpenSeadragon.Viewport#panTo}).
+             * Raised when the viewport is panned (see {@link OpenSeadragon.Viewport#panBy} and {@link OpenSeadragon.Viewport#panTo}).
              *
              * @event pan
              * @memberof OpenSeadragon.Viewer
