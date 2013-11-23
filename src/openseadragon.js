@@ -278,6 +278,30 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
     /**
+     * The OpenSeadragon version.
+     *
+     * @member {Object} version
+     * @memberof OpenSeadragon
+     * @property {String} versionStr - The version number as a string ('major.minor.revision').
+     * @property {Number} major - The major version number.
+     * @property {Number} minor - The minor version number.
+     * @property {Number} revision - The revision number.
+     */
+    $.version = (function () {
+        // The version string ('x.x.x') is filled in by the grunt concat build task
+        //    from the 'version' value in package.json
+        var versionStr = '<%= pkg.version %>',
+            versionComponents = versionStr.split( '.' );
+        return {
+            versionStr: versionStr,
+            major: parseInt( versionComponents[ 0 ] ),
+            minor: parseInt( versionComponents[ 1 ] ),
+            revision: parseInt( versionComponents[ 2 ] )
+        };
+    }());
+
+
+    /**
      * Taken from jquery 1.6.1
      * [[Class]] -> type pairs
      * @private
