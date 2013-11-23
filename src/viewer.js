@@ -1657,14 +1657,16 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    containerSize = _getSafeElemSize( viewer.container );
-    if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-        // maintain image position
-        var oldBounds = viewer.viewport.getBounds();
-        var oldCenter = viewer.viewport.getCenter();
-        resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
-        THIS[ viewer.hash ].prevContainerSize = containerSize;
-        THIS[ viewer.hash ].forceRedraw = true;
+    if ( viewer.pollForResize ) {
+        containerSize = _getSafeElemSize( viewer.container );
+        if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
+            // maintain image position
+            var oldBounds = viewer.viewport.getBounds();
+            var oldCenter = viewer.viewport.getCenter();
+            resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            THIS[ viewer.hash ].prevContainerSize = containerSize;
+            THIS[ viewer.hash ].forceRedraw = true;
+        }
     }
 
     animated = viewer.viewport.update();
