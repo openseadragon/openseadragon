@@ -1657,7 +1657,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    if ( viewer.pollForResize ) {
+    if ( !viewer.noResizePolling ) {
         containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             // maintain image position
