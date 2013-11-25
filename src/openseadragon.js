@@ -285,6 +285,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @property {Number} major - The major version number.
      * @property {Number} minor - The minor version number.
      * @property {Number} revision - The revision number.
+     * @since 1.0.0
      */
     $.version = {
         versionStr: '<%= osdVersion.versionStr %>',
