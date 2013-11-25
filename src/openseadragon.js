@@ -288,9 +288,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      */
     $.version = {
         versionStr: '<%= osdVersion.versionStr %>',
-        major: parseInt('<%= osdVersion.major %>'),
-        minor: parseInt('<%= osdVersion.minor %>'),
-        revision: parseInt('<%= osdVersion.revision %>')
+        major: parseInt( '<%= osdVersion.major %>', 10 ),
+        minor: parseInt( '<%= osdVersion.minor %>', 10 ),
+        revision: parseInt( '<%= osdVersion.revision %>', 10 )
     };
 
 
