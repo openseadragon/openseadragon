@@ -287,18 +287,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @property {Number} minor - The minor version number.
      * @property {Number} revision - The revision number.
      */
-    $.version = (function () {
-        // The version string ('x.x.x') is filled in by the grunt concat build task
-        //    from the 'version' value in package.json
-        var versionStr = '<%= pkg.version %>',
-            versionComponents = versionStr.split( '.' );
-        return {
-            versionStr: versionStr,
-            major: parseInt( versionComponents[ 0 ] ),
-            minor: parseInt( versionComponents[ 1 ] ),
-            revision: parseInt( versionComponents[ 2 ] )
-        };
-    }());
+    $.version = {
+        versionStr: '<%= version.versionStr %>',
+        major: parseInt('<%= version.major %>'),
+        minor: parseInt('<%= version.minor %>'),
+        revision: parseInt('<%= version.revision %>')
+    };
 
 
     /**
@@ -307,18 +301,18 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @private
      */
     var class2type = {
-        '[object Boolean]':     'boolean',
-        '[object Number]':      'number',
-        '[object String]':      'string',
-        '[object Function]':    'function',
-        '[object Array]':       'array',
-        '[object Date]':        'date',
-        '[object RegExp]':      'regexp',
-        '[object Object]':      'object'
-    },
-    // Save a reference to some core methods
-    toString    = Object.prototype.toString,
-    hasOwn      = Object.prototype.hasOwnProperty;
+            '[object Boolean]':     'boolean',
+            '[object Number]':      'number',
+            '[object String]':      'string',
+            '[object Function]':    'function',
+            '[object Array]':       'array',
+            '[object Date]':        'date',
+            '[object RegExp]':      'regexp',
+            '[object Object]':      'object'
+        },
+        // Save a reference to some core methods
+        toString    = Object.prototype.toString,
+        hasOwn      = Object.prototype.hasOwnProperty;
 
     /**
      * Taken from jQuery 1.6.1
