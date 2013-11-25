@@ -55,7 +55,7 @@ $.ButtonState = {
 /**
  * @class Button
  * @classdesc Manages events, hover states for individual buttons, tool-tips, as well
- * as fading the bottons out when the user has not interacted with them
+ * as fading the buttons out when the user has not interacted with them
  * for a specified period.
  *
  * @memberof OpenSeadragon

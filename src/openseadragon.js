@@ -148,7 +148,7 @@
   * @property {OpenSeadragon.NavImages} [navImages]
   *     An object with a property for each button or other built-in navigation
   *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
-  *     Each of those in turn provides an image path for each state of the botton
+  *     Each of those in turn provides an image path for each state of the button
   *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
   *     image paths, by default assume there is a folder on the servers root path
   *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
