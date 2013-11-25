@@ -174,7 +174,7 @@
   *     image though it is less effective visually if the HTML5 Canvas is not
   *     availble on the viewing device.
   *
-  * @param {Boolean} [options.noResizePolling=false]
+  * @param {Boolean} [options.autoResize=true]
   *     Set to true to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
   * @param {Number} [options.visibilityRatio=0.5]
@@ -535,7 +535,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             pixelsPerWheelLine:     40,
-            noResizePolling:        false,
+            autoResize:             true,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:    true,  //SEQUENCE
