@@ -51,6 +51,8 @@ var THIS = {},
  * as arguments and we translate a positional call into an idiomatic call.
  *
  * @class Viewer
+ * @classdesc The main OpenSeadragon viewer class.
+ *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @extends OpenSeadragon.ControlDock
@@ -94,9 +96,36 @@ $.Viewer = function( options ) {
         hash:           options.hash || options.id,
 
         //dom nodes
+        /**
+         * The parent element of this Viewer instance, passed in when the Viewer was created.
+         * @member {Element} element
+         * @memberof OpenSeadragon.Viewer#
+         */
         element:        null,
-        canvas:         null,
+        /**
+         * A &lt;form&gt; element (provided by {@link OpenSeadragon.ControlDock}), the base element of this Viewer instance.<br><br>
+         * Child element of {@link OpenSeadragon.Viewer#element}.
+         * @member {Element} container
+         * @memberof OpenSeadragon.Viewer#
+         */
         container:      null,
+        /**
+         * A &lt;textarea&gt; element, the element where keyboard events are handled.<br><br>
+         * Child element of {@link OpenSeadragon.Viewer#container},
+         * positioned below {@link OpenSeadragon.Viewer#canvas}. 
+         * @member {Element} keyboardCommandArea
+         * @memberof OpenSeadragon.Viewer#
+         */
+        keyboardCommandArea: null,
+        /**
+         * A &lt;div&gt; element, the element where user-input events are handled for panning and zooming.<br><br>
+         * Child element of {@link OpenSeadragon.Viewer#container},
+         * positioned on top of {@link OpenSeadragon.Viewer#keyboardCommandArea}.<br><br>
+         * The parent of {@link OpenSeadragon.Drawer#canvas} instances. 
+         * @member {Element} canvas
+         * @memberof OpenSeadragon.Viewer#
+         */
+        canvas:         null,
 
         //TODO: not sure how to best describe these
         overlays:       [],
@@ -117,13 +146,14 @@ $.Viewer = function( options ) {
         //in initialize.  It's still considered idiomatic to put them here
         source:         null,
         /**
+         * Handles rendering of tiles in the viewer. Created for each TileSource opened.
          * @member {OpenSeadragon.Drawer} drawer
          * @memberof OpenSeadragon.Viewer#
          */
         drawer:         null,
         drawers:        [],
         /**
-         * The viewer's viewport, where you can access zoom, pan, etc.
+         * Handles coordinate-related functionality - zoom, pan, rotation, etc. Created for each TileSource opened.
          * @member {OpenSeadragon.Viewport} viewport
          * @memberof OpenSeadragon.Viewer#
          */
@@ -416,7 +446,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * A deprecated function, renamed to 'open' to match event name and
      * match current 'close' method.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.openTileSource
      * @param {String|Object|Function} See OpenSeadragon.Viewer.prototype.open
      * @return {OpenSeadragon.Viewer} Chainable.
      *
@@ -442,7 +471,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      implementation. If the object has a property which is a function
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.open
      * @param {String|Object|Function}
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
@@ -531,7 +559,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.close
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:close
      */
@@ -580,7 +607,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Function to destroy the viewer and clean up everything created by
      * OpenSeadragon.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.destroy
      */
     destroy: function( ) {
         this.close();
@@ -619,7 +645,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isMouseNavEnabled
      * @return {Boolean}
      */
     isMouseNavEnabled: function () {
@@ -628,7 +653,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setMouseNavEnabled
      * @param {Boolean} enabled - true to enable, false to disable
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:mouse-enabled
@@ -652,7 +676,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.areControlsEnabled
      * @return {Boolean}
      */
     areControlsEnabled: function () {
@@ -669,7 +692,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Shows or hides the controls (e.g. the default navigation buttons).
      *
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setControlsEnabled
      * @param {Boolean} true to show, false to hide.
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:controls-enabled
@@ -697,7 +719,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isFullPage
      * @return {Boolean}
      */
     isFullPage: function () {
@@ -708,7 +729,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Toggle full page mode.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setFullPage
      * @param {Boolean} fullPage
      *      If true, enter full page mode.  If false, exit full page mode.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -908,7 +928,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Toggle full screen mode if supported. Toggle full page mode otherwise.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setFullScreen
      * @param {Boolean} fullScreen
      *      If true, enter full screen mode.  If false, exit full screen mode.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -997,7 +1016,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.isVisible
      * @return {Boolean}
      */
     isVisible: function () {
@@ -1007,7 +1025,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.setVisible
      * @param {Boolean} visible
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:visible
@@ -1031,7 +1048,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.bindSequenceControls
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     bindSequenceControls: function(){
@@ -1117,7 +1133,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.bindStandardControls
      * @return {OpenSeadragon.Viewer} Chainable.
      */
     bindStandardControls: function(){
@@ -1240,7 +1255,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Gets the active page of a sequence
      * @function
-     * @name OpenSeadragon.Viewer.prototype.currentPage
      * @return {Number}
      */
     currentPage: function () {
@@ -1249,7 +1263,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @name OpenSeadragon.Viewer.prototype.goToPage
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:page
      */
@@ -1643,7 +1656,7 @@ function onCanvasClick( event ) {
         this.viewport.applyConstraints();
     }
     /**
-     * Raised when a mouse press/release or touch/remove occurs on the viewer.
+     * Raised when a mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
      * @event canvas-click
      * @memberof OpenSeadragon.Viewer
@@ -1683,7 +1696,7 @@ function onCanvasDrag( event ) {
         }
     }
     /**
-     * Raised when a mouse or touch drag operation occurs in the viewer.
+     * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
      * @event canvas-drag
      * @memberof OpenSeadragon.Viewer
@@ -1710,7 +1723,7 @@ function onCanvasRelease( event ) {
         this.viewport.applyConstraints();
     }
     /**
-     * Raised when the mouse button is released or touch ends in the viewer.
+     * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
      * @event canvas-release
      * @memberof OpenSeadragon.Viewer
@@ -1743,7 +1756,7 @@ function onCanvasScroll( event ) {
         this.viewport.applyConstraints();
     }
     /**
-     * Raised when a scroll event occurs in the viewer (mouse wheel, touch pinch, etc.).
+     * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel, touch pinch, etc.).
      *
      * @event canvas-scroll
      * @memberof OpenSeadragon.Viewer
@@ -1775,7 +1788,7 @@ function onContainerExit( event ) {
         }
     }
     /**
-     * Raised when the cursor leaves the viewer element.
+     * Raised when the cursor leaves the {@link OpenSeadragon.Viewer#container} element.
      *
      * @event container-exit
      * @memberof OpenSeadragon.Viewer
@@ -1805,7 +1818,7 @@ function onContainerRelease( event ) {
         }
     }
     /**
-     * Raised when the mouse button is released or touch ends in the viewer.
+     * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#container} element.
      *
      * @event container-release
      * @memberof OpenSeadragon.Viewer
@@ -1831,7 +1844,7 @@ function onContainerEnter( event ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
     /**
-     * Raised when the cursor enters the viewer element.
+     * Raised when the cursor enters the {@link OpenSeadragon.Viewer#container} element.
      *
      * @event container-enter
      * @memberof OpenSeadragon.Viewer

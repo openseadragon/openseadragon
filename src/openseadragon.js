@@ -118,6 +118,14 @@
   * @typedef {Object} Options
   * @memberof OpenSeadragon
   *
+  * @property {String} id
+  *     Id of the element to append the viewer's container element to. If not provided, the 'element' property must be provided.
+  *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
+  *
+  * @property {Element} element
+  *     The element to append the viewer's container element to. If not provided, the 'id' property must be provided.
+  *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
+  *
   * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
   *     As an Array, the tileSource can hold either Objects or mixed
   *     types of Arrays of Objects, Strings, or Functions. When a value is a String,
@@ -625,11 +633,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     $.extend( $, /** @lends OpenSeadragon */{
         /**
-         * These are the default values for the optional settings documented
-         * at {@link OpenSeadragon.Options}.
-         * @member DEFAULT_SETTINGS
-         * @memberof OpenSeadragon
+         * The default values for the optional settings documented at {@link OpenSeadragon.Options}.
          * @static
+         * @type {Object}
          */
         DEFAULT_SETTINGS: {
             //DATA SOURCE DETAILS
@@ -764,10 +770,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Invokes the method as if it where a method belonging to the object.
+         * Returns a function which invokes the method as if it were a method belonging to the object.
          * @function
          * @param {Object} object
          * @param {Function} method
+         * @returns {Function}
          */
         delegate: function( object, method ) {
             return function(){
@@ -921,12 +928,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Gets the latest event, really only useful internally since its
-         * specific to IE behavior.  TODO: Deprecate this from the api and
-         * use it internally.
+         * specific to IE behavior.
          * @function
          * @param {Event} [event]
          * @returns {Event}
          * @deprecated For internal use only
+         * @private
          */
         getEvent: function( event ) {
             if( event ){
@@ -1717,12 +1724,14 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
     /**
-     * The current browser vendor, version, and related information regarding
-     * detected features. Features include *'alpha'* - Does the browser support image alpha
-     *  transparency.<br/>
+     * The current browser vendor, version, and related information regarding detected features.
      * @member {Object} Browser
      * @memberof OpenSeadragon
      * @static
+     * @type {Object}
+     * @property {OpenSeadragon.BROWSERS} vendor - One of the {@link OpenSeadragon.BROWSERS} enumeration values.
+     * @property {Number} version
+     * @property {Boolean} alpha - Does the browser support image alpha transparency.
      */
     $.Browser = {
         vendor:     $.BROWSERS.UNKNOWN,

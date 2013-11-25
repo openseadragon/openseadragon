@@ -37,6 +37,9 @@
 
 /**
  * @class Viewport
+ * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.) for an {@link OpenSeadragon.Viewer}.
+ * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#viewport}).
+ *
  * @memberof OpenSeadragon
  */
 $.Viewport = function( options ) {

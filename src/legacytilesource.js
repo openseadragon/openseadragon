@@ -35,13 +35,14 @@
 (function( $ ){
 
 /**
- * The LegacyTileSource allows simple, traditional image pyramids to be loaded
+ * @class LegacyTileSource
+ * @classdesc The LegacyTileSource allows simple, traditional image pyramids to be loaded
  * into an OpenSeadragon Viewer.  Basically, this translates to the historically
  * common practice of starting with a 'master' image, maybe a tiff for example,
  * and generating a set of 'service' images like one or more thumbnails, a medium
  * resolution image and a high resolution image in standard web formats like
  * png or jpg.
- * @class LegacyTileSource
+ *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Array} levels An array of file descriptions, each is an object with

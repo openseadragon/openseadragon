@@ -42,14 +42,6 @@
  *  spring is not in motion initally by default.
  * @param {Number} options.springStiffness - Spring stiffness.
  * @param {Number} options.animationTime - Animation duration per spring.
- *
- * @property {Number} initial - Initial value of spring, default to 0 so
- *  spring is not in motion initally by default.
- * @property {Number} springStiffness - Spring stiffness.
- * @property {Number} animationTime - Animation duration per spring.
- * @property {Object} current
- * @property {Number} start
- * @property {Number} target
  */
 $.Spring = function( options ) {
     var args = arguments;
@@ -61,9 +53,19 @@ $.Spring = function( options ) {
             initial: args.length && typeof ( args[ 0 ] ) == "number" ?
                 args[ 0 ] :
                 0,
+            /**
+             * Spring stiffness.
+             * @member {Number} springStiffness
+             * @memberof OpenSeadragon.Spring#
+             */
             springStiffness: args.length > 1 ?
                 args[ 1 ].springStiffness :
                 5.0,
+            /**
+             * Animation duration per spring.
+             * @member {Number} animationTime
+             * @memberof OpenSeadragon.Spring#
+             */
             animationTime: args.length > 1 ?
                 args[ 1 ].animationTime :
                 1.5
@@ -72,7 +74,12 @@ $.Spring = function( options ) {
 
     $.extend( true, this, options);
 
-
+    /**
+     * @member {Object} current
+     * @memberof OpenSeadragon.Spring#
+     * @property {Number} value
+     * @property {Number} time
+     */
     this.current = {
         value: typeof ( this.initial ) == "number" ?
             this.initial :
@@ -80,11 +87,23 @@ $.Spring = function( options ) {
         time:  $.now() // always work in milliseconds
     };
 
+    /**
+     * @member {Object} start
+     * @memberof OpenSeadragon.Spring#
+     * @property {Number} value
+     * @property {Number} time
+     */
     this.start = {
         value: this.current.value,
         time:  this.current.time
     };
 
+    /**
+     * @member {Object} target
+     * @memberof OpenSeadragon.Spring#
+     * @property {Number} value
+     * @property {Number} time
+     */
     this.target = {
         value: this.current.value,
         time:  this.current.time

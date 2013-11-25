@@ -49,27 +49,13 @@ var DEVICE_SCREEN       = $.getWindowSize(),
 
 /**
  * @class Drawer
+ * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}. 
+ * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#drawer}).
+ *
  * @memberof OpenSeadragon
  * @param {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
  * @param {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
- * @param {Element} element - Reference to Viewer 'canvas'.
- * @property {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
- * @property {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
- * @property {Element} container - Reference to Viewer 'canvas'.
- * @property {Element|Canvas} canvas - TODO
- * @property {CanvasContext} context - TODO
- * @property {Object} config - Reference to Viewer config.
- * @property {Number} downloading - How many images are currently being loaded in parallel.
- * @property {Number} normHeight - Ratio of zoomable image height to width.
- * @property {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
- * @property {Array} tilesLoaded - An unordered list of Tiles with loaded images.
- * @property {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
- * @property {Array} overlays - An unordered list of Overlays added.
- * @property {Array} lastDrawn - An unordered list of Tiles drawn last frame.
- * @property {Number} lastResetTime - Last time for which the drawer was reset.
- * @property {Boolean} midUpdate - Is the drawer currently updating the viewport?
- * @property {Boolean} updateAgain - Does the drawer need to update the viewort again?
- * @property {Element} element - DEPRECATED Alias for container.
+ * @param {Element} element - Parent element.
  */
 $.Drawer = function( options ) {
 
@@ -80,9 +66,9 @@ $.Drawer = function( options ) {
 
     if( !$.isPlainObject( options ) ){
         options = {
-            source:     args[ 0 ],
-            viewport:   args[ 1 ],
-            element:    args[ 2 ]
+            source:     args[ 0 ], // Reference to Viewer tile source.
+            viewport:   args[ 1 ], // Reference to Viewer viewport.
+            element:    args[ 2 ]  // Parent element.
         };
     }
 
@@ -90,18 +76,18 @@ $.Drawer = function( options ) {
 
         //internal state properties
         viewer:         null,
-        downloading:    0,
-        tilesMatrix:    {},
-        tilesLoaded:    [],
-        coverage:       {},
-        lastDrawn:      [],
-        lastResetTime:  0,
-        midUpdate:      false,
-        updateAgain:    true,
+        downloading:    0,     // How many images are currently being loaded in parallel.
+        tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
+        tilesLoaded:    [],    // An unordered list of Tiles with loaded images.
+        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
+        lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
+        lastResetTime:  0,     // Last time for which the drawer was reset.
+        midUpdate:      false, // Is the drawer currently updating the viewport?
+        updateAgain:    true,  // Does the drawer need to update the viewort again?
 
 
         //internal state / configurable settings
-        overlays:           [],
+        overlays:           [], // An unordered list of Overlays added.
         collectionOverlays: {},
 
         //configurable settings
@@ -120,10 +106,33 @@ $.Drawer = function( options ) {
     }, options );
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
+    /**
+     * The parent element of this Drawer instance, passed in when the Drawer was created.
+     * The parent of {@link OpenSeadragon.Drawer#canvas}.
+     * @member {Element} container
+     * @memberof OpenSeadragon.Drawer#
+     */
     this.container  = $.getElement( this.element );
+    /**
+     * A &lt;canvas&gt; element if the browser supports them, otherwise a &lt;div&gt; element.
+     * Child element of {@link OpenSeadragon.Drawer#container}.
+     * @member {Element} canvas
+     * @memberof OpenSeadragon.Drawer#
+     */
     this.canvas     = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
+    /**
+     * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
+     * @member {Object} context
+     * @memberof OpenSeadragon.Drawer#
+     */
     this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
+    // Ratio of zoomable image height to width.
     this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
+    /**
+     * @member {Element} element
+     * @memberof OpenSeadragon.Drawer#
+     * @deprecated Alias for {@link OpenSeadragon.Drawer#container}.
+     */
     this.element    = this.container;
 
     // We force our container to ltr because our drawing math doesn't work in rtl.
@@ -447,6 +456,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         return loading;
     },
 
+    /**
+     * Returns whether rotation is supported or not.
+     * @method
+     * @return {Boolean} True if rotation is supported.
+     */
     canRotate: function() {
         return this.useCanvas;
     }

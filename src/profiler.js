@@ -35,9 +35,10 @@
 (function( $ ){
 
 /**
- * A utility class useful for developers to establish baseline performance
- * metrics of rendering routines.
  * @class Profiler
+ * @classdesc A utility class useful for developers to establish baseline performance
+ * metrics of rendering routines.
+ *
  * @memberof OpenSeadragon
  * @property {Boolean} midUpdate
  * @property {Number} numUpdates

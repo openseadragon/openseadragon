@@ -35,17 +35,17 @@
 (function( $ ){
 
 /**
- * The Navigator provides a small view of the current image as fixed
+ * @class Navigator
+ * @classdesc The Navigator provides a small view of the current image as fixed
  * while representing the viewport as a moving box serving as a frame
  * of reference in the larger viewport as to which portion of the image
  * is currently being examined.  The navigator's viewport can be interacted
  * with using the keyboard or the mouse.
- * @class Navigator
+ *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.Viewer
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {String} options.viewerId
  */
 $.Navigator = function( options ){
 

@@ -43,11 +43,11 @@
 (function( $ ){
 
 /**
- * A tilesource implementation for Tiled Map Services (TMS).
+ * @class TmsTileSource
+ * @classdesc A tilesource implementation for Tiled Map Services (TMS).
  * TMS tile scheme ( [ as supported by OpenLayers ] is described here
  * ( http://openlayers.org/dev/examples/tms.html ).
  *
- * @class TmsTileSource
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Number|Object} width - the pixel width of the image or the idiomatic

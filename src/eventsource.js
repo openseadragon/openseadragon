@@ -44,10 +44,9 @@
 
 
 /**
- * For use by classes which want to support custom, non-browser events.
- * TODO: Add a method 'one' which automatically unbinds a listener after 
- *       the first triggered event that matches.
  * @class EventSource
+ * @classdesc For use by classes which want to support custom, non-browser events.
+ *
  * @memberof OpenSeadragon
  */
 $.EventSource = function() {
@@ -55,6 +54,8 @@ $.EventSource = function() {
 };
 
 $.EventSource.prototype = /** @lends OpenSeadragon.EventSource.prototype */{
+
+    // TODO: Add a method 'one' which automatically unbinds a listener after the first triggered event that matches.
 
     /**
      * Add an event handler for a given event.

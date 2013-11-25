@@ -35,6 +35,8 @@
 (function( $ ){
     /**
      * @class ControlDock
+     * @classdesc Provides a container element (a &lt;form&gt; element) with support for the layout of control elements.
+     *
      * @memberof OpenSeadragon
      */
     $.ControlDock = function( options ){

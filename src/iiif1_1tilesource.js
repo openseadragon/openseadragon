@@ -35,10 +35,10 @@
 (function( $ ){
 
 /**
- * A client implementation of the International Image Interoperability
+ * @class IIIF1_1TileSource
+ * @classdesc A client implementation of the International Image Interoperability
  * Format: Image API 1.1
  *
- * @class IIIF1_1TileSource
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @see http://library.stanford.edu/iiif/image-api/

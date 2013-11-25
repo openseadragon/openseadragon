@@ -45,53 +45,130 @@
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
- *
- * @property {Number} level The zoom level this tile belongs to.
- * @property {Number} x The vector component 'x'.
- * @property {Number} y The vector component 'y'.
- * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized
- *      coordinates
- * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has
- *      this tile failed to load?
- * @property {String} url The URL of this tile's image.
- * @property {Boolean} loaded Is this tile loaded?
- * @property {Boolean} loading Is this tile loading?
- * @property {Element} element The HTML div element for this tile
- * @property {Element} imgElement The HTML img element for this tile
- * @property {Image} image The Image object for this tile
- * @property {String} style The alias of this.element.style.
- * @property {String} position This tile's position on screen, in pixels.
- * @property {String} size This tile's size on screen, in pixels
- * @property {String} blendStart The start time of this tile's blending
- * @property {String} opacity The current opacity this tile should be.
- * @property {String} distance The distance of this tile to the viewport center
- * @property {String} visibility The visibility score of this tile.
- * @property {Boolean} beingDrawn Whether this tile is currently being drawn
- * @property {Number} lastTouchTime Timestamp the tile was last touched.
  */
 $.Tile = function(level, x, y, bounds, exists, url) {
+    /**
+     * The zoom level this tile belongs to.
+     * @member {Number} level
+     * @memberof OpenSeadragon.Tile#
+     */
     this.level   = level;
+    /**
+     * The vector component 'x'.
+     * @member {Number} x
+     * @memberof OpenSeadragon.Tile#
+     */
     this.x       = x;
+    /**
+     * The vector component 'y'.
+     * @member {Number} y
+     * @memberof OpenSeadragon.Tile#
+     */
     this.y       = y;
+    /**
+     * Where this tile fits, in normalized coordinates
+     * @member {OpenSeadragon.Point} bounds
+     * @memberof OpenSeadragon.Tile#
+     */
     this.bounds  = bounds;
+    /**
+     * Is this tile a part of a sparse image? Also has this tile failed to load?
+     * @member {Boolean} exists
+     * @memberof OpenSeadragon.Tile#
+     */
     this.exists  = exists;
+    /**
+     * The URL of this tile's image.
+     * @member {String} url
+     * @memberof OpenSeadragon.Tile#
+     */
     this.url     = url;
+    /**
+     * Is this tile loaded?
+     * @member {Boolean} loaded
+     * @memberof OpenSeadragon.Tile#
+     */
     this.loaded  = false;
+    /**
+     * Is this tile loading?
+     * @member {Boolean} loading
+     * @memberof OpenSeadragon.Tile#
+     */
     this.loading = false;
 
+    /**
+     * The HTML div element for this tile
+     * @member {Element} element
+     * @memberof OpenSeadragon.Tile#
+     */
     this.element    = null;
+    /**
+     * The HTML img element for this tile.
+     * @member {Element} imgElement
+     * @memberof OpenSeadragon.Tile#
+     */
     this.imgElement = null;
+    /**
+     * The Image object for this tile.
+     * @member {Object} image
+     * @memberof OpenSeadragon.Tile#
+     */
     this.image      = null;
 
+    /**
+     * The alias of this.element.style.
+     * @member {String} style
+     * @memberof OpenSeadragon.Tile#
+     */
     this.style      = null;
+    /**
+     * This tile's position on screen, in pixels.
+     * @member {OpenSeadragon.Point} position
+     * @memberof OpenSeadragon.Tile#
+     */
     this.position   = null;
+    /**
+     * This tile's size on screen, in pixels.
+     * @member {OpenSeadragon.Point} size
+     * @memberof OpenSeadragon.Tile#
+     */
     this.size       = null;
+    /**
+     * The start time of this tile's blending.
+     * @member {Number} blendStart
+     * @memberof OpenSeadragon.Tile#
+     */
     this.blendStart = null;
+    /**
+     * The current opacity this tile should be.
+     * @member {Number} opacity
+     * @memberof OpenSeadragon.Tile#
+     */
     this.opacity    = null;
+    /**
+     * The distance of this tile to the viewport center.
+     * @member {Number} distance
+     * @memberof OpenSeadragon.Tile#
+     */
     this.distance   = null;
+    /**
+     * The visibility score of this tile.
+     * @member {Number} visibility
+     * @memberof OpenSeadragon.Tile#
+     */
     this.visibility = null;
 
+    /**
+     * Whether this tile is currently being drawn.
+     * @member {Boolean} beingDrawn
+     * @memberof OpenSeadragon.Tile#
+     */
     this.beingDrawn     = false;
+    /**
+     * Timestamp the tile was last touched.
+     * @member {Number} lastTouchTime
+     * @memberof OpenSeadragon.Tile#
+     */
     this.lastTouchTime  = 0;
 };
 

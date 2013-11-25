@@ -46,18 +46,19 @@
         THIS           = {};
 
     /**
-     * The MouseTracker allows other classes to set handlers for common mouse
-     * events on a specific element like, 'enter', 'exit', 'press', 'release',
-     * 'scroll', 'click', and 'drag'.
      * @class MouseTracker
+     * @classdesc Provides simplified handling of common mouse, touch, and keyboard
+     * events on a specific element, like 'enter', 'exit', 'press', 'release',
+     * 'scroll', 'click', and 'drag'.
+     *
      * @memberof OpenSeadragon
      * @param {Object} options
      *      Allows configurable properties to be entirely specified by passing
      *      an options object to the constructor.  The constructor also supports
-     *      the original positional arguments 'elements', 'clickTimeThreshold',
+     *      the original positional arguments 'element', 'clickTimeThreshold',
      *      and 'clickDistThreshold' in that order.
      * @param {Element|String} options.element
-     *      A reference to an element or an element id for which the mouse
+     *      A reference to an element or an element id for which the mouse/touch/key
      *      events will be monitored.
      * @param {Number} options.clickTimeThreshold
      *      The number of milliseconds within which multiple mouse clicks
@@ -65,43 +66,33 @@
      * @param {Number} options.clickDistThreshold
      *      The distance between mouse click within multiple mouse clicks
      *      will be treated as a single event.
-     * @param {Number} options.stopDelay
+     * @param {Number} [options.stopDelay=50]
      *      The number of milliseconds without mouse move before the mouse stop
      *      event is fired.
-     * @param {OpenSeadragon.EventHandler} options.enterHandler
+     * @param {OpenSeadragon.EventHandler} [options.enterHandler=null]
      *      An optional handler for mouse enter.
-     * @param {OpenSeadragon.EventHandler} options.exitHandler
+     * @param {OpenSeadragon.EventHandler} [options.exitHandler=null]
      *      An optional handler for mouse exit.
-     * @param {OpenSeadragon.EventHandler} options.pressHandler
+     * @param {OpenSeadragon.EventHandler} [options.pressHandler=null]
      *      An optional handler for mouse press.
-     * @param {OpenSeadragon.EventHandler} options.releaseHandler
+     * @param {OpenSeadragon.EventHandler} [options.releaseHandler=null]
      *      An optional handler for mouse release.
-     * @param {OpenSeadragon.EventHandler} options.moveHandler
+     * @param {OpenSeadragon.EventHandler} [options.moveHandler=null]
      *      An optional handler for mouse move.
-     * @param {OpenSeadragon.EventHandler} options.scrollHandler
+     * @param {OpenSeadragon.EventHandler} [options.scrollHandler=null]
      *      An optional handler for mouse scroll.
-     * @param {OpenSeadragon.EventHandler} options.clickHandler
+     * @param {OpenSeadragon.EventHandler} [options.clickHandler=null]
      *      An optional handler for mouse click.
-     * @param {OpenSeadragon.EventHandler} options.dragHandler
+     * @param {OpenSeadragon.EventHandler} [options.dragHandler=null]
      *      An optional handler for mouse drag.
-     * @param {OpenSeadragon.EventHandler} options.keyHandler
+     * @param {OpenSeadragon.EventHandler} [options.keyHandler=null]
      *      An optional handler for keypress.
-     * @param {OpenSeadragon.EventHandler} options.focusHandler
+     * @param {OpenSeadragon.EventHandler} [options.focusHandler=null]
      *      An optional handler for focus.
-     * @param {OpenSeadragon.EventHandler} options.blurHandler
+     * @param {OpenSeadragon.EventHandler} [options.blurHandler=null]
      *      An optional handler for blur.
      * @param {Object} [options.userData=null]
      *      Arbitrary object to be passed unchanged to any attached handler methods.
-     * @property {Number} hash
-     *      An unique hash for this tracker.
-     * @property {Element} element
-     *      The element for which mouse event are being monitored.
-     * @property {Number} clickTimeThreshold
-     *      The number of milliseconds within which mutliple mouse clicks
-     *      will be treated as a single event.
-     * @property {Number} clickDistThreshold
-     *      The distance between mouse click within multiple mouse clicks
-     *      will be treated as a single event.
      */
     $.MouseTracker = function ( options ) {
 
@@ -115,9 +106,24 @@
             };
         }
 
-        this.hash               = Math.random();
+        this.hash               = Math.random(); // An unique hash for this tracker.
+        /**
+         * The element for which mouse/touch/key events are being monitored.
+         * @member {Element} element
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.element            = $.getElement( options.element );
+        /**
+         * The number of milliseconds within which mutliple mouse clicks will be treated as a single event.
+         * @member {Number} clickTimeThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.clickTimeThreshold = options.clickTimeThreshold;
+        /**
+         * The distance between mouse click within multiple mouse clicks will be treated as a single event.
+         * @member {Number} clickDistThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.clickDistThreshold = options.clickDistThreshold;
         this.userData           = options.userData       || null;
         this.stopDelay          = options.stopDelay      || 50;

@@ -56,6 +56,11 @@ var THIS = {};
  *          require better abstraction at those points in order to effeciently
  *          reuse those paradigms.
  */
+/**
+ * @class ReferenceStrip
+ * @memberof OpenSeadragon
+ * @param {Object} options
+ */
 $.ReferenceStrip = function ( options ) {
 
     var _this       = this,
@@ -220,8 +225,11 @@ $.ReferenceStrip = function ( options ) {
 
 };
 
-$.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototype, {
+$.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.ReferenceStrip.prototype */{
 
+    /**
+     * @function
+     */
     setFocus: function ( page ) {
         var element      = $.getElement( this.element.id + '-' + page ),
             viewerSize   = $.getElementSize( this.viewer.canvas ),
@@ -268,9 +276,9 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
             onStripEnter.call( this, { eventSource: this.innerTracker } );
         }
     },
+
     /**
      * @function
-     * @name OpenSeadragon.ReferenceStrip.prototype.update
      */
     update: function () {
         if ( THIS[this.id].animating ) {

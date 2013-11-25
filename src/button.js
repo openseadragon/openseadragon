@@ -53,39 +53,30 @@ $.ButtonState = {
 };
 
 /**
- * Manages events, hover states for individual buttons, tool-tips, as well
+ * @class Button
+ * @classdesc Manages events, hover states for individual buttons, tool-tips, as well
  * as fading the bottons out when the user has not interacted with them
  * for a specified period.
- * @class Button
+ *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {String} options.tooltip Provides context help for the button we the
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
+ * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
- * @param {String} options.srcRest URL of image to use in 'rest' state
- * @param {String} options.srcGroup URL of image to use in 'up' state
- * @param {String} options.srcHover URL of image to use in 'hover' state
- * @param {String} options.srcDown URL of image to use in 'down' state
- * @param {Element} [options.element] Element to use as a container for the
- *  button.
- * @property {String} tooltip Provides context help for the button we the
- *  user hovers over it.
- * @property {String} srcRest URL of image to use in 'rest' state
- * @property {String} srcGroup URL of image to use in 'up' state
- * @property {String} srcHover URL of image to use in 'hover' state
- * @property {String} srcDown URL of image to use in 'down' state
- * @property {Object} config Configurable settings for this button. DEPRECATED.
- * @property {Element} [element] Element to use as a container for the
- *  button.
- * @property {Number} fadeDelay How long to wait before fading
- * @property {Number} fadeLength How long should it take to fade the button.
- * @property {Number} fadeBeginTime When the button last began to fade.
- * @property {Boolean} shouldFade Whether this button should fade after user
- *  stops interacting with the viewport.
-    this.fadeDelay      = 0;      // begin fading immediately
-    this.fadeLength     = 2000;   // fade over a period of 2 seconds
-    this.fadeBeginTime  = null;
-    this.shouldFade     = false;
+ * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
+ * @param {String} [options.srcGroup=null] URL of image to use in 'up' state.
+ * @param {String} [options.srcHover=null] URL of image to use in 'hover' state.
+ * @param {String} [options.srcDown=null] URL of image to use in 'down' state.
+ * @param {Number} [options.fadeDelay=0] How long to wait before fading.
+ * @param {Number} [options.fadeLength=2000] How long should it take to fade the button.
+ * @param {OpenSeadragon.EventHandler} [options.onPress=null] Event handler callback for {@link OpenSeadragon.Button.event:press}.
+ * @param {OpenSeadragon.EventHandler} [options.onRelease=null] Event handler callback for {@link OpenSeadragon.Button.event:release}.
+ * @param {OpenSeadragon.EventHandler} [options.onClick=null] Event handler callback for {@link OpenSeadragon.Button.event:click}.
+ * @param {OpenSeadragon.EventHandler} [options.onEnter=null] Event handler callback for {@link OpenSeadragon.Button.event:enter}.
+ * @param {OpenSeadragon.EventHandler} [options.onExit=null] Event handler callback for {@link OpenSeadragon.Button.event:exit}.
+ * @param {OpenSeadragon.EventHandler} [options.onFocus=null] Event handler callback for {@link OpenSeadragon.Button.event:focus}.
+ * @param {OpenSeadragon.EventHandler} [options.onBlur=null] Event handler callback for {@link OpenSeadragon.Button.event:blur}.
  */
 $.Button = function( options ) {
 
@@ -102,9 +93,17 @@ $.Button = function( options ) {
         srcDown:            null,
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
-        // begin fading immediately
+        /**
+         * How long to wait before fading.
+         * @member {Number} fadeDelay
+         * @memberof OpenSeadragon.Button#
+         */
         fadeDelay:          0,
-        // fade over a period of 2 seconds
+        /**
+         * How long should it take to fade the button.
+         * @member {Number} fadeLength
+         * @memberof OpenSeadragon.Button#
+         */
         fadeLength:         2000,
         onPress:            null,
         onRelease:          null,
@@ -116,6 +115,11 @@ $.Button = function( options ) {
 
     }, options );
 
+    /**
+     * The button element.
+     * @member {Element} element
+     * @memberof OpenSeadragon.Button#
+     */
     this.element        = options.element   || $.makeNeutralElement( "button" );
 
     //if the user has specified the element to bind the control to explicitly
@@ -167,15 +171,27 @@ $.Button = function( options ) {
     this.addHandler( "focus",     this.onFocus );
     this.addHandler( "blur",      this.onBlur );
 
+    /**
+     * The button's current state.
+     * @member {OpenSeadragon.ButtonState} currentState
+     * @memberof OpenSeadragon.Button#
+     */
     this.currentState = $.ButtonState.GROUP;
 
+    // When the button last began to fade.
     this.fadeBeginTime  = null;
+    // Whether this button should fade after user stops interacting with the viewport.
     this.shouldFade     = false;
 
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
     this.element.title          = this.tooltip;
 
+    /**
+     * Tracks mouse/touch/key events on the button.
+     * @member {OpenSeadragon.MouseTracker} tracker
+     * @memberof OpenSeadragon.Button#
+     */
     this.tracker = new $.MouseTracker({
 
         element:            this.element,
