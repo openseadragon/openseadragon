@@ -175,7 +175,7 @@
   *     availble on the viewing device.
   *
   * @param {Boolean} [options.autoResize=true]
-  *     Set to true to prevent polling for viewer size changes. Useful for providing custom resize behavior.
+  *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
   * @param {Number} [options.visibilityRatio=0.5]
   *     The percentage ( as a number from 0 to 1 ) of the source image which

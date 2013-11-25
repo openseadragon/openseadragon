@@ -56,7 +56,7 @@ OPENSEADRAGON CHANGELOG
     * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
 * Fixed: IE8 error with custom buttons - "Object doesn't support this action" (#279)
 * Support IIIF servers that don't report tile dimensions (#286)
-* Added a autoResize option. Default is true. When set to false, the viewer takes no action when its container element is resized.
+* Added an autoResize option. Default is true. When set to false, the viewer takes no action when its container element is resized.
 
 0.9.131:
 
