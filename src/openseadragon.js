@@ -280,18 +280,17 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     /**
      * The OpenSeadragon version.
      *
-     * @member {Object} version
-     * @memberof OpenSeadragon
+     * @member {Object} OpenSeadragon.version
      * @property {String} versionStr - The version number as a string ('major.minor.revision').
      * @property {Number} major - The major version number.
      * @property {Number} minor - The minor version number.
      * @property {Number} revision - The revision number.
      */
     $.version = {
-        versionStr: '<%= version.versionStr %>',
-        major: parseInt('<%= version.major %>'),
-        minor: parseInt('<%= version.minor %>'),
-        revision: parseInt('<%= version.revision %>')
+        versionStr: '<%= osdVersion.versionStr %>',
+        major: parseInt('<%= osdVersion.major %>'),
+        minor: parseInt('<%= osdVersion.minor %>'),
+        revision: parseInt('<%= osdVersion.revision %>')
     };
 
 
