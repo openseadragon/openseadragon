@@ -55,6 +55,12 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
         pkg: packageJson,
+        osdVersion: {
+            versionStr: packageJson.version,
+            major:      parseInt(packageJson.version.split('.')[0], 10),
+            minor:      parseInt(packageJson.version.split('.')[1], 10),
+            revision:   parseInt(packageJson.version.split('.')[2], 10)
+        },
         clean: {
             build: ["build"],
             package: [packageDir],

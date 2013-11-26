@@ -1,6 +1,6 @@
 {
   "name": "OpenSeadragon",
-  "version": "0.9.131",
+  "version": "1.0.0",
   "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
   "devDependencies": {
     "grunt": "~0.4.1",

@@ -416,23 +416,43 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
     /**
+     * The OpenSeadragon version.
+     *
+     * @member {Object} OpenSeadragon.version
+     * @property {String} versionStr - The version number as a string ('major.minor.revision').
+     * @property {Number} major - The major version number.
+     * @property {Number} minor - The minor version number.
+     * @property {Number} revision - The revision number.
+     * @since 1.0.0
+     */
+    /* jshint ignore:start */
+    $.version = {
+        versionStr: '<%= osdVersion.versionStr %>',
+        major: <%= osdVersion.major %>,
+        minor: <%= osdVersion.minor %>,
+        revision: <%= osdVersion.revision %>
+    };
+    /* jshint ignore:end */
+
+
+    /**
      * Taken from jquery 1.6.1
      * [[Class]] -> type pairs
      * @private
      */
     var class2type = {
-        '[object Boolean]':     'boolean',
-        '[object Number]':      'number',
-        '[object String]':      'string',
-        '[object Function]':    'function',
-        '[object Array]':       'array',
-        '[object Date]':        'date',
-        '[object RegExp]':      'regexp',
-        '[object Object]':      'object'
-    },
-    // Save a reference to some core methods
-    toString    = Object.prototype.toString,
-    hasOwn      = Object.prototype.hasOwnProperty;
+            '[object Boolean]':     'boolean',
+            '[object Number]':      'number',
+            '[object String]':      'string',
+            '[object Function]':    'function',
+            '[object Array]':       'array',
+            '[object Date]':        'date',
+            '[object RegExp]':      'regexp',
+            '[object Object]':      'object'
+        },
+        // Save a reference to some core methods
+        toString    = Object.prototype.toString,
+        hasOwn      = Object.prototype.hasOwnProperty;
 
     /**
      * Taken from jQuery 1.6.1
