@@ -674,14 +674,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
             newBounds = oldBounds,
-            widthDeltaFactor = newContainerSize.x / this.containerSize.x;
+            widthDeltaFactor;
 
         this.containerSize = new $.Point(
             newContainerSize.x,
             newContainerSize.y
         );
 
-        if (maintain) {
+        if ( maintain ) {
+            widthDeltaFactor = newContainerSize.x / this.containerSize.x;
             newBounds.width  = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
         }
