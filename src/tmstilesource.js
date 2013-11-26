@@ -43,11 +43,12 @@
 (function( $ ){
 
 /**
- * A tilesource implementation for Tiled Map Services (TMS).
+ * @class TmsTileSource
+ * @classdesc A tilesource implementation for Tiled Map Services (TMS).
  * TMS tile scheme ( [ as supported by OpenLayers ] is described here
  * ( http://openlayers.org/dev/examples/tms.html ).
  *
- * @class
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Number|Object} width - the pixel width of the image or the idiomatic
  *      options object which is used instead of positional arguments.
@@ -91,14 +92,13 @@ $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
 
 };
 
-$.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.TmsTileSource.prototype */{
 
 
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -109,7 +109,6 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
     /**
      *
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.configure
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
      * @return {Object} options - A dictionary of keyword arguments sufficient
@@ -122,7 +121,6 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

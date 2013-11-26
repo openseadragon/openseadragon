@@ -46,17 +46,19 @@
         THIS           = {};
 
     /**
-     * The MouseTracker allows other classes to set handlers for common mouse
-     * events on a specific element like, 'enter', 'exit', 'press', 'release',
+     * @class MouseTracker
+     * @classdesc Provides simplified handling of common mouse, touch, and keyboard
+     * events on a specific element, like 'enter', 'exit', 'press', 'release',
      * 'scroll', 'click', and 'drag'.
-     * @class
+     *
+     * @memberof OpenSeadragon
      * @param {Object} options
      *      Allows configurable properties to be entirely specified by passing
      *      an options object to the constructor.  The constructor also supports
-     *      the original positional arguments 'elements', 'clickTimeThreshold',
+     *      the original positional arguments 'element', 'clickTimeThreshold',
      *      and 'clickDistThreshold' in that order.
      * @param {Element|String} options.element
-     *      A reference to an element or an element id for which the mouse
+     *      A reference to an element or an element id for which the mouse/touch/key
      *      events will be monitored.
      * @param {Number} options.clickTimeThreshold
      *      The number of milliseconds within which multiple mouse clicks
@@ -64,43 +66,33 @@
      * @param {Number} options.clickDistThreshold
      *      The distance between mouse click within multiple mouse clicks
      *      will be treated as a single event.
-     * @param {Number} options.stopDelay
+     * @param {Number} [options.stopDelay=50]
      *      The number of milliseconds without mouse move before the mouse stop
      *      event is fired.
-     * @param {Function} options.enterHandler
+     * @param {OpenSeadragon.EventHandler} [options.enterHandler=null]
      *      An optional handler for mouse enter.
-     * @param {Function} options.exitHandler
+     * @param {OpenSeadragon.EventHandler} [options.exitHandler=null]
      *      An optional handler for mouse exit.
-     * @param {Function} options.pressHandler
+     * @param {OpenSeadragon.EventHandler} [options.pressHandler=null]
      *      An optional handler for mouse press.
-     * @param {Function} options.releaseHandler
+     * @param {OpenSeadragon.EventHandler} [options.releaseHandler=null]
      *      An optional handler for mouse release.
-     * @param {Function} options.moveHandler
+     * @param {OpenSeadragon.EventHandler} [options.moveHandler=null]
      *      An optional handler for mouse move.
-     * @param {Function} options.scrollHandler
+     * @param {OpenSeadragon.EventHandler} [options.scrollHandler=null]
      *      An optional handler for mouse scroll.
-     * @param {Function} options.clickHandler
+     * @param {OpenSeadragon.EventHandler} [options.clickHandler=null]
      *      An optional handler for mouse click.
-     * @param {Function} options.dragHandler
+     * @param {OpenSeadragon.EventHandler} [options.dragHandler=null]
      *      An optional handler for mouse drag.
-     * @param {Function} options.keyHandler
+     * @param {OpenSeadragon.EventHandler} [options.keyHandler=null]
      *      An optional handler for keypress.
-     * @param {Function} options.focusHandler
+     * @param {OpenSeadragon.EventHandler} [options.focusHandler=null]
      *      An optional handler for focus.
-     * @param {Function} options.blurHandler
+     * @param {OpenSeadragon.EventHandler} [options.blurHandler=null]
      *      An optional handler for blur.
      * @param {Object} [options.userData=null]
      *      Arbitrary object to be passed unchanged to any attached handler methods.
-     * @property {Number} hash
-     *      An unique hash for this tracker.
-     * @property {Element} element
-     *      The element for which mouse event are being monitored.
-     * @property {Number} clickTimeThreshold
-     *      The number of milliseconds within which mutliple mouse clicks
-     *      will be treated as a single event.
-     * @property {Number} clickDistThreshold
-     *      The distance between mouse click within multiple mouse clicks
-     *      will be treated as a single event.
      */
     $.MouseTracker = function ( options ) {
 
@@ -114,9 +106,24 @@
             };
         }
 
-        this.hash               = Math.random();
+        this.hash               = Math.random(); // An unique hash for this tracker.
+        /**
+         * The element for which mouse/touch/key events are being monitored.
+         * @member {Element} element
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.element            = $.getElement( options.element );
+        /**
+         * The number of milliseconds within which mutliple mouse clicks will be treated as a single event.
+         * @member {Number} clickTimeThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.clickTimeThreshold = options.clickTimeThreshold;
+        /**
+         * The distance between mouse click within multiple mouse clicks will be treated as a single event.
+         * @member {Number} clickDistThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
         this.clickDistThreshold = options.clickDistThreshold;
         this.userData           = options.userData       || null;
         this.stopDelay          = options.stopDelay      || 50;
@@ -188,7 +195,7 @@
 
     };
 
-    $.MouseTracker.prototype = {
+    $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{
 
         /**
          * Clean up any events or objects created by the mouse tracker.
@@ -243,8 +250,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -268,8 +275,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -288,8 +295,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -313,8 +320,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -333,8 +340,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -357,8 +364,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -374,15 +381,15 @@
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
          * @param {Number} event.quick
-         *      True only if the clickDistThreshold and clickDeltaThreshold are both pased. Useful for ignoring events.
+         *      True only if the clickDistThreshold and clickDeltaThreshold are both passed. Useful for ignoring events.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
          * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -405,8 +412,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -425,8 +432,8 @@
          *      True if the original event is a touch event, otherwise false.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -445,8 +452,8 @@
          *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -461,8 +468,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -477,8 +484,8 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} [event.preventDefaultAction=false]
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent).
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */

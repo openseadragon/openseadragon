@@ -35,29 +35,46 @@
 (function( $ ){
 
 /**
- * A Rectangle really represents a 2x2 matrix where each row represents a
+ * @class Rect
+ * @classdesc A Rectangle really represents a 2x2 matrix where each row represents a
  * 2 dimensional vector component, the first is (x,y) and the second is
  * (width, height).  The latter component implies the equation of a simple
  * plane.
  *
- * @class
+ * @memberof OpenSeadragon
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
  * @param {Number} width The vector component 'height'.
  * @param {Number} height The vector component 'width'.
- * @property {Number} x The vector component 'x'.
- * @property {Number} y The vector component 'y'.
- * @property {Number} width The vector component 'width'.
- * @property {Number} height The vector component 'height'.
  */
 $.Rect = function( x, y, width, height ) {
+    /**
+     * The vector component 'x'.
+     * @member {Number} x
+     * @memberof OpenSeadragon.Rect#
+     */
     this.x = typeof ( x ) == "number" ? x : 0;
+    /**
+     * The vector component 'y'.
+     * @member {Number} y
+     * @memberof OpenSeadragon.Rect#
+     */
     this.y = typeof ( y ) == "number" ? y : 0;
+    /**
+     * The vector component 'width'.
+     * @member {Number} width
+     * @memberof OpenSeadragon.Rect#
+     */
     this.width  = typeof ( width )  == "number" ? width : 0;
+    /**
+     * The vector component 'height'.
+     * @member {Number} height
+     * @memberof OpenSeadragon.Rect#
+     */
     this.height = typeof ( height ) == "number" ? height : 0;
 };
 
-$.Rect.prototype = {
+$.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
 
     /**
      * The aspect ratio is simply the ratio of width to height.

@@ -82,45 +82,53 @@
  */
 
 
+/**
+ * @version  <%= pkg.name %> <%= pkg.version %>
+ *
+ * @file
+ * <h2><strong>OpenSeadragon - Javascript Deep Zooming</strong></h2>
+ * <p>
+ * OpenSeadragon provides an html interface for creating
+ * deep zoom user interfaces.  The simplest examples include deep
+ * zoom for large resolution images, and complex examples include
+ * zoomable map interfaces driven by SVG files.
+ * </p>
+ *
+ */
+
+/**
+ * @module OpenSeadragon
+ *
+ */
+
+/**
+ * The root namespace for OpenSeadragon.  All utility methods
+ * and classes are defined on or below this namespace.
+ *
+ * @namespace OpenSeadragon
+ *
+ */
+
+
+// Typedefs
 
  /**
-  * @version  <%= pkg.name %> <%= pkg.version %>
+  * All required and optional settings for instantiating a new instance of an OpenSeadragon image viewer.
   *
-  * @fileOverview
-  * <h2>
-  * <strong>
-  * OpenSeadragon - Javascript Deep Zooming
-  * </strong>
-  * </h2>
-  * <p>
-  * OpenSeadragon is provides an html interface for creating
-  * deep zoom user interfaces.  The simplest examples include deep
-  * zoom for large resolution images, and complex examples include
-  * zoomable map interfaces driven by SVG files.
-  * </p>
-  */
-
- /**
-  * The root namespace for OpenSeadragon, this function also serves as a single
-  * point of instantiation for an {@link OpenSeadragon.Viewer}, including all
-  * combinations of out-of-the-box configurable features.  All utility methods
-  * and classes are defined on or below this namespace.
+  * @typedef {Object} Options
+  * @memberof OpenSeadragon
   *
-  * @namespace
-  * @function
-  * @name OpenSeadragon
-  * @exports $ as OpenSeadragon
+  * @property {String} id
+  *     Id of the element to append the viewer's container element to. If not provided, the 'element' property must be provided.
+  *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
   *
-  * @param {Object} options All required and optional settings for instantiating
-  *     a new instance of an OpenSeadragon image viewer.
+  * @property {Element} element
+  *     The element to append the viewer's container element to. If not provided, the 'id' property must be provided.
+  *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
   *
-  * @param {String} options.xmlPath
-  *     DEPRECATED. A relative path to load a DZI file from the server.
-  *     Prefer the newer options.tileSources.
-  *
-  * @param {Array|String|Function|Object[]|Array[]|String[]|Function[]} options.tileSources
-  *     As an Array, the tileSource can hold either be all Objects or mixed
-  *     types of Arrays of Objects, String, Function. When a value is a String,
+  * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
+  *     As an Array, the tileSource can hold either Objects or mixed
+  *     types of Arrays of Objects, Strings, or Functions. When a value is a String,
   *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.
   *     When a value is a Function, the function is used to create a new
   *     {@link OpenSeadragon.TileSource} whose abstract method
@@ -128,144 +136,273 @@
   *     is an Array of objects, it is used to create a
   *     {@link OpenSeadragon.LegacyTileSource}.
   *
-  * @param {Boolean} [options.debugMode=true]
-  *     Currently does nothing. TODO: provide an in-screen panel providing event
-  *     detail feedback.
+  * @property {String} [xmlPath=null]
+  *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
+  *     Prefer the newer Options.tileSources.
   *
-  * @param {Number} [options.animationTime=1.5]
-  *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
-  *     which occur when the image is dragged or zoomed.
-  *
-  * @param {Number} [options.blendTime=0.5]
-  *     Specifies the duration of animation as higher or lower level tiles are
-  *     replacing the existing tile.
-  *
-  * @param {Boolean} [options.alwaysBlend=false]
-  *     Forces the tile to always blend.  By default the tiles skip blending
-  *     when the blendTime is surpassed and the current animation frame would
-  *     not complete the blend.
-  *
-  * @param {Boolean} [options.autoHideControls=true]
-  *     If the user stops interacting with the viewport, fade the navigation
-  *     controls.  Useful for presentation since the controls are by default
-  *     floated on top of the image the user is viewing.
-  *
-  * @param {Boolean} [options.immediateRender=false]
-  *     Render the best closest level first, ignoring the lowering levels which
-  *     provide the effect of very blurry to sharp. It is recommended to change
-  *     setting to true for mobile devices.
-  *
-  * @param {Boolean} [options.wrapHorizontal=false]
-  *     Set to true to force the image to wrap horizontally within the viewport.
-  *     Useful for maps or images representing the surface of a sphere or cylinder.
-  *
-  * @param {Boolean} [options.wrapVertical=false]
-  *     Set to true to force the image to wrap vertically within the viewport.
-  *     Useful for maps or images representing the surface of a sphere or cylinder.
-  *
-  * @param {Number} [options.minZoomImageRatio=0.8]
-  *     The minimum percentage ( expressed as a number between 0 and 1 ) of
-  *     the viewport height or width at which the zoom out will be constrained.
-  *     Setting it to 0, for example will allow you to zoom out infinitly.
-  *
-  * @param {Number} [options.maxZoomPixelRatio=2]
-  *     The maximum ratio to allow a zoom-in to affect the highest level pixel
-  *     ratio. This can be set to Infinity to allow 'infinite' zooming into the
-  *     image though it is less effective visually if the HTML5 Canvas is not
-  *     availble on the viewing device.
-  *
-  * @param {Number} [options.visibilityRatio=0.5]
-  *     The percentage ( as a number from 0 to 1 ) of the source image which
-  *     must be kept within the viewport.  If the image is dragged beyond that
-  *     limit, it will 'bounce' back until the minimum visibility ration is
-  *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
-  *     true will provide the effect of an infinitely scrolling viewport.
-  *
-  * @param {Number} [options.springStiffness=5.0]
-  *
-  * @param {Number} [options.imageLoaderLimit=0]
-  *     The maximum number of image requests to make concurrently.  By default
-  *     it is set to 0 allowing the browser to make the maximum number of
-  *     image requests in parallel as allowed by the browsers policy.
-  *
-  * @param {Number} [options.clickTimeThreshold=200]
-  *     If multiple mouse clicks occurs within less than this number of
-  *     milliseconds, treat them as a single click.
-  *
-  * @param {Number} [options.clickDistThreshold=5]
-  *     If a mouse or touch drag occurs and the distance to the starting drag
-  *     point is less than this many pixels, ignore the drag event.
-  *
-  * @param {Number} [options.zoomPerClick=2.0]
-  *     The "zoom distance" per mouse click or touch tap.
-  *
-  * @param {Number} [options.zoomPerScroll=1.2]
-  *     The "zoom distance" per mouse scroll or touch pinch.
-  *
-  * @param {Number} [options.zoomPerSecond=2.0]
-  *     The number of seconds to animate a single zoom event over.
-  *
-  * @param {Boolean} [options.showNavigationControl=true]
-  *     Set to false to prevent the appearance of the default navigation controls.
-  *
-  * @param {Boolean} [options.showNavigator=false]
-  *     Set to true to make the navigator minimap appear.
-  *
-  * @param {Boolean} [options.navigatorId=navigator-GENERATED DATE]
-  *     Set the ID of a div to hold the navigator minimap.  If one is not specified,
-  *     one will be generated and placed on top of the main image
-  *
-  * @param {Number} [options.controlsFadeDelay=2000]
-  *     The number of milliseconds to wait once the user has stopped interacting
-  *     with the interface before begining to fade the controls. Assumes
-  *     showNavigationControl and autoHideControls are both true.
-  *
-  * @param {Number} [options.controlsFadeLength=1500]
-  *     The number of milliseconds to animate the controls fading out.
-  *
-  * @param {Number} [options.maxImageCacheCount=100]
-  *     The max number of images we should keep in memory (per drawer).
-  *
-  * @param {Boolean} [options.useCanvas=true]
-  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
-  *
-  * @param {Number} [options.minPixelRatio=0.5]
-  *     The higher the minPixelRatio, the lower the quality of the image that
-  *     is considered sufficient to stop rendering a given zoom level.  For
-  *     example, if you are targeting mobile devices with less bandwith you may
-  *     try setting this to 1.5 or higher.
-  *
-  * @param {Boolean} [options.mouseNavEnabled=true]
-  *     Is the user able to interact with the image via mouse or touch. Default
-  *     interactions include draging the image in a plane, and zooming in toward
-  *     and away from the image.
-  *
-  * @param {Boolean} [options.preserveViewport=false]
-  *     If the viewer has been configured with a sequence of tile sources, then
-  *     normally navigating to through each image resets the viewport to 'home'
-  *     position.  If preserveViewport is set to true, then the viewport position
-  *     is preserved when navigating between images in the sequence.
-  *
-  * @param {String} [options.prefixUrl='/images/']
+  * @property {String} [prefixUrl='/images/']
   *     Prepends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
   *     environments.
   *
-  * @param {Object} [options.navImages=]
+  * @property {OpenSeadragon.NavImages} [navImages]
   *     An object with a property for each button or other built-in navigation
   *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
-  *     Each of those in turn provides an image path for each state of the botton
+  *     Each of those in turn provides an image path for each state of the button
   *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
   *     image paths, by default assume there is a folder on the servers root path
   *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
   *     these paths, prefer setting the option.prefixUrl rather than overriding
   *     every image path directly through this setting.
   *
-  * @param {Boolean} [options.navPrevNextWrap=false]
+  * @property {Object} [tileHost=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @property {Boolean} [debugMode=false]
+  *     TODO: provide an in-screen panel providing event detail feedback.
+  *
+  * @property {String} [debugGridColor='#437AB2']
+  *
+  * @property {Number} [animationTime=1.2]
+  *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
+  *     which occur when the image is dragged or zoomed.
+  *
+  * @property {Number} [blendTime=0]
+  *     Specifies the duration of animation as higher or lower level tiles are
+  *     replacing the existing tile.
+  *
+  * @property {Boolean} [alwaysBlend=false]
+  *     Forces the tile to always blend.  By default the tiles skip blending
+  *     when the blendTime is surpassed and the current animation frame would
+  *     not complete the blend.
+  *
+  * @property {Boolean} [autoHideControls=true]
+  *     If the user stops interacting with the viewport, fade the navigation
+  *     controls.  Useful for presentation since the controls are by default
+  *     floated on top of the image the user is viewing.
+  *
+  * @property {Boolean} [immediateRender=false]
+  *     Render the best closest level first, ignoring the lowering levels which
+  *     provide the effect of very blurry to sharp. It is recommended to change
+  *     setting to true for mobile devices.
+  *
+  * @property {Number} [defaultZoomLevel=0]
+  *     Zoom level to use when image is first opened or the home button is clicked.
+  *     If 0, adjusts to fit viewer.
+  *
+  * @property {Number} [degrees=0]
+  *     Initial rotation.
+  *
+  * @property {Number} [minZoomLevel=null]
+  *
+  * @property {Number} [maxZoomLevel=null]
+  *
+  * @property {Boolean} [panHorizontal=true]
+  *     Allow horizontal pan.
+  *
+  * @property {Boolean} [panVertical=true]
+  *     Allow vertical pan.
+  *
+  * @property {Boolean} [constrainDuringPan=false]
+  *
+  * @property {Boolean} [wrapHorizontal=false]
+  *     Set to true to force the image to wrap horizontally within the viewport.
+  *     Useful for maps or images representing the surface of a sphere or cylinder.
+  *
+  * @property {Boolean} [wrapVertical=false]
+  *     Set to true to force the image to wrap vertically within the viewport.
+  *     Useful for maps or images representing the surface of a sphere or cylinder.
+  *
+  * @property {Number} [minZoomImageRatio=0.9]
+  *     The minimum percentage ( expressed as a number between 0 and 1 ) of
+  *     the viewport height or width at which the zoom out will be constrained.
+  *     Setting it to 0, for example will allow you to zoom out infinitly.
+  *
+  * @property {Number} [maxZoomPixelRatio=1.1]
+  *     The maximum ratio to allow a zoom-in to affect the highest level pixel
+  *     ratio. This can be set to Infinity to allow 'infinite' zooming into the
+  *     image though it is less effective visually if the HTML5 Canvas is not
+  *     availble on the viewing device.
+  *
+  * @property {Number} [pixelsPerWheelLine=40]
+  *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
+  *
+  * @property {Number} [visibilityRatio=0.5]
+  *     The percentage ( as a number from 0 to 1 ) of the source image which
+  *     must be kept within the viewport.  If the image is dragged beyond that
+  *     limit, it will 'bounce' back until the minimum visibility ration is
+  *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
+  *     true will provide the effect of an infinitely scrolling viewport.
+  *
+  * @property {Number} [springStiffness=7.0]
+  *
+  * @property {Number} [imageLoaderLimit=0]
+  *     The maximum number of image requests to make concurrently.  By default
+  *     it is set to 0 allowing the browser to make the maximum number of
+  *     image requests in parallel as allowed by the browsers policy.
+  *
+  * @property {Number} [clickTimeThreshold=300]
+  *     If multiple mouse clicks occurs within less than this number of
+  *     milliseconds, treat them as a single click.
+  *
+  * @property {Number} [clickDistThreshold=5]
+  *     If a mouse or touch drag occurs and the distance to the starting drag
+  *     point is less than this many pixels, ignore the drag event.
+  *
+  * @property {Number} [zoomPerClick=2.0]
+  *     The "zoom distance" per mouse click or touch tap. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the click-to-zoom feature.</em>
+  *
+  * @property {Number} [zoomPerScroll=1.2]
+  *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature.</em>
+  *
+  * @property {Number} [zoomPerSecond=1.0]
+  *     The number of seconds to animate a single zoom event over.
+  *
+  * @property {Boolean} [showNavigationControl=true]
+  *     Set to false to prevent the appearance of the default navigation controls.
+  *
+  * @property {Boolean} [showNavigator=false]
+  *     Set to true to make the navigator minimap appear.
+  *
+  * @property {Boolean} [navigatorId=navigator-GENERATED DATE]
+  *     Set the ID of a div to hold the navigator minimap.  If one is not specified,
+  *     one will be generated and placed on top of the main image
+  *
+  * @property {Number} [navigatorHeight=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @property {Number} [navigatorWidth=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @property {Number} [navigatorPosition=null]
+  *     TODO: Implement this. Currently not used.
+  *
+  * @property {Number} [navigatorSizeRatio=0.2]
+  *     Ratio of navigator size to viewer size.
+  *
+  * @property {Number} [controlsFadeDelay=2000]
+  *     The number of milliseconds to wait once the user has stopped interacting
+  *     with the interface before begining to fade the controls. Assumes
+  *     showNavigationControl and autoHideControls are both true.
+  *
+  * @property {Number} [controlsFadeLength=1500]
+  *     The number of milliseconds to animate the controls fading out.
+  *
+  * @property {Number} [maxImageCacheCount=200]
+  *     The max number of images we should keep in memory (per drawer).
+  *
+  * @property {Number} [timeout=30000]
+  *
+  * @property {Boolean} [useCanvas=true]
+  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
+  *
+  * @property {Number} [minPixelRatio=0.5]
+  *     The higher the minPixelRatio, the lower the quality of the image that
+  *     is considered sufficient to stop rendering a given zoom level.  For
+  *     example, if you are targeting mobile devices with less bandwith you may
+  *     try setting this to 1.5 or higher.
+  *
+  * @property {Boolean} [mouseNavEnabled=true]
+  *     Is the user able to interact with the image via mouse or touch. Default
+  *     interactions include draging the image in a plane, and zooming in toward
+  *     and away from the image.
+  *
+  * @property {Boolean} [navPrevNextWrap=false]
   *     If the 'previous' button will wrap to the last image when viewing the first
   *     image and if the 'next' button will wrap to the first image when viewing
   *     the last image.
   *
+  * @property {Boolean} [showSequenceControl=true]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     provide buttons for navigating forward and backward through the images.
+  *
+  * @property {Number} [initialPage=0]
+  *     If the viewer has been configured with a sequence of tile sources, display this page initially.
+  *
+  * @property {Boolean} [preserveViewport=false]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     normally navigating to through each image resets the viewport to 'home'
+  *     position.  If preserveViewport is set to true, then the viewport position
+  *     is preserved when navigating between images in the sequence.
+  *
+  * @property {Boolean} [showReferenceStrip=false]
+  *     If the viewer has been configured with a sequence of tile sources, then
+  *     display a scrolling strip of image thumbnails for navigating through the images.
+  *
+  * @property {String} [referenceStripScroll='horizontal']
+  *
+  * @property {Element} [referenceStripElement=null]
+  *
+  * @property {Number} [referenceStripHeight=null]
+  *
+  * @property {Number} [referenceStripWidth=null]
+  *
+  * @property {String} [referenceStripPosition='BOTTOM_LEFT']
+  *
+  * @property {Number} [referenceStripSizeRatio=0.2]
+  *
+  * @property {Boolean} [collectionMode=false]
+  *
+  * @property {Number} [collectionRows=3]
+  *
+  * @property {String} [collectionLayout='horizontal']
+  *
+  * @property {Number} [collectionTileSize=800]
+  *
+  */
+
+/**
+  * The names for the image resources used for the image navigation buttons.
+  *
+  * @typedef {Object} NavImages
+  * @memberof OpenSeadragon
+  *
+  * @property {Object} zoomIn - Images for the zoom-in button.
+  * @property {String} zoomIn.REST
+  * @property {String} zoomIn.GROUP
+  * @property {String} zoomIn.HOVER
+  * @property {String} zoomIn.DOWN
+  *
+  * @property {Object} zoomOut - Images for the zoom-out button.
+  * @property {String} zoomOut.REST
+  * @property {String} zoomOut.GROUP
+  * @property {String} zoomOut.HOVER
+  * @property {String} zoomOut.DOWN
+  *
+  * @property {Object} home - Images for the home button.
+  * @property {String} home.REST
+  * @property {String} home.GROUP
+  * @property {String} home.HOVER
+  * @property {String} home.DOWN
+  *
+  * @property {Object} fullpage - Images for the full-page button.
+  * @property {String} fullpage.REST
+  * @property {String} fullpage.GROUP
+  * @property {String} fullpage.HOVER
+  * @property {String} fullpage.DOWN
+  *
+  * @property {Object} previous - Images for the previous button.
+  * @property {String} previous.REST
+  * @property {String} previous.GROUP
+  * @property {String} previous.HOVER
+  * @property {String} previous.DOWN
+  *
+  * @property {Object} next - Images for the next button.
+  * @property {String} next.REST
+  * @property {String} next.GROUP
+  * @property {String} next.HOVER
+  * @property {String} next.DOWN
+  *
+  */
+
+
+ /**
+  * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
+  * combinations of out-of-the-box configurable features.
+  *
+  * @function OpenSeadragon
+  * @memberof module:OpenSeadragon
+  * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
 window.OpenSeadragon = window.OpenSeadragon || function( options ){
@@ -273,6 +410,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     return new OpenSeadragon.Viewer( options );
 
 };
+
 
 (function( $ ){
 
@@ -298,9 +436,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isFunction
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isFunction
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isFunction = function( obj ) {
         return $.type(obj) === "function";
@@ -309,9 +447,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isArray
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isArray
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isArray = Array.isArray || function( obj ) {
         return $.type(obj) === "array";
@@ -321,9 +459,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     /**
      * A crude way of determining if an object is a window.
      * Taken from jQuery 1.6.1
-     * @name $.isWindow
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isWindow
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isWindow = function( obj ) {
         return obj && typeof obj === "object" && "setInterval" in obj;
@@ -332,9 +470,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.type
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function type
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.type = function( obj ) {
         return ( obj === null ) || ( obj === undefined ) ?
@@ -345,9 +483,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isPlainObject
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isPlainObject
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isPlainObject = function( obj ) {
         // Must be an Object.
@@ -376,9 +514,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @name $.isEmptyObject
-     * @function
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function isEmptyObject
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isEmptyObject = function( obj ) {
         for ( var name in obj ) {
@@ -390,8 +528,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * True if the browser supports the HTML5 canvas element
-     * @name $.supportsCanvas
-     * @property
+     * @member {Boolean} supportsCanvas
+     * @memberof OpenSeadragon
      */
     $.supportsCanvas = (function () {
         var canvasElement = document.createElement( 'canvas' );
@@ -418,7 +556,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
     /**
      * Taken from jQuery 1.6.1
-     * @see <a href='http://www.jquery.com/'>jQuery</a>
+     * @function extend
+     * @memberof OpenSeadragon
+     * @see {@link http://www.jquery.com/ jQuery}
      */
     $.extend = function() {
         var options,
@@ -491,12 +631,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
 
 
-    $.extend( $, {
+    $.extend( $, /** @lends OpenSeadragon */{
         /**
-         * These are the default values for the optional settings documented
-         * in the {@link OpenSeadragon} constructor detail.
-         * @name $.DEFAULT_SETTINGS
+         * The default values for the optional settings documented at {@link OpenSeadragon.Options}.
          * @static
+         * @type {Object}
          */
         DEFAULT_SETTINGS: {
             //DATA SOURCE DETAILS
@@ -631,11 +770,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * Invokes the the method as if it where a method belonging to the object.
-         * @name $.delegate
+         * Returns a function which invokes the method as if it were a method belonging to the object.
          * @function
          * @param {Object} object
          * @param {Function} method
+         * @returns {Function}
          */
         delegate: function( object, method ) {
             return function(){
@@ -649,10 +788,15 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
-         * An enumeration of Browser vendors including UNKNOWN, IE, FIREFOX,
-         * SAFARI, CHROME, and OPERA.
-         * @name $.BROWSERS
+         * An enumeration of Browser vendors.
          * @static
+         * @type {Object}
+         * @property {Number} UNKNOWN
+         * @property {Number} IE
+         * @property {Number} FIREFOX
+         * @property {Number} SAFARI
+         * @property {Number} CHROME
+         * @property {Number} OPERA
          */
         BROWSERS: {
             UNKNOWN:    0,
@@ -667,7 +811,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Returns a DOM Element for the given id or element.
          * @function
-         * @name OpenSeadragon.getElement
          * @param {String|Element} element Accepts an id or element.
          * @returns {Element} The element with the given id, null, or the element itself.
          */
@@ -682,9 +825,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the position of the upper-left corner of the element.
          * @function
-         * @name OpenSeadragon.getElementPosition
          * @param {Element|String} element - the elemenet we want the position for.
-         * @returns {Point} - the position of the upper left corner of the element.
+         * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element.
          */
         getElementPosition: function( element ) {
             var result = new $.Point(),
@@ -716,9 +858,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the position of the upper-left corner of the element adjusted for current page and/or element scroll.
          * @function
-         * @name OpenSeadragon.getElementOffset
          * @param {Element|String} element - the element we want the position for.
-         * @returns {Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
+         * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element adjusted for current page and/or element scroll.
          */
         getElementOffset: function( element ) {
             element = $.getElement( element );
@@ -754,9 +895,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the height and width of the given element.
          * @function
-         * @name OpenSeadragon.getElementSize
          * @param {Element|String} element
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getElementSize: function( element ) {
             element = $.getElement( element );
@@ -771,7 +911,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Returns the CSSStyle object for the given element.
          * @function
-         * @name OpenSeadragon.getElementStyle
          * @param {Element|String} element
          * @returns {CSSStyle}
          */
@@ -789,12 +928,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Gets the latest event, really only useful internally since its
-         * specific to IE behavior.  TODO: Deprecate this from the api and
-         * use it internally.
+         * specific to IE behavior.
          * @function
-         * @name OpenSeadragon.getEvent
          * @param {Event} [event]
          * @returns {Event}
+         * @deprecated For internal use only
+         * @private
          */
         getEvent: function( event ) {
             if( event ){
@@ -813,9 +952,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Gets the position of the mouse on the screen for a given event.
          * @function
-         * @name OpenSeadragon.getMousePosition
          * @param {Event} [event]
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getMousePosition: function( event ) {
 
@@ -858,8 +996,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the page's current scroll position.
          * @function
-         * @name OpenSeadragon.getPageScroll
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getPageScroll: function() {
             var docElement  = document.documentElement || {},
@@ -897,8 +1034,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Set the page scroll position.
          * @function
-         * @name OpenSeadragon.getPageScroll
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         setPageScroll: function( scroll ) {
             if ( typeof ( window.scrollTo ) !== "undefined" ) {
@@ -949,8 +1085,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Determines the size of the browsers window.
          * @function
-         * @name OpenSeadragon.getWindowSize
-         * @returns {Point}
+         * @returns {OpenSeadragon.Point}
          */
         getWindowSize: function() {
             var docElement = document.documentElement || {},
@@ -989,7 +1124,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Wraps the given element in a nest of divs so that the element can
          * be easily centered using CSS tables
          * @function
-         * @name OpenSeadragon.makeCenteredNode
          * @param {Element|String} element
          * @returns {Element} outermost wrapper element
          */
@@ -1037,7 +1171,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Creates an easily positionable element of the given type that therefor
          * serves as an excellent container element.
          * @function
-         * @name OpenSeadragon.makeNeutralElement
          * @param {String} tagName
          * @returns {Element}
          */
@@ -1057,7 +1190,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Returns the current milliseconds, using Date.now() if available
-         * @name $.now
          * @function
          */
         now: function( ) {
@@ -1076,7 +1208,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Generally only IE has issues doing this correctly for formats like
          * png.
          * @function
-         * @name OpenSeadragon.makeTransparentImage
          * @param {String} src
          * @returns {Element}
          */
@@ -1125,7 +1256,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Sets the opacity of the specified element.
          * @function
-         * @name OpenSeadragon.setElementOpacity
          * @param {Element|String} element
          * @param {Number} opacity
          * @param {Boolean} [usesAlpha]
@@ -1157,7 +1287,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Add the specified CSS class to the element if not present.
-         * @name $.addClass
          * @function
          * @param {Element|String} element
          * @param {String} className
@@ -1176,7 +1305,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Remove the specified CSS class from the element.
-         * @name $.removeClass
          * @function
          * @param {Element|String} element
          * @param {String} className
@@ -1200,7 +1328,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Adds an event listener for the given element, eventName and handler.
          * @function
-         * @name OpenSeadragon.addEvent
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
@@ -1230,7 +1357,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Remove a given event listener for the given element, event type and
          * handler.
          * @function
-         * @name OpenSeadragon.removeEvent
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
@@ -1260,7 +1386,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Cancels the default browser behavior had the event propagated all
          * the way up the DOM to the window object.
          * @function
-         * @name OpenSeadragon.cancelEvent
          * @param {Event} [event]
          */
         cancelEvent: function( event ) {
@@ -1287,7 +1412,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Stops the propagation of the event up the DOM.
          * @function
-         * @name OpenSeadragon.stopEvent
          * @param {Event} [event]
          */
         stopEvent: function( event ) {
@@ -1319,7 +1443,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * invocation, and each invocation can add additional arguments as well.
          *
          * @function
-         * @name OpenSeadragon.createCallback
          * @param {Object} object
          * @param {Function} method
          * @param [args] any additional arguments are passed as arguments to the
@@ -1351,7 +1474,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Retreives the value of a url parameter from the window.location string.
          * @function
-         * @name OpenSeadragon.getUrlParameter
          * @param {String} key
          * @returns {String} The value of the url parameter or null if no param matches.
          */
@@ -1396,7 +1518,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Makes an AJAX request.
          * @function
-         * @name OpenSeadragon.makeAjaxRequest
          * @param {String} url - the url to request
          * @param {Function} onSuccess - a function to call on a successful response
          * @param {Function} onError - a function to call on when an error occurs
@@ -1461,7 +1582,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Taken from jQuery 1.6.1
          * @function
-         * @name OpenSeadragon.jsonp
          * @param {Object} options
          * @param {String} options.url
          * @param {Function} options.callback
@@ -1542,8 +1662,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Fully deprecated. Will throw an error.
          * @function
-         * @name OpenSeadragon.createFromDZI
-         * @deprecated - use OpenSeadragon.Viewer.prototype.open
+         * @deprecated use {@link OpenSeadragon.Viewer#open}
          */
         createFromDZI: function() {
             throw "OpenSeadragon.createFromDZI is deprecated, use Viewer.open.";
@@ -1552,7 +1671,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         /**
          * Parses an XML string into a DOM Document.
          * @function
-         * @name OpenSeadragon.parseXml
          * @param {String} string
          * @returns {Document}
          */
@@ -1594,7 +1712,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Reports whether the image format is supported for tiling in this
          * version.
          * @function
-         * @name OpenSeadragon.imageFormatSupported
          * @param {String} [extension]
          * @returns {Boolean}
          */
@@ -1607,12 +1724,14 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
     /**
-     * The current browser vendor, version, and related information regarding
-     * detected features.  Features include <br/>
-     *  <strong>'alpha'</strong> - Does the browser support image alpha
-     *  transparency.<br/>
-     * @name $.Browser
+     * The current browser vendor, version, and related information regarding detected features.
+     * @member {Object} Browser
+     * @memberof OpenSeadragon
      * @static
+     * @type {Object}
+     * @property {OpenSeadragon.BROWSERS} vendor - One of the {@link OpenSeadragon.BROWSERS} enumeration values.
+     * @property {Number} version
+     * @property {Boolean} alpha - Does the browser support image alpha transparency.
      */
     $.Browser = {
         vendor:     $.BROWSERS.UNKNOWN,

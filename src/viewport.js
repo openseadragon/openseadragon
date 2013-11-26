@@ -36,7 +36,11 @@
 
 
 /**
- * @class
+ * @class Viewport
+ * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.) for an {@link OpenSeadragon.Viewer}.
+ * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#viewport}).
+ *
+ * @memberof OpenSeadragon
  */
 $.Viewport = function( options ) {
 
@@ -105,11 +109,12 @@ $.Viewport = function( options ) {
     this.update();
 };
 
-$.Viewport.prototype = {
+$.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:reset-size
      */
     resetContentSize: function( contentSize ){
         this.contentSize    = contentSize;
@@ -121,6 +126,16 @@ $.Viewport.prototype = {
         this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
 
         if( this.viewer ){
+            /**
+             * Raised when the viewer's content size is reset (see {@link OpenSeadragon.Viewport#resetContentSize}).
+             *
+             * @event reset-size
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} contentSize
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'reset-size', {
                 contentSize: contentSize
             });
@@ -164,9 +179,20 @@ $.Viewport.prototype = {
     /**
      * @function
      * @param {Boolean} immediately
+     * @fires OpenSeadragon.Viewer.event:home
      */
     goHome: function( immediately ) {
         if( this.viewer ){
+            /**
+             * Raised when the "home" operation occurs (see {@link OpenSeadragon.Viewport#goHome}).
+             *
+             * @event home
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Boolean} immediately
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'home', {
                 immediately: immediately
             });
@@ -297,6 +323,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function( immediately ) {
         var actualZoom = this.getZoom(),
@@ -367,6 +394,16 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
+             *
+             * @event constrain
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Boolean} immediately
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
@@ -492,6 +529,7 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:pan
      */
     panBy: function( delta, immediately ) {
         var center = new $.Point(
@@ -507,6 +545,7 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} center
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:pan
      */
     panTo: function( center, immediately ) {
         if ( immediately ) {
@@ -518,6 +557,17 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * Raised when the viewport is panned (see {@link OpenSeadragon.Viewport#panBy} and {@link OpenSeadragon.Viewport#panTo}).
+             *
+             * @event pan
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} center
+             * @property {Boolean} immediately
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'pan', {
                 center: center,
                 immediately: immediately
@@ -530,6 +580,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomBy: function( factor, refPoint, immediately ) {
         if( refPoint instanceof $.Point && !isNaN( refPoint.x ) && !isNaN( refPoint.y ) ) {
@@ -544,6 +595,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomTo: function( zoom, refPoint, immediately ) {
 
@@ -560,6 +612,18 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * Raised when the viewport zoom level changes (see {@link OpenSeadragon.Viewport#zoomBy} and {@link OpenSeadragon.Viewport#zoomTo}).
+             *
+             * @event zoom
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Number} zoom
+             * @property {OpenSeadragon.Point} refPoint
+             * @property {Boolean} immediately
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
@@ -576,7 +640,6 @@ $.Viewport.prototype = {
      * debug mode doesn't rotate yet, and overlay rotation is only
      * partially supported.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.setRotation
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setRotation: function( degrees ) {
@@ -597,7 +660,6 @@ $.Viewport.prototype = {
     /**
      * Gets the current rotation in degrees.
      * @function
-     * @name OpenSeadragon.Viewport.prototype.getRotation
      * @return {Number} The current rotation in degrees.
      */
     getRotation: function() {
@@ -607,6 +669,7 @@ $.Viewport.prototype = {
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:resize
      */
     resize: function( newContainerSize, maintain ) {
         var oldBounds = this.getBounds(),
@@ -624,6 +687,17 @@ $.Viewport.prototype = {
         }
 
         if( this.viewer ){
+            /**
+             * Raised when the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             *
+             * @event resize
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} newContainerSize
+             * @property {Boolean} maintain
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.viewer.raiseEvent( 'resize', {
                 newContainerSize: newContainerSize,
                 maintain: maintain

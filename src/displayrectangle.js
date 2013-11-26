@@ -35,10 +35,12 @@
 (function( $ ){
 
 /**
- * A display rectanlge is very similar to the OpenSeadragon.Rect but adds two
+ * @class DisplayRect
+ * @classdesc A display rectangle is very similar to {@link OpenSeadragon.Rect} but adds two
  * fields, 'minLevel' and 'maxLevel' which denote the supported zoom levels
  * for this rectangle.
- * @class
+ *
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.Rect
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
@@ -46,13 +48,21 @@
  * @param {Number} height The vector component 'width'.
  * @param {Number} minLevel The lowest zoom level supported.
  * @param {Number} maxLevel The highest zoom level supported.
- * @property {Number} minLevel The lowest zoom level supported.
- * @property {Number} maxLevel The highest zoom level supported.
  */
 $.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
     $.Rect.apply( this, [ x, y, width, height ] );
 
+    /**
+     * The lowest zoom level supported.
+     * @member {Number} minLevel
+     * @memberof OpenSeadragon.DisplayRect#
+     */
     this.minLevel = minLevel;
+    /**
+     * The highest zoom level supported.
+     * @member {Number} maxLevel
+     * @memberof OpenSeadragon.DisplayRect#
+     */
     this.maxLevel = maxLevel;
 };
 

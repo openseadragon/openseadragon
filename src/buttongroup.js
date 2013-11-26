@@ -34,42 +34,41 @@
 
 (function( $ ){
 /**
- * Manages events on groups of buttons.
- * @class
- * @param {Object} options - a dictionary of settings applied against the entire
- * group of buttons
- * @param {Array}    options.buttons Array of buttons
- * @param {Element}  [options.group]   Element to use as the container,
- * @param {Object}   options.config  Object with Viewer settings ( TODO: is
- *  this actually used anywhere? )
- * @param {Function} [options.enter]   Function callback for when the mouse
- *  enters group
- * @param {Function} [options.exit]    Function callback for when mouse leaves
- *  the group
- * @param {Function} [options.release] Function callback for when mouse is
- *  released
- * @property {Array} buttons - An array containing the buttons themselves.
- * @property {Element} element - The shared container for the buttons.
- * @property {Object} config - Configurable settings for the group of buttons.
- * @property {OpenSeadragon.MouseTracker} tracker - Tracks mouse events accross
- *  the group of buttons.
+ * @class ButtonGroup
+ * @classdesc Manages events on groups of buttons.
+ *
+ * @memberof OpenSeadragon
+ * @param {Object} options - A dictionary of settings applied against the entire group of buttons.
+ * @param {Array} options.buttons Array of buttons
+ * @param {Element} [options.element] Element to use as the container
  **/
 $.ButtonGroup = function( options ) {
 
     $.extend( true, this, {
+        /**
+         * An array containing the buttons themselves.
+         * @member {Array} buttons
+         * @memberof OpenSeadragon.ButtonGroup#
+         */
         buttons:            [],
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
         labelText:          ""
     }, options );
 
-    // copy the botton elements
+    // copy the button elements  TODO: Why?
     var buttons = this.buttons.concat([]),
         _this = this,
         i;
 
+    /**
+     * The shared container for the buttons.
+     * @member {Element} element
+     * @memberof OpenSeadragon.ButtonGroup#
+     */
     this.element = options.element || $.makeNeutralElement( "fieldgroup" );
 
+    // TODO What if there IS an options.group specified? 
     if( !options.group ){
         this.label   = $.makeNeutralElement( "label" );
         //TODO: support labels for ButtonGroups
@@ -81,6 +80,11 @@ $.ButtonGroup = function( options ) {
         }
     }
 
+    /**
+     * Tracks mouse/touch/key events accross the group of buttons.
+     * @member {OpenSeadragon.MouseTracker} tracker
+     * @memberof OpenSeadragon.ButtonGroup#
+     */
     this.tracker = new $.MouseTracker({
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
@@ -110,13 +114,13 @@ $.ButtonGroup = function( options ) {
     }).setTracking( true );
 };
 
-$.ButtonGroup.prototype = {
+$.ButtonGroup.prototype = /** @lends OpenSeadragon.ButtonGroup.prototype */{
 
     /**
      * TODO: Figure out why this is used on the public API and if a more useful
      * api can be created.
      * @function
-     * @name OpenSeadragon.ButtonGroup.prototype.emulateEnter
+     * @private
      */
     emulateEnter: function() {
         this.tracker.enterHandler( { eventSource: this.tracker } );
@@ -126,7 +130,7 @@ $.ButtonGroup.prototype = {
      * TODO: Figure out why this is used on the public API and if a more useful
      * api can be created.
      * @function
-     * @name OpenSeadragon.ButtonGroup.prototype.emulateExit
+     * @private
      */
     emulateExit: function() {
         this.tracker.exitHandler( { eventSource: this.tracker } );

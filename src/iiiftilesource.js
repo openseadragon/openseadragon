@@ -42,11 +42,11 @@
 (function( $ ){
 
 /**
- * A client implementation of the International Image Interoperability
- * Format: Image API Draft 0.2 - Please read more about the specification
- * at
+ * @class IIIFTileSource
+ * @classdesc A client implementation of the International Image Interoperability
+ * Format: Image API Draft 0.2
  *
- * @class
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @see http://library.stanford.edu/iiif/image-api/
  */
@@ -81,12 +81,11 @@ $.IIIFTileSource = function( options ){
     $.TileSource.apply( this, [ options ] );
 };
 
-$.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.IIIFTileSource.prototype */{
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
-     * @function
-     * @name OpenSeadragon.IIIFTileSource.prototype.supports
+     * @method
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -109,10 +108,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
         );
     },
 
-    /**
+   /**
      *
-     * @function
-     * @name OpenSeadragon.IIIFTileSource.prototype.configure
+     * @method
      * @param {Object|XMLDocument} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
      * @return {Object} options - A dictionary of keyword arguments sufficient
@@ -152,8 +150,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
     /**
      * Responsible for retreiving the url which will return an image for the
      * region speified by the given x, y, and level components.
-     * @function
-     * @name OpenSeadragon.IIIFTileSource.prototype.getTileUrl
+     * @method
      * @param {Number} level - z index
      * @param {Number} x
      * @param {Number} y
@@ -215,28 +212,28 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, {
  * @private
  * @inner
  * @function
- *
-    <?xml version="1.0" encoding="UTF-8"?>
-    <info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
-      <identifier>1E34750D-38DB-4825-A38A-B60A345E591C</identifier>
-      <width>6000</width>
-      <height>4000</height>
-      <scale_factors>
-        <scale_factor>1</scale_factor>
-        <scale_factor>2</scale_factor>
-        <scale_factor>4</scale_factor>
-      </scale_factors>
-      <tile_width>1024</tile_width>
-      <tile_height>1024</tile_height>
-      <formats>
-        <format>jpg</format>
-        <format>png</format>
-      </formats>
-      <qualities>
-        <quality>native</quality>
-        <quality>grey</quality>
-      </qualities>
-    </info>
+ * @example
+ *   <?xml version="1.0" encoding="UTF-8"?>
+ *   <info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
+ *     <identifier>1E34750D-38DB-4825-A38A-B60A345E591C</identifier>
+ *     <width>6000</width>
+ *     <height>4000</height>
+ *     <scale_factors>
+ *       <scale_factor>1</scale_factor>
+ *       <scale_factor>2</scale_factor>
+ *       <scale_factor>4</scale_factor>
+ *     </scale_factors>
+ *     <tile_width>1024</tile_width>
+ *     <tile_height>1024</tile_height>
+ *     <formats>
+ *       <format>jpg</format>
+ *       <format>png</format>
+ *     </formats>
+ *     <qualities>
+ *       <quality>native</quality>
+ *       <quality>grey</quality>
+ *     </qualities>
+ *   </info>
  */
 function configureFromXml( tileSource, xmlDoc ){
 
@@ -306,18 +303,18 @@ function parseXML( node, configuration, property ){
  * @private
  * @inner
  * @function
- *
-    {
-        "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
-        "identifier" : "1E34750D-38DB-4825-A38A-B60A345E591C",
-        "width" : 6000,
-        "height" : 4000,
-        "scale_factors" : [ 1, 2, 4 ],
-        "tile_width" : 1024,
-        "tile_height" : 1024,
-        "formats" : [ "jpg", "png" ],
-        "quality" : [ "native", "grey" ]
-    }
+ * @example
+ *   {
+ *       "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1",
+ *       "identifier" : "1E34750D-38DB-4825-A38A-B60A345E591C",
+ *       "width" : 6000,
+ *       "height" : 4000,
+ *       "scale_factors" : [ 1, 2, 4 ],
+ *       "tile_width" : 1024,
+ *       "tile_height" : 1024,
+ *       "formats" : [ "jpg", "png" ],
+ *       "quality" : [ "native", "grey" ]
+ *   }
  */
 function configureFromObject( tileSource, configuration ){
     //the image_host property is not part of the iiif standard but is included here to
