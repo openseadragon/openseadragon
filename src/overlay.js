@@ -35,10 +35,20 @@
 (function( $ ){
 
     /**
-     * An enumeration of positions that an overlay may be assigned relative
-     * to the viewport including CENTER, TOP_LEFT (default), TOP, TOP_RIGHT,
-     * RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, and LEFT.
+     * An enumeration of positions that an overlay may be assigned relative to the viewport.
+     * @member OverlayPlacement
+     * @memberof OpenSeadragon
      * @static
+     * @type {Object}
+     * @property {Number} CENTER
+     * @property {Number} TOP_LEFT
+     * @property {Number} TOP
+     * @property {Number} TOP_RIGHT
+     * @property {Number} RIGHT
+     * @property {Number} BOTTOM_RIGHT
+     * @property {Number} BOTTOM
+     * @property {Number} BOTTOM_LEFT
+     * @property {Number} LEFT
      */
     $.OverlayPlacement = {
         CENTER:       0,
@@ -53,10 +63,27 @@
     };
 
     /**
-     * An Overlay provides a
-     * @class
+     * @class Overlay
+     * @classdesc Provides a way to float an HTML element on top of the viewer element.
+     *
+     * @memberof OpenSeadragon
+     * @param {Object} options
+     * @param {Element} options.element
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} options.location
+     * @param {OpenSeadragon.OverlayPlacement} options.placement - Only used if location is an {@link OpenSeadragon.Point}.
+     * @param {OpenSeadragon.Overlay.OnDrawCallback} options.onDraw
      */
     $.Overlay = function( element, location, placement ) {
+
+        /**
+         * onDraw callback signature used by {@link OpenSeadragon.Overlay}.
+         *
+         * @callback OnDrawCallback
+         * @memberof OpenSeadragon.Overlay
+         * @param {OpenSeadragon.Point} position
+         * @param {OpenSeadragon.Point} size
+         * @param {Element} element
+         */
 
         var options;
         if( $.isPlainObject( element ) ){
@@ -93,7 +120,7 @@
         this.onDraw = options.onDraw;
     };
 
-    $.Overlay.prototype = {
+    $.Overlay.prototype = /** @lends OpenSeadragon.Overlay.prototype */{
 
         /**
          * @function

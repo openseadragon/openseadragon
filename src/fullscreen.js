@@ -60,12 +60,20 @@
  */
 
 
-/**
- * Determines the appropriate level of native full screen support we can get
- * from the browser.
- * @name $.supportsFullScreen
- */
 (function( $ ) {
+    /**
+     * Determined native full screen support we can get from the browser.
+     * @member fullScreenApi
+     * @memberof OpenSeadragon
+     * @type {object}
+     * @property {Boolean} supportsFullScreen
+     * @property {Function} isFullScreen
+     * @property {Function} requestFullScreen
+     * @property {Function} cancelFullScreen
+     * @property {String} fullScreenEventName
+     * @property {String} fullScreenErrorEventName
+     * @property {String} prefix
+     */
     var fullScreenApi = {
             supportsFullScreen: false,
             isFullScreen: function() { return false; },

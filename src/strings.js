@@ -59,11 +59,10 @@ var I18N = {
     }
 };
 
-$.extend( $, {
+$.extend( $, /** @lends OpenSeadragon */{
 
     /**
      * @function
-     * @name OpenSeadragon.getString
      * @param {String} property
      */
     getString: function( prop ) {
@@ -95,7 +94,6 @@ $.extend( $, {
 
     /**
      * @function
-     * @name OpenSeadragon.setString
      * @param {String} property
      * @param {*} value
      */

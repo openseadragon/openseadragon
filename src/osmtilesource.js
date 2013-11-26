@@ -43,12 +43,13 @@
 (function( $ ){
 
 /**
- * A tilesource implementation for OpenStreetMap.
+ * @class OsmTileSource
+ * @classdesc A tilesource implementation for OpenStreetMap.<br><br>
  *
  * Note 1. Zoomlevels. Deep Zoom and OSM define zoom levels differently. In  Deep
  * Zoom, level 0 equals an image of 1x1 pixels. In OSM, level 0 equals an image of
  * 256x256 levels (see http://gasi.ch/blog/inside-deep-zoom-2). I.e. there is a
- * difference of log2(256)=8 levels.
+ * difference of log2(256)=8 levels.<br><br>
  *
  * Note 2. Image dimension. According to the OSM Wiki
  * (http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Zoom_levels)
@@ -56,7 +57,7 @@
  * pixel size. I.e. the Deep Zoom image dimension is 65.572.864x65.572.864
  * pixels.
  *
- * @class
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Number|Object} width - the pixel width of the image or the idiomatic
  *      options object which is used instead of positional arguments.
@@ -99,14 +100,13 @@ $.OsmTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
 
 };
 
-$.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.OsmTileSource.prototype */{
 
 
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.OsmTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -120,7 +120,6 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
     /**
      *
      * @function
-     * @name OpenSeadragon.OsmTileSource.prototype.configure
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
      * @return {Object} options - A dictionary of keyword arguments sufficient
@@ -133,7 +132,6 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.OsmTileSource.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

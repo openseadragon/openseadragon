@@ -35,8 +35,15 @@
 (function( $ ){
 
 /**
- * An enumeration of button states including, REST, GROUP, HOVER, and DOWN
+ * An enumeration of button states
+ * @member ButtonState
+ * @memberof OpenSeadragon
  * @static
+ * @type {Object}
+ * @property {Number} REST
+ * @property {Number} GROUP
+ * @property {Number} HOVER
+ * @property {Number} DOWN
  */
 $.ButtonState = {
     REST:   0,
@@ -46,38 +53,30 @@ $.ButtonState = {
 };
 
 /**
- * Manages events, hover states for individual buttons, tool-tips, as well
- * as fading the bottons out when the user has not interacted with them
+ * @class Button
+ * @classdesc Manages events, hover states for individual buttons, tool-tips, as well
+ * as fading the buttons out when the user has not interacted with them
  * for a specified period.
- * @class
+ *
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {String} options.tooltip Provides context help for the button we the
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
+ * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
- * @param {String} options.srcRest URL of image to use in 'rest' state
- * @param {String} options.srcGroup URL of image to use in 'up' state
- * @param {String} options.srcHover URL of image to use in 'hover' state
- * @param {String} options.srcDown URL of image to use in 'down' state
- * @param {Element} [options.element] Element to use as a container for the
- *  button.
- * @property {String} tooltip Provides context help for the button we the
- *  user hovers over it.
- * @property {String} srcRest URL of image to use in 'rest' state
- * @property {String} srcGroup URL of image to use in 'up' state
- * @property {String} srcHover URL of image to use in 'hover' state
- * @property {String} srcDown URL of image to use in 'down' state
- * @property {Object} config Configurable settings for this button. DEPRECATED.
- * @property {Element} [element] Element to use as a container for the
- *  button.
- * @property {Number} fadeDelay How long to wait before fading
- * @property {Number} fadeLength How long should it take to fade the button.
- * @property {Number} fadeBeginTime When the button last began to fade.
- * @property {Boolean} shouldFade Whether this button should fade after user
- *  stops interacting with the viewport.
-    this.fadeDelay      = 0;      // begin fading immediately
-    this.fadeLength     = 2000;   // fade over a period of 2 seconds
-    this.fadeBeginTime  = null;
-    this.shouldFade     = false;
+ * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
+ * @param {String} [options.srcGroup=null] URL of image to use in 'up' state.
+ * @param {String} [options.srcHover=null] URL of image to use in 'hover' state.
+ * @param {String} [options.srcDown=null] URL of image to use in 'down' state.
+ * @param {Number} [options.fadeDelay=0] How long to wait before fading.
+ * @param {Number} [options.fadeLength=2000] How long should it take to fade the button.
+ * @param {OpenSeadragon.EventHandler} [options.onPress=null] Event handler callback for {@link OpenSeadragon.Button.event:press}.
+ * @param {OpenSeadragon.EventHandler} [options.onRelease=null] Event handler callback for {@link OpenSeadragon.Button.event:release}.
+ * @param {OpenSeadragon.EventHandler} [options.onClick=null] Event handler callback for {@link OpenSeadragon.Button.event:click}.
+ * @param {OpenSeadragon.EventHandler} [options.onEnter=null] Event handler callback for {@link OpenSeadragon.Button.event:enter}.
+ * @param {OpenSeadragon.EventHandler} [options.onExit=null] Event handler callback for {@link OpenSeadragon.Button.event:exit}.
+ * @param {OpenSeadragon.EventHandler} [options.onFocus=null] Event handler callback for {@link OpenSeadragon.Button.event:focus}.
+ * @param {OpenSeadragon.EventHandler} [options.onBlur=null] Event handler callback for {@link OpenSeadragon.Button.event:blur}.
  */
 $.Button = function( options ) {
 
@@ -94,9 +93,17 @@ $.Button = function( options ) {
         srcDown:            null,
         clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
         clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
-        // begin fading immediately
+        /**
+         * How long to wait before fading.
+         * @member {Number} fadeDelay
+         * @memberof OpenSeadragon.Button#
+         */
         fadeDelay:          0,
-        // fade over a period of 2 seconds
+        /**
+         * How long should it take to fade the button.
+         * @member {Number} fadeLength
+         * @memberof OpenSeadragon.Button#
+         */
         fadeLength:         2000,
         onPress:            null,
         onRelease:          null,
@@ -108,6 +115,11 @@ $.Button = function( options ) {
 
     }, options );
 
+    /**
+     * The button element.
+     * @member {Element} element
+     * @memberof OpenSeadragon.Button#
+     */
     this.element        = options.element   || $.makeNeutralElement( "button" );
 
     //if the user has specified the element to bind the control to explicitly
@@ -159,15 +171,27 @@ $.Button = function( options ) {
     this.addHandler( "focus",     this.onFocus );
     this.addHandler( "blur",      this.onBlur );
 
+    /**
+     * The button's current state.
+     * @member {OpenSeadragon.ButtonState} currentState
+     * @memberof OpenSeadragon.Button#
+     */
     this.currentState = $.ButtonState.GROUP;
 
+    // When the button last began to fade.
     this.fadeBeginTime  = null;
+    // Whether this button should fade after user stops interacting with the viewport.
     this.shouldFade     = false;
 
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
     this.element.title          = this.tooltip;
 
+    /**
+     * Tracks mouse/touch/key events on the button.
+     * @member {OpenSeadragon.MouseTracker} tracker
+     * @memberof OpenSeadragon.Button#
+     */
     this.tracker = new $.MouseTracker({
 
         element:            this.element,
@@ -177,6 +201,16 @@ $.Button = function( options ) {
         enterHandler: function( event ) {
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
+                /**
+                 * Raised when the cursor enters the Button element.
+                 *
+                 * @event enter
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
             } else if ( !event.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
@@ -185,29 +219,79 @@ $.Button = function( options ) {
 
         focusHandler: function ( event ) {
             this.enterHandler( event );
+            /**
+             * Raised when the Button element receives focus.
+             *
+             * @event focus
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
 
         exitHandler: function( event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
+                /**
+                 * Raised when the cursor leaves the Button element.
+                 *
+                 * @event exit
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
             }
         },
 
         blurHandler: function ( event ) {
             this.exitHandler( event );
+            /**
+             * Raised when the Button element loses focus.
+             *
+             * @event blur
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
         },
 
         pressHandler: function ( event ) {
             inTo( _this, $.ButtonState.DOWN );
+            /**
+             * Raised when a mouse button is pressed or touch occurs in the Button element.
+             *
+             * @event press
+             * @memberof OpenSeadragon.Button
+             * @type {object}
+             * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+             * @property {Object} originalEvent - The original DOM event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
         },
 
         releaseHandler: function( event ) {
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
+                /**
+                 * Raised when the mouse button is released or touch ends in the Button element.
+                 *
+                 * @event release
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
             } else if ( event.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
@@ -218,6 +302,16 @@ $.Button = function( options ) {
 
         clickHandler: function( event ) {
             if ( event.quick ) {
+                /**
+                 * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
+                 *
+                 * @event click
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent("click", { originalEvent: event.originalEvent });
             }
         },
@@ -225,7 +319,27 @@ $.Button = function( options ) {
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
             if( 13 === event.keyCode ){
+                /***
+                 * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
+                 *
+                 * @event click
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
+                /***
+                 * Raised when the mouse button is released or touch ends in the Button element.
+                 *
+                 * @event release
+                 * @memberof OpenSeadragon.Button
+                 * @type {object}
+                 * @property {OpenSeadragon.Button} eventSource - A reference to the Button which raised the event.
+                 * @property {Object} originalEvent - The original DOM event.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
                 return false;
             }
@@ -237,13 +351,12 @@ $.Button = function( options ) {
     outTo( this, $.ButtonState.REST );
 };
 
-$.extend( $.Button.prototype, $.EventSource.prototype, {
+$.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.Button.prototype */{
 
     /**
      * TODO: Determine what this function is intended to do and if it's actually
      * useful as an API point.
      * @function
-     * @name OpenSeadragon.Button.prototype.notifyGroupEnter
      */
     notifyGroupEnter: function() {
         inTo( this, $.ButtonState.GROUP );
@@ -253,18 +366,23 @@ $.extend( $.Button.prototype, $.EventSource.prototype, {
      * TODO: Determine what this function is intended to do and if it's actually
      * useful as an API point.
      * @function
-     * @name OpenSeadragon.Button.prototype.notifyGroupExit
      */
     notifyGroupExit: function() {
         outTo( this, $.ButtonState.REST );
     },
 
+    /**
+     * @function
+     */
     disable: function(){
         this.notifyGroupExit();
         this.element.disabled = true;
         $.setElementOpacity( this.element, 0.2, true );
     },
 
+    /**
+     * @function
+     */
     enable: function(){
         this.element.disabled = false;
         $.setElementOpacity( this.element, 1.0, true );

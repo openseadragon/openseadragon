@@ -35,10 +35,17 @@
 (function( $ ){
 
 /**
- * An enumeration of supported locations where controls can be anchored,
- * including NONE, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, and BOTTOM_LEFT.
- * The anchoring is always relative to the container
+ * An enumeration of supported locations where controls can be anchored.
+ * The anchoring is always relative to the container.
+ * @member ControlAnchor
+ * @memberof OpenSeadragon
  * @static
+ * @type {Object}
+ * @property {Number} NONE
+ * @property {Number} TOP_LEFT
+ * @property {Number} TOP_RIGHT
+ * @property {Number} BOTTOM_LEFT
+ * @property {Number} BOTTOM_RIGHT
  */
 $.ControlAnchor = {
     NONE: 0,
@@ -49,10 +56,12 @@ $.ControlAnchor = {
 };
 
 /**
- * A Control represents any interface element which is meant to allow the user
+ * @class Control
+ * @classdesc A Control represents any interface element which is meant to allow the user
  * to interact with the zoomable interface. Any control can be anchored to any
  * element.
- * @class
+ *
+ * @memberof OpenSeadragon
  * @param {Element} element - the control element to be anchored in the container.
  * @param {Object } options - All required and optional settings for configuring a control element.
  * @param {OpenSeadragon.ControlAnchor} [options.anchor=OpenSeadragon.ControlAnchor.NONE] - the position of the control
@@ -61,16 +70,6 @@ $.ControlAnchor = {
  *  directly to the container
  * @param {Boolean} [options.autoFade=true] - Whether the control should have the autofade behavior
  * @param {Element} container - the element to control will be anchored too.
- *
- * @property {Element} element - the element providing the user interface with
- *  some type of control. Eg a zoom-in button
- * @property {OpenSeadragon.ControlAnchor} anchor - the position of the control
- *  relative to the container.
- * @property {Boolean} autoFade - Whether the control should have the autofade behavior
- * @property {Element} container - the element within with the control is
- *  positioned.
- * @property {Element} wrapper - a neutral element surrounding the control
- *  element.
  */
 $.Control = function ( element, options, container ) {
     var parent = element.parentNode;
@@ -82,10 +81,35 @@ $.Control = function ( element, options, container ) {
          options = {anchor: options};
     }
     options.attachToViewer = (typeof options.attachToViewer === 'undefined') ? true : options.attachToViewer;
+    /**
+     * True if the control should have autofade behavior.
+     * @member {Boolean} autoFade
+     * @memberof OpenSeadragon.Control#
+     */
     this.autoFade = (typeof options.autoFade === 'undefined') ? true : options.autoFade;
+    /**
+     * The element providing the user interface with some type of control (e.g. a zoom-in button).
+     * @member {Element} element
+     * @memberof OpenSeadragon.Control#
+     */
     this.element    = element;
+    /**
+     * The position of the Control relative to its container.
+     * @member {OpenSeadragon.ControlAnchor} anchor
+     * @memberof OpenSeadragon.Control#
+     */
     this.anchor     = options.anchor;
+    /**
+     * The Control's containing element.
+     * @member {Element} container
+     * @memberof OpenSeadragon.Control#
+     */
     this.container  = container;
+    /**
+     * A neutral element surrounding the control element.
+     * @member {Element} wrapper
+     * @memberof OpenSeadragon.Control#
+     */
     this.wrapper    = $.makeNeutralElement( "span" );
     this.wrapper.style.display = "inline-block";
     this.wrapper.appendChild( this.element );
@@ -110,7 +134,7 @@ $.Control = function ( element, options, container ) {
     }
 };
 
-$.Control.prototype = {
+$.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
 
     /**
      * Removes the control from the container.

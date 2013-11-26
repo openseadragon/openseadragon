@@ -35,9 +35,11 @@
 (function( $ ){
 
 /**
- * A utility class useful for developers to establish baseline performance
+ * @class Profiler
+ * @classdesc A utility class useful for developers to establish baseline performance
  * metrics of rendering routines.
- * @class
+ *
+ * @memberof OpenSeadragon
  * @property {Boolean} midUpdate
  * @property {Number} numUpdates
  * @property {Number} lastBeginTime
@@ -66,7 +68,7 @@ $.Profiler = function() {
     this.maxIdleTime = 0;
 };
 
-$.Profiler.prototype = {
+$.Profiler.prototype = /** @lends OpenSeadragon.Profiler.prototype */{
 
     /**
      * @function

@@ -29,6 +29,7 @@ OPENSEADRAGON CHANGELOG
     * There is now a 'full-screen' event with a `fullScreen` property (true if it has gone to full screen).
     * There are now 'pre-full-page' and 'pre-full-screen' events that include a `preventDefaultAction` property you can set in your handler to cancel. They also have `fullPage` and `fullScreen` properties respectively, to indicate if they are going into or out of the mode.
 * BREAKING CHANGE: Removed the 'onPageChange' callback from the viewer options. Viewer.goToPage() now raises the 'page' event only (#285)
+* Major documentation improvements (#281)
 * MouseTracker now passes the original event objects to its handler methods (#23)
 * MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
 * Added stopHandler to MouseTracker. (#262)
@@ -56,7 +57,8 @@ OPENSEADRAGON CHANGELOG
     * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
 * Fixed: IE8 error with custom buttons - "Object doesn't support this action" (#279)
 * Support IIIF servers that don't report tile dimensions (#286)
-* Added an autoResize option. Default is true. When set to false, the viewer takes no action when its container element is resized.
+* Added an autoResize option. Default is true. When set to false, the viewer takes no action when its container element is resized. (#291)
+* Added a static 'version' property to OpenSeadragon. Useful for plugins that require specific OpenSeadragon versions. (#292)
 
 0.9.131:
 

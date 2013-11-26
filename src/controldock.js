@@ -34,7 +34,10 @@
 
 (function( $ ){
     /**
-     * @class
+     * @class ControlDock
+     * @classdesc Provides a container element (a &lt;form&gt; element) with support for the layout of control elements.
+     *
+     * @memberof OpenSeadragon
      */
     $.ControlDock = function( options ){
         var layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'],
@@ -85,7 +88,7 @@
         this.container.appendChild( this.controls.bottomleft );
     };
 
-    $.ControlDock.prototype = {
+    $.ControlDock.prototype = /** @lends OpenSeadragon.ControlDock.prototype */{
 
         /**
          * @function
