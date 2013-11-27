@@ -1,4 +1,4 @@
-# OpenSeadragon 
+# OpenSeadragon
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
@@ -58,7 +58,7 @@ If you wish to work interactively with the tests or test your changes:
 
     grunt connect watch
 
-and open `http://localhost:8000/test/test.html` in your browser. 
+and open `http://localhost:8000/test/test.html` in your browser.
 
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
@@ -70,7 +70,7 @@ When contributing, please attempt to match the code style already in the codebas
 
 When fixing bugs and adding features, when appropriate please also:
 
-* Update related doc comments
+* Update related doc comments (we use [JSDoc 3](http://usejsdoc.org/))
 * Add/update related unit tests
 
 If you're new to the project, check out our [good first bug](https://github.com/openseadragon/openseadragon/issues?labels=good+first+bug&page=1&state=open) issues for some places to dip your toe in the water.
