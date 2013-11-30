@@ -578,6 +578,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.source     = null;
         this.drawer     = null;
+        this.drawers    = [];
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
         //this.profiler   = null;
@@ -1045,6 +1046,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
+    /**
+     * @function
+     * @name OpenSeadragon.Viewer.prototype.addLayer
+     */
+    addLayer: function( tileSource ) {
+        var drawer = new $.Drawer(
+            tileSource,
+            this.viewport,
+            this.canvas
+            );
+        this.drawers.push( drawer );
+        updateOnce( this );
+        return drawer.canvas;
+    },
 
     /**
      * @function
@@ -1460,6 +1475,7 @@ function openTileSource( viewer, source ) {
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor
     });
+    _this.drawers.push( _this.drawer );
 
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && !_this.collectionMode ){
@@ -1929,7 +1945,7 @@ function updateOnce( viewer ) {
     }
 
     if ( animated ) {
-        viewer.drawer.update();
+        updateDrawers( viewer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
@@ -1943,8 +1959,8 @@ function updateOnce( viewer ) {
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         viewer.raiseEvent( "animation" );
-    } else if ( THIS[ viewer.hash ].forceRedraw || viewer.drawer.needsUpdate() ) {
-        viewer.drawer.update();
+    } else if ( THIS[ viewer.hash ].forceRedraw || drawersNeedUpdate( viewer ) ) {
+        updateDrawers( viewer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
@@ -1996,6 +2012,18 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
         newHeight
         );
     viewport.fitBounds( newBounds, true );
+}
+
+function updateDrawers( viewer ) {
+    viewer.drawers.forEach( function( drawer ) {
+        drawer.update();
+    });
+}
+
+function drawersNeedUpdate( viewer ) {
+    return viewer.drawers.some( function( drawer ) {
+        return drawer.needsUpdate();
+    });
 }
 
 ///////////////////////////////////////////////////////////////////////////////
