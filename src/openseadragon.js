@@ -102,10 +102,10 @@
  */
 
 /**
- * The root namespace for OpenSeadragon.  All utility methods
- * and classes are defined on or below this namespace.
- *
  * @namespace OpenSeadragon
+ *
+ * @classdesc The root namespace for OpenSeadragon.  All utility methods
+ * and classes are defined on or below this namespace.
  *
  */
 

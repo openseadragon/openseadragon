@@ -95,20 +95,20 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
      *
      * @function
      * @param {Object} data - the raw configuration
+     * @example <caption>IIIF 1.1 Info Looks like this (XML syntax is no more)</caption>
+     * {
+     *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+     *   "@id" : "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
+     *   "width" : 6000,
+     *   "height" : 4000,
+     *   "scale_factors" : [ 1, 2, 4 ],
+     *   "tile_width" : 1024,
+     *   "tile_height" : 1024,
+     *   "formats" : [ "jpg", "png" ],
+     *   "qualities" : [ "native", "grey" ]
+     *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" 
+     * } 
      */
-    // IIIF 1.1 Info Looks like this (XML syntax is no more):
-    // {
-    //   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
-    //   "@id" : "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
-    //   "width" : 6000,
-    //   "height" : 4000,
-    //   "scale_factors" : [ 1, 2, 4 ],
-    //   "tile_width" : 1024,
-    //   "tile_height" : 1024,
-    //   "formats" : [ "jpg", "png" ],
-    //   "qualities" : [ "native", "grey" ]
-    //   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" 
-    // } 
     configure: function( data ){
       return data;
     },
