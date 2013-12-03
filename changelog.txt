@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.0.1: (in progress)
+
 1.0.0:
 
 NOTE: This version has a number of breaking changes to the API, mostly in event handling. See below.
