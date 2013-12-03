@@ -1,7 +1,9 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.0.0: (in progress)
+1.0.0:
+
+NOTE: This version has a number of breaking changes to the API, mostly in event handling. See below.
 
 * BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
     * The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
