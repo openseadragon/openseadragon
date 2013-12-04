@@ -105,9 +105,9 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
      *   "tile_width" : 1024,
      *   "tile_height" : 1024,
      *   "formats" : [ "jpg", "png" ],
-     *   "qualities" : [ "native", "grey" ]
-     *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" 
-     * } 
+     *   "qualities" : [ "native", "grey" ],
+     *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0"
+     * }
      */
     configure: function( data ){
       return data;
