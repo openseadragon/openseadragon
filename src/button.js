@@ -120,7 +120,7 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element        = options.element   || $.makeNeutralElement( "button" );
+    this.element        = options.element   || $.makeNeutralElement( "div" );
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -183,6 +183,7 @@ $.Button = function( options ) {
     // Whether this button should fade after user stops interacting with the viewport.
     this.shouldFade     = false;
 
+    this.element.style.cursor   = "pointer";
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
     this.element.title          = this.tooltip;
