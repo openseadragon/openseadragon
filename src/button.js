@@ -186,6 +186,7 @@ $.Button = function( options ) {
     this.element.style.cursor   = "pointer";
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
+    this.element.tabIndex       = "0";
     this.element.title          = this.tooltip;
 
     /**
