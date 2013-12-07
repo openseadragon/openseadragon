@@ -120,7 +120,7 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element        = options.element   || $.makeNeutralElement( "div" );
+    this.element        = options.element   || $.makeNeutralElement( "button" );
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -129,22 +129,23 @@ $.Button = function( options ) {
         this.imgGroup     = $.makeTransparentImage( this.srcGroup );
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
+        this.imgDiv       = $.makeNeutralElement( "div" );
 
-        this.element.appendChild( this.imgRest );
-        this.element.appendChild( this.imgGroup );
-        this.element.appendChild( this.imgHover );
-        this.element.appendChild( this.imgDown );
+        this.imgDiv.style.position = "relative";
 
+        //this.imgRest.style.position =
         this.imgGroup.style.position =
         this.imgHover.style.position =
         this.imgDown.style.position  =
             "absolute";
 
+        this.imgRest.style.top =
         this.imgGroup.style.top =
         this.imgHover.style.top =
         this.imgDown.style.top  =
             "0px";
 
+        this.imgRest.style.left =
         this.imgGroup.style.left =
         this.imgHover.style.left =
         this.imgDown.style.left  =
@@ -160,6 +161,12 @@ $.Button = function( options ) {
             this.imgDown.style.top  =
                 "";
         }
+
+        this.imgDiv.appendChild( this.imgRest );
+        this.imgDiv.appendChild( this.imgGroup );
+        this.imgDiv.appendChild( this.imgHover );
+        this.imgDiv.appendChild( this.imgDown );
+        this.element.appendChild( this.imgDiv );
     }
 
 
@@ -183,10 +190,8 @@ $.Button = function( options ) {
     // Whether this button should fade after user stops interacting with the viewport.
     this.shouldFade     = false;
 
-    this.element.style.cursor   = "pointer";
     this.element.style.display  = "inline-block";
     this.element.style.position = "relative";
-    this.element.tabIndex       = "0";
     this.element.title          = this.tooltip;
 
     /**
