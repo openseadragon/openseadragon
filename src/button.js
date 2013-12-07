@@ -133,19 +133,16 @@ $.Button = function( options ) {
 
         this.imgDiv.style.position = "relative";
 
-        //this.imgRest.style.position =
         this.imgGroup.style.position =
         this.imgHover.style.position =
         this.imgDown.style.position  =
             "absolute";
 
-        this.imgRest.style.top =
         this.imgGroup.style.top =
         this.imgHover.style.top =
         this.imgDown.style.top  =
             "0px";
 
-        this.imgRest.style.left =
         this.imgGroup.style.left =
         this.imgHover.style.left =
         this.imgDown.style.left  =
