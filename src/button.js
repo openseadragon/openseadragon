@@ -129,11 +129,9 @@ $.Button = function( options ) {
         this.imgGroup     = $.makeTransparentImage( this.srcGroup );
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
+        this.imgDiv       = $.makeNeutralElement( "div" );
 
-        this.element.appendChild( this.imgRest );
-        this.element.appendChild( this.imgGroup );
-        this.element.appendChild( this.imgHover );
-        this.element.appendChild( this.imgDown );
+        this.imgDiv.style.position = "relative";
 
         this.imgGroup.style.position =
         this.imgHover.style.position =
@@ -160,6 +158,12 @@ $.Button = function( options ) {
             this.imgDown.style.top  =
                 "";
         }
+
+        this.imgDiv.appendChild( this.imgRest );
+        this.imgDiv.appendChild( this.imgGroup );
+        this.imgDiv.appendChild( this.imgHover );
+        this.imgDiv.appendChild( this.imgDown );
+        this.element.appendChild( this.imgDiv );
     }
 
 
