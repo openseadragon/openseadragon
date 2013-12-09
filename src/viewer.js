@@ -477,81 +477,26 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
     open: function ( tileSource ) {
-        var _this = this,
-            customTileSource,
-            readySource,
-            $TileSource,
-            options;
+        var _this = this;
 
         _this._hideMessage();
 
-        //allow plain xml strings or json strings to be parsed here
-        if( $.type( tileSource ) == 'string' ){
-            if( tileSource.match(/\s*<.*/) ){
-                tileSource = $.parseXml( tileSource );
-            }else if( tileSource.match(/\s*[\{\[].*/) ){
-                /*jshint evil:true*/
-                tileSource = eval( '('+tileSource+')' );
-            }
-        }
-
-        setTimeout(function(){
-            if ( $.type( tileSource ) == 'string') {
-                //If its still a string it means it must be a url at this point
-                tileSource = new $.TileSource( tileSource, function( event ){
-                    openTileSource( _this, event.tileSource );
-                });
-                tileSource.addHandler( 'open-failed', function ( event ) {
-                    /**
-                     * Raised when an error occurs loading a TileSource.
-                     *
-                     * @event open-failed
-                     * @memberof OpenSeadragon.Viewer
-                     * @type {object}
-                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                     * @property {String} message
-                     * @property {String} source
-                     * @property {?Object} userData - Arbitrary subscriber-defined object.
-                     */
-                    _this.raiseEvent( 'open-failed', event );
-                });
-
-            } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ){
-                if( $.isFunction( tileSource.getTileUrl ) ){
-                    //Custom tile source
-                    customTileSource = new $.TileSource(tileSource);
-                    customTileSource.getTileUrl = tileSource.getTileUrl;
-                    openTileSource( _this, customTileSource );
-                } else {
-                    //inline configuration
-                    $TileSource = $.TileSource.determineType( _this, tileSource );
-                    if ( !$TileSource ) {
-                        /***
-                         * Raised when an error occurs loading a TileSource.
-                         *
-                         * @event open-failed
-                         * @memberof OpenSeadragon.Viewer
-                         * @type {object}
-                         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                         * @property {String} message
-                         * @property {String} source
-                         * @property {?Object} userData - Arbitrary subscriber-defined object.
-                         */
-                        _this.raiseEvent( 'open-failed', {
-                            message: "Unable to load TileSource",
-                            source: tileSource
-                        });
-                        return;
-                    }
-                    options = $TileSource.prototype.configure.apply( _this, [ tileSource ]);
-                    readySource = new $TileSource( options );
-                    openTileSource( _this, readySource );
-                }
-            } else {
-                //can assume it's already a tile source implementation
-                openTileSource( _this, tileSource );
-            }
-        }, 1);
+        getTileSourceImplementation( _this, tileSource, function( tileSource ) {
+            openTileSource( _this, tileSource );
+        }, function( event ) {
+            /**
+             * Raised when an error occurs loading a TileSource.
+             *
+             * @event open-failed
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {String} message
+             * @property {String} source
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            _this.raiseEvent( 'open-failed', event );
+        });
 
         return this;
     },
@@ -1047,18 +992,155 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Add a layer.
+     * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
+     *  supports.
      * @function
-     * @name OpenSeadragon.Viewer.prototype.addLayer
+     * @param {Object} options
+     * @param {String|Object|Function} [options.tileSource] The TileSource of the layer.
+     * @param {Number} [options.opacity=1] The opacity of the layer.
+     * @param {Number} [options.level] The level of the layer.
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:add-layer
+     * @fires OpenSeadragon.Viewer.event:add-layer-failed
      */
-    addLayer: function( tileSource ) {
-        var drawer = new $.Drawer(
-            tileSource,
-            this.viewport,
-            this.canvas
-            );
-        this.drawers.push( drawer );
-        updateOnce( this );
-        return drawer.canvas;
+    addLayer: function( options ) {
+        var _this = this,
+            tileSource = options.tileSource;
+
+        if ( !tileSource ) {
+            throw new Error( "No tile source provided as new layer." );
+        }
+
+        getTileSourceImplementation( this, tileSource, function( tileSource ) {
+            var drawer = new $.Drawer({
+                viewer: _this,
+                source: tileSource,
+                viewport: _this.viewport,
+                element: _this.canvas,
+                opacity: options.opacity !== undefined ?
+                    options.opacity : _this.opacity,
+                maxImageCacheCount: _this.maxImageCacheCount,
+                imageLoaderLimit: _this.imageLoaderLimit,
+                minZoomImageRatio: _this.minZoomImageRatio,
+                wrapHorizontal: _this.wrapHorizontal,
+                wrapVertical: _this.wrapVertical,
+                immediateRender: _this.immediateRender,
+                blendTime: _this.blendTime,
+                alwaysBlend: _this.alwaysBlend,
+                minPixelRatio: _this.minPixelRatio,
+                timeout: _this.timeout,
+                debugMode: _this.debugMode,
+                debugGridColor: _this.debugGridColor
+            });
+            _this.drawers.push( drawer );
+            if ( options.level ) {
+                _this.setLayerLevel( drawer, options.level );
+            }
+            THIS[ _this.hash ].forceRedraw = true;
+            /**
+             * Raised when a layer is successfully added.
+             * @event add-layer
+             * @memberOf OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            _this.raiseEvent( 'add-layer', { drawer: drawer } );
+        }, function( event ) {
+            /**
+             * Raised when an error occurs while adding a layer.
+             * @event add-layer-failed
+             * @memberOf OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {String} message
+             * @property {String} source
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            _this.raiseEvent( 'add-layer-failed', event );
+        } );
+
+        return this;
+    },
+
+    /**
+     * Get the level of the layer associated with the given drawer or -1 if not
+     * present.
+     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer.
+     * @returns {Number} The level of the layer or -1 if not present.
+     */
+    getLayerLevel: function( drawer ) {
+        return this.drawers.indexOf( drawer );
+    },
+
+    /**
+     * Change the level of a layer so that it appears over or under others.
+     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the changing
+     * level layer.
+     * @param {Number} level The new level
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     */
+    setLayerLevel: function( drawer, level ) {
+        var oldLevel = this.drawers.indexOf( drawer );
+        if ( level === 0 || oldLevel === 0 ) {
+            throw new Error( "Cannot reassign base level." );
+        }
+        if ( level > this.drawers.length - 1 ) {
+            throw new Error( "Level bigger than number of layers." );
+        }
+        if ( level === oldLevel || oldLevel === -1 ) {
+            return this;
+        }
+        this.drawers.splice( oldLevel, 1 );
+        this.drawers.splice( level, 0, drawer );
+        this.canvas.removeChild( drawer.canvas );
+        // Insert right after layer at level - 1
+        var prevLevelCanvas = this.drawers[level - 1].canvas;
+        prevLevelCanvas.parentNode.insertBefore( drawer.canvas,
+            prevLevelCanvas.nextSibling );
+        return this;
+    },
+
+    /**
+     * @function
+     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer 
+     * to remove
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:remove-layer
+     */
+    removeLayer: function( drawer ) {
+        var index = this.drawers.indexOf( drawer );
+        if ( index === -1 ) {
+            return this;
+        }
+        if ( index === 0 ) {
+            throw new Error( "Cannot remove base layer." );
+        }
+
+        this.drawers.splice( index, 1 );
+        this.canvas.removeChild( drawer.canvas );
+        /**
+         * Raised when a layer is removed.
+         * @event remove-layer
+         * @memberOf OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'remove-layer', { drawer: drawer } );
+        return this;
+    },
+
+    /**
+     * Force the viewer to redraw its drawers.
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     */
+    forceRedraw: function() {
+        THIS[ this.hash ].forceRedraw = true;
+        return this;
     },
 
     /**
@@ -1393,6 +1475,61 @@ function _getSafeElemSize (oElement) {
  * @function
  * @private
  */
+function getTileSourceImplementation( viewer, tileSource, successCallback,
+    failCallback) {
+    var _this = viewer;
+
+    //allow plain xml strings or json strings to be parsed here
+    if ( $.type( tileSource ) == 'string' ) {
+        if ( tileSource.match( /\s*<.*/ ) ) {
+            tileSource = $.parseXml( tileSource );
+        } else if ( tileSource.match( /\s*[\{\[].*/ ) ) {
+            /*jshint evil:true*/
+            tileSource = eval( '(' + tileSource + ')' );
+        }
+    }
+
+    setTimeout( function() {
+        if ( $.type( tileSource ) == 'string' ) {
+            //If its still a string it means it must be a url at this point
+            tileSource = new $.TileSource( tileSource, function( event ) {
+                successCallback( event.tileSource );
+            });
+            tileSource.addHandler( 'open-failed', function( event ) {
+                failCallback( event );
+            } );
+
+        } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ) {
+            if ( $.isFunction( tileSource.getTileUrl ) ) {
+                //Custom tile source
+                var customTileSource = new $.TileSource( tileSource );
+                customTileSource.getTileUrl = tileSource.getTileUrl;
+                successCallback( customTileSource );
+            } else {
+                //inline configuration
+                var $TileSource = $.TileSource.determineType( _this, tileSource );
+                if ( !$TileSource ) {
+                    failCallback( {
+                        message: "Unable to load TileSource",
+                        source: tileSource
+                    });
+                    return;
+                }
+                var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
+                var readySource = new $TileSource( options );
+                successCallback( readySource );
+            }
+        } else {
+            //can assume it's already a tile source implementation
+            successCallback( tileSource );
+        }
+    }, 1 );
+}
+
+/**
+ * @function
+ * @private
+ */
 function openTileSource( viewer, source ) {
     var _this = viewer,
         overlay,
@@ -1462,6 +1599,7 @@ function openTileSource( viewer, source ) {
         viewport:           _this.viewport,
         element:            _this.canvas,
         overlays:           [].concat( _this.overlays ).concat( _this.source.overlays ),
+        opacity:            _this.opacity,
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
         minZoomImageRatio:  _this.minZoomImageRatio,
@@ -1475,7 +1613,7 @@ function openTileSource( viewer, source ) {
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor
     });
-    _this.drawers.push( _this.drawer );
+    _this.drawers = [_this.drawer];
 
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && !_this.collectionMode ){
@@ -2015,15 +2153,18 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 }
 
 function updateDrawers( viewer ) {
-    viewer.drawers.forEach( function( drawer ) {
-        drawer.update();
-    });
+    for (var i = 0; i < viewer.drawers.length; i++ ) {
+        viewer.drawers[i].update();
+    }
 }
 
 function drawersNeedUpdate( viewer ) {
-    return viewer.drawers.some( function( drawer ) {
-        return drawer.needsUpdate();
-    });
+    for (var i = 0; i < viewer.drawers.length; i++ ) {
+        if (viewer.drawers[i].needsUpdate()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

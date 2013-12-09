@@ -190,6 +190,9 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
+  * @property {Number} [opacity=1]
+  *     Opacity of the drawer (1=opaque, 0=transparent)
+  *
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
@@ -714,6 +717,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             // INITIAL ROTATION
             degrees:                0,
+
+            // APPEARANCE
+            opacity:                1,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
