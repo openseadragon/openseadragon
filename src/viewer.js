@@ -1122,7 +1122,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }else{
                     this.addControl(
                         this.pagingControl,
-                        {anchor: this.sequenceControlAnchor ? this.sequenceControlAnchor : $.ControlAnchor.TOP_LEFT}
+                        {anchor: this.sequenceControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1243,7 +1243,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }else{
                     this.addControl(
                         this.navControl,
-                        {anchor: this.navigationControlAnchor ? this.navigationControlAnchor : $.ControlAnchor.TOP_LEFT}
+                        {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
