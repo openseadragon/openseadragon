@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 1.0.1: (in progress)
 
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
+* Added ControlAnchor options for default controls (#304)
 
 1.0.0:
 
