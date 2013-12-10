@@ -264,6 +264,9 @@
   * @property {Boolean} [showNavigationControl=true]
   *     Set to false to prevent the appearance of the default navigation controls.
   *
+  * @property {OpenSeadragon.ControlAnchor} [navigationControlAnchor=TOP_LEFT]
+  *     Placement of the default navigation controls.
+  *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
@@ -318,6 +321,9 @@
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
   *     provide buttons for navigating forward and backward through the images.
+  *
+  * @property {OpenSeadragon.ControlAnchor} [sequenceControlAnchor=TOP_LEFT]
+  *     Placement of the default sequence controls.
   *
   * @property {Number} [initialPage=0]
   *     If the viewer has been configured with a sequence of tile sources, display this page initially.
@@ -697,12 +703,14 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             autoResize:             true,
 
             //DEFAULT CONTROL SETTINGS
-            showSequenceControl:    true,  //SEQUENCE
-            preserveViewport:       false, //SEQUENCE
-            showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
-            controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
-            controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
-            mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
+            showSequenceControl:     true,  //SEQUENCE
+            sequenceControlAnchor:   null,  //SEQUENCE
+            preserveViewport:        false, //SEQUENCE
+            showNavigationControl:   true,  //ZOOM/HOME/FULL/SEQUENCE
+            navigationControlAnchor: null,  //ZOOM/HOME/FULL
+            controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
+            mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:          false,
