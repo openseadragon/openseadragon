@@ -1072,7 +1072,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Number} The level of the layer or -1 if not present.
      */
     getLayerLevel: function( drawer ) {
-        return this.drawers.indexOf( drawer );
+        return $.indexOf( this.drawers, drawer );
     },
 
     /**
@@ -1081,13 +1081,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * level layer.
      * @param {Number} level The new level
      * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:layer-level-changed
      */
     setLayerLevel: function( drawer, level ) {
-        var oldLevel = this.drawers.indexOf( drawer );
+        var oldLevel = this.getLayerLevel( drawer );
         if ( level === 0 || oldLevel === 0 ) {
             throw new Error( "Cannot reassign base level." );
         }
-        if ( level > this.drawers.length - 1 ) {
+        if ( level >= this.drawers.length ) {
             throw new Error( "Level bigger than number of layers." );
         }
         if ( level === oldLevel || oldLevel === -1 ) {
@@ -1100,6 +1101,25 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var prevLevelCanvas = this.drawers[level - 1].canvas;
         prevLevelCanvas.parentNode.insertBefore( drawer.canvas,
             prevLevelCanvas.nextSibling );
+
+        /**
+         * Raised when the order of the layers has been changed.
+         * @event layer-level-changed
+         * @memberOf OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {OpenSeadragon.Drawer} drawer - The drawer which level has
+         * been changed
+         * @property {Number} previousLevel - The previous level of the drawer
+         * @property {Number} newLevel - The new level of the drawer
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'layer-level-changed', {
+            drawer: drawer,
+            previousLevel: oldLevel,
+            newLevel: level
+        } );
+
         return this;
     },
 
