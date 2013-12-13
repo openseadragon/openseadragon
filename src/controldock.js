@@ -128,7 +128,6 @@
                     break;
                 case $.ControlAnchor.ABSOLUTE:
                     div = this.container;
-                    element.style.position = "absolute";
                     element.style.margin = "0px";
                     element.style.padding = "0px";
                     break;

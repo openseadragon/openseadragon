@@ -179,19 +179,17 @@ $.Navigator = function( options ){
         options.controlOptions
     );
 
-    if ( options.controlOptions.anchor === $.ControlAnchor.ABSOLUTE ) {
-        this.element.style.top = typeof ( options.top )  == "number" ? ( options.top + 'px' ) : options.top;
-        this.element.style.left  = typeof ( options.left )  == "number" ?  (options.left + 'px' ) : options.left;
-    }
-    if ( options.width && options.height ) {
-        this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
-        this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
-    } else {
-        viewerSize = $.getElementSize( viewer.element );
-        this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
-        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
-        if ( options.maintainSizeRatio ) {
-            this.oldViewerSize = viewerSize;
+    if ( options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE ) {
+        if ( options.width && options.height ) {
+            this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
+            this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+        } else {
+            viewerSize = $.getElementSize( viewer.element );
+            this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
+            this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+            if ( options.maintainSizeRatio ) {
+                this.oldViewerSize = viewerSize;
+            }
         }
     }
 

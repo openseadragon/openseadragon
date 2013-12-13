@@ -112,16 +112,30 @@ $.Control = function ( element, options, container ) {
      * @member {Element} wrapper
      * @memberof OpenSeadragon.Control#
      */
-    if ( this.anchor != $.ControlAnchor.ABSOLUTE ) {
+    if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
+        this.wrapper    = $.makeNeutralElement( "div" );
+        this.wrapper.style.position = "absolute";
+        this.wrapper.style.top = typeof ( options.top )  == "number" ? ( options.top + 'px' ) : options.top;
+        this.wrapper.style.left  = typeof ( options.left )  == "number" ?  (options.left + 'px' ) : options.left;
+        this.wrapper.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
+        this.wrapper.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+        this.wrapper.style.margin = "0px";
+        this.wrapper.style.padding = "0px";
+
+        this.element.style.position = "relative";
+        this.element.style.top = "0px";
+        this.element.style.left = "0px";
+        this.element.style.height = "100%";
+        this.element.style.width = "100%";
+    } else {
         this.wrapper    = $.makeNeutralElement( "span" );
         this.wrapper.style.display = "inline-block";
-        this.wrapper.appendChild( this.element );
-
         if ( this.anchor == $.ControlAnchor.NONE ) {
             // IE6 fix
             this.wrapper.style.width = this.wrapper.style.height = "100%";
         }
     }
+    this.wrapper.appendChild( this.element );
 
     if (options.attachToViewer ) {
         if ( this.anchor == $.ControlAnchor.TOP_RIGHT ||
@@ -130,13 +144,11 @@ $.Control = function ( element, options, container ) {
                 this.wrapper,
                 this.container.firstChild
             );
-        } else if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
-            this.container.appendChild( this.element );
         } else {
             this.container.appendChild( this.wrapper );
         }
     } else {
-        parent.appendChild( this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper );
+        parent.appendChild( this.wrapper );
     }
 };
 
@@ -147,10 +159,8 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @function
      */
     destroy: function() {
-        if ( this.anchor != $.ControlAnchor.ABSOLUTE ) {
-            this.wrapper.removeChild( this.element );
-        }
-        this.container.removeChild( this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper );
+        this.wrapper.removeChild( this.element );
+        this.container.removeChild( this.wrapper );
     },
 
     /**
@@ -159,8 +169,7 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @return {Boolean} true if currenly visible, false otherwise.
      */
     isVisible: function() {
-        var controlElement = this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper;
-        return controlElement.style.display != "none";
+        return this.wrapper.style.display != "none";
     },
 
     /**
@@ -169,15 +178,9 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @param {Boolean} visible - true to make visible, false to hide.
      */
     setVisible: function( visible ) {
-        if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
-            this.element.style.display = visible ?
-                "block" :
-                "none";
-        } else {
-            this.wrapper.style.display = visible ?
-                "inline-block" :
-                "none";
-        }
+        this.wrapper.style.display = visible ?
+            ( this.anchor == $.ControlAnchor.ABSOLUTE ? 'block' : 'inline-block' ) :
+            "none";
     },
 
     /**
@@ -186,7 +189,7 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @param {Number} opactiy - a value between 1 and 0 inclusively.
      */
     setOpacity: function( opacity ) {
-        if ( this.anchor == $.ControlAnchor.ABSOLUTE || ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) ) {
+        if ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
             $.setElementOpacity( this.element, opacity, true );
         } else {
             $.setElementOpacity( this.wrapper, opacity, true );
