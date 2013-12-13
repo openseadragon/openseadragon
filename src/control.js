@@ -46,13 +46,15 @@
  * @property {Number} TOP_RIGHT
  * @property {Number} BOTTOM_LEFT
  * @property {Number} BOTTOM_RIGHT
+ * @property {Number} ABSOLUTE
  */
 $.ControlAnchor = {
     NONE: 0,
     TOP_LEFT: 1,
     TOP_RIGHT: 2,
     BOTTOM_RIGHT: 3,
-    BOTTOM_LEFT: 4
+    BOTTOM_LEFT: 4,
+    ABSOLUTE: 5
 };
 
 /**
@@ -110,13 +112,15 @@ $.Control = function ( element, options, container ) {
      * @member {Element} wrapper
      * @memberof OpenSeadragon.Control#
      */
-    this.wrapper    = $.makeNeutralElement( "span" );
-    this.wrapper.style.display = "inline-block";
-    this.wrapper.appendChild( this.element );
+    if ( this.anchor != $.ControlAnchor.ABSOLUTE ) {
+        this.wrapper    = $.makeNeutralElement( "span" );
+        this.wrapper.style.display = "inline-block";
+        this.wrapper.appendChild( this.element );
 
-    if ( this.anchor == $.ControlAnchor.NONE ) {
-        // IE6 fix
-        this.wrapper.style.width = this.wrapper.style.height = "100%";
+        if ( this.anchor == $.ControlAnchor.NONE ) {
+            // IE6 fix
+            this.wrapper.style.width = this.wrapper.style.height = "100%";
+        }
     }
 
     if (options.attachToViewer ) {
@@ -126,11 +130,13 @@ $.Control = function ( element, options, container ) {
                 this.wrapper,
                 this.container.firstChild
             );
+        } else if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
+            this.container.appendChild( this.element );
         } else {
             this.container.appendChild( this.wrapper );
         }
     } else {
-        parent.appendChild( this.wrapper );
+        parent.appendChild( this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper );
     }
 };
 
@@ -141,8 +147,10 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @function
      */
     destroy: function() {
-        this.wrapper.removeChild( this.element );
-        this.container.removeChild( this.wrapper );
+        if ( this.anchor != $.ControlAnchor.ABSOLUTE ) {
+            this.wrapper.removeChild( this.element );
+        }
+        this.container.removeChild( this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper );
     },
 
     /**
@@ -151,7 +159,8 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @return {Boolean} true if currenly visible, false otherwise.
      */
     isVisible: function() {
-        return this.wrapper.style.display != "none";
+        var controlElement = this.anchor == $.ControlAnchor.ABSOLUTE ? this.element : this.wrapper;
+        return controlElement.style.display != "none";
     },
 
     /**
@@ -160,9 +169,15 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @param {Boolean} visible - true to make visible, false to hide.
      */
     setVisible: function( visible ) {
-        this.wrapper.style.display = visible ?
-            "inline-block" :
-            "none";
+        if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
+            this.element.style.display = visible ?
+                "block" :
+                "none";
+        } else {
+            this.wrapper.style.display = visible ?
+                "inline-block" :
+                "none";
+        }
     },
 
     /**
@@ -171,7 +186,7 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      * @param {Number} opactiy - a value between 1 and 0 inclusively.
      */
     setOpacity: function( opacity ) {
-        if ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) {
+        if ( this.anchor == $.ControlAnchor.ABSOLUTE || ( this.element[ $.SIGNAL ] && $.Browser.vendor == $.BROWSERS.IE ) ) {
             $.setElementOpacity( this.element, opacity, true );
         } else {
             $.setElementOpacity( this.wrapper, opacity, true );

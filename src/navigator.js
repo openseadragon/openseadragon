@@ -50,7 +50,7 @@
 $.Navigator = function( options ){
 
     var viewer      = options.viewer,
-        viewerSize  = $.getElementSize( viewer.element),
+        viewerSize,
         unneededElement;
 
     //We may need to create a new element and id if they did not
@@ -73,6 +73,12 @@ $.Navigator = function( options ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
             } else if( 'TOP_LEFT' == options.position ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
+            } else if( 'ABSOLUTE' == options.position ){
+               options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
+               options.controlOptions.top = options.top;
+               options.controlOptions.left = options.left;
+               options.controlOptions.height = options.height;
+               options.controlOptions.width = options.width;
             }
         }
         
@@ -104,7 +110,6 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
-    this.viewerSizeInPoints = viewer.viewport.deltaPointsFromPixels(viewerSize);
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
@@ -147,20 +152,16 @@ $.Navigator = function( options ){
         style.cssFloat      = 'left'; //Firefox
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
-        style.cursor        = 'default';
+        style.cursor        = 'pointer';
     }( this.displayRegion.style, this.borderWidth ));
 
 
     this.element.innerTracker = new $.MouseTracker({
-        element:        this.element,
-        dragHandler:        $.delegate( this, onCanvasDrag ),
-        clickHandler:       $.delegate( this, onCanvasClick ),
-        releaseHandler:     $.delegate( this, onCanvasRelease ),
-        scrollHandler:  function(){
-            //dont scroll the page up and down if the user is scrolling
-            //in the navigator
-            return false;
-        }
+        element:         this.element,
+        dragHandler:     $.delegate( this, onCanvasDrag ),
+        clickHandler:    $.delegate( this, onCanvasClick ),
+        releaseHandler:  $.delegate( this, onCanvasRelease ),
+        scrollHandler:   $.delegate( this, onCanvasScroll )
     }).setTracking( true );
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
@@ -178,12 +179,20 @@ $.Navigator = function( options ){
         options.controlOptions
     );
 
-    if( options.width && options.height ){
-        this.element.style.width  = options.width + 'px';
-        this.element.style.height = options.height + 'px';
+    if ( options.controlOptions.anchor === $.ControlAnchor.ABSOLUTE ) {
+        this.element.style.top = typeof ( options.top )  == "number" ? ( options.top + 'px' ) : options.top;
+        this.element.style.left  = typeof ( options.left )  == "number" ?  (options.left + 'px' ) : options.left;
+    }
+    if ( options.width && options.height ) {
+        this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
+        this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
     } else {
-        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+        viewerSize = $.getElementSize( viewer.element );
         this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
+        this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+        if ( options.maintainSizeRatio ) {
+            this.oldViewerSize = viewerSize;
+        }
     }
 
     $.Viewer.apply( this, [ options ] );
@@ -203,9 +212,19 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     update: function( viewport ){
 
-        var bounds,
+        var viewerSize,
+            bounds,
             topleft,
             bottomright;
+
+        if ( this.maintainSizeRatio ) {
+            viewerSize = $.getElementSize( this.viewer.element );
+            if ( !viewerSize.equals ( this.oldViewerSize ) ) {
+                this.element.style.height = ( viewerSize.y * this.sizeRatio ) + 'px';
+                this.element.style.width  = ( viewerSize.x * this.sizeRatio ) + 'px';
+                this.oldViewerSize = viewerSize;
+            }
+        }
 
         if( viewport && this.viewport ){
             bounds      = viewport.getBounds( true );
@@ -256,21 +275,7 @@ function onCanvasClick( event ) {
         dimensions;
     if (! this.drag) {
         if ( this.viewer.viewport ) {
-            viewerPosition = this.viewport.deltaPointsFromPixels( event.position );
-            dimensions = this.viewer.viewport.getBounds().getSize();
-            newBounds = new $.Rect(
-                viewerPosition.x - dimensions.x/2,
-                viewerPosition.y - dimensions.y/2,
-                dimensions.x,
-                dimensions.y
-            );
-            if (this.viewer.source.aspectRatio > this.viewer.viewport.getAspectRatio()) {
-                newBounds.y = newBounds.y -  ((this.viewerSizeInPoints.y - (1/this.viewer.source.aspectRatio)) /2 );
-            }
-            else  {
-                newBounds.x = newBounds.x -  ((this.viewerSizeInPoints.x -1) /2 );
-            }
-            this.viewer.viewport.fitBounds(newBounds);
+            this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
             this.viewer.viewport.applyConstraints();
         }
     }
@@ -320,16 +325,30 @@ function onCanvasRelease( event ) {
  * @function
  */
 function onCanvasScroll( event ) {
-    var factor;
-    if ( this.viewer.viewport ) {
-        factor = Math.pow( this.zoomPerScroll, event.scroll );
-        this.viewer.viewport.zoomBy(
-            factor,
-            this.viewport.getCenter()
-        );
-        this.viewer.viewport.applyConstraints();
-    }
-    //cancels event
+    /**
+     * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#navigator} element (mouse wheel, touch pinch, etc.).
+     *
+     * @event navigator-scroll
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} scroll - The scroll delta for the event.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.viewer.raiseEvent( 'navigator-scroll', {
+        tracker: event.eventSource,
+        position: event.position,
+        scroll: event.scroll,
+        shift: event.shift,
+        originalEvent: event.originalEvent
+    });
+
+    //dont scroll the page up and down if the user is scrolling
+    //in the navigator
     return false;
 }
 
