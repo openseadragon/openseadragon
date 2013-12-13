@@ -419,6 +419,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.downloading++;
 
             image = new Image();
+            image.crossOrigin = 'Anonymous';
 
             complete = function( imagesrc, resultingImage ){
                 _this.downloading--;
