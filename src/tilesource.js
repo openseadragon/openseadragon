@@ -55,7 +55,7 @@
  * @param {Number|Object|Array|String} width
  *      If more than a single argument is supplied, the traditional use of
  *      positional parameters is supplied and width is expected to be the width
- *      source image at it's max resolution in pixels.  If a single argument is supplied and
+ *      source image at its max resolution in pixels.  If a single argument is supplied and
  *      it is an Object or Array, the construction is assumed to occur through
  *      the extending classes implementation of 'configure'.  Finally if only a
  *      single argument is supplied and it is a String, the extending class is
@@ -93,7 +93,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     }
 
     //Tile sources supply some events, namely 'ready' when they must be configured
-    //by asyncronously fetching their configuration data.
+    //by asynchronously fetching their configuration data.
     $.EventSource.call( this );
 
     //we allow options to override anything we dont treat as
@@ -131,7 +131,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
     /**
-     * The overlap in pixels each tile shares with it's adjacent neighbors.
+     * The overlap in pixels each tile shares with its adjacent neighbors.
      * @member {Number} tileOverlap
      * @memberof OpenSeadragon.TileSource#
      */
@@ -366,7 +366,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
                 callback: callback
             });
         } else {
-            // request info via xhr asyncronously.
+            // request info via xhr asynchronously.
             $.makeAjaxRequest( url, function( xhr ) {
                 var data = processResponse( xhr );
                 callback( data );
