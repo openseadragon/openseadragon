@@ -298,7 +298,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
     },
 
     /**
-     * Removes tile from its contianer.
+     * Removes tile from its container.
      * @function
      */
     unload: function() {
