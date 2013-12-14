@@ -300,6 +300,10 @@
   *     Specifies the size of the navigator minimap (see navigatorPosition).
   *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
   *
+  * @property {Boolean} [navigatorAutoResize=true]
+  *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
+  *     Setting to false can also improve performance when the navigator is configured to a fixed size.
+  *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -736,6 +740,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorLeft:              null,
             navigatorHeight:            null,
             navigatorWidth:             null,
+            navigatorAutoResize:        true,
 
             // INITIAL ROTATION
             degrees:                0,

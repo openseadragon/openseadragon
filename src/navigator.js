@@ -105,7 +105,8 @@ $.Navigator = function( options ){
         showSequenceControl:    false,
         immediateRender:        true,
         blendTime:              0,
-        animationTime:          0
+        animationTime:          0,
+        autoResize:             options.autoResize
     });
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
@@ -193,6 +194,8 @@ $.Navigator = function( options ){
         }
     }
 
+    this.oldContainerSize = new $.Point( 0, 0 );
+
     $.Viewer.apply( this, [ options ] );
 
     this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
@@ -206,9 +209,43 @@ $.Navigator = function( options ){
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
 
     /**
+     * Used to notify the navigator when its size has changed. 
+     * Especially useful when {@link OpenSeadragon.Options}.navigatorAutoResize is set to false and the navigator is resizable.
      * @function
      */
-    update: function( viewport ){
+    updateSize: function () {
+        if ( this.viewport ) {
+            var containerSize = new $.Point(
+                    (this.container.clientWidth === 0 ? 1 : this.container.clientWidth),
+                    (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
+                );
+            if ( !containerSize.equals( this.oldContainerSize ) ) {
+                var oldBounds = this.viewport.getBounds();
+                var oldCenter = this.viewport.getCenter();
+                this.viewport.resize( containerSize, true );
+                var imageHeight = 1 / this.source.aspectRatio;
+                var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
+                var newHeight = oldBounds.height <= imageHeight ?
+                    oldBounds.height : imageHeight;
+                var newBounds = new $.Rect(
+                    oldCenter.x - ( newWidth / 2.0 ),
+                    oldCenter.y - ( newHeight / 2.0 ),
+                    newWidth,
+                    newHeight
+                    );
+                this.viewport.fitBounds( newBounds, true );
+                this.oldContainerSize = containerSize;
+                this.drawer.update();
+            }
+        }
+    },
+
+    /**
+     * Used to update the navigator minimap's viewport rectangle when a change in the viewer's viewport occurs.
+     * @function
+     * @param {OpenSeadragon.Viewport} The viewport this navigator is tracking.
+     */
+    update: function( viewport ) {
 
         var viewerSize,
             bounds,
@@ -217,17 +254,18 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
         if ( this.maintainSizeRatio ) {
             viewerSize = $.getElementSize( this.viewer.element );
-            if ( !viewerSize.equals ( this.oldViewerSize ) ) {
+            if ( !viewerSize.equals( this.oldViewerSize ) ) {
                 this.element.style.height = ( viewerSize.y * this.sizeRatio ) + 'px';
                 this.element.style.width  = ( viewerSize.x * this.sizeRatio ) + 'px';
                 this.oldViewerSize = viewerSize;
+                this.updateSize();
             }
         }
 
-        if( viewport && this.viewport ){
+        if( viewport && this.viewport ) {
             bounds      = viewport.getBounds( true );
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft());
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight()).minus(this.totalBorderWidths);
+            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft(), false );
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false ).minus( this.totalBorderWidths );
 
             //update style for navigator-box
             (function(style) {
@@ -246,7 +284,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     },
 
-    open: function( source ){
+    open: function( source ) {
+        this.updateSize();
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
         if( source.tileSize > containerSize.x ||
             source.tileSize > containerSize.y ){

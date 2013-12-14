@@ -1484,6 +1484,7 @@ function openTileSource( viewer, source ) {
                 left:              _this.navigatorLeft,
                 width:             _this.navigatorWidth,
                 height:            _this.navigatorHeight,
+                autoResize:        _this.navigatorAutoResize,
                 tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
