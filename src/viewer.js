@@ -910,6 +910,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         }
 
+        if ( this.navigator && this.viewport ) {
+            this.navigator.update( this.viewport );
+        }
+
         /**
          * Raised when the viewer has changed to/from full-page mode (see {@link OpenSeadragon.Viewer#setFullPage}).
          *
@@ -990,6 +994,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.element.style.width = _this.fullPageStyleWidth;
                         _this.element.style.height = _this.fullPageStyleHeight;
                     }
+                }
+                if ( _this.navigator && _this.viewport ) {
+                    _this.navigator.update( _this.viewport );
                 }
                 /**
                  * Raised when the viewer has changed to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
