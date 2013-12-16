@@ -153,7 +153,7 @@ $.Navigator = function( options ){
         style.cssFloat      = 'left'; //Firefox
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
-        style.cursor        = 'pointer';
+        style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
 
 
