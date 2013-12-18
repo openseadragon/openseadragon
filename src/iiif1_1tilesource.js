@@ -45,22 +45,44 @@
  */
 $.IIIF1_1TileSource = function( options ){
 
+
     $.extend( true, this, options );
+
 
     if( !(this.height && this.width && this['@id'] ) ){
         throw new Error('IIIF required parameters not provided.');
     }
 
-    if ( !(this.tile_width && this.tile_height) ) {
-        // use the short dimension if there aren't tile sizes provided.
-        options.tileSize = Math.min(this.height, this.width);
-    } else {
+    if( (this.profile &&
+        this.profile == "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" ) ){
+        // what if not reporting a profile?
+        throw new Error('IIIF Image API 1.1 compliance level 1 or greater is required.');
+    }
+
+    if (this.tile_width) {
         options.tileSize = this.tile_width;
+    } else if (this.tile_height) {
+        options.tileSize = this.tile_height;
+    } else {
+        // use the largest of tile_options that is smaller than the short
+        // dimension
+
+        var short_dim = Math.min(this.height, this.width),
+            tile_options = [128,256,512,1024],
+            smaller_tiles = [];
+
+            for ( var c = 0; c < tile_options.length; c++ ) {
+                if ( tile_options[c] <= short_dim ) {
+                    smaller_tiles.push(tile_options[c]);
+                }
+            }
+        options.tileSize = Math.max.apply(null, smaller_tiles);
+
     }
 
     if (! options.maxLevel ) {
-        var mf = -1;
-        var scfs = this.scale_factors || this.scale_factor;
+        var mf = -1
+;        var scfs = this.scale_factors || this.scale_factor;
         if ( scfs instanceof Array ) {
             for ( var i = 0; i < scfs.length; i++ ) {
                 var cf = Number( scfs[i] );
@@ -82,13 +104,9 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
      * @param {Object|Array} data
      * @param {String} optional - url
      */
-    supports: function( data, url ){
-        return data.profile && (
-            "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" == data.profile ||
-            "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1" == data.profile ||
-            "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2" == data.profile ||
-            "http://library.stanford.edu/iiif/image-api/1.1/compliance.html" == data.profile
-        );
+    supports: function( data, url ) {
+        return ( data['@context'] &&
+            data['@context'] == "http://library.stanford.edu/iiif/image-api/1.1/context.json" );
     },
 
     /**
@@ -124,6 +142,7 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
     getTileUrl: function( level, x, y ){
 
         //# constants
+
         var IIIF_ROTATION = '0',
             IIIF_QUALITY = 'native.jpg',
 
@@ -153,7 +172,14 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
             iiif_tile_y = y * iiif_tile_size_height;
             iiif_tile_w = Math.min( iiif_tile_size_width, this.width - iiif_tile_x );
             iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
-            iiif_size = Math.ceil(iiif_tile_w * scale) + "," +  Math.ceil(iiif_tile_h * scale);
+
+            if( (this.profile &&
+                this.profile == "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1" ) ){
+                iiif_size = Math.ceil(iiif_tile_w * scale) + ",";
+            } else {
+                iiif_size = Math.ceil(iiif_tile_w * scale) + "," +  Math.ceil(iiif_tile_h * scale);
+            }
+
             iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
         }
         uri = [ this['@id'], iiif_region, iiif_size, IIIF_ROTATION, IIIF_QUALITY ].join('/');
