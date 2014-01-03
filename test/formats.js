@@ -77,12 +77,27 @@
 
     // ----------
     asyncTest('IIIF 1.1 JSON', function() {
-        testOpen('iiif1_1.json');
+        testOpen('iiif_1_1_tiled.json');
     });
 
-        // ----------
-    asyncTest('IIIF No Tiles', function() {
-        testOpen('iiif_no_tiles.json');
+    // ----------
+    asyncTest('IIIF No Tiles, Less than 256', function() {
+        testOpen('iiif_1_1_no_tiles_255.json');
+    });
+
+    // ----------
+    asyncTest('IIIF No Tiles, Bet. 256 and 512', function() {
+        testOpen('iiif_1_1_no_tiles_384.json');
+    });
+
+    // ----------
+    asyncTest('IIIF No Tiles, Bet. 512 and 1024', function() {
+        testOpen('iiif_1_1_no_tiles_768.json');
+    });
+
+    // ----------
+    asyncTest('IIIF No Tiles, Larger than 1024', function() {
+        testOpen('iiif_1_1_no_tiles_1048.json');
     });
 
 })();

@@ -68,7 +68,7 @@ $.IIIF1_1TileSource = function( options ){
         // dimension
 
         var short_dim = Math.min(this.height, this.width),
-            tile_options = [128,256,512,1024],
+            tile_options = [256,512,1024],
             smaller_tiles = [];
 
             for ( var c = 0; c < tile_options.length; c++ ) {
@@ -76,13 +76,20 @@ $.IIIF1_1TileSource = function( options ){
                     smaller_tiles.push(tile_options[c]);
                 }
             }
-        options.tileSize = Math.max.apply(null, smaller_tiles);
 
+        if ( smaller_tiles.length > 0 ) {
+            options.tileSize = Math.max.apply(null, smaller_tiles);
+        } else {
+            // If we're smaller than 256, just use the short side.
+            options.tileSize = short_dim;
+        }
+        this.tile_width = options.tileSize;  // So that 'full' gets used for 
+        this.tile_height = options.tileSize; // the region below
     }
 
     if (! options.maxLevel ) {
-        var mf = -1
-;        var scfs = this.scale_factors || this.scale_factor;
+        var mf = -1;
+        var scfs = this.scale_factors || this.scale_factor;
         if ( scfs instanceof Array ) {
             for ( var i = 0; i < scfs.length; i++ ) {
                 var cf = Number( scfs[i] );
@@ -165,7 +172,7 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
             uri;
 
         if ( level_width < this.tile_width && level_height < this.tile_height ){
-            iiif_size = level_width + "," + level_height;
+            iiif_size = level_width + ",";
             iiif_region = 'full';
         } else {
             iiif_tile_x = x * iiif_tile_size_width;
@@ -173,12 +180,7 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
             iiif_tile_w = Math.min( iiif_tile_size_width, this.width - iiif_tile_x );
             iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
 
-            if( (this.profile &&
-                this.profile == "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1" ) ){
-                iiif_size = Math.ceil(iiif_tile_w * scale) + ",";
-            } else {
-                iiif_size = Math.ceil(iiif_tile_w * scale) + "," +  Math.ceil(iiif_tile_h * scale);
-            }
+            iiif_size = Math.ceil(iiif_tile_w * scale) + ",";
 
             iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
         }
