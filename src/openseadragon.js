@@ -433,10 +433,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      */
     /* jshint ignore:start */
     $.version = {
-        versionStr: '<%= osdVersion.versionStr %>',
-        major: <%= osdVersion.major %>,
-        minor: <%= osdVersion.minor %>,
-        revision: <%= osdVersion.revision %>
+//        versionStr: '<%= osdVersion.versionStr %>',
+//        major: <%= osdVersion.major %>,
+//        minor: <%= osdVersion.minor %>,
+//        revision: <%= osdVersion.revision %>
     };
     /* jshint ignore:end */
 
@@ -1347,7 +1347,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          */
         indexOf: function( array, searchElement, fromIndex ) {
             if ( Array.prototype.indexOf ) {
-                this.indexOf = Array.prototype.indexOf;
+                this.indexOf = function( array, searchElement, fromIndex ) {
+                    return array.indexOf( searchElement, fromIndex );
+                };
             } else {
                 this.indexOf = function( array, searchElement, fromIndex ) {
                     var i,

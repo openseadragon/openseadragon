@@ -1044,11 +1044,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * @memberOf OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Object} options The options passed to the addLayer method.
              * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( 'add-layer', { drawer: drawer } );
+            _this.raiseEvent( 'add-layer', {
+                options: options,
+                drawer: drawer
+            });
         }, function( event ) {
+            event.options = options;
             /**
              * Raised when an error occurs while adding a layer.
              * @event add-layer-failed
@@ -1057,6 +1062,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
              * @property {String} message
              * @property {String} source
+             * @property {Object} options The options passed to the addLayer method.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( 'add-layer-failed', event );
@@ -1496,7 +1502,7 @@ function _getSafeElemSize (oElement) {
  * @private
  */
 function getTileSourceImplementation( viewer, tileSource, successCallback,
-    failCallback) {
+    failCallback ) {
     var _this = viewer;
 
     //allow plain xml strings or json strings to be parsed here
