@@ -433,10 +433,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      */
     /* jshint ignore:start */
     $.version = {
-//        versionStr: '<%= osdVersion.versionStr %>',
-//        major: <%= osdVersion.major %>,
-//        minor: <%= osdVersion.minor %>,
-//        revision: <%= osdVersion.revision %>
+        versionStr: '<%= osdVersion.versionStr %>',
+        major: <%= osdVersion.major %>,
+        minor: <%= osdVersion.minor %>,
+        revision: <%= osdVersion.revision %>
     };
     /* jshint ignore:end */
 
