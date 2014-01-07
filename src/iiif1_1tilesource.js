@@ -49,45 +49,45 @@ $.IIIF1_1TileSource = function( options ){
     $.extend( true, this, options );
 
 
-    if( !(this.height && this.width && this['@id'] ) ){
-        throw new Error('IIIF required parameters not provided.');
+    if ( !( this.height && this.width && this['@id'] ) ){
+        throw new Error( 'IIIF required parameters not provided.' );
     }
 
-    if( (this.profile &&
+    if ( ( this.profile &&
         this.profile == "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0" ) ){
         // what if not reporting a profile?
-        throw new Error('IIIF Image API 1.1 compliance level 1 or greater is required.');
+        throw new Error( 'IIIF Image API 1.1 compliance level 1 or greater is required.' );
     }
 
-    if (this.tile_width) {
+    if ( this.tile_width ) {
         options.tileSize = this.tile_width;
-    } else if (this.tile_height) {
+    } else if ( this.tile_height ) {
         options.tileSize = this.tile_height;
     } else {
-        // use the largest of tile_options that is smaller than the short
+        // use the largest of tileOptions that is smaller than the short
         // dimension
 
-        var short_dim = Math.min(this.height, this.width),
-            tile_options = [256,512,1024],
-            smaller_tiles = [];
+        var shortDim = Math.min( this.height, this.width ),
+            tileOptions = [256,512,1024],
+            smallerTiles = [];
 
-            for ( var c = 0; c < tile_options.length; c++ ) {
-                if ( tile_options[c] <= short_dim ) {
-                    smaller_tiles.push(tile_options[c]);
+            for ( var c = 0; c < tileOptions.length; c++ ) {
+                if ( tileOptions[c] <= shortDim ) {
+                    smallerTiles.push( tileOptions[c] );
                 }
             }
 
-        if ( smaller_tiles.length > 0 ) {
-            options.tileSize = Math.max.apply(null, smaller_tiles);
+        if ( smallerTiles.length > 0 ) {
+            options.tileSize = Math.max.apply( null, smallerTiles );
         } else {
             // If we're smaller than 256, just use the short side.
-            options.tileSize = short_dim;
+            options.tileSize = shortDim;
         }
         this.tile_width = options.tileSize;  // So that 'full' gets used for 
         this.tile_height = options.tileSize; // the region below
     }
 
-    if (! options.maxLevel ) {
+    if ( !options.maxLevel ) {
         var mf = -1;
         var scfs = this.scale_factors || this.scale_factor;
         if ( scfs instanceof Array ) {
@@ -96,7 +96,7 @@ $.IIIF1_1TileSource = function( options ){
                 if ( !isNaN( cf ) && cf > mf ) { mf = cf; }
             }
         }
-        if ( mf < 0 ) { options.maxLevel = Number(Math.ceil(Math.log(Math.max(this.width, this.height), 2))); }
+        if ( mf < 0 ) { options.maxLevel = Number( Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ) ) ); }
         else { options.maxLevel = mf; }
     }
 
@@ -157,34 +157,34 @@ $.extend( $.IIIF1_1TileSource.prototype, $.TileSource.prototype, /** @lends Open
             scale = Math.pow( 0.5, this.maxLevel - level ),
 
             //# image dimensions at this level
-            level_width = Math.ceil( this.width * scale ),
-            level_height = Math.ceil( this.height * scale ),
+            levelWidth = Math.ceil( this.width * scale ),
+            levelHeight = Math.ceil( this.height * scale ),
 
             //## iiif region
-            iiif_tile_size_width = Math.ceil( this.tileSize / scale ),
-            iiif_tile_size_height = Math.ceil( this.tileSize / scale ),
-            iiif_region,
-            iiif_tile_x,
-            iiif_tile_y,
-            iiif_tile_w,
-            iiif_tile_h,
-            iiif_size,
+            iiifTileSizeWidth = Math.ceil( this.tileSize / scale ),
+            iiifTileSizeHeight = Math.ceil( this.tileSize / scale ),
+            iiifRegion,
+            iiifTileX,
+            iiifTileY,
+            iiifTileW,
+            iiifTileH,
+            iiifSize,
             uri;
 
-        if ( level_width < this.tile_width && level_height < this.tile_height ){
-            iiif_size = level_width + ",";
-            iiif_region = 'full';
+        if ( levelWidth < this.tile_width && levelHeight < this.tile_height ){
+            iiifSize = levelWidth + ",";
+            iiifRegion = 'full';
         } else {
-            iiif_tile_x = x * iiif_tile_size_width;
-            iiif_tile_y = y * iiif_tile_size_height;
-            iiif_tile_w = Math.min( iiif_tile_size_width, this.width - iiif_tile_x );
-            iiif_tile_h = Math.min( iiif_tile_size_height, this.height - iiif_tile_y );
+            iiifTileX = x * iiifTileSizeWidth;
+            iiifTileY = y * iiifTileSizeHeight;
+            iiifTileW = Math.min( iiifTileSizeWidth, this.width - iiifTileX );
+            iiifTileH = Math.min( iiifTileSizeHeight, this.height - iiifTileY );
 
-            iiif_size = Math.ceil(iiif_tile_w * scale) + ",";
+            iiifSize = Math.ceil( iiifTileW * scale ) + ",";
 
-            iiif_region = [ iiif_tile_x, iiif_tile_y, iiif_tile_w, iiif_tile_h ].join(',');
+            iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
         }
-        uri = [ this['@id'], iiif_region, iiif_size, IIIF_ROTATION, IIIF_QUALITY ].join('/');
+        uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, IIIF_QUALITY ].join( '/' );
         return uri;
     }
   });
