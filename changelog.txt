@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
 * Added ControlAnchor options for default controls (#304)
 * Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
+* Additional enhancements for IIIF support (#315)
 
 1.0.0:
 
