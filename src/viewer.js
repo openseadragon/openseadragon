@@ -1082,6 +1082,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Get the number of layers used.
+     * @returns {Number} The number of layers used.
+     */
+    getNumberOfLayers: function() {
+        return this.drawers.length - 1;
+    },
+
+    /**
      * Change the level of a layer so that it appears over or under others.
      * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the changing
      * level layer.
