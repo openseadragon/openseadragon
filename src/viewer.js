@@ -1072,12 +1072,24 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Get the layer at the specified level.
+     * @param {Number} level The layer to retrieve level.
+     * @returns {OpenSeadragon.Drawer} The layer at the specified level.
+     */
+    getLayerAtLevel: function( level ) {
+        if ( level >= this.drawers.length ) {
+            throw new Error( "Level bigger than number of layers." );
+        }
+        return this.drawers[ level ];
+    },
+
+    /**
      * Get the level of the layer associated with the given drawer or -1 if not
      * present.
      * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer.
      * @returns {Number} The level of the layer or -1 if not present.
      */
-    getLayerLevel: function( drawer ) {
+    getLevelOfLayer: function( drawer ) {
         return $.indexOf( this.drawers, drawer );
     },
 
@@ -1098,7 +1110,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:layer-level-changed
      */
     setLayerLevel: function( drawer, level ) {
-        var oldLevel = this.getLayerLevel( drawer );
+        var oldLevel = this.getLevelOfLayer( drawer );
         if ( level === 0 || oldLevel === 0 ) {
             throw new Error( "Cannot reassign base level." );
         }
