@@ -1011,6 +1011,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if ( !tileSource ) {
             throw new Error( "No tile source provided as new layer." );
         }
+        if ( this.collectionMode ) {
+            throw new Error( "Layers not supported in collection mode." );
+        }
 
         function raiseAddLayerFailed( event ) {
              /**
