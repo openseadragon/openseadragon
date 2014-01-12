@@ -37,7 +37,7 @@
                 tileSource: {
                     type: 'legacy-image-pyramid',
                     levels: [ {
-                            url: "test/data/A.png",
+                            url: "data/A.png",
                             width: 1000,
                             height: 1000
                         } ]
@@ -89,7 +89,7 @@
                         "The layer at level 2 should be layer1." );
 
                     options.level = 2;
-                    options.tileSource.levels[0].url = "test/data/CCyan.png";
+                    options.tileSource.levels[0].url = "data/CCyan.png";
                     options.opacity = 0.5;
                     viewer.addLayer( options );
                     viewer.addHandler( "add-layer", function addThirdLayerHandler( event ) {
@@ -125,5 +125,40 @@
         viewer.open( '/test/data/testpattern.dzi' );
     });
 
+    asyncTest( 'Collections as layers', function() {
 
+        var options = {
+            tileSource: [{
+                    type: 'legacy-image-pyramid',
+                    levels: [{
+                            url: "data/A.png",
+                            width: 1000,
+                            height: 1000
+                        }]
+                }, {
+                    type: 'legacy-image-pyramid',
+                    levels: [{
+                            url: "data/BBlue.png",
+                            width: 1000,
+                            height: 1000
+                        }]
+                }]
+        };
+
+        viewer.addHandler( "open", function openHandler() {
+            viewer.removeHandler( "open", openHandler );
+
+            viewer.addHandler( "add-layer-failed",
+                function addLayerFailedHandler( event ) {
+                    viewer.removeHandler( "add-layer-failed", addLayerFailedHandler );
+
+                    equal( event.message, "Collections can not be added as layers." );
+                    equal( event.options, options, "Layer failed event should give the options." );
+                    start();
+                } );
+            viewer.addLayer( options );
+
+        });
+        viewer.open( '/test/data/testpattern.dzi' );
+    });
 })();

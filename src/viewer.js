@@ -1012,7 +1012,32 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             throw new Error( "No tile source provided as new layer." );
         }
 
+        function raiseAddLayerFailed( event ) {
+             /**
+             * Raised when an error occurs while adding a layer.
+             * @event add-layer-failed
+             * @memberOf OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {String} message
+             * @property {String} source
+             * @property {Object} options The options passed to the addLayer method.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            _this.raiseEvent( 'add-layer-failed', event );
+        }
+
         getTileSourceImplementation( this, tileSource, function( tileSource ) {
+
+            if ( tileSource instanceof Array ) {
+                raiseAddLayerFailed({
+                    message: "Collections can not be added as layers.",
+                    source: tileSource,
+                    options: options
+                });
+                return;
+            }
+
             var drawer = new $.Drawer({
                 viewer: _this,
                 source: tileSource,
@@ -1054,18 +1079,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             });
         }, function( event ) {
             event.options = options;
-            /**
-             * Raised when an error occurs while adding a layer.
-             * @event add-layer-failed
-             * @memberOf OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {String} message
-             * @property {String} source
-             * @property {Object} options The options passed to the addLayer method.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            _this.raiseEvent( 'add-layer-failed', event );
+            raiseAddLayerFailed(event);
         } );
 
         return this;
