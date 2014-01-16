@@ -51,8 +51,6 @@
         },
 
         initializeTestDOM: function () {
-// style="margin:0px;padding:0px;width:100px;height:100px;overflow:hidden;"
-// style="margin:0px;padding:0px;width:100%;height:100%;"
             $( "#qunit-fixture" )
                 .append( '<div><div id="example"></div><div id="exampleNavigator"></div></div>' )
                 .append( '<div id="wideexample"></div>' )
