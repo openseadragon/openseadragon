@@ -3,6 +3,11 @@
     width: 500px;
 }
 
+#exampleNavigator {
+    height: 100px;
+    width: 150px;
+}
+
 #wideexample {
     height: 300px;
     width: 700px;
