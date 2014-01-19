@@ -52,21 +52,27 @@ QUnit.config.autostart = false;
     var assessNavigatorLocation = function (expectedX, expectedY) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedX, navigator.offset().left, 10, ' Navigator x position');
-        Util.assessNumericValue(expectedY, navigator.offset().top, 10, ' Navigator y position');
+        Util.assessNumericValue(expectedX, navigator.offset().left, 10, ' Navigator x Position');
+        Util.assessNumericValue(expectedY, navigator.offset().top, 10, ' Navigator y Position');
     };
 
-    var assessNavigatorSize = function (expectedWidth, expectedHeight) {
+    var assessNavigatorSize = function (expectedWidth, expectedHeight, msg) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedWidth, navigator.width(), 2, ' Navigator width');
-        Util.assessNumericValue(expectedHeight, navigator.height(), 2, ' Navigator height');
+        Util.assessNumericValue(expectedWidth, navigator.width(), 2, ' Navigator Width ' + (msg ? msg : ''));
+        Util.assessNumericValue(expectedHeight, navigator.height(), 2, ' Navigator Height ' + (msg ? msg : ''));
     };
 
-    var assessNavigatorAspectRatio = function (expectedAspectRatio) {
+    var assessNavigatorAspectRatio = function (expectedAspectRatio, variance, msg) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedAspectRatio, navigator.width() / navigator.height(), 0.0001, ' Navigator aspect ratio');
+        Util.assessNumericValue(expectedAspectRatio, navigator.width() / navigator.height(), variance, ' Navigator Aspect Ratio ' + (msg ? msg : ''));
+    };
+
+    var assessNavigatorArea = function (expectedArea, msg) {
+        var navigator = $(".navigator");
+
+        Util.assessNumericValue(expectedArea, navigator.width() * navigator.height(), Math.max(navigator.width(), navigator.height()), ' Navigator Area ' + (msg ? msg : ''));
     };
 
     var navigatorRegionBoundsInPoints = function (recalcForResize) {
@@ -270,34 +276,48 @@ QUnit.config.autostart = false;
         simulateNavigatorDrag(viewer.navigator, delta.x * displayRegionWidth, delta.y * displayRegionHeight);
     };
 
+    var resizeElement = function ($element, width, height) {
+        $element.width(width);
+        $element.height(height);
+    };
+
     var assessNavigatorViewerPlacement = function (seadragonProperties, testProperties) {
         var navigatorOperationScenarios = [
-            {interactionOperation:clickOnNavigator("TOPRIGHT"),
-              assessmentOperation:assessViewerInCorner("TOPRIGHT"),
-                assessmentMessage:"After click on navigator on top right"  },
-            {interactionOperation:dragNavigatorBackToCenter,
-              assessmentOperation:assessViewerInCenter,
-                assessmentMessage:"After drag on navigator from top right"  },
-            {interactionOperation:clickOnNavigator("BOTTOMLEFT"),
-              assessmentOperation:assessViewerInCorner("BOTTOMLEFT"),
-                assessmentMessage:"After click on navigator on bottom left"  },
-            {interactionOperation:dragNavigatorBackToCenter,
-              assessmentOperation:assessViewerInCenter,
-                assessmentMessage:"After drag on navigator from bottom left"  },
-            {interactionOperation:clickOnNavigator("BOTTOMRIGHT"),
-              assessmentOperation:assessViewerInCorner("BOTTOMRIGHT"),
-                assessmentMessage:"After click on navigator on bottom right"  },
-            {interactionOperation:dragNavigatorBackToCenter,
-              assessmentOperation:assessViewerInCenter,
-                assessmentMessage:"After drag on navigator from bottom right"  },
-            {interactionOperation:clickOnNavigator("TOPLEFT"),
-              assessmentOperation:assessViewerInCorner("TOPLEFT"),
-                assessmentMessage:"After click on navigator on top left"  },
-            {interactionOperation:dragNavigatorBackToCenter,
-              assessmentOperation:assessViewerInCenter,
-                assessmentMessage:"After drag on navigator from top left"  }
-        ],
-            autoFadeWaitTime = 100;
+                {interactionOperation:clickOnNavigator("TOPRIGHT"),
+                  assessmentOperation:assessViewerInCorner("TOPRIGHT"),
+                    assessmentMessage:"After click on navigator on top right"  },
+                {interactionOperation:dragNavigatorBackToCenter,
+                  assessmentOperation:assessViewerInCenter,
+                    assessmentMessage:"After drag on navigator from top right"  },
+                {interactionOperation:clickOnNavigator("BOTTOMLEFT"),
+                  assessmentOperation:assessViewerInCorner("BOTTOMLEFT"),
+                    assessmentMessage:"After click on navigator on bottom left"  },
+                {interactionOperation:dragNavigatorBackToCenter,
+                  assessmentOperation:assessViewerInCenter,
+                    assessmentMessage:"After drag on navigator from bottom left"  },
+                {interactionOperation:clickOnNavigator("BOTTOMRIGHT"),
+                  assessmentOperation:assessViewerInCorner("BOTTOMRIGHT"),
+                    assessmentMessage:"After click on navigator on bottom right"  },
+                {interactionOperation:dragNavigatorBackToCenter,
+                  assessmentOperation:assessViewerInCenter,
+                    assessmentMessage:"After drag on navigator from bottom right"  },
+                {interactionOperation:clickOnNavigator("TOPLEFT"),
+                  assessmentOperation:assessViewerInCorner("TOPLEFT"),
+                    assessmentMessage:"After click on navigator on top left"  },
+                {interactionOperation:dragNavigatorBackToCenter,
+                  assessmentOperation:assessViewerInCenter,
+                    assessmentMessage:"After drag on navigator from top left"  }
+            ],
+            viewerResizeScenarios = [
+                {resizeFactorX:0.5, resizeFactorY:1.0, assessmentMessage:"After Viewer Resize (50%, 100%)"},
+                {resizeFactorX:1.0, resizeFactorY:0.5, assessmentMessage:"After Viewer Resize (100%, 50%)"},
+                {resizeFactorX:1.0, resizeFactorY:1.0, assessmentMessage:"After Viewer Resize (100%, 100%)"}
+            ],
+            autoFadeWaitTime = 100,
+            navigatorElement = null,
+            viewerElement = null,
+            viewerOriginalSize = null,
+            navigatorOriginalSize = null;
 
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
@@ -341,38 +361,89 @@ QUnit.config.autostart = false;
             waitForViewer(assessAfterDragOnViewer);
         };
 
+        var assessAfterResizeViewer = function () {
+            viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
+            waitForViewer(assessAfterZoomOnViewer);
+        };
+
+        var assessViewerResizeAndTakeNextStep = function (step) {
+            return function () {
+                var nextStep = step + 1;
+                if (seadragonProperties.navigatorId) {
+                    // Navigator hosted in outside element...size shouldn't change
+                    assessNavigatorSize(navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                }
+                else {
+                    // Navigator hosted in viewer
+                    if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition == 'ABSOLUTE') {
+                        // Navigator positioned 'ABSOLUTE'...size shouldn't change
+                        assessNavigatorSize(navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                    }
+                    else {
+                        // Navigator positioned 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', or 'BOTTOM_RIGHT'
+                        if (seadragonProperties.navigatorMaintainSizeRatio) {
+                            // Navigator should maintain aspect ratio and size proportioned to viewer size
+                            assessNavigatorAspectRatio(viewerElement.width() / viewerElement.height(), 0.0001, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorSize(viewerElement.width() * seadragonProperties.navigatorSizeRatio, viewerElement.height() * seadragonProperties.navigatorSizeRatio, viewerResizeScenarios[step].assessmentMessage);
+                        }
+                        else {
+                            // Navigator should maintain aspect ratio and area
+                            // Variances are loosened up here, since 1 pixel rounding difference in resizing to maintain area
+                            //   can cause a relatively large difference in area and aspect ratio.
+                            assessNavigatorAspectRatio(viewerElement.width() / viewerElement.height(), 0.1, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorArea(navigatorOriginalSize.x * navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                        }
+                    }
+                }
+
+                if (step === viewerResizeScenarios.length - 1) {
+                    assessAfterResizeViewer();
+                }
+                else {
+                    resizeElement(viewerElement, viewerOriginalSize.x * viewerResizeScenarios[nextStep].resizeFactorX, viewerOriginalSize.y * viewerResizeScenarios[nextStep].resizeFactorY);
+                    waitForViewer(assessViewerResizeAndTakeNextStep(nextStep));
+                }
+            };
+        };
+
         var captureInitialStateThenAct = function () {
             assessDisplayRegion("After image load");
 
             testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
 
-            viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
-            waitForViewer(assessAfterZoomOnViewer);
+            viewerOriginalSize = new OpenSeadragon.Point(viewerElement.width(), viewerElement.height());
+            navigatorOriginalSize = new OpenSeadragon.Point(navigatorElement.width(), navigatorElement.height());
+
+            resizeElement(viewerElement, viewerOriginalSize.x * viewerResizeScenarios[0].resizeFactorX, viewerOriginalSize.y * viewerResizeScenarios[0].resizeFactorY);
+            waitForViewer(assessViewerResizeAndTakeNextStep(0));
         };
 
         var assessAutoFadeTriggered = function () {
-            ok($(testProperties.navigatorLocator).parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
+            ok(navigatorElement.parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
             waitForViewer(captureInitialStateThenAct);
         };
 
         var assessAutoFadeDisabled = function () {
-            ok($(testProperties.navigatorLocator).parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
+            ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
             waitForViewer(captureInitialStateThenAct);
         };
 
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
+            navigatorElement = $(testProperties.navigatorLocator);
+            viewerElement = $("#" + seadragonProperties.id);
+            //TODO This should be testProperties.testAutoFade, but test hangs. Fix this!
             if (!testProperties.testAutohide) {
                 waitForViewer(captureInitialStateThenAct);
             }
             else {
-                ok($(testProperties.navigatorLocator).parent().css("opacity") > 0, "Expecting navigator to be visible initially");
+                ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be visible initially");
                 var event = {
                      clientX:1,
                      clientY:1
                  };
 
-                $("#" + seadragonProperties.id).simulate('blur', event);
+                viewerrElement.simulate('blur', event);
 
                 if (testProperties.expectedAutoFade) {
                     setTimeout(assessAutoFadeTriggered,autoFadeWaitTime);
@@ -391,6 +462,7 @@ QUnit.config.autostart = false;
                 tileSources:'/test/data/wide.dzi',
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: false,
                 animationTime:0
             },
             {
@@ -403,7 +475,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -415,6 +487,7 @@ QUnit.config.autostart = false;
                 tileSources:'/test/data/tall.dzi',
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: false,
                 animationTime:0,
                 controlsFadeDelay:0,
                 controlsFadeLength:1
@@ -430,7 +503,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -443,6 +516,7 @@ QUnit.config.autostart = false;
                 showNavigationControl: false,
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: false,
                 navigatorPosition: 'TOP_LEFT',
                 animationTime:0,
                 controlsFadeDelay:0,
@@ -459,7 +533,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left,
                         mainViewerElement.offset().top);
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -472,6 +546,7 @@ QUnit.config.autostart = false;
                 showNavigationControl: false,
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: true,
                 navigatorPosition: 'TOP_RIGHT',
                 animationTime:0,
                 controlsFadeDelay:0,
@@ -488,7 +563,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -501,6 +576,7 @@ QUnit.config.autostart = false;
                 showNavigationControl: false,
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: false,
                 navigatorPosition: 'BOTTOM_LEFT',
                 animationTime:0,
                 controlsFadeDelay:0,
@@ -517,7 +593,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left,
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -530,6 +606,7 @@ QUnit.config.autostart = false;
                 showNavigationControl: false,
                 showNavigator:true,
                 navigatorSizeRatio:0.2,
+                navigatorMaintainSizeRatio: false,
                 navigatorPosition: 'BOTTOM_RIGHT',
                 animationTime:0,
                 controlsFadeDelay:0,
@@ -546,7 +623,7 @@ QUnit.config.autostart = false;
                     assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
                     assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height());
+                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
@@ -605,18 +682,19 @@ QUnit.config.autostart = false;
     });
 
     asyncTest('CustomDialogNavigatorElementWithTallImageTallViewer', function () {
-        $('#exampleNavigator').dialog({ width: 200,
-                                        height:200,
+        $('#exampleNavigator').dialog({ width: 150,
+                                        height:100,
                                         open: function (event, ui) {
-                                            $('#exampleNavigator').width(200);
-                                            $('#exampleNavigator').height(200);
-                                        },
-                                        resize: function (event, ui) {
-                                            //ui.size.width
-                                            //ui.size.height
-                                            //$('#exampleNavigator').dialog("option", "width", 200);
-                                            //$('#exampleNavigator').dialog("option", "width", 200);
+                                            $('#exampleNavigator').width(150);
+                                            $('#exampleNavigator').height(100);
                                         }
+                                        //TODO Use this in testing resizable navigator
+                                        //resize: function (event, ui) {
+                                        //    //ui.size.width
+                                        //    //ui.size.height
+                                        //    //$('#exampleNavigator').dialog("option", "width", 200);
+                                        //    //$('#exampleNavigator').dialog("option", "width", 200);
+                                        //}
                                       });
         assessNavigatorViewerPlacement({
                 id:'tallexample',
