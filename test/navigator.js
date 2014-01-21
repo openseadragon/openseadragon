@@ -75,14 +75,14 @@ QUnit.config.autostart = false;
         Util.assessNumericValue(expectedArea, navigator.width() * navigator.height(), Math.max(navigator.width(), navigator.height()), ' Navigator Area ' + (msg ? msg : ''));
     };
 
-    var navigatorRegionBoundsInPoints = function (recalcForResize) {
+    var navigatorRegionBoundsInPoints = function () {
         var regionBoundsInPoints,
             expectedDisplayRegionWidth,
             expectedDisplayRegionHeight,
             expectedDisplayRegionXLocation,
             expectedDisplayRegionYLocation;
 
-        if (navigator === null || recalcForResize) {
+        if (navigator === null) {
             navigator = $(".navigator");
             navigatorScaleFactor = Math.min(navigator.width() / viewer.viewport.contentSize.x, navigator.height() / viewer.viewport.contentSize.y);
             displayRegionWidth = viewer.viewport.contentSize.x * navigatorScaleFactor;
@@ -117,12 +117,12 @@ QUnit.config.autostart = false;
 
     };
 
-    var assessDisplayRegion = function (status, recalcForResize) {
+    var assessDisplayRegion = function (status) {
 
         if (debug) {
             console.log(status);
         }
-        var expectedBounds = navigatorRegionBoundsInPoints(recalcForResize);
+        var expectedBounds = navigatorRegionBoundsInPoints();
         Util.assessNumericValue(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
         Util.assessNumericValue(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
         Util.assessNumericValue(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
@@ -313,6 +313,11 @@ QUnit.config.autostart = false;
                 {resizeFactorX:1.0, resizeFactorY:0.5, assessmentMessage:"After Viewer Resize (100%, 50%)"},
                 {resizeFactorX:1.0, resizeFactorY:1.0, assessmentMessage:"After Viewer Resize (100%, 100%)"}
             ],
+            navigatorResizeScenarios = [
+                {resizeFactorX:0.75, resizeFactorY:1.0, assessmentMessage:"After Navigator Resize (75%, 100%)"},
+                {resizeFactorX:1.0, resizeFactorY:0.75, assessmentMessage:"After Navigator Resize (100%, 75%)"},
+                {resizeFactorX:1.0, resizeFactorY:1.0, assessmentMessage:"After Navigator Resize (100%, 100%)"}
+            ],
             autoFadeWaitTime = 100,
             navigatorElement = null,
             viewerElement = null,
@@ -361,9 +366,24 @@ QUnit.config.autostart = false;
             waitForViewer(assessAfterDragOnViewer);
         };
 
-        var assessAfterResizeViewer = function () {
+        var assessAfterResizeNavigator = function () {
             viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
             waitForViewer(assessAfterZoomOnViewer);
+        };
+
+        var assessNavigatorResizeAndTakeNextStep = function (step) {
+            return function () {
+                var nextStep = step + 1;
+                assessNavigatorSize(navigatorOriginalSize.x * navigatorResizeScenarios[step].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[step].resizeFactorY, navigatorResizeScenarios[step].assessmentMessage);
+                assessDisplayRegion(navigatorResizeScenarios[step].assessmentMessage);
+                if (step === viewerResizeScenarios.length - 1) {
+                    assessAfterResizeNavigator();
+                }
+                else {
+                    resizeElement(navigatorElement, navigatorOriginalSize.x * navigatorResizeScenarios[nextStep].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[nextStep].resizeFactorY);
+                    waitForViewer(assessNavigatorResizeAndTakeNextStep(nextStep));
+                }
+            };
         };
 
         var assessViewerResizeAndTakeNextStep = function (step) {
@@ -397,7 +417,15 @@ QUnit.config.autostart = false;
                 }
 
                 if (step === viewerResizeScenarios.length - 1) {
-                    assessAfterResizeViewer();
+                    if (seadragonProperties.navigatorId) {
+                        // Navigator hosted in outside element...run navigator resize tests
+                        resizeElement(navigatorElement, navigatorOriginalSize.x * navigatorResizeScenarios[0].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[0].resizeFactorY);
+                        waitForViewer(assessNavigatorResizeAndTakeNextStep(0));
+                    }
+                    else {
+                        // Navigator hosted in viewer...skip navigator resize tests
+                        assessAfterResizeNavigator();
+                    }
                 }
                 else {
                     resizeElement(viewerElement, viewerOriginalSize.x * viewerResizeScenarios[nextStep].resizeFactorX, viewerOriginalSize.y * viewerResizeScenarios[nextStep].resizeFactorY);
@@ -443,7 +471,7 @@ QUnit.config.autostart = false;
                      clientY:1
                  };
 
-                viewerrElement.simulate('blur', event);
+                viewerElement.simulate('blur', event);
 
                 if (testProperties.expectedAutoFade) {
                     setTimeout(assessAutoFadeTriggered,autoFadeWaitTime);
