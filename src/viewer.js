@@ -910,6 +910,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         }
 
+        if ( this.navigator && this.viewport ) {
+            this.navigator.update( this.viewport );
+        }
+
         /**
          * Raised when the viewer has changed to/from full-page mode (see {@link OpenSeadragon.Viewer#setFullPage}).
          *
@@ -990,6 +994,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.element.style.width = _this.fullPageStyleWidth;
                         _this.element.style.height = _this.fullPageStyleHeight;
                     }
+                }
+                if ( _this.navigator && _this.viewport ) {
+                    _this.navigator.update( _this.viewport );
                 }
                 /**
                  * Raised when the viewer has changed to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
@@ -1469,16 +1476,20 @@ function openTileSource( viewer, source ) {
             _this.navigator.open( source );
         } else {
             _this.navigator = new $.Navigator({
-                id:          _this.navigatorId,
-                position:    _this.navigatorPosition,
-                sizeRatio:   _this.navigatorSizeRatio,
-                height:      _this.navigatorHeight,
-                width:       _this.navigatorWidth,
-                tileSources: source,
-                tileHost:    _this.tileHost,
-                prefixUrl:   _this.prefixUrl,
-                overlays:    _this.overlays,
-                viewer:      _this
+                id:                _this.navigatorId,
+                position:          _this.navigatorPosition,
+                sizeRatio:         _this.navigatorSizeRatio,
+                maintainSizeRatio: _this.navigatorMaintainSizeRatio,
+                top:               _this.navigatorTop,
+                left:              _this.navigatorLeft,
+                width:             _this.navigatorWidth,
+                height:            _this.navigatorHeight,
+                autoResize:        _this.navigatorAutoResize,
+                tileSources:       source,
+                tileHost:          _this.tileHost,
+                prefixUrl:         _this.prefixUrl,
+                overlays:          _this.overlays,
+                viewer:            _this
             });
         }
     }

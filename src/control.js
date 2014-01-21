@@ -46,13 +46,15 @@
  * @property {Number} TOP_RIGHT
  * @property {Number} BOTTOM_LEFT
  * @property {Number} BOTTOM_RIGHT
+ * @property {Number} ABSOLUTE
  */
 $.ControlAnchor = {
     NONE: 0,
     TOP_LEFT: 1,
     TOP_RIGHT: 2,
     BOTTOM_RIGHT: 3,
-    BOTTOM_LEFT: 4
+    BOTTOM_LEFT: 4,
+    ABSOLUTE: 5
 };
 
 /**
@@ -110,14 +112,30 @@ $.Control = function ( element, options, container ) {
      * @member {Element} wrapper
      * @memberof OpenSeadragon.Control#
      */
-    this.wrapper    = $.makeNeutralElement( "span" );
-    this.wrapper.style.display = "inline-block";
-    this.wrapper.appendChild( this.element );
+    if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
+        this.wrapper    = $.makeNeutralElement( "div" );
+        this.wrapper.style.position = "absolute";
+        this.wrapper.style.top = typeof ( options.top )  == "number" ? ( options.top + 'px' ) : options.top;
+        this.wrapper.style.left  = typeof ( options.left )  == "number" ?  (options.left + 'px' ) : options.left;
+        this.wrapper.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
+        this.wrapper.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+        this.wrapper.style.margin = "0px";
+        this.wrapper.style.padding = "0px";
 
-    if ( this.anchor == $.ControlAnchor.NONE ) {
-        // IE6 fix
-        this.wrapper.style.width = this.wrapper.style.height = "100%";
+        this.element.style.position = "relative";
+        this.element.style.top = "0px";
+        this.element.style.left = "0px";
+        this.element.style.height = "100%";
+        this.element.style.width = "100%";
+    } else {
+        this.wrapper    = $.makeNeutralElement( "span" );
+        this.wrapper.style.display = "inline-block";
+        if ( this.anchor == $.ControlAnchor.NONE ) {
+            // IE6 fix
+            this.wrapper.style.width = this.wrapper.style.height = "100%";
+        }
     }
+    this.wrapper.appendChild( this.element );
 
     if (options.attachToViewer ) {
         if ( this.anchor == $.ControlAnchor.TOP_RIGHT ||
@@ -161,7 +179,7 @@ $.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
      */
     setVisible: function( visible ) {
         this.wrapper.style.display = visible ?
-            "inline-block" :
+            ( this.anchor == $.ControlAnchor.ABSOLUTE ? 'block' : 'inline-block' ) :
             "none";
     },
 

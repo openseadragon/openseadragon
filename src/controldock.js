@@ -126,6 +126,11 @@
                     element.style.paddingLeft = "0px";
                     element.style.paddingTop = "0px";
                     break;
+                case $.ControlAnchor.ABSOLUTE:
+                    div = this.container;
+                    element.style.margin = "0px";
+                    element.style.padding = "0px";
+                    break;
                 default:
                 case $.ControlAnchor.NONE:
                     div = this.container;
