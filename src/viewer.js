@@ -994,7 +994,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Add a layer.
      * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
-     *  supports.
+     *  supports except arrays of images as layers cannot be sequences.
      * @function
      * @param {Object} options
      * @param {String|Object|Function} [options.tileSource] The TileSource of the layer.
@@ -1008,6 +1008,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var _this = this,
             tileSource = options.tileSource;
 
+        if ( !this.isOpen() ) {
+            throw new Error( "An image must be loaded before adding layers." );
+        }
         if ( !tileSource ) {
             throw new Error( "No tile source provided as new layer." );
         }
@@ -1034,7 +1037,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if ( tileSource instanceof Array ) {
                 raiseAddLayerFailed({
-                    message: "Collections can not be added as layers.",
+                    message: "Sequences can not be added as layers.",
                     source: tileSource,
                     options: options
                 });
@@ -1062,7 +1065,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugGridColor: _this.debugGridColor
             });
             _this.drawers.push( drawer );
-            if ( options.level ) {
+            if ( options.level !== undefined ) {
                 _this.setLayerLevel( drawer, options.level );
             }
             THIS[ _this.hash ].forceRedraw = true;
@@ -1114,8 +1117,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Get the number of layers used.
      * @returns {Number} The number of layers used.
      */
-    getNumberOfLayers: function() {
-        return this.drawers.length - 1;
+    getLayersCount: function() {
+        return this.drawers.length;
     },
 
     /**
@@ -1128,22 +1131,33 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     setLayerLevel: function( drawer, level ) {
         var oldLevel = this.getLevelOfLayer( drawer );
-        if ( level === 0 || oldLevel === 0 ) {
-            throw new Error( "Cannot reassign base level." );
-        }
+
         if ( level >= this.drawers.length ) {
             throw new Error( "Level bigger than number of layers." );
         }
         if ( level === oldLevel || oldLevel === -1 ) {
             return this;
         }
+        if ( level === 0 || oldLevel === 0 ) {
+            if ( THIS[ this.hash ].sequenced ) {
+                throw new Error( "Cannot reassign base level when in sequence mode." );
+            }
+            // We need to re-assign the base drawer
+            this.drawer = level === 0 ? drawer : this.getLayerAtLevel( level );
+        }
         this.drawers.splice( oldLevel, 1 );
         this.drawers.splice( level, 0, drawer );
         this.canvas.removeChild( drawer.canvas );
-        // Insert right after layer at level - 1
-        var prevLevelCanvas = this.drawers[level - 1].canvas;
-        prevLevelCanvas.parentNode.insertBefore( drawer.canvas,
-            prevLevelCanvas.nextSibling );
+        if ( level === 0 ) {
+            var nextLevelCanvas = this.drawers[ 1 ].canvas;
+            nextLevelCanvas.parentNode.insertBefore( drawer.canvas,
+                nextLevelCanvas );
+        } else {
+            // Insert right after layer at level - 1
+            var prevLevelCanvas = this.drawers[level - 1].canvas;
+            prevLevelCanvas.parentNode.insertBefore( drawer.canvas,
+                prevLevelCanvas.nextSibling );
+        }
 
         /**
          * Raised when the order of the layers has been changed.
