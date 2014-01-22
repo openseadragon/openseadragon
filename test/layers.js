@@ -162,11 +162,11 @@
         var options = {
             tileSource: {
                 type: 'legacy-image-pyramid',
-                levels: [ {
+                levels: [{
                         url: "data/A.png",
                         width: 1000,
                         height: 1000
-                    } ]
+                    }]
             },
             level: 0
         };
@@ -180,12 +180,19 @@
                 equal( viewer.drawer, aDrawer, "Viewer.drawer should be set to aDrawer." );
                 viewer.setLayerLevel( aDrawer, 1 );
                 equal( viewer.drawer, testPatternDrawer, "Viewer.drawer should be set back to testPatternDrawer." );
-                start( );
-            } );
+
+                viewer.removeLayer( viewer.drawer );
+                equal( viewer.drawer, aDrawer, "Viewer.drawer must be reassigned when removing base layer." );
+
+                viewer.removeLayer( viewer.drawer );
+                ok( !viewer.isOpen(), "Viewer should be closed when removing last layer." );
+
+                start();
+            });
             viewer.addLayer( options );
-        } );
+        });
         viewer.open( '/test/data/testpattern.dzi' );
-    } );
+    });
 
     asyncTest( 'Layers and sequences', function() {
         expect( 1 );
@@ -209,37 +216,37 @@
 //                }]}] );
 
         viewer.close();
-        viewer = OpenSeadragon( {
+        viewer = OpenSeadragon({
             id: 'layersexample',
             prefixUrl: '/build/openseadragon/images/',
             springStiffness: 100, // Faster animation = faster tests
-            tileSources: [ {
+            tileSources: [{
                     type: 'legacy-image-pyramid',
-                    levels: [ {
+                    levels: [{
                             url: "data/A.png",
                             width: 1000,
                             height: 1000
-                        } ]
+                        }]
                 },
                 {
                     type: 'legacy-image-pyramid',
-                    levels: [ {
+                    levels: [{
                             url: "data/BBlue.png",
                             width: 1000,
                             height: 1000
-                        } ] } ]
-
-        } );
+                        }]
+                }]
+        });
 // End workaround
 
         var options = {
             tileSource: {
                 type: 'legacy-image-pyramid',
-                levels: [ {
+                levels: [{
                         url: "data/CCyan.png",
                         width: 1000,
                         height: 1000
-                    } ]
+                    }]
             }
         };
 

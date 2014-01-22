@@ -1181,6 +1181,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Remove a layer. If there is only one layer, close the viewer.
      * @function
      * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer 
      * to remove
@@ -1193,7 +1194,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
         if ( index === 0 ) {
-            throw new Error( "Cannot remove base layer." );
+            if ( THIS[ this.hash ].sequenced ) {
+                throw new Error( "Cannot remove base layer when in sequence mode." );
+            }
+            if ( this.drawers.length === 1 ) {
+                this.close();
+                return this;
+            }
+            this.drawer = this.drawers[ 1 ];
         }
 
         this.drawers.splice( index, 1 );
