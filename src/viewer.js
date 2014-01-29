@@ -74,8 +74,7 @@ $.Viewer = function( options ) {
             xmlPath:            args.length > 1 ? args[ 1 ] : undefined,
             prefixUrl:          args.length > 2 ? args[ 2 ] : undefined,
             controls:           args.length > 3 ? args[ 3 ] : undefined,
-            overlays:           args.length > 4 ? args[ 4 ] : undefined,
-            overlayControls:    args.length > 5 ? args[ 5 ] : undefined
+            overlays:           args.length > 4 ? args[ 4 ] : undefined
         };
     }
 
@@ -129,7 +128,6 @@ $.Viewer = function( options ) {
 
         //TODO: not sure how to best describe these
         overlays:       [],
-        overlayControls:[],
 
         //private state properties
         previousBody:   [],
@@ -1386,9 +1384,7 @@ function _getSafeElemSize (oElement) {
  * @private
  */
 function openTileSource( viewer, source ) {
-    var _this = viewer,
-        overlay,
-        i;
+    var _this = viewer;
 
     if ( _this.source ) {
         _this.close( );
@@ -1517,38 +1513,6 @@ function openTileSource( viewer, source ) {
     THIS[ _this.hash ].forceRedraw = true;
     _this._updateRequestId = scheduleUpdate( _this, updateMulti );
 
-    //Assuming you had programatically created a bunch of overlays
-    //and added them via configuration
-    for ( i = 0; i < _this.overlayControls.length; i++ ) {
-
-        overlay = _this.overlayControls[ i ];
-
-        if ( overlay.point ) {
-
-            _this.drawer.addOverlay(
-                overlay.id,
-                new $.Point(
-                    overlay.point.X,
-                    overlay.point.Y
-                ),
-                $.OverlayPlacement.TOP_LEFT
-            );
-
-        } else {
-
-            _this.drawer.addOverlay(
-                overlay.id,
-                new $.Rect(
-                    overlay.rect.Point.X,
-                    overlay.rect.Point.Y,
-                    overlay.rect.Width,
-                    overlay.rect.Height
-                ),
-                overlay.placement
-            );
-
-        }
-    }
     VIEWERS[ _this.hash ] = _this;
 
     /**
