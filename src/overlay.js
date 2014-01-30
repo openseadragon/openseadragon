@@ -174,7 +174,7 @@
                 element.parentNode.removeChild( element );
                 //this should allow us to preserve overlays when required between
                 //pages
-                if( element.prevElementParent ){
+                if ( element.prevElementParent ) {
                     style.display = 'none';
                     //element.prevElementParent.insertBefore(
                     //    element,
@@ -208,10 +208,16 @@
                 drawerCenter = new $.Point(
                     viewport.viewer.drawer.canvas.width / 2,
                     viewport.viewer.drawer.canvas.height / 2
-                ),
-                degrees = viewport.degrees,
-                position,
-                size,
+                    ),
+                degrees  = viewport.degrees,
+                position = viewport.pixelFromPoint(
+                    this.bounds.getTopLeft(),
+                    true
+                    ),
+                size     = viewport.deltaPixelsFromPoints(
+                    this.bounds.getSize(),
+                    true
+                    ),
                 overlayCenter;
 
             if ( element.parentNode != container ) {
@@ -225,8 +231,8 @@
                 this.size = $.getElementSize( element );
             }
 
-            position = this.position;
-            size     = this.size;
+            this.position = position;
+            this.size     = size;
 
             this.adjust( position, size );
 
