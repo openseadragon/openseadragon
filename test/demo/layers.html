@@ -146,13 +146,13 @@
             }
 
             function updateOrder() {
-                var nbLayers = viewer.getNumberOfLayers();
+                var nbLayers = viewer.getLayersCount();
                 if ( nbLayers < 2 ) {
                     return;
                 }
                 $.each( $( "#used select option" ), function( index, value ) {
                     var layer = value.innerHTML;
-                    viewer.setLayerLevel( layers[layer], nbLayers - index );
+                    viewer.setLayerLevel( layers[layer], nbLayers -1 - index );
                 } );
             }
 

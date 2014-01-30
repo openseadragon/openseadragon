@@ -1155,8 +1155,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             if ( THIS[ this.hash ].sequenced ) {
                 throw new Error( "Cannot reassign base level when in sequence mode." );
             }
-            // We need to re-assign the base drawer
+            // We need to re-assign the base drawer and the source
             this.drawer = level === 0 ? drawer : this.getLayerAtLevel( level );
+            this.source = this.drawer.source;
         }
         this.drawers.splice( oldLevel, 1 );
         this.drawers.splice( level, 0, drawer );
