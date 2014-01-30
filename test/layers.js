@@ -27,7 +27,7 @@
 
     // ----------
     asyncTest( 'Layers operations', function() {
-        expect( 22 );
+        expect( 23 );
         viewer.addHandler( "open", function( ) {
             equal( 1, viewer.getLayersCount( ),
                 "One layer should be present after opening." );
@@ -112,7 +112,16 @@
 
                         });
                         viewer.removeLayer( layer2 );
-                        start();
+
+                        options.tileSource.levels[0].width = 500;
+                        viewer.addHandler( "add-layer-failed", function addLayerFailed( event ) {
+                            viewer.removeHandler( "add-layer-failed", addLayerFailed );
+
+                            equal( viewer.getLayersCount(), 3 );
+
+                            start();
+                        });
+                        viewer.addLayer( options );
                     });
                 });
             });

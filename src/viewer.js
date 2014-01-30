@@ -1044,6 +1044,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return;
             }
 
+            for ( var i = 0; i < _this.drawers.length; i++ ) {
+                var otherAspectRatio = _this.drawers[ i ].source.aspectRatio;
+                var diff = otherAspectRatio - tileSource.aspectRatio;
+                if ( Math.abs( diff ) > _this.layersAspectRatioEpsilon ) {
+                    raiseAddLayerFailed({
+                        message: "Aspect ratio mismatch with layer " + i + ".",
+                        source: tileSource,
+                        options: options
+                    });
+                    return;
+                }
+            }
+
             var drawer = new $.Drawer({
                 viewer: _this,
                 source: tileSource,
