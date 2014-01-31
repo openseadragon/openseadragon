@@ -127,7 +127,10 @@ $.Viewer = function( options ) {
         canvas:         null,
 
         // Overlays list. An overlay allows to add html on top of the viewer.
-        overlays:       [],
+        // Configured overlays via viewer's options
+        overlays:           [],
+        // Currently opened overlays
+        currentOverlays:    [],
 
         //private state properties
         previousBody:   [],
