@@ -1,12 +1,14 @@
 /* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
 
 ( function() {
-    var debug = false,
-        viewer;
+    var viewer;
 
     module( "Overlays", {
         setup: function() {
             var example = $( '<div id="example-overlays"></div>' ).appendTo( "#qunit-fixture" );
+            var fixedOverlay = $( '<div id="fixed-overlay"></div>' ).appendTo(example);
+            fixedOverlay.width(70);
+            fixedOverlay.height(60);
 
             testLog.reset();
         },
@@ -227,7 +229,11 @@
                     width: 124,
                     height: 132,
                     id: "overlay"
-                } ]
+                }, {
+                    px: 400,
+                    py: 500,
+                    id: "fixed-overlay"
+                }]
         } );
 
         function checkOverlayPosition( contextMessage ) {
@@ -244,6 +250,16 @@
             var expectedHeight = Math.ceil( 132 * zoom );
             equal( $( "#overlay" ).width(), expectedWidth, "Width mismatch " + contextMessage );
             equal( $( "#overlay" ).height( ), expectedHeight, "Height mismatch " + contextMessage );
+
+
+            expPosition = viewport.imageToViewerElementCoordinates(
+                new OpenSeadragon.Point( 400, 500 ) ).apply( Math.floor );
+            actPosition = $( "#fixed-overlay" ).position();
+            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+
+            equal( $( "#fixed-overlay" ).width(), 70, "Fixed overlay width mismatch " + contextMessage );
+            equal( $( "#fixed-overlay" ).height( ), 60, "Fixed overlay height mismatch " + contextMessage );
         }
 
         waitForViewer( function() {
@@ -256,6 +272,68 @@
                 viewer.viewport.goHome();
                 waitForViewer( function() {
                     checkOverlayPosition( "after goHome using image coordinates" );
+                    start();
+                } );
+            } );
+
+        } );
+    } );
+
+    asyncTest( 'Overlays size in points', function() {
+
+        viewer = OpenSeadragon( {
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: [ '/test/data/testpattern.dzi', '/test/data/testpattern.dzi' ],
+            springStiffness: 100, // Faster animation = faster tests
+            overlays: [ {
+                    x: 0.2,
+                    y: 0.1,
+                    width: 0.5,
+                    height: 0.1,
+                    id: "overlay"
+                },{
+                    x: 0.5,
+                    y: 0.6,
+                    id: "fixed-overlay"
+                } ]
+        } );
+
+        function checkOverlayPosition( contextMessage ) {
+            var viewport = viewer.viewport;
+
+            var expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.2, 0.1 ) ).apply( Math.floor );
+            var actPosition = $( "#overlay" ).position();
+            equal( actPosition.left, expPosition.x, "X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
+
+            var expectedSize = viewport.deltaPixelsFromPoints(
+                new OpenSeadragon.Point(0.5, 0.1));
+            equal( $( "#overlay" ).width(), expectedSize.x, "Width mismatch " + contextMessage );
+            equal( $( "#overlay" ).height( ), expectedSize.y, "Height mismatch " + contextMessage );
+
+
+            expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.5, 0.6 ) ).apply( Math.floor );
+            actPosition = $( "#fixed-overlay" ).position();
+            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+
+            equal( $( "#fixed-overlay" ).width(), 70, "Fixed overlay width mismatch " + contextMessage );
+            equal( $( "#fixed-overlay" ).height( ), 60, "Fixed overlay height mismatch " + contextMessage );
+        }
+
+        waitForViewer( function() {
+            checkOverlayPosition( "after opening using viewport coordinates" );
+
+            viewer.viewport.zoomBy( 1.1 ).panBy( new OpenSeadragon.Point( 0.1, 0.2 ) );
+            waitForViewer( function() {
+                checkOverlayPosition( "after zoom and pan using viewport coordinates" );
+
+                viewer.viewport.goHome();
+                waitForViewer( function() {
+                    checkOverlayPosition( "after goHome using viewport coordinates" );
                     start();
                 } );
             } );

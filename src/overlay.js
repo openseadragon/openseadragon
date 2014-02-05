@@ -35,7 +35,8 @@
 (function( $ ){
 
     /**
-     * An enumeration of positions that an overlay may be assigned relative to the viewport.
+     * An enumeration of positions that an overlay may be assigned relative to
+     * the viewport.
      * @member OverlayPlacement
      * @memberof OpenSeadragon
      * @static
@@ -69,8 +70,14 @@
      * @memberof OpenSeadragon
      * @param {Object} options
      * @param {Element} options.element
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} options.location
-     * @param {OpenSeadragon.OverlayPlacement} options.placement - Only used if location is an {@link OpenSeadragon.Point}.
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} options.location - The
+     * location of the overlay on the image. If a {@link OpenSeadragon.Point}
+     * is specified, the overlay will keep a constant size independently of the
+     * zoom. It a {@link OpenSeadragon.Rect} is specified, the overlay size will
+     * be adjusted when the zoom changes.
+     * @param {OpenSeadragon.OverlayPlacement} [options.placement=OpenSeadragon.OverlayPlacement.TOP_LEFT]
+     * Relative position to the viewport.
+     * Only used if location is a {@link OpenSeadragon.Point}.
      * @param {OpenSeadragon.Overlay.OnDrawCallback} options.onDraw
      */
     $.Overlay = function( element, location, placement ) {
@@ -86,9 +93,9 @@
          */
 
         var options;
-        if( $.isPlainObject( element ) ){
+        if ( $.isPlainObject( element ) ) {
             options = element;
-        } else{
+        } else {
             options = {
                 element: element,
                 location: location,
