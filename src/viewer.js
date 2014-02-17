@@ -1416,7 +1416,8 @@ function openTileSource( viewer, source ) {
             showNavigator:          false,
             minZoomImageRatio:      1,
             maxZoomPixelRatio:      1,
-            viewer:                 _this //,
+            viewer:                 _this,
+            degrees:                 _this.degrees //,
             //TODO: figure out how to support these in a way that makes sense
             //minZoomLevel:           this.minZoomLevel,
             //maxZoomLevel:           this.maxZoomLevel
@@ -1438,7 +1439,8 @@ function openTileSource( viewer, source ) {
             defaultZoomLevel:   _this.defaultZoomLevel,
             minZoomLevel:       _this.minZoomLevel,
             maxZoomLevel:       _this.maxZoomLevel,
-            viewer:             _this
+            viewer:             _this,
+            degrees:            _this.degrees
         });
     }
 
