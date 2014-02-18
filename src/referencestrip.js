@@ -76,8 +76,11 @@ $.ReferenceStrip = function ( options ) {
         options.id              = 'referencestrip-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
         this.element.id         = options.id;
-        this.element.className  = 'referencestrip';
+    } else {
+        this.element            = document.getElementById( options.id );
     }
+
+    this.element.className  = 'referencestrip';
 
     options = $.extend( true, {
         sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
