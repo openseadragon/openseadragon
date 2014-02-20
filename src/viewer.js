@@ -1153,6 +1153,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
+            onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
+            onRotateRightHandler    = $.delegate( this, onRotateRight ),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1228,6 +1230,34 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 srcHover:   resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
                 srcDown:    resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
                 onRelease:  onFullScreenHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            buttons.push( this.rotateLeft = new $.Button({
+                element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.RotateLeft" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
+                onRelease:  onRotateLeftHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            }));
+
+            buttons.push( this.rotateRight = new $.Button({
+                element:    this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.RotateRight" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
+                onRelease:  onRotateRightHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             }));
@@ -2113,6 +2143,38 @@ function onFullScreen() {
     this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateLeft() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation == 0) {
+            currRotation = 270;
+        }
+        else {
+            currRotation -= 90;
+        }
+        this.viewport.setRotation(currRotation);
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateRight() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation == 270) {
+            currRotation = 0;
+        }
+        else {
+            currRotation += 90;
+        }
+        this.viewport.setRotation(currRotation);
     }
 }
 
