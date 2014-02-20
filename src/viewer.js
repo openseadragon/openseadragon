@@ -2152,7 +2152,7 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation == 0) {
+        if (currRotation === 0) {
             currRotation = 270;
         }
         else {
@@ -2168,7 +2168,7 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation == 270) {
+        if (currRotation === 270) {
             currRotation = 0;
         }
         else {
