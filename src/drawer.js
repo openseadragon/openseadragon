@@ -1228,6 +1228,23 @@ function drawTiles( drawer, lastDrawn ){
         tileSource,
         collectionTileSource;
 
+    // We need a callback to give image manipulation a chance to happen
+    var drawingHandler = function(args) {
+        if (drawer.viewer) {
+          /**
+           * This event is fired just before the tile is drawn giving the application a chance to alter the image.
+           *
+           * @event tile-drawing
+           * @memberof OpenSeadragon.Viewer
+           * @type {object}
+           * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+           * @property {OpenSeadragon.Tile} tile
+           * @property {?Object} userData - 'context', 'tile' and 'rendered'.
+           */
+            drawer.viewer.raiseEvent('tile-drawing', args);
+        }
+    };
+
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
 
@@ -1299,10 +1316,10 @@ function drawTiles( drawer, lastDrawn ){
                 // specifically, don't save,rotate,restore every time we draw a tile
                 if( drawer.viewport.degrees !== 0 ) {
                     offsetForRotation( tile, drawer.canvas, drawer.context, drawer.viewport.degrees );
-                    tile.drawCanvas( drawer.context );
+                    tile.drawCanvas( drawer.context, drawingHandler );
                     restoreRotationChanges( tile, drawer.canvas, drawer.context );
                 } else {
-                    tile.drawCanvas( drawer.context );
+                    tile.drawCanvas( drawer.context, drawingHandler );
                 }
             } else {
                 tile.drawHTML( drawer.canvas );
