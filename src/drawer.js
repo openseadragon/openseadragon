@@ -153,6 +153,79 @@ $.Drawer = function( options ) {
 $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
+     * Adds an html element as an overlay to the current viewport.  Useful for
+     * highlighting words or areas of interest on an image or other zoomable
+     * interface.
+     * @method
+     * @param {Element|String|Object} element - A reference to an element or an id for
+     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
+     * @param {function} onDraw - If supplied the callback is called when the overlay
+     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      It is passed position, size and element.
+     * @fires OpenSeadragon.Viewer.event:add-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#addOverlay} instead.
+     */
+    addOverlay: function( element, location, placement, onDraw ) {
+        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
+        this.viewer.addOverlay( element, location, placement, onDraw );
+        return this;
+    },
+
+    /**
+     * Updates the overlay represented by the reference to the element or
+     * element id moving it to the new location, relative to the new placement.
+     * @method
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
+     * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:update-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#updateOverlay} instead.
+     */
+    updateOverlay: function( element, location, placement ) {
+        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
+        this.viewer.updateOverlay( element, location, placement );
+        return this;
+    },
+
+    /**
+     * Removes and overlay identified by the reference element or element id
+     *      and schedules and update.
+     * @method
+     * @param {Element|String} element - A reference to the element or an
+     *      element id which represent the ovelay content to be removed.
+     * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:remove-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#removeOverlay} instead.
+     */
+    removeOverlay: function( element ) {
+        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
+        this.viewer.updateOverlay( element );
+        return this;
+    },
+
+    /**
+     * Removes all currently configured Overlays from this Drawer and schedules
+     *      and update.
+     * @method
+     * @return {OpenSeadragon.Drawer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:clear-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#clearOverlays} instead.
+     */
+    clearOverlays: function() {
+        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
+        this.viewer.clearOverlays();
+        return this;
+    },
+
+    /**
      * Returns whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
      * @method
