@@ -798,6 +798,18 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     HOVER:  'fullpage_hover.png',
                     DOWN:   'fullpage_pressed.png'
                 },
+                rotateleft: {
+                    REST:   'rotateleft_rest.png',
+                    GROUP:  'rotateleft_grouphover.png',
+                    HOVER:  'rotateleft_hover.png',
+                    DOWN:   'rotateleft_pressed.png'
+                },
+                rotateright: {
+                    REST:   'rotateright_rest.png',
+                    GROUP:  'rotateright_grouphover.png',
+                    HOVER:  'rotateright_hover.png',
+                    DOWN:   'rotateright_pressed.png'
+                },
                 previous: {
                     REST:   'previous_rest.png',
                     GROUP:  'previous_grouphover.png',
