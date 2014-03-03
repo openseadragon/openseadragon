@@ -336,6 +336,11 @@
   *     image and if the 'next' button will wrap to the first image when viewing
   *     the last image.
   *
+  * @property {Boolean} [showRotationControl=false]
+  *     If true then the rotate left/right controls will be displayed as part of the
+  *     standard controls. This is also subject to the browser support for rotate
+  *     (e.g. viewer.drawer.canRotate()).
+  *
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
   *     provide buttons for navigating forward and backward through the images.
@@ -807,6 +812,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 }
             },
             navPrevNextWrap:        false,
+            showRotationControl:    false,
 
             //DEVELOPER SETTINGS
             debugMode:              false,

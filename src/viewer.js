@@ -1234,33 +1234,36 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 onBlur:     onBlurHandler
             }));
 
-            buttons.push( this.rotateLeft = new $.Button({
-                element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.RotateLeft" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
-                onRelease:  onRotateLeftHandler,
-                onFocus:    onFocusHandler,
-                onBlur:     onBlurHandler
-            }));
+            if (this.showRotationControl && this.drawer.canRotate()) {
+                buttons.push( this.rotateLeft = new $.Button({
+                    element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateLeft" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
+                    onRelease:  onRotateLeftHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
 
-            buttons.push( this.rotateRight = new $.Button({
-                element:    this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.RotateRight" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
-                onRelease:  onRotateRightHandler,
-                onFocus:    onFocusHandler,
-                onBlur:     onBlurHandler
-            }));
+                buttons.push( this.rotateRight = new $.Button({
+                    element:    this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateRight" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
+                    onRelease:  onRotateRightHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
+
+            }
 
             if( useGroup ){
                 this.buttons = new $.ButtonGroup({
