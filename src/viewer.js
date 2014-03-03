@@ -1234,7 +1234,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 onBlur:     onBlurHandler
             }));
 
-            if (this.showRotationControl && this.drawer.canRotate()) {
+            if (this.showRotationControl) {
                 buttons.push( this.rotateLeft = new $.Button({
                     element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
                     clickTimeThreshold: this.clickTimeThreshold,
@@ -1502,6 +1502,21 @@ function openTileSource( viewer, source ) {
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor
     });
+
+    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
+    if (!_this.drawer.canRotate()) {
+        // Disable/remove the rotate left/right buttons since they aren't supported
+        if (_this.rotateLeft) {
+            i = _this.buttons.buttons.indexOf(_this.rotateLeft);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateLeft.element);
+        }
+        if (_this.rotateRight) {
+            i = _this.buttons.buttons.indexOf(_this.rotateRight);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateRight.element);
+        }
+    }
 
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && !_this.collectionMode ){
