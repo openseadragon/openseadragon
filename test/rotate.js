@@ -25,8 +25,8 @@
             viewer.removeHandler('open', openHandler);
             ok(true, 'Open event was sent');
             ok(viewer.drawer, 'Drawer exists');
-            ok(viewer.drawer.canRotate(), 'drawer.canRotate is true');
-            ok(!viewer.showRotationControl, 'showRotationControl is on - default should be off');
+            ok(viewer.drawer.canRotate(), 'drawer.canRotate needs to be true');
+            ok(!viewer.showRotationControl, 'showRotationControl should be off');
             ok(!viewer.rotateLeft, "rotateLeft button should be null");
             ok(!viewer.rotateRight, "rotateRight button should be null");
             start();
@@ -48,10 +48,10 @@
             viewer.removeHandler('open', openHandler);
             ok(true, 'Open event was sent');
             ok(viewer.drawer, 'Drawer exists');
-            ok(viewer.drawer.canRotate(), 'drawer.canRotate is true');
-            ok(viewer.showRotationControl, 'showRotationControl is on');
-            ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateLeft), "rotateLeft not found");
-            ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateRight), "rotateRight not found");
+            ok(viewer.drawer.canRotate(), 'drawer.canRotate needs to be true');
+            ok(viewer.showRotationControl, 'showRotationControl should be true');
+            ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateLeft), "rotateLeft should be found");
+            ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateRight), "rotateRight should be found");
             start();
         };
 
