@@ -52,6 +52,15 @@
             ok(viewer.showRotationControl, 'showRotationControl should be true');
             ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateLeft), "rotateLeft should be found");
             ok(-1 != viewer.buttons.buttons.indexOf(viewer.rotateRight), "rotateRight should be found");
+
+            // Now simulate the left/right button clicks. Security prevents us from simulating a click,
+            // so we will call the 'onRelease' handler for the button
+            ok(viewer.viewport.degrees === 0, "Image should start at 0 degrees rotation");
+            viewer.rotateLeft.onRelease();
+            ok(viewer.viewport.degrees === 270, "Image should be 270 degrees rotation (left)");
+            viewer.rotateRight.onRelease();
+            ok(viewer.viewport.degrees === 0, "Image should be 270 degrees rotation (right)");
+
             start();
         };
 
