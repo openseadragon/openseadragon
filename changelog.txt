@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Enhanced the navigatorTop, navigatorLeft, navigatorHeight, and navigatorWidth options to allow a number for pixel units or a string for other element units (%, em, etc.) (#310)
 * Additional enhancements for IIIF support (#315)
 * Fixed: Setting degrees in Viewer constructor has no effect (#336)
+* Added pre-draw event for tiles to allow applications to alter the image (#348)
 
 1.0.0:
 
