@@ -280,4 +280,23 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
+    // ----------
+    asyncTest( 'tile-drawing event', function () {
+        var tileDrawing = function ( event ) {
+            viewer.removeHandler( 'tile-drawing', tileDrawing );
+            ok( event, 'Event handler should be invoked' );
+            if ( event ) {
+                // Make sure we have the expected elements set
+                ok(event.context, "Context should be set");
+                ok(event.tile, "Tile should be set");
+                ok(event.rendered, "Rendered should be set");
+            }
+            viewer.close();
+            start();
+        };
+
+        viewer.addHandler( 'tile-drawing', tileDrawing );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
 } )();
