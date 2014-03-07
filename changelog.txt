@@ -14,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Additional enhancements for IIIF support (#315)
 * Fixed: Setting degrees in Viewer constructor has no effect (#336)
 * Added pre-draw event for tiles to allow applications to alter the image (#348)
+* Added optional Rotate Left/Right buttons to standard controls (#341)
 
 1.0.0:
 
