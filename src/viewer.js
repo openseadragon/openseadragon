@@ -270,7 +270,14 @@ $.Viewer = function( options ) {
         style.position = "absolute";
         style.top      = "0px";
         style.left     = "0px";
-    }(  this.canvas.style ));
+        // Disable browser default touch handling
+        if (style["touch-action"] !== undefined) {
+            style["touch-action"] = "none";
+        }
+        else if (style["-ms-touch-action"] !== undefined) {
+            style["-ms-touch-action"] = "none";
+        }
+    }(this.canvas.style));
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -378,7 +385,8 @@ $.Viewer = function( options ) {
         clickHandler:       $.delegate( this, onCanvasClick ),
         dragHandler:        $.delegate( this, onCanvasDrag ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
-        scrollHandler:      $.delegate( this, onCanvasScroll )
+        scrollHandler:      $.delegate( this, onCanvasScroll ),
+        pinchHandler:       $.delegate( this, onCanvasPinch )
     }).setTracking( this.mouseNavEnabled ? true : false ); // default state
 
     this.outerTracker = new $.MouseTracker({
@@ -1817,7 +1825,7 @@ function onCanvasScroll( event ) {
         this.viewport.applyConstraints();
     }
     /**
-     * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel, touch pinch, etc.).
+     * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
      *
      * @event canvas-scroll
      * @memberof OpenSeadragon.Viewer
@@ -1841,7 +1849,41 @@ function onCanvasScroll( event ) {
     return false;
 }
 
-function onContainerExit( event ) {
+function onCanvasPinch(event) {
+    if (!event.preventDefaultAction && this.viewport) {
+        //TODO This is temporary for testing. Zoom should track pinch gesture one-to-one, around center point!
+        this.viewport.zoomBy(
+            ( event.delta > 0 ) ? 1.2 : 0.8,
+            this.viewport.pointFromPixel(event.position, true)
+        );
+        this.viewport.applyConstraints();
+    }
+    /**
+     * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-pinch
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} delta - The pinch delta for the event.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent('canvas-pinch', {
+        tracker: event.eventSource,
+        position: event.position,
+        delta: event.delta,
+        shift: event.shift,
+        originalEvent: event.originalEvent
+    });
+    //cancels event
+    return false;
+}
+
+function onContainerExit(event) {
     if ( !event.insideElementPressed ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {

@@ -999,6 +999,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
+         * Determines if a point is within the bounding rectangle of the given element (hit-test).
+         * @function
+         * @param {Element|String} element
+         * @param {OpenSeadragon.Point} point
+         * @returns {Boolean}
+         */
+        pointInElement: function( element, point ) {
+            element = $.getElement( element );
+            var offset = $.getElementOffset( element ),
+                size = $.getElementSize( element );
+            return point.x >= offset.x && point.x < offset.x + size.x && point.y < offset.y + size.y && point.y >= offset.y;
+        },
+
+
+        /**
          * Gets the latest event, really only useful internally since its
          * specific to IE behavior.
          * @function
