@@ -1851,20 +1851,22 @@ function onCanvasScroll( event ) {
 
 function onCanvasPinch(event) {
 //{
-//    eventSource:          tracker,
-//    gesturePoints:        gesturePoints,
-//    center:               getPointRelative( new $.Point( ( gesturePoints[0].currentPos.x + gesturePoints[1].currentPos.x ) / 2,
-//                                                         ( gesturePoints[0].currentPos.y + gesturePoints[1].currentPos.y ) / 2 ) ),
-//    lastDistance:         delegate.lastPinchDist,
-//    currentDistance:      delegate.currentPinchDist,
-//    originalEvent:        event,
-//    preventDefaultAction: false,
-//    userData:             tracker.userData
+//    eventSource:
+//    gesturePoints:
+//    lastCenter:
+//    center:
+//    lastDistance:
+//    currentDistance:
+//    originalEvent:
+//    preventDefaultAction:
+//    userData:
 //}
     if (!event.preventDefaultAction && this.viewport) {
+        //window.alert(event.lastCenter.x + ',' + event.lastCenter.y + '\n' + event.center.x + ',' + event.center.y);
         //TODO This is temporary for testing. Zoom should track pinch gesture one-to-one!
         this.viewport.zoomBy( event.currentDistance / event.lastDistance,
                               this.viewport.pointFromPixel( event.center, true ) );
+        this.viewport.panBy( this.viewport.pointFromPixel( event.lastCenter, true ).minus( this.viewport.pointFromPixel( event.center, true ) ), false );
         this.viewport.applyConstraints();
     }
     /**

@@ -213,8 +213,11 @@
             penPoints:             {},
             penPointCount:         0,
             // Tracking for pinch gesture
+            pinchGesturePoints:    [],
             lastPinchDist:         0,
             currentPinchDist:      0,
+            lastPinchCenter:       null,
+            currentPinchCenter:    null,
 
             //insideElementPressed:  false,
             //insideElement:         false,
@@ -851,6 +854,14 @@
     function getPointRelative( point, element ) {
         var offset = $.getElementOffset( element );
         return point.minus( offset );
+    }
+
+    /**
+     * @private
+     * @inner
+     */
+    function getCenterPoint( point1, point2 ) {
+        return new $.Point( ( point1.x + point2.x ) / 2, ( point1.y + point2.y ) / 2 );
     }
 
 
@@ -1931,8 +1942,7 @@
             dispatchPress = false,
             i,
             pointerCount = pointers.length,
-            curPointer,
-            gesturePoints;
+            curPointer;
 
         for ( i = 0; i < pointerCount; i++ ) {
             curPointer = pointers[ i ];
@@ -1952,11 +1962,12 @@
                     delegate.touchPointCount++;
                     if ( delegate.touchPointCount == 2 && tracker.pinchHandler ) {
                         // Initialize for pinch gesture tracking
-                        gesturePoints = [];
+                        delegate.pinchGesturePoints = [];
                         for ( var p in delegate.touchPoints ) {
-                            gesturePoints.push( delegate.touchPoints[ p ] );
+                            delegate.pinchGesturePoints.push( delegate.touchPoints[ p ] );
                         }
-                        delegate.lastPinchDist = delegate.currentPinchDist = gesturePoints[0].currentPos.distanceTo(gesturePoints[1].currentPos);
+                        delegate.lastPinchDist = delegate.currentPinchDist = delegate.pinchGesturePoints[0].currentPos.distanceTo( delegate.pinchGesturePoints[1].currentPos );
+                        delegate.lastPinchCenter = delegate.currentPinchCenter = getCenterPoint( delegate.pinchGesturePoints[0].currentPos, delegate.pinchGesturePoints[1].currentPos );
                     }
                 }
             }
@@ -2124,8 +2135,7 @@
             points,
             pointCount,
             delta,
-            propagate,
-            gesturePoints;
+            propagate;
 
         if ( pointers[ 0 ].type === 'mouse' ) {
             points = delegate.mousePoints;
@@ -2199,20 +2209,23 @@
 
         // Pinch Gesture
         if ( pointers[ 0 ].type === 'touch' && delegate.touchPointCount == 2 && tracker.pinchHandler ) {
-            gesturePoints = [];
-            for ( var p in delegate.touchPoints ) {
-                gesturePoints.push( delegate.touchPoints[ p ] );
-            }
-            delta = gesturePoints[0].currentPos.distanceTo( gesturePoints[1].currentPos );
+            //gesturePoints = [];
+            //for ( var p in delegate.touchPoints ) {
+            //    gesturePoints.push( delegate.touchPoints[ p ] );
+            //}
+            delta = delegate.pinchGesturePoints[0].currentPos.distanceTo( delegate.pinchGesturePoints[1].currentPos );
             if ( delta != delegate.currentPinchDist ) {
+                //window.alert(delegate.pinchGesturePoints[0].currentPos.x + ',' + delegate.pinchGesturePoints[0].currentPos.y + '\n' + delegate.pinchGesturePoints[1].currentPos.x + ',' + delegate.pinchGesturePoints[1].currentPos.y);
                 delegate.lastPinchDist = delegate.currentPinchDist;
                 delegate.currentPinchDist = delta;
+                delegate.lastPinchCenter = delegate.currentPinchCenter;
+                delegate.currentPinchCenter = getCenterPoint( delegate.pinchGesturePoints[0].currentPos, delegate.pinchGesturePoints[1].currentPos );
                 propagate = tracker.pinchHandler(
                     {
                         eventSource:          tracker,
-                        gesturePoints:        gesturePoints,
-                        center:               getPointRelative( new $.Point( ( gesturePoints[0].currentPos.x + gesturePoints[1].currentPos.x ) / 2,
-                                                                                ( gesturePoints[0].currentPos.y + gesturePoints[1].currentPos.y ) / 2 ) ),
+                        gesturePoints:        delegate.pinchGesturePoints,
+                        lastCenter:           getPointRelative( delegate.lastPinchCenter ),
+                        center:               getPointRelative( delegate.currentPinchCenter ),
                         lastDistance:         delegate.lastPinchDist,
                         currentDistance:      delegate.currentPinchDist,
                         originalEvent:        event,
