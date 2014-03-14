@@ -201,7 +201,9 @@
             touchstart:            function ( event ) { onTouchStart( _this, event ); },
             touchmove:             function ( event ) { onTouchMove( _this, event ); },
             touchend:              function ( event ) { onTouchEnd( _this, event ); },
-            tracking:              false,
+            gesturestart:          function ( event ) { onGestureStart( _this, event ); },
+            gesturechange:         function ( event ) { onGestureChange( _this, event ); },
+            tracking: false,
             capturing:             false,
             // Contact Points
             mousePoints:           {},
@@ -614,7 +616,7 @@
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
-            $.MouseTracker.subscribeEvents.push( "touchstart", "touchmove", "touchend" );
+            $.MouseTracker.subscribeEvents.push( "touchstart", "touchmove", "touchend", "gesturestart", "gesturechange" );
         }
         $.MouseTracker.mousePointerId = "legacy-mouse";
         $.MouseTracker.maxTouchPoints = 10;
@@ -1168,10 +1170,10 @@
         }
 
         if ( $.MouseTracker.unprefixedPointerEvents ) {
-            event.target.setPointerCapture(event.pointerId);
+            event.currentTarget.setPointerCapture(event.pointerId);
         }
         else {
-            event.target.msSetPointerCapture(event.pointerId);
+            event.currentTarget.msSetPointerCapture(event.pointerId);
         }
 
         time = $.now();
@@ -1193,9 +1195,12 @@
 
         addPointers( tracker, event, [pointer] );
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.cancelEvent( event );
-        }
+        //if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
+        //    $.cancelEvent(event);
+        event.stopPropagation();
+        event.preventDefault();
+            return false;
+        //}
     }
 
 
@@ -1266,10 +1271,10 @@
         }
 
         if ( $.MouseTracker.unprefixedPointerEvents ) {
-            event.target.releasePointerCapture(event.pointerId);
+            event.currentTarget.releasePointerCapture(event.pointerId);
         }
         else {
-            event.target.msReleasePointerCapture(event.pointerId);
+            event.currentTarget.msReleasePointerCapture(event.pointerId);
         }
 
         time = $.now();
@@ -1289,7 +1294,14 @@
             currentTime: time
         };
 
-        removePointers( tracker, event, [pointer] );
+        removePointers(tracker, event, [pointer]);
+
+        //if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
+        //    $.cancelEvent(event);
+        event.stopPropagation();
+        event.preventDefault();
+        return false;
+        //}
     }
 
 
@@ -1388,7 +1400,14 @@
             currentTime: time
         };
 
-        updatePointers( tracker, event, [pointer] );
+        updatePointers(tracker, event, [pointer]);
+
+        //if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
+        //    $.cancelEvent(event);
+        event.stopPropagation();
+        event.preventDefault();
+        return false;
+        //}
     }
 
 
@@ -1511,7 +1530,9 @@
 
         addPointers( tracker, event, pointers );
 
+        event.stopPropagation();
         event.preventDefault();
+        return false;
 ////****************************************************************
 //        var touchA,
 //            touchB;
@@ -1597,7 +1618,9 @@
             updatePointersOut( tracker, event, [pointer] );
         }
 
+        event.stopPropagation();
         event.preventDefault();
+        return false;
 //****************************************************************************************
 //        if ( event.touches.length === 0 &&
 //            event.targetTouches.length === 0 &&
@@ -1652,7 +1675,9 @@
 
         updatePointers( tracker, event, pointers );
 
+        event.stopPropagation();
         event.preventDefault();
+        return false;
 //*******************************************************************************
 //        var touchA,
 //            touchB,
@@ -1702,6 +1727,28 @@
 //                //}
 //        }
 //        event.preventDefault();
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onGestureStart( tracker, event ) {
+        event.stopPropagation();
+        event.preventDefault();
+        return false;
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onGestureChange( tracker, event ) {
+        event.stopPropagation();
+        event.preventDefault();
+        return false;
     }
 
 
@@ -2157,18 +2204,17 @@
                 gesturePoints.push( delegate.touchPoints[ p ] );
             }
             delta = gesturePoints[0].currentPos.distanceTo( gesturePoints[1].currentPos );
-            //if ( delta != delegate.currentPinchDist ) {
-            if (delta != delegate.currentPinchDist && Math.abs(delta - delegate.lastPinchDist) > 75) {
+            if ( delta != delegate.currentPinchDist ) {
                 delegate.lastPinchDist = delegate.currentPinchDist;
                 delegate.currentPinchDist = delta;
-
                 propagate = tracker.pinchHandler(
                     {
                         eventSource:          tracker,
-                        position:             getPointRelative( updatePointer.currentPos, tracker.element ),
-                        delta:                delegate.currentPinchDist - delegate.lastPinchDist,
-                        shift:                event.shiftKey,
-                        isTouchEvent:         curPointer.type === 'touch',
+                        gesturePoints:        gesturePoints,
+                        center:               getPointRelative( new $.Point( ( gesturePoints[0].currentPos.x + gesturePoints[1].currentPos.x ) / 2,
+                                                                                ( gesturePoints[0].currentPos.y + gesturePoints[1].currentPos.y ) / 2 ) ),
+                        lastDistance:         delegate.lastPinchDist,
+                        currentDistance:      delegate.currentPinchDist,
                         originalEvent:        event,
                         preventDefaultAction: false,
                         userData:             tracker.userData

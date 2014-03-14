@@ -1850,12 +1850,21 @@ function onCanvasScroll( event ) {
 }
 
 function onCanvasPinch(event) {
+//{
+//    eventSource:          tracker,
+//    gesturePoints:        gesturePoints,
+//    center:               getPointRelative( new $.Point( ( gesturePoints[0].currentPos.x + gesturePoints[1].currentPos.x ) / 2,
+//                                                         ( gesturePoints[0].currentPos.y + gesturePoints[1].currentPos.y ) / 2 ) ),
+//    lastDistance:         delegate.lastPinchDist,
+//    currentDistance:      delegate.currentPinchDist,
+//    originalEvent:        event,
+//    preventDefaultAction: false,
+//    userData:             tracker.userData
+//}
     if (!event.preventDefaultAction && this.viewport) {
-        //TODO This is temporary for testing. Zoom should track pinch gesture one-to-one, around center point!
-        this.viewport.zoomBy(
-            ( event.delta > 0 ) ? 1.2 : 0.8,
-            this.viewport.pointFromPixel(event.position, true)
-        );
+        //TODO This is temporary for testing. Zoom should track pinch gesture one-to-one!
+        this.viewport.zoomBy( event.currentDistance / event.lastDistance,
+                              this.viewport.pointFromPixel( event.center, true ) );
         this.viewport.applyConstraints();
     }
     /**
@@ -1883,7 +1892,7 @@ function onCanvasPinch(event) {
     return false;
 }
 
-function onContainerExit(event) {
+function onContainerExit( event ) {
     if ( !event.insideElementPressed ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
