@@ -127,10 +127,7 @@ $.Viewer = function( options ) {
         canvas:         null,
 
         // Overlays list. An overlay allows to add html on top of the viewer.
-        // Configured overlays via viewer's options
         overlays:           [],
-        // Currently opened overlays
-        currentOverlays:    [],
 
         //private state properties
         previousBody:   [],
@@ -212,6 +209,7 @@ $.Viewer = function( options ) {
     };
 
     this._updateRequestId = null;
+    this.currentOverlays = [];
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -1303,7 +1301,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
    /**
      * Adds an html element as an overlay to the current viewport.  Useful for
      * highlighting words or areas of interest on an image or other zoomable
-     * interface.
+     * interface. The overlays added via this method are removed when the viewport
+     * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
      *      the element which will overlayed. Or an Object specifying the configuration for the overlay
@@ -1331,19 +1330,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             };
         }
 
-        element = $.getElement(options.element);
+        element = $.getElement( options.element );
 
         if ( getOverlayIndex( this.currentOverlays, element ) >= 0 ) {
             // they're trying to add a duplicate overlay
             return this;
         }
-
-        this.currentOverlays.push( new $.Overlay({
-            element: element,
-            location: options.location,
-            placement: options.placement,
-            onDraw: options.onDraw
-        }) );
+        this.currentOverlays.push( getOverlayObject( this, options ) );
         THIS[ this.hash ].forceRedraw = true;
         /**
          * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Viewer#addOverlay}).
@@ -1622,7 +1615,6 @@ function openTileSource( viewer, source ) {
         source:             _this.source,
         viewport:           _this.viewport,
         element:            _this.canvas,
-        overlays:           [].concat( _this.overlays ).concat( _this.source.overlays ),
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
         minZoomImageRatio:  _this.minZoomImageRatio,
@@ -1657,7 +1649,6 @@ function openTileSource( viewer, source ) {
                 tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
-                overlays:          _this.overlays,
                 viewer:            _this
             });
         }
@@ -1675,7 +1666,6 @@ function openTileSource( viewer, source ) {
             tileSources: _this.tileSources,
             tileHost:    _this.tileHost,
             prefixUrl:   _this.prefixUrl,
-            overlays:    _this.overlays,
             viewer:      _this
         });
     }
@@ -1688,15 +1678,7 @@ function openTileSource( viewer, source ) {
 
     VIEWERS[ _this.hash ] = _this;
 
-    _this.currentOverlays = [];
-    var i;
-    for ( i = 0; i < _this.overlays.length; i++ ) {
-        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
-    }
-    for ( var j = 0; j < _this.source.overlays.length; j++ ) {
-        _this.currentOverlays[ i + j ] =
-            getOverlayObject( _this, _this.source.overlays[ j ] );
-    }
+    loadOverlays( _this );
 
     /**
      * Raised when the viewer has opened and loaded one or more TileSources.
@@ -1713,68 +1695,84 @@ function openTileSource( viewer, source ) {
     return _this;
 }
 
+function loadOverlays( _this ) {
+    _this.currentOverlays = [];
+    for ( var i = 0; i < _this.overlays.length; i++ ) {
+        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+    }
+    for ( var j = 0; j < _this.source.overlays.length; j++ ) {
+        _this.currentOverlays[ i + j ] =
+            getOverlayObject( _this, _this.source.overlays[ j ] );
+    }
+}
+
 function getOverlayObject( viewer, overlay ) {
-    if ( !$.isPlainObject( overlay ) ) {
+    if ( overlay instanceof $.Overlay ) {
         return overlay;
     }
 
-    var element  = null,
-    rect = ( overlay.height && overlay.width ) ? new $.Rect(
-        overlay.x || overlay.px,
-        overlay.y || overlay.py,
-        overlay.width,
-        overlay.height
-    ) : new $.Point(
-        overlay.x || overlay.px,
-        overlay.y || overlay.py
-    ),
-    id = overlay.id ?
-        overlay.id :
-        "openseadragon-overlay-" + Math.floor( Math.random() * 10000000 );
-
-    element = $.getElement(overlay.id);
-    if ( !element ) {
-        element         = document.createElement("a");
-        element.href    = "#/overlay/" + id;
-    }
-    element.id = id;
-    $.addClass( element, overlay.className ?
-        overlay.className :
-        "openseadragon-overlay"
-    );
-
-    if( overlay.px !== undefined ) {
-        //if they specified 'px' so it's in pixel coordinates so
-        //we need to translate to viewport coordinates
-        rect = viewer.viewport.imageToViewportRectangle( rect );
-    }
-
-    if( overlay.placement ){
-        return new $.Overlay({
-            element: element,
-            location: viewer.viewport.pointFromPixel( rect ),
-            placement: $.OverlayPlacement[ overlay.placement.toUpperCase() ],
-            onDraw: overlay.onDraw
-        });
+    var element = null;
+    if ( overlay.element ) {
+        element = $.getElement( overlay.element );
     } else {
-        return new $.Overlay({
-            element: element,
-            location: rect,
-            onDraw: overlay.onDraw
-        });
+        var id = overlay.id ?
+            overlay.id :
+            "openseadragon-overlay-" + Math.floor( Math.random() * 10000000 );
+
+        element = $.getElement( overlay.id );
+        if ( !element ) {
+            element         = document.createElement( "a" );
+            element.href    = "#/overlay/" + id;
+        }
+        element.id = id;
+        $.addClass( element, overlay.className ?
+            overlay.className :
+            "openseadragon-overlay"
+        );
     }
+
+    var location = overlay.location;
+    if ( !location ) {
+        var rect = ( overlay.height && overlay.width ) ? new $.Rect(
+            overlay.x || overlay.px,
+            overlay.y || overlay.py,
+            overlay.width,
+            overlay.height
+        ) : new $.Point(
+            overlay.x || overlay.px,
+            overlay.y || overlay.py
+        );
+        if( overlay.px !== undefined ) {
+            //if they specified 'px' so it's in pixel coordinates so
+            //we need to translate to viewport coordinates
+            rect = viewer.viewport.imageToViewportRectangle( rect );
+        }
+        location = overlay.placement ? viewer.viewport.pointFromPixel( rect ) :
+            rect;
+    }
+
+    var placement = overlay.placement;
+    if ( placement && ( $.type( placement ) === "string" ) ) {
+        placement = $.OverlayPlacement[ overlay.placement.toUpperCase() ];
+    }
+
+    return new $.Overlay({
+        element: element,
+        location: location,
+        placement: placement,
+        onDraw: overlay.onDraw
+    });
 }
 
 /**
  * @private
  * @inner
- * Determines the 'z-index' of the given overlay.  Overlays are ordered in
- * a z-index based on the order they are added to the Drawer.
+ * Determines the index of the given overlay in the given overlays array.
  */
 function getOverlayIndex( overlays, element ) {
     var i;
     for ( i = overlays.length - 1; i >= 0; i-- ) {
-        if ( overlays[ i ].element == element ) {
+        if ( overlays[ i ].element === element ) {
             return i;
         }
     }
@@ -1782,7 +1780,7 @@ function getOverlayIndex( overlays, element ) {
     return -1;
 }
 
-function drawOverlays( viewport, overlays, container ){
+function drawOverlays( viewport, overlays, container ) {
     var i,
         length = overlays.length;
     for ( i = 0; i < length; i++ ) {

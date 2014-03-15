@@ -73,7 +73,7 @@
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} options.location - The
      * location of the overlay on the image. If a {@link OpenSeadragon.Point}
      * is specified, the overlay will keep a constant size independently of the
-     * zoom. It a {@link OpenSeadragon.Rect} is specified, the overlay size will
+     * zoom. If a {@link OpenSeadragon.Rect} is specified, the overlay size will
      * be adjusted when the zoom changes.
      * @param {OpenSeadragon.OverlayPlacement} [options.placement=OpenSeadragon.OverlayPlacement.TOP_LEFT]
      * Relative position to the viewport.

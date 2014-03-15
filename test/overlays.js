@@ -71,8 +71,8 @@
         function openHandler() {
             viewer.removeHandler( 'open', openHandler );
 
-            equal( viewer.overlays.length, 1, "Global overlay not added." );
-            equal( viewer.currentOverlays.length, 1, "Global overlay not opened." );
+            equal( viewer.overlays.length, 1, "Global overlay should be added." );
+            equal( viewer.currentOverlays.length, 1, "Global overlay should be open." );
 
             viewer.addHandler( 'open', openPageHandler );
             viewer.goToPage( 1 );
@@ -81,8 +81,8 @@
         function openPageHandler() {
             viewer.removeHandler( 'open', openPageHandler );
 
-            equal( viewer.overlays.length, 1, "Global overlay removed after page switch." );
-            equal( viewer.currentOverlays.length, 1, "Global overlay not re-opened after page switch." );
+            equal( viewer.overlays.length, 1, "Global overlay should stay after page switch." );
+            equal( viewer.currentOverlays.length, 1, "Global overlay should re-open after page switch." );
 
             viewer.addHandler( 'close', closeHandler );
             viewer.close();
@@ -91,14 +91,14 @@
         function closeHandler() {
             viewer.removeHandler( 'close', closeHandler );
 
-            equal( viewer.overlays.length, 1, "Global overlay removed on close." );
-            equal( viewer.currentOverlays.length, 0, "Global overlay not removed on close." );
+            equal( viewer.overlays.length, 1, "Global overlay should not be removed on close." );
+            equal( viewer.currentOverlays.length, 0, "Global overlay should be closed on close." );
 
             start();
         }
     } );
 
-    asyncTest( 'Overlays via addOverlay ', function() {
+    asyncTest( 'Page Overlays via viewer options', function() {
 
         viewer = OpenSeadragon( {
             id: 'example-overlays',
@@ -143,7 +143,7 @@
             viewer.removeHandler( 'open', openHandler );
 
             equal( viewer.overlays.length, 0, "No global overlay should be added." );
-            equal( viewer.currentOverlays.length, 1, "Tile overlay not opened." );
+            equal( viewer.currentOverlays.length, 1, "Page overlay should be open." );
 
             viewer.addHandler( 'open', openPageHandler );
             viewer.goToPage( 1 );
@@ -152,8 +152,8 @@
         function openPageHandler() {
             viewer.removeHandler( 'open', openPageHandler );
 
-            equal( viewer.overlays.length, 0, "Global overlay added after page switch." );
-            equal( viewer.currentOverlays.length, 0, "Tile overlay re-opened after page switch." );
+            equal( viewer.overlays.length, 0, "No global overlay should be added after page switch." );
+            equal( viewer.currentOverlays.length, 0, "No page overlay should be opened after page switch." );
 
             viewer.addHandler( 'close', closeHandler );
             viewer.close();
@@ -162,8 +162,8 @@
         function closeHandler() {
             viewer.removeHandler( 'close', closeHandler );
 
-            equal( viewer.overlays.length, 0, "Global overlay added on close." );
-            equal( viewer.currentOverlays.length, 0, "Tile overlay not removed on close." );
+            equal( viewer.overlays.length, 0, "No global overlay should be added on close." );
+            equal( viewer.currentOverlays.length, 0, "Page overlay should be closed on close." );
 
             start();
         }
@@ -182,14 +182,14 @@
         function openHandler() {
             viewer.removeHandler( 'open', openHandler );
 
-            equal( viewer.overlays.length, 0, "Global overlay added." );
-            equal( viewer.currentOverlays.length, 0, "Overlay opened." );
+            equal( viewer.overlays.length, 0, "No global overlay should be added." );
+            equal( viewer.currentOverlays.length, 0, "No overlay should be open." );
 
             var rect = new OpenSeadragon.Rect( 0.1, 0.1, 0.1, 0.1 );
-            var overlay = $( "<div id=\"overlay\"></div>" ).get( 0 );
+            var overlay = $( "<div/>" ).prop("id", "overlay").get( 0 );
             viewer.addOverlay( overlay, rect );
-            equal( viewer.overlays.length, 0, "Manual overlay added as global overlay." );
-            equal( viewer.currentOverlays.length, 1, "Manual overlay not opened." );
+            equal( viewer.overlays.length, 0, "No manual overlay should be added as global overlay." );
+            equal( viewer.currentOverlays.length, 1, "A manual overlay should be open." );
 
             viewer.addHandler( 'open', openPageHandler );
             viewer.goToPage( 1 );
@@ -198,8 +198,8 @@
         function openPageHandler() {
             viewer.removeHandler( 'open', openPageHandler );
 
-            equal( viewer.overlays.length, 0, "Global overlay added after page switch." );
-            equal( viewer.currentOverlays.length, 0, "Manual overlay not removed after page switch." );
+            equal( viewer.overlays.length, 0, "No global overlay should be added after page switch." );
+            equal( viewer.currentOverlays.length, 0, "Manual overlay should be removed after page switch." );
 
             viewer.addHandler( 'close', closeHandler );
             viewer.close();
@@ -208,8 +208,8 @@
         function closeHandler() {
             viewer.removeHandler( 'close', closeHandler );
 
-            equal( viewer.overlays.length, 0, "Global overlay added on close." );
-            equal( viewer.currentOverlays.length, 0, "Overlay not removed on close." );
+            equal( viewer.overlays.length, 0, "No global overlay should be added on close." );
+            equal( viewer.currentOverlays.length, 0, "Manual overlay should be removed on close." );
 
             start();
         }
