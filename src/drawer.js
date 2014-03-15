@@ -1067,7 +1067,7 @@ function drawTiles( drawer, lastDrawn ){
                             ')';
                     }
 
-                    drawer.addOverlay(
+                    drawer.viewer.addOverlay(
                         viewer.element,
                         tile.bounds
                     );
