@@ -215,16 +215,16 @@
                 drawerCenter = new $.Point(
                     viewport.viewer.drawer.canvas.width / 2,
                     viewport.viewer.drawer.canvas.height / 2
-                    ),
+                ),
                 degrees  = viewport.degrees,
                 position = viewport.pixelFromPoint(
                     this.bounds.getTopLeft(),
                     true
-                    ),
+                ),
                 size     = viewport.deltaPixelsFromPoints(
                     this.bounds.getSize(),
                     true
-                    ),
+                ),
                 overlayCenter;
 
             if ( element.parentNode != container ) {
