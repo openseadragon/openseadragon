@@ -1862,11 +1862,10 @@ function onCanvasPinch(event) {
 //    userData:
 //}
     if (!event.preventDefaultAction && this.viewport) {
-        //window.alert(event.lastCenter.x + ',' + event.lastCenter.y + '\n' + event.center.x + ',' + event.center.y);
-        //TODO This is temporary for testing. Zoom should track pinch gesture one-to-one!
-        this.viewport.zoomBy( event.currentDistance / event.lastDistance,
-                              this.viewport.pointFromPixel( event.center, true ) );
-        this.viewport.panBy( this.viewport.pointFromPixel( event.lastCenter, true ).minus( this.viewport.pointFromPixel( event.center, true ) ), false );
+        var centerPt = this.viewport.pointFromPixel( event.center, true ),
+            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+        this.viewport.zoomBy( event.currentDistance / event.lastDistance, centerPt, true );
+        this.viewport.panBy( lastCenterPt.minus( centerPt ), false );
         this.viewport.applyConstraints();
     }
     /**

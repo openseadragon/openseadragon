@@ -2215,7 +2215,6 @@
             //}
             delta = delegate.pinchGesturePoints[0].currentPos.distanceTo( delegate.pinchGesturePoints[1].currentPos );
             if ( delta != delegate.currentPinchDist ) {
-                //window.alert(delegate.pinchGesturePoints[0].currentPos.x + ',' + delegate.pinchGesturePoints[0].currentPos.y + '\n' + delegate.pinchGesturePoints[1].currentPos.x + ',' + delegate.pinchGesturePoints[1].currentPos.y);
                 delegate.lastPinchDist = delegate.currentPinchDist;
                 delegate.currentPinchDist = delta;
                 delegate.lastPinchCenter = delegate.currentPinchCenter;
@@ -2224,8 +2223,8 @@
                     {
                         eventSource:          tracker,
                         gesturePoints:        delegate.pinchGesturePoints,
-                        lastCenter:           getPointRelative( delegate.lastPinchCenter ),
-                        center:               getPointRelative( delegate.currentPinchCenter ),
+                        lastCenter:           getPointRelative( delegate.lastPinchCenter, tracker.element ),
+                        center:               getPointRelative( delegate.currentPinchCenter, tracker.element ),
                         lastDistance:         delegate.lastPinchDist,
                         currentDistance:      delegate.currentPinchDist,
                         originalEvent:        event,
