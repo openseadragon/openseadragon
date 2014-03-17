@@ -102,7 +102,7 @@
     } else if ( document.msExitFullscreen ) {
         fullScreenApi.supportsFullScreen = true;
         fullScreenApi.isFullScreen = function() {
-            return document.msFullscreenElement !== undefined;
+            return document.msFullscreenElement !== null;
         };
         fullScreenApi.requestFullScreen = function( element ) {
             return element.msRequestFullscreen();
