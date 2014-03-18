@@ -1150,6 +1150,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
+            onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
+            onRotateRightHandler    = $.delegate( this, onRotateRight ),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1228,6 +1230,37 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             }));
+
+            if (this.showRotationControl) {
+                buttons.push( this.rotateLeft = new $.Button({
+                    element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateLeft" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
+                    onRelease:  onRotateLeftHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
+
+                buttons.push( this.rotateRight = new $.Button({
+                    element:    this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateRight" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
+                    onRelease:  onRotateRightHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
+
+            }
 
             if( useGroup ){
                 this.buttons = new $.ButtonGroup({
@@ -1550,7 +1583,8 @@ function _getSafeElemSize (oElement) {
  * @private
  */
 function openTileSource( viewer, source ) {
-    var _this = viewer;
+    var i,
+        _this = viewer;
 
     if ( _this.source ) {
         _this.close( );
@@ -1578,7 +1612,8 @@ function openTileSource( viewer, source ) {
             showNavigator:          false,
             minZoomImageRatio:      1,
             maxZoomPixelRatio:      1,
-            viewer:                 _this //,
+            viewer:                 _this,
+            degrees:                 _this.degrees //,
             //TODO: figure out how to support these in a way that makes sense
             //minZoomLevel:           this.minZoomLevel,
             //maxZoomLevel:           this.maxZoomLevel
@@ -1600,7 +1635,8 @@ function openTileSource( viewer, source ) {
             defaultZoomLevel:   _this.defaultZoomLevel,
             minZoomLevel:       _this.minZoomLevel,
             maxZoomLevel:       _this.maxZoomLevel,
-            viewer:             _this
+            viewer:             _this,
+            degrees:            _this.degrees
         });
     }
 
@@ -1628,6 +1664,21 @@ function openTileSource( viewer, source ) {
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor
     });
+
+    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
+    if (!_this.drawer.canRotate()) {
+        // Disable/remove the rotate left/right buttons since they aren't supported
+        if (_this.rotateLeft) {
+            i = _this.buttons.buttons.indexOf(_this.rotateLeft);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateLeft.element);
+        }
+        if (_this.rotateRight) {
+            i = _this.buttons.buttons.indexOf(_this.rotateRight);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateRight.element);
+        }
+    }
 
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && !_this.collectionMode ){
@@ -2332,6 +2383,38 @@ function onFullScreen() {
     this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateLeft() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation === 0) {
+            currRotation = 270;
+        }
+        else {
+            currRotation -= 90;
+        }
+        this.viewport.setRotation(currRotation);
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateRight() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation === 270) {
+            currRotation = 0;
+        }
+        else {
+            currRotation += 90;
+        }
+        this.viewport.setRotation(currRotation);
     }
 }
 

@@ -55,7 +55,9 @@ var I18N = {
         ZoomIn:         "Zoom in",
         ZoomOut:        "Zoom out",
         NextPage:       "Next page",
-        PreviousPage:   "Previous page"
+        PreviousPage:   "Previous page",
+        RotateLeft:     "Rotate left",
+        RotateRight:    "Rotate right"
     }
 };
 
