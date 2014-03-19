@@ -136,6 +136,28 @@
   *     is an Array of objects, it is used to create a
   *     {@link OpenSeadragon.LegacyTileSource}.
   *
+  * @property {Array} overlays Array of objects defining permanent overlays of
+  *     the viewer. The overlays added via this option and later removed with
+  *     {@link OpenSeadragon.Viewer#removeOverlay} will be added back when a new
+  *     image is opened.
+  *     To add overlays which can be definitively removed, one must use
+  *     {@link OpenSeadragon.Viewer#addOverlay}
+  *     If displaying a sequence of images, the overlays can be associated
+  *     with a specific page by passing the overlays array to the page's
+  *     tile source configuration.
+  *     Expected properties:
+  *     * x, y, (or px, py for pixel coordinates) to define the location.
+  *     * width, height in point if using x,y or in pixels if using px,py. If width
+  *       and height are specified, the overlay size is adjusted when zooming,
+  *       otherwise the size stays the size of the content (or the size defined by CSS).
+  *     * className to associate a class to the overlay
+  *     * id to set the overlay element. If an element with this id already exists,
+  *       it is reused, otherwise it is created. If not specified, a new element is
+  *       created.
+  *     * placement a string to define the relative position to the viewport.
+  *       Only used if no width and height are specified. Default: 'TOP_LEFT'.
+  *       See {@link OpenSeadragon.OverlayPlacement} for possible values.
+  *
   * @property {String} [xmlPath=null]
   *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
   *     Prefer the newer Options.tileSources.
