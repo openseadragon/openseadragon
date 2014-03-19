@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 1.0.1: (in progress)
 
+* DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
 * Added ControlAnchor options for default controls (#304)
 * Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
