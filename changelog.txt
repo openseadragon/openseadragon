@@ -1,7 +1,26 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.0.0: (in progress)
+1.0.1: (in progress)
+
+* DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* Improved overlay functions (#331)
+* Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
+* Added ControlAnchor options for default controls (#304)
+* Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
+* Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
+* Added a 'navigator-scroll' event to Navigator. Fired when mousewheel/pinch events occur in the navigator (#310)
+* Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)
+* Added 'ABSOLUTE' as a navigatorPosition option, along with corresponding navigatorTop, navigatorLeft options. Allows the navigator minimap to be placed anywhere in the viewer (#310)
+* Enhanced the navigatorTop, navigatorLeft, navigatorHeight, and navigatorWidth options to allow a number for pixel units or a string for other element units (%, em, etc.) (#310)
+* Additional enhancements for IIIF support (#315)
+* Fixed: Setting degrees in Viewer constructor has no effect (#336)
+* Added pre-draw event for tiles to allow applications to alter the image (#348)
+* Added optional Rotate Left/Right buttons to standard controls (#341)
+
+1.0.0:
+
+NOTE: This version has a number of breaking changes to the API, mostly in event handling. See below.
 
 * BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
     * The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.

@@ -231,8 +231,10 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * Renders the tile in a canvas-based context.
      * @function
      * @param {Canvas} context
+     * @param {Function} method for firing the drawing event. drawingHandler({context, tile, rendered})
+     * where <code>rendered</code> is the context with the pre-drawn image.
      */
-    drawCanvas: function( context ) {
+    drawCanvas: function( context, drawingHandler ) {
 
         var position = this.position,
             size     = this.size,
@@ -280,6 +282,9 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         rendered = TILE_CACHE[ this.url ];
 
+        // This gives the application a chance to make image manipulation changes as we are rendering the image
+        drawingHandler({context: context, tile: this, rendered: rendered});
+
         //rendered.save();
         context.drawImage(
             rendered.canvas,
@@ -298,7 +303,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
     },
 
     /**
-     * Removes tile from it's contianer.
+     * Removes tile from its container.
      * @function
      */
     unload: function() {

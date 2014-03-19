@@ -102,10 +102,10 @@
  */
 
 /**
- * The root namespace for OpenSeadragon.  All utility methods
- * and classes are defined on or below this namespace.
- *
  * @namespace OpenSeadragon
+ *
+ * @classdesc The root namespace for OpenSeadragon.  All utility methods
+ * and classes are defined on or below this namespace.
  *
  */
 
@@ -135,6 +135,28 @@
   *     getUrl( level, x, y ) is implemented by the function. Finally, when it
   *     is an Array of objects, it is used to create a
   *     {@link OpenSeadragon.LegacyTileSource}.
+  *
+  * @property {Array} overlays Array of objects defining permanent overlays of
+  *     the viewer. The overlays added via this option and later removed with
+  *     {@link OpenSeadragon.Viewer#removeOverlay} will be added back when a new
+  *     image is opened.
+  *     To add overlays which can be definitively removed, one must use
+  *     {@link OpenSeadragon.Viewer#addOverlay}
+  *     If displaying a sequence of images, the overlays can be associated
+  *     with a specific page by passing the overlays array to the page's
+  *     tile source configuration.
+  *     Expected properties:
+  *     * x, y, (or px, py for pixel coordinates) to define the location.
+  *     * width, height in point if using x,y or in pixels if using px,py. If width
+  *       and height are specified, the overlay size is adjusted when zooming,
+  *       otherwise the size stays the size of the content (or the size defined by CSS).
+  *     * className to associate a class to the overlay
+  *     * id to set the overlay element. If an element with this id already exists,
+  *       it is reused, otherwise it is created. If not specified, a new element is
+  *       created.
+  *     * placement a string to define the relative position to the viewport.
+  *       Only used if no width and height are specified. Default: 'TOP_LEFT'.
+  *       See {@link OpenSeadragon.OverlayPlacement} for possible values.
   *
   * @property {String} [xmlPath=null]
   *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
@@ -270,24 +292,45 @@
   * @property {Boolean} [showNavigationControl=true]
   *     Set to false to prevent the appearance of the default navigation controls.
   *
+  * @property {OpenSeadragon.ControlAnchor} [navigationControlAnchor=TOP_LEFT]
+  *     Placement of the default navigation controls.
+  *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
   * @property {Boolean} [navigatorId=navigator-GENERATED DATE]
-  *     Set the ID of a div to hold the navigator minimap.  If one is not specified,
-  *     one will be generated and placed on top of the main image
+  *     The ID of a div to hold the navigator minimap.
+  *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
+  *     If an ID is not specified, a div element will be generated and placed on top of the main image.
   *
-  * @property {Number} [navigatorHeight=null]
-  *     TODO: Implement this. Currently not used.
-  *
-  * @property {Number} [navigatorWidth=null]
-  *     TODO: Implement this. Currently not used.
-  *
-  * @property {Number} [navigatorPosition=null]
-  *     TODO: Implement this. Currently not used.
+  * @property {String} [navigatorPosition='TOP_RIGHT']
+  *     Valid values are 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', or 'ABSOLUTE'.<br>
+  *     If 'ABSOLUTE' is specified, then navigatorTop|Left|Height|Width determines the size and position of the navigator minimap in the viewer, and navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.<br>
+  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the navigatorSizeRatio or navigatorHeight|Width values determine the size of the navigator minimap.
   *
   * @property {Number} [navigatorSizeRatio=0.2]
-  *     Ratio of navigator size to viewer size.
+  *     Ratio of navigator size to viewer size. Ignored if navigatorHeight|Width are specified.
+  *
+  * @property {Boolean} [navigatorMaintainSizeRatio=false]
+  *     If true, the navigator minimap is resized (using navigatorSizeRatio) when the viewer size changes.
+  *
+  * @property {Number|String} [navigatorTop=null]
+  *     Specifies the location of the navigator minimap (see navigatorPosition).
+  *
+  * @property {Number|String} [navigatorLeft=null]
+  *     Specifies the location of the navigator minimap (see navigatorPosition).
+  *
+  * @property {Number|String} [navigatorHeight=null]
+  *     Specifies the size of the navigator minimap (see navigatorPosition).
+  *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
+  *
+  * @property {Number|String} [navigatorWidth=null]
+  *     Specifies the size of the navigator minimap (see navigatorPosition).
+  *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
+  *
+  * @property {Boolean} [navigatorAutoResize=true]
+  *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
+  *     Setting to false can also improve performance when the navigator is configured to a fixed size.
   *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
@@ -321,9 +364,17 @@
   *     image and if the 'next' button will wrap to the first image when viewing
   *     the last image.
   *
+  * @property {Boolean} [showRotationControl=false]
+  *     If true then the rotate left/right controls will be displayed as part of the
+  *     standard controls. This is also subject to the browser support for rotate
+  *     (e.g. viewer.drawer.canRotate()).
+  *
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
   *     provide buttons for navigating forward and backward through the images.
+  *
+  * @property {OpenSeadragon.ControlAnchor} [sequenceControlAnchor=TOP_LEFT]
+  *     Placement of the default sequence controls.
   *
   * @property {Number} [initialPage=0]
   *     If the viewer has been configured with a sequence of tile sources, display this page initially.
@@ -703,20 +754,26 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             autoResize:             true,
 
             //DEFAULT CONTROL SETTINGS
-            showSequenceControl:    true,  //SEQUENCE
-            preserveViewport:       false, //SEQUENCE
-            showNavigationControl:  true,  //ZOOM/HOME/FULL/SEQUENCE
-            controlsFadeDelay:      2000,  //ZOOM/HOME/FULL/SEQUENCE
-            controlsFadeLength:     1500,  //ZOOM/HOME/FULL/SEQUENCE
-            mouseNavEnabled:        true,  //GENERAL MOUSE INTERACTIVITY
+            showSequenceControl:     true,  //SEQUENCE
+            sequenceControlAnchor:   null,  //SEQUENCE
+            preserveViewport:        false, //SEQUENCE
+            showNavigationControl:   true,  //ZOOM/HOME/FULL/SEQUENCE
+            navigationControlAnchor: null,  //ZOOM/HOME/FULL
+            controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
+            controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
+            mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS
-            showNavigator:          false,
-            navigatorId:            null,
-            navigatorHeight:        null,
-            navigatorWidth:         null,
-            navigatorPosition:      null,
-            navigatorSizeRatio:     0.2,
+            showNavigator:              false,
+            navigatorId:                null,
+            navigatorPosition:          null,
+            navigatorSizeRatio:         0.2,
+            navigatorMaintainSizeRatio: false,
+            navigatorTop:               null,
+            navigatorLeft:              null,
+            navigatorHeight:            null,
+            navigatorWidth:             null,
+            navigatorAutoResize:        true,
 
             // INITIAL ROTATION
             degrees:                0,
@@ -775,6 +832,18 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     HOVER:  'fullpage_hover.png',
                     DOWN:   'fullpage_pressed.png'
                 },
+                rotateleft: {
+                    REST:   'rotateleft_rest.png',
+                    GROUP:  'rotateleft_grouphover.png',
+                    HOVER:  'rotateleft_hover.png',
+                    DOWN:   'rotateleft_pressed.png'
+                },
+                rotateright: {
+                    REST:   'rotateright_rest.png',
+                    GROUP:  'rotateright_grouphover.png',
+                    HOVER:  'rotateright_hover.png',
+                    DOWN:   'rotateright_pressed.png'
+                },
                 previous: {
                     REST:   'previous_rest.png',
                     GROUP:  'previous_grouphover.png',
@@ -789,6 +858,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 }
             },
             navPrevNextWrap:        false,
+            showRotationControl:    false,
 
             //DEVELOPER SETTINGS
             debugMode:              false,

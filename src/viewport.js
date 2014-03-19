@@ -920,12 +920,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * Convert pixel coordinates relative to the image to
      * viewer element coordinates.
-     * @param {OpenSeadragon.Point} point
+     * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
-    imageToViewerElementCoordinates: function( point ) {
-        var pixel = this.pixelFromPoint( point, true );
-        return this.imageToViewportCoordinates( pixel );
+    imageToViewerElementCoordinates: function( pixel ) {
+        var point = this.imageToViewportCoordinates( pixel );
+        return this.pixelFromPoint( point, true );
     },
 
     /**

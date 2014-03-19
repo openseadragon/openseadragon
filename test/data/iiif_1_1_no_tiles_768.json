@@ -1,0 +1,18 @@
+{
+  "profile": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2",
+  "height": 637,
+  "width": 768,
+  "qualities": [
+    "native",
+    "color",
+    "grey",
+    "bitonal"
+  ],
+  "formats": [
+    "jpg",
+    "png",
+    "gif"
+  ],
+  "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+  "@id": "http://localhost:8000/test/data/iiif_1_1_no_tiles_768"
+}

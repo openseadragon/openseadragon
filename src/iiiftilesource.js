@@ -114,7 +114,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object|XMLDocument} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
      * @return {Object} options - A dictionary of keyword arguments sufficient
-     *      to configure this tile source via it's constructor.
+     *      to configure this tile source via its constructor.
      */
     configure: function( data, url ){
         var service,

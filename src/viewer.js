@@ -74,8 +74,7 @@ $.Viewer = function( options ) {
             xmlPath:            args.length > 1 ? args[ 1 ] : undefined,
             prefixUrl:          args.length > 2 ? args[ 2 ] : undefined,
             controls:           args.length > 3 ? args[ 3 ] : undefined,
-            overlays:           args.length > 4 ? args[ 4 ] : undefined,
-            overlayControls:    args.length > 5 ? args[ 5 ] : undefined
+            overlays:           args.length > 4 ? args[ 4 ] : undefined
         };
     }
 
@@ -127,9 +126,8 @@ $.Viewer = function( options ) {
          */
         canvas:         null,
 
-        //TODO: not sure how to best describe these
-        overlays:       [],
-        overlayControls:[],
+        // Overlays list. An overlay allows to add html on top of the viewer.
+        overlays:           [],
 
         //private state properties
         previousBody:   [],
@@ -211,6 +209,7 @@ $.Viewer = function( options ) {
     };
 
     this._updateRequestId = null;
+    this.currentOverlays = [];
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -517,9 +516,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        if ( this.drawer ) {
-            this.drawer.clearOverlays();
-        }
+        this.clearOverlays();
 
         this.source     = null;
         this.drawer     = null;
@@ -856,6 +853,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         }
 
+        if ( this.navigator && this.viewport ) {
+            this.navigator.update( this.viewport );
+        }
+
         /**
          * Raised when the viewer has changed to/from full-page mode (see {@link OpenSeadragon.Viewer#setFullPage}).
          *
@@ -936,6 +937,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.element.style.width = _this.fullPageStyleWidth;
                         _this.element.style.height = _this.fullPageStyleHeight;
                     }
+                }
+                if ( _this.navigator && _this.viewport ) {
+                    _this.navigator.update( _this.viewport );
                 }
                 /**
                  * Raised when the viewer has changed to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
@@ -1318,7 +1322,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }else{
                     this.addControl(
                         this.pagingControl,
-                        {anchor: $.ControlAnchor.TOP_LEFT}
+                        {anchor: this.sequenceControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1342,6 +1346,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
+            onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
+            onRotateRightHandler    = $.delegate( this, onRotateRight ),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1421,6 +1427,37 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 onBlur:     onBlurHandler
             }));
 
+            if (this.showRotationControl) {
+                buttons.push( this.rotateLeft = new $.Button({
+                    element:    this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateLeft" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
+                    onRelease:  onRotateLeftHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
+
+                buttons.push( this.rotateRight = new $.Button({
+                    element:    this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.RotateRight" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
+                    onRelease:  onRotateRightHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
+
+            }
+
             if( useGroup ){
                 this.buttons = new $.ButtonGroup({
                     buttons:            buttons,
@@ -1439,7 +1476,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }else{
                     this.addControl(
                         this.navControl,
-                        {anchor: $.ControlAnchor.TOP_LEFT}
+                        {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
             }
@@ -1487,6 +1524,173 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
 
+        return this;
+    },
+
+   /**
+     * Adds an html element as an overlay to the current viewport.  Useful for
+     * highlighting words or areas of interest on an image or other zoomable
+     * interface. The overlays added via this method are removed when the viewport
+     * is closed which include when changing page.
+     * @method
+     * @param {Element|String|Object} element - A reference to an element or an id for
+     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
+     * @param {function} onDraw - If supplied the callback is called when the overlay
+     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      It is passed position, size and element.
+     * @return {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:add-overlay
+     */
+    addOverlay: function( element, location, placement, onDraw ) {
+        var options;
+        if( $.isPlainObject( element ) ){
+            options = element;
+        } else {
+            options = {
+                element: element,
+                location: location,
+                placement: placement,
+                onDraw: onDraw
+            };
+        }
+
+        element = $.getElement( options.element );
+
+        if ( getOverlayIndex( this.currentOverlays, element ) >= 0 ) {
+            // they're trying to add a duplicate overlay
+            return this;
+        }
+        this.currentOverlays.push( getOverlayObject( this, options ) );
+        THIS[ this.hash ].forceRedraw = true;
+        /**
+         * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Viewer#addOverlay}).
+         *
+         * @event add-overlay
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Element} element - The overlay element.
+         * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
+         * @property {OpenSeadragon.OverlayPlacement} placement
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'add-overlay', {
+            element: element,
+            location: options.location,
+            placement: options.placement
+        });
+        return this;
+    },
+
+    /**
+     * Updates the overlay represented by the reference to the element or
+     * element id moving it to the new location, relative to the new placement.
+     * @method
+     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
+     *      rectangle which will be overlayed.
+     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     *      viewport which the location coordinates will be treated as relative
+     *      to.
+     * @return {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:update-overlay
+     */
+    updateOverlay: function( element, location, placement ) {
+        var i;
+
+        element = $.getElement( element );
+        i = getOverlayIndex( this.currentOverlays, element );
+
+        if ( i >= 0 ) {
+            this.currentOverlays[ i ].update( location, placement );
+            THIS[ this.hash ].forceRedraw = true;
+            /**
+             * Raised when an overlay's location or placement changes
+             * (see {@link OpenSeadragon.Viewer#updateOverlay}).
+             *
+             * @event update-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the
+             * Viewer which raised the event.
+             * @property {Element} element
+             * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
+             * @property {OpenSeadragon.OverlayPlacement} placement
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent( 'update-overlay', {
+                element: element,
+                location: location,
+                placement: placement
+            });
+        }
+        return this;
+    },
+
+    /**
+     * Removes an overlay identified by the reference element or element id
+     * and schedules an update.
+     * @method
+     * @param {Element|String} element - A reference to the element or an
+     *      element id which represent the ovelay content to be removed.
+     * @return {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:remove-overlay
+     */
+    removeOverlay: function( element ) {
+        var i;
+
+        element = $.getElement( element );
+        i = getOverlayIndex( this.currentOverlays, element );
+
+        if ( i >= 0 ) {
+            this.currentOverlays[ i ].destroy();
+            this.currentOverlays.splice( i, 1 );
+            THIS[ this.hash ].forceRedraw = true;
+            /**
+             * Raised when an overlay is removed from the viewer
+             * (see {@link OpenSeadragon.Viewer#removeOverlay}).
+             *
+             * @event remove-overlay
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the
+             * Viewer which raised the event.
+             * @property {Element} element - The overlay element.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent( 'remove-overlay', {
+                element: element
+            });
+        }
+        return this;
+    },
+
+    /**
+     * Removes all currently configured Overlays from this Viewer and schedules
+     * an update.
+     * @method
+     * @return {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:clear-overlay
+     */
+    clearOverlays: function() {
+        while ( this.currentOverlays.length > 0 ) {
+            this.currentOverlays.pop().destroy();
+        }
+        THIS[ this.hash ].forceRedraw = true;
+        /**
+         * Raised when all overlays are removed from the viewer (see {@link OpenSeadragon.Drawer#clearOverlays}).
+         *
+         * @event clear-overlay
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'clear-overlay', {} );
         return this;
     },
 
@@ -1630,9 +1834,8 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
  * @private
  */
 function openTileSource( viewer, source ) {
-    var _this = viewer,
-        overlay,
-        i;
+    var i,
+        _this = viewer;
 
     if ( _this.source ) {
         _this.close( );
@@ -1660,12 +1863,13 @@ function openTileSource( viewer, source ) {
             showNavigator:          false,
             minZoomImageRatio:      1,
             maxZoomPixelRatio:      1,
-            viewer:                 _this //,
+            viewer:                 _this,
+            degrees:                 _this.degrees //,
             //TODO: figure out how to support these in a way that makes sense
             //minZoomLevel:           this.minZoomLevel,
             //maxZoomLevel:           this.maxZoomLevel
         });
-    }else{
+    } else {
         if( source ){
             _this.source = source;
         }
@@ -1682,7 +1886,8 @@ function openTileSource( viewer, source ) {
             defaultZoomLevel:   _this.defaultZoomLevel,
             minZoomLevel:       _this.minZoomLevel,
             maxZoomLevel:       _this.maxZoomLevel,
-            viewer:             _this
+            viewer:             _this,
+            degrees:            _this.degrees
         });
     }
 
@@ -1697,7 +1902,6 @@ function openTileSource( viewer, source ) {
         source:             _this.source,
         viewport:           _this.viewport,
         element:            _this.canvas,
-        overlays:           [].concat( _this.overlays ).concat( _this.source.overlays ),
         opacity:            _this.opacity,
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
@@ -1714,6 +1918,21 @@ function openTileSource( viewer, source ) {
     });
     _this.drawers = [_this.drawer];
 
+    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
+    if (!_this.drawer.canRotate()) {
+        // Disable/remove the rotate left/right buttons since they aren't supported
+        if (_this.rotateLeft) {
+            i = _this.buttons.buttons.indexOf(_this.rotateLeft);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateLeft.element);
+        }
+        if (_this.rotateRight) {
+            i = _this.buttons.buttons.indexOf(_this.rotateRight);
+            _this.buttons.buttons.splice(i, 1);
+            _this.buttons.element.removeChild(_this.rotateRight.element);
+        }
+    }
+
     //Instantiate a navigator if configured
     if ( _this.showNavigator  && !_this.collectionMode ){
         // Note: By passing the fully parsed source, the navigator doesn't
@@ -1722,16 +1941,19 @@ function openTileSource( viewer, source ) {
             _this.navigator.open( source );
         } else {
             _this.navigator = new $.Navigator({
-                id:          _this.navigatorId,
-                position:    _this.navigatorPosition,
-                sizeRatio:   _this.navigatorSizeRatio,
-                height:      _this.navigatorHeight,
-                width:       _this.navigatorWidth,
-                tileSources: source,
-                tileHost:    _this.tileHost,
-                prefixUrl:   _this.prefixUrl,
-                overlays:    _this.overlays,
-                viewer:      _this
+                id:                _this.navigatorId,
+                position:          _this.navigatorPosition,
+                sizeRatio:         _this.navigatorSizeRatio,
+                maintainSizeRatio: _this.navigatorMaintainSizeRatio,
+                top:               _this.navigatorTop,
+                left:              _this.navigatorLeft,
+                width:             _this.navigatorWidth,
+                height:            _this.navigatorHeight,
+                autoResize:        _this.navigatorAutoResize,
+                tileSources:       source,
+                tileHost:          _this.tileHost,
+                prefixUrl:         _this.prefixUrl,
+                viewer:            _this
             });
         }
     }
@@ -1748,7 +1970,6 @@ function openTileSource( viewer, source ) {
             tileSources: _this.tileSources,
             tileHost:    _this.tileHost,
             prefixUrl:   _this.prefixUrl,
-            overlays:    _this.overlays,
             viewer:      _this
         });
     }
@@ -1759,39 +1980,9 @@ function openTileSource( viewer, source ) {
     THIS[ _this.hash ].forceRedraw = true;
     _this._updateRequestId = scheduleUpdate( _this, updateMulti );
 
-    //Assuming you had programatically created a bunch of overlays
-    //and added them via configuration
-    for ( i = 0; i < _this.overlayControls.length; i++ ) {
-
-        overlay = _this.overlayControls[ i ];
-
-        if ( overlay.point ) {
-
-            _this.drawer.addOverlay(
-                overlay.id,
-                new $.Point(
-                    overlay.point.X,
-                    overlay.point.Y
-                ),
-                $.OverlayPlacement.TOP_LEFT
-            );
-
-        } else {
-
-            _this.drawer.addOverlay(
-                overlay.id,
-                new $.Rect(
-                    overlay.rect.Point.X,
-                    overlay.rect.Point.Y,
-                    overlay.rect.Width,
-                    overlay.rect.Height
-                ),
-                overlay.placement
-            );
-
-        }
-    }
     VIEWERS[ _this.hash ] = _this;
+
+    loadOverlays( _this );
 
     /**
      * Raised when the viewer has opened and loaded one or more TileSources.
@@ -1808,8 +1999,98 @@ function openTileSource( viewer, source ) {
     return _this;
 }
 
+function loadOverlays( _this ) {
+    _this.currentOverlays = [];
+    for ( var i = 0; i < _this.overlays.length; i++ ) {
+        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+    }
+    for ( var j = 0; j < _this.source.overlays.length; j++ ) {
+        _this.currentOverlays[ i + j ] =
+            getOverlayObject( _this, _this.source.overlays[ j ] );
+    }
+}
 
+function getOverlayObject( viewer, overlay ) {
+    if ( overlay instanceof $.Overlay ) {
+        return overlay;
+    }
 
+    var element = null;
+    if ( overlay.element ) {
+        element = $.getElement( overlay.element );
+    } else {
+        var id = overlay.id ?
+            overlay.id :
+            "openseadragon-overlay-" + Math.floor( Math.random() * 10000000 );
+
+        element = $.getElement( overlay.id );
+        if ( !element ) {
+            element         = document.createElement( "a" );
+            element.href    = "#/overlay/" + id;
+        }
+        element.id = id;
+        $.addClass( element, overlay.className ?
+            overlay.className :
+            "openseadragon-overlay"
+        );
+    }
+
+    var location = overlay.location;
+    if ( !location ) {
+        var rect = ( overlay.height && overlay.width ) ? new $.Rect(
+            overlay.x || overlay.px,
+            overlay.y || overlay.py,
+            overlay.width,
+            overlay.height
+        ) : new $.Point(
+            overlay.x || overlay.px,
+            overlay.y || overlay.py
+        );
+        if( overlay.px !== undefined ) {
+            //if they specified 'px' so it's in pixel coordinates so
+            //we need to translate to viewport coordinates
+            rect = viewer.viewport.imageToViewportRectangle( rect );
+        }
+        location = overlay.placement ? viewer.viewport.pointFromPixel( rect ) :
+            rect;
+    }
+
+    var placement = overlay.placement;
+    if ( placement && ( $.type( placement ) === "string" ) ) {
+        placement = $.OverlayPlacement[ overlay.placement.toUpperCase() ];
+    }
+
+    return new $.Overlay({
+        element: element,
+        location: location,
+        placement: placement,
+        onDraw: overlay.onDraw
+    });
+}
+
+/**
+ * @private
+ * @inner
+ * Determines the index of the given overlay in the given overlays array.
+ */
+function getOverlayIndex( overlays, element ) {
+    var i;
+    for ( i = overlays.length - 1; i >= 0; i-- ) {
+        if ( overlays[ i ].element === element ) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function drawOverlays( viewport, overlays, container ) {
+    var i,
+        length = overlays.length;
+    for ( i = 0; i < length; i++ ) {
+        overlays[ i ].drawHTML( container, viewport );
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
@@ -2183,6 +2464,7 @@ function updateOnce( viewer ) {
 
     if ( animated ) {
         updateDrawers( viewer );
+        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.canvas );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
@@ -2198,6 +2480,7 @@ function updateOnce( viewer ) {
         viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || drawersNeedUpdate( viewer ) ) {
         updateDrawers( viewer );
+        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.canvas );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
@@ -2368,6 +2651,38 @@ function onFullScreen() {
     this.fullPageButton.element.focus();
     if ( this.viewport ) {
         this.viewport.applyConstraints();
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateLeft() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation === 0) {
+            currRotation = 270;
+        }
+        else {
+            currRotation -= 90;
+        }
+        this.viewport.setRotation(currRotation);
+    }
+}
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onRotateRight() {
+    if ( this.viewport ) {
+        var currRotation = this.viewport.getRotation();
+        if (currRotation === 270) {
+            currRotation = 0;
+        }
+        else {
+            currRotation += 90;
+        }
+        this.viewport.setRotation(currRotation);
     }
 }
 
