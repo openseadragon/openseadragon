@@ -1811,7 +1811,8 @@ function getOverlayObject( viewer, overlay ) {
         element: element,
         location: location,
         placement: placement,
-        onDraw: overlay.onDraw
+        onDraw: overlay.onDraw,
+        checkResize: overlay.checkResize
     });
 }
 

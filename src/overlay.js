@@ -78,7 +78,11 @@
      * @param {OpenSeadragon.OverlayPlacement} [options.placement=OpenSeadragon.OverlayPlacement.TOP_LEFT]
      * Relative position to the viewport.
      * Only used if location is a {@link OpenSeadragon.Point}.
-     * @param {OpenSeadragon.Overlay.OnDrawCallback} options.onDraw
+     * @param {OpenSeadragon.Overlay.OnDrawCallback} [options.onDraw]
+     * @param {Boolean} [options.checkResize=true] Set to false to avoid to
+     * check the size of the overlay everytime it is drawn when using a
+     * {@link OpenSeadragon.Point} as options.location. It will improve
+     * performances but will cause a misalignment if the overlay size changes.
      */
     $.Overlay = function( element, location, placement ) {
 
@@ -125,6 +129,8 @@
             options.placement :
             $.OverlayPlacement.TOP_LEFT;
         this.onDraw = options.onDraw;
+        this.checkResize = options.checkResize === undefined ?
+            true : options.checkResize;
     };
 
     $.Overlay.prototype = /** @lends OpenSeadragon.Overlay.prototype */{
@@ -212,19 +218,12 @@
             var element = this.element,
                 style   = this.style,
                 scales  = this.scales,
-                drawerCenter = new $.Point(
-                    viewport.viewer.drawer.canvas.width / 2,
-                    viewport.viewer.drawer.canvas.height / 2
-                ),
                 degrees  = viewport.degrees,
                 position = viewport.pixelFromPoint(
                     this.bounds.getTopLeft(),
                     true
                 ),
-                size     = viewport.deltaPixelsFromPoints(
-                    this.bounds.getSize(),
-                    true
-                ),
+                size,
                 overlayCenter;
 
             if ( element.parentNode != container ) {
@@ -232,10 +231,18 @@
                 element.prevElementParent  = element.parentNode;
                 element.prevNextSibling    = element.nextSibling;
                 container.appendChild( element );
+                this.size = $.getElementSize( element );
             }
 
-            if ( !scales ) {
-                this.size = $.getElementSize( element );
+            if ( scales ) {
+                size = viewport.deltaPixelsFromPoints(
+                    this.bounds.getSize(),
+                    true
+                );
+            } else if ( this.checkResize ) {
+                size = $.getElementSize( element );
+            } else {
+                size = this.size;
             }
 
             this.position = position;
@@ -254,6 +261,10 @@
             if( degrees !== 0 && this.scales ) {
                 overlayCenter = new $.Point( size.x / 2, size.y / 2 );
 
+                var drawerCenter = new $.Point(
+                    viewport.viewer.drawer.canvas.width / 2,
+                    viewport.viewer.drawer.canvas.height / 2
+                );
                 position = position.plus( overlayCenter ).rotate(
                     degrees,
                     drawerCenter
@@ -263,10 +274,10 @@
                 size = new $.Point( Math.abs( size.x ), Math.abs( size.y ) );
             }
 
-            // call the onDraw callback if there is one to allow, this allows someone to overwrite
+            // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
-            if (this.onDraw) {
-                this.onDraw(position, size, element);
+            if ( this.onDraw ) {
+                this.onDraw( position, size, element );
             } else {
                 style.left     = position.x + "px";
                 style.top      = position.y + "px";
