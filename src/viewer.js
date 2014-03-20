@@ -128,6 +128,8 @@ $.Viewer = function( options ) {
 
         // Overlays list. An overlay allows to add html on top of the viewer.
         overlays:           [],
+        // Container inside the canvas where overlays are drawn.
+        overlaysContainer:  null,
 
         //private state properties
         previousBody:   [],
@@ -148,8 +150,10 @@ $.Viewer = function( options ) {
          * @member {OpenSeadragon.Drawer} drawer
          * @memberof OpenSeadragon.Viewer#
          */
-        drawer:         null,
-        drawers:        [],
+        drawer:             null,
+        drawers:            [],
+        // Container inside the canvas where drawers (layers) are drawn.
+        drawersContainer:   null,
         /**
          * Handles coordinate-related functionality - zoom, pan, rotation, etc. Created for each TileSource opened.
          * @member {OpenSeadragon.Viewport} viewport
@@ -260,6 +264,8 @@ $.Viewer = function( options ) {
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
     this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
+    this.drawersContainer     = $.makeNeutralElement( "div" );
+    this.overlaysContainer    = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
     (function( style ){
@@ -297,6 +303,8 @@ $.Viewer = function( options ) {
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
+    this.canvas.appendChild( this.drawersContainer );
+    this.canvas.appendChild( this.overlaysContainer );
 
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
@@ -517,16 +525,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         this.clearOverlays();
+        this.drawersContainer.innerHTML = "";
+        this.overlaysContainer.innerHTML = "";
 
         this.source     = null;
         this.drawer     = null;
         this.drawers    = [];
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
-        //this.profiler   = null;
-        if (this.canvas){
-            this.canvas.innerHTML = "";
-        }
+
 
         VIEWERS[ this.hash ] = null;
         delete VIEWERS[ this.hash ];
@@ -1001,9 +1008,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *  supports except arrays of images as layers cannot be sequences.
      * @function
      * @param {Object} options
-     * @param {String|Object|Function} [options.tileSource] The TileSource of the layer.
+     * @param {String|Object|Function} options.tileSource The TileSource of the layer.
      * @param {Number} [options.opacity=1] The opacity of the layer.
-     * @param {Number} [options.level] The level of the layer.
+     * @param {Number} [options.level] The level of the layer. Added on top of
+     * all other layers if not specified.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-layer
      * @fires OpenSeadragon.Viewer.event:add-layer-failed
@@ -1065,7 +1073,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 viewer: _this,
                 source: tileSource,
                 viewport: _this.viewport,
-                element: _this.canvas,
+                element: _this.drawersContainer,
                 opacity: options.opacity !== undefined ?
                     options.opacity : _this.opacity,
                 maxImageCacheCount: _this.maxImageCacheCount,
@@ -1165,7 +1173,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         this.drawers.splice( oldLevel, 1 );
         this.drawers.splice( level, 0, drawer );
-        this.canvas.removeChild( drawer.canvas );
+        this.drawersContainer.removeChild( drawer.canvas );
         if ( level === 0 ) {
             var nextLevelCanvas = this.drawers[ 1 ].canvas;
             nextLevelCanvas.parentNode.insertBefore( drawer.canvas,
@@ -1223,7 +1231,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         this.drawers.splice( index, 1 );
-        this.canvas.removeChild( drawer.canvas );
+        this.drawersContainer.removeChild( drawer.canvas );
         /**
          * Raised when a layer is removed.
          * @event remove-layer
@@ -1841,7 +1849,6 @@ function openTileSource( viewer, source ) {
         _this.close( );
     }
 
-    _this.canvas.innerHTML = "";
     THIS[ _this.hash ].prevContainerSize = _getSafeElemSize( _this.container );
 
 
@@ -1901,7 +1908,7 @@ function openTileSource( viewer, source ) {
         viewer:             _this,
         source:             _this.source,
         viewport:           _this.viewport,
-        element:            _this.canvas,
+        element:            _this.drawersContainer,
         opacity:            _this.opacity,
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
@@ -2464,7 +2471,7 @@ function updateOnce( viewer ) {
 
     if ( animated ) {
         updateDrawers( viewer );
-        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.canvas );
+        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
@@ -2480,7 +2487,7 @@ function updateOnce( viewer ) {
         viewer.raiseEvent( "animation" );
     } else if ( THIS[ viewer.hash ].forceRedraw || drawersNeedUpdate( viewer ) ) {
         updateDrawers( viewer );
-        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.canvas );
+        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
