@@ -1535,15 +1535,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
-    /**
-     * @function Force the viewer to redraw its content.
-     * @return {OpenSeadragon.Viewer} Chainable.
-     */
-    forceRedraw: function() {
-        THIS[ this.hash ].forceRedraw = true;
-        return this;
-    },
-
    /**
      * Adds an html element as an overlay to the current viewport.  Useful for
      * highlighting words or areas of interest on an image or other zoomable
