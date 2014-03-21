@@ -212,6 +212,12 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
+  * @property {Number} [opacity=1]
+  *     Opacity of the drawer (1=opaque, 0=transparent)
+  *
+  * @property {Number} [layersAspectRatioEpsilon=0.0001]
+  *     Maximum aspectRatio mismatch between 2 layers.
+  *
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
@@ -402,6 +408,10 @@
   * @property {String} [collectionLayout='horizontal']
   *
   * @property {Number} [collectionTileSize=800]
+  *
+  * @property {String} [crossOriginPolicy='Anonymous']
+  *      Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
+  *      not use CORS, and the canvas will be tainted.
   *
   */
 
@@ -717,6 +727,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             tileSources:            null,
             tileHost:               null,
             initialPage:            0,
+            crossOriginPolicy:      'Anonymous',
             
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -771,6 +782,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             // INITIAL ROTATION
             degrees:                0,
+
+            // APPEARANCE
+            opacity:                1,
+
+            // LAYERS SETTINGS
+            layersAspectRatioEpsilon:   0.0001,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
@@ -1396,6 +1413,52 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             }
         },
 
+        /**
+         * Find the first index at which an element is found in an array or -1
+         * if not present.
+         *
+         * Code taken and adapted from
+         * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf#Compatibility
+         *
+         * @function
+         * @param {Array} array The array from which to find the element
+         * @param {Object} searchElement The element to find
+         * @param {Number} [fromIndex=0] Index to start research.
+         * @returns {Number} The index of the element in the array.
+         */
+        indexOf: function( array, searchElement, fromIndex ) {
+            if ( Array.prototype.indexOf ) {
+                this.indexOf = function( array, searchElement, fromIndex ) {
+                    return array.indexOf( searchElement, fromIndex );
+                };
+            } else {
+                this.indexOf = function( array, searchElement, fromIndex ) {
+                    var i,
+                        pivot = ( fromIndex ) ? fromIndex : 0,
+                        length;
+                    if ( !array ) {
+                        throw new TypeError( );
+                    }
+
+                    length = array.length;
+                    if ( length === 0 || pivot >= length ) {
+                        return -1;
+                    }
+
+                    if ( pivot < 0 ) {
+                        pivot = length - Math.abs( pivot );
+                    }
+
+                    for ( i = pivot; i < length; i++ ) {
+                        if ( array[i] === searchElement ) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                };
+            }
+            return this.indexOf( array, searchElement, fromIndex );
+        },
 
         /**
          * Remove the specified CSS class from the element.

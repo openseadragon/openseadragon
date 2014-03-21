@@ -90,6 +90,7 @@ $.Drawer = function( options ) {
         collectionOverlays: {}, // For collection mode. Here an overlay is actually a viewer.
 
         //configurable settings
+        opacity:            $.DEFAULT_SETTINGS.opacity,
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
         imageLoaderLimit:   $.DEFAULT_SETTINGS.imageLoaderLimit,
         minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
@@ -100,7 +101,8 @@ $.Drawer = function( options ) {
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        timeout:            $.DEFAULT_SETTINGS.timeout
+        timeout:            $.DEFAULT_SETTINGS.timeout,
+        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
 
@@ -142,6 +144,7 @@ $.Drawer = function( options ) {
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
+    $.setElementOpacity( this.canvas, this.opacity, true );
 
     // explicit left-align
     this.container.style.textAlign = "left";
@@ -226,6 +229,26 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     /**
+     * Set the opacity of the drawer.
+     * @method
+     * @param {Number} opacity
+     * @return {OpenSeadragon.Drawer} Chainable.
+     */
+    setOpacity: function( opacity ) {
+        this.opacity = opacity;
+        $.setElementOpacity( this.canvas, this.opacity, true );
+        return this;
+    },
+
+    /**
+     * Get the opacity of the drawer.
+     * @method
+     * @returns {Number}
+     */
+    getOpacity: function() {
+        return this.opacity;
+    },
+    /**
      * Returns whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
      * @method
@@ -303,7 +326,10 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.downloading++;
 
             image = new Image();
-            image.crossOrigin = 'Anonymous';
+
+            if (_this.crossOriginPolicy !== false) {
+              image.crossOrigin = _this.crossOriginPolicy;
+            }
 
             complete = function( imagesrc, resultingImage ){
                 _this.downloading--;

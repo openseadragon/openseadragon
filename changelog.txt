@@ -3,11 +3,16 @@ OPENSEADRAGON CHANGELOG
 
 1.0.1: (in progress)
 
+* BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
+    * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
+    * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
 * Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
 * Added ControlAnchor options for default controls (#304)
 * Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
+* Added crossOriginPolicy drawer configuration to enable or disable CORS image requests (#364)
 * Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
 * Added a 'navigator-scroll' event to Navigator. Fired when mousewheel/pinch events occur in the navigator (#310)
 * Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)

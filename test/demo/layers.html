@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon Layers Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <style type="text/css">
+
+            .openseadragon1 {
+                width: 800px;
+                height: 600px;
+                float: left;
+            }
+
+            #availables, #arrows, #left, #updown, #right {
+                float: left;
+            }
+
+
+
+        </style>
+    </head>
+    <body>
+        <div>
+            Simple demo page to show an OpenSeadragon viewer with layers.
+        </div>
+        <div id="contentDiv" class="openseadragon1"></div>
+
+        <div>
+            <div id="availables">
+                Available layers<br>
+                <select name="layers-availables" size="4" multiple="multiple">
+                    <option>CCyan</option>
+                    <option>DDandelion</option>
+                </select>
+            </div>
+            <div id="arrows">
+                <div id="left">
+                    <button onclick="left();">&lAarr; Remove</button>
+                </div>
+                <div id="updown">
+                    <div id="up">
+                        <button onclick="up();">&uArr; Up</button>
+                    </div>
+                    <div id="down">
+                        <button onclick="down();">&dArr; Down</button>
+                    </div>
+                </div>
+                <div id="right">
+                    <button onclick="right();">&rAarr; Add</button>
+                </div>
+            </div>
+            <div id="used">
+                Used layers<br>
+                <select name="layers-used" size="4" multiple="multiple">
+                    <option>A</option>
+                    <option>BBlue</option>
+                </select>
+            </div>
+
+            <br><br><br><br>
+
+            <div>
+                Opacity: <br>
+                <label for="AOpacity" >A</label>
+                <input id="AOpacity" type="text" value="0.5"><br>
+                <label for="BBlueOpacity" >BBlue</label>
+                <input id="BBlueOpacity" type="text" value="1"><br>
+                <label for="CCyanOpacity" >CCyan</label>
+                <input id="CCyanOpacity" type="text" value="1"><br>
+                <label for="DDandelion" >DDandelion</label>
+                <input id="DDandelion" type="text" value="1"><br>
+            </div>
+
+            <br><br><br><br>
+
+            <div>
+                <button onclick="rotate();">Rotate</button>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+
+            function getOpacity( layerName ) {
+                var id = $( "label" ).filter( function( index ) {
+                    return layerName === this.innerHTML;
+                } ).attr( "for" );
+                return $( "#" + id ).val();
+            }
+
+            function right() {
+                var added = $( "#availables select option:selected" ).detach();
+                $( "#used select" ).append( added );
+                $.each( added, function( index, value ) {
+                    addLayer( value.innerHTML );
+                } );
+            }
+
+            function addLayer( layerName ) {
+                var options = {
+                    tileSource: {
+                        type: 'legacy-image-pyramid',
+                        levels: [ {
+                                url: "../data/" + layerName + ".png",
+                                width: 1000,
+                                height: 1000
+                            } ]
+                    },
+                    opacity: getOpacity( layerName )
+                };
+                var addLayerHandler = function( event ) {
+                    if ( event.options === options ) {
+                        viewer.removeHandler( "add-layer", addLayerHandler );
+                        layers[layerName] = event.drawer;
+                        updateOrder();
+                    }
+                };
+                viewer.addHandler( "add-layer", addLayerHandler );
+                viewer.addLayer( options );
+            }
+
+            function left() {
+                var removed = $( "#used select option:selected" ).detach();
+                $( "#availables select" ).append( removed );
+                $.each( removed, function( index, value ) {
+                    var layer = value.innerHTML;
+                    viewer.removeLayer( layers[layer] );
+                    delete layers[layer];
+                    updateOrder();
+                } );
+            }
+
+            function up() {
+                $.each( $( "#used select option:selected" ), function( index, value ) {
+                    $( value ).prev( "option" ).insertAfter( value );
+                } );
+                updateOrder();
+            }
+
+            function down() {
+                $.each( $( "#used select option:selected" ).get().reverse(),
+                    function( index, value ) {
+                        $( value ).next( "option" ).insertBefore( value );
+                    } );
+                updateOrder();
+            }
+
+            function updateOrder() {
+                var nbLayers = viewer.getLayersCount();
+                if ( nbLayers < 2 ) {
+                    return;
+                }
+                $.each( $( "#used select option" ), function( index, value ) {
+                    var layer = value.innerHTML;
+                    viewer.setLayerLevel( layers[layer], nbLayers -1 - index );
+                } );
+            }
+
+            function rotate() {
+                var viewport = viewer.viewport;
+                viewport.setRotation( viewport.getRotation() + 90 );
+            }
+
+            var viewer = OpenSeadragon( {
+                id: "contentDiv",
+                prefixUrl: "../../build/openseadragon/images/",
+                tileSources: "../data/testpattern.dzi",
+                showNavigator: true
+            } );
+            viewer.addHandler( "open", function() {
+                $.each( $( "#used select option" ), function( index, value ) {
+                    var layer = value.innerHTML;
+                    addLayer( layer );
+                } );
+            } );
+
+            var layers = { };
+
+            $( "input" ).keyup( function( event ) {
+                var elt = event.target;
+                var layerName = $( "label" ).filter( function( index ) {
+                    return $( this ).attr( "for" ) === elt.id;
+                } ).html();
+
+                var layer = layers[layerName];
+                if ( layer ) {
+                    var opacity = $(elt).val();
+                    layer.setOpacity( opacity );
+                }
+            } );
+
+        </script>
+    </body>
+</html>
