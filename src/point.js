@@ -76,10 +76,10 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Substract another Point to this point and return a new Point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     * @param {OpenSeadragon.Point} point The point to substract vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the substraction of the
      *  vector components
      */
     minus: function( point ) {
@@ -90,11 +90,11 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Multiply this point by a factor and return a new Point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @param {Number} factor The factor to multiply vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the multiplication
+     *  of the vector components by the factor
      */
     times: function( factor ) {
         return new $.Point(
@@ -104,11 +104,11 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Divide this point by a factor and return a new Point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @param {Number} factor The factor to divide vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the division of the
+     *  vector components by the factor
      */
     divide: function( factor ) {
         return new $.Point(
@@ -118,10 +118,9 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Compute the opposite of this point and return a new Point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
+     * @returns {OpenSeadragon.Point} A new point representing the opposite of the
      *  vector components
      */
     negate: function() {
@@ -129,11 +128,10 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Compute the distance between this point and another point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @param {OpenSeadragon.Point} point The point to compute the distance with.
+     * @returns {Number} The distance between the 2 points
      */
     distanceTo: function( point ) {
         return Math.sqrt(
@@ -143,22 +141,21 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Apply a function to each coordinate of this point and return a new point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @param {function} func The function to apply to each coordinate.
+     * @returns {OpenSeadragon.Point} A new point with the coordinates computed
+     * by the specified function
      */
     apply: function( func ) {
         return new $.Point( func( this.x ), func( this.y ) );
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Check if this point is equal to another one.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @param {OpenSeadragon.Point} point The point to compare this point with.
+     * @returns {Boolean} true if they are equal, false otherwise.
      */
     equals: function( point ) {
         return (
@@ -186,11 +183,10 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
     },
 
     /**
-     * Add another Point to this point and return a new Point.
+     * Convert this point to a string in the format (x,y) where x and y are
+     * rounded to the nearest integer.
      * @function
-     * @param {OpenSeadragon.Point} point The point to add vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the sum of the
-     *  vector components
+     * @returns {String} A string representation of this point.
      */
     toString: function() {
         return "(" + Math.round(this.x) + "," + Math.round(this.y) + ")";

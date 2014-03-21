@@ -87,10 +87,10 @@ $.Drawer = function( options ) {
 
 
         //internal state / configurable settings
-        overlays:           [], // An unordered list of Overlays added.
-        collectionOverlays: {},
+        collectionOverlays: {}, // For collection mode. Here an overlay is actually a viewer.
 
         //configurable settings
+        opacity:            $.DEFAULT_SETTINGS.opacity,
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
         imageLoaderLimit:   $.DEFAULT_SETTINGS.imageLoaderLimit,
         minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
@@ -101,7 +101,8 @@ $.Drawer = function( options ) {
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        timeout:            $.DEFAULT_SETTINGS.timeout
+        timeout:            $.DEFAULT_SETTINGS.timeout,
+        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
 
@@ -143,22 +144,11 @@ $.Drawer = function( options ) {
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
+    $.setElementOpacity( this.canvas, this.opacity, true );
 
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
-
-    //create the correct type of overlay by convention if the overlays
-    //are not already OpenSeadragon.Overlays
-    for( i = 0; i < this.overlays.length; i++ ){
-        if( $.isPlainObject( this.overlays[ i ] ) ){
-
-            this.overlays[ i ] = addOverlayFromConfiguration( this, this.overlays[ i ]);
-
-        } else if ( $.isFunction( this.overlays[ i ] ) ){
-            //TODO
-        }
-    }
 
     //this.profiler    = new $.Profiler();
 };
@@ -177,57 +167,15 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
-     * @param {function} onDraw - If supplied the callback is called when the overlay 
+     * @param {function} onDraw - If supplied the callback is called when the overlay
      *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
      * @fires OpenSeadragon.Viewer.event:add-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#addOverlay} instead.
      */
     addOverlay: function( element, location, placement, onDraw ) {
-        var options;
-        if( $.isPlainObject( element ) ){
-            options = element;
-        } else {
-            options = {
-                element: element,
-                location: location,
-                placement: placement,
-                onDraw: onDraw
-            };
-        }
-
-        element = $.getElement(options.element);
-
-        if ( getOverlayIndex( this.overlays, element ) >= 0 ) {
-            // they're trying to add a duplicate overlay
-            return;
-        }
-
-        this.overlays.push( new $.Overlay({
-            element: element,
-            location: options.location,
-            placement: options.placement,
-            onDraw: options.onDraw
-        }) );
-        this.updateAgain = true;
-        if( this.viewer ){
-            /**
-             * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Drawer#addOverlay}).
-             *
-             * @event add-overlay
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Element} element - The overlay element.
-             * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-             * @property {OpenSeadragon.OverlayPlacement} placement
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'add-overlay', {
-                element: element,
-                location: options.location,
-                placement: options.placement
-            });
-        }
+        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
+        this.viewer.addOverlay( element, location, placement, onDraw );
         return this;
     },
 
@@ -242,36 +190,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      to.
      * @return {OpenSeadragon.Drawer} Chainable.
      * @fires OpenSeadragon.Viewer.event:update-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#updateOverlay} instead.
      */
     updateOverlay: function( element, location, placement ) {
-        var i;
-
-        element = $.getElement( element );
-        i = getOverlayIndex( this.overlays, element );
-
-        if ( i >= 0 ) {
-            this.overlays[ i ].update( location, placement );
-            this.updateAgain = true;
-        }
-        if( this.viewer ){
-            /**
-             * Raised when an overlay's location or placement changes (see {@link OpenSeadragon.Drawer#updateOverlay}).
-             *
-             * @event update-overlay
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Element} element
-             * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-             * @property {OpenSeadragon.OverlayPlacement} placement
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'update-overlay', {
-                element: element,
-                location: location,
-                placement: placement
-            });
-        }
+        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
+        this.viewer.updateOverlay( element, location, placement );
         return this;
     },
 
@@ -283,33 +206,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      element id which represent the ovelay content to be removed.
      * @return {OpenSeadragon.Drawer} Chainable.
      * @fires OpenSeadragon.Viewer.event:remove-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#removeOverlay} instead.
      */
     removeOverlay: function( element ) {
-        var i;
-
-        element = $.getElement( element );
-        i = getOverlayIndex( this.overlays, element );
-
-        if ( i >= 0 ) {
-            this.overlays[ i ].destroy();
-            this.overlays.splice( i, 1 );
-            this.updateAgain = true;
-        }
-        if( this.viewer ){
-            /**
-             * Raised when an overlay is removed from the viewer (see {@link OpenSeadragon.Drawer#removeOverlay}).
-             *
-             * @event remove-overlay
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Element} element - The overlay element.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'remove-overlay', {
-                element: element
-            });
-        }
+        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
+        this.viewer.updateOverlay( element );
         return this;
     },
 
@@ -319,28 +220,34 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @method
      * @return {OpenSeadragon.Drawer} Chainable.
      * @fires OpenSeadragon.Viewer.event:clear-overlay
+     * @deprecated - use {@link OpenSeadragon.Viewer#clearOverlays} instead.
      */
     clearOverlays: function() {
-        while ( this.overlays.length > 0 ) {
-            this.overlays.pop().destroy();
-            this.updateAgain = true;
-        }
-        if( this.viewer ){
-            /**
-             * Raised when all overlays are removed from the viewer (see {@link OpenSeadragon.Drawer#clearOverlays}).
-             *
-             * @event clear-overlay
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'clear-overlay', {} );
-        }
+        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
+        this.viewer.clearOverlays();
         return this;
     },
 
+    /**
+     * Set the opacity of the drawer.
+     * @method
+     * @param {Number} opacity
+     * @return {OpenSeadragon.Drawer} Chainable.
+     */
+    setOpacity: function( opacity ) {
+        this.opacity = opacity;
+        $.setElementOpacity( this.canvas, this.opacity, true );
+        return this;
+    },
 
+    /**
+     * Get the opacity of the drawer.
+     * @method
+     * @returns {Number}
+     */
+    getOpacity: function() {
+        return this.opacity;
+    },
     /**
      * Returns whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
@@ -419,7 +326,10 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.downloading++;
 
             image = new Image();
-            image.crossOrigin = 'Anonymous';
+
+            if (_this.crossOriginPolicy !== false) {
+              image.crossOrigin = _this.crossOriginPolicy;
+            }
 
             complete = function( imagesrc, resultingImage ){
                 _this.downloading--;
@@ -466,61 +376,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         return this.useCanvas;
     }
 };
-
-/**
- * @private
- * @inner
- */
- function addOverlayFromConfiguration( drawer, overlay ){
-
-    var element  = null,
-        rect = ( overlay.height && overlay.width ) ? new $.Rect(
-            overlay.x || overlay.px,
-            overlay.y || overlay.py,
-            overlay.width,
-            overlay.height
-        ) : new $.Point(
-            overlay.x || overlay.px,
-            overlay.y || overlay.py
-        ),
-        id = overlay.id ?
-            overlay.id :
-            "openseadragon-overlay-"+Math.floor(Math.random()*10000000);
-
-    element = $.getElement(overlay.id);
-    if( !element ){
-        element         = document.createElement("a");
-        element.href    = "#/overlay/"+id;
-    }
-    element.id        = id;
-    $.addClass( element, overlay.className ?
-        overlay.className :
-        "openseadragon-overlay"
-    );
-
-
-    if(overlay.px !== undefined){
-        //if they specified 'px' so it's in pixel coordinates so
-        //we need to translate to viewport coordinates
-        rect = drawer.viewport.imageToViewportRectangle( rect );
-    }
-    
-    if( overlay.placement ){
-        return new $.Overlay({
-            element: element,
-            location: drawer.viewport.pointFromPixel(rect),
-            placement: $.OverlayPlacement[overlay.placement.toUpperCase()],
-            onDraw: overlay.onDraw
-        });
-    }else{
-        return new $.Overlay({
-            element: element,
-            location: rect,
-            onDraw: overlay.onDraw
-        });
-    }
-
-}
 
 /**
  * @private
@@ -695,7 +550,6 @@ function updateViewport( drawer ) {
 
     //TODO
     drawTiles( drawer, drawer.lastDrawn );
-    drawOverlays( drawer.viewport, drawer.overlays, drawer.container );
 
     //TODO
     if ( best ) {
@@ -1145,23 +999,6 @@ function resetCoverage( coverage, level ) {
 /**
  * @private
  * @inner
- * Determines the 'z-index' of the given overlay.  Overlays are ordered in
- * a z-index based on the order they are added to the Drawer.
- */
-function getOverlayIndex( overlays, element ) {
-    var i;
-    for ( i = overlays.length - 1; i >= 0; i-- ) {
-        if ( overlays[ i ].element == element ) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-/**
- * @private
- * @inner
  * Determines whether the 'last best' tile for the area is better than the
  * tile in question.
  */
@@ -1194,28 +1031,6 @@ function finishLoadingImage( image, callback, successful, jobid ){
         callback( image.src, successful ? image : null);
     });
 
-}
-
-
-function drawOverlays( viewport, overlays, container ){
-    var i,
-        length = overlays.length;
-    for ( i = 0; i < length; i++ ) {
-        drawOverlay( viewport, overlays[ i ], container );
-    }
-}
-
-function drawOverlay( viewport, overlay, container ){
-
-    overlay.position = viewport.pixelFromPoint(
-        overlay.bounds.getTopLeft(),
-        true
-    );
-    overlay.size     = viewport.deltaPixelsFromPoints(
-        overlay.bounds.getSize(),
-        true
-    );
-    overlay.drawHTML( container, viewport );
 }
 
 function drawTiles( drawer, lastDrawn ){
@@ -1297,7 +1112,7 @@ function drawTiles( drawer, lastDrawn ){
                             ')';
                     }
 
-                    drawer.addOverlay(
+                    drawer.viewer.addOverlay(
                         viewer.element,
                         tile.bounds
                     );
