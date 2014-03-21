@@ -1921,7 +1921,8 @@ function openTileSource( viewer, source ) {
         minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
         timeout:            _this.timeout,
         debugMode:          _this.debugMode,
-        debugGridColor:     _this.debugGridColor
+        debugGridColor:     _this.debugGridColor,
+        crossOriginPolicy:  _this.crossOriginPolicy
     });
     _this.drawers = [_this.drawer];
 

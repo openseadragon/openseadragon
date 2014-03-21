@@ -101,7 +101,8 @@ $.Drawer = function( options ) {
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        timeout:            $.DEFAULT_SETTINGS.timeout
+        timeout:            $.DEFAULT_SETTINGS.timeout,
+        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
 
@@ -325,7 +326,10 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.downloading++;
 
             image = new Image();
-            image.crossOrigin = 'Anonymous';
+
+            if (_this.crossOriginPolicy !== false) {
+              image.crossOrigin = _this.crossOriginPolicy;
+            }
 
             complete = function( imagesrc, resultingImage ){
                 _this.downloading--;
