@@ -6,9 +6,9 @@
     module( "Overlays", {
         setup: function() {
             var example = $( '<div id="example-overlays"></div>' ).appendTo( "#qunit-fixture" );
-            var fixedOverlay = $( '<div id="fixed-overlay"></div>' ).appendTo(example);
-            fixedOverlay.width(70);
-            fixedOverlay.height(60);
+            var fixedOverlay = $( '<div id="fixed-overlay"></div>' ).appendTo( example );
+            fixedOverlay.width( 70 );
+            fixedOverlay.height( 60 );
 
             testLog.reset();
         },
@@ -186,7 +186,7 @@
             equal( viewer.currentOverlays.length, 0, "No overlay should be open." );
 
             var rect = new OpenSeadragon.Rect( 0.1, 0.1, 0.1, 0.1 );
-            var overlay = $( "<div/>" ).prop("id", "overlay").get( 0 );
+            var overlay = $( "<div/>" ).prop( "id", "overlay" ).get( 0 );
             viewer.addOverlay( overlay, rect );
             equal( viewer.overlays.length, 0, "No manual overlay should be added as global overlay." );
             equal( viewer.currentOverlays.length, 1, "A manual overlay should be open." );
@@ -221,7 +221,7 @@
         viewer = OpenSeadragon( {
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
-            tileSources: [ '/test/data/testpattern.dzi', '/test/data/testpattern.dzi' ],
+            tileSources: '/test/data/testpattern.dzi',
             springStiffness: 100, // Faster animation = faster tests
             overlays: [ {
                     px: 13,
@@ -232,8 +232,9 @@
                 }, {
                     px: 400,
                     py: 500,
-                    id: "fixed-overlay"
-                }]
+                    id: "fixed-overlay",
+                    placement: "TOP_LEFT"
+                } ]
         } );
 
         function checkOverlayPosition( contextMessage ) {
@@ -284,7 +285,7 @@
         viewer = OpenSeadragon( {
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
-            tileSources: [ '/test/data/testpattern.dzi', '/test/data/testpattern.dzi' ],
+            tileSources: '/test/data/testpattern.dzi',
             springStiffness: 100, // Faster animation = faster tests
             overlays: [ {
                     x: 0.2,
@@ -292,10 +293,11 @@
                     width: 0.5,
                     height: 0.1,
                     id: "overlay"
-                },{
+                }, {
                     x: 0.5,
                     y: 0.6,
-                    id: "fixed-overlay"
+                    id: "fixed-overlay",
+                    placement: "TOP_LEFT"
                 } ]
         } );
 
@@ -309,9 +311,9 @@
             equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
 
             var expectedSize = viewport.deltaPixelsFromPoints(
-                new OpenSeadragon.Point(0.5, 0.1));
+                new OpenSeadragon.Point( 0.5, 0.1 ) );
             equal( $( "#overlay" ).width(), expectedSize.x, "Width mismatch " + contextMessage );
-            equal( $( "#overlay" ).height( ), expectedSize.y, "Height mismatch " + contextMessage );
+            equal( $( "#overlay" ).height(), expectedSize.y, "Height mismatch " + contextMessage );
 
 
             expPosition = viewport.viewportToViewerElementCoordinates(
@@ -341,4 +343,193 @@
         } );
     } );
 
-} )();
+    asyncTest( 'Overlays placement', function() {
+
+        var scalableOverlayLocation = new OpenSeadragon.Rect( 0.2, 0.1, 0.5, 0.1 );
+        var fixedOverlayLocation = new OpenSeadragon.Point( 0.5, 0.6 );
+
+        viewer = OpenSeadragon( {
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            overlays: [ {
+                    x: scalableOverlayLocation.x,
+                    y: scalableOverlayLocation.y,
+                    width: scalableOverlayLocation.width,
+                    height: scalableOverlayLocation.height,
+                    id: "overlay",
+                    placement: "TOP_LEFT"
+                }, {
+                    x: fixedOverlayLocation.x,
+                    y: fixedOverlayLocation.y,
+                    id: "fixed-overlay",
+                    placement: "TOP_LEFT"
+                } ]
+        } );
+
+        // Scalable overlays are always TOP_LEFT
+        function checkScalableOverlayPosition( contextMessage ) {
+            var viewport = viewer.viewport;
+
+            var expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.2, 0.1 ) ).apply( Math.floor );
+            var actPosition = $( "#overlay" ).position();
+            equal( actPosition.left, expPosition.x, "X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
+        }
+
+        function checkFixedOverlayPosition( expectedOffset, contextMessage ) {
+            var viewport = viewer.viewport;
+
+            var expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.5, 0.6 ) )
+                .apply( Math.floor )
+                .plus( expectedOffset );
+            var actPosition = $( "#fixed-overlay" ).position();
+            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+        }
+
+        waitForViewer( function() {
+
+            checkScalableOverlayPosition( "with TOP_LEFT placement." );
+            checkFixedOverlayPosition( new OpenSeadragon.Point( 0, 0 ),
+                "with TOP_LEFT placement." );
+
+            viewer.updateOverlay( "overlay", scalableOverlayLocation,
+                OpenSeadragon.OverlayPlacement.CENTER );
+            viewer.updateOverlay( "fixed-overlay", fixedOverlayLocation,
+                OpenSeadragon.OverlayPlacement.CENTER );
+
+            setTimeout( function() {
+                checkScalableOverlayPosition( "with CENTER placement." );
+                checkFixedOverlayPosition( new OpenSeadragon.Point( -35, -30 ),
+                    "with CENTER placement." );
+
+                viewer.updateOverlay( "overlay", scalableOverlayLocation,
+                    OpenSeadragon.OverlayPlacement.BOTTOM_RIGHT );
+                viewer.updateOverlay( "fixed-overlay", fixedOverlayLocation,
+                    OpenSeadragon.OverlayPlacement.BOTTOM_RIGHT );
+                setTimeout( function() {
+                    checkScalableOverlayPosition( "with BOTTOM_RIGHT placement." );
+                    checkFixedOverlayPosition( new OpenSeadragon.Point( -70, -60 ),
+                        "with BOTTOM_RIGHT placement." );
+
+                    start();
+                }, 100 );
+
+            }, 100 );
+
+        } );
+    } );
+
+    asyncTest( 'Overlays placement and resizing check', function() {
+
+        var fixedOverlayLocation = new OpenSeadragon.Point( 0.5, 0.6 );
+
+        viewer = OpenSeadragon( {
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            overlays: [ {
+                    x: fixedOverlayLocation.x,
+                    y: fixedOverlayLocation.y,
+                    id: "fixed-overlay",
+                    placement: "CENTER",
+                    checkResize: true
+                } ]
+        } );
+
+        function checkFixedOverlayPosition( expectedOffset, contextMessage ) {
+            var viewport = viewer.viewport;
+
+            var expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.5, 0.6 ) )
+                .apply( Math.floor )
+                .plus( expectedOffset );
+            var actPosition = $( "#fixed-overlay" ).position();
+            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+        }
+
+        waitForViewer( function() {
+            checkFixedOverlayPosition( new OpenSeadragon.Point( -35, -30 ),
+                "with overlay of size 70,60." );
+
+            $( "#fixed-overlay" ).width( 50 );
+            $( "#fixed-overlay" ).height( 40 );
+
+            // The resizing of the overlays is not detected by the viewer's loop.
+            viewer.forceRedraw();
+
+            setTimeout( function() {
+                checkFixedOverlayPosition( new OpenSeadragon.Point( -25, -20 ),
+                    "with overlay of size 50,40." );
+
+                // Restore original size
+                $( "#fixed-overlay" ).width( 70 );
+                $( "#fixed-overlay" ).height( 60 );
+
+                start();
+            }, 100 );
+        } );
+
+    } );
+
+    asyncTest( 'Overlays placement and no resizing check', function() {
+
+        var fixedOverlayLocation = new OpenSeadragon.Point( 0.5, 0.6 );
+
+        viewer = OpenSeadragon( {
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            overlays: [ {
+                    x: fixedOverlayLocation.x,
+                    y: fixedOverlayLocation.y,
+                    id: "fixed-overlay",
+                    placement: "CENTER",
+                    checkResize: false
+                } ]
+        } );
+
+        function checkFixedOverlayPosition( expectedOffset, contextMessage ) {
+            var viewport = viewer.viewport;
+
+            var expPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point( 0.5, 0.6 ) )
+                .apply( Math.floor )
+                .plus( expectedOffset );
+            var actPosition = $( "#fixed-overlay" ).position();
+            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
+            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+        }
+
+        waitForViewer( function() {
+            checkFixedOverlayPosition( new OpenSeadragon.Point( -35, -30 ),
+                "with overlay of size 70,60." );
+
+            $( "#fixed-overlay" ).width( 50 );
+            $( "#fixed-overlay" ).height( 40 );
+
+            // The resizing of the overlays is not detected by the viewer's loop.
+            viewer.forceRedraw();
+
+            setTimeout( function() {
+                checkFixedOverlayPosition( new OpenSeadragon.Point( -35, -30 ),
+                    "with overlay of size 50,40." );
+
+                // Restore original size
+                $( "#fixed-overlay" ).width( 70 );
+                $( "#fixed-overlay" ).height( 60 );
+
+                start();
+            }, 100 );
+        } );
+
+    } );
+
+} )( );

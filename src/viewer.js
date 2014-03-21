@@ -1331,6 +1331,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
+    /**
+     * @function Force the viewer to redraw its content.
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    forceRedraw: function() {
+        THIS[ this.hash ].forceRedraw = true;
+        return this;
+    },
+
    /**
      * Adds an html element as an overlay to the current viewport.  Useful for
      * highlighting words or areas of interest on an image or other zoomable
@@ -1784,22 +1793,31 @@ function getOverlayObject( viewer, overlay ) {
 
     var location = overlay.location;
     if ( !location ) {
-        var rect = ( overlay.height && overlay.width ) ? new $.Rect(
-            overlay.x || overlay.px,
-            overlay.y || overlay.py,
-            overlay.width,
-            overlay.height
-        ) : new $.Point(
-            overlay.x || overlay.px,
-            overlay.y || overlay.py
-        );
-        if( overlay.px !== undefined ) {
-            //if they specified 'px' so it's in pixel coordinates so
-            //we need to translate to viewport coordinates
-            rect = viewer.viewport.imageToViewportRectangle( rect );
+        if ( overlay.width && overlay.height ) {
+            location = overlay.px !== undefined ?
+                viewer.viewport.imageToViewportRectangle( new $.Rect(
+                    overlay.px,
+                    overlay.py,
+                    overlay.width,
+                    overlay.height
+                ) ) :
+                new $.Rect(
+                    overlay.x,
+                    overlay.y,
+                    overlay.width,
+                    overlay.height
+                );
+        } else {
+            location = overlay.px !== undefined ?
+                viewer.viewport.imageToViewportCoordinates( new $.Point(
+                    overlay.px,
+                    overlay.py
+                ) ) :
+                new $.Point(
+                    overlay.x,
+                    overlay.y
+                );
         }
-        location = overlay.placement ? viewer.viewport.pointFromPixel( rect ) :
-            rect;
     }
 
     var placement = overlay.placement;
