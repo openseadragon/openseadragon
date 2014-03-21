@@ -3,11 +3,11 @@ OPENSEADRAGON CHANGELOG
 
 1.0.1: (in progress)
 
-* BREAKING CHANGE: the openseadragon-canvas element now have two child divs which mean: (#298)
-    * the drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
-    * the overlays elements are no longer accssible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
-* Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
+* BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
+    * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
+    * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
 * Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
 * Added ControlAnchor options for default controls (#304)
