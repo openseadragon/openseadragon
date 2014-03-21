@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
 * Added ControlAnchor options for default controls (#304)
 * Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
+* Added crossOriginPolicy drawer configuration to enable or disable CORS image requests (#364)
 * Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
 * Added a 'navigator-scroll' event to Navigator. Fired when mousewheel/pinch events occur in the navigator (#310)
 * Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)
