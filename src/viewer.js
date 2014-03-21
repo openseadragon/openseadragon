@@ -1755,11 +1755,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        this.viewport.panBy(
-            this.viewport.deltaPointsFromPixels(
-                event.delta.negate()
-            )
-        );
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), true );
         if( this.constrainDuringPan ){
             this.viewport.applyConstraints();
         }
@@ -1856,7 +1852,7 @@ function onCanvasPinch(event) {
 //    lastCenter:
 //    center:
 //    lastDistance:
-//    currentDistance:
+//    distance:
 //    originalEvent:
 //    preventDefaultAction:
 //    userData:
@@ -1864,8 +1860,8 @@ function onCanvasPinch(event) {
     if (!event.preventDefaultAction && this.viewport) {
         var centerPt = this.viewport.pointFromPixel( event.center, true ),
             lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-        this.viewport.zoomBy( event.currentDistance / event.lastDistance, centerPt, true );
-        this.viewport.panBy( lastCenterPt.minus( centerPt ), false );
+        this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+        this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
         this.viewport.applyConstraints();
     }
     /**
@@ -1879,13 +1875,12 @@ function onCanvasPinch(event) {
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} delta - The pinch delta for the event.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {OpenSeadragon.GesturePoint[]} gesturePoints - 
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent('canvas-pinch', {
         tracker: event.eventSource,
-        position: event.position,
-        delta: event.delta,
         shift: event.shift,
         originalEvent: event.originalEvent
     });
