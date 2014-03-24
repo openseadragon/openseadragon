@@ -22,6 +22,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Setting degrees in Viewer constructor has no effect (#336)
 * Added pre-draw event for tiles to allow applications to alter the image (#348)
 * Added optional Rotate Left/Right buttons to standard controls (#341)
+* Added optimization for large numbers of overlays: `checkResize = false` option for OpenSeadragon.Overlay (#365)
 
 1.0.0:
 
