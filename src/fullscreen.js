@@ -32,42 +32,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Implementation and research by John Dyer in:
- * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
- * John Dyer has released this fullscreen code under the MIT license; see
- * <https://github.com/openseadragon/openseadragon/issues/81>.
- *
- * Copyright (C) 2011 John Dyer
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
- * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
- * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
 (function( $ ) {
     /**
-     * Determined native full screen support we can get from the browser.
+     * Determine native full screen support we can get from the browser.
      * @member fullScreenApi
      * @memberof OpenSeadragon
      * @type {object}
      * @property {Boolean} supportsFullScreen Return true if full screen API is supported.
      * @property {Function} isFullScreen Return true if currently in full screen mode.
+     * @property {Function} getFullScreenElement Return the element currently in full screen mode.
      * @property {Function} requestFullScreen Make a request to go in full screen mode.
      * @property {Function} exitFullScreen Make a request to exit full screen mode.
      * @property {Function} cancelFullScreen Deprecated, use exitFullScreen instead.
@@ -76,20 +49,22 @@
      * in full screen mode failed.
      */
     var fullScreenApi = {
-            supportsFullScreen: false,
-            isFullScreen: function() { return false; },
-            requestFullScreen: function() {},
-            exitFullScreen: function() {},
-            cancelFullScreen: function() {},
-            fullScreenEventName: '',
-            fullScreenErrorEventName: ''
-        };
+        supportsFullScreen: false,
+        isFullScreen: function() { return false; },
+        getFullScreenElement: function() { return null; },
+        requestFullScreen: function() {},
+        exitFullScreen: function() {},
+        cancelFullScreen: function() {},
+        fullScreenEventName: '',
+        fullScreenErrorEventName: ''
+    };
 
     // check for native support
     if ( document.exitFullscreen ) {
+        // W3C standard
         fullScreenApi.supportsFullScreen = true;
-        fullScreenApi.isFullScreen = function() {
-            return document.fullscreenElement !== null;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.fullscreenElement;
         };
         fullScreenApi.requestFullScreen = function( element ) {
             return element.requestFullscreen();
@@ -100,9 +75,10 @@
         fullScreenApi.fullScreenEventName = "fullscreenchange";
         fullScreenApi.fullScreenErrorEventName = "fullscreenerror";
     } else if ( document.msExitFullscreen ) {
+        // IE 11
         fullScreenApi.supportsFullScreen = true;
-        fullScreenApi.isFullScreen = function() {
-            return document.msFullscreenElement !== null;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.msFullscreenElement;
         };
         fullScreenApi.requestFullScreen = function( element ) {
             return element.msRequestFullscreen();
@@ -113,9 +89,10 @@
         fullScreenApi.fullScreenEventName = "MSFullscreenChange";
         fullScreenApi.fullScreenErrorEventName = "MSFullscreenError";
     } else if ( document.webkitExitFullscreen ) {
+        // Recent webkit
         fullScreenApi.supportsFullScreen = true;
-        fullScreenApi.isFullScreen = function() {
-            return document.webkitIsFullScreen;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.webkitFullscreenElement;
         };
         fullScreenApi.requestFullScreen = function( element ) {
             return element.webkitRequestFullscreen();
@@ -125,10 +102,25 @@
         };
         fullScreenApi.fullScreenEventName = "webkitfullscreenchange";
         fullScreenApi.fullScreenErrorEventName = "webkitfullscreenerror";
-    } else if ( document.mozCancelFullScreen ) {
+    } else if ( document.webkitCancelFullScreen ) {
+        // Old webkit
         fullScreenApi.supportsFullScreen = true;
-        fullScreenApi.isFullScreen = function() {
-            return document.mozFullScreen;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.webkitCurrentFullScreenElement;
+        };
+        fullScreenApi.requestFullScreen = function( element ) {
+            return element.webkitRequestFullScreen();
+        };
+        fullScreenApi.exitFullScreen = function() {
+            document.webkitCancelFullScreen();
+        };
+        fullScreenApi.fullScreenEventName = "webkitfullscreenchange";
+        fullScreenApi.fullScreenErrorEventName = "webkitfullscreenerror";
+    } else if ( document.mozCancelFullScreen ) {
+        // Firefox
+        fullScreenApi.supportsFullScreen = true;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.mozFullScreenElement;
         };
         fullScreenApi.requestFullScreen = function( element ) {
             return element.mozRequestFullScreen();
@@ -139,6 +131,9 @@
         fullScreenApi.fullScreenEventName = "mozfullscreenchange";
         fullScreenApi.fullScreenErrorEventName = "mozfullscreenerror";
     }
+    fullScreenApi.isFullScreen = function() {
+        return fullScreenApi.getFullScreenElement() !== null;
+    };
     fullScreenApi.cancelFullScreen = function() {
         $.console.error("cancelFullScreen is deprecated. Use exitFullScreen instead.");
         fullScreenApi.exitFullScreen();
