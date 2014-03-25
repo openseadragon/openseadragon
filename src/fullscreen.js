@@ -118,7 +118,7 @@
             return document.webkitIsFullScreen;
         };
         fullScreenApi.requestFullScreen = function( element ) {
-            return element.webkitRequestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+            return element.webkitRequestFullscreen();
         };
         fullScreenApi.exitFullScreen = function() {
             document.webkitExitFullscreen();
