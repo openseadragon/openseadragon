@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.0.1: (in progress)
+1.1.0: (in progress)
 
 * BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
     * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
