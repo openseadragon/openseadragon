@@ -210,7 +210,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      */
     removeOverlay: function( element ) {
         $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
-        this.viewer.updateOverlay( element );
+        this.viewer.removeOverlay( element );
         return this;
     },
 
