@@ -1,12 +1,14 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.0.1: (in progress)
+1.1.0: (in progress)
 
 * BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
     * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
     * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
+* BREAKING CHANGE: Pseudo full screen mode on IE<11 using activex has been dropped. OpenSeadragon will run in full page if full screen mode is requested.
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* DEPRECATION: OpenSeadragon.cancelFullScreen has been renamed OpenSeadragon.exitFullScreen (#358)
 * Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
 * Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
@@ -23,6 +25,7 @@ OPENSEADRAGON CHANGELOG
 * Added pre-draw event for tiles to allow applications to alter the image (#348)
 * Added optional Rotate Left/Right buttons to standard controls (#341)
 * Added optimization for large numbers of overlays: `checkResize = false` option for OpenSeadragon.Overlay (#365)
+* Updated full screen API, adding support for Opera and IE11 and allowing keyboard input in Chrome (#358)
 
 1.0.0:
 

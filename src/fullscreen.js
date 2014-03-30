@@ -32,114 +32,112 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Implementation and research by John Dyer in:
- * http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
- * John Dyer has released this fullscreen code under the MIT license; see
- * <https://github.com/openseadragon/openseadragon/issues/81>.
- *
- * Copyright (C) 2011 John Dyer
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
- * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
- * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
 (function( $ ) {
     /**
-     * Determined native full screen support we can get from the browser.
+     * Determine native full screen support we can get from the browser.
      * @member fullScreenApi
      * @memberof OpenSeadragon
      * @type {object}
-     * @property {Boolean} supportsFullScreen
-     * @property {Function} isFullScreen
-     * @property {Function} requestFullScreen
-     * @property {Function} cancelFullScreen
-     * @property {String} fullScreenEventName
-     * @property {String} fullScreenErrorEventName
-     * @property {String} prefix
+     * @property {Boolean} supportsFullScreen Return true if full screen API is supported.
+     * @property {Function} isFullScreen Return true if currently in full screen mode.
+     * @property {Function} getFullScreenElement Return the element currently in full screen mode.
+     * @property {Function} requestFullScreen Make a request to go in full screen mode.
+     * @property {Function} exitFullScreen Make a request to exit full screen mode.
+     * @property {Function} cancelFullScreen Deprecated, use exitFullScreen instead.
+     * @property {String} fullScreenEventName Event fired when the full screen mode change.
+     * @property {String} fullScreenErrorEventName Event fired when a request to go
+     * in full screen mode failed.
      */
     var fullScreenApi = {
-            supportsFullScreen: false,
-            isFullScreen: function() { return false; },
-            requestFullScreen: function() {},
-            cancelFullScreen: function() {},
-            fullScreenEventName: '',
-            fullScreenErrorEventName: '',
-            prefix: ''
-        },
-        browserPrefixes = 'webkit moz o ms khtml'.split(' ');
+        supportsFullScreen: false,
+        isFullScreen: function() { return false; },
+        getFullScreenElement: function() { return null; },
+        requestFullScreen: function() {},
+        exitFullScreen: function() {},
+        cancelFullScreen: function() {},
+        fullScreenEventName: '',
+        fullScreenErrorEventName: ''
+    };
 
     // check for native support
-    if (typeof document.cancelFullScreen != 'undefined') {
+    if ( document.exitFullscreen ) {
+        // W3C standard
         fullScreenApi.supportsFullScreen = true;
-    } else {
-        // check for fullscreen support by vendor prefix
-        for (var i = 0, il = browserPrefixes.length; i < il; i++ ) {
-            fullScreenApi.prefix = browserPrefixes[i];
-
-            if (typeof document[fullScreenApi.prefix + 'CancelFullScreen' ] != 'undefined' ) {
-                fullScreenApi.supportsFullScreen = true;
-
-                break;
-            }
-        }
-    }
-
-    // update methods to do something useful
-    if (fullScreenApi.supportsFullScreen) {
-        fullScreenApi.fullScreenEventName = fullScreenApi.prefix + 'fullscreenchange';
-        fullScreenApi.fullScreenErrorEventName = fullScreenApi.prefix + 'fullscreenerror';
-
-        fullScreenApi.isFullScreen = function() {
-            switch (this.prefix) {
-                case '':
-                    return document.fullScreen;
-                case 'webkit':
-                    return document.webkitIsFullScreen;
-                default:
-                    return document[this.prefix + 'FullScreen'];
-            }
+        fullScreenApi.getFullScreenElement = function() {
+            return document.fullscreenElement;
         };
         fullScreenApi.requestFullScreen = function( element ) {
-            return (this.prefix === '') ?
-                element.requestFullScreen() :
-                element[this.prefix + 'RequestFullScreen']();
-
+            return element.requestFullscreen();
         };
-        fullScreenApi.cancelFullScreen = function() {
-            return (this.prefix === '') ?
-                document.cancelFullScreen() :
-                document[this.prefix + 'CancelFullScreen']();
+        fullScreenApi.exitFullScreen = function() {
+            document.exitFullscreen();
         };
-    } else if ( typeof window.ActiveXObject !== "undefined" ){
-        // Older IE.  Support based on:
-        // http://stackoverflow.com/questions/1125084/how-to-make-in-javascript-full-screen-windows-stretching-all-over-the-screen/7525760
-        fullScreenApi.requestFullScreen = function(){
-            /* global ActiveXObject:true */
-            var wscript = new ActiveXObject("WScript.Shell");
-            if ( wscript !== null ) {
-                wscript.SendKeys("{F11}");
-            }
-            return false;
+        fullScreenApi.fullScreenEventName = "fullscreenchange";
+        fullScreenApi.fullScreenErrorEventName = "fullscreenerror";
+    } else if ( document.msExitFullscreen ) {
+        // IE 11
+        fullScreenApi.supportsFullScreen = true;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.msFullscreenElement;
         };
-        fullScreenApi.cancelFullScreen = fullScreenApi.requestFullScreen;
+        fullScreenApi.requestFullScreen = function( element ) {
+            return element.msRequestFullscreen();
+        };
+        fullScreenApi.exitFullScreen = function() {
+            document.msExitFullscreen();
+        };
+        fullScreenApi.fullScreenEventName = "MSFullscreenChange";
+        fullScreenApi.fullScreenErrorEventName = "MSFullscreenError";
+    } else if ( document.webkitExitFullscreen ) {
+        // Recent webkit
+        fullScreenApi.supportsFullScreen = true;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.webkitFullscreenElement;
+        };
+        fullScreenApi.requestFullScreen = function( element ) {
+            return element.webkitRequestFullscreen();
+        };
+        fullScreenApi.exitFullScreen = function() {
+            document.webkitExitFullscreen();
+        };
+        fullScreenApi.fullScreenEventName = "webkitfullscreenchange";
+        fullScreenApi.fullScreenErrorEventName = "webkitfullscreenerror";
+    } else if ( document.webkitCancelFullScreen ) {
+        // Old webkit
+        fullScreenApi.supportsFullScreen = true;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.webkitCurrentFullScreenElement;
+        };
+        fullScreenApi.requestFullScreen = function( element ) {
+            return element.webkitRequestFullScreen();
+        };
+        fullScreenApi.exitFullScreen = function() {
+            document.webkitCancelFullScreen();
+        };
+        fullScreenApi.fullScreenEventName = "webkitfullscreenchange";
+        fullScreenApi.fullScreenErrorEventName = "webkitfullscreenerror";
+    } else if ( document.mozCancelFullScreen ) {
+        // Firefox
+        fullScreenApi.supportsFullScreen = true;
+        fullScreenApi.getFullScreenElement = function() {
+            return document.mozFullScreenElement;
+        };
+        fullScreenApi.requestFullScreen = function( element ) {
+            return element.mozRequestFullScreen();
+        };
+        fullScreenApi.exitFullScreen = function() {
+            document.mozCancelFullScreen();
+        };
+        fullScreenApi.fullScreenEventName = "mozfullscreenchange";
+        fullScreenApi.fullScreenErrorEventName = "mozfullscreenerror";
     }
+    fullScreenApi.isFullScreen = function() {
+        return fullScreenApi.getFullScreenElement() !== null;
+    };
+    fullScreenApi.cancelFullScreen = function() {
+        $.console.error("cancelFullScreen is deprecated. Use exitFullScreen instead.");
+        fullScreenApi.exitFullScreen();
+    };
 
     // export api
     $.extend( $, fullScreenApi );

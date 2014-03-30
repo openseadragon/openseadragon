@@ -976,7 +976,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.requestFullScreen( document.body );
 
         } else {
-            $.cancelFullScreen();
+            $.exitFullScreen();
         }
         return this;
     },
