@@ -1,3 +1,4 @@
+/// <reference path="http://localhost/OpenSeadragonImagingHelper/index.html" />
 /*
  * OpenSeadragon - Viewer
  *
@@ -391,6 +392,7 @@ $.Viewer = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
         clickHandler:       $.delegate( this, onCanvasClick ),
         dragHandler:        $.delegate( this, onCanvasDrag ),
+        dragEndHandler:     $.delegate( this, onCanvasDragEnd ),
         releaseHandler:     $.delegate( this, onCanvasRelease ),
         scrollHandler:      $.delegate( this, onCanvasScroll ),
         pinchHandler:       $.delegate( this, onCanvasPinch )
@@ -2246,7 +2248,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), true );
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), ( event.pointerType !== 'mouse' ) ? true : false );
         if( this.constrainDuringPan ){
             this.viewport.applyConstraints();
         }
@@ -2261,6 +2263,8 @@ function onCanvasDrag( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
+     * @property {Number} speed - Current computed speed, in pixels per second.
+     * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
@@ -2269,13 +2273,49 @@ function onCanvasDrag( event ) {
         tracker: event.eventSource,
         position: event.position,
         delta: event.delta,
+        speed: event.speed,
+        direction: event.direction,
+        shift: event.shift,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasDragEnd( event ) {
+    if ( event.pointerType !== 'mouse' && !event.preventDefaultAction && this.viewport && event.speed > 20 ) {
+        var amplitudeX = 0.35 * ( event.speed * Math.cos( event.direction ) ),
+            amplitudeY = 0.35 * ( event.speed * Math.sin( event.direction ) ),
+            center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
+            target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
+        this.viewport.panTo( target, false );
+        this.viewport.applyConstraints();
+    }
+    /**
+     * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-drag-end
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
+     * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-drag-end', {
+        tracker: event.eventSource,
+        position: event.position,
+        speed: event.speed,
+        direction: event.direction,
         shift: event.shift,
         originalEvent: event.originalEvent
     });
 }
 
 function onCanvasRelease( event ) {
-    if ( event.insideElementPressed && this.viewport ) {
+    if ( event.pointerType === 'mouse' && event.insideElementPressed && this.viewport ) {
         this.viewport.applyConstraints();
     }
     /**
@@ -2299,6 +2339,45 @@ function onCanvasRelease( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
+}
+
+function onCanvasPinch( event ) {
+    if ( !event.preventDefaultAction && this.viewport ) {
+        var centerPt = this.viewport.pointFromPixel( event.center, true ),
+            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+        this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+        this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
+        this.viewport.applyConstraints();
+    }
+    /**
+     * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-pinch
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gesturePoints - Gesture points associated with the gesture. Velocity data can be found here.
+     * @property {OpenSeadragon.Point} lastCenter - The previous center point of the two pinch contact points relative to the tracked element.
+     * @property {OpenSeadragon.Point} center - The center point of the two pinch contact points relative to the tracked element.
+     * @property {Number} lastDistance - The previous distance between the two pinch contact points in CSS pixels.
+     * @property {Number} distance - The distance between the two pinch contact points in CSS pixels.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent('canvas-pinch', {
+        tracker: event.eventSource,
+        gesturePoints: event.gesturePoints,
+        lastCenter: event.lastCenter,
+        center: event.center,
+        lastDistance: event.lastDistance,
+        distance: event.distance,
+        shift: event.shift,
+        originalEvent: event.originalEvent
+    });
+    //cancels event
+    return false;
 }
 
 function onCanvasScroll( event ) {
@@ -2329,49 +2408,6 @@ function onCanvasScroll( event ) {
         tracker: event.eventSource,
         position: event.position,
         scroll: event.scroll,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-    //cancels event
-    return false;
-}
-
-function onCanvasPinch(event) {
-//{
-//    eventSource:
-//    gesturePoints:
-//    lastCenter:
-//    center:
-//    lastDistance:
-//    distance:
-//    originalEvent:
-//    preventDefaultAction:
-//    userData:
-//}
-    if (!event.preventDefaultAction && this.viewport) {
-        var centerPt = this.viewport.pointFromPixel( event.center, true ),
-            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-        this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-        this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
-        this.viewport.applyConstraints();
-    }
-    /**
-     * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-pinch
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Number} delta - The pinch delta for the event.
-     * @property {Boolean} shift - True if the shift key was pressed during this event.
-     * @property {OpenSeadragon.GesturePoint[]} gesturePoints - 
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent('canvas-pinch', {
-        tracker: event.eventSource,
         shift: event.shift,
         originalEvent: event.originalEvent
     });

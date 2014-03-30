@@ -742,7 +742,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomLevel:           null,
 
             //UI RESPONSIVENESS AND FEEL
-            springStiffness:        7.0,
+            springStiffness:        5.0,
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
             zoomPerClick:           2,

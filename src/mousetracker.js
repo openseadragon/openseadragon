@@ -37,44 +37,14 @@
         // is any button currently being pressed while mouse events occur
     var IS_BUTTON_DOWN = false,
         // is any tracker currently capturing?
-        IS_CAPTURING   = false,
+        //IS_CAPTURING   = false,
         // dictionary from hash to MouseTracker
-        ACTIVE         = {},
+        //ACTIVE         = {},
         // list of trackers interested in capture
-        CAPTURING      = [],
+        //CAPTURING      = [],
         // dictionary from hash to private properties
         THIS           = {};
 
-
-    /**
-     * Represents a point of contact on the screen made by a mouse cursor, pen, touch, or other pointing device.
-     *
-     * @typedef {Object} GesturePoint
-     * @memberof OpenSeadragon.MouseTracker
-     *
-     * @property {Number} id
-     *     Identifier unique from all other active GesturePoints for a given pointer device.
-     * @property {String} type
-     *     "mouse", "touch", "pen", or "".
-     * @property {Boolean} isCaptured
-     *     True if input for the pointer is captured to the tracked element.
-     * @property {Boolean} insideElementPressed
-     *     True if mouse button pressed or contact point initiated inside the screen area of the tracked element.
-     * @property {Boolean} insideElement
-     *     True if mouse cursor or contact point is currently inside the screen area of the tracked element.
-     * @property {OpenSeadragon.Point} startPos
-     *     The initial pointer position, relative to the page including any scrolling.
-     * @property {Number} startTime
-     *     The initial pointer contact time, in milliseconds.
-     * @property {OpenSeadragon.Point} lastPos
-     *     The last pointer position, relative to the page including any scrolling.
-     * @property {Number} lastTime
-     *     The last pointer contact time, in milliseconds.
-     * @property {OpenSeadragon.Point} currentPos
-     *     The current pointer position, relative to the page including any scrolling.
-     * @property {Number} currentTime
-     *     The current pointer contact time, in milliseconds.
-     */
 
     /**
      * @class MouseTracker
@@ -116,10 +86,10 @@
      *      An optional handler for mouse click.
      * @param {OpenSeadragon.EventHandler} [options.dragHandler=null]
      *      An optional handler for the drag gesture.
+     * @param {OpenSeadragon.EventHandler} [options.dragEndHandler=null]
+     *      An optional handler for after a drag gesture.
      * @param {OpenSeadragon.EventHandler} [options.pinchHandler=null]
      *      An optional handler for the pinch gesture.
-     * @param {OpenSeadragon.EventHandler} [options.swipeHandler=null]
-     *      An optional handler for the swipe gesture.
      * @param {OpenSeadragon.EventHandler} [options.keyHandler=null]
      *      An optional handler for keypress.
      * @param {OpenSeadragon.EventHandler} [options.focusHandler=null]
@@ -171,8 +141,8 @@
         this.scrollHandler      = options.scrollHandler  || null;
         this.clickHandler       = options.clickHandler   || null;
         this.dragHandler        = options.dragHandler    || null;
+        this.dragEndHandler     = options.dragEndHandler || null;
         this.pinchHandler       = options.pinchHandler   || null;
-        this.swipeHandler       = options.swipeHandler   || null;
         this.stopHandler        = options.stopHandler    || null;
         this.keyHandler         = options.keyHandler     || null;
         this.focusHandler       = options.focusHandler   || null;
@@ -215,10 +185,10 @@
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
             mouseup:               function ( event ) { onMouseUp( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
-            mouseupcapturedie:     function ( event ) { onMouseUpCapturedIE( _this, event ); },
+            //mouseupcapturedie:     function ( event ) { onMouseUpCapturedIE( _this, event ); },
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
-            mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
+            //mousemovecapturedie:   function ( event ) { onMouseMoveCapturedIE( _this, event ); },
 
             touchenter:            function ( event ) { onTouchEnter( _this, event ); },
             touchleave:            function ( event ) { onTouchLeave( _this, event ); },
@@ -245,26 +215,16 @@
 
             tracking:              false,
             capturing:             false,
-            // Contact Points
-            mousePoints:           {},
-            mousePointCount:       0,
-            touchPoints:           {},
-            touchPointCount:       0,
-            penPoints:             {},
-            penPointCount:         0,
+            // Active Contact Points
+            mousePoints:           new $.MouseTracker.GesturePointList(),
+            touchPoints:           new $.MouseTracker.GesturePointList(),
+            penPoints:             new $.MouseTracker.GesturePointList(),
             // Tracking for pinch gesture
             pinchGPoints:          [],
             lastPinchDist:         0,
             currentPinchDist:      0,
             lastPinchCenter:       null,
-            currentPinchCenter:    null,
-
-            //insideElementPressed:  false,
-            //insideElement:         false,
-            //lastPoint:             null,
-            //lastMouseDownTime:     null,
-            //lastMouseDownPoint:    null,
-            //lastPinchDelta:        0,
+            currentPinchCenter:    null
         };
 
     };
@@ -313,7 +273,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -340,7 +300,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -367,7 +327,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -389,7 +349,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -416,7 +376,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -438,7 +398,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -464,7 +424,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -490,12 +450,16 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
          * @param {OpenSeadragon.Point} event.delta
-         *      The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
+         *      The x,y components of the difference between the current position and the last drag event position.  Useful for ignoring or weighting the events.
+         * @param {Number} speed
+         *     Current computed speed, in pixels per second.
+         * @property {Number} direction
+         *     Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
          * @param {Boolean} event.isTouchEvent
@@ -516,16 +480,48 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
-         * @param {OpenSeadragon.Point} event.delta
-         *      The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
+         * @param {Number} speed
+         *     Speed at the end of a drag gesture, in pixels per second.
+         * @property {Number} direction
+         *     Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
          * @param {Boolean} event.isTouchEvent
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        dragEndHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", or "".
+         * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} event.gesturePoints
+         *      Gesture points associated with the gesture. Velocity data can be found here.
+         * @param {OpenSeadragon.Point} event.lastCenter
+         *      The previous center point of the two pinch contact points relative to the tracked element.
+         * @param {OpenSeadragon.Point} event.center
+         *      The center point of the two pinch contact points relative to the tracked element.
+         * @param {Number} event.lastDistance
+         *      The previous distance between the two pinch contact points in CSS pixels.
+         * @param {Number} event.distance
+         *      The distance between the two pinch contact points in CSS pixels.
+         * @param {Boolean} event.shift
+         *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
          * @param {Boolean} event.preventDefaultAction
@@ -542,33 +538,7 @@
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
-         * @param {String} pointerType
-         *     "mouse", "touch", "pen", or "".
-         * @param {OpenSeadragon.Point} event.position
-         *      The position of the event relative to the tracked element.
-         * @param {OpenSeadragon.Point} event.delta
-         *      The x,y components of the difference between start drag and end drag.  Usefule for ignoring or weighting the events.
-         * @param {Boolean} event.shift
-         *      True if the shift key was pressed during this event.
-         * @param {Boolean} event.isTouchEvent
-         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
-         * @param {Object} event.originalEvent
-         *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
-         * @param {Object} event.userData
-         *      Arbitrary user-defined object.
-         */
-        swipeHandler: function () { },
-
-        /**
-         * Implement or assign implementation to these handlers during or after
-         * calling the constructor.
-         * @function
-         * @param {Object} event
-         * @param {OpenSeadragon.MouseTracker} event.eventSource
-         *      A reference to the tracker instance.
-         * @param {String} pointerType
+         * @param {String} event.pointerType
          *     "mouse", "touch", "pen", or "".
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
@@ -638,6 +608,99 @@
 
 
     /**
+     * @member gesturePointVelocityTracker
+     * @memberof OpenSeadragon.MouseTracker
+     * @private
+     *
+     * Provides continuous computation of velocity (speed and direction) of active pointers.
+     *
+     * This is a singleton, used by all MouseTracker instances. Currently it is extremely unlikely there will ever be more than
+     * two active gesture pointers at a time.
+     */
+    $.MouseTracker.gesturePointVelocityTracker = (function () {
+        var trackerPoints = [],
+            intervalId = 0,
+            lastTime = 0;
+
+        // Generates a unique identifier for a tracked gesture point
+        var _generateGuid = function ( tracker, gPoint ) {
+            return tracker.hash.toString() + gPoint.type + gPoint.id.toString();
+        };
+
+        // Interval timer callback. Computes velocity for all tracked gesture points.
+        var _doTracking = function () {
+            var i,
+                len = trackerPoints.length,
+                trackPoint,
+                gPoint,
+                now = $.now(),
+                elapsedTime,
+                distance,
+                speed;
+
+            elapsedTime = now - lastTime;
+            lastTime = now;
+
+            for ( i = 0; i < len; i++ ) {
+                trackPoint = trackerPoints[ i ];
+                gPoint = trackPoint.gPoint;
+                // Math.atan2 gives us just what we need for a velocity vector, as we can simply
+                //   use cos()/sin() to extract the x/y velocity components.
+                gPoint.direction = Math.atan2( gPoint.currentPos.y - trackPoint.lastPos.y, gPoint.currentPos.x - trackPoint.lastPos.x );
+                // speed = distance / elapsed time
+                distance = trackPoint.lastPos.distanceTo( gPoint.currentPos );
+                trackPoint.lastPos = gPoint.currentPos;
+                speed = 1000 * distance / ( elapsedTime + 1 );
+                // Simple biased average, favors the most recent speed computation. Smooths out erratic gestures a bit.
+                gPoint.speed = 0.75 * speed + 0.25 * gPoint.speed;
+            }
+        };
+
+        // Public. Add a gesture point to be tracked
+        var addPoint = function ( tracker, gPoint ) {
+            var guid = _generateGuid( tracker, gPoint );
+
+            trackerPoints.push(
+                {
+                    guid: guid,
+                    gPoint: gPoint,
+                    lastPos: gPoint.currentPos
+                } );
+
+            // Only fire up the interval timer when there's gesture points to track
+            if ( trackerPoints.length === 1 ) {
+                lastTime = $.now();
+                intervalId = window.setInterval( _doTracking, 50 );
+            }
+        };
+
+        // Public. Stop tracking a gesture point
+        var removePoint = function ( tracker, gPoint ) {
+            var guid = _generateGuid( tracker, gPoint ),
+                i,
+                len = trackerPoints.length;
+            for ( i = 0; i < len; i++ ) {
+                if ( trackerPoints[ i ].guid === guid ) {
+                    //gPoint = trackerPoints[ i ].gPoint;
+                    trackerPoints.splice( i, 1 );
+                    // Only run the interval timer if theres gesture points to track
+                    len--;
+                    if ( len === 0 ) {
+                        window.clearInterval( intervalId );
+                    }
+                    break;
+                }
+            }
+        };
+
+        return {
+            addPoint:    addPoint,
+            removePoint: removePoint
+        };
+    } )();
+
+
+    /**
      * Detect available mouse wheel event name.
      */
     $.MouseTracker.wheelEventName = ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version > 8 ) ||
@@ -646,7 +709,7 @@
                                     'DOMMouseScroll';                                                        // Assume old Firefox
 
     /**
-     * Detect browser pointer device event model and build appropriate list of events to subscribe to.
+     * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
      */
     $.MouseTracker.subscribeEvents = [ "click", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
@@ -678,10 +741,18 @@
         }
     }
     else {
+        // Standard mouse events
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
-            $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave", "touchstart", "touchend", "touchmove", "touchcancel" );
+            $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
+            if ( 'ontouchenter' in window ) {
+                $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave" );
+                $.MouseTracker.haveTouchEnter = true;
+            }
+            else {
+                $.MouseTracker.haveTouchEnter = false;
+            }
         }
         if ( 'ongesturestart' in window ) {
             // iOS (see https://developer.apple.com/library/safari/documentation/UserExperience/Reference/GestureEventClassReference/GestureEvent/GestureEvent.html)
@@ -691,6 +762,108 @@
         $.MouseTracker.mousePointerId = "legacy-mouse";
         $.MouseTracker.maxTouchPoints = 10;
     }
+    
+
+//*******************************************************************************************************************************************
+//** Utility Types/Classes
+
+
+    /**
+     * Represents a point of contact on the screen made by a mouse cursor, pen, touch, or other pointing device.
+     *
+     * @typedef {Object} GesturePoint
+     * @memberof OpenSeadragon.MouseTracker
+     *
+     * @property {Number} id
+     *     Identifier unique from all other active GesturePoints for a given pointer device.
+     * @property {String} type
+     *     "mouse", "touch", "pen", or "".
+     * @property {Boolean} insideElementPressed
+     *     True if mouse button pressed or contact point initiated inside the screen area of the tracked element.
+     * @property {Boolean} insideElement
+     *     True if mouse cursor or contact point is currently inside the screen area of the tracked element.
+     * @property {Number} speed
+     *     Continuously computed speed, in pixels per second.
+     * @property {Number} direction
+     *     Continuously computed direction, in radians. Only valid if speed > 0.
+     * @property {OpenSeadragon.Point} startPos
+     *     The initial pointer position, relative to the page including any scrolling.
+     * @property {Number} startTime
+     *     The initial pointer contact time, in milliseconds.
+     * @property {OpenSeadragon.Point} lastPos
+     *     The last pointer position, relative to the page including any scrolling.
+     * @property {Number} lastTime
+     *     The last pointer contact time, in milliseconds.
+     * @property {OpenSeadragon.Point} currentPos
+     *     The current pointer position, relative to the page including any scrolling.
+     * @property {Number} currentTime
+     *     The current pointer contact time, in milliseconds.
+     */
+
+
+    /**
+     * @class GesturePointList
+     * @classdesc Provides an abstraction for a set of {@link OpenSeadragon.MouseTracker.GesturePoint} objects.
+     * @memberof OpenSeadragon.MouseTracker
+     */
+    $.MouseTracker.GesturePointList = function () {
+        this._gPoints = [];
+    };
+    $.MouseTracker.GesturePointList.prototype = /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */{
+        /**
+         * @function
+         * @returns {Number} Number of gesture points in the list.
+         */
+        getLength: function () {
+            return this._gPoints.length;
+        },
+        /**
+         * @function
+         * @returns {Array.<OpenSeadragon.MouseTracker.GesturePoint>} The list of gesture points in the list as an array (read-only).
+         */
+        asArray: function () {
+            return this._gPoints;
+        },
+        /**
+         * @function
+         * @param {OpenSeadragon.MouseTracker.GesturePoint} gesturePoint - A gesture point to add to the list.
+         * @returns {Number} Number of gesture points in the list.
+         */
+        add: function ( gp ) {
+            return this._gPoints.push( gp );
+        },
+        /**
+         * @function
+         * @param {Number} id - The id of the gesture point to remove from the list.
+         * @returns {Number} Number of gesture points in the list.
+         */
+        removeById: function ( id ) {
+            var i,
+                len = this._gPoints.length;
+            for ( i = 0; i < len; i++ ) {
+                if ( this._gPoints[ i ].id === id ) {
+                    this._gPoints.splice( i, 1 );
+                    break;
+                }
+            }
+            return this._gPoints.length;
+        },
+        /**
+         * @function
+         * @param {Number} id - The id of the gesture point to retrieve from the list.
+         * @returns {OpenSeadragon.MouseTracker.GesturePoint|null} The gesture point with the given id, or null if not found.
+         */
+        getById: function ( id ) {
+            var i,
+                len = this._gPoints.length;
+            for ( i = 0; i < len; i++ ) {
+                if ( this._gPoints[ i ].id === id ) {
+                    return this._gPoints[ i ];
+                }
+            }
+            return null;
+        }
+    };
     
 
 //*******************************************************************************************************************************************
@@ -718,7 +891,7 @@
                 );
             }
             delegate.tracking = true;
-            ACTIVE[ tracker.hash ] = tracker;
+            //ACTIVE[ tracker.hash ] = tracker;
         }
     }
 
@@ -745,7 +918,7 @@
 
             releaseMouse( tracker );
             delegate.tracking = false;
-            delete ACTIVE[ tracker.hash ];
+            //delete ACTIVE[ tracker.hash ];
         }
     }
 
@@ -766,26 +939,26 @@
         var delegate = THIS[ tracker.hash ];
         if ( !delegate.capturing ) {
 
-            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-                $.removeEvent(
-                    tracker.element,
-                    "mouseup",
-                    delegate.mouseup,
-                    false
-                );
-                $.addEvent(
-                    tracker.element,
-                    "mouseup",
-                    delegate.mouseupcapturedie,
-                    true
-                );
-                $.addEvent(
-                    tracker.element,
-                    "mousemove",
-                    delegate.mousemovecapturedie,
-                    true
-                );
-            } else {
+            //if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
+            //    $.removeEvent(
+            //        tracker.element,
+            //        "mouseup",
+            //        delegate.mouseup,
+            //        false
+            //    );
+            //    $.addEvent(
+            //        tracker.element,
+            //        "mouseup",
+            //        delegate.mouseupcapturedie,
+            //        true
+            //    );
+            //    $.addEvent(
+            //        tracker.element,
+            //        "mousemove",
+            //        delegate.mousemovecapturedie,
+            //        true
+            //    );
+            //} else {
                 $.addEvent(
                     window,
                     "mouseup",
@@ -798,7 +971,7 @@
                     delegate.mousemovecaptured,
                     true
                 );
-            }
+            //}
             delegate.capturing = true;
         }
     }
@@ -813,26 +986,26 @@
         var delegate = THIS[ tracker.hash ];
         if ( delegate.capturing ) {
 
-            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-                $.removeEvent(
-                    tracker.element,
-                    "mousemove",
-                    delegate.mousemovecapturedie,
-                    true
-                );
-                $.removeEvent(
-                    tracker.element,
-                    "mouseup",
-                    delegate.mouseupcapturedie,
-                    true
-                );
-                $.addEvent(
-                    tracker.element,
-                    "mouseup",
-                    delegate.mouseup,
-                    false
-                );
-            } else {
+            //if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
+            //    $.removeEvent(
+            //        tracker.element,
+            //        "mousemove",
+            //        delegate.mousemovecapturedie,
+            //        true
+            //    );
+            //    $.removeEvent(
+            //        tracker.element,
+            //        "mouseup",
+            //        delegate.mouseupcapturedie,
+            //        true
+            //    );
+            //    $.addEvent(
+            //        tracker.element,
+            //        "mouseup",
+            //        delegate.mouseup,
+            //        false
+            //    );
+            //} else {
                 $.removeEvent(
                     window,
                     "mousemove",
@@ -845,7 +1018,7 @@
                     delegate.mouseupcaptured,
                     true
                 );
-            }
+            //}
             delegate.capturing = false;
         }
     }
@@ -863,6 +1036,29 @@
     //        }
     //    }
     //}
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function getGPointsListByType( tracker, type ) {
+        var delegate = THIS[ tracker.hash ],
+            list;
+        if ( type === 'mouse' ) {
+            list = delegate.mousePoints;
+        }
+        else if ( type === 'touch' ) {
+            list = delegate.touchPoints;
+        }
+        else if ( type === 'pen' ) {
+            list = delegate.penPoints;
+        }
+        else {
+            list = null;
+        }
+        return list;
+    }
 
 
     /**
@@ -1076,7 +1272,7 @@
             position,
             gPoint;
 
-        event = $.getEvent(event);
+        event = $.getEvent( event );
 
         time = $.now();
         position = getMouseAbsolute( event );
@@ -1084,9 +1280,9 @@
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
-            //isCaptured: true,
             //insideElementPressed: true,
             insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1095,7 +1291,7 @@
             currentTime: time
         };
 
-        updatePointersOver( tracker, event, [gPoint] );
+        updatePointersOver( tracker, event, [ gPoint ] );
     }
 
 
@@ -1108,7 +1304,7 @@
             position,
             gPoint;
 
-        event = $.getEvent(event);
+        event = $.getEvent( event );
 
         var eventOrTouchPoint = event;//isTouch ? event.touches[ 0 ] : event;
 
@@ -1118,9 +1314,9 @@
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
-            //isCaptured: true,
             //insideElementPressed: true,
             insideElement: false,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1129,7 +1325,7 @@
             currentTime: time
         };
 
-        updatePointersOut( tracker, event, [gPoint] );
+        updatePointersOut( tracker, event, [ gPoint ] );
     }
 
 
@@ -1143,7 +1339,7 @@
             position,
             gPoint;
 
-        event = $.getEvent(event);
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -1155,33 +1351,33 @@
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
-            isCaptured: true,
             insideElementPressed: true,
             insideElement: true,
-            startPos: position,
-            startTime: time,
-            lastPos: position,
-            lastTime: time,
+            //speed: 0,
+            //startPos: position,
+            //startTime: time,
+            //lastPos: position,
+            //lastTime: time,
             currentPos: position,
             currentTime: time
         };
 
-        addPointers( tracker, event, [gPoint] );
+        addPointers( tracker, event, [ gPoint ] );
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
+        if ( tracker.pressHandler || tracker.dragHandler ) {
             $.cancelEvent( event );
         }
 
-        if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
-             !IS_CAPTURING ) {
+        //if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
+        //     !IS_CAPTURING ) {
             captureMouse( tracker );
-            IS_CAPTURING = true;
-            // reset to empty & add us
-            CAPTURING = [ tracker ];
-        } else if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-            // add us to the list
-            CAPTURING.push( tracker );
-        }
+            //IS_CAPTURING = true;
+            //// reset to empty & add us
+            //CAPTURING = [ tracker ];
+        //} else if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
+        //    // add us to the list
+        //    CAPTURING.push( tracker );
+        //}
     }
 
 
@@ -1205,9 +1401,9 @@
      */
     function onMouseUpCaptured( tracker, event ) {
         var delegate = THIS[ tracker.hash ],
-            gPoint = delegate.mousePoints[ $.MouseTracker.mousePointerId ] || null;
+            gPoint = delegate.mousePoints.getById( $.MouseTracker.mousePointerId );
 
-        if ( !gPoint.insideElement ) {
+        if ( gPoint && !gPoint.insideElement ) {
             handleMouseUp( tracker, event );
         }
 
@@ -1225,32 +1421,32 @@
      * @private
      * @inner
      */
-    function onMouseUpCapturedIE( tracker, event ) {
-        var othertracker,
-            i;
+    //function onMouseUpCapturedIE( tracker, event ) {
+    //    var othertracker,
+    //        i;
 
-        event = $.getEvent( event );
+    //    event = $.getEvent( event );
 
-        if ( event.button == 2 ) {
-            return;
-        }
+    //    if ( event.button == 2 ) {
+    //        return;
+    //    }
 
-        for ( i = 0; i < CAPTURING.length; i++ ) {
-            othertracker = CAPTURING[ i ];
-            if ( !hasMouse( othertracker ) ) {
-                handleMouseUp( othertracker, event );
-            }
-        }
+    //    for ( i = 0; i < CAPTURING.length; i++ ) {
+    //        othertracker = CAPTURING[ i ];
+    //        if ( !hasMouse( othertracker ) ) {
+    //            handleMouseUp( othertracker, event );
+    //        }
+    //    }
 
-        releaseMouse( tracker );
-        IS_CAPTURING = false;
-        event.srcElement.fireEvent(
-            "on" + event.type,
-            document.createEventObject( event )
-        );
+    //    releaseMouse( tracker );
+    //    IS_CAPTURING = false;
+    //    event.srcElement.fireEvent(
+    //        "on" + event.type,
+    //        document.createEventObject( event )
+    //    );
 
-        $.stopEvent( event );
-    }
+    //    $.stopEvent( event );
+    //}
 
 
     /**
@@ -1280,14 +1476,14 @@
      * @private
      * @inner
      */
-    function onMouseMoveCapturedIE( tracker, event ) {
-        var i;
-        for ( i = 0; i < CAPTURING.length; i++ ) {
-            handleMouseMove( CAPTURING[ i ], event );
-        }
-
-        $.stopEvent( event );
-    }
+    //function onMouseMoveCapturedIE( tracker, event ) {
+    //    var i;
+    //    for ( i = 0; i < CAPTURING.length; i++ ) {
+    //        handleMouseMove( CAPTURING[ i ], event );
+    //    }
+    //
+    //    $.stopEvent( event );
+    //}
 
 
     /**
@@ -1309,9 +1505,9 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 insideElement: true,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1344,9 +1540,9 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 insideElement: false,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1375,13 +1571,13 @@
 
         time = $.now();
 
-        if ( touchCount > 0 && delegate.touchPointCount === 0 ) {
+        if ( !$.MouseTracker.haveTouchEnter && touchCount > 0 && delegate.touchPoints.getLength() === 0 ) {
             gPoint = {
                 id: event.changedTouches[ 0 ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 insideElement: true,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1389,7 +1585,7 @@
                 currentPos: getMouseAbsolute( event.changedTouches[ 0 ] ),
                 currentTime: time
             };
-            updatePointersOver( tracker, event, [gPoint] );
+            updatePointersOver( tracker, event, [ gPoint ] );
         }
 
         for ( i = 0; i < touchCount; i++ ) {
@@ -1398,13 +1594,13 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                isCaptured: false,
                 insideElementPressed: true,
                 insideElement: true,
-                startPos: position,
-                startTime: time,
-                lastPos: position,
-                lastTime: time,
+                //speed: 0,
+                //startPos: position,
+                //startTime: time,
+                //lastPos: position,
+                //lastTime: time,
                 currentPos: position,
                 currentTime: time
             } );
@@ -1412,41 +1608,11 @@
 
         addPointers( tracker, event, gPoints );
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
-////****************************************************************
-//        var touchA,
-//            touchB;
-
-//        if ( event.touches.length == 1 &&
-//            event.targetTouches.length == 1 &&
-//            event.changedTouches.length == 1 ) {
-
-//            THIS[ tracker.hash ].lastTouch = event.touches[ 0 ];
-//            handlePointerOver( tracker, event, getMouseRelative( event.changedTouches[ 0 ], tracker.element ) );
-//            // call with no capture as the onMouseMoveCaptured will 
-//            // be triggered by onTouchMove
-//            onMouseDown( tracker, event, true, true );
-//        }
-
-//        if ( event.touches.length == 2 ) {
-
-//            touchA = getMouseAbsolute( event.touches[ 0 ] );
-//            touchB = getMouseAbsolute( event.touches[ 1 ] );
-//            THIS[ tracker.hash ].lastPinchDelta =
-//                Math.abs( touchA.x - touchB.x ) +
-//                Math.abs( touchA.y - touchB.y );
-//            THIS[ tracker.hash ].pinchMidpoint = new $.Point(
-//                ( touchA.x + touchB.x ) / 2,
-//                ( touchA.y + touchB.y ) / 2
-//            );
-//            //$.console.debug("pinch start : "+THIS[ tracker.hash ].lastPinchDelta);
-//        }
-
-//        event.preventDefault();
     }
 
 
@@ -1471,9 +1637,9 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                isCaptured: false,
                 //insideElementPressed: true,
                 //insideElement: true,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1485,13 +1651,13 @@
 
         removePointers( tracker, event, gPoints );
 
-        if ( touchCount > 0 && delegate.touchPointCount === 0 ) {
+        if ( !$.MouseTracker.haveTouchEnter && touchCount > 0 && delegate.touchPoints.getLength() === 0 ) {
             gPoint = {
                 id: event.changedTouches[ 0 ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 insideElement: false,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1499,32 +1665,14 @@
                 currentPos: getMouseAbsolute( event.changedTouches[ 0 ] ),
                 currentTime: time
             };
-            updatePointersOut( tracker, event, [gPoint] );
+            updatePointersOut( tracker, event, [ gPoint ] );
         }
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
-//****************************************************************************************
-//        if ( event.touches.length === 0 &&
-//            event.targetTouches.length === 0 &&
-//            event.changedTouches.length == 1 ) {
-
-//            THIS[ tracker.hash ].lastTouch = null;
-
-//            // call with no release, as the mouse events are 
-//            // not registered in onTouchStart
-//            onMouseUpCaptured( tracker, event, true, true );
-//            handlePointerOut( tracker, event, getMouseRelative( event.changedTouches[ 0 ], tracker.element ) );
-//        }
-//        if ( event.touches.length + event.changedTouches.length == 2 ) {
-//            THIS[ tracker.hash ].lastPinchDelta = null;
-//            THIS[ tracker.hash ].pinchMidpoint = null;
-//            //$.console.debug("pinch end");
-//        }
-//        event.preventDefault();
     }
 
 
@@ -1547,9 +1695,9 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 //insideElement: true,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1561,60 +1709,11 @@
 
         updatePointers( tracker, event, gPoints );
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
-//*******************************************************************************
-//        var touchA,
-//            touchB,
-//            pinchDelta;
-
-//        if ( !THIS[ tracker.hash ].lastTouch ) {
-//            return;
-//        }
-
-//        if ( event.touches.length === 1 &&
-//            event.targetTouches.length === 1 &&
-//            event.changedTouches.length === 1 &&
-//            THIS[ tracker.hash ].lastTouch.identifier === event.touches[ 0 ].identifier ) {
-
-//            onMouseMoveCaptured( tracker, event, true );
-
-//        } else if ( event.touches.length === 2 ) {
-
-//            touchA = getMouseAbsolute( event.touches[ 0 ] );
-//            touchB = getMouseAbsolute( event.touches[ 1 ] );
-//            pinchDelta =
-//                Math.abs( touchA.x - touchB.x ) +
-//                Math.abs( touchA.y - touchB.y );
-
-//                ////TODO: make the 75px pinch threshold configurable
-//                //if ( Math.abs( THIS[ tracker.hash ].lastPinchDelta - pinchDelta ) > 75 ) {
-//                //    //$.console.debug( "pinch delta : " + pinchDelta + " | previous : " + THIS[ tracker.hash ].lastPinchDelta);
-
-//                //    // Simulate a 'wheel' event
-//                //    var simulatedEvent = {
-//                //        target:     event.target || event.srcElement,
-//                //        type:       "wheel",
-//                //        shiftKey:   event.shiftKey || false,
-//                //        clientX:    THIS[ tracker.hash ].pinchMidpoint.x,
-//                //        clientY:    THIS[ tracker.hash ].pinchMidpoint.y,
-//                //        pageX:      THIS[ tracker.hash ].pinchMidpoint.x,
-//                //        pageY:      THIS[ tracker.hash ].pinchMidpoint.y,
-//                //        deltaMode:  1, // 0=pixel, 1=line, 2=page
-//                //        deltaX:     0,
-//                //        deltaY:     ( THIS[ tracker.hash ].lastPinchDelta > pinchDelta ) ? 1 : -1,
-//                //        deltaZ:     0
-//                //    };
-
-//                //    handleWheelEvent( tracker, simulatedEvent, event, true );
-
-//                //    THIS[ tracker.hash ].lastPinchDelta = pinchDelta;
-//                //}
-//        }
-//        event.preventDefault();
     }
 
 
@@ -1637,9 +1736,9 @@
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                //isCaptured: false,
                 //insideElementPressed: true,
                 //insideElement: true,
+                //speed: 0,
                 //startPos: position,
                 //startTime: time,
                 //lastPos: position,
@@ -1690,9 +1789,9 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            //isCaptured: false,
             //insideElementPressed: true,
             insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1701,7 +1800,7 @@
             currentTime: time
         };
 
-        updatePointersOver( tracker, event, [gPoint] );
+        updatePointersOver( tracker, event, [ gPoint ] );
     }
 
 
@@ -1720,9 +1819,9 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            //isCaptured: false,
             //insideElementPressed: true,
             insideElement: false,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1731,50 +1830,10 @@
             currentTime: time
         };
 
-        updatePointersOut( tracker, event, [gPoint] );
+        updatePointersOut( tracker, event, [ gPoint ] );
     }
 
 
-//$.MouseTracker.mousePointerId = "legacy-mouse";
-//$.MouseTracker.unprefixedPointerEvents = false;
-//$.MouseTracker.maxTouchPoints = 10;
-//    function addPointers( tracker, event, gPoints ) {
-//    }
-//    function updatePointersOver( tracker, event, gPoints ) {
-//    }
-//    function updatePointersOut( tracker, event, gPoints ) {
-//    }
-//    function updatePointers( tracker, event, gPoints ) {
-//    }
-//    function removePointers( tracker, event, gPoints ) {
-//    }
-//    function cancelPointers( tracker, event, gPoints ) {
-//    }
-//pointer = {
-//    id: x,            // getPointerType( event )
-//    type: '',         // 'mouse', 'touch', 'pen', ''
-//    isCaptured: false,
-//    insideElementPressed: true,
-//    insideElement: true,
-//    startPos: null,   // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    startTime: 0xFFFFFFFF,
-//    lastPos: null,    // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    lastTime: 0xFFFFFFFF,
-//    currentPos: null, // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    currentTime: 0xFFFFFFFF,
-//}
-//var delegate = THIS[ tracker.hash ]
-//delegate.mousePoints:           {},
-//delegate.mousePointCount:       0,
-//delegate.touchPoints:           {},
-//delegate.touchPointCount:       0,
-//delegate.penPoints:             {},
-//delegate.penPointCount:         0
-//
-//var touchPoints = {};
-//touchPoints[event.pointerId] = "test";
-//touchPoints[12345] = "test12345";
-//delete touchPoints[event.pointerId];
     /**
      * @private
      * @inner
@@ -1790,10 +1849,10 @@
         }
 
         if ( $.MouseTracker.unprefixedPointerEvents ) {
-            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.setPointerCapture( event.pointerId );
         }
         else {
-            event.currentTarget.msSetPointerCapture(event.pointerId);
+            event.currentTarget.msSetPointerCapture( event.pointerId );
         }
 
         time = $.now();
@@ -1802,22 +1861,22 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            isCaptured: true,
             insideElementPressed: true,
             insideElement: true,
-            startPos: position,
-            startTime: time,
-            lastPos: position,
-            lastTime: time,
+            //speed: 0,
+            //startPos: position,
+            //startTime: time,
+            //lastPos: position,
+            //lastTime: time,
             currentPos: position,
             currentTime: time
         };
 
-        addPointers( tracker, event, [gPoint] );
+        addPointers( tracker, event, [ gPoint ] );
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
     }
@@ -1838,10 +1897,10 @@
         }
 
         if ( $.MouseTracker.unprefixedPointerEvents ) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
+            event.currentTarget.releasePointerCapture( event.pointerId );
         }
         else {
-            event.currentTarget.msReleasePointerCapture(event.pointerId);
+            event.currentTarget.msReleasePointerCapture( event.pointerId );
         }
 
         time = $.now();
@@ -1850,9 +1909,9 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            isCaptured: false,
             //insideElementPressed: true,
             //insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1861,11 +1920,11 @@
             currentTime: time
         };
 
-        removePointers(tracker, event, [gPoint]);
+        removePointers(tracker, event, [ gPoint ]);
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
     }
@@ -1887,9 +1946,9 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            //isCaptured: false,
             //insideElementPressed: true,
             //insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1898,11 +1957,11 @@
             currentTime: time
         };
 
-        updatePointers(tracker, event, [gPoint]);
+        updatePointers(tracker, event, [ gPoint ]);
 
-        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler || tracker.swipeHandler ) {
-            $.stopEvent(event);
-            $.cancelEvent(event);
+        if ( tracker.pressHandler || tracker.dragHandler || tracker.pinchHandler ) {
+            $.stopEvent( event );
+            $.cancelEvent( event );
             return false;
         }
     }
@@ -1923,9 +1982,9 @@
         gPoint = {
             id: event.pointerId,
             type: getPointerType( event ),
-            //isCaptured: false,
             //insideElementPressed: true,
             //insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -1934,7 +1993,7 @@
             //currentTime: time
         };
 
-        cancelPointers( tracker, event, [gPoint] );
+        cancelPointers( tracker, event, [ gPoint ] );
     }
 
 
@@ -1990,7 +2049,7 @@
             position,
             gPoint;
 
-        event = $.getEvent(event);
+        event = $.getEvent( event );
 
         time = $.now();
         position = getMouseAbsolute( event );
@@ -1998,9 +2057,9 @@
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
-            //isCaptured: false,
             //insideElementPressed: true,
             //insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -2009,7 +2068,7 @@
             currentTime: time
         };
 
-        updatePointers( tracker, event, [gPoint] );
+        updatePointers( tracker, event, [ gPoint ] );
     }
 
 
@@ -2022,7 +2081,7 @@
             position,
             gPoint;
 
-        event = $.getEvent(event);
+        event = $.getEvent( event );
 
         if ( event.button == 2 ) {
             return;
@@ -2034,9 +2093,9 @@
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
-            isCaptured: false,
             //insideElementPressed: true,
             //insideElement: true,
+            //speed: 0,
             //startPos: position,
             //startTime: time,
             //lastPos: position,
@@ -2045,7 +2104,7 @@
             currentTime: time
         };
 
-        removePointers( tracker, event, [gPoint] );
+        removePointers( tracker, event, [ gPoint ] );
     }
 
 
@@ -2068,47 +2127,6 @@
     }
 
 
-//$.MouseTracker.mousePointerId = "legacy-mouse";
-//$.MouseTracker.unprefixedPointerEvents = false;
-//$.MouseTracker.maxTouchPoints = 10;
-//    function addPointers( tracker, event, gPoints ) {
-//    }
-//    function updatePointersOver( tracker, event, gPoints ) {
-//    }
-//    function updatePointersOut( tracker, event, gPoints ) {
-//    }
-//    function updatePointers( tracker, event, gPoints ) {
-//    }
-//    function removePointers( tracker, event, gPoints ) {
-//    }
-//    function cancelPointers( tracker, event, gPoints ) {
-//    }
-//pointer = {
-//    id: x,            // getPointerType( event )
-//    type: '',         // 'mouse', 'touch', 'pen', ''
-//    isCaptured: false,
-//    insideElementPressed: true,
-//    insideElement: true,
-//    startPos: null,   // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    startTime: 0xFFFFFFFF,
-//    lastPos: null,    // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    lastTime: 0xFFFFFFFF,
-//    currentPos: null, // $.Point getMouseAbsolute( eventOrTouchPoint ); getPointRelative( point, tracker.element )
-//    currentTime: 0xFFFFFFFF,
-//}
-//var delegate = THIS[ tracker.hash ]
-//delegate.mousePoints:           {},
-//delegate.mousePointCount:       0,
-//delegate.touchPoints:           {},
-//delegate.touchPointCount:       0,
-//delegate.penPoints:             {},
-//delegate.penPointCount:         0
-//
-//var touchPoints = {};
-//touchPoints[event.pointerId] = "test";
-//touchPoints[12345] = "test12345";
-//delete touchPoints[event.pointerId];
-
     /**
      * @private
      * @inner
@@ -2116,60 +2134,56 @@
     function addPointers( tracker, event, gPoints ) {
         var delegate = THIS[ tracker.hash ],
             propagate,
-            dispatchPress = false,
+            pointsList = getGPointsListByType( tracker, gPoints[ 0 ].type ),
+            pointsListLength,
             i,
             gPointCount = gPoints.length,
             curGPoint;
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            if ( curGPoint.type === 'mouse' ) {
-                if ( !delegate.mousePointCount ) {
-                    delegate.mousePoints[ curGPoint.id ] = curGPoint;
-                    delegate.mousePointCount++;
-                    dispatchPress = true;
-                }
-            }
-            else if ( curGPoint.type === 'touch' ) {
-                if ( !delegate.touchPointCount ) {
-                    dispatchPress = true;
-                }
-                if ( !delegate.touchPoints[ curGPoint.id ] ) {
-                    delegate.touchPoints[ curGPoint.id ] = curGPoint;
-                    delegate.touchPointCount++;
-                    if ( delegate.touchPointCount == 2 && tracker.pinchHandler ) {
-                        // Initialize for pinch gesture tracking
-                        delegate.pinchGPoints = [];
-                        for ( var p in delegate.touchPoints ) {
-                            delegate.pinchGPoints.push( delegate.touchPoints[ p ] );
-                        }
-                        delegate.lastPinchDist = delegate.currentPinchDist = delegate.pinchGPoints[0].currentPos.distanceTo( delegate.pinchGPoints[1].currentPos );
-                        delegate.lastPinchCenter = delegate.currentPinchCenter = getCenterPoint( delegate.pinchGPoints[0].currentPos, delegate.pinchGPoints[1].currentPos );
-                    }
-                }
-            }
-            else if ( curGPoint.type === 'pen' ) {
-                if ( !delegate.penPointCount ) {
-                    delegate.penPoints[ curGPoint.id ] = curGPoint;
-                    delegate.penPointCount++;
-                    dispatchPress = true;
-                }
-            }
+        if ( pointsList ) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
 
-            if ( dispatchPress && tracker.pressHandler ) {
-                propagate = tracker.pressHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          curGPoint.type,
-                        position:             getPointRelative( curGPoint.startPos, tracker.element ),
-                        isTouchEvent:         curGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
+                // Initialize for drag/swipe/pinch
+                curGPoint.speed = 0;
+                curGPoint.direction = 0;
+                curGPoint.startPos = curGPoint.currentPos;
+                curGPoint.startTime = curGPoint.currentTime;
+                curGPoint.lastPos = curGPoint.currentPos;
+                curGPoint.lastTime = curGPoint.currentTime;
+
+                if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
+                    $.MouseTracker.gesturePointVelocityTracker.addPoint( tracker, curGPoint );
+                }
+
+                pointsListLength = pointsList.add( curGPoint );
+
+                if ( pointsListLength == 1 ) {
+                    // Press
+                    if ( tracker.pressHandler ) {
+                        propagate = tracker.pressHandler(
+                            {
+                                eventSource:          tracker,
+                                pointerType:          curGPoint.type,
+                                position:             getPointRelative( curGPoint.startPos, tracker.element ),
+                                isTouchEvent:         curGPoint.type === 'touch',
+                                originalEvent:        event,
+                                preventDefaultAction: false,
+                                userData:             tracker.userData
+                            }
+                        );
+                        if ( propagate === false ) {
+                            $.cancelEvent( event );
+                        }
                     }
-                );
-                if ( propagate === false ) {
-                    $.cancelEvent( event );
+                }
+                else if ( pointsListLength == 2 ) {
+                    if ( tracker.pinchHandler && curGPoint.type === 'touch' ) {
+                        // Initialize for pinch
+                        delegate.pinchGPoints = pointsList.asArray();
+                        delegate.lastPinchDist = delegate.currentPinchDist = delegate.pinchGPoints[ 0 ].currentPos.distanceTo( delegate.pinchGPoints[ 1 ].currentPos );
+                        delegate.lastPinchCenter = delegate.currentPinchCenter = getCenterPoint( delegate.pinchGPoints[ 0 ].currentPos, delegate.pinchGPoints[ 1 ].currentPos );
+                    }
                 }
             }
         }
@@ -2182,6 +2196,7 @@
      */
     function updatePointersOver( tracker, event, gPoints ) {
         var delegate = THIS[ tracker.hash ],
+            pointsList = getGPointsListByType( tracker, gPoints[ 0 ].type ),
             i,
             gPointCount = gPoints.length,
             curGPoint,
@@ -2189,49 +2204,41 @@
             insideElementPressed,
             propagate;
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            if ( curGPoint.type === 'mouse' ) {
-                updateGPoint = delegate.mousePoints[ curGPoint.id ] || null;
-            }
-            else if ( curGPoint.type === 'touch' ) {
-                updateGPoint = delegate.touchPoints[ curGPoint.id ] || null;
-            }
-            else if ( curGPoint.type === 'pen' ) {
-                updateGPoint = delegate.penPoints[ curGPoint.id ] || null;
-            }
-            else {
-                updateGPoint = null;
-            }
+        if ( pointsList ) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
+                updateGPoint = pointsList.getById( curGPoint.id );
 
-            if ( updateGPoint ) {
-                updateGPoint.insideElement = true;
-                updateGPoint.lastPos = updateGPoint.currentPos;
-                updateGPoint.lastTime = updateGPoint.currentTime;
-                updateGPoint.currentPos = curGPoint.currentPos;
-                updateGPoint.currentTime = curGPoint.currentTime;
-                insideElementPressed = updateGPoint.insideElementPressed;
-            }
-            else {
-                insideElementPressed = false;
-            }
+                if ( updateGPoint ) {
+                    updateGPoint.insideElement = true;
+                    updateGPoint.lastPos = updateGPoint.currentPos;
+                    updateGPoint.lastTime = updateGPoint.currentTime;
+                    updateGPoint.currentPos = curGPoint.currentPos;
+                    updateGPoint.currentTime = curGPoint.currentTime;
+                    insideElementPressed = updateGPoint.insideElementPressed;
+                }
+                else {
+                    insideElementPressed = false;
+                }
 
-            if ( tracker.enterHandler ) {
-                propagate = tracker.enterHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          curGPoint.type,
-                        position:             getPointRelative( curGPoint.currentPos, tracker.element ),
-                        insideElementPressed: insideElementPressed,
-                        buttonDownAny:        IS_BUTTON_DOWN,
-                        isTouchEvent:         curGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
+                // Enter
+                if ( tracker.enterHandler ) {
+                    propagate = tracker.enterHandler(
+                        {
+                            eventSource:          tracker,
+                            pointerType:          curGPoint.type,
+                            position:             getPointRelative( curGPoint.currentPos, tracker.element ),
+                            insideElementPressed: insideElementPressed,
+                            buttonDownAny:        IS_BUTTON_DOWN,
+                            isTouchEvent:         curGPoint.type === 'touch',
+                            originalEvent:        event,
+                            preventDefaultAction: false,
+                            userData:             tracker.userData
+                        }
+                    );
+                    if ( propagate === false ) {
+                        $.cancelEvent( event );
                     }
-                );
-                if ( propagate === false ) {
-                    $.cancelEvent( event );
                 }
             }
         }
@@ -2244,6 +2251,7 @@
      */
     function updatePointersOut( tracker, event, gPoints ) {
         var delegate = THIS[ tracker.hash ],
+            pointsList = getGPointsListByType( tracker, gPoints[ 0 ].type ),
             i,
             gPointCount = gPoints.length,
             curGPoint,
@@ -2251,50 +2259,42 @@
             insideElementPressed,
             propagate;
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            if ( curGPoint.type === 'mouse' ) {
-                updateGPoint = delegate.mousePoints[ curGPoint.id ] || null;
-            }
-            else if ( curGPoint.type === 'touch' ) {
-                updateGPoint = delegate.touchPoints[ curGPoint.id ] || null;
-            }
-            else if ( curGPoint.type === 'pen' ) {
-                updateGPoint = delegate.penPoints[ curGPoint.id ] || null;
-            }
-            else {
-                updateGPoint = null;
-            }
+        if ( pointsList ) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
+                updateGPoint = pointsList.getById( curGPoint.id );
 
-            if ( updateGPoint ) {
-                updateGPoint.insideElement = false;
-                updateGPoint.lastPos = updateGPoint.currentPos;
-                updateGPoint.lastTime = updateGPoint.currentTime;
-                updateGPoint.currentPos = curGPoint.currentPos;
-                updateGPoint.currentTime = curGPoint.currentTime;
-                insideElementPressed = updateGPoint.insideElementPressed;
-            }
-            else {
-                insideElementPressed = false;
-            }
+                if ( updateGPoint ) {
+                    updateGPoint.insideElement = false;
+                    updateGPoint.lastPos = updateGPoint.currentPos;
+                    updateGPoint.lastTime = updateGPoint.currentTime;
+                    updateGPoint.currentPos = curGPoint.currentPos;
+                    updateGPoint.currentTime = curGPoint.currentTime;
+                    insideElementPressed = updateGPoint.insideElementPressed;
+                }
+                else {
+                    insideElementPressed = false;
+                }
 
-            if ( tracker.exitHandler ) {
-                propagate = tracker.exitHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          curGPoint.type,
-                        position:             getPointRelative( curGPoint.currentPos, tracker.element ),
-                        insideElementPressed: insideElementPressed,
-                        buttonDownAny:        IS_BUTTON_DOWN,
-                        isTouchEvent:         curGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
+                // Exit
+                if ( tracker.exitHandler ) {
+                    propagate = tracker.exitHandler(
+                        {
+                            eventSource:          tracker,
+                            pointerType:          curGPoint.type,
+                            position:             getPointRelative( curGPoint.currentPos, tracker.element ),
+                            insideElementPressed: insideElementPressed,
+                            buttonDownAny:        IS_BUTTON_DOWN,
+                            isTouchEvent:         curGPoint.type === 'touch',
+                            originalEvent:        event,
+                            preventDefaultAction: false,
+                            userData:             tracker.userData
+                        }
+                    );
+
+                    if ( propagate === false ) {
+                        $.cancelEvent( event );
                     }
-                );
-
-                if ( propagate === false ) {
-                    $.cancelEvent( event );
                 }
             }
         }
@@ -2308,52 +2308,72 @@
     function updatePointers( tracker, event, gPoints ) {
         // Pointer(s) changed coordinates, button state, pressure, tilt, or contact geometry (e.g. width and height)
         var delegate = THIS[ tracker.hash ],
+            pointsList = getGPointsListByType( tracker, gPoints[ 0 ].type ),
+            pointsListLength,
             i,
             gPointCount = gPoints.length,
             curGPoint,
             updateGPoint,
-            points,
-            pointCount,
+            gPointArray,
             delta,
             propagate;
 
-        if ( gPoints[ 0 ].type === 'mouse' ) {
-            points = delegate.mousePoints;
-            pointCount = delegate.mousePointCount;
-        }
-        else if ( gPoints[ 0 ].type === 'touch' ) {
-            points = delegate.touchPoints;
-            pointCount = delegate.touchPointCount;
-        }
-        else if ( gPoints[ 0 ].type === 'pen' ) {
-            points = delegate.penPoints;
-            pointCount = delegate.penPointCount;
-        }
-        else {
-            points = null;
-        }
+        if ( pointsList ) {
+            pointsListLength = pointsList.getLength();
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            updateGPoint = points ? ( points[ curGPoint.id ] || null ) : null;
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
+                updateGPoint = pointsList.getById( curGPoint.id );
 
-            if ( updateGPoint ) {
-                updateGPoint.lastPos = updateGPoint.currentPos;
-                updateGPoint.lastTime = updateGPoint.currentTime;
-                updateGPoint.currentPos = curGPoint.currentPos;
-                updateGPoint.currentTime = curGPoint.currentTime;
+                if ( updateGPoint ) {
+                    updateGPoint.lastPos = updateGPoint.currentPos;
+                    updateGPoint.lastTime = updateGPoint.currentTime;
+                    updateGPoint.currentPos = curGPoint.currentPos;
+                    updateGPoint.currentTime = curGPoint.currentTime;
+                }
 
-                // Drag Gesture
-                if ( pointCount == 1 && tracker.dragHandler &&  !updateGPoint.currentPos.equals( updateGPoint.lastPos ) ) {
+                //if ( tracker.stopHandler ) {
+                //    clearTimeout( tracker.stopTimeOut );
+                //    tracker.stopTimeOut = setTimeout( function() {
+                //        handlePointerStop( tracker, event );
+                //    }, tracker.stopDelay );
+                //}
+            }
+
+            if ( pointsListLength == 1 ) {
+                // Move (1 contact)
+                if ( tracker.moveHandler ) {
+                    updateGPoint = pointsList.asArray()[ 0 ];
+                    propagate = tracker.moveHandler(
+                        {
+                            eventSource:          tracker,
+                            pointerType:          updateGPoint.type,
+                            position:             getPointRelative( updateGPoint.currentPos, tracker.element ),
+                            isTouchEvent:         updateGPoint.type === 'touch',
+                            originalEvent:        event,
+                            preventDefaultAction: false,
+                            userData:             tracker.userData
+                        }
+                    );
+                    if ( propagate === false ) {
+                        $.cancelEvent( event );
+                    }
+                }
+
+                // Drag
+                if ( tracker.dragHandler ) {
+                    updateGPoint = pointsList.asArray()[ 0 ];
                     delta = updateGPoint.currentPos.minus( updateGPoint.lastPos );
                     propagate = tracker.dragHandler(
                         {
                             eventSource:          tracker,
-                            pointerType:          curGPoint.type,
+                            pointerType:          updateGPoint.type,
                             position:             getPointRelative( updateGPoint.currentPos, tracker.element ),
                             delta:                delta,
+                            speed:                updateGPoint.speed,
+                            direction:            updateGPoint.direction,
                             shift:                event.shiftKey,
-                            isTouchEvent:         curGPoint.type === 'touch',
+                            isTouchEvent:         updateGPoint.type === 'touch',
                             originalEvent:        event,
                             preventDefaultAction: false,
                             userData:             tracker.userData
@@ -2364,58 +2384,53 @@
                     }
                 }
             }
-
-            if ( pointCount == 1 && tracker.moveHandler ) {
-                propagate = tracker.moveHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          curGPoint.type,
-                        position:             getPointRelative( curGPoint.currentPos, tracker.element ),
-                        isTouchEvent:         curGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
+            else if ( pointsListLength == 2 ) {
+                // Move (2 contacts, use center)
+                if ( tracker.moveHandler ) {
+                    gPointArray = pointsList.asArray();
+                    propagate = tracker.moveHandler(
+                        {
+                            eventSource:          tracker,
+                            pointerType:          gPointArray[ 0 ].type,
+                            position:             getPointRelative( getCenterPoint( gPointArray[ 0 ].currentPos, gPointArray[ 1 ].currentPos ), tracker.element ),
+                            isTouchEvent:         gPointArray[ 0 ].type === 'touch',
+                            originalEvent:        event,
+                            preventDefaultAction: false,
+                            userData:             tracker.userData
+                        }
+                    );
+                    if ( propagate === false ) {
+                        $.cancelEvent( event );
                     }
-                );
-                if ( propagate === false ) {
-                    $.cancelEvent( event );
                 }
-            }
-            //if ( tracker.stopHandler ) {
-            //    clearTimeout( tracker.stopTimeOut );
-            //    tracker.stopTimeOut = setTimeout( function() {
-            //        handlePointerStop( tracker, event );
-            //    }, tracker.stopDelay );
-            //}
-        }
 
-        // Pinch Gesture
-        if ( gPoints[ 0 ].type === 'touch' && delegate.touchPointCount == 2 && tracker.pinchHandler ) {
-            //gesturePoints = [];
-            //for ( var p in delegate.touchPoints ) {
-            //    gesturePoints.push( delegate.touchPoints[ p ] );
-            //}
-            delta = delegate.pinchGPoints[0].currentPos.distanceTo( delegate.pinchGPoints[1].currentPos );
-            if ( delta != delegate.currentPinchDist ) {
-                delegate.lastPinchDist = delegate.currentPinchDist;
-                delegate.currentPinchDist = delta;
-                delegate.lastPinchCenter = delegate.currentPinchCenter;
-                delegate.currentPinchCenter = getCenterPoint( delegate.pinchGPoints[0].currentPos, delegate.pinchGPoints[1].currentPos );
-                propagate = tracker.pinchHandler(
-                    {
-                        eventSource:          tracker,
-                        gesturePoints:        delegate.pinchGPoints,
-                        lastCenter:           getPointRelative( delegate.lastPinchCenter, tracker.element ),
-                        center:               getPointRelative( delegate.currentPinchCenter, tracker.element ),
-                        lastDistance:         delegate.lastPinchDist,
-                        distance:             delegate.currentPinchDist,
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
+                // Pinch
+                if ( tracker.pinchHandler && gPoints[ 0 ].type === 'touch' ) {
+                    delta = delegate.pinchGPoints[ 0 ].currentPos.distanceTo( delegate.pinchGPoints[ 1 ].currentPos );
+                    if ( delta != delegate.currentPinchDist ) {
+                        delegate.lastPinchDist = delegate.currentPinchDist;
+                        delegate.currentPinchDist = delta;
+                        delegate.lastPinchCenter = delegate.currentPinchCenter;
+                        delegate.currentPinchCenter = getCenterPoint( delegate.pinchGPoints[ 0 ].currentPos, delegate.pinchGPoints[ 1 ].currentPos );
+                        propagate = tracker.pinchHandler(
+                            {
+                                eventSource:          tracker,
+                                pointerType:          'touch',
+                                gesturePoints:        delegate.pinchGPoints,
+                                lastCenter:           getPointRelative( delegate.lastPinchCenter, tracker.element ),
+                                center:               getPointRelative( delegate.currentPinchCenter, tracker.element ),
+                                lastDistance:         delegate.lastPinchDist,
+                                distance:             delegate.currentPinchDist,
+                                shift:                event.shiftKey,
+                                originalEvent:        event,
+                                preventDefaultAction: false,
+                                userData:             tracker.userData
+                            }
+                        );
+                        if ( propagate === false ) {
+                            $.cancelEvent( event );
+                        }
                     }
-                );
-                if ( propagate === false ) {
-                    $.cancelEvent( event );
                 }
             }
         }
@@ -2428,117 +2443,116 @@
      */
     function removePointers( tracker, event, gPoints ) {
         var delegate = THIS[ tracker.hash ],
+            pointsList = getGPointsListByType( tracker, gPoints[ 0 ].type ),
+            pointsListLength,
             propagate,
-            //were we inside the tracked element when we were pressed
             insideElementPressed,
-            //are we still inside the tracked element when we released
             insideElementReleased,
-            dispatchRelease,
-            pressPoint,
-            pressTime,
             releasePoint,
+            releaseTime,
             i,
             gPointCount = gPoints.length,
             curGPoint,
-            updateGPoint;
+            updateGPoint,
+            removedGPoint;
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            dispatchRelease = false;
-            if ( curGPoint.type === 'mouse' ) {
-                updateGPoint = delegate.mousePoints[ curGPoint.id ] || null;
-                if ( updateGPoint ) {
-                    pressPoint = updateGPoint.startPos;
-                    pressTime = updateGPoint.startTime;
-                    delete delegate.mousePoints[ curGPoint.id ];
-                    delegate.mousePointCount--;
-                    if ( !delegate.mousePointCount ) {
-                        dispatchRelease = true;
-                        releasePoint = curGPoint.currentPos;
-                    }
-                }
-            }
-            else if ( curGPoint.type === 'touch' ) {
-                updateGPoint = delegate.touchPoints[ curGPoint.id ] || null;
-                if ( updateGPoint ) {
-                    pressPoint = updateGPoint.startPos;
-                    pressTime = updateGPoint.startTime;
-                    delete delegate.touchPoints[ curGPoint.id ];
-                    delegate.touchPointCount--;
-                    if ( !delegate.touchPointCount ) {
-                        dispatchRelease = true;
-                        releasePoint = curGPoint.currentPos;
-                    }
-                }
-            }
-            else if ( curGPoint.type === 'pen' ) {
-                updateGPoint = delegate.penPoints[ curGPoint.id ] || null;
-                if ( updateGPoint ) {
-                    pressPoint = updateGPoint.startPos;
-                    pressTime = updateGPoint.startTime;
-                    delete delegate.penPoints[ curGPoint.id ];
-                    delegate.penPointCount--;
-                    if ( !delegate.penPointCount ) {
-                        dispatchRelease = true;
-                        releasePoint = curGPoint.currentPos;
-                    }
-                }
-            }
-            else {
-                updateGPoint = null;
-            }
+        if ( pointsList ) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
 
-            if ( dispatchRelease ) {
-                if ( updateGPoint ) {
-                    insideElementPressed = updateGPoint.insideElementPressed;
-                    insideElementReleased = $.pointInElement( tracker.element, releasePoint );
-                }
-                else {
-                    insideElementPressed = false;
-                    insideElementReleased = false;
-                }
+                removedGPoint = pointsList.getById( curGPoint.id );
 
-                if ( tracker.releaseHandler ) {
-                    propagate = tracker.releaseHandler(
-                        {
-                            eventSource:           tracker,
-                            pointerType:           curGPoint.type,
-                            position:              getPointRelative( releasePoint, tracker.element ),
-                            insideElementPressed:  insideElementPressed,
-                            insideElementReleased: insideElementReleased,
-                            isTouchEvent:          curGPoint.type === 'touch',
-                            originalEvent:         event,
-                            preventDefaultAction:  false,
-                            userData:              tracker.userData
+                if ( removedGPoint ) {
+
+                    releasePoint = removedGPoint.currentPos;
+                    releaseTime = removedGPoint.currentTime;
+
+                    if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
+                        $.MouseTracker.gesturePointVelocityTracker.removePoint( tracker, removedGPoint );
+                    }
+
+                    pointsListLength = pointsList.removeById( curGPoint.id );
+
+                    if ( pointsListLength === 0 ) {
+
+                        insideElementPressed = removedGPoint.insideElementPressed;
+                        insideElementReleased = $.pointInElement( tracker.element, releasePoint );
+
+                        // Release
+                        if ( tracker.releaseHandler ) {
+                            propagate = tracker.releaseHandler(
+                                {
+                                    eventSource:           tracker,
+                                    pointerType:           removedGPoint.type,
+                                    position:              getPointRelative( releasePoint, tracker.element ),
+                                    insideElementPressed:  insideElementPressed,
+                                    insideElementReleased: insideElementReleased,
+                                    isTouchEvent:          removedGPoint.type === 'touch',
+                                    originalEvent:         event,
+                                    preventDefaultAction:  false,
+                                    userData:              tracker.userData
+                                }
+                            );
+                            if ( propagate === false ) {
+                                $.cancelEvent( event );
+                            }
                         }
-                    );
-                    if ( propagate === false ) {
-                        $.cancelEvent( event );
-                    }
-                }
 
-                // Click Gesture
-                if ( insideElementPressed && insideElementReleased && tracker.clickHandler ) {
-                    var time = curGPoint.currentTime - pressTime,
-                        distance = pressPoint.distanceTo( curGPoint.currentPos ),
-                        quick = time <= tracker.clickTimeThreshold &&
-                                   distance <= tracker.clickDistThreshold;
-
-                    propagate = tracker.clickHandler(
-                        {
-                            eventSource:          tracker,
-                            pointerType:          curGPoint.type,
-                            position:             getPointRelative( curGPoint.currentPos, tracker.element ),
-                            quick:                quick,
-                            shift:                event.shiftKey,
-                            isTouchEvent:         curGPoint.type === 'touch',
-                            originalEvent:        event,
-                            preventDefaultAction: false,
-                            userData:             tracker.userData
+                        // Drag End
+                        if ( tracker.dragEndHandler ) {
+                            propagate = tracker.dragEndHandler(
+                                {
+                                    eventSource:          tracker,
+                                    pointerType:          removedGPoint.type,
+                                    position:             getPointRelative( removedGPoint.currentPos, tracker.element ),
+                                    speed:                removedGPoint.speed,
+                                    direction:            removedGPoint.direction,
+                                    shift:                event.shiftKey,
+                                    isTouchEvent:         removedGPoint.type === 'touch',
+                                    originalEvent:        event,
+                                    preventDefaultAction: false,
+                                    userData:             tracker.userData
+                                }
+                            );
+                            if ( propagate === false ) {
+                                $.cancelEvent( event );
+                            }
                         }
-                    );
-                    if ( propagate === false ) {
-                        $.cancelEvent( event );
+
+                        // Click
+                        if ( tracker.clickHandler && insideElementPressed && insideElementReleased ) {
+                            var time = releaseTime - removedGPoint.startTime,
+                                distance = removedGPoint.startPos.distanceTo( releasePoint ),
+                                quick = time <= tracker.clickTimeThreshold &&
+                                           distance <= tracker.clickDistThreshold;
+
+                            propagate = tracker.clickHandler(
+                                {
+                                    eventSource:          tracker,
+                                    pointerType:          curGPoint.type,
+                                    position:             getPointRelative( curGPoint.currentPos, tracker.element ),
+                                    quick:                quick,
+                                    shift:                event.shiftKey,
+                                    isTouchEvent:         curGPoint.type === 'touch',
+                                    originalEvent:        event,
+                                    preventDefaultAction: false,
+                                    userData:             tracker.userData
+                                }
+                            );
+                            if ( propagate === false ) {
+                                $.cancelEvent( event );
+                            }
+                        }
+                    }
+                    //else if ( pointsListLength === 1 ) {
+                    //}
+                    else if ( pointsListLength === 2 ) {
+                        if ( tracker.pinchHandler && curGPoint.type === 'touch' ) {
+                            // Reset for pinch
+                            delegate.pinchGPoints = pointsList.asArray();
+                            delegate.lastPinchDist = delegate.currentPinchDist = delegate.pinchGPoints[ 0 ].currentPos.distanceTo( delegate.pinchGPoints[ 1 ].currentPos );
+                            delegate.lastPinchCenter = delegate.currentPinchCenter = getCenterPoint( delegate.pinchGPoints[ 0 ].currentPos, delegate.pinchGPoints[ 1 ].currentPos );
+                        }
                     }
                 }
             }
@@ -2551,32 +2565,7 @@
      * @inner
      */
     function cancelPointers( tracker, event, gPoints ) {
-        var delegate = THIS[ tracker.hash ],
-            i,
-            gPointCount = gPoints.length,
-            curGPoint;
-
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            if ( curGPoint.type === 'mouse' ) {
-                if ( delegate.mousePoints[ curGPoint.id ] ) {
-                    delete delegate.mousePoints[ curGPoint.id ];
-                    delegate.mousePointCount--;
-                }
-            }
-            else if ( curGPoint.type === 'touch' ) {
-                if ( delegate.touchPoints[ curGPoint.id ] ) {
-                    delete delegate.touchPoints[ curGPoint.id ];
-                    delegate.touchPointCount--;
-                }
-            }
-            else if ( curGPoint.type === 'pen' ) {
-                if ( delegate.penPoints[ curGPoint.id ] ) {
-                    delete delegate.penPoints[ curGPoint.id ];
-                    delegate.penPointCount--;
-                }
-            }
-        }
+        removePointers( tracker, event, gPoints );
     }
 
 
