@@ -1,4 +1,3 @@
-/// <reference path="http://localhost/OpenSeadragonImagingHelper/index.html" />
 /*
  * OpenSeadragon - Viewer
  *
