@@ -2281,6 +2281,7 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
+    // TODO: Make the magic numbers configurable (20 pixels-per-second speed threshold and 0.35 momentum dampener).
     if ( event.pointerType !== 'mouse' && !event.preventDefaultAction && this.viewport && event.speed > 20 ) {
         var amplitudeX = 0.35 * ( event.speed * Math.cos( event.direction ) ),
             amplitudeY = 0.35 * ( event.speed * Math.sin( event.direction ) ),
