@@ -2207,7 +2207,7 @@ function onBlur(){
 function onCanvasClick( event ) {
     var zoomPerClick,
         factor;
-    if ( !event.preventDefaultAction && this.viewport && event.quick ) {    // ignore clicks where mouse moved
+    if ( event.pointerType !== 'touch' && !event.preventDefaultAction && this.viewport && event.quick ) {
         zoomPerClick = this.zoomPerClick;
         factor = event.shift ? 1.0 / zoomPerClick : zoomPerClick;
         this.viewport.zoomBy(
