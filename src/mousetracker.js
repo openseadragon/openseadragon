@@ -36,12 +36,6 @@
 
         // is any button currently being pressed while pointer events occur
     var IS_BUTTON_DOWN = false,
-        // is any tracker currently capturing?
-        //IS_CAPTURING   = false,
-        // dictionary from hash to MouseTracker
-        //ACTIVE         = {},
-        // list of trackers interested in capture
-        //CAPTURING      = [],
         // dictionary from hash to private properties
         THIS           = {};
 
@@ -159,6 +153,8 @@
          *      Are we curruently capturing mouse events (legacy mouse events only).
          */
         THIS[ this.hash ] = {
+            setCaptureCapable:     !!this.element.setCapture && !!this.element.releaseCapture,
+
             click:                 function ( event ) { onClick( _this, event ); },
             keypress:              function ( event ) { onKeyPress( _this, event ); },
             focus:                 function ( event ) { onFocus( _this, event ); },
@@ -670,7 +666,6 @@
                 len = trackerPoints.length;
             for ( i = 0; i < len; i++ ) {
                 if ( trackerPoints[ i ].guid === guid ) {
-                    //gPoint = trackerPoints[ i ].gPoint;
                     trackerPoints.splice( i, 1 );
                     // Only run the interval timer if theres gesture points to track
                     len--;
@@ -730,7 +725,7 @@
         }
     }
     else {
-        // Standard mouse events
+        // Legacy W3C mouse events
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
@@ -901,7 +896,6 @@
                 );
             }
             delegate.tracking = true;
-            //ACTIVE[ tracker.hash ] = tracker;
         }
     }
 
@@ -928,16 +922,7 @@
 
             releaseMouse( tracker );
             delegate.tracking = false;
-            //delete ACTIVE[ tracker.hash ];
         }
-    }
-
-    /**
-     * @private
-     * @inner
-     */
-    function hasMouse( tracker ) {
-        return THIS[ tracker.hash ].insideElement;
     }
 
     /**
@@ -947,28 +932,13 @@
      */
     function captureMouse( tracker ) {
         var delegate = THIS[ tracker.hash ];
-        if ( !delegate.capturing ) {
 
-            //if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-            //    $.removeEvent(
-            //        tracker.element,
-            //        "mouseup",
-            //        delegate.mouseup,
-            //        false
-            //    );
-            //    $.addEvent(
-            //        tracker.element,
-            //        "mouseup",
-            //        delegate.mouseupcapturedie,
-            //        true
-            //    );
-            //    $.addEvent(
-            //        tracker.element,
-            //        "mousemove",
-            //        delegate.mousemovecapturedie,
-            //        true
-            //    );
-            //} else {
+        if ( !delegate.capturing ) {
+            if ( delegate.setCaptureCapable ) {
+                // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
+                tracker.element.setCapture( true );
+            }
+            else {
                 $.addEvent(
                     window,
                     "mouseup",
@@ -981,7 +951,7 @@
                     delegate.mousemovecaptured,
                     true
                 );
-            //}
+            }
             delegate.capturing = true;
         }
     }
@@ -994,28 +964,13 @@
      */
     function releaseMouse( tracker ) {
         var delegate = THIS[ tracker.hash ];
-        if ( delegate.capturing ) {
 
-            //if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-            //    $.removeEvent(
-            //        tracker.element,
-            //        "mousemove",
-            //        delegate.mousemovecapturedie,
-            //        true
-            //    );
-            //    $.removeEvent(
-            //        tracker.element,
-            //        "mouseup",
-            //        delegate.mouseupcapturedie,
-            //        true
-            //    );
-            //    $.addEvent(
-            //        tracker.element,
-            //        "mouseup",
-            //        delegate.mouseup,
-            //        false
-            //    );
-            //} else {
+        if ( delegate.capturing ) {
+            if ( delegate.setCaptureCapable ) {
+                // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
+                tracker.element.releaseCapture();
+            }
+            else {
                 $.removeEvent(
                     window,
                     "mousemove",
@@ -1028,24 +983,10 @@
                     delegate.mouseupcaptured,
                     true
                 );
-            //}
+            }
             delegate.capturing = false;
         }
     }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    //function triggerOthers( tracker, handler, event, isTouch ) {
-    //    var otherHash;
-    //    for ( otherHash in ACTIVE ) {
-    //        if ( ACTIVE.hasOwnProperty( otherHash ) && tracker.hash != otherHash ) {
-    //            handler( ACTIVE[ otherHash ], event, isTouch );
-    //        }
-    //    }
-    //}
 
 
     /**
@@ -1326,6 +1267,10 @@
             return;
         }
 
+        if ( tracker.pressHandler || tracker.clickHandler || tracker.dragHandler ) {
+            captureMouse( tracker );
+        }
+
         gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
@@ -1336,20 +1281,9 @@
 
         addPointers( tracker, event, [ gPoint ] );
 
-        if ( tracker.pressHandler || tracker.dragHandler ) {
+        if ( tracker.pressHandler || tracker.clickHandler || tracker.dragHandler ) {
             $.cancelEvent( event );
         }
-
-        //if ( !( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) ||
-        //     !IS_CAPTURING ) {
-            captureMouse( tracker );
-            //IS_CAPTURING = true;
-            //// reset to empty & add us
-            //CAPTURING = [ tracker ];
-        //} else if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 9 ) {
-        //    // add us to the list
-        //    CAPTURING.push( tracker );
-        //}
     }
 
 
@@ -1358,67 +1292,34 @@
      * @inner
      */
     function onMouseUp( tracker, event ) {
-        handleMouseUp( tracker, event );
+        var delegate = THIS[ tracker.hash ];
+
+        if ( !delegate.capturing || delegate.setCaptureCapable ) {
+            handleMouseUp( tracker, event );
+        }
+
+        if ( delegate.capturing ) {
+            releaseMouse( tracker );
+        }
     }
 
-
     /**
-     * Only triggered in W3C browsers by elements within which the mouse was
-     * initially pressed, since they are now listening to the window for
-     * mouseup during the capture phase. We shouldn't handle the mouseup
-     * here if the mouse is still inside this element, since the regular
-     * mouseup handler will still fire.
+     * This handler is attached to the window object to emulate mouse capture.
+     * Only triggered in older W3C browsers that don't have setCapture/releaseCapture 
+     * methods or don't support the new pointer events model.
+     * onMouseUp is still called on the tracked element, so avoid processing twice.
      * @private
      * @inner
      */
     function onMouseUpCaptured( tracker, event ) {
-        var delegate = THIS[ tracker.hash ],
-            gPoint = delegate.mousePoints.getById( $.MouseTracker.mousePointerId );
+        var delegate = THIS[ tracker.hash ];
 
-        if ( gPoint && !gPoint.insideElement ) {
-            handleMouseUp( tracker, event );
+        handleMouseUp( tracker, event );
+
+        if ( delegate.capturing ) {
+            releaseMouse( tracker );
         }
-
-        releaseMouse( tracker );
     }
-
-
-    /**
-     * Only triggered once by the deepest element that initially received
-     * the mouse down event. We want to make sure THIS event doesn't bubble.
-     * Instead, we want to trigger the elements that initially received the
-     * mouse down event (including this one) only if the mouse is no longer
-     * inside them. Then, we want to release capture, and emulate a regular
-     * mouseup on the event that this event was meant for.
-     * @private
-     * @inner
-     */
-    //function onMouseUpCapturedIE( tracker, event ) {
-    //    var othertracker,
-    //        i;
-
-    //    event = $.getEvent( event );
-
-    //    if ( event.button == 2 ) {
-    //        return;
-    //    }
-
-    //    for ( i = 0; i < CAPTURING.length; i++ ) {
-    //        othertracker = CAPTURING[ i ];
-    //        if ( !hasMouse( othertracker ) ) {
-    //            handleMouseUp( othertracker, event );
-    //        }
-    //    }
-
-    //    releaseMouse( tracker );
-    //    IS_CAPTURING = false;
-    //    event.srcElement.fireEvent(
-    //        "on" + event.type,
-    //        document.createEventObject( event )
-    //    );
-
-    //    $.stopEvent( event );
-    //}
 
 
     /**
@@ -1427,38 +1328,23 @@
      */
     function onMouseMove( tracker, event ) {
         var delegate = THIS[ tracker.hash ];
-        if ( !delegate.capturing ) {
+        if ( !delegate.capturing || delegate.setCaptureCapable ) {
             handleMouseMove( tracker, event );
         }
    }
 
     
     /**
+     * This handler is attached to the window object to emulate mouse capture.
+     * Only triggered in older W3C browsers that don't have setCapture/releaseCapture 
+     * methods or don't support the new pointer events model.
+     * onMouseMove is still called on the tracked element, so avoid processing twice.
      * @private
      * @inner
      */
     function onMouseMoveCaptured( tracker, event ) {
         handleMouseMove( tracker, event );
     }
-
-
-    /**
-     * Only triggered once by the deepest element that initially received
-     * the mouse down event. Since no other element has captured the mouse,
-     * we want to trigger the elements that initially received the mouse
-     * down event (including this one). The the param tracker isn't used
-     * but for consistency with the other event handlers we include it.
-     * @private
-     * @inner
-     */
-    //function onMouseMoveCapturedIE( tracker, event ) {
-    //    var i;
-    //    for ( i = 0; i < CAPTURING.length; i++ ) {
-    //        handleMouseMove( CAPTURING[ i ], event );
-    //    }
-    //
-    //    $.stopEvent( event );
-    //}
 
 
     /**
@@ -1961,7 +1847,7 @@
             for ( i = 0; i < gPointCount; i++ ) {
                 curGPoint = gPoints[ i ];
 
-                // Initialize for drag/swipe/pinch
+                // Initialize for gesture tracking
                 curGPoint.insideElementPressed = true;
                 curGPoint.insideElement = true;
                 curGPoint.speed = 0;
@@ -2408,22 +2294,8 @@
     }
 
 
-    ///**
-    // * @private
-    // * @inner
-    // * Returns true if elementB is a child node of elementA, or if they're equal.
-    // */
-    //function isChild( elementA, elementB ) {
-    //    var body = document.body;
-    //    while ( elementB && elementA != elementB && body != elementB ) {
-    //        try {
-    //            elementB = elementB.parentNode;
-    //        } catch ( e ) {
-    //            return false;
-    //        }
-    //    }
-    //    return elementA == elementB;
-    //}
+    // TODO Do we really need these anymore (used as buttonDownAny in enterHandler/exitHandler callbacks)?
+    //      Surely there's a more robust and elegant solution...
 
     /**
      * @private

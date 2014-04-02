@@ -1515,9 +1515,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 return function ( element, eventName, handler, useCapture ) {
                     element = $.getElement( element );
                     element.attachEvent( 'on' + eventName, handler );
-                    if ( useCapture && element.setCapture ) {
-                        element.setCapture();
-                    }
                 };
             } else {
                 throw new Error( "No known event model." );
@@ -1544,9 +1541,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 return function( element, eventName, handler, useCapture ) {
                     element = $.getElement( element );
                     element.detachEvent( 'on' + eventName, handler );
-                    if ( useCapture && element.releaseCapture ) {
-                        element.releaseCapture();
-                    }
                 };
             } else {
                 throw new Error( "No known event model." );
