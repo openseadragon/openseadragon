@@ -1771,7 +1771,29 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             div.parentNode.removeChild(div);
             delete this.messageDiv;
         }
+    },
+
+    /**
+     * Gets this viewer's gesture settings for the given pointer device type.
+     * @method
+     * @param {String} type - The pointer device type to get the gesture settings for. "mouse", "touch", "pen", or "".
+     * @return {OpenSeadragon.GestureSettings}
+     */
+    gestureSettingsByDeviceType: function ( type ) {
+        if ( type === 'mouse' ) {
+            return this.gestureSettingsMouse;
+        }
+        else if ( type === 'touch' ) {
+            return this.gestureSettingsTouch;
+        }
+        else if ( type === 'pen' ) {
+            return this.gestureSettingsPen;
+        }
+        else {
+            return { clickToZoom: false,  flickEnabled: false, flickMinSpeed: 20, flickMomentum: 0.35 };
+        }
     }
+
 });
 
 
@@ -2205,16 +2227,17 @@ function onBlur(){
 }
 
 function onCanvasClick( event ) {
-    var zoomPerClick,
-        factor;
-    if ( event.pointerType !== 'touch' && !event.preventDefaultAction && this.viewport && event.quick ) {
-        zoomPerClick = this.zoomPerClick;
-        factor = event.shift ? 1.0 / zoomPerClick : zoomPerClick;
-        this.viewport.zoomBy(
-            factor,
-            this.viewport.pointFromPixel( event.position, true )
-        );
-        this.viewport.applyConstraints();
+    var gestureSettings;
+
+    if ( !event.preventDefaultAction && this.viewport && event.quick ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.clickToZoom ) {
+            this.viewport.zoomBy(
+                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
     }
     /**
      * Raised when a mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
@@ -2240,15 +2263,18 @@ function onCanvasClick( event ) {
 }
 
 function onCanvasDrag( event ) {
+    var gestureSettings;
+
     if ( !event.preventDefaultAction && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), ( event.pointerType !== 'mouse' ) ? true : false );
-        if( this.constrainDuringPan ){
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
+        if( this.constrainDuringPan && !gestureSettings.flickEnabled ){
             this.viewport.applyConstraints();
         }
     }
@@ -2280,14 +2306,18 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
-    // TODO: Make the magic numbers configurable (20 pixels-per-second speed threshold and 0.35 momentum dampener).
-    if ( event.pointerType !== 'mouse' && !event.preventDefaultAction && this.viewport && event.speed > 20 ) {
-        var amplitudeX = 0.35 * ( event.speed * Math.cos( event.direction ) ),
-            amplitudeY = 0.35 * ( event.speed * Math.sin( event.direction ) ),
-            center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
-            target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
-        this.viewport.panTo( target, false );
-        this.viewport.applyConstraints();
+    var gestureSettings;
+
+    if ( !event.preventDefaultAction && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.flickEnabled && event.speed >= gestureSettings.flickMinSpeed && !event.preventDefaultAction && this.viewport ) {
+            var amplitudeX = gestureSettings.flickMomentum * ( event.speed * Math.cos( event.direction ) ),
+                amplitudeY = gestureSettings.flickMomentum * ( event.speed * Math.sin( event.direction ) ),
+                center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
+                target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
+            this.viewport.panTo( target, false );
+            this.viewport.applyConstraints();
+        }
     }
     /**
      * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
@@ -2315,8 +2345,14 @@ function onCanvasDragEnd( event ) {
 }
 
 function onCanvasRelease( event ) {
-    if ( event.pointerType === 'mouse' && event.insideElementPressed && this.viewport ) {
-        this.viewport.applyConstraints();
+    var gestureSettings;
+
+    if ( event.insideElementPressed && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
+        if ( !gestureSettings.flickEnabled ) {
+            this.viewport.applyConstraints();
+        }
     }
     /**
      * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.

@@ -684,6 +684,10 @@
     } )();
 
 
+///////////////////////////////////////////////////////////////////////////////
+// Event model detection
+///////////////////////////////////////////////////////////////////////////////
+
     /**
      * Detect available mouse wheel event name.
      */
@@ -747,6 +751,10 @@
         $.MouseTracker.maxTouchPoints = 10;
     }
     
+
+///////////////////////////////////////////////////////////////////////////////
+// Classes and typedefs
+///////////////////////////////////////////////////////////////////////////////
 
     /**
      * Represents a point of contact on the screen made by a mouse cursor, pen, touch, or other pointing device.
@@ -875,8 +883,12 @@
     };
     
 
+///////////////////////////////////////////////////////////////////////////////
+// Utility functions
+///////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Starts tracking pointer events on this element.
+     * Starts tracking pointer events on the tracked element.
      * @private
      * @inner
      */
@@ -900,7 +912,7 @@
     }
 
     /**
-     * Stops tracking pointer events on this element.
+     * Stops tracking pointer events on the tracked element.
      * @private
      * @inner
      */
@@ -926,7 +938,7 @@
     }
 
     /**
-     * Begin capturing mouse events on this element (legacy mouse events only).
+     * Begin capturing mouse events to the tracked element (legacy mouse events only).
      * @private
      * @inner
      */
@@ -958,7 +970,7 @@
 
 
     /**
-     * Stop capturing mouse events on this element (legacy mouse events only).
+     * Stop capturing mouse events to the tracked element (legacy mouse events only).
      * @private
      * @inner
      */
@@ -1013,6 +1025,8 @@
 
 
     /**
+     * Gets a W3C Pointer Events model compatible pointer type string from a DOM pointer event.
+     * IE10 used a long integer value, but the W3C specification (and IE11+) use a string "mouse", "touch", "pen", or "".
      * @private
      * @inner
      */
@@ -1078,6 +1092,10 @@
         return new $.Point( ( point1.x + point2.x ) / 2, ( point1.y + point2.y ) / 2 );
     }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// DOM event handlers
+///////////////////////////////////////////////////////////////////////////////
 
     /**
      * @private
@@ -1726,6 +1744,10 @@
     }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// DOM event handler utility functions
+///////////////////////////////////////////////////////////////////////////////
+
     /**
      * Handles 'wheel' events. 
      * The event may be simulated by the legacy mouse wheel event handler (onMouseWheel()).
@@ -2294,7 +2316,11 @@
     }
 
 
-    // TODO Do we really need these anymore (used as buttonDownAny in enterHandler/exitHandler callbacks)?
+///////////////////////////////////////////////////////////////////////////////
+// Deprecated
+///////////////////////////////////////////////////////////////////////////////
+
+   // TODO Do we really need these anymore (used as buttonDownAny in enterHandler/exitHandler callbacks)?
     //      Surely there's a more robust and elegant solution...
 
     /**
