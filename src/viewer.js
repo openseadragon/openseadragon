@@ -1790,7 +1790,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this.gestureSettingsPen;
         }
         else {
-            return { clickToZoom: false,  flickEnabled: false, flickMinSpeed: 20, flickMomentum: 0.35 };
+            return { scrollToZoom: false, clickToZoom: false,  flickEnabled: false, flickMinSpeed: 20, flickMomentum: 0.35 };
         }
     }
 
@@ -2417,14 +2417,19 @@ function onCanvasPinch( event ) {
 }
 
 function onCanvasScroll( event ) {
-    var factor;
+    var gestureSettings,
+        factor;
+
     if ( !event.preventDefaultAction && this.viewport ) {
-        factor = Math.pow( this.zoomPerScroll, event.scroll );
-        this.viewport.zoomBy(
-            factor,
-            this.viewport.pointFromPixel( event.position, true )
-        );
-        this.viewport.applyConstraints();
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.scrollToZoom ) {
+            factor = Math.pow( this.zoomPerScroll, event.scroll );
+            this.viewport.zoomBy(
+                factor,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
     }
     /**
      * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
