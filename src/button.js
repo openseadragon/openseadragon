@@ -120,18 +120,23 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element        = options.element   || $.makeNeutralElement( "button" );
+    this.element        = options.element   || $.makeNeutralElement( "div" );
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
-    if( !options.element ){
+    if ( !options.element ) {
         this.imgRest      = $.makeTransparentImage( this.srcRest );
         this.imgGroup     = $.makeTransparentImage( this.srcGroup );
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
-        this.imgDiv       = $.makeNeutralElement( "div" );
 
-        this.imgDiv.style.position = "relative";
+        this.imgRest.alt  =
+        this.imgGroup.alt =
+        this.imgHover.alt =
+        this.imgDown.alt  =
+            this.tooltip;
+
+        this.element.style.position = "relative";
 
         this.imgGroup.style.position =
         this.imgHover.style.position =
@@ -159,11 +164,10 @@ $.Button = function( options ) {
                 "";
         }
 
-        this.imgDiv.appendChild( this.imgRest );
-        this.imgDiv.appendChild( this.imgGroup );
-        this.imgDiv.appendChild( this.imgHover );
-        this.imgDiv.appendChild( this.imgDown );
-        this.element.appendChild( this.imgDiv );
+        this.element.appendChild( this.imgRest );
+        this.element.appendChild( this.imgGroup );
+        this.element.appendChild( this.imgHover );
+        this.element.appendChild( this.imgDown );
     }
 
 
