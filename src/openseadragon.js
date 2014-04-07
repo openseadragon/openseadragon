@@ -409,7 +409,7 @@
   *
   * @property {Number} [collectionTileSize=800]
   *
-  * @property {String} [crossOriginPolicy='Anonymous']
+  * @property {String|Boolean} [crossOriginPolicy=false]
   *      Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
   *      not use CORS, and the canvas will be tainted.
   *
@@ -727,7 +727,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             tileSources:            null,
             tileHost:               null,
             initialPage:            0,
-            crossOriginPolicy:      'Anonymous',
+            crossOriginPolicy:      false,
             
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
