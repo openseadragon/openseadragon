@@ -102,7 +102,7 @@ $.Viewer = function( options ) {
          */
         element:        null,
         /**
-         * A &lt;form&gt; element (provided by {@link OpenSeadragon.ControlDock}), the base element of this Viewer instance.<br><br>
+         * A &lt;div&gt; element (provided by {@link OpenSeadragon.ControlDock}), the base element of this Viewer instance.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#element}.
          * @member {Element} container
          * @memberof OpenSeadragon.Viewer#

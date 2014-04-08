@@ -66,7 +66,7 @@ $.ButtonGroup = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.ButtonGroup#
      */
-    this.element = options.element || $.makeNeutralElement( "fieldgroup" );
+    this.element = options.element || $.makeNeutralElement( "div" );
 
     // TODO What if there IS an options.group specified? 
     if( !options.group ){
