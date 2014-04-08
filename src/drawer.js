@@ -327,8 +327,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
             image = new Image();
 
-            if (_this.crossOriginPolicy !== false) {
-              image.crossOrigin = _this.crossOriginPolicy;
+            if ( _this.crossOriginPolicy !== false ) {
+                image.crossOrigin = _this.crossOriginPolicy;
             }
 
             complete = function( imagesrc, resultingImage ){
