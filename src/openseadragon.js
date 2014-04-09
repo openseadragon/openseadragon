@@ -289,12 +289,6 @@
   * @property {Number} [zoomPerSecond=1.0]
   *     The number of seconds to animate a single zoom event over.
   *
-  * @property {Boolean} [showNavigationControl=true]
-  *     Set to false to prevent the appearance of the default navigation controls.
-  *
-  * @property {OpenSeadragon.ControlAnchor} [navigationControlAnchor=TOP_LEFT]
-  *     Placement of the default navigation controls.
-  *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
@@ -359,15 +353,39 @@
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
   *
-  * @property {Boolean} [navPrevNextWrap=false]
-  *     If the 'previous' button will wrap to the last image when viewing the first
-  *     image and if the 'next' button will wrap to the first image when viewing
-  *     the last image.
+  * @property {Boolean} [showNavigationControl=true]
+  *     Set to false to prevent the appearance of the default navigation controls.<br>
+  *     Note that if set to false, the customs buttons set by the options
+  *     zoomInButton, zoomOutButton etc, are rendered inactive.
+  *
+  * @property {OpenSeadragon.ControlAnchor} [navigationControlAnchor=TOP_LEFT]
+  *     Placement of the default navigation controls.
+  *     To set the placement of the sequence controls, see the
+  *     sequenceControlAnchor option.
+  *
+  * @property {Boolean} [showZoomControl=true]
+  *     If true then + and - buttons to zoom in and out are displayed.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
+  *
+  * @property {Boolean} [showHomeControl=true]
+  *     If true then the 'Go home' button is displayed to go back to the original
+  *     zoom and pan.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
+  *
+  * @property {Boolean} [showFullPageControl=true]
+  *     If true then the 'Toggle full page' button is displayed to switch
+  *     between full page and normal mode.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showRotationControl=false]
   *     If true then the rotate left/right controls will be displayed as part of the
   *     standard controls. This is also subject to the browser support for rotate
-  *     (e.g. viewer.drawer.canRotate()).
+  *     (e.g. viewer.drawer.canRotate()).<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
@@ -375,6 +393,59 @@
   *
   * @property {OpenSeadragon.ControlAnchor} [sequenceControlAnchor=TOP_LEFT]
   *     Placement of the default sequence controls.
+  *
+  * @property {Boolean} [navPrevNextWrap=false]
+  *     If true then the 'previous' button will wrap to the last image when
+  *     viewing the first image and the 'next' button will wrap to the first
+  *     image when viewing the last image.
+  *
+  * @property {String} zoomInButton
+  *     Set the id of the custom 'Zoom in' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} zoomOutButton
+  *     Set the id of the custom 'Zoom out' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} homeButton
+  *     Set the id of the custom 'Go home' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} fullPageButton
+  *     Set the id of the custom 'Toggle full page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} rotateLeftButton
+  *     Set the id of the custom 'Rotate left' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} rotateRightButton
+  *     Set the id of the custom 'Rotate right' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} previousButton
+  *     Set the id of the custom 'Previous page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
+  *
+  * @property {String} nextButton
+  *     Set the id of the custom 'Next page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {Number} [initialPage=0]
   *     If the viewer has been configured with a sequence of tile sources, display this page initially.
@@ -444,6 +515,18 @@
   * @property {String} fullpage.GROUP
   * @property {String} fullpage.HOVER
   * @property {String} fullpage.DOWN
+  *
+  * @property {Object} rotateleft - Images for the rotate left button.
+  * @property {String} rotateleft.REST
+  * @property {String} rotateleft.GROUP
+  * @property {String} rotateleft.HOVER
+  * @property {String} rotateleft.DOWN
+  *
+  * @property {Object} rotateright - Images for the rotate right button.
+  * @property {String} rotateright.REST
+  * @property {String} rotateright.GROUP
+  * @property {String} rotateright.HOVER
+  * @property {String} rotateright.DOWN
   *
   * @property {Object} previous - Images for the previous button.
   * @property {String} previous.REST
@@ -762,8 +845,13 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             showSequenceControl:     true,  //SEQUENCE
             sequenceControlAnchor:   null,  //SEQUENCE
             preserveViewport:        false, //SEQUENCE
-            showNavigationControl:   true,  //ZOOM/HOME/FULL/SEQUENCE
-            navigationControlAnchor: null,  //ZOOM/HOME/FULL
+            navPrevNextWrap:         false, //SEQUENCE
+            showNavigationControl:   true,  //ZOOM/HOME/FULL/ROTATION
+            navigationControlAnchor: null,  //ZOOM/HOME/FULL/ROTATION
+            showZoomControl:         true,  //ZOOM
+            showHomeControl:         true,  //HOME
+            showFullPageControl:     true,  //FULL
+            showRotationControl:     false, //ROTATION
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
@@ -862,8 +950,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     DOWN:   'next_pressed.png'
                 }
             },
-            navPrevNextWrap:        false,
-            showRotationControl:    false,
 
             //DEVELOPER SETTINGS
             debugMode:              false,
