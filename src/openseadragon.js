@@ -354,8 +354,8 @@
   *     and away from the image.
   *
   * @property {Boolean} [showNavigationControl=true]
-  *     Set to false to prevent the appearance of the default navigation controls.
-  *     Note that if set to false, the customs buttons setted by the options
+  *     Set to false to prevent the appearance of the default navigation controls.<br>
+  *     Note that if set to false, the customs buttons set by the options
   *     zoomInButton, zoomOutButton etc, are rendered inactive.
   *
   * @property {OpenSeadragon.ControlAnchor} [navigationControlAnchor=TOP_LEFT]
@@ -364,20 +364,28 @@
   *     sequenceControlAnchor option.
   *
   * @property {Boolean} [showZoomControl=true]
-  *     If true then + and - buttons to zoom in and out are displayed.
+  *     If true then + and - buttons to zoom in and out are displayed.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showHomeControl=true]
   *     If true then the 'Go home' button is displayed to go back to the original
-  *     zoom and pan.
+  *     zoom and pan.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showFullPageControl=true]
   *     If true then the 'Toggle full page' button is displayed to switch
-  *     between full page and normal mode.
+  *     between full page and normal mode.<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showRotationControl=false]
   *     If true then the rotate left/right controls will be displayed as part of the
   *     standard controls. This is also subject to the browser support for rotate
-  *     (e.g. viewer.drawer.canRotate()).
+  *     (e.g. viewer.drawer.canRotate()).<br>
+  *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
+  *     this setting when set to false.
   *
   * @property {Boolean} [showSequenceControl=true]
   *     If the viewer has been configured with a sequence of tile sources, then
@@ -387,33 +395,57 @@
   *     Placement of the default sequence controls.
   *
   * @property {Boolean} [navPrevNextWrap=false]
-  *     If the 'previous' button will wrap to the last image when viewing the first
-  *     image and if the 'next' button will wrap to the first image when viewing
-  *     the last image.
+  *     If true then the 'previous' button will wrap to the last image when
+  *     viewing the first image and the 'next' button will wrap to the first
+  *     image when viewing the last image.
   *
   * @property {String} zoomInButton
   *     Set the id of the custom 'Zoom in' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} zoomOutButton
   *     Set the id of the custom 'Zoom out' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} homeButton
   *     Set the id of the custom 'Go home' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} fullPageButton
   *     Set the id of the custom 'Toggle full page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} rotateLeftButton
   *     Set the id of the custom 'Rotate left' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} rotateRightButton
   *     Set the id of the custom 'Rotate right' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} previousButton
   *     Set the id of the custom 'Previous page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {String} nextButton
   *     Set the id of the custom 'Next page' button to use.
+  *     This is usefull to have a custom button anywhere in the web page.<br>
+  *     To only change the button images, consider using
+  *     {@link OpenSeadragon.Options.navImages}
   *
   * @property {Number} [initialPage=0]
   *     If the viewer has been configured with a sequence of tile sources, display this page initially.
