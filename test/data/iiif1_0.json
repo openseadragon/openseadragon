@@ -1,0 +1,26 @@
+{
+  "identifier": "iiif_1_0_files",
+  "width": 775,
+  "height": 1024,
+  "scale_factors": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "tile_width": 256,
+  "tile_height": 256,
+  "formats": [
+    "jpg",
+    "png"
+  ],
+  "qualities": [
+    "native",
+    "bitonal",
+    "grey",
+    "color"
+  ],
+  "profile": "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+}

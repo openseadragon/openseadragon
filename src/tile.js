@@ -1,67 +1,181 @@
+/*
+ * OpenSeadragon - Tile
+ *
+ * Copyright (C) 2009 CodePlex Foundation
+ * Copyright (C) 2010-2013 OpenSeadragon contributors
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ *
+ * - Neither the name of CodePlex Foundation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 (function( $ ){
     var TILE_CACHE       = {};
 /**
- * @class
+ * @class Tile
+ * @memberof OpenSeadragon
  * @param {Number} level The zoom level this tile belongs to.
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
- * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
+ * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized
  *      coordinates.
- * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has 
+ * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
- *
- * @property {Number} level The zoom level this tile belongs to.
- * @property {Number} x The vector component 'x'.
- * @property {Number} y The vector component 'y'.
- * @property {OpenSeadragon.Point} bounds Where this tile fits, in normalized 
- *      coordinates
- * @property {Boolean} exists Is this tile a part of a sparse image? ( Also has 
- *      this tile failed to load?
- * @property {String} url The URL of this tile's image.
- * @property {Boolean} loaded Is this tile loaded?
- * @property {Boolean} loading Is this tile loading
- * @property {Element} element The HTML element for this tile
- * @property {Image} image The Image object for this tile
- * @property {String} style The alias of this.element.style.
- * @property {String} position This tile's position on screen, in pixels.
- * @property {String} size This tile's size on screen, in pixels
- * @property {String} blendStart The start time of this tile's blending
- * @property {String} opacity The current opacity this tile should be.
- * @property {String} distance The distance of this tile to the viewport center
- * @property {String} visibility The visibility score of this tile.
- * @property {Boolean} beingDrawn Whether this tile is currently being drawn
- * @property {Number} lastTouchTime Timestamp the tile was last touched.
  */
 $.Tile = function(level, x, y, bounds, exists, url) {
+    /**
+     * The zoom level this tile belongs to.
+     * @member {Number} level
+     * @memberof OpenSeadragon.Tile#
+     */
     this.level   = level;
+    /**
+     * The vector component 'x'.
+     * @member {Number} x
+     * @memberof OpenSeadragon.Tile#
+     */
     this.x       = x;
+    /**
+     * The vector component 'y'.
+     * @member {Number} y
+     * @memberof OpenSeadragon.Tile#
+     */
     this.y       = y;
+    /**
+     * Where this tile fits, in normalized coordinates
+     * @member {OpenSeadragon.Point} bounds
+     * @memberof OpenSeadragon.Tile#
+     */
     this.bounds  = bounds;
+    /**
+     * Is this tile a part of a sparse image? Also has this tile failed to load?
+     * @member {Boolean} exists
+     * @memberof OpenSeadragon.Tile#
+     */
     this.exists  = exists;
+    /**
+     * The URL of this tile's image.
+     * @member {String} url
+     * @memberof OpenSeadragon.Tile#
+     */
     this.url     = url;
+    /**
+     * Is this tile loaded?
+     * @member {Boolean} loaded
+     * @memberof OpenSeadragon.Tile#
+     */
     this.loaded  = false;
+    /**
+     * Is this tile loading?
+     * @member {Boolean} loading
+     * @memberof OpenSeadragon.Tile#
+     */
     this.loading = false;
 
+    /**
+     * The HTML div element for this tile
+     * @member {Element} element
+     * @memberof OpenSeadragon.Tile#
+     */
     this.element    = null;
+    /**
+     * The HTML img element for this tile.
+     * @member {Element} imgElement
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.imgElement = null;
+    /**
+     * The Image object for this tile.
+     * @member {Object} image
+     * @memberof OpenSeadragon.Tile#
+     */
     this.image      = null;
 
+    /**
+     * The alias of this.element.style.
+     * @member {String} style
+     * @memberof OpenSeadragon.Tile#
+     */
     this.style      = null;
+    /**
+     * This tile's position on screen, in pixels.
+     * @member {OpenSeadragon.Point} position
+     * @memberof OpenSeadragon.Tile#
+     */
     this.position   = null;
+    /**
+     * This tile's size on screen, in pixels.
+     * @member {OpenSeadragon.Point} size
+     * @memberof OpenSeadragon.Tile#
+     */
     this.size       = null;
+    /**
+     * The start time of this tile's blending.
+     * @member {Number} blendStart
+     * @memberof OpenSeadragon.Tile#
+     */
     this.blendStart = null;
+    /**
+     * The current opacity this tile should be.
+     * @member {Number} opacity
+     * @memberof OpenSeadragon.Tile#
+     */
     this.opacity    = null;
+    /**
+     * The distance of this tile to the viewport center.
+     * @member {Number} distance
+     * @memberof OpenSeadragon.Tile#
+     */
     this.distance   = null;
+    /**
+     * The visibility score of this tile.
+     * @member {Number} visibility
+     * @memberof OpenSeadragon.Tile#
+     */
     this.visibility = null;
 
+    /**
+     * Whether this tile is currently being drawn.
+     * @member {Boolean} beingDrawn
+     * @memberof OpenSeadragon.Tile#
+     */
     this.beingDrawn     = false;
+    /**
+     * Timestamp the tile was last touched.
+     * @member {Number} lastTouchTime
+     * @memberof OpenSeadragon.Tile#
+     */
     this.lastTouchTime  = 0;
 };
 
-$.Tile.prototype = {
-    
+$.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
+
     /**
-     * Provides a string representation of this tiles level and (x,y) 
+     * Provides a string representation of this tiles level and (x,y)
      * components.
      * @function
      * @returns {String}
@@ -76,9 +190,6 @@ $.Tile.prototype = {
      * @param {Element} container
      */
     drawHTML: function( container ) {
-
-        var containerSize = $.getElementSize( container );
-
         if ( !this.loaded || !this.image ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
@@ -87,33 +198,16 @@ $.Tile.prototype = {
             return;
         }
 
-        /* EXISTING IMPLEMENTATION
-        if ( !this.element ) {
-            this.element              = $.makeNeutralElement("img");
-            this.element.src          = this.url;
-
-            this.style                     = this.element.style;
-            this.style.position            = "absolute";
-            this.style.msInterpolationMode = "nearest-neighbor";
-        }
-
-        if ( this.element.parentNode != container ) {
-            container.appendChild( this.element );
-        }
-
-        this.style.top     = position.y + "px";
-        this.style.left    = position.x + "px";
-        this.style.height  = size.y + "px";
-        this.style.width   = size.x + "px";
-        */
-
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
-        
+
         if ( !this.element ) {
-            this.element              = $.makeNeutralElement("img");
-            this.element.src          = this.url;
-            this.element.style.msInterpolationMode = "nearest-neighbor";
+            this.element                              = $.makeNeutralElement( "div" );
+            this.imgElement                           = $.makeNeutralElement( "img" );
+            this.imgElement.src                       = this.url;
+            this.imgElement.style.msInterpolationMode = "nearest-neighbor";
+            this.imgElement.style.width               = "100%";
+            this.imgElement.style.height              = "100%";
 
             this.style                     = this.element.style;
             this.style.position            = "absolute";
@@ -121,23 +215,26 @@ $.Tile.prototype = {
         if ( this.element.parentNode != container ) {
             container.appendChild( this.element );
         }
+        if ( this.imgElement.parentNode != this.element ) {
+            this.element.appendChild( this.imgElement );
+        }
 
-        this.style.top     = 100 * ( this.position.y / containerSize.y ) + "%";
-        this.style.left    = 100 * ( this.position.x / containerSize.x ) + "%";
-        this.style.height  = 100 * ( this.size.y / containerSize.y ) + "%";
-        this.style.width   = 100 * ( this.size.x / containerSize.x ) + "%";
-        
+        this.style.top     = this.position.y + "px";
+        this.style.left    = this.position.x + "px";
+        this.style.height  = this.size.y + "px";
+        this.style.width   = this.size.x + "px";
+
         $.setElementOpacity( this.element, this.opacity );
-
-
     },
 
     /**
      * Renders the tile in a canvas-based context.
      * @function
      * @param {Canvas} context
+     * @param {Function} method for firing the drawing event. drawingHandler({context, tile, rendered})
+     * where <code>rendered</code> is the context with the pre-drawn image.
      */
-    drawCanvas: function( context ) {
+    drawCanvas: function( context, drawingHandler ) {
 
         var position = this.position,
             size     = this.size,
@@ -162,11 +259,11 @@ $.Tile.prototype = {
         if( context.globalAlpha == 1 && this.url.match('.png') ){
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
-            context.clearRect( 
-                position.x+1, 
-                position.y+1, 
-                size.x-2, 
-                size.y-2 
+            context.clearRect(
+                position.x+1,
+                position.y+1,
+                size.x-2,
+                size.y-2
             );
 
         }
@@ -184,18 +281,21 @@ $.Tile.prototype = {
         }
 
         rendered = TILE_CACHE[ this.url ];
-        
+
+        // This gives the application a chance to make image manipulation changes as we are rendering the image
+        drawingHandler({context: context, tile: this, rendered: rendered});
+
         //rendered.save();
-        context.drawImage( 
-            rendered.canvas, 
+        context.drawImage(
+            rendered.canvas,
             0,
-            0, 
-            rendered.canvas.width, 
-            rendered.canvas.height, 
-            position.x, 
-            position.y, 
-            size.x, 
-            size.y 
+            0,
+            rendered.canvas.width,
+            rendered.canvas.height,
+            position.x,
+            position.y,
+            size.x,
+            size.y
         );
         //rendered.restore();
 
@@ -203,21 +303,25 @@ $.Tile.prototype = {
     },
 
     /**
-     * Removes tile from it's contianer.
+     * Removes tile from its container.
      * @function
      */
     unload: function() {
+        if ( this.imgElement && this.imgElement.parentNode ) {
+            this.imgElement.parentNode.removeChild( this.imgElement );
+        }
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
-        } 
+        }
         if ( TILE_CACHE[ this.url ]){
             delete TILE_CACHE[ this.url ];
         }
 
-        this.element = null;
-        this.image   = null;
-        this.loaded  = false;
-        this.loading = false;
+        this.element    = null;
+        this.imgElement = null;
+        this.image      = null;
+        this.loaded     = false;
+        this.loading    = false;
     }
 };
 

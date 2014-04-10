@@ -1,12 +1,171 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-0.9.125: In Progress
+1.1.0: (in progress)
 
-* Fully deprecated OpenSeadragon.createFromDZI, safely deprecated Viewer.openTileSource and 
+* BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
+    * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
+    * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
+* BREAKING CHANGE: Pseudo full screen mode on IE<11 using activex has been dropped. OpenSeadragon will run in full page if full screen mode is requested.
+* DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
+* DEPRECATION: OpenSeadragon.cancelFullScreen has been renamed OpenSeadragon.exitFullScreen (#358)
+* Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
+* Improved overlay functions (#331)
+* Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
+* Added ControlAnchor options for default controls (#304)
+* Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
+* Added crossOriginPolicy drawer configuration to enable or disable CORS image requests (#364)
+* Disabled CORS by default (#377)
+* Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
+* Added a 'navigator-scroll' event to Navigator. Fired when mousewheel/pinch events occur in the navigator (#310)
+* Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)
+* Added 'ABSOLUTE' as a navigatorPosition option, along with corresponding navigatorTop, navigatorLeft options. Allows the navigator minimap to be placed anywhere in the viewer (#310)
+* Enhanced the navigatorTop, navigatorLeft, navigatorHeight, and navigatorWidth options to allow a number for pixel units or a string for other element units (%, em, etc.) (#310)
+* Additional enhancements for IIIF support (#315)
+* Fixed: Setting degrees in Viewer constructor has no effect (#336)
+* Added pre-draw event for tiles to allow applications to alter the image (#348)
+* Added optional Rotate Left/Right buttons to standard controls (#341)
+* Added optimization for large numbers of overlays: `checkResize = false` option for OpenSeadragon.Overlay (#365)
+* Updated full screen API, adding support for Opera and IE11 and allowing keyboard input in Chrome (#358)
+* Various fixes to bring OpenSeadragon into W3C compliance (#375)
+* Added separate flags for turning off each of the nav buttons (#376)
+
+1.0.0:
+
+NOTE: This version has a number of breaking changes to the API, mostly in event handling. See below.
+
+* BREAKING CHANGE: All EventSource and MouseTracker event handler method signatures changed to 'handlerMethod(event)' where event == { eventSource, userData, ... } (#251) (Also fixes #23, #224, #239)
+    * The new eventSource property in the event object replaces the old eventSource parameter that was passed to handler methods.
+    * Where the event object duplicated the eventSource value, those properties have been removed. This affects the following events:
+        * All Button events - 'button' property removed
+        * All Viewer (Viewer, Drawer, Viewport) events - 'viewer' property removed
+* BREAKING CHANGE: Renamed EventHandler to EventSource (#225)
+* BREAKING CHANGE: Event names changed for consistency: changed to lower case, compound names hyphenated, and "on" prefixes removed (#226):
+    * Viewer "animationstart" changed to "animation-start"
+    * Viewer "animationfinish" changed to "animation-finish"
+    * Button "onPress" changed to "press"
+    * Button "onRelease" changed to "release"
+    * Button "onClick" changed to "click"
+    * Button "onEnter" changed to "enter"
+    * Button "onExit" changed to "exit"
+    * Button "onFocus" changed to "focus"
+    * Button "onBlur" changed to "blur"
+* BREAKING CHANGE: Numerous improvements to fullPage/fullScreen (#256):
+    * Retains zoom/pan position better when switching into and out of fullPage.
+    * Retains scroll position when switching back out.
+    * More resilient to styling variations on the page.
+    * setFullPage no longer automatically engages fullScreen; there's now a separate setFullScreen.
+    * 'fullpage' event is now 'full-page'.
+    * The `fullpage` property of the 'full-page' event is now `fullPage`.
+    * There is now a 'full-screen' event with a `fullScreen` property (true if it has gone to full screen).
+    * There are now 'pre-full-page' and 'pre-full-screen' events that include a `preventDefaultAction` property you can set in your handler to cancel. They also have `fullPage` and `fullScreen` properties respectively, to indicate if they are going into or out of the mode.
+* BREAKING CHANGE: Removed the 'onPageChange' callback from the viewer options. Viewer.goToPage() now raises the 'page' event only (#285)
+* Major documentation improvements (#281)
+* MouseTracker now passes the original event objects to its handler methods (#23)
+* MouseTracker now supports an optional 'moveHandler' method for tracking mousemove events (#215)
+* Added stopHandler to MouseTracker. (#262)
+* Fixed: Element-relative mouse coordinates now correct if the element and/or page is scrolled (using new OpenSeadragon.getElementOffset() method) (#131)
+* Fixed: Pinch zoom event issue, regressive issue from previous event system changes (#244)
+* Added IIIF Image API 1.1 Tile Source (#230)
+* IIIF 1.0 now uses pixel based syntax (#249)
+* Fixed: Touch event issue where no canvas-click events were being raised (#240)
+* Check that zoom reference point is valid before using it in zoomTo and zoomBy (#247)
+* Added a number of easier coordinate conversion methods to viewport (#243)
+* Added the ability to create a viewer and start at a specified page (#252)
+* Fixed image resolve issue with collection mode (#255)
+* DOM events are now passed through as 'event.originalEvent' in viewer and button events where appropriate. (#257) Affects the following events:
+    * Viewer: 'canvas-release', 'canvas-click', 'canvas-drag', 'canvas-scroll', 'container-enter', 'container-exit', 'container-release'
+    * Button: 'enter', 'exit', 'press', 'release', 'focus', 'blur', 'click'
+* Fixed: IE 10 not reading DZI file correctly in certain circumstances (#218)
+* Added support for the 'wheel' DOM mousewheel event (#261)
+* Fix for non-canvas tile rendering at large size (#264)
+* Drawer now uses an HTML5 canvas element whenever it's available. Can be overridden with the Viewer.useCanvas option (#191)
+* Added a boolean preventDefaultAction property (default false) to the event object passed to MouseTracker handler methods. (#270) Implemented in the following MouseTracker subscribers:
+    * Viewer.keyboardCommandArea.innerTracker.focusHandler: preventDefaultAction == true prevents scrolling viewer into view
+    * Viewer.keyboardCommandArea.innerTracker.keyHandler: preventDefaultAction == true prevents viewer keyboard navigation
+    * Viewer.innerTracker.clickHandler: preventDefaultAction == true prevents viewer zoom on click
+    * Viewer.innerTracker.dragHandler: preventDefaultAction == true prevents viewer panning with mouse/touch
+    * Viewer.innerTracker.scrollHandler: preventDefaultAction == true prevents viewer zooming on mousewheel/pinch
+* Fixed: IE8 error with custom buttons - "Object doesn't support this action" (#279)
+* Support IIIF servers that don't report tile dimensions (#286)
+* Added an autoResize option. Default is true. When set to false, the viewer takes no action when its container element is resized. (#291)
+* Added a static 'version' property to OpenSeadragon. Useful for plugins that require specific OpenSeadragon versions. (#292)
+
+0.9.131:
+
+* Fixed: canvas-click event shouldn't fire as you drag (#198)
+* Fixed: LegacyTileSource doesn't fail gracefully when no supported file formats are found (#202)
+* Added an optional userData argument to EventHandler.addHandler() which is passed unchanged to the handler method (#203)
+* Fixed AJAX error reporting on IE8 (#208)
+* Added viewportToImageRectangle method, and updated imageToViewportRectangle, imageToViewportCoordinates, and viewportToImageCoordinates to be more flexible with params (#212)
+* Fixed: Viewer is not responsive (css) after returning from full screen (#222)
+
+0.9.130:
+
+* Added partial support for rotation (just 90 degree increments for now). (#185)
+* Hiding and restoring broke the viewer; fixed (#177)
+* You can now provide an onDraw function for overlays to do custom overlay manipulation (#160)
+* Added a destroy function on the viewer to clean up and remove elements (#179)
+* Fixed: navigatorPosition option corrected. (#163)
+* OpenSeadragon.now() returned undefined the first time; fixed
+* onTouchEnd did not call the correct mouse up handler; fixed (#159)
+* Touch events no longer capture mouse (was causing issues on devices that support both) (#168)
+* Clicking on a button control no longer refreshes page (#184)
+* Drawer now works when the page is rtl (#187)
+* Fixed a situation that could throw errors in touch handling (#188)
+
+0.9.129:
+
+* Fixed: navigator image not updating when base zoom image is changed (#147)
+* Fixed tile rendering issue at lower zoom levels with the IIIF TileSource (#55)
+* On IE, ajax errors would cause an exception to be thrown; fixed (#144)
+* Faster and more consistent millisecond getter (#138)
+* Fixed an error when using navPrevNextWrap on single images (#135)
+* Various fixes to our timer handling (#133)
+* Now generating source map for openseadragon.min.js (#51)
+* Fix for calculating overlay width / height (#142)
+* JSHint tidying (#136)
+* Improved Ajax method (#149)
+* Overhauled AJAX error reporting (#151)
+
+0.9.128:
+
+* The navigator is now off by default (#102)
+* Reverted minPixelRatio to 0.5 for better quality (#116)
+* Sometimes tiles wouldn't resolve if you used the blendTime option; fixed. (#95)
+* You can now choose to have previous and next buttons wrap using the config.navPrevNextWrap. (#114)
+* You can now specify an ID for a div to hold the navigator (#46)
+* You can now click in the navigator to go to a new location (#46)
+* Keyboard handling is now done in the viewer rather than navigator (#46)
+* Additional navigator fixes (#46)
+* Drawer events now fire properly (#94)
+* Fixed an error in EventHandler.removeHandler() (#48)
+* Better requestAnimationFrame detection on older Firefox (#103)
+* More efficient navigator loading (#115)
+* Simplified element opacity setting implementation (#123)
+
+0.9.127:
+
+* Fixed a problem with getString when the string property is a sub-property. (#64)
+* Fixed: Tooltips for Navigation Controls not displaying (#63)
+* Cleaned up some diagnostic code that was broken.
+* Added fullpage class to viewer element when in fullpage mode (#61)
+* Reverted to original New BSD license; cleaned up license declarations (#89)
+
+0.9.126:
+
+* DZI JSONp was broken; fixed.
+
+0.9.125:
+
+* Fully deprecated OpenSeadragon.createFromDZI, safely deprecated Viewer.openTileSource and
   Viewer.openDZI to use Viewer.open internally. (#53 & #54).
 * Full page bug fix for when viewer is child of document body (#43).
-* Overlays for DZI bug fix (#45). 
+* Overlays for DZI bug fix (#45).
+* DziTileSource: avoid changing relative paths (#56).
+* Fix typo in preserveViewport handling (#77).
+* Fix updateMulti timer leak after multiple Viewer.open() calls (#76).
+* Minor documentation fixes.
 
 0.9.124:
 

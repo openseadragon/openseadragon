@@ -1,12 +1,54 @@
-(function( $ ){
-    
-/**
- * A tilesource implementation for Tiled Map Services (TMS). Adopted from Rainer Simon
- * project http://github.com/rsimon/seajax-utils. TMS tile
- * scheme ( [ as supported by OpenLayers ] is described here 
- * ( http://openlayers.org/dev/examples/tms.html ) )
+/*
+ * OpenSeadragon - TmsTileSource
  *
- * @class
+ * Copyright (C) 2009 CodePlex Foundation
+ * Copyright (C) 2010-2013 OpenSeadragon contributors
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ *
+ * - Neither the name of CodePlex Foundation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Derived from the TMS tile source in Rainer Simon's seajax-utils project
+ * <http://github.com/rsimon/seajax-utils>.  Rainer Simon has contributed
+ * the included code to the OpenSeadragon project under the New BSD license;
+ * see <https://github.com/openseadragon/openseadragon/issues/58>.
+ */
+
+
+(function( $ ){
+
+/**
+ * @class TmsTileSource
+ * @classdesc A tilesource implementation for Tiled Map Services (TMS).
+ * TMS tile scheme ( [ as supported by OpenLayers ] is described here
+ * ( http://openlayers.org/dev/examples/tms.html ).
+ *
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Number|Object} width - the pixel width of the image or the idiomatic
  *      options object which is used instead of positional arguments.
@@ -14,7 +56,7 @@
  * @param {Number} tileSize
  * @param {Number} tileOverlap
  * @param {String} tilesUrl
- */ 
+ */
 $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     var options;
 
@@ -45,19 +87,18 @@ $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     options.tileSize = 256;
     options.width = bufferedWidth;
     options.height = bufferedHeight;
-    
+
     $.TileSource.apply( this, [ options ] );
 
 };
 
-$.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.TmsTileSource.prototype */{
 
 
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -66,12 +107,11 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.configure
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( data, url ){
@@ -81,7 +121,6 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.TmsTileSource.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y

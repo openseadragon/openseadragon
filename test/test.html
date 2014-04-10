@@ -4,17 +4,31 @@
     <meta charset="utf-8">
     <title>OpenSeadragon QUnit</title>
     <link rel="stylesheet" href="/node_modules/grunt-contrib-qunit/test/libs/qunit.css">
+    <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <link rel="stylesheet" href="/test/test.css">
 </head>
 <body>
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
-    <div id="example"></div>
     <script src="/node_modules/grunt-contrib-qunit/test/libs/qunit.js"></script>
     <script src="/test/lib/jquery-1.9.1.min.js"></script>
+    <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
     <script src="/test/lib/jquery.simulate.js"></script>
     <script src="/build/openseadragon/openseadragon.min.js"></script>
-    <script src="/test/util.js"></script>
+    <script src="/test/test.js"></script>
+
+    <!-- Polyfill must be inserted first because it is testing functions
+         reassignments which could be done by other test. -->
+    <script src="/test/polyfills.js"></script>
     <script src="/test/basic.js"></script>
+    <script src="/test/navigator.js"></script>
+    <script src="/test/strings.js"></script>
+    <script src="/test/formats.js"></script>
+    <script src="/test/utils.js"></script>
+    <script src="/test/events.js"></script>
+    <script src="/test/units.js"></script>
+    <script src="/test/layers.js"></script>
+    <script src="/test/overlays.js"></script>
+    <script src="/test/controls.js"></script>
 </body>
 </html>

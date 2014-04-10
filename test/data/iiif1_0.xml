@@ -1,0 +1,26 @@
+<info xmlns="http://library.stanford.edu/iiif/image-api/ns/">
+  <identifier>iiif_1_0_files</identifier>
+  <width>775</width>
+  <height>1024</height>
+  <scale_factors>
+    <scale_factor>1</scale_factor>
+    <scale_factor>2</scale_factor>
+    <scale_factor>3</scale_factor>
+    <scale_factor>4</scale_factor>
+    <scale_factor>5</scale_factor>
+    <scale_factor>6</scale_factor>
+  </scale_factors>
+  <tile_width>256</tile_width>
+  <tile_height>256</tile_height>
+  <formats>
+    <format>jpg</format>
+    <format>png</format>
+  </formats>
+  <qualities>
+    <quality>native</quality>
+    <quality>bitonal</quality>
+    <quality>grey</quality>
+    <quality>color</quality>
+  </qualities>
+  <profile>http://library.stanford.edu/iiif/image-api/compliance.html#level1</profile>
+</info>

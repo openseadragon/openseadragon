@@ -10,15 +10,19 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-git-describe");
+    grunt.loadNpmTasks('grunt-text-replace');
 
     // ----------
-    var distribution = "build/openseadragon/openseadragon.js",
+    var packageJson = grunt.file.readJSON("package.json"),
+        distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
+        packageDirName = "openseadragon-bin-" + packageJson.version,
+        packageDir = "build/" + packageDirName + "/",
         releaseRoot = "../site-build/built-openseadragon/",
         sources = [
             "src/openseadragon.js",
             "src/fullscreen.js",
-            "src/eventhandler.js",
+            "src/eventsource.js",
             "src/mousetracker.js",
             "src/control.js",
             "src/controldock.js",
@@ -30,6 +34,7 @@ module.exports = function(grunt) {
             "src/tilesource.js",
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
+            "src/iiif1_1tilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/legacytilesource.js",
@@ -49,9 +54,16 @@ module.exports = function(grunt) {
     // ----------
     // Project configuration.
     grunt.initConfig({
-        pkg: grunt.file.readJSON("package.json"),
+        pkg: packageJson,
+        osdVersion: {
+            versionStr: packageJson.version,
+            major:      parseInt(packageJson.version.split('.')[0], 10),
+            minor:      parseInt(packageJson.version.split('.')[1], 10),
+            revision:   parseInt(packageJson.version.split('.')[2], 10)
+        },
         clean: {
             build: ["build"],
+            package: [packageDir],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -64,7 +76,8 @@ module.exports = function(grunt) {
                 banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
                     + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
                     + "//! Git commit: <%= gitInfo %>\n"
-                    + "//! http://openseadragon.github.io\n\n",
+                    + "//! http://openseadragon.github.io\n"
+                    + "//! License: http://openseadragon.github.io/license/\n\n",
                 process: true
             },
             dist: {
@@ -72,9 +85,27 @@ module.exports = function(grunt) {
                 dest: distribution
             }
         },
+        replace: {
+            cleanPaths: {
+                src: ['build/openseadragon/*.map'],
+                overwrite: true,
+                replacements: [
+                    {
+                        from: /build\/openseadragon\//g,
+                        to: ''
+                    }
+                ]
+            }
+        },
         uglify: {
             options: {
-                preserveComments: "some"
+                preserveComments: "some",
+                sourceMap: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map');
+                },
+                sourceMappingURL: function (filename) {
+                    return filename.replace(/\.js$/, '.js.map').replace('build/openseadragon/', '');
+                },
             },
             openseadragon: {
                 src: [ distribution ],
@@ -84,24 +115,27 @@ module.exports = function(grunt) {
         compress: {
             zip: {
                 options: {
-                    archive: "build/openseadragon.zip"
+                    archive: "build/releases/" + packageDirName + ".zip",
+                    level: 9
                 },
                 files: [
-                   { expand: true, cwd: "build/", src: ["openseadragon/**"] }
+                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
                 ]
             },
             tar: {
                 options: {
-                    archive: "build/openseadragon.tar"
+                    archive: "build/releases/" + packageDirName + ".tar.gz",
+                    level: 9
                 },
                 files: [
-                   { expand: true, cwd: "build/", src: [ "openseadragon/**" ] }
+                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
                 ]
             }
         },
         qunit: {
             all: {
                 options: {
+                    timeout: 10000,
                     urls: [ "http://localhost:8000/test/test.html" ]
                 }
             }
@@ -120,12 +154,7 @@ module.exports = function(grunt) {
         },
         jshint: {
             options: {
-                browser: true,
-                eqeqeq: false,
-                loopfunc: false,
-                globals: {
-                    OpenSeadragon: true
-                }
+                jshintrc: '.jshintrc'
             },
             beforeconcat: sources,
             afterconcat: [ distribution ]
@@ -144,10 +173,22 @@ module.exports = function(grunt) {
     // Copies the image files into the appropriate location in the build folder.
     grunt.registerTask("copy:build", function() {
         grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
-            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);            
+            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
         });
+    });
 
-        grunt.file.copy("changelog.txt", "build/changelog.txt");
+    // ----------
+    // Copy:package task.
+    // Creates a directory tree to be compressed into a package.
+    grunt.registerTask("copy:package", function() {
+        grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
+            var dest = packageDir
+                + (subdir ? subdir + "/" : '/')
+                + filename;
+            grunt.file.copy(abspath, dest);
+        });
+        grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
+        grunt.file.copy("LICENSE.txt", packageDir + "LICENSE.txt");
     });
 
     // ----------
@@ -155,6 +196,10 @@ module.exports = function(grunt) {
     // Copies the contents of the build folder into the release folder.
     grunt.registerTask("copy:release", function() {
         grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
+            if (subdir === 'releases') {
+                return;
+            }
+
             var dest = releaseRoot
                 + (subdir ? subdir + "/" : '/')
                 + filename;
@@ -167,7 +212,8 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat", "uglify", "copy:build"
+        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat",
+        "uglify", "replace:cleanPaths", "copy:build"
     ]);
 
     // ----------
@@ -177,8 +223,8 @@ module.exports = function(grunt) {
 
     // ----------
     // Package task.
-    // Builds and creates the .zip and .tar files.
-    grunt.registerTask("package", ["build", "compress"]);
+    // Builds and creates the .zip and .tar.gz files.
+    grunt.registerTask("package", ["build", "copy:package", "compress", "clean:package"]);
 
     // ----------
     // Publish task.

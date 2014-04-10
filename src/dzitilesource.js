@@ -1,8 +1,42 @@
+/*
+ * OpenSeadragon - DziTileSource
+ *
+ * Copyright (C) 2009 CodePlex Foundation
+ * Copyright (C) 2010-2013 OpenSeadragon contributors
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ *
+ * - Neither the name of CodePlex Foundation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 (function( $ ){
-    
+
 /**
- * @class
+ * @class DziTileSource
+ * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @param {Number|Object} width - the pixel width of the image or the idiomatic
  *      options object which is used instead of positional arguments.
@@ -15,13 +49,13 @@
  * @property {String} tilesUrl
  * @property {String} fileFormat
  * @property {OpenSeadragon.DisplayRect[]} displayRects
- */ 
+ */
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects, minLevel, maxLevel ) {
     var i,
         rect,
         level,
         options;
-    
+
     if( $.isPlainObject( width ) ){
         options = width;
     }else{
@@ -33,7 +67,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             tilesUrl: arguments[ 4 ],
             fileFormat: arguments[ 5 ],
             displayRects: arguments[ 6 ],
-            minLevel: arguments[ 7 ], 
+            minLevel: arguments[ 7 ],
             maxLevel: arguments[ 8 ]
         };
     }
@@ -42,7 +76,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
     this.tilesUrl     = options.tilesUrl;
     this.fileFormat   = options.fileFormat;
     this.displayRects = options.displayRects;
-    
+
     if ( this.displayRects ) {
         for ( i = this.displayRects.length - 1; i >= 0; i-- ) {
             rect = this.displayRects[ i ];
@@ -54,19 +88,18 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
             }
         }
     }
-    
+
     $.TileSource.apply( this, [ options ] );
 
 };
 
-$.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
+$.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.DziTileSource.prototype */{
 
 
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
      * @function
-     * @name OpenSeadragon.DziTileSource.prototype.supports
      * @param {Object|Array} data
      * @param {String} optional - url
      */
@@ -83,21 +116,16 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
     },
 
     /**
-     * 
+     *
      * @function
-     * @name OpenSeadragon.DziTileSource.prototype.configure
      * @param {Object|XMLDocument} data - the raw configuration
      * @param {String} url - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient 
+     * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( data, url ){
 
-        var dziPath,
-            dziName,
-            tilesUrl,
-            options,
-            host;
+        var options;
 
         if( !$.isPlainObject(data) ){
 
@@ -109,7 +137,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
         }
 
         if (url && !options.tilesUrl) {
-            options.tilesUrl = url.replace(/([^\/]+)\.dzi$/, '$1_files/');
+            options.tilesUrl = url.replace(/([^\/]+)\.(dzi|xml|js)$/, '$1_files/');
         }
 
         return options;
@@ -118,7 +146,6 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.DziTileSource.prototype.getTileUrl
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
@@ -130,7 +157,6 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
 
     /**
      * @function
-     * @name OpenSeadragon.DziTileSource.prototype.tileExists
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
@@ -183,7 +209,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, {
  * @function
  */
 function configureFromXML( tileSource, xmlDoc ){
-    
+
     if ( !xmlDoc || !xmlDoc.documentElement ) {
         throw new Error( $.getString( "Errors.Xml" ) );
     }
@@ -199,7 +225,7 @@ function configureFromXML( tileSource, xmlDoc ){
         i;
 
     if ( rootName == "Image" ) {
-        
+
         try {
             sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
             configuration = {
@@ -208,7 +234,7 @@ function configureFromXML( tileSource, xmlDoc ){
                     Url:         root.getAttribute( "Url" ),
                     Format:      root.getAttribute( "Format" ),
                     DisplayRect: null,
-                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ), 
+                    Overlap:     parseInt( root.getAttribute( "Overlap" ), 10 ),
                     TileSize:    parseInt( root.getAttribute( "TileSize" ), 10 ),
                     Size: {
                         Height: parseInt( sizeNode.getAttribute( "Height" ), 10 ),
@@ -222,7 +248,7 @@ function configureFromXML( tileSource, xmlDoc ){
                     $.getString( "Errors.ImageFormat", configuration.Image.Format.toUpperCase() )
                 );
             }
-            
+
             dispRectNodes = root.getElementsByTagName( "DisplayRect" );
             for ( i = 0; i < dispRectNodes.length; i++ ) {
                 dispRectNode = dispRectNodes[ i ];
@@ -247,14 +273,14 @@ function configureFromXML( tileSource, xmlDoc ){
             return configureFromObject( tileSource, configuration );
 
         } catch ( e ) {
-            throw (e instanceof Error) ? 
-                e : 
+            throw (e instanceof Error) ?
+                e :
                 new Error( $.getString("Errors.Dzi") );
         }
     } else if ( rootName == "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName == "Error" ) {
-        return processDZIError( root );
+        return $._processDZIError( root );
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );
@@ -281,7 +307,7 @@ function configureFromObject( tileSource, configuration ){
 
     //TODO: need to figure out out to better handle image format compatibility
     //      which actually includes additional file formats like xml and pdf
-    //      and plain text for various tilesource implementations to avoid low 
+    //      and plain text for various tilesource implementations to avoid low
     //      level errors.
     //
     //      For now, just don't perform the check.
