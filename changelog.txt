@@ -29,6 +29,7 @@ OPENSEADRAGON CHANGELOG
 * Updated full screen API, adding support for Opera and IE11 and allowing keyboard input in Chrome (#358)
 * Various fixes to bring OpenSeadragon into W3C compliance (#375)
 * Added separate flags for turning off each of the nav buttons (#376)
+* Added support for query parameters in DZI tileSource URL (#378)
 
 1.0.0:
 
