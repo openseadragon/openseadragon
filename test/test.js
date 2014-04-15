@@ -37,7 +37,7 @@
             };
 
             $canvas
-                .simulate( 'mouseover', event )
+                .simulate( 'mouseenter', event )
                 .simulate( 'mousedown', event );
             for ( var i = 0; i < args.dragCount; i++ ) {
                 event.clientX += args.dragDx;
@@ -47,7 +47,7 @@
             }
             $canvas
                 .simulate( 'mouseup', event )
-                .simulate( 'mouseout', event );
+                .simulate( 'mouseleave', event );
         },
 
         initializeTestDOM: function () {

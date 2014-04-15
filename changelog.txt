@@ -7,9 +7,13 @@ OPENSEADRAGON CHANGELOG
     * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
     * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
 * BREAKING CHANGE: Pseudo full screen mode on IE<11 using activex has been dropped. OpenSeadragon will run in full page if full screen mode is requested.
+* BREAKING CHANGE: MouseTracker touch pinch gestures are no longer converted to scroll events. MouseTracker.pinchHandler should be used instead. (#369)
+* BREAKING CHANGE: MouseTracker now uses pointer enter/leave DOM events instead of pointer over/out DOM events for generating enterHandler/exitHandler events and for tracking pointers inside the hit-test bounds of the tracked element. (#369)
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
 * DEPRECATION: OpenSeadragon.cancelFullScreen has been renamed OpenSeadragon.exitFullScreen (#358)
-* DEPRECATION: The 'isTouchEvent' property passed in MouseTracker events is deprecated and has been replaced with 'pointerType', which is a String value "mouse", "touch", "pen", or "" to support multiple simultaneous pointing devices (#369)
+* DEPRECATION: The 'isTouchEvent' property passed in MouseTracker events is deprecated and has been replaced with 'pointerType', which is a String value "mouse", "touch", "pen", etc. to support multiple simultaneous pointing devices (#369)
+* DEPRECATION: The 'buttonDownAny' property passed in MouseTracker enter and exit events (enterHandler/exitHandler) is deprecated and has been replaced with 'buttons', which indicates the button(s) currently pressed (#369)
+* DEPRECATION: The 'buttonDownAny' property passed in Viewer's 'container-enter' and 'container-exit' events is deprecated and has been replaced with 'buttons', which indicates the button(s) currently pressed (#369)
 * Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
 * Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
@@ -28,7 +32,7 @@ OPENSEADRAGON CHANGELOG
 * Added optimization for large numbers of overlays: `checkResize = false` option for OpenSeadragon.Overlay (#365)
 * Updated full screen API, adding support for Opera and IE11 and allowing keyboard input in Chrome (#358)
 * Enhanced MouseTracker for multi-touch (#369)
-    * Added support for multiple touch-points on multiple/simultaneous pointing devices
+    * Added support for tracking multiple touch-points on multiple/simultaneous pointing devices
     * Added support for the W3C Pointer Events event model. Enables touch/multi-touch on IE10+
     * Added a dragEndHandler event callback, called when a drag gesture ends
     * Added a pinchHandler event callback, called as a pinch gesture (2 touch points) is occurring

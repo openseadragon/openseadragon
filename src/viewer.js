@@ -278,8 +278,7 @@ $.Viewer = function( options ) {
         // Disable browser default touch handling
         if (style["touch-action"] !== undefined) {
             style["touch-action"] = "none";
-        }
-        else if (style["-ms-touch-action"] !== undefined) {
+        } else if (style["-ms-touch-action"] !== undefined) {
             style["-ms-touch-action"] = "none";
         }
     }(this.canvas.style));
@@ -1776,21 +1775,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Gets this viewer's gesture settings for the given pointer device type.
      * @method
-     * @param {String} type - The pointer device type to get the gesture settings for. "mouse", "touch", "pen", or "".
+     * @param {String} type - The pointer device type to get the gesture settings for ("mouse", "touch", "pen", etc.).
      * @return {OpenSeadragon.GestureSettings}
      */
     gestureSettingsByDeviceType: function ( type ) {
-        if ( type === 'mouse' ) {
-            return this.gestureSettingsMouse;
-        }
-        else if ( type === 'touch' ) {
-            return this.gestureSettingsTouch;
-        }
-        else if ( type === 'pen' ) {
-            return this.gestureSettingsPen;
-        }
-        else {
-            return { scrollToZoom: false, clickToZoom: false,  flickEnabled: false, flickMinSpeed: 20, flickMomentum: 0.35 };
+        switch ( type ) {
+            case 'mouse':
+                return this.gestureSettingsMouse;
+            case 'touch':
+                return this.gestureSettingsTouch;
+            case 'pen':
+                return this.gestureSettingsPen;
+            default:
+                return this.gestureSettingsUnknown;
         }
     }
 
@@ -2472,14 +2469,16 @@ function onContainerExit( event ) {
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-exit', {
         tracker: event.eventSource,
         position: event.position,
+        buttons: event.buttons,
         insideElementPressed: event.insideElementPressed,
         buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
@@ -2528,14 +2527,16 @@ function onContainerEnter( event ) {
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-enter', {
         tracker: event.eventSource,
         position: event.position,
+        buttons: event.buttons,
         insideElementPressed: event.insideElementPressed,
         buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent

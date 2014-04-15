@@ -11,17 +11,18 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
+    $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave", "mousedown", "mouseup", "mousemove" );
     if ( 'ontouchstart' in window ) {
         // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
         $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
         if ( 'ontouchenter' in window ) {
             $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave" );
             $.MouseTracker.haveTouchEnter = true;
-        }
-        else {
+        } else {
             $.MouseTracker.haveTouchEnter = false;
         }
+    } else {
+        $.MouseTracker.haveTouchEnter = false;
     }
     if ( 'ongesturestart' in window ) {
         // iOS (see https://developer.apple.com/library/safari/documentation/UserExperience/Reference/GestureEventClassReference/GestureEvent/GestureEvent.html)
