@@ -1725,6 +1725,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             return value ? value : null;
         },
 
+        /**
+         * Retrieves the protocol used by the url. The url can either be absolute
+         * or relative.
+         * @function
+         * @param {String} url The url to retrieve the protocol from.
+         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         */
+        getUrlProtocol: function( url ) {
+            var match = url.match(/^([a-z]+:)\/\//i);
+            if ( match === null ) {
+                // Relative URL, retrive the protocol from window.location
+                return window.location.protocol;
+            }
+            return match[1].toLowerCase();
+        },
 
         createAjaxRequest: function(){
             var request;
@@ -1778,10 +1793,13 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    if ( request.status == 200 ) {
+                    var protocol = $.getUrlProtocol( url );
+                    var successStatus =
+                        protocol === "http:" || protocol === "https:" ? 200 : 0;
+                    if ( request.status === successStatus ) {
                         onSuccess( request );
                     } else {
-                        $.console.log( "AJAX request returned %s: %s", request.status, url );
+                        $.console.log( "AJAX request returned %d: %s", request.status, url );
 
                         if ( $.isFunction( onError ) ) {
                             onError( request );
