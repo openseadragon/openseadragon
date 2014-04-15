@@ -128,7 +128,7 @@ $.Control = function ( element, options, container ) {
         this.element.style.height = "100%";
         this.element.style.width = "100%";
     } else {
-        this.wrapper    = $.makeNeutralElement( "span" );
+        this.wrapper    = $.makeNeutralElement( "div" );
         this.wrapper.style.display = "inline-block";
         if ( this.anchor == $.ControlAnchor.NONE ) {
             // IE6 fix

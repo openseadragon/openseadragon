@@ -20,6 +20,7 @@ OPENSEADRAGON CHANGELOG
 * Added ControlAnchor options for default controls (#304)
 * Enabled basic cross-domain tile loading without tainting canvas (works in Chrome and Firefox) (#308)
 * Added crossOriginPolicy drawer configuration to enable or disable CORS image requests (#364)
+* Disabled CORS by default (#377)
 * Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
 * Added a 'navigator-scroll' event to Navigator. Fired when mousewheel events occur in the navigator (#310)
 * Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)
@@ -31,6 +32,9 @@ OPENSEADRAGON CHANGELOG
 * Added optional Rotate Left/Right buttons to standard controls (#341)
 * Added optimization for large numbers of overlays: `checkResize = false` option for OpenSeadragon.Overlay (#365)
 * Updated full screen API, adding support for Opera and IE11 and allowing keyboard input in Chrome (#358)
+* Various fixes to bring OpenSeadragon into W3C compliance (#375)
+* Added separate flags for turning off each of the nav buttons (#376)
+* Added support for query parameters in DZI tileSource URL (#378)
 * Enhanced MouseTracker for multi-touch (#369)
     * Added support for tracking multiple touch-points on multiple/simultaneous pointing devices
     * Added support for the W3C Pointer Events event model. Enables touch/multi-touch on IE10+

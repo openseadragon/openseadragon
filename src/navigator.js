@@ -201,7 +201,7 @@ $.Navigator = function( options ){
 
     $.Viewer.apply( this, [ options ] );
 
-    this.element.getElementsByTagName('form')[0].appendChild( this.displayRegion );
+    this.element.getElementsByTagName( 'div' )[0].appendChild( this.displayRegion );
     unneededElement = this.element.getElementsByTagName('textarea')[0];
     if (unneededElement) {
         unneededElement.parentNode.removeChild(unneededElement);

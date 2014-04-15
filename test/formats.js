@@ -66,6 +66,11 @@
     });
 
     // ----------
+    asyncTest('DZI XML with query parameter', function() {
+        testOpen('testpattern.xml?param=value');
+    });
+
+     // ----------
     asyncTest('IIIF 1.0 JSON', function() {
         testOpen('iiif1_0.json');
     });

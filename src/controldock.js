@@ -46,7 +46,7 @@
 
         $.extend( true, this, {
             id: 'controldock-'+$.now()+'-'+Math.floor(Math.random()*1000000),
-            container: $.makeNeutralElement('form'),
+            container: $.makeNeutralElement( 'div' ),
             controls: []
         }, options );
 

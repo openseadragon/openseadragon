@@ -447,7 +447,7 @@ function loadPanels( strip, viewerSize, scroll ) {
                 element: miniViewer.displayRegion
             } );
 
-            element.getElementsByTagName( 'form' )[0].appendChild(
+            element.getElementsByTagName( 'div' )[0].appendChild(
                 miniViewer.displayRegion
             );
 

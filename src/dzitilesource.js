@@ -137,7 +137,8 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         }
 
         if (url && !options.tilesUrl) {
-            options.tilesUrl = url.replace(/([^\/]+)\.(dzi|xml|js)$/, '$1_files/');
+            options.tilesUrl = url.replace(/([^\/]+)\.(dzi|xml|js)(\?.*|$)/, '$1_files/');
+            options.queryParams = url.match(/\?.*/);
         }
 
         return options;
@@ -151,7 +152,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * @param {Number} y
      */
     getTileUrl: function( level, x, y ) {
-        return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat ].join( '' );
+        return [ this.tilesUrl, level, '/', x, '_', y, '.', this.fileFormat, this.queryParams ].join( '' );
     },
 
 
