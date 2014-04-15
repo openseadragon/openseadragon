@@ -163,6 +163,8 @@
             DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
             MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
 
+            mouseover:             function ( event ) { onMouseOver( _this, event ); },
+            mouseout:              function ( event ) { onMouseOut( _this, event ); },
             mouseenter:            function ( event ) { onMouseEnter( _this, event ); },
             mouseleave:            function ( event ) { onMouseLeave( _this, event ); },
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
@@ -761,6 +763,7 @@
             $.MouseTracker.maxTouchPoints = 0;
         }
         $.MouseTracker.haveTouchEnter = true;
+        $.MouseTracker.haveMouseEnter = true;
     } else if ( window.MSPointerEvent ) {
         // IE10
         $.MouseTracker.subscribeEvents.push( "MSPointerEnter", "MSPointerLeave", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
@@ -771,9 +774,17 @@
             $.MouseTracker.maxTouchPoints = 0;
         }
         $.MouseTracker.haveTouchEnter = true;
+        $.MouseTracker.haveMouseEnter = true;
     } else {
         // Legacy W3C mouse events
-        $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave", "mousedown", "mouseup", "mousemove" );
+        $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+        if ( 'onmouseenter' in window ) {
+            $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+            $.MouseTracker.haveMouseEnter = true;
+        } else {
+            $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
+            $.MouseTracker.haveMouseEnter = false;
+        }
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
             $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
@@ -862,7 +873,6 @@
         this.buttons = 0;
         /**
          * Current number of contact points (touch points, mouse down, etc.) for the device.
-         * Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
          * @member {Number} contacts
          * @memberof OpenSeadragon.MouseTracker.GesturePointList#
          */
@@ -1317,6 +1327,72 @@
      * @private
      * @inner
      */
+    function isParentChild( parent, child )
+    {
+       if ( parent === child ) {
+           return false;
+       }
+       while ( child && child !== parent ) {
+           child = child.parentNode;
+       }
+       return child === parent;
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onMouseOver( tracker, event ) {
+        var gPoint;
+
+        event = $.getEvent( event );
+
+        if ( this === event.relatedTarget || isParentChild( this, event.relatedTarget ) ) {
+            return;
+        }
+
+        gPoint = {
+            id: $.MouseTracker.mousePointerId,
+            type: 'mouse',
+            isPrimary: true,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersEnter( tracker, event, [ gPoint ] );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onMouseOut( tracker, event ) {
+        var gPoint;
+
+        event = $.getEvent( event );
+
+        if ( this === event.relatedTarget || isParentChild( this, event.relatedTarget ) ) {
+            return;
+        }
+
+        gPoint = {
+            id: $.MouseTracker.mousePointerId,
+            type: 'mouse',
+            isPrimary: true,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersExit( tracker, event, [ gPoint ] );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
     function onMouseEnter( tracker, event ) {
         var gPoint;
 
@@ -1330,7 +1406,7 @@
             currentTime: $.now()
         };
 
-        updatePointersOver( tracker, event, [ gPoint ] );
+        updatePointersEnter( tracker, event, [ gPoint ] );
     }
 
 
@@ -1351,7 +1427,7 @@
             currentTime: $.now()
         };
 
-        updatePointersOut( tracker, event, [ gPoint ] );
+        updatePointersExit( tracker, event, [ gPoint ] );
     }
 
 
@@ -1493,7 +1569,7 @@
             } );
         }
 
-        updatePointersOver( tracker, event, gPoints );
+        updatePointersEnter( tracker, event, gPoints );
     }
 
 
@@ -1516,7 +1592,7 @@
             } );
         }
 
-        updatePointersOut( tracker, event, gPoints );
+        updatePointersExit( tracker, event, gPoints );
     }
 
 
@@ -1544,7 +1620,7 @@
 
         // simulate touchenter if not natively available
         if ( !$.MouseTracker.haveTouchEnter ) {
-            updatePointersOver( tracker, event, gPoints );
+            updatePointersEnter( tracker, event, gPoints );
         }
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
@@ -1584,7 +1660,7 @@
 
         // simulate touchleave if not natively available
         if ( !$.MouseTracker.haveTouchEnter && touchCount > 0 ) {
-            updatePointersOut( tracker, event, gPoints );
+            updatePointersExit( tracker, event, gPoints );
         }
 
         $.stopEvent( event );
@@ -1675,7 +1751,7 @@
             currentTime: $.now()
         };
 
-        updatePointersOver( tracker, event, [ gPoint ] );
+        updatePointersEnter( tracker, event, [ gPoint ] );
     }
 
 
@@ -1694,7 +1770,7 @@
             currentTime: $.now()
         };
 
-        updatePointersOut( tracker, event, [ gPoint ] );
+        updatePointersExit( tracker, event, [ gPoint ] );
     }
 
 
@@ -1871,7 +1947,7 @@
      * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
      *      Gesture points associated with the event.
      */
-    function updatePointersOver( tracker, event, gPoints ) {
+    function updatePointersEnter( tracker, event, gPoints ) {
         var pointsList = tracker.getActivePointersListByType( gPoints[ 0 ].type ),
             i,
             gPointCount = gPoints.length,
@@ -1935,7 +2011,7 @@
      * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
      *      Gesture points associated with the event.
      */
-    function updatePointersOut( tracker, event, gPoints ) {
+    function updatePointersExit( tracker, event, gPoints ) {
         var delegate = THIS[ tracker.hash ],
             pointsList = tracker.getActivePointersListByType( gPoints[ 0 ].type ),
             i,

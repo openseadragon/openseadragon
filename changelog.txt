@@ -8,7 +8,6 @@ OPENSEADRAGON CHANGELOG
     * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
 * BREAKING CHANGE: Pseudo full screen mode on IE<11 using activex has been dropped. OpenSeadragon will run in full page if full screen mode is requested.
 * BREAKING CHANGE: MouseTracker touch pinch gestures are no longer converted to scroll events. MouseTracker.pinchHandler should be used instead. (#369)
-* BREAKING CHANGE: MouseTracker now uses pointer enter/leave DOM events instead of pointer over/out DOM events for generating enterHandler/exitHandler events and for tracking pointers inside the hit-test bounds of the tracked element. (#369)
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
 * DEPRECATION: OpenSeadragon.cancelFullScreen has been renamed OpenSeadragon.exitFullScreen (#358)
 * DEPRECATION: The 'isTouchEvent' property passed in MouseTracker events is deprecated and has been replaced with 'pointerType', which is a String value "mouse", "touch", "pen", etc. to support multiple simultaneous pointing devices (#369)
