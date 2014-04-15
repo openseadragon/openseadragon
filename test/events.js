@@ -147,13 +147,13 @@
         var simulateEnter = function ($element, x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
-            $canvas.simulate( 'mouseenter', simEvent );
+            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseenter' : 'mouseover', simEvent );
         };
 
         var simulateLeave = function ($element, x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
-            $canvas.simulate( 'mouseleave', simEvent );
+            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
         };
 
         var simulateMove = function ($element, dX, dY, count) {
