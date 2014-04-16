@@ -144,69 +144,37 @@
             tracker.dragEndHandler = origDragEndHandler;
         };
 
-        var simulateEnter = function ($element, x, y) {
+        var simulateEnter = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
             $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseenter' : 'mouseover', simEvent );
         };
 
-        var simulateLeave = function ($element, x, y) {
+        var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
             $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
         };
 
-        var simulateMove = function ($element, dX, dY, count) {
+        var simulateDown = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            $canvas.simulate( 'mousedown', simEvent );
+        };
+
+        var simulateUp = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            $canvas.simulate( 'mouseup', simEvent );
+        };
+
+        var simulateMove = function (dX, dY, count) {
             var i;
             for ( i = 0; i < count; i++ ) {
                 simEvent.clientX += dX;
                 simEvent.clientY += dY;
                 $canvas.simulate( 'mousemove', simEvent );
             }
-        };
-
-        var simulateTimedMove = function ($element, dX, dY, count, ms, doneCallback) {
-            var msInterval = Math.floor(ms / count),
-                dX = dX,
-                dY = dY,
-                i = count,
-                doneCallback = doneCallback,
-                moves = 0;
-
-            intervalId = window.setInterval(function () {
-                if (i > 0) {
-                    moves++;
-                    //simEvent.clientX += dX;
-                    //simEvent.clientY += dY;
-                    //$canvas.simulate( 'mousemove', simEvent );
-                }
-                i--;
-                if (i === 0) {
-                    window.clearInterval( intervalId );
-                    doneCallback();
-                }
-            }, msInterval );
-
-
-            //for ( i = 0; i < count; i++ ) {
-            //    simEvent.clientX += dX;
-            //    simEvent.clientY += dY;
-            //    $canvas.simulate( 'mousemove', simEvent );
-            //    targetTime = msWait + OpenSeadragon.now();
-            //    while (OpenSeadragon.now() < targetTime) {}
-            //}
-        };
-
-        var simulateDown = function ($element, x, y) {
-            simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
-            $canvas.simulate( 'mousedown', simEvent );
-        };
-
-        var simulateUp = function ($element, x, y) {
-            simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
-            $canvas.simulate( 'mouseup', simEvent );
         };
 
         var resetForAssessment = function () {
@@ -271,10 +239,10 @@
                 equal( quickClick, expected.quickClick, expected.description + 'clickHandler event.quick matches expected (' + expected.quickClick + ')' );
             }
             if ('speed' in expected) {
-                equal( speed, expected.speed, expected.description + 'Drag speed matches expected (' + expected.speed + ')' );
+                Util.assessNumericValue(expected.speed, speed, 1.0, expected.description + 'Drag speed ');
             }
             if ('direction' in expected) {
-                equal( direction, expected.direction, expected.description + 'Drag direction matches expected (' + expected.direction + ')' );
+                Util.assessNumericValue(expected.direction, direction, 0.2, expected.description + 'Drag direction ');
             }
         };
 
@@ -289,10 +257,10 @@
             // enter-move-release (release in tracked element, press in unknown element)
             //   (Note we also test to see if the pointer is still being tracked by not simulating a leave event until after assessment)
             resetForAssessment();
-            simulateEnter($canvas, 0, 0);
-            simulateMove($canvas, 1, 1, 10);
-            simulateMove($canvas, -1, -1, 10);
-            simulateUp($canvas, 0, 0);
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateUp(0, 0);
             assessGestureExpectations({
                 description:           'enter-move-release (release in tracked element, press in unknown element):  ',
                 enterCount:            1,
@@ -309,14 +277,14 @@
                 trackedPointers:       1
                 //quickClick:            false
             });
-            simulateLeave($canvas, -1, -1); // flush tracked pointer
+            simulateLeave(-1, -1); // flush tracked pointer
 
             // enter-move-exit (fly-over)
             resetForAssessment();
-            simulateEnter($canvas, 0, 0);
-            simulateMove($canvas, 1, 1, 10);
-            simulateMove($canvas, -1, -1, 10);
-            simulateLeave($canvas, -1, -1);
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
             assessGestureExpectations({
                 description:           'enter-move-exit (fly-over):  ',
                 enterCount:            1,
@@ -336,9 +304,9 @@
 
             // move-exit (fly-over, no enter event)
             resetForAssessment();
-            simulateMove($canvas, 1, 1, 10);
-            simulateMove($canvas, -1, -1, 10);
-            simulateLeave($canvas, -1, -1);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
             assessGestureExpectations({
                 description:           'move-exit (fly-over, no enter event):  ',
                 enterCount:            0,
@@ -358,10 +326,10 @@
 
             // enter-press-release-exit
             resetForAssessment();
-            simulateEnter($canvas, 0, 0);
-            simulateDown($canvas, 0, 0);
-            simulateUp($canvas, 0, 0);
-            simulateLeave($canvas, -1, -1);
+            simulateEnter(0, 0);
+            simulateDown(0, 0);
+            simulateUp(0, 0);
+            simulateLeave(-1, -1);
             assessGestureExpectations({
                 description:           'enter-press-release-exit (click):  ',
                 enterCount:            1,
@@ -381,12 +349,12 @@
 
             // enter-press-move-release-move-exit (drag, release in tracked element)
             resetForAssessment();
-            simulateEnter($canvas, 0, 0);
-            simulateDown($canvas, 0, 0);
-            simulateMove($canvas, 1, 1, 100);
-            simulateUp($canvas, 10, 10);
-            simulateMove($canvas, -1, -1, 100);
-            simulateLeave($canvas, -1, -1);
+            simulateEnter(0, 0);
+            simulateDown(0, 0);
+            simulateMove(1, 1, 100);
+            simulateUp(10, 10);
+            simulateMove(-1, -1, 100);
+            simulateLeave(-1, -1);
             assessGestureExpectations({
                 description:           'enter-press-move-release-move-exit (drag, release in tracked element):  ',
                 enterCount:            1,
@@ -406,13 +374,13 @@
 
             // enter-press-move-exit-move-release (drag, release outside tracked element)
             resetForAssessment();
-            simulateEnter($canvas, 0, 0);
-            simulateDown($canvas, 0, 0);
-            simulateMove($canvas, 1, 1, 5);
-            simulateMove($canvas, -1, -1, 5);
-            simulateLeave($canvas, -1, -1);
-            simulateMove($canvas, -1, -1, 5);
-            simulateUp($canvas, -5, -5);
+            simulateEnter(0, 0);
+            simulateDown(0, 0);
+            simulateMove(1, 1, 5);
+            simulateMove(-1, -1, 5);
+            simulateLeave(-1, -1);
+            simulateMove(-1, -1, 5);
+            simulateUp(-5, -5);
             assessGestureExpectations({
                 description:           'enter-press-move-exit-move-release (drag, release outside tracked element):  ',
                 enterCount:            1,

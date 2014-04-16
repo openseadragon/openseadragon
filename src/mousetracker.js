@@ -2116,7 +2116,7 @@
 
         // Only capture and track primary button, pen, and touch contacts
         //if ( buttonChanged !== 0 ) {
-        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the line above
+        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the commented line above
             return false;
         }
 
@@ -2241,7 +2241,7 @@
 
         // Only capture and track primary button, pen, and touch contacts
         //if ( buttonChanged !== 0 ) {
-        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the line above
+        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the commented line above
             return false;
         }
 
@@ -2570,7 +2570,8 @@
      *      Gesture points associated with the event.
      */
     function updatePointersCancel( tracker, event, gPoints ) {
-        //removePointers( tracker, event, gPoints );
+        updatePointersUp( tracker, event, gPoints, 0 );
+        updatePointersExit( tracker, event, gPoints );
     }
 
 

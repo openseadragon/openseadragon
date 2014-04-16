@@ -2383,12 +2383,17 @@ function onCanvasRelease( event ) {
 }
 
 function onCanvasPinch( event ) {
+    var gestureSettings;
+
     if ( !event.preventDefaultAction && this.viewport ) {
-        var centerPt = this.viewport.pointFromPixel( event.center, true ),
-            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-        this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-        this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
-        this.viewport.applyConstraints();
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.pinchToZoom ) {
+            var centerPt = this.viewport.pointFromPixel( event.center, true ),
+                lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+            this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
+            this.viewport.applyConstraints();
+        }
     }
     /**
      * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.

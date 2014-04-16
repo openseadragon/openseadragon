@@ -41,11 +41,11 @@ OPENSEADRAGON CHANGELOG
     * Added a pinchHandler event callback, called as a pinch gesture (2 touch points) is occurring
     * Added real-time velocity (speed and direction) tracking to drag operations. 'speed' and 'direction' values are passed in the dragHandler and dragEndHandler event data
 * Enhanced Viewer for multi-touch (#369)
-    * Added pinch zoom with the new MouseTracker pinchHandler
+    * Added pinch zoom with the new MouseTracker pinchHandler. The 'pan' and 'zoom' Viewer events can be used to detect changes resulting in pinch gestures
     * Added a "canvas-pinch" event fired by the pinch event handler
     * Added flick gesture with the new MouseTracker dragEndHandler
     * Added a "canvas-drag-end" event fired by the drag-end event handler
-    * Added a GestureSettings class for per-device gesture options. Currently has settings to enable/disable zoom-on-scroll, zoom-on-click, and flick gesture settings.
+    * Added a GestureSettings class for per-device gesture options. Currently has settings to enable/disable zoom-on-scroll, zoom-on-pinch, zoom-on-click, and flick gesture settings.
     * Added GestureSettings objects for mouse, touch, and pen devices to the Viewer options giving users the ability to customize gesture handling in the viewer
     * Added velocity (speed and direction) properties to the "canvas-drag" event
 
