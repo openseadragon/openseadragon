@@ -189,7 +189,7 @@ QUnit.config.autostart = false;
                 clientY:offset.top + locationY
             };
         $canvas
-            .simulate('mouseover', event)
+            .simulate(OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseenter' : 'mouseover', event)
             .simulate('mousedown', event)
             .simulate('mouseup', event);
     };
