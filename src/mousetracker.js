@@ -1985,7 +1985,7 @@
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
                         insideElementPressed: curGPoint.insideElementPressed,
-                        buttonDownAny:        pointsList.buttons !== 0,// IS_BUTTON_DOWN, *deprecated*
+                        buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
                         originalEvent:        event,
                         preventDefaultAction: false,
@@ -2048,7 +2048,7 @@
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
                         insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
-                        buttonDownAny:        pointsList.buttons !== 0,// IS_BUTTON_DOWN, *deprecated*
+                        buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
                         originalEvent:        event,
                         preventDefaultAction: false,

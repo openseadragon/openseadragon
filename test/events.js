@@ -409,7 +409,7 @@
     } );
 
     // ----------
-    asyncTest( 'MouseTracker: preventDefaultAction', function () {
+    asyncTest( 'Viewer: preventDefaultAction', function () {
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             tracker = viewer.innerTracker,
             origClickHandler,
@@ -642,7 +642,7 @@
     } );
 
     // ----------
-    asyncTest( 'Viewer: addHandler without userData', function () {
+    asyncTest( 'EventSource: addHandler without userData', function () {
         var openHandler = function ( event ) {
             viewer.removeHandler( 'open', openHandler );
             ok( event, 'Event handler received event data' );
@@ -659,7 +659,7 @@
     } );
 
     // ----------
-    asyncTest( 'Viewer: addHandler with userData', function () {
+    asyncTest( 'EventSource: addHandler with userData', function () {
         var userData = { item1: 'Test user data', item2: Math.random() },
             originalUserData = { item1: userData.item1, item2: userData.item2 };
 
