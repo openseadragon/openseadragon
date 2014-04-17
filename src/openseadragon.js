@@ -1741,35 +1741,35 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             return match[1].toLowerCase();
         },
 
-        createAjaxRequest: function(){
-            var request;
-
-            if ( window.XMLHttpRequest ) {
-                $.createAjaxRequest = function( ){
+        /**
+         * Create an XHR object
+         * @param {type} [local] If set to true, the XHR will be file: protocol
+         * compatible if possible (but may raise a warning in the browser).
+         * @returns {XMLHttpRequest}
+         */
+        createAjaxRequest: function( local ) {
+            if ( window.ActiveXObject ) {
+                if ( window.XMLHttpRequest ) {
+                    $.createAjaxRequest = function( local ) {
+                        if ( local ) {
+                            /* global ActiveXObject:true */
+                            return new ActiveXObject( "Microsoft.XMLHTTP" );
+                        }
+                        return new XMLHttpRequest();
+                    };
+                } else {
+                    $.createAjaxRequest = function() {
+                        return new ActiveXObject( "Microsoft.XMLHTTP" );
+                    };
+                }
+            } else if ( window.XMLHttpRequest ) {
+                $.createAjaxRequest = function() {
                     return new XMLHttpRequest();
                 };
-                request = new XMLHttpRequest();
-            } else if ( window.ActiveXObject ) {
-                /*jshint loopfunc:true*/
-                /* global ActiveXObject:true */
-                for ( var i = 0; i < ACTIVEX.length; i++ ) {
-                    try {
-                        request = new ActiveXObject( ACTIVEX[ i ] );
-                        $.createAjaxRequest = function( ){
-                            return new ActiveXObject( ACTIVEX[ i ] );
-                        };
-                        break;
-                    } catch (e) {
-                        continue;
-                    }
-                }
-            }
-
-            if ( !request ) {
+            } else {
                 throw new Error( "Browser doesn't support XMLHttpRequest." );
             }
-
-            return request;
+            return $.createAjaxRequest( local );
         },
 
 
@@ -1782,7 +1782,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
-            var request = $.createAjaxRequest();
+            var protocol = $.getUrlProtocol( url );
+            var request = $.createAjaxRequest( protocol === "file:" );
 
             if ( !$.isFunction( onSuccess ) ) {
                 throw new Error( "makeAjaxRequest requires a success callback" );
@@ -1793,7 +1794,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    var protocol = $.getUrlProtocol( url );
                     var successStatus =
                         protocol === "http:" || protocol === "https:" ? 200 : 0;
                     if ( request.status === successStatus ) {
