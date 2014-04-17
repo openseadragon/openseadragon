@@ -7,8 +7,12 @@ OPENSEADRAGON CHANGELOG
     * The drawer element is no longer accessible via viewer.canvas.firstChild but via viewer.drawersContainer.firstChild or viewer.drawer.canvas.
     * The overlays elements are no longer accessible via viewer.canvas.childNodes but via viewer.overlaysContainer.childNodes or viewer.currentOverlays[i].element.
 * BREAKING CHANGE: Pseudo full screen mode on IE<11 using activex has been dropped. OpenSeadragon will run in full page if full screen mode is requested.
+* BREAKING CHANGE: MouseTracker touch pinch gestures are no longer converted to scroll events. MouseTracker.pinchHandler should be used instead. (#369)
 * DEPRECATION: overlay functions have been moved from Drawer to Viewer (#331)
 * DEPRECATION: OpenSeadragon.cancelFullScreen has been renamed OpenSeadragon.exitFullScreen (#358)
+* DEPRECATION: The 'isTouchEvent' property passed in MouseTracker events is deprecated and has been replaced with 'pointerType', which is a String value "mouse", "touch", "pen", etc. to support multiple simultaneous pointing devices (#369)
+* DEPRECATION: The 'buttonDownAny' property passed in MouseTracker enter and exit events (enterHandler/exitHandler) is deprecated and has been replaced with 'buttons', which indicates the button(s) currently pressed (#369)
+* DEPRECATION: The 'buttonDownAny' property passed in Viewer's 'container-enter' and 'container-exit' events is deprecated and has been replaced with 'buttons', which indicates the button(s) currently pressed (#369)
 * Added layers support. Multiple images can now been displayed on top of each other with transparency via the Viewer.addLayer method (#298)
 * Improved overlay functions (#331)
 * Fixed: Nav button highlight states aren't quite aligned on Firefox (#303)
@@ -17,7 +21,7 @@ OPENSEADRAGON CHANGELOG
 * Added crossOriginPolicy drawer configuration to enable or disable CORS image requests (#364)
 * Disabled CORS by default (#377)
 * Added a ControlAnchor.ABSOLUTE enumeration. Enables absolute positioning of control elements in the viewer (#310)
-* Added a 'navigator-scroll' event to Navigator. Fired when mousewheel/pinch events occur in the navigator (#310)
+* Added a 'navigator-scroll' event to Navigator. Fired when mousewheel events occur in the navigator (#310)
 * Added a navigatorMaintainSizeRatio option. If set to true, the navigator minimap resizes when the viewer element is resized (#310)
 * Added 'ABSOLUTE' as a navigatorPosition option, along with corresponding navigatorTop, navigatorLeft options. Allows the navigator minimap to be placed anywhere in the viewer (#310)
 * Enhanced the navigatorTop, navigatorLeft, navigatorHeight, and navigatorWidth options to allow a number for pixel units or a string for other element units (%, em, etc.) (#310)
@@ -30,6 +34,20 @@ OPENSEADRAGON CHANGELOG
 * Various fixes to bring OpenSeadragon into W3C compliance (#375)
 * Added separate flags for turning off each of the nav buttons (#376)
 * Added support for query parameters in DZI tileSource URL (#378)
+* Enhanced MouseTracker for multi-touch (#369)
+    * Added support for tracking multiple touch-points on multiple/simultaneous pointing devices
+    * Added support for the W3C Pointer Events event model. Enables touch/multi-touch on IE10+
+    * Added a dragEndHandler event callback, called when a drag gesture ends
+    * Added a pinchHandler event callback, called as a pinch gesture (2 touch points) is occurring
+    * Added real-time velocity (speed and direction) tracking to drag operations. 'speed' and 'direction' values are passed in the dragHandler and dragEndHandler event data
+* Enhanced Viewer for multi-touch (#369)
+    * Added pinch zoom with the new MouseTracker pinchHandler. The 'pan' and 'zoom' Viewer events can be used to detect changes resulting in pinch gestures
+    * Added a "canvas-pinch" event fired by the pinch event handler
+    * Added flick gesture with the new MouseTracker dragEndHandler
+    * Added a "canvas-drag-end" event fired by the drag-end event handler
+    * Added a GestureSettings class for per-device gesture options. Currently has settings to enable/disable zoom-on-scroll, zoom-on-pinch, zoom-on-click, and flick gesture settings.
+    * Added GestureSettings objects for mouse, touch, and pen devices to the Viewer options giving users the ability to customize gesture handling in the viewer
+    * Added velocity (speed and direction) properties to the "canvas-drag" event
 
 1.0.0:
 
