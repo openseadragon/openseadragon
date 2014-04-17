@@ -1748,11 +1748,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {XMLHttpRequest}
          */
         createAjaxRequest: function( local ) {
-            if ( window.ActiveXObject ) {
+            // IE11 does not support window.ActiveXObject so we just try to
+            // create one to see if it is supported.
+            // See: http://msdn.microsoft.com/en-us/library/ie/dn423948%28v=vs.85%29.aspx
+            var supportActiveX;
+            try {
+                /* global ActiveXObject:true */
+                supportActiveX = !!new ActiveXObject( "Microsoft.XMLHTTP" );
+            } catch( e ) {
+                supportActiveX = false;
+            }
+
+            if ( supportActiveX ) {
                 if ( window.XMLHttpRequest ) {
                     $.createAjaxRequest = function( local ) {
                         if ( local ) {
-                            /* global ActiveXObject:true */
                             return new ActiveXObject( "Microsoft.XMLHTTP" );
                         }
                         return new XMLHttpRequest();
@@ -2001,12 +2011,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     };
 
 
-    var ACTIVEX = [
-            "Msxml2.XMLHTTP",
-            "Msxml3.XMLHTTP",
-            "Microsoft.XMLHTTP"
-        ],
-        FILEFORMATS = {
+    var FILEFORMATS = {
             "bmp":  false,
             "jpeg": true,
             "jpg":  true,
