@@ -1729,6 +1729,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * Retrieves the protocol used by the url. The url can either be absolute
          * or relative.
          * @function
+         * @private
          * @param {String} url The url to retrieve the protocol from.
          * @return {String} The protocol (http:, https:, file:, ftp: ...)
          */
@@ -1743,6 +1744,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Create an XHR object
+         * @private
          * @param {type} [local] If set to true, the XHR will be file: protocol
          * compatible if possible (but may raise a warning in the browser).
          * @returns {XMLHttpRequest}
@@ -1781,7 +1783,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             }
             return $.createAjaxRequest( local );
         },
-
 
         /**
          * Makes an AJAX request.
