@@ -274,7 +274,7 @@
   *     If a mouse or touch drag occurs and the distance to the starting drag
   *     point is less than this many pixels, ignore the drag event.
   *
-  * @property {Number} [springStiffness=5.0]
+  * @property {Number} [springStiffness=6.5]
   *
   * @property {Number} [animationTime=1.2]
   *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
@@ -891,7 +891,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             //UI RESPONSIVENESS AND FEEL
             clickTimeThreshold:     300,
             clickDistThreshold:     5,
-            springStiffness:        5.0,
+            springStiffness:        6.5,
             animationTime:          1.2,
             gestureSettingsMouse:   { scrollToZoom: true,  clickToZoom: true,  pinchToZoom: false, flickEnabled: false, flickMinSpeed: 120, flickMomentum: 0.25 },
             gestureSettingsTouch:   { scrollToZoom: false, clickToZoom: false, pinchToZoom: true,  flickEnabled: true,  flickMinSpeed: 120, flickMomentum: 0.25 },
