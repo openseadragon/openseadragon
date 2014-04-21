@@ -1947,28 +1947,25 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @returns {Document}
          */
         parseXml: function( string ) {
-            //TODO: yet another example where we can determine the correct
-            //      implementation once at start-up instead of everytime we use
-            //      the function. DONE.
-            if ( window.ActiveXObject ) {
+            if ( window.DOMParser ) {
 
-                $.parseXml = function( string ){
-                    var xmlDoc = null;
-
-                    xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                    xmlDoc.async = false;
-                    xmlDoc.loadXML( string );
-                    return xmlDoc;
-                };
-
-            } else if ( window.DOMParser ) {
-
-                $.parseXml = function( string ){
+                $.parseXml = function( string ) {
                     var xmlDoc = null,
                         parser;
 
                     parser = new DOMParser();
                     xmlDoc = parser.parseFromString( string, "text/xml" );
+                    return xmlDoc;
+                };
+
+            } else if ( window.ActiveXObject ) {
+
+                $.parseXml = function( string ) {
+                    var xmlDoc = null;
+
+                    xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
+                    xmlDoc.async = false;
+                    xmlDoc.loadXML( string );
                     return xmlDoc;
                 };
 
