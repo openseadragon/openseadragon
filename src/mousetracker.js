@@ -1627,7 +1627,6 @@
             // Touch event model start, end, and move events are always captured so we don't need to capture explicitly
         }
 
-        $.stopEvent( event );
         $.cancelEvent( event );
     }
 
@@ -1663,7 +1662,6 @@
             updatePointersExit( tracker, event, gPoints );
         }
 
-        $.stopEvent( event );
         $.cancelEvent( event );
     }
 
@@ -1689,7 +1687,6 @@
 
         updatePointersMove( tracker, event, gPoints );
 
-        $.stopEvent( event );
         $.cancelEvent( event );
     }
 
