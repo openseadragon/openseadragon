@@ -4,7 +4,7 @@
      * Plugin to force OpenSeadragon to use the legacy mouse pointer event model
      */
 
-    $.MouseTracker.subscribeEvents = [ "click", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
+    $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
     if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
         // Older Firefox
