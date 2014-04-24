@@ -87,6 +87,30 @@
         );
     });
 
+    test("getUrlProtocol", function() {
+
+        equal(OpenSeadragon.getUrlProtocol("test"), window.location.protocol,
+            "'test' url protocol should be window.location.protocol");
+
+        equal(OpenSeadragon.getUrlProtocol("/test"), window.location.protocol,
+            "'/test' url protocol should be window.location.protocol");
+
+        equal(OpenSeadragon.getUrlProtocol("//test"), window.location.protocol,
+            "'//test' url protocol should be window.location.protocol");
+
+        equal(OpenSeadragon.getUrlProtocol("http://test"), "http:",
+            "'http://test' url protocol should be http:");
+
+        equal(OpenSeadragon.getUrlProtocol("https://test"), "https:",
+            "'https://test' url protocol should be https:");
+
+        equal(OpenSeadragon.getUrlProtocol("file://test"), "file:",
+            "'file://test' url protocol should be file:");
+
+        equal(OpenSeadragon.getUrlProtocol("FTP://test"), "ftp:",
+            "'FTP://test' url protocol should be ftp:");
+    });
+
     // ----------
     asyncTest("requestAnimationFrame", function() {
         var timeWatcher = Util.timeWatcher();

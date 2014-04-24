@@ -56,7 +56,7 @@
 
             equal($(".openseadragon-message").length, 1, "Open failures should display a message");
 
-            ok(testLog.log.contains('["AJAX request returned %s: %s",404,"/test/data/not-a-real-file"]'),
+            ok(testLog.log.contains('["AJAX request returned %d: %s",404,"/test/data/not-a-real-file"]'),
                "AJAX failures should be logged to the console");
 
             start();
