@@ -50,6 +50,7 @@ OPENSEADRAGON CHANGELOG
     * Added velocity (speed and direction) properties to the "canvas-drag" event
 * Added double-click gesture detection to MouseTracker with corresponding dblClickHandler event callback (#392)
 * Added zoom on double-click feature to Viewer, with corresponding dblClickToZoom option added to the GestureSettings class (#392)
+* Made it possible to run OpenSeadragon from local filesystem on some browsers (#379)
 
 1.0.0:
 

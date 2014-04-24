@@ -407,6 +407,7 @@ $.Viewer = function( options ) {
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
         exitHandler:           $.delegate( this, onContainerExit ),
+        pressHandler:          $.delegate( this, onContainerPress ),
         releaseHandler:        $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
@@ -2537,8 +2538,15 @@ function onContainerExit( event ) {
     });
 }
 
+function onContainerPress( event ) {
+    if ( event.pointerType === 'touch' && !$.MouseTracker.haveTouchEnter ) {
+        THIS[ this.hash ].mouseInside = true;
+        abortControlsAutoHide( this );
+    }
+}
+
 function onContainerRelease( event ) {
-    if ( !event.insideElementReleased ) {
+    if ( !event.insideElementReleased || ( event.pointerType === 'touch' && !$.MouseTracker.haveTouchEnter ) ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
