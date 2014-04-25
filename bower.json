@@ -1,0 +1,17 @@
+{
+  "name": "openseadragon",
+  "version": "1.0.0",
+  "homepage": "http://openseadragon.github.io/",
+  "authors": [
+  ],
+  "description": "An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.",
+  "main": "build/openseadragon/openseadragon.min.js",
+  "license": "OpenSeadragon is released under the New BSD license. For details, see the file LICENSE.txt.",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
