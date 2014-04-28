@@ -2101,7 +2101,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         //version and supporting feature sets.
         var app = navigator.appName,
             ver = navigator.appVersion,
-            ua  = navigator.userAgent;
+            ua  = navigator.userAgent,
+            regex;
 
         //console.error( 'appName: ' + navigator.appName );
         //console.error( 'appVersion: ' + navigator.appVersion );
@@ -2137,6 +2138,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                                 ua.indexOf( "Safari" )
                             )
                         );
+                    } else {
+                        regex = new RegExp( "Trident/.*rv:([0-9]{1,}[.0-9]{0,}) ");
+                        if ( regex.exec( ua ) !== null ) {
+                            $.Browser.vendor = $.BROWSERS.IE;
+                            $.Browser.version = parseFloat( RegExp.$1 );
+                        }
                     }
                 }
                 break;
