@@ -189,8 +189,8 @@ $.Navigator = function( options ){
             this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
         } else {
             viewerSize = $.getElementSize( viewer.element );
-            this.element.style.height = ( viewerSize.y * options.sizeRatio ) + 'px';
-            this.element.style.width  = ( viewerSize.x * options.sizeRatio ) + 'px';
+            this.element.style.height = Math.round( viewerSize.y * options.sizeRatio ) + 'px';
+            this.element.style.width  = Math.round( viewerSize.x * options.sizeRatio ) + 'px';
             this.oldViewerSize = viewerSize;
         }
         navigatorSize = $.getElementSize( this.element );
@@ -268,8 +268,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 newWidth = Math.sqrt(this.elementArea * (viewerSize.x / viewerSize.y));
                 newHeight = this.elementArea / newWidth;
             }
-            this.element.style.width  = newWidth + 'px';
-            this.element.style.height = newHeight + 'px';
+            this.element.style.width  = Math.round( newWidth ) + 'px';
+            this.element.style.height = Math.round( newHeight ) + 'px';
             this.updateSize();
         }
 
@@ -281,14 +281,14 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             //update style for navigator-box
             (function(style) {
 
-                style.top    = topleft.y + 'px';
-                style.left   = topleft.x + 'px';
+                style.top    = Math.round( topleft.y ) + 'px';
+                style.left   = Math.round( topleft.x ) + 'px';
 
                 var width = Math.abs( topleft.x - bottomright.x );
                 var height = Math.abs( topleft.y - bottomright.y );
                 // make sure width and height are non-negative so IE doesn't throw
-                style.width  = Math.max( width, 0 ) + 'px';
-                style.height = Math.max( height, 0 ) + 'px';
+                style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
+                style.height = Math.round( Math.max( height, 0 ) ) + 'px';
 
             }( this.displayRegion.style ));
         }
