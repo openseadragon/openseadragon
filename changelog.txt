@@ -48,6 +48,8 @@ OPENSEADRAGON CHANGELOG
     * Added a GestureSettings class for per-device gesture options. Currently has settings to enable/disable zoom-on-scroll, zoom-on-pinch, zoom-on-click, and flick gesture settings.
     * Added GestureSettings objects for mouse, touch, and pen devices to the Viewer options giving users the ability to customize gesture handling in the viewer
     * Added velocity (speed and direction) properties to the "canvas-drag" event
+* Added double-click gesture detection to MouseTracker with corresponding dblClickHandler event callback (#392)
+* Added zoom on double-click feature to Viewer, with corresponding dblClickToZoom option added to the GestureSettings class (#392)
 * Made it possible to run OpenSeadragon from local filesystem on some browsers (#379)
 
 1.0.0:

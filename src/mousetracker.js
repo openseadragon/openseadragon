@@ -40,10 +40,8 @@
 
     /**
      * @class MouseTracker
-     * @classdesc Provides simplified handling of common pointer device (mouse, touch, pen, etc.) and keyboard
-     * events on a specific element, like 'enter', 'exit', 'press', 'release',
-     * 'scroll', 'click', and 'drag'.
-     *
+     * @classdesc Provides simplified handling of common pointer device (mouse, touch, pen, etc.) gestures
+     *            and keyboard events on a specified element.
      * @memberof OpenSeadragon
      * @param {Object} options
      *      Allows configurable properties to be entirely specified by passing
@@ -54,11 +52,17 @@
      *      A reference to an element or an element id for which the pointer/key
      *      events will be monitored.
      * @param {Number} options.clickTimeThreshold
-     *      The number of milliseconds within which multiple pointer clicks
-     *      will be treated as a single event.
+     *      The number of milliseconds within which a pointer down-up event combination
+     *      will be treated as a click gesture.
      * @param {Number} options.clickDistThreshold
-     *      The distance between pointer click within multiple pointer clicks
-     *      will be treated as a single event.
+     *      The maximum distance allowed between a pointer down event and a pointer up event
+     *      to be treated as a click gesture.
+     * @param {Number} options.dblClickTimeThreshold
+     *      The number of milliseconds within which two pointer down-up event combinations
+     *      will be treated as a double-click gesture.
+     * @param {Number} options.dblClickDistThreshold
+     *      The maximum distance allowed between two pointer click events
+     *      to be treated as a click gesture.
      * @param {Number} [options.stopDelay=50]
      *      The number of milliseconds without pointer move before the stop
      *      event is fired.
@@ -76,6 +80,8 @@
      *      An optional handler for mouse wheel scroll.
      * @param {OpenSeadragon.EventHandler} [options.clickHandler=null]
      *      An optional handler for pointer click.
+     * @param {OpenSeadragon.EventHandler} [options.dblClickHandler=null]
+     *      An optional handler for pointer double-click.
      * @param {OpenSeadragon.EventHandler} [options.dragHandler=null]
      *      An optional handler for the drag gesture.
      * @param {OpenSeadragon.EventHandler} [options.dragEndHandler=null]
@@ -111,34 +117,51 @@
          */
         this.element            = $.getElement( options.element );
         /**
-         * The number of milliseconds within which mutliple pointer clicks will be treated as a single event.
+         * The number of milliseconds within which a pointer down-up event combination 
+         * will be treated as a click gesture.
          * @member {Number} clickTimeThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.clickTimeThreshold = options.clickTimeThreshold;
         /**
-         * The distance between pointer click within multiple pointer clicks will be treated as a single event.
+         * The maximum distance allowed between a pointer down event and a pointer up event
+         * to be treated as a click gesture.
          * @member {Number} clickDistThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.clickDistThreshold = options.clickDistThreshold;
-        this.userData           = options.userData       || null;
-        this.stopDelay          = options.stopDelay      || 50;
+        /**
+         * The number of milliseconds within which two pointer down-up event combinations
+         * will be treated as a double-click gesture.
+         * @member {Number} dblClickTimeThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
+        this.dblClickTimeThreshold = options.dblClickTimeThreshold;
+        /**
+         * The maximum distance allowed between two pointer click events
+         * to be treated as a click gesture.
+         * @member {Number} clickDistThreshold
+         * @memberof OpenSeadragon.MouseTracker#
+         */
+        this.dblClickDistThreshold = options.dblClickDistThreshold;
+        this.userData           = options.userData        || null;
+        this.stopDelay          = options.stopDelay       || 50;
 
-        this.enterHandler       = options.enterHandler   || null;
-        this.exitHandler        = options.exitHandler    || null;
-        this.pressHandler       = options.pressHandler   || null;
-        this.releaseHandler     = options.releaseHandler || null;
-        this.moveHandler        = options.moveHandler    || null;
-        this.scrollHandler      = options.scrollHandler  || null;
-        this.clickHandler       = options.clickHandler   || null;
-        this.dragHandler        = options.dragHandler    || null;
-        this.dragEndHandler     = options.dragEndHandler || null;
-        this.pinchHandler       = options.pinchHandler   || null;
-        this.stopHandler        = options.stopHandler    || null;
-        this.keyHandler         = options.keyHandler     || null;
-        this.focusHandler       = options.focusHandler   || null;
-        this.blurHandler        = options.blurHandler    || null;
+        this.enterHandler       = options.enterHandler    || null;
+        this.exitHandler        = options.exitHandler     || null;
+        this.pressHandler       = options.pressHandler    || null;
+        this.releaseHandler     = options.releaseHandler  || null;
+        this.moveHandler        = options.moveHandler     || null;
+        this.scrollHandler      = options.scrollHandler   || null;
+        this.clickHandler       = options.clickHandler    || null;
+        this.dblClickHandler    = options.dblClickHandler || null;
+        this.dragHandler        = options.dragHandler     || null;
+        this.dragEndHandler     = options.dragEndHandler  || null;
+        this.pinchHandler       = options.pinchHandler    || null;
+        this.stopHandler        = options.stopHandler     || null;
+        this.keyHandler         = options.keyHandler      || null;
+        this.focusHandler       = options.focusHandler    || null;
+        this.blurHandler        = options.blurHandler     || null;
 
         //Store private properties in a scope sealed hash map
         var _this = this;
@@ -154,6 +177,7 @@
             setCaptureCapable:     !!this.element.setCapture && !!this.element.releaseCapture,
 
             click:                 function ( event ) { onClick( _this, event ); },
+            dblclick:              function ( event ) { onDblClick( _this, event ); },
             keypress:              function ( event ) { onKeyPress( _this, event ); },
             focus:                 function ( event ) { onFocus( _this, event ); },
             blur:                  function ( event ) { onBlur( _this, event ); },
@@ -206,6 +230,10 @@
 
             // Legacy mouse event tracking
             capturing:             false,
+
+            // Tracking for double-click gesture
+            lastClickPos:          null,
+            dblClickTimeOut:       null,
 
             // Tracking for pinch gesture
             pinchGPoints:          [],
@@ -456,7 +484,7 @@
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
          * @param {Boolean} event.quick
-         *      True only if the clickDistThreshold and clickDeltaThreshold are both passed. Useful for ignoring events.
+         *      True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for ignoring drag events.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
          * @param {Boolean} event.isTouchEvent
@@ -469,6 +497,30 @@
          *      Arbitrary user-defined object.
          */
         clickHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Boolean} event.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        dblClickHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -746,7 +798,7 @@
     /**
      * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
      */
-    $.MouseTracker.subscribeEvents = [ "click", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
+    $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
     if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
         // Older Firefox
@@ -877,6 +929,12 @@
          * @memberof OpenSeadragon.MouseTracker.GesturePointList#
          */
         this.contacts = 0;
+        /**
+         * Current number of clicks for the device. Used for multiple click gesture tracking.
+         * @member {Number} clicks
+         * @memberof OpenSeadragon.MouseTracker.GesturePointList#
+         */
+        this.clicks = 0;
     };
     $.MouseTracker.GesturePointList.prototype = /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */{
         /**
@@ -1159,6 +1217,17 @@
      */
     function onClick( tracker, event ) {
         if ( tracker.clickHandler ) {
+            $.cancelEvent( event );
+        }
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onDblClick( tracker, event ) {
+        if ( tracker.dblClickHandler ) {
             $.cancelEvent( event );
         }
     }
@@ -1453,7 +1522,7 @@
             captureMouse( tracker );
         }
 
-        if ( tracker.clickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
+        if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
             $.cancelEvent( event );
         }
     }
@@ -1795,7 +1864,7 @@
             $.stopEvent( event );
         }
 
-        if ( tracker.clickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
+        if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
             $.cancelEvent( event );
         }
     }
@@ -2210,7 +2279,8 @@
             curGPoint,
             updateGPoint,
             releaseCapture = false,
-            wasCaptured = false;
+            wasCaptured = false,
+            quick;
 
         if ( typeof event.buttons !== 'undefined' ) {
             pointsList.buttons = event.buttons;
@@ -2317,28 +2387,63 @@
                             }
                         }
 
-                        // Click
-                        if ( tracker.clickHandler && updateGPoint.insideElementPressed && updateGPoint.insideElement ) {
-                            var time = releaseTime - updateGPoint.contactTime,
-                                distance = updateGPoint.contactPos.distanceTo( releasePoint ),
-                                quick = time <= tracker.clickTimeThreshold &&
-                                            distance <= tracker.clickDistThreshold;
+                        // Click / Double-Click
+                        if ( ( tracker.clickHandler || tracker.dblClickHandler ) && updateGPoint.insideElement ) {
+                            quick = releaseTime - updateGPoint.contactTime <= tracker.clickTimeThreshold &&
+                                            updateGPoint.contactPos.distanceTo( releasePoint ) <= tracker.clickDistThreshold;
 
-                            propagate = tracker.clickHandler(
-                                {
-                                    eventSource:          tracker,
-                                    pointerType:          updateGPoint.type,
-                                    position:             getPointRelativeToAbsolute( updateGPoint.currentPos, tracker.element ),
-                                    quick:                quick,
-                                    shift:                event.shiftKey,
-                                    isTouchEvent:         updateGPoint.type === 'touch',
-                                    originalEvent:        event,
-                                    preventDefaultAction: false,
-                                    userData:             tracker.userData
+                            // Click
+                            if ( tracker.clickHandler ) {
+                                propagate = tracker.clickHandler(
+                                    {
+                                        eventSource:          tracker,
+                                        pointerType:          updateGPoint.type,
+                                        position:             getPointRelativeToAbsolute( updateGPoint.currentPos, tracker.element ),
+                                        quick:                quick,
+                                        shift:                event.shiftKey,
+                                        isTouchEvent:         updateGPoint.type === 'touch',
+                                        originalEvent:        event,
+                                        preventDefaultAction: false,
+                                        userData:             tracker.userData
+                                    }
+                                );
+                                if ( propagate === false ) {
+                                    $.cancelEvent( event );
                                 }
-                            );
-                            if ( propagate === false ) {
-                                $.cancelEvent( event );
+                            }
+
+                            // Double-Click
+                            if ( tracker.dblClickHandler && quick ) {
+                                pointsList.clicks++;
+                                if ( pointsList.clicks === 1 ) {
+                                    delegate.lastClickPos = releasePoint;
+                                    /*jshint loopfunc:true*/
+                                    delegate.dblClickTimeOut = setTimeout( function() {
+                                        pointsList.clicks = 0;
+                                    }, tracker.dblClickTimeThreshold );
+                                    /*jshint loopfunc:false*/
+                                } else if ( pointsList.clicks === 2 ) {
+                                    clearTimeout( delegate.dblClickTimeOut );
+                                    pointsList.clicks = 0;
+                                    if ( delegate.lastClickPos.distanceTo( releasePoint ) <= tracker.dblClickDistThreshold ) {
+                                        propagate = tracker.dblClickHandler(
+                                            {
+                                                eventSource:          tracker,
+                                                pointerType:          updateGPoint.type,
+                                                position:             getPointRelativeToAbsolute( updateGPoint.currentPos, tracker.element ),
+                                                shift:                event.shiftKey,
+                                                isTouchEvent:         updateGPoint.type === 'touch',
+                                                originalEvent:        event,
+                                                preventDefaultAction: false,
+                                                userData:             tracker.userData
+                                            }
+                                        );
+                                        if ( propagate === false ) {
+                                            $.cancelEvent( event );
+                                        }
+                                    }
+                                    delegate.lastClickPos = null;
+                                }
                             }
                         }
                     } else if ( pointsList.contacts === 2 ) {

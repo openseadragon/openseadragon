@@ -385,25 +385,30 @@ $.Viewer = function( options ) {
 
 
     this.innerTracker = new $.MouseTracker({
-        element:            this.canvas,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        clickHandler:       $.delegate( this, onCanvasClick ),
-        dragHandler:        $.delegate( this, onCanvasDrag ),
-        dragEndHandler:     $.delegate( this, onCanvasDragEnd ),
-        releaseHandler:     $.delegate( this, onCanvasRelease ),
-        scrollHandler:      $.delegate( this, onCanvasScroll ),
-        pinchHandler:       $.delegate( this, onCanvasPinch )
+        element:               this.canvas,
+        clickTimeThreshold:    this.clickTimeThreshold,
+        clickDistThreshold:    this.clickDistThreshold,
+        dblClickTimeThreshold: this.dblClickTimeThreshold,
+        dblClickDistThreshold: this.dblClickDistThreshold,
+        clickHandler:          $.delegate( this, onCanvasClick ),
+        dblClickHandler:       $.delegate( this, onCanvasDblClick ),
+        dragHandler:           $.delegate( this, onCanvasDrag ),
+        dragEndHandler:        $.delegate( this, onCanvasDragEnd ),
+        releaseHandler:        $.delegate( this, onCanvasRelease ),
+        scrollHandler:         $.delegate( this, onCanvasScroll ),
+        pinchHandler:          $.delegate( this, onCanvasPinch )
     }).setTracking( this.mouseNavEnabled ? true : false ); // default state
 
     this.outerTracker = new $.MouseTracker({
-        element:            this.container,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        enterHandler:       $.delegate( this, onContainerEnter ),
-        exitHandler:        $.delegate( this, onContainerExit ),
-        pressHandler:       $.delegate( this, onContainerPress ),
-        releaseHandler:     $.delegate( this, onContainerRelease )
+        element:               this.container,
+        clickTimeThreshold:    this.clickTimeThreshold,
+        clickDistThreshold:    this.clickDistThreshold,
+        dblClickTimeThreshold: this.dblClickTimeThreshold,
+        dblClickDistThreshold: this.dblClickDistThreshold,
+        enterHandler:          $.delegate( this, onContainerEnter ),
+        exitHandler:           $.delegate( this, onContainerExit ),
+        pressHandler:          $.delegate( this, onContainerPress ),
+        releaseHandler:        $.delegate( this, onContainerRelease )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
     if( this.toolbar ){
@@ -2254,7 +2259,7 @@ function onCanvasClick( event ) {
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Boolean} quick - True only if the clickDistThreshold and clickDeltaThreshold are both passed. Useful for differentiating between clicks and drags.
+     * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
@@ -2263,6 +2268,40 @@ function onCanvasClick( event ) {
         tracker: event.eventSource,
         position: event.position,
         quick: event.quick,
+        shift: event.shift,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasDblClick( event ) {
+    var gestureSettings;
+
+    if ( !event.preventDefaultAction && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.dblClickToZoom ) {
+            this.viewport.zoomBy(
+                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
+    }
+    /**
+     * Raised when a double mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-double-click
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-double-click', {
+        tracker: event.eventSource,
+        position: event.position,
         shift: event.shift,
         originalEvent: event.originalEvent
     });

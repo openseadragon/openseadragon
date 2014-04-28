@@ -37,6 +37,7 @@
             origReleaseHandler,
             origMoveHandler,
             origClickHandler,
+            origDblClickHandler,
             origDragHandler,
             origDragEndHandler,
             enterCount,
@@ -45,6 +46,7 @@
             releaseCount,
             moveCount,
             clickCount,
+            dblClickCount,
             dragCount,
             dragEndCount,
             insideElementPressed,
@@ -111,6 +113,15 @@
                     return true;
                 }
             };
+            origDblClickHandler = tracker.dblClickHandler;
+            tracker.dblClickHandler = function ( event ) {
+                dblClickCount++;
+                if (origDblClickHandler) {
+                    return origDblClickHandler( event );
+                } else {
+                    return true;
+                }
+            };
             origDragHandler = tracker.dragHandler;
             tracker.dragHandler = function ( event ) {
                 dragCount++;
@@ -140,6 +151,7 @@
             tracker.releaseHandler = origReleaseHandler;
             tracker.moveHandler = origMoveHandler;
             tracker.clickHandler = origClickHandler;
+            tracker.dblClickHandler = origDblClickHandler;
             tracker.dragHandler = origDragHandler;
             tracker.dragEndHandler = origDragEndHandler;
         };
@@ -188,6 +200,7 @@
             releaseCount = 0;
             moveCount = 0;
             clickCount = 0;
+            dblClickCount = 0;
             dragCount = 0;
             dragEndCount = 0;
             insideElementPressed = false;
@@ -216,6 +229,9 @@
             }
             if ('clickCount' in expected) {
                 equal( clickCount, expected.clickCount, expected.description + 'clickHandler event count matches expected (' + expected.clickCount + ')' );
+            }
+            if ('dblClickCount' in expected) {
+                equal( dblClickCount, expected.dblClickCount, expected.description + 'dblClickHandler event count matches expected (' + expected.dblClickCount + ')' );
             }
             if ('dragCount' in expected) {
                 equal( dragCount, expected.dragCount, expected.description + 'dragHandler event count matches expected (' + expected.dragCount + ')' );
@@ -269,6 +285,7 @@
                 releaseCount:          1,
                 moveCount:             20,
                 clickCount:            0,
+                dblClickCount:         0,
                 dragCount:             0,
                 dragEndCount:          0,
                 insideElementPressed:  false,
@@ -293,6 +310,7 @@
                 releaseCount:          0,
                 moveCount:             20,
                 clickCount:            0,
+                dblClickCount:         0,
                 dragCount:             0,
                 dragEndCount:          0,
                 //insideElementPressed:  false,
@@ -315,6 +333,7 @@
                 releaseCount:          0,
                 moveCount:             20,
                 clickCount:            0,
+                dblClickCount:         0,
                 dragCount:             0,
                 dragEndCount:          0,
                 //insideElementPressed:  false,
@@ -324,7 +343,33 @@
                 //quickClick:            false
             });
 
-            // enter-press-release-exit
+            // enter-press-release-press-release-exit (double click)
+            resetForAssessment();
+            simulateEnter(0, 0);
+            simulateDown(0, 0);
+            simulateUp(0, 0);
+            simulateDown(0, 0);
+            simulateUp(0, 0);
+            simulateLeave(-1, -1);
+            assessGestureExpectations({
+                description:           'enter-press-release-press-release-exit (double click):  ',
+                enterCount:            1,
+                exitCount:             1,
+                pressCount:            2,
+                releaseCount:          2,
+                moveCount:             0,
+                clickCount:            2,
+                dblClickCount:         1,
+                dragCount:             0,
+                dragEndCount:          0,
+                insideElementPressed:  true,
+                insideElementReleased: true,
+                contacts:              0,
+                trackedPointers:       0
+                //quickClick:            true
+            });
+
+            // enter-press-release-exit (click)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
@@ -338,6 +383,7 @@
                 releaseCount:          1,
                 moveCount:             0,
                 clickCount:            1,
+                dblClickCount:         0,
                 dragCount:             0,
                 dragEndCount:          0,
                 insideElementPressed:  true,
@@ -363,6 +409,7 @@
                 releaseCount:          1,
                 moveCount:             200,
                 clickCount:            1,
+                dblClickCount:         0,
                 dragCount:             100,
                 dragEndCount:          1,
                 insideElementPressed:  true,
@@ -389,6 +436,7 @@
                 releaseCount:          1,
                 moveCount:             15,
                 clickCount:            0,
+                dblClickCount:         0,
                 dragCount:             15,
                 dragEndCount:          1,
                 insideElementPressed:  true,
@@ -509,6 +557,8 @@
                 userData: userData,
                 clickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickTimeThreshold,
                 clickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickDistThreshold,
+                dblClickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickTimeThreshold,
+                dblClickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickDistThreshold,
                 focusHandler: onMouseTrackerFocus,
                 blurHandler: onMouseTrackerBlur,
                 enterHandler: onMouseTrackerEnter,
