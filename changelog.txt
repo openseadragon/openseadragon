@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.1.1: (in progress)
+
 1.1.0:
 
 * BREAKING CHANGE: the openseadragon-canvas element now has two child divs. This means: (#298)
