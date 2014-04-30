@@ -209,6 +209,14 @@ module.exports = function(grunt) {
     });
 
     // ----------
+    grunt.registerTask("bower", function() {
+        var path = "../site-build/bower.json";
+        var data = grunt.file.readJSON(path);
+        data.version = packageJson.version;
+        grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
+    });
+
+    // ----------
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
@@ -229,7 +237,7 @@ module.exports = function(grunt) {
     // ----------
     // Publish task.
     // Cleans the built files out of the release folder and copies newly built ones over.
-    grunt.registerTask("publish", ["package", "clean:release", "copy:release"]);
+    grunt.registerTask("publish", ["package", "clean:release", "copy:release", "bower"]);
 
     // ----------
     // Default task.
