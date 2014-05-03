@@ -174,8 +174,6 @@
          *      Are we curruently capturing mouse events (legacy mouse events only).
          */
         THIS[ this.hash ] = {
-            setCaptureCapable:     !!this.element.setCapture && !!this.element.releaseCapture,
-
             click:                 function ( event ) { onClick( _this, event ); },
             dblclick:              function ( event ) { onDblClick( _this, event ); },
             keypress:              function ( event ) { onKeyPress( _this, event ); },
@@ -796,6 +794,14 @@
                                     'DOMMouseScroll';                                                        // Assume old Firefox
 
     /**
+     * Detect legacy mouse capture support.
+     */
+    $.MouseTracker.supportsMouseCapture = (function () {
+        var divElement = document.createElement( 'div' );
+        return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
+    }());
+
+    /**
      * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
      */
     $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
@@ -829,14 +835,9 @@
         $.MouseTracker.haveMouseEnter = true;
     } else {
         // Legacy W3C mouse events
-        $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
-        if ( 'onmouseenter' in window ) {
-            $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
-            $.MouseTracker.haveMouseEnter = true;
-        } else {
-            $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-            $.MouseTracker.haveMouseEnter = false;
-        }
+        // TODO: Favor mouseenter/mouseleave over mouseover/mouseout when Webkit browser support is better
+        $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
+        $.MouseTracker.haveMouseEnter = false;
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
             $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
@@ -1082,7 +1083,7 @@
         var delegate = THIS[ tracker.hash ];
 
         if ( !delegate.capturing ) {
-            if ( delegate.setCaptureCapable ) {
+            if ( $.MouseTracker.supportsMouseCapture ) {
                 // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
                 tracker.element.setCapture( true );
             } else {
@@ -1115,7 +1116,7 @@
         var delegate = THIS[ tracker.hash ];
 
         if ( delegate.capturing ) {
-            if ( delegate.setCaptureCapable ) {
+            if ( $.MouseTracker.supportsMouseCapture ) {
                 // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
                 tracker.element.releaseCapture();
             } else {
