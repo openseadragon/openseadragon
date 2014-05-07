@@ -2319,7 +2319,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
         this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
-        if( this.constrainDuringPan && !gestureSettings.flickEnabled ){
+        if( this.constrainDuringPan ){
             this.viewport.applyConstraints();
         }
     }
@@ -2355,11 +2355,17 @@ function onCanvasDragEnd( event ) {
 
     if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.flickEnabled && event.speed >= gestureSettings.flickMinSpeed && !event.preventDefaultAction && this.viewport ) {
+        if ( gestureSettings.flickEnabled && event.speed >= gestureSettings.flickMinSpeed ) {
             var amplitudeX = gestureSettings.flickMomentum * ( event.speed * Math.cos( event.direction ) ),
                 amplitudeY = gestureSettings.flickMomentum * ( event.speed * Math.sin( event.direction ) ),
                 center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
                 target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
+            if( !this.panHorizontal ) {
+                target.x = center.x;
+            }
+            if( !this.panVertical ) {
+                target.y = center.y;
+            }
             this.viewport.panTo( target, false );
             this.viewport.applyConstraints();
         }
@@ -2423,15 +2429,25 @@ function onCanvasRelease( event ) {
 }
 
 function onCanvasPinch( event ) {
-    var gestureSettings;
+    var gestureSettings,
+        centerPt,
+        lastCenterPt,
+        panByPt;
 
     if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if ( gestureSettings.pinchToZoom ) {
-            var centerPt = this.viewport.pointFromPixel( event.center, true ),
-                lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+            panByPt = lastCenterPt.minus( centerPt );
+            if( !this.panHorizontal ) {
+                panByPt.x = 0;
+            }
+            if( !this.panVertical ) {
+                panByPt.y = 0;
+            }
             this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-            this.viewport.panBy( lastCenterPt.minus( centerPt ), true );
+            this.viewport.panBy( panByPt, true );
             this.viewport.applyConstraints();
         }
     }
