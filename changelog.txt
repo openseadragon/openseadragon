@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.1.2: (in progress)
+
 1.1.1:
 
 * Fixed issue with dragging the navigator highlight on Webkit browsers (#395)
