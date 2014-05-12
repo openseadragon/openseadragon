@@ -45,6 +45,7 @@ module.exports = function(grunt) {
             "src/referencestrip.js",
             "src/displayrectangle.js",
             "src/spring.js",
+            "src/imageLoader.js",
             "src/tile.js",
             "src/overlay.js",
             "src/drawer.js",
@@ -73,11 +74,11 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                banner: "//! <%= pkg.name %> <%= pkg.version %>\n"
-                    + "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n"
-                    + "//! Git commit: <%= gitInfo %>\n"
-                    + "//! http://openseadragon.github.io\n"
-                    + "//! License: http://openseadragon.github.io/license/\n\n",
+                banner: "//! <%= pkg.name %> <%= pkg.version %>\n" +
+                    "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
+                    "//! Git commit: <%= gitInfo %>\n" +
+                    "//! http://openseadragon.github.io\n" +
+                    "//! License: http://openseadragon.github.io/license/\n\n",
                 process: true
             },
             dist: {
@@ -182,9 +183,9 @@ module.exports = function(grunt) {
     // Creates a directory tree to be compressed into a package.
     grunt.registerTask("copy:package", function() {
         grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
-            var dest = packageDir
-                + (subdir ? subdir + "/" : '/')
-                + filename;
+            var dest = packageDir +
+                (subdir ? subdir + "/" : '/') +
+                filename;
             grunt.file.copy(abspath, dest);
         });
         grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
@@ -200,9 +201,9 @@ module.exports = function(grunt) {
                 return;
             }
 
-            var dest = releaseRoot
-                + (subdir ? subdir + "/" : '/')
-                + filename;
+            var dest = releaseRoot +
+                (subdir ? subdir + "/" : '/') +
+                filename;
 
             grunt.file.copy(abspath, dest);
         });

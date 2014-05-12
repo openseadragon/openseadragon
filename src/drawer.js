@@ -76,7 +76,7 @@ $.Drawer = function( options ) {
 
         //internal state properties
         viewer:         null,
-        downloading:    0,     // How many images are currently being loaded in parallel.
+        imageLoader:    new $.ImageLoader(),
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
         tilesLoaded:    [],    // An unordered list of Tiles with loaded images.
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
@@ -92,7 +92,6 @@ $.Drawer = function( options ) {
         //configurable settings
         opacity:            $.DEFAULT_SETTINGS.opacity,
         maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
-        imageLoaderLimit:   $.DEFAULT_SETTINGS.imageLoaderLimit,
         minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
         wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
         wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
@@ -297,77 +296,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     /**
-     * Used internally to load images when required.  May also be used to
-     * preload a set of images so the browser will have them available in
-     * the local cache to optimize user experience in certain cases. Because
-     * the number of parallel image loads is configurable, if too many images
-     * are currently being loaded, the request will be ignored.  Since by
-     * default drawer.imageLoaderLimit is 0, the native browser parallel
-     * image loading policy will be used.
-     * @method
-     * @param {String} src - The url of the image to load.
-     * @param {Function} callback - The function that will be called with the
-     *      Image object as the only parameter if it was loaded successfully.
-     *      If an error occured, or the request timed out or was aborted,
-     *      the parameter is null instead.
-     * @return {Boolean} loading - Whether the request was submitted or ignored
-     *      based on OpenSeadragon.DEFAULT_SETTINGS.imageLoaderLimit.
-     */
-    loadImage: function( src, callback ) {
-        var _this = this,
-            loading = false,
-            image,
-            jobid,
-            complete;
-
-        if ( !this.imageLoaderLimit ||
-              this.downloading < this.imageLoaderLimit ) {
-
-            this.downloading++;
-
-            image = new Image();
-
-            if ( _this.crossOriginPolicy !== false ) {
-                image.crossOrigin = _this.crossOriginPolicy;
-            }
-
-            complete = function( imagesrc, resultingImage ){
-                _this.downloading--;
-                if (typeof ( callback ) == "function") {
-                    try {
-                        callback( resultingImage );
-                    } catch ( e ) {
-                        $.console.error(
-                            "%s while executing %s callback: %s",
-                            e.name,
-                            src,
-                            e.message,
-                            e
-                        );
-                    }
-                }
-            };
-
-            image.onload = function(){
-                finishLoadingImage( image, complete, true, jobid );
-            };
-
-            image.onabort = image.onerror = function(){
-                finishLoadingImage( image, complete, false, jobid );
-            };
-
-            jobid = window.setTimeout( function(){
-                finishLoadingImage( image, complete, false, jobid );
-            }, this.timeout );
-
-            loading   = true;
-            image.src = src;
-        }
-
-        return loading;
-    },
-
-    /**
      * Returns whether rotation is supported or not.
      * @method
      * @return {Boolean} True if rotation is supported.
@@ -436,13 +364,13 @@ function updateViewport( drawer ) {
         levelOpacity,
         levelVisibility;
 
-    //TODO
+    // Reset tile's internal drawn state
     while ( drawer.lastDrawn.length > 0 ) {
         tile = drawer.lastDrawn.pop();
         tile.beingDrawn = false;
     }
 
-    //TODO
+    // Clear canvas
     drawer.canvas.innerHTML   = "";
     if ( drawer.useCanvas ) {
         if( drawer.canvas.width  != viewportSize.x ||
@@ -470,7 +398,7 @@ function updateViewport( drawer ) {
         return;
     }
 
-    //TODO
+    // Calculate viewport rect / bounds
     if ( !drawer.wrapHorizontal ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
         viewportBR.x = Math.min( viewportBR.x, 1 );
@@ -480,10 +408,12 @@ function updateViewport( drawer ) {
         viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
     }
 
-    //TODO
+    // Calculations for the interval of levels to draw
+    // (above in initial var statement)
+    // can return invalid intervals; fix that here if necessary
     lowestLevel = Math.min( lowestLevel, highestLevel );
 
-    //TODO
+    // Update any level that will be drawn
     var drawLevel; // FIXME: drawLevel should have a more explanatory name
     for ( level = highestLevel; level >= lowestLevel; level-- ) {
         drawLevel = false;
@@ -528,7 +458,7 @@ function updateViewport( drawer ) {
             optimalRatio - renderPixelRatioT
         );
 
-        //TODO
+        // Update the level and keep track of 'best' tile to load
         best = updateLevel(
             drawer,
             haveDrawn,
@@ -542,16 +472,17 @@ function updateViewport( drawer ) {
             best
         );
 
-        //TODO
+        // Stop the loop if lower-res tiles would all be covered by
+        // already drawn tiles
         if (  providesCoverage( drawer.coverage, level ) ) {
             break;
         }
     }
 
-    //TODO
+    // Perform the actual drawing
     drawTiles( drawer, drawer.lastDrawn );
 
-    //TODO
+    // Load the new 'best' tile
     if ( best ) {
         loadTile( drawer, best, currentTime );
         // because we haven't finished drawing, so
@@ -756,18 +687,18 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
     return tile;
 }
 
-
 function loadTile( drawer, tile, time ) {
     if( drawer.viewport.collectionMode ){
         drawer.midUpdate = false;
         onTileLoad( drawer, tile, time );
     } else {
-        tile.loading = drawer.loadImage(
-            tile.url,
-            function( image ){
+        tile.loading = true;
+        drawer.imageLoader.addJob({
+            src: tile.url,
+            callback: function( image ){
                 onTileLoad( drawer, tile, time, image );
             }
-        );
+        });
     }
 }
 
@@ -1016,21 +947,6 @@ function compareTiles( previousBest, tile ) {
     }
 
     return previousBest;
-}
-
-function finishLoadingImage( image, callback, successful, jobid ){
-
-    image.onload = null;
-    image.onabort = null;
-    image.onerror = null;
-
-    if ( jobid ) {
-        window.clearTimeout( jobid );
-    }
-    $.requestAnimationFrame( function() {
-        callback( image.src, successful ? image : null);
-    });
-
 }
 
 function drawTiles( drawer, lastDrawn ){
