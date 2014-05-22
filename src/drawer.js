@@ -703,23 +703,10 @@ function loadTile( drawer, tile, time ) {
 }
 
 function onTileLoad( drawer, tile, time, image ) {
-    var insertionIndex,
-        cutoff,
-        worstTile,
-        worstTime,
-        worstLevel,
-        worstTileIndex,
-        prevTile,
-        prevTime,
-        prevLevel,
-        i;
 
     tile.loading = false;
 
-    if ( drawer.midUpdate ) {
-        $.console.warn( "Tile load callback in middle of drawing routine." );
-        return;
-    } else if ( !image  && !drawer.viewport.collectionMode ) {
+    if ( !image  && !drawer.viewport.collectionMode ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         if( !drawer.debugMode ){
             tile.exists = false;
@@ -733,46 +720,63 @@ function onTileLoad( drawer, tile, time, image ) {
     tile.loaded = true;
     tile.image  = image;
 
-
-    insertionIndex = drawer.tilesLoaded.length;
-
-    if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
-        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
-
-        worstTile       = null;
-        worstTileIndex  = -1;
-
-        for ( i = drawer.tilesLoaded.length - 1; i >= 0; i-- ) {
-            prevTile = drawer.tilesLoaded[ i ];
-
-            if ( prevTile.level <= drawer.cutoff || prevTile.beingDrawn ) {
-                continue;
-            } else if ( !worstTile ) {
-                worstTile       = prevTile;
-                worstTileIndex  = i;
-                continue;
-            }
-
-            prevTime    = prevTile.lastTouchTime;
-            worstTime   = worstTile.lastTouchTime;
-            prevLevel   = prevTile.level;
-            worstLevel  = worstTile.level;
-
-            if ( prevTime < worstTime ||
-               ( prevTime == worstTime && prevLevel > worstLevel ) ) {
-                worstTile       = prevTile;
-                worstTileIndex  = i;
-            }
+    if ( drawer.tilesLoaded.length < drawer.maxImageCacheCount ) {
+        // always safe to append things to cache
+        drawer.tilesLoaded[ drawer.tilesLoaded.length ] = tile;
+    }
+    else {
+        // need to remove something from cache,
+        // make sure this doesn't happen mid update
+        if ( !drawer.midUpdate ) {
+            updateTileCache( tile, drawer );
         }
-
-        if ( worstTile && worstTileIndex >= 0 ) {
-            worstTile.unload();
-            insertionIndex = worstTileIndex;
+        else {
+            window.setTimeout( function() {
+                updateTileCache( tile, drawer );
+            }, 1);
         }
     }
 
-    drawer.tilesLoaded[ insertionIndex ] = tile;
     drawer.updateAgain = true;
+}
+
+function updateTileCache( newTile, drawer ) {
+    var i, prevTile, prevTime, worstTime, prevLevel, worstLevel,
+        insertionIndex = drawer.tilesLoaded.length,
+        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) ),
+
+        worstTile       = null,
+        worstTileIndex  = -1;
+
+    for ( i = drawer.tilesLoaded.length - 1; i >= 0; i-- ) {
+        prevTile = drawer.tilesLoaded[ i ];
+
+        if ( prevTile.level <= drawer.cutoff || prevTile.beingDrawn ) {
+            continue;
+        } else if ( !worstTile ) {
+            worstTile       = prevTile;
+            worstTileIndex  = i;
+            continue;
+        }
+
+        prevTime    = prevTile.lastTouchTime;
+        worstTime   = worstTile.lastTouchTime;
+        prevLevel   = prevTile.level;
+        worstLevel  = worstTile.level;
+
+        if ( prevTime < worstTime ||
+                ( prevTime == worstTime && prevLevel > worstLevel ) ) {
+                    worstTile       = prevTile;
+                    worstTileIndex  = i;
+                }
+    }
+
+    if ( worstTile && worstTileIndex >= 0 ) {
+        worstTile.unload();
+        insertionIndex = worstTileIndex;
+    }
+
+    drawer.tilesLoaded[ insertionIndex ] = newTile;
 }
 
 
