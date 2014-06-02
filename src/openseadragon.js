@@ -656,14 +656,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
      * @property {Number} revision - The revision number.
      * @since 1.0.0
      */
-    /* jshint ignore:start */
     $.version = {
         versionStr: '<%= osdVersion.versionStr %>',
-        major: <%= osdVersion.major %>,
-        minor: <%= osdVersion.minor %>,
-        revision: <%= osdVersion.revision %>
+        major: parseInt('<%= osdVersion.major %>', 10),
+        minor: parseInt('<%= osdVersion.minor %>', 10),
+        revision: parseInt('<%= osdVersion.revision %>', 10)
     };
-    /* jshint ignore:end */
 
 
     /**
