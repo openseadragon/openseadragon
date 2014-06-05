@@ -13,7 +13,8 @@
     "grunt-contrib-qunit": "^0.5.1",
     "grunt-contrib-jshint": "^0.10.0",
     "grunt-contrib-compress": "^0.9.1",
-    "grunt-contrib-connect": "^0.7.1"
+    "grunt-contrib-connect": "^0.7.1",
+    "qunitjs": "^1.14.0"
   },
   "scripts": {
     "test": "grunt test"
