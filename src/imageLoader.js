@@ -47,7 +47,7 @@ function ImageJob ( options ) {
     
     $.extend( true, this, {
         timeout:        $.DEFAULT_SETTINGS.timeout,
-        jobId:          null,
+        jobId:          null
     }, options );
     
     /**
