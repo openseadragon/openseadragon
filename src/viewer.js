@@ -542,6 +542,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.drawersContainer.innerHTML = "";
         this.overlaysContainer.innerHTML = "";
 
+		if (this.drawer) {
+			this.drawer.destroy();
+		}
+		
         this.source     = null;
         this.drawer     = null;
         this.drawers    = [];
@@ -596,7 +600,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (this.outerTracker){
             this.outerTracker.destroy();
         }
-
+		
+		THIS[ this.hash ] = null;
+		delete THIS[ this.hash ];
+		
         // clear all our references to dom objects
         this.canvas = null;
         this.keyboardCommandArea = null;

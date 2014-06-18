@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Memory Check Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to monitor OpenSeadragon Memory Usage.
+    </div>
+	<button onclick="createViewer()">Create</button>
+	<button onclick="destroyViewer()">Destroy</button>
+	
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+		var _viewer;
+		
+		var generateUniqueHash = (function() {
+			var counter = 0;
+			return function() {		
+				return "seadragon_"+(counter++);
+			};
+		})();
+		
+		function createViewer() {
+			if (_viewer) {
+				destroyViewer();
+			}
+			
+			_viewer = OpenSeadragon({
+				element: document.getElementById("contentDiv"),
+				showNavigationControl: false,
+				springStiffness: 20,
+				animationTime : 1.5,
+				visibilityRatio: 1,
+				hash: "hello",
+				tileSources: {
+					Image: {
+						xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
+						Url:      'http://cdn.photosynth.net/ps2/92fe5de9-dffa-4315-9095-082da8b90642/packet/undistorted/img0014/',
+						Format:   "jpg", 
+						Overlap:  1, 
+						TileSize: 510,
+						Size: {
+							Width:  4592,
+							Height: 3448
+						}
+					}
+				}
+			});
+		}
+		
+		function destroyViewer() {
+			if (_viewer) {
+				_viewer.destroy();
+			}
+			_viewer = null;
+		}
+
+    </script>
+</body>
+</html>
