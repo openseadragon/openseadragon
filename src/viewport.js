@@ -471,8 +471,129 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         return this.zoomTo( newZoom, referencePoint, immediately );
     },
-
-
+    
+    /**
+     * @function
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    fitBoundsWithConstraints: function( bounds, immediately ) {
+        var aspect = this.getAspectRatio(),
+            center = bounds.getCenter(),
+            newBounds = new $.Rect(
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height
+            ),
+            oldBounds,
+            oldZoom,
+            newZoom,
+            referencePoint,
+            horizontalThreshold,
+            verticalThreshold,
+            left,
+            right,
+            top,
+            bottom,
+            dx = 0,
+            dy = 0,
+            newBoundsAspectRatio;
+        
+        if ( newBounds.getAspectRatio() >= aspect ) {
+            newBounds.height = bounds.width / aspect;
+            newBounds.y      = center.y - newBounds.height / 2;
+        } else {
+            newBounds.width = bounds.height * aspect;
+            newBounds.x     = center.x - newBounds.width / 2;
+        }
+        
+        newBoundsAspectRatio = newBounds.getAspectRatio();
+        
+        this.panTo( this.getCenter( true ), true );
+        this.zoomTo( this.getZoom( true ), null, true );
+        
+        oldBounds = this.getBounds();
+        oldZoom   = this.getZoom();
+        newZoom   = 1.0 / newBounds.width;
+        
+        var newConstrainedZoom = Math.max(
+            Math.min(newZoom, this.getMaxZoom() ),
+            this.getMinZoom()
+        );
+        
+        if (newZoom !== newConstrainedZoom) {
+            newZoom = newConstrainedZoom;
+            newBounds.width = 1.0 / newZoom;
+            newBounds.x = center.x - newBounds.width / 2;
+            newBounds.height = newBounds.width / newBoundsAspectRatio;
+            newBounds.y = center.y - newBounds.height / 2;
+        }
+        
+        horizontalThreshold = this.visibilityRatio * newBounds.width;
+        verticalThreshold   = this.visibilityRatio * newBounds.height;
+        
+        left   = newBounds.x + newBounds.width;
+        right  = 1 - newBounds.x;
+        top    = newBounds.y + newBounds.height;
+        bottom = this.contentAspectY - newBounds.y;
+        
+        if ( this.wrapHorizontal ) {
+            //do nothing
+        } else {
+            if ( left < horizontalThreshold ) {
+                dx = horizontalThreshold - left;
+            }
+            if ( right < horizontalThreshold ) {
+                dx = dx ?
+                    ( dx + right - horizontalThreshold ) / 2 :
+                    ( right - horizontalThreshold );
+            }
+        }
+        
+        if ( this.wrapVertical ) {
+            //do nothing
+        } else {
+            if ( top < verticalThreshold ) {
+                dy = ( verticalThreshold - top );
+            }
+            if ( bottom < verticalThreshold ) {
+                dy =  dy ?
+                    ( dy + bottom - verticalThreshold ) / 2 :
+                    ( bottom - verticalThreshold );
+            }
+        }
+        
+        if ( dx || dy ) {
+            newBounds.x += dx;
+            newBounds.y += dy;
+            if( newBounds.width > 1  ){
+                newBounds.x = 0.5 - newBounds.width/2;
+            }
+            if( newBounds.height > this.contentAspectY ){
+                newBounds.y = this.contentAspectY/2 - newBounds.height/2;
+            }
+        }
+        
+        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
+            return this.panTo( newBounds.getCenter(), immediately );
+        }
+        
+        referencePoint = oldBounds.getTopLeft().times(
+            this.containerSize.x / oldBounds.width
+        ).minus(
+            newBounds.getTopLeft().times(
+                this.containerSize.x / newBounds.width
+            )
+        ).divide(
+            this.containerSize.x / oldBounds.width -
+            this.containerSize.x / newBounds.width
+        );
+        
+        return this.zoomTo( newZoom, referencePoint, immediately );
+    },
+    
     /**
      * @function
      * @param {Boolean} immediately
