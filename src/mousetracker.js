@@ -252,9 +252,9 @@
         destroy: function () {
             stopTracking( this );
             this.element = null;
-			
-			THIS[ this.hash ] = null;
-			delete THIS[ this.hash ];
+
+            THIS[ this.hash ] = null;
+            delete THIS[ this.hash ];
         },
 
         /**
