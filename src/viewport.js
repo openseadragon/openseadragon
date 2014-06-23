@@ -322,6 +322,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     
     /**
      * @function
+     * @private
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Rect} constrained bounds.
@@ -387,6 +388,22 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             }
         }
         
+        if( this.viewer ){
+            /**
+             * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
+             *
+             * @event constrain
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {Boolean} immediately
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.viewer.raiseEvent( 'constrain', {
+                immediately: immediately
+            });
+        }        
+        
         return newBounds;    
     },
     
@@ -415,23 +432,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         if ( bounds.x !== constrainedBounds.x || bounds.y !== constrainedBounds.y || immediately ){
             this.fitBounds( constrainedBounds, immediately );
         }
-
-        if( this.viewer ){
-            /**
-             * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
-             *
-             * @event constrain
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-             * @property {Boolean} immediately
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'constrain', {
-                immediately: immediately
-            });
-        }
-
+        
         return this;
     },
 
@@ -445,14 +446,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     
     /**
      * @function
+     * @private
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Object} options (immediately=null, constraints=false)
+     * @param {Object} options (immediately=false, constraints=false)
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     _fitBounds: function( bounds, options ) {
-        var newOptions = options || {};
-        var immediately = newOptions.immediately || null;
-        var constraints = newOptions.constraints || false;
+        options = options || {};
+        var immediately = options.immediately || false;
+        var constraints = options.constraints || false;
     
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
@@ -503,22 +505,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             }
             
             newBounds = this._applyBoundaryConstraints( newBounds, immediately );
-            
-            if( this.viewer ){
-                /**
-                 * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
-                 *
-                 * @event constrain
-                 * @memberof OpenSeadragon.Viewer
-                 * @type {object}
-                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-                 * @property {Boolean} immediately
-                 * @property {?Object} userData - Arbitrary subscriber-defined object.
-                 */
-                this.viewer.raiseEvent( 'constrain', {
-                    immediately: immediately
-                });
-            }
         }
         
         if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
