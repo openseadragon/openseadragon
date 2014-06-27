@@ -711,6 +711,7 @@ function loadTile( drawer, tile, time ) {
         tile.loading = true;
         drawer.imageLoader.addJob({
             src: tile.url,
+            crossOriginPolicy: drawer.crossOriginPolicy,
             callback: function( image ){
                 onTileLoad( drawer, tile, time, image );
             }
