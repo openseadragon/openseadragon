@@ -49,7 +49,7 @@ var DEVICE_SCREEN       = $.getWindowSize(),
 
 /**
  * @class Drawer
- * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}. 
+ * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#drawer}).
  *
  * @memberof OpenSeadragon
@@ -73,6 +73,9 @@ $.Drawer = function( options ) {
     }
 
     $.extend( true, this, {
+
+        x: 0,
+        y: 0,
 
         //internal state properties
         viewer:         null,
@@ -380,6 +383,11 @@ function updateViewport( drawer ) {
         levelOpacity,
         levelVisibility;
 
+    viewportTL.x -= drawer.x;
+    viewportTL.y -= drawer.y;
+    viewportBR.x -= drawer.x;
+    viewportBR.y -= drawer.y;
+
     // Reset tile's internal drawn state
     while ( drawer.lastDrawn.length > 0 ) {
         tile = drawer.lastDrawn.pop();
@@ -636,7 +644,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         drawer.source.tileOverlap,
         drawer.viewport,
         viewportCenter,
-        levelVisibility
+        levelVisibility,
+        drawer
     );
 
     if ( tile.loaded ) {
@@ -793,9 +802,13 @@ function onTileLoad( drawer, tile, time, image ) {
 }
 
 
-function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
-    var boundsTL     = tile.bounds.getTopLeft(),
-        boundsSize   = tile.bounds.getSize(),
+function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, drawer ){
+    var boundsTL     = tile.bounds.getTopLeft();
+
+    boundsTL.x += drawer.x;
+    boundsTL.y += drawer.y;
+
+    var boundsSize   = tile.bounds.getSize(),
         positionC    = viewport.pixelFromPoint( boundsTL, true ),
         positionT    = viewport.pixelFromPoint( boundsTL, false ),
         sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),

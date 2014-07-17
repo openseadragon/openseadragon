@@ -111,7 +111,7 @@ $.Viewer = function( options ) {
         /**
          * A &lt;textarea&gt; element, the element where keyboard events are handled.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
-         * positioned below {@link OpenSeadragon.Viewer#canvas}. 
+         * positioned below {@link OpenSeadragon.Viewer#canvas}.
          * @member {Element} keyboardCommandArea
          * @memberof OpenSeadragon.Viewer#
          */
@@ -120,7 +120,7 @@ $.Viewer = function( options ) {
          * A &lt;div&gt; element, the element where user-input events are handled for panning and zooming.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
          * positioned on top of {@link OpenSeadragon.Viewer#keyboardCommandArea}.<br><br>
-         * The parent of {@link OpenSeadragon.Drawer#canvas} instances. 
+         * The parent of {@link OpenSeadragon.Drawer#canvas} instances.
          * @member {Element} canvas
          * @memberof OpenSeadragon.Viewer#
          */
@@ -246,14 +246,14 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
-            
+
             //Keeps the initial page within bounds
             if ( this.initialPage > this.tileSources.length - 1 ){
                 this.initialPage = this.tileSources.length - 1;
             }
-            
+
             initialTileSource = this.tileSources[ this.initialPage ];
-            
+
             //Update the sequence (aka currrent page) property
             THIS[ this.hash ].sequence = this.initialPage;
         } else {
@@ -529,12 +529,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:close
      */
     close: function ( ) {
-        
+
         if ( !THIS[ this.hash ] ) {
             //this viewer has already been destroyed: returning immediately
             return this;
         }
-        
+
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
             this._updateRequestId = null;
@@ -579,7 +579,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Function to destroy the viewer and clean up everything created by OpenSeadragon.
-     * 
+     *
      * Example:
      * var viewer = OpenSeadragon({
      *   [...]
@@ -596,8 +596,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         //TODO: implement this...
         //this.unbindSequenceControls()
-        //this.unbindStandardControls()        
-        
+        //this.unbindStandardControls()
+
         this.removeAllHandlers();
 
         // Go through top element (passed to us) and remove all children
@@ -1096,24 +1096,26 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return;
             }
 
-            for ( var i = 0; i < _this.drawers.length; i++ ) {
-                var otherAspectRatio = _this.drawers[ i ].source.aspectRatio;
-                var diff = otherAspectRatio - tileSource.aspectRatio;
-                if ( Math.abs( diff ) > _this.layersAspectRatioEpsilon ) {
-                    raiseAddLayerFailed({
-                        message: "Aspect ratio mismatch with layer " + i + ".",
-                        source: tileSource,
-                        options: options
-                    });
-                    return;
-                }
-            }
+            // for ( var i = 0; i < _this.drawers.length; i++ ) {
+            //     var otherAspectRatio = _this.drawers[ i ].source.aspectRatio;
+            //     var diff = otherAspectRatio - tileSource.aspectRatio;
+            //     if ( Math.abs( diff ) > _this.layersAspectRatioEpsilon ) {
+            //         raiseAddLayerFailed({
+            //             message: "Aspect ratio mismatch with layer " + i + ".",
+            //             source: tileSource,
+            //             options: options
+            //         });
+            //         return;
+            //     }
+            // }
 
             var drawer = new $.Drawer({
                 viewer: _this,
                 source: tileSource,
                 viewport: _this.viewport,
                 element: _this.drawersContainer,
+                x: options.x !== undefined ? options.x : 0,
+                y: options.y !== undefined ? options.y : 0,
                 opacity: options.opacity !== undefined ?
                     options.opacity : _this.opacity,
                 maxImageCacheCount: _this.maxImageCacheCount,
@@ -1249,7 +1251,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Remove a layer. If there is only one layer, close the viewer.
      * @function
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer 
+     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer
      * to remove
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:remove-layer
@@ -1540,7 +1542,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         return this;
     },
-    
+
     /**
      * Gets the active page of a sequence
      * @function
@@ -1779,7 +1781,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
       },
-      
+
     /**
      * Display a message in the viewport
      * @function OpenSeadragon.Viewer.prototype._showMessage

@@ -326,6 +326,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function( immediately ) {
+        if (true) {
+            return; // TEMP
+        }
+
         var actualZoom = this.getZoom(),
             constrainedZoom = Math.max(
                 Math.min( actualZoom, this.getMaxZoom() ),
@@ -653,7 +657,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
         this.degrees = degrees;
         this.viewer.forceRedraw();
-        
+
         return this;
     },
 
@@ -991,7 +995,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         return viewerCoordinates.plus(
                 OpenSeadragon.getElementPosition( this.viewer.element ));
     },
-    
+
     /**
      * Convert a viewport zoom to an image zoom.
      * Image zoom: ratio of the original image size to displayed image size.
@@ -1009,7 +1013,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         var viewportToImageZoomRatio = containerWidth / imageWidth;
         return viewportZoom * viewportToImageZoomRatio;
     },
-    
+
     /**
      * Convert an image zoom to a viewport zoom.
      * Image zoom: ratio of the original image size to displayed image size.
