@@ -497,13 +497,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function ( tileSource ) {
+    open: function ( tileSource, options ) {
         var _this = this;
 
         _this._hideMessage();
 
         getTileSourceImplementation( _this, tileSource, function( tileSource ) {
-            openTileSource( _this, tileSource );
+            openTileSource( _this, tileSource, options );
         }, function( event ) {
             /**
              * Raised when an error occurs loading a TileSource.
@@ -1116,6 +1116,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 element: _this.drawersContainer,
                 x: options.x !== undefined ? options.x : 0,
                 y: options.y !== undefined ? options.y : 0,
+                scale: options.scale || 1,
                 opacity: options.opacity !== undefined ?
                     options.opacity : _this.opacity,
                 maxImageCacheCount: _this.maxImageCacheCount,
@@ -1911,7 +1912,7 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
  * @function
  * @private
  */
-function openTileSource( viewer, source ) {
+function openTileSource( viewer, source, options ) {
     var i,
         _this = viewer;
 
@@ -1992,7 +1993,10 @@ function openTileSource( viewer, source ) {
         timeout:            _this.timeout,
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor,
-        crossOriginPolicy:  _this.crossOriginPolicy
+        crossOriginPolicy:  _this.crossOriginPolicy,
+        x: options.x || 0,
+        y: options.y || 0,
+        scale: options.scale || 1
     });
     _this.drawers = [_this.drawer];
 

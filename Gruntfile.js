@@ -223,6 +223,13 @@ module.exports = function(grunt) {
     ]);
 
     // ----------
+    // Minimal build task.
+    // For use during development as desired.
+    grunt.registerTask("minbuild", [
+        "git-describe", "concat", "copy:build"
+    ]);
+
+    // ----------
     // Test task.
     // Builds and runs unit tests.
     grunt.registerTask("test", ["build", "connect", "qunit"]);

@@ -5,14 +5,20 @@
             var self = this;
 
             this.viewer = OpenSeadragon( {
-                // debugMode: true,
+                debugMode: true,
+                zoomPerScroll: 1.02,
                 id: "contentDiv",
-                prefixUrl: "../../../build/openseadragon/images/",
-                tileSources: "../../data/tall.dzi"
+                prefixUrl: "../../../build/openseadragon/images/"
             } );
 
             this.viewer.addHandler( "open", function() {
                 self.addLayer();
+            });
+
+            this.viewer.open("../../data/tall.dzi", {
+                x: 1.5,
+                y: 0,
+                scale: 1
             });
         },
 
@@ -23,8 +29,9 @@
             var options = {
                 tileSource: '../../data/wide.dzi',
                 opacity: 1,
-                x: 0.5,
-                y: 0.5
+                x: 0,
+                y: 1.5,
+                scale: 4
             };
 
             var addLayerHandler = function( event ) {
