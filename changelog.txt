@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * Fix for IIPServer-style urls when using DZI (#413)
 * Fix memory leak while destroying the viewer (#421)
+* Added fitBoundsWithConstraints() to the viewport (#423)
 
 1.1.1:
 
