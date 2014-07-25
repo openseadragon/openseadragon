@@ -198,6 +198,14 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * @function
      * @param {Number} level
      */
+    getTileSize: function( level ) {
+        return this.tileSize;
+    },
+
+    /**
+     * @function
+     * @param {Number} level
+     */
     getLevelScale: function( level ) {
 
         // see https://github.com/openseadragon/openseadragon/issues/22
@@ -220,8 +228,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getNumTiles: function( level ) {
         var scale = this.getLevelScale( level ),
-            x = Math.ceil( scale * this.dimensions.x / this.tileSize ),
-            y = Math.ceil( scale * this.dimensions.y / this.tileSize );
+            x = Math.ceil( scale * this.dimensions.x / this.getTileSize(level) ),
+            y = Math.ceil( scale * this.dimensions.y / this.getTileSize(level) );
 
         return new $.Point( x, y );
     },
@@ -245,10 +253,11 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getClosestLevel: function( rect ) {
         var i,
-            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.tileSize ),
+            tilesPerSide,
             tiles;
         for( i = this.minLevel; i < this.maxLevel; i++ ){
             tiles = this.getNumTiles( i );
+            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.getTileSize(i) );            
             if( Math.max( tiles.x, tiles.y ) + 1 >= tilesPerSide ){
                 break;
             }
@@ -263,8 +272,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getTileAtPoint: function( level, point ) {
         var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level ) ),
-            tx = Math.floor( pixel.x / this.tileSize ),
-            ty = Math.floor( pixel.y / this.tileSize );
+            tx = Math.floor( pixel.x / this.getTileSize(level) ),
+            ty = Math.floor( pixel.y / this.getTileSize(level) );
 
         return new $.Point( tx, ty );
     },
@@ -277,10 +286,11 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getTileBounds: function( level, x, y ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            px = ( x === 0 ) ? 0 : this.tileSize * x - this.tileOverlap,
-            py = ( y === 0 ) ? 0 : this.tileSize * y - this.tileOverlap,
-            sx = this.tileSize + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
-            sy = this.tileSize + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
+            tileSize = this.getTileSize(level),
+            px = ( x === 0 ) ? 0 : tileSize * x - this.tileOverlap,
+            py = ( y === 0 ) ? 0 : tileSize * y - this.tileOverlap,
+            sx = tileSize + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
+            sy = tileSize + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
             scale = 1.0 / dimensionsScaled.x;
 
         sx = Math.min( sx, dimensionsScaled.x - px );
