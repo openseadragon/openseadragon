@@ -105,4 +105,9 @@
         testOpen('iiif_1_1_no_tiles_1048/info.json');
     });
 
+    // ----------
+    asyncTest('IIIF 2.0 JSON', function() {
+        testOpen('iiif_2_0_tiled/info.json');
+    });    
+
 })();
