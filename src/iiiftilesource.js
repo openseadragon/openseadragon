@@ -35,7 +35,7 @@
 (function( $ ){
 
 /**
- * @class IIIFMultiTileSource
+ * @class IIIFTileSource
  * @classdesc A client implementation of the International Image Interoperability
  * Format: Image API 1.0 - 2.0
  *
