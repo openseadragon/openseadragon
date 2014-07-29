@@ -1,6 +1,7 @@
 /*
  * OpenSeadragon - IIIFMultiTileSource
  *
+ * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2013 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +43,7 @@
  * @extends OpenSeadragon.TileSource
  * @see http://iiif.io/api/image/
  */
-$.IIIFMultiTileSource = function( options ){
+$.IIIFTileSource = function( options ){
 
 
     $.extend( true, this, options );
@@ -107,7 +108,7 @@ $.IIIFMultiTileSource = function( options ){
     $.TileSource.apply( this, [ options ] );
 };
 
-$.extend( $.IIIFMultiTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.IIIFMultiTileSource.prototype */{
+$.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.IIIFTileSource.prototype */{
     /**
      * Determine if the data and/or url imply the image service is supported by
      * this tile source.
@@ -148,7 +149,7 @@ $.extend( $.IIIFMultiTileSource.prototype, $.TileSource.prototype, /** @lends Op
      *
      * @function
      * @param {Object} data - the raw configuration
-     * @example <caption>IIIF 1.1 Info Looks like this (XML syntax is no more)</caption>
+     * @example <caption>IIIF 1.1 Info Looks like this</caption>
      * {
      *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
      *   "@id" : "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
@@ -177,6 +178,12 @@ $.extend( $.IIIFMultiTileSource.prototype, $.TileSource.prototype, /** @lends Op
             return data;
         }
     },
+
+    /**
+     * Return the tileSize for the given level.
+     * @function
+     * @param {Number} level
+    */
 
     getTileSize: function( level ){
         var scaleFactor = Math.pow(2, this.maxLevel - level);

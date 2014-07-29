@@ -127,6 +127,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      */
     /**
      * The size of the image tiles used to compose the image.
+     * Please note that tileSize may be deprecated in a future release. 
+     * Instead the getTileSize(level) function should be used.
      * @member {Number} tileSize
      * @memberof OpenSeadragon.TileSource#
      */
@@ -195,6 +197,10 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
 
     /**
+     * Return the tileSize for a given level. 
+     * Subclasses should override this if tileSizes can be different at different levels
+     *   such as in IIIFTileSource.  Code should use this function rather than reading
+     *   from .tileSize directly.  tileSize may be deprecated in a future release.
      * @function
      * @param {Number} level
      */
