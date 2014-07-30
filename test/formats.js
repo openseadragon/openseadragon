@@ -72,37 +72,42 @@
 
      // ----------
     asyncTest('IIIF 1.0 JSON', function() {
-        testOpen('iiif1_0.json');
+        testOpen('iiif_1_0_files/info.json');
     });
 
     // ----------
     asyncTest('IIIF 1.0 XML', function() {
-        testOpen('iiif1_0.xml');
+        testOpen('iiif_1_0_files/info.xml');
     });
 
     // ----------
     asyncTest('IIIF 1.1 JSON', function() {
-        testOpen('iiif_1_1_tiled.json');
+        testOpen('iiif_1_1_tiled/info.json');
     });
 
     // ----------
     asyncTest('IIIF No Tiles, Less than 256', function() {
-        testOpen('iiif_1_1_no_tiles_255.json');
+        testOpen('iiif_1_1_no_tiles_255/info.json');
     });
 
     // ----------
     asyncTest('IIIF No Tiles, Bet. 256 and 512', function() {
-        testOpen('iiif_1_1_no_tiles_384.json');
+        testOpen('iiif_1_1_no_tiles_384/info.json');
     });
 
     // ----------
     asyncTest('IIIF No Tiles, Bet. 512 and 1024', function() {
-        testOpen('iiif_1_1_no_tiles_768.json');
+        testOpen('iiif_1_1_no_tiles_768/info.json');
     });
 
     // ----------
     asyncTest('IIIF No Tiles, Larger than 1024', function() {
-        testOpen('iiif_1_1_no_tiles_1048.json');
+        testOpen('iiif_1_1_no_tiles_1048/info.json');
     });
+
+    // ----------
+    asyncTest('IIIF 2.0 JSON', function() {
+        testOpen('iiif_2_0_tiled/info.json');
+    });    
 
 })();
