@@ -298,12 +298,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     open: function( source ) {
         this.updateSize();
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
-        if( source.tileSize > containerSize.x ||
-            source.tileSize > containerSize.y ){
-            this.minPixelRatio = Math.min(
-                containerSize.x,
-                containerSize.y
-            ) / source.tileSize;
+        var ts = source.getTileSize(source.maxLevel);
+        if ( ts > containerSize.x || ts > containerSize.y ) {
+            this.minPixelRatio = Math.min( containerSize.x, containerSize.y ) / ts;
         } else {
             this.minPixelRatio = this.viewer.minPixelRatio;
         }

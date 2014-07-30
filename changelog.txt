@@ -6,6 +6,9 @@ OPENSEADRAGON CHANGELOG
 * Fix for IIPServer-style urls when using DZI (#413)
 * Fix memory leak while destroying the viewer (#421)
 * Added fitBoundsWithConstraints() to the viewport (#423)
+* New combined IIIF TileSource for 1.0 through 2.0 (#441)
+* Allowed TileSources to have dynamic tileSize via source.getTileSize(level) (#441)
+
 
 1.1.1:
 
