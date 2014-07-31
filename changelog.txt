@@ -1,10 +1,15 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.1.2: (in progress)
+1.2.0: (in progress)
 
+* New combined IIIF TileSource for 1.0 through 2.0 (#441)
+    * BREAKING CHANGE: Removed IIIF1_1TileSource (now that IIIFTileSource supports all versions)
+* Allowed TileSources to have dynamic tileSize via source.getTileSize(level) (#441)
+    * DEPRECATION: Use .getTileSize(level) instead of .tileSize
 * Fix for IIPServer-style urls when using DZI (#413)
 * Fix memory leak while destroying the viewer (#421)
+* Added fitBoundsWithConstraints() to the viewport (#423)
 
 1.1.1:
 

@@ -49,7 +49,7 @@ var DEVICE_SCREEN       = $.getWindowSize(),
 
 /**
  * @class Drawer
- * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}. 
+ * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#drawer}).
  *
  * @memberof OpenSeadragon
@@ -72,6 +72,32 @@ $.Drawer = function( options ) {
         };
     }
 
+    this._worldX = options.x || 0;
+    delete options.x;
+    this._worldY = options.y || 0;
+    delete options.y;
+
+    // Ratio of zoomable image height to width.
+    this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
+
+    if ( options.width ) {
+        this._scale = options.width;
+        delete options.width;
+
+        if ( options.height ) {
+            $.console.error( "specifying both width and height to a drawer is not supported" );
+            delete options.height;
+        }
+    } else if ( options.height ) {
+        this._scale = options.height / this.normHeight;
+        delete options.height;
+    } else {
+        this._scale = 1;
+    }
+
+    this._worldWidth = this._scale;
+    this._worldHeight = this.normHeight * this._scale;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -83,7 +109,7 @@ $.Drawer = function( options ) {
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the drawer was reset.
         midUpdate:      false, // Is the drawer currently updating the viewport?
-        updateAgain:    true,  // Does the drawer need to update the viewort again?
+        updateAgain:    true,  // Does the drawer need to update the viewport again?
 
 
         //internal state / configurable settings
@@ -126,8 +152,7 @@ $.Drawer = function( options ) {
      * @memberof OpenSeadragon.Drawer#
      */
     this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
-    // Ratio of zoomable image height to width.
-    this.normHeight = this.source.dimensions.y / this.source.dimensions.x;
+
     /**
      * @member {Element} element
      * @memberof OpenSeadragon.Drawer#
@@ -357,7 +382,7 @@ function updateViewport( drawer ) {
         zeroRatioC      = drawer.viewport.deltaPixelsFromPoints(
             drawer.source.getPixelRatio( 0 ),
             true
-        ).x,
+        ).x * drawer._scale,
         lowestLevel     = Math.max(
             drawer.source.minLevel,
             Math.floor(
@@ -379,6 +404,11 @@ function updateViewport( drawer ) {
         optimalRatio,
         levelOpacity,
         levelVisibility;
+
+    viewportTL.x -= drawer._worldX;
+    viewportTL.y -= drawer._worldY;
+    viewportBR.x -= drawer._worldX;
+    viewportBR.y -= drawer._worldY;
 
     // Reset tile's internal drawn state
     while ( drawer.lastDrawn.length > 0 ) {
@@ -406,22 +436,22 @@ function updateViewport( drawer ) {
 
     //Don't draw if completely outside of the viewport
     if  ( !drawer.wrapHorizontal &&
-        ( viewportBR.x < 0 || viewportTL.x > 1 ) ) {
+        ( viewportBR.x < 0 || viewportTL.x > drawer._worldWidth ) ) {
         return;
     } else if
         ( !drawer.wrapVertical &&
-        ( viewportBR.y < 0 || viewportTL.y > drawer.normHeight ) ) {
+        ( viewportBR.y < 0 || viewportTL.y > drawer._worldHeight ) ) {
         return;
     }
 
     // Calculate viewport rect / bounds
     if ( !drawer.wrapHorizontal ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
-        viewportBR.x = Math.min( viewportBR.x, 1 );
+        viewportBR.x = Math.min( viewportBR.x, drawer._worldWidth );
     }
     if ( !drawer.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
-        viewportBR.y = Math.min( viewportBR.y, drawer.normHeight );
+        viewportBR.y = Math.min( viewportBR.y, drawer._worldHeight );
     }
 
     // Calculations for the interval of levels to draw
@@ -438,7 +468,7 @@ function updateViewport( drawer ) {
         renderPixelRatioC = drawer.viewport.deltaPixelsFromPoints(
             drawer.source.getPixelRatio( level ),
             true
-        ).x;
+        ).x * drawer._scale;
 
         if ( ( !haveDrawn && renderPixelRatioC >= drawer.minPixelRatio ) ||
              ( level == lowestLevel ) ) {
@@ -452,7 +482,7 @@ function updateViewport( drawer ) {
         renderPixelRatioT = drawer.viewport.deltaPixelsFromPoints(
             drawer.source.getPixelRatio( level ),
             false
-        ).x;
+        ).x * drawer._scale;
 
         zeroRatioT      = drawer.viewport.deltaPixelsFromPoints(
             drawer.source.getPixelRatio(
@@ -462,7 +492,7 @@ function updateViewport( drawer ) {
                 )
             ),
             false
-        ).x;
+        ).x * drawer._scale;
 
         optimalRatio    = drawer.immediateRender ?
             1 :
@@ -548,8 +578,8 @@ function updateLevel( drawer, haveDrawn, drawLevel, level, levelOpacity, levelVi
     }
 
     //OK, a new drawing so do your calculations
-    tileTL    = drawer.source.getTileAtPoint( level, viewportTL );
-    tileBR    = drawer.source.getTileAtPoint( level, viewportBR );
+    tileTL    = drawer.source.getTileAtPoint( level, viewportTL.divide( drawer._scale ));
+    tileBR    = drawer.source.getTileAtPoint( level, viewportBR.divide( drawer._scale ));
     numberOfTiles  = drawer.source.getNumTiles( level );
 
     resetCoverage( drawer.coverage, level );
@@ -593,7 +623,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
             drawer.tilesMatrix,
             currentTime,
             numberOfTiles,
-            drawer.normHeight
+            drawer._worldWidth,
+            drawer._worldHeight
         ),
         drawTile = drawLevel;
 
@@ -636,7 +667,8 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
         drawer.source.tileOverlap,
         drawer.viewport,
         viewportCenter,
-        levelVisibility
+        levelVisibility,
+        drawer
     );
 
     if ( tile.loaded ) {
@@ -662,7 +694,7 @@ function updateTile( drawer, drawLevel, haveDrawn, x, y, level, levelOpacity, le
     return best;
 }
 
-function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeight ) {
+function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWidth, worldHeight ) {
     var xMod,
         yMod,
         bounds,
@@ -684,8 +716,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, normHeig
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
 
-        bounds.x += 1.0 * ( x - xMod ) / numTiles.x;
-        bounds.y += normHeight * ( y - yMod ) / numTiles.y;
+        bounds.x += worldWidth * ( x - xMod ) / numTiles.x;
+        bounds.y += worldHeight * ( y - yMod ) / numTiles.y;
 
         tilesMatrix[ level ][ x ][ y ] = new $.Tile(
             level,
@@ -750,11 +782,10 @@ function onTileLoad( drawer, tile, time, image ) {
     tile.loaded = true;
     tile.image  = image;
 
-
     insertionIndex = drawer.tilesLoaded.length;
 
     if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
-        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
+        cutoff = Math.ceil( Math.log( drawer.source.getTileSize(tile.level) ) / Math.log( 2 ) );
 
         worstTile       = null;
         worstTileIndex  = -1;
@@ -793,10 +824,20 @@ function onTileLoad( drawer, tile, time, image ) {
 }
 
 
-function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility ){
-    var boundsTL     = tile.bounds.getTopLeft(),
-        boundsSize   = tile.bounds.getSize(),
-        positionC    = viewport.pixelFromPoint( boundsTL, true ),
+function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, drawer ){
+    var boundsTL     = tile.bounds.getTopLeft();
+
+    boundsTL.x *= drawer._scale;
+    boundsTL.y *= drawer._scale;
+    boundsTL.x += drawer._worldX;
+    boundsTL.y += drawer._worldY;
+
+    var boundsSize   = tile.bounds.getSize();
+
+    boundsSize.x *= drawer._scale;
+    boundsSize.y *= drawer._scale;
+
+    var positionC    = viewport.pixelFromPoint( boundsTL, true ),
         positionT    = viewport.pixelFromPoint( boundsTL, false ),
         sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),
         sizeT        = viewport.deltaPixelsFromPoints( boundsSize, false ),

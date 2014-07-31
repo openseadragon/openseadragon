@@ -111,7 +111,7 @@ $.Viewer = function( options ) {
         /**
          * A &lt;textarea&gt; element, the element where keyboard events are handled.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
-         * positioned below {@link OpenSeadragon.Viewer#canvas}. 
+         * positioned below {@link OpenSeadragon.Viewer#canvas}.
          * @member {Element} keyboardCommandArea
          * @memberof OpenSeadragon.Viewer#
          */
@@ -120,7 +120,7 @@ $.Viewer = function( options ) {
          * A &lt;div&gt; element, the element where user-input events are handled for panning and zooming.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
          * positioned on top of {@link OpenSeadragon.Viewer#keyboardCommandArea}.<br><br>
-         * The parent of {@link OpenSeadragon.Drawer#canvas} instances. 
+         * The parent of {@link OpenSeadragon.Drawer#canvas} instances.
          * @member {Element} canvas
          * @memberof OpenSeadragon.Viewer#
          */
@@ -246,14 +246,14 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
-            
+
             //Keeps the initial page within bounds
             if ( this.initialPage > this.tileSources.length - 1 ){
                 this.initialPage = this.tileSources.length - 1;
             }
-            
+
             initialTileSource = this.tileSources[ this.initialPage ];
-            
+
             //Update the sequence (aka currrent page) property
             THIS[ this.hash ].sequence = this.initialPage;
         } else {
@@ -497,13 +497,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function ( tileSource ) {
+    open: function ( tileSource, options ) {
         var _this = this;
 
         _this._hideMessage();
 
         getTileSourceImplementation( _this, tileSource, function( tileSource ) {
-            openTileSource( _this, tileSource );
+            openTileSource( _this, tileSource, options );
         }, function( event ) {
             /**
              * Raised when an error occurs loading a TileSource.
@@ -529,12 +529,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:close
      */
     close: function ( ) {
-        
+
         if ( !THIS[ this.hash ] ) {
             //this viewer has already been destroyed: returning immediately
             return this;
         }
-        
+
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
             this._updateRequestId = null;
@@ -579,7 +579,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Function to destroy the viewer and clean up everything created by OpenSeadragon.
-     * 
+     *
      * Example:
      * var viewer = OpenSeadragon({
      *   [...]
@@ -596,8 +596,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         //TODO: implement this...
         //this.unbindSequenceControls()
-        //this.unbindStandardControls()        
-        
+        //this.unbindStandardControls()
+
         this.removeAllHandlers();
 
         // Go through top element (passed to us) and remove all children
@@ -1046,12 +1046,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Add a layer.
      * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
      *  supports except arrays of images as layers cannot be sequences.
+     * Note that you can specify options.width or options.height, but not both.
+     * The other dimension will be calculated according to the layer's aspect ratio.
      * @function
      * @param {Object} options
      * @param {String|Object|Function} options.tileSource The TileSource of the layer.
      * @param {Number} [options.opacity=1] The opacity of the layer.
      * @param {Number} [options.level] The level of the layer. Added on top of
      * all other layers if not specified.
+     * @param {Number} [options.x=0] The X position for the image in world coordinates.
+     * @param {Number} [options.y=0] The Y position for the image in world coordinates.
+     * @param {Number} [options.width=1] The width for the image in world coordinates.
+     * @param {Number} [options.height] The height for the image in world coordinates.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-layer
      * @fires OpenSeadragon.Viewer.event:add-layer-failed
@@ -1096,24 +1102,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return;
             }
 
-            for ( var i = 0; i < _this.drawers.length; i++ ) {
-                var otherAspectRatio = _this.drawers[ i ].source.aspectRatio;
-                var diff = otherAspectRatio - tileSource.aspectRatio;
-                if ( Math.abs( diff ) > _this.layersAspectRatioEpsilon ) {
-                    raiseAddLayerFailed({
-                        message: "Aspect ratio mismatch with layer " + i + ".",
-                        source: tileSource,
-                        options: options
-                    });
-                    return;
-                }
-            }
-
             var drawer = new $.Drawer({
                 viewer: _this,
                 source: tileSource,
                 viewport: _this.viewport,
                 element: _this.drawersContainer,
+                x: options.x,
+                y: options.y,
+                width: options.width,
+                height: options.height,
                 opacity: options.opacity !== undefined ?
                     options.opacity : _this.opacity,
                 maxImageCacheCount: _this.maxImageCacheCount,
@@ -1249,7 +1246,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Remove a layer. If there is only one layer, close the viewer.
      * @function
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer 
+     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer
      * to remove
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:remove-layer
@@ -1540,7 +1537,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         return this;
     },
-    
+
     /**
      * Gets the active page of a sequence
      * @function
@@ -1779,7 +1776,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
       },
-      
+
     /**
      * Display a message in the viewport
      * @function OpenSeadragon.Viewer.prototype._showMessage
@@ -1909,9 +1906,11 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
  * @function
  * @private
  */
-function openTileSource( viewer, source ) {
+function openTileSource( viewer, source, options ) {
     var i,
         _this = viewer;
+
+    options = options || {};
 
     if ( _this.source ) {
         _this.close( );
@@ -1977,6 +1976,10 @@ function openTileSource( viewer, source ) {
         source:             _this.source,
         viewport:           _this.viewport,
         element:            _this.drawersContainer,
+        x:                  options.x,
+        y:                  options.y,
+        width:              options.width,
+        height:             options.height,
         opacity:            _this.opacity,
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,

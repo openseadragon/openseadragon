@@ -34,7 +34,6 @@ module.exports = function(grunt) {
             "src/tilesource.js",
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
-            "src/iiif1_1tilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/legacytilesource.js",
@@ -220,6 +219,13 @@ module.exports = function(grunt) {
     grunt.registerTask("build", [
         "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat",
         "uglify", "replace:cleanPaths", "copy:build"
+    ]);
+
+    // ----------
+    // Minimal build task.
+    // For use during development as desired.
+    grunt.registerTask("minbuild", [
+        "git-describe", "concat", "copy:build"
     ]);
 
     // ----------

@@ -211,9 +211,6 @@
   * @property {Number} [opacity=1]
   *     Opacity of the drawer (1=opaque, 0=transparent)
   *
-  * @property {Number} [layersAspectRatioEpsilon=0.0001]
-  *     Maximum aspectRatio mismatch between 2 layers.
-  *
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
@@ -961,9 +958,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             // APPEARANCE
             opacity:                1,
-
-            // LAYERS SETTINGS
-            layersAspectRatioEpsilon:   0.0001,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
