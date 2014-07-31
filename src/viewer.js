@@ -1046,12 +1046,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Add a layer.
      * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
      *  supports except arrays of images as layers cannot be sequences.
+     * Note that you can specify options.width or options.height, but not both.
+     * The other dimension will be calculated according to the layer's aspect ratio.
      * @function
      * @param {Object} options
      * @param {String|Object|Function} options.tileSource The TileSource of the layer.
      * @param {Number} [options.opacity=1] The opacity of the layer.
      * @param {Number} [options.level] The level of the layer. Added on top of
      * all other layers if not specified.
+     * @param {Number} [options.x=0] The X position for the image in world coordinates.
+     * @param {Number} [options.y=0] The Y position for the image in world coordinates.
+     * @param {Number} [options.width=1] The width for the image in world coordinates.
+     * @param {Number} [options.height] The height for the image in world coordinates.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-layer
      * @fires OpenSeadragon.Viewer.event:add-layer-failed
@@ -1095,19 +1101,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 });
                 return;
             }
-
-            // for ( var i = 0; i < _this.drawers.length; i++ ) {
-            //     var otherAspectRatio = _this.drawers[ i ].source.aspectRatio;
-            //     var diff = otherAspectRatio - tileSource.aspectRatio;
-            //     if ( Math.abs( diff ) > _this.layersAspectRatioEpsilon ) {
-            //         raiseAddLayerFailed({
-            //             message: "Aspect ratio mismatch with layer " + i + ".",
-            //             source: tileSource,
-            //             options: options
-            //         });
-            //         return;
-            //     }
-            // }
 
             var drawer = new $.Drawer({
                 viewer: _this,
