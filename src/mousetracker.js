@@ -1896,6 +1896,7 @@
                 event.currentTarget.msReleasePointerCapture( event.pointerId );
             }
         }
+        updatePointersExit(tracker, event, [gPoint]);
     }
 
 
