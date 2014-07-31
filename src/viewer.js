@@ -1114,9 +1114,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 source: tileSource,
                 viewport: _this.viewport,
                 element: _this.drawersContainer,
-                x: options.x !== undefined ? options.x : 0,
-                y: options.y !== undefined ? options.y : 0,
-                scale: options.scale || 1,
+                x: options.x,
+                y: options.y,
+                width: options.width,
+                height: options.height,
                 opacity: options.opacity !== undefined ?
                     options.opacity : _this.opacity,
                 maxImageCacheCount: _this.maxImageCacheCount,
@@ -1916,6 +1917,8 @@ function openTileSource( viewer, source, options ) {
     var i,
         _this = viewer;
 
+    options = options || {};
+
     if ( _this.source ) {
         _this.close( );
     }
@@ -1980,6 +1983,10 @@ function openTileSource( viewer, source, options ) {
         source:             _this.source,
         viewport:           _this.viewport,
         element:            _this.drawersContainer,
+        x:                  options.x,
+        y:                  options.y,
+        width:              options.width,
+        height:             options.height,
         opacity:            _this.opacity,
         maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
@@ -1993,10 +2000,7 @@ function openTileSource( viewer, source, options ) {
         timeout:            _this.timeout,
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor,
-        crossOriginPolicy:  _this.crossOriginPolicy,
-        x: options.x || 0,
-        y: options.y || 0,
-        scale: options.scale || 1
+        crossOriginPolicy:  _this.crossOriginPolicy
     });
     _this.drawers = [_this.drawer];
 

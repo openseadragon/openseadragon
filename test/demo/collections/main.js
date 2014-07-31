@@ -7,6 +7,7 @@
             this.viewer = OpenSeadragon( {
                 debugMode: true,
                 zoomPerScroll: 1.02,
+                // showNavigator: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             } );
@@ -18,7 +19,7 @@
             this.viewer.open("../../data/tall.dzi", {
                 x: 1.5,
                 y: 0,
-                scale: 1
+                width: 1
             });
         },
 
@@ -31,7 +32,7 @@
                 opacity: 1,
                 x: 0,
                 y: 1.5,
-                scale: 4
+                height: 1
             };
 
             var addLayerHandler = function( event ) {
