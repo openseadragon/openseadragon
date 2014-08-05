@@ -529,6 +529,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:close
      */
     close: function ( ) {
+        
+        if ( !THIS[ this.hash ] ) {
+            //this viewer has already been destroyed: returning immediately
+            return this;
+        }
+        
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
             this._updateRequestId = null;
@@ -541,6 +547,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.clearOverlays();
         this.drawersContainer.innerHTML = "";
         this.overlaysContainer.innerHTML = "";
+
+        if ( this.drawer ) {
+            this.drawer.destroy();
+        }
 
         this.source     = null;
         this.drawer     = null;
@@ -568,13 +578,26 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
 
     /**
-     * Function to destroy the viewer and clean up everything created by
-     * OpenSeadragon.
+     * Function to destroy the viewer and clean up everything created by OpenSeadragon.
+     * 
+     * Example:
+     * var viewer = OpenSeadragon({
+     *   [...]
+     * });
+     *
+     * //when you are done with the viewer:
+     * viewer.destroy();
+     * viewer = null; //important
+     *
      * @function
      */
     destroy: function( ) {
         this.close();
 
+        //TODO: implement this...
+        //this.unbindSequenceControls()
+        //this.unbindStandardControls()        
+        
         this.removeAllHandlers();
 
         // Go through top element (passed to us) and remove all children
@@ -596,6 +619,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (this.outerTracker){
             this.outerTracker.destroy();
         }
+
+        THIS[ this.hash ] = null;
+        delete THIS[ this.hash ];
 
         // clear all our references to dom objects
         this.canvas = null;

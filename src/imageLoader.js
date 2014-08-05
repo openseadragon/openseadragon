@@ -41,13 +41,14 @@
  *
  * @memberof OpenSeadragon
  * @param {String} source - URL of image to download.
+ * @param {String} crossOriginPolicy - CORS policy to use for downloads
  * @param {Function} callback - Called once image has finished downloading.
  */
 function ImageJob ( options ) {
     
     $.extend( true, this, {
         timeout:        $.DEFAULT_SETTINGS.timeout,
-        jobId:          null,
+        jobId:          null
     }, options );
     
     /**
@@ -69,7 +70,7 @@ ImageJob.prototype = {
 
         this.image = new Image();
 
-        if ( _this.crossOriginPolicy !== false ) {
+        if ( this.crossOriginPolicy !== false ) {
             this.image.crossOrigin = this.crossOriginPolicy;
         }
 
@@ -122,6 +123,7 @@ $.ImageLoader.prototype = {
      * Add an unloaded image to the loader queue.
      * @method
      * @param {String} src - URL of image to download.
+     * @param {String} crossOriginPolicy - CORS policy to use for downloads
      * @param {Function} callback - Called once image has been downloaded.
      */
     addJob: function( options ) {
@@ -131,6 +133,7 @@ $.ImageLoader.prototype = {
             },
             jobOptions = {
                 src: options.src,
+                crossOriginPolicy: options.crossOriginPolicy,
                 callback: complete
             },
             newJob = new ImageJob( jobOptions );

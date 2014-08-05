@@ -258,6 +258,9 @@
         destroy: function () {
             stopTracking( this );
             this.element = null;
+
+            THIS[ this.hash ] = null;
+            delete THIS[ this.hash ];
         },
 
         /**
@@ -1788,7 +1791,7 @@
         for ( i = 0; i < touchCount; i++ ) {
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
-                type: 'touch',
+                type: 'touch'
             } );
         }
 
@@ -2099,7 +2102,7 @@
 
         gPoint = {
             id: event.pointerId,
-            type: getPointerType( event ),
+            type: getPointerType( event )
         };
 
         updatePointersCancel( tracker, event, [ gPoint ] );

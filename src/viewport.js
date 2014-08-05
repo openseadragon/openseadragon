@@ -319,41 +319,37 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             return this.zoomSpring.target.value;
         }
     },
-
+    
     /**
      * @function
-     * @return {OpenSeadragon.Viewport} Chainable.
-     * @fires OpenSeadragon.Viewer.event:constrain
-     */
-    applyConstraints: function( immediately ) {
-        var actualZoom = this.getZoom(),
-            constrainedZoom = Math.max(
-                Math.min( actualZoom, this.getMaxZoom() ),
-                this.getMinZoom()
-            ),
-            bounds,
-            horizontalThreshold,
+     * @private
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Rect} constrained bounds.
+     */    
+    _applyBoundaryConstraints: function( bounds, immediately ) {
+        var horizontalThreshold,
             verticalThreshold,
             left,
             right,
             top,
             bottom,
             dx = 0,
-            dy = 0;
+            dy = 0,
+            newBounds = new $.Rect(
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height
+            );
+    
+        horizontalThreshold = this.visibilityRatio * newBounds.width;
+        verticalThreshold   = this.visibilityRatio * newBounds.height;
 
-        if ( actualZoom != constrainedZoom ) {
-            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
-        }
-
-        bounds = this.getBounds();
-
-        horizontalThreshold = this.visibilityRatio * bounds.width;
-        verticalThreshold   = this.visibilityRatio * bounds.height;
-
-        left   = bounds.x + bounds.width;
-        right  = 1 - bounds.x;
-        top    = bounds.y + bounds.height;
-        bottom = this.contentAspectY - bounds.y;
+        left   = newBounds.x + newBounds.width;
+        right  = 1 - newBounds.x;
+        top    = newBounds.y + newBounds.height;
+        bottom = this.contentAspectY - newBounds.y;
 
         if ( this.wrapHorizontal ) {
             //do nothing
@@ -382,17 +378,16 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         if ( dx || dy || immediately ) {
-            bounds.x += dx;
-            bounds.y += dy;
-            if( bounds.width > 1  ){
-                bounds.x = 0.5 - bounds.width/2;
+            newBounds.x += dx;
+            newBounds.y += dy;
+            if( newBounds.width > 1  ){
+                newBounds.x = 0.5 - newBounds.width/2;
             }
-            if( bounds.height > this.contentAspectY ){
-                bounds.y = this.contentAspectY/2 - bounds.height/2;
+            if( newBounds.height > this.contentAspectY ){
+                newBounds.y = this.contentAspectY/2 - newBounds.height/2;
             }
-            this.fitBounds( bounds, immediately );
         }
-
+        
         if( this.viewer ){
             /**
              * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
@@ -407,8 +402,37 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
+        }        
+        
+        return newBounds;    
+    },
+    
+    /**
+     * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:constrain
+     */
+    applyConstraints: function( immediately ) {
+        var actualZoom = this.getZoom(),
+            constrainedZoom = Math.max(
+                Math.min( actualZoom, this.getMaxZoom() ),
+                this.getMinZoom()
+            ),
+            bounds,
+            constrainedBounds;
+        
+        if ( actualZoom != constrainedZoom ) {
+            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
         }
 
+        bounds = this.getBounds();
+
+        constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
+        
+        if ( bounds.x !== constrainedBounds.x || bounds.y !== constrainedBounds.y || immediately ){
+            this.fitBounds( constrainedBounds, immediately );
+        }
+        
         return this;
     },
 
@@ -419,14 +443,19 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     ensureVisible: function( immediately ) {
         return this.applyConstraints( immediately );
     },
-
+    
     /**
      * @function
+     * @private
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Boolean} immediately
+     * @param {Object} options (immediately=false, constraints=false)
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    fitBounds: function( bounds, immediately ) {
+    _fitBounds: function( bounds, options ) {
+        options = options || {};
+        var immediately = options.immediately || false;
+        var constraints = options.constraints || false;
+    
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
             newBounds = new $.Rect(
@@ -438,8 +467,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             oldBounds,
             oldZoom,
             newZoom,
-            referencePoint;
-
+            referencePoint,
+            newBoundsAspectRatio,
+            newConstrainedZoom;
+        
         if ( newBounds.getAspectRatio() >= aspect ) {
             newBounds.height = bounds.width / aspect;
             newBounds.y      = center.y - newBounds.height / 2;
@@ -447,17 +478,39 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             newBounds.width = bounds.height * aspect;
             newBounds.x     = center.x - newBounds.width / 2;
         }
-
+        
+        if ( constraints ) {
+            newBoundsAspectRatio = newBounds.getAspectRatio();
+        }
+        
         this.panTo( this.getCenter( true ), true );
         this.zoomTo( this.getZoom( true ), null, true );
-
+        
         oldBounds = this.getBounds();
         oldZoom   = this.getZoom();
         newZoom   = 1.0 / newBounds.width;
-        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
-            return this.panTo( center, immediately );
+        
+        if ( constraints ) {
+            newConstrainedZoom = Math.max(
+                Math.min(newZoom, this.getMaxZoom() ),
+                this.getMinZoom()
+            );
+            
+            if (newZoom !== newConstrainedZoom) {
+                newZoom = newConstrainedZoom;
+                newBounds.width = 1.0 / newZoom;
+                newBounds.x = center.x - newBounds.width / 2;
+                newBounds.height = newBounds.width / newBoundsAspectRatio;
+                newBounds.y = center.y - newBounds.height / 2;
+            }
+            
+            newBounds = this._applyBoundaryConstraints( newBounds, immediately );
         }
-
+        
+        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
+            return this.panTo( constraints ? newBounds.getCenter() : center, immediately );
+        }
+        
         referencePoint = oldBounds.getTopLeft().times(
             this.containerSize.x / oldBounds.width
         ).minus(
@@ -468,11 +521,36 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.containerSize.x / oldBounds.width -
             this.containerSize.x / newBounds.width
         );
-
+        
         return this.zoomTo( newZoom, referencePoint, immediately );
+    },    
+    
+    /**
+     * @function
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    fitBounds: function( bounds, immediately ) {
+        return this._fitBounds( bounds, {
+            immediately: immediately,
+            constraints: false
+        } );
     },
-
-
+    
+    /**
+     * @function
+     * @param {OpenSeadragon.Rect} bounds
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    fitBoundsWithConstraints: function( bounds, immediately ) {
+        return this._fitBounds( bounds, {
+            immediately: immediately,
+            constraints: true
+        } );
+    },
+    
     /**
      * @function
      * @param {Boolean} immediately

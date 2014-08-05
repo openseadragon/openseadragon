@@ -295,6 +295,7 @@
             equal(null, viewer.container);
             equal(null, viewer.element);
             equal(true, closeCalled);
+            viewer = null;
             start();
         });
         viewer.open('/test/data/testpattern.dzi');

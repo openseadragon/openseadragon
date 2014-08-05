@@ -34,7 +34,6 @@ module.exports = function(grunt) {
             "src/tilesource.js",
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
-            "src/iiif1_1tilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/legacytilesource.js",
@@ -51,6 +50,11 @@ module.exports = function(grunt) {
             "src/drawer.js",
             "src/viewport.js"
         ];
+
+    // ----------
+    grunt.event.once('git-describe', function (rev) {
+        grunt.config.set('gitInfo', rev);
+    });
 
     // ----------
     // Project configuration.
@@ -101,12 +105,8 @@ module.exports = function(grunt) {
         uglify: {
             options: {
                 preserveComments: "some",
-                sourceMap: function (filename) {
-                    return filename.replace(/\.js$/, '.js.map');
-                },
-                sourceMappingURL: function (filename) {
-                    return filename.replace(/\.js$/, '.js.map').replace('build/openseadragon/', '');
-                },
+                sourceMap: true,
+                sourceMapName: 'build/openseadragon/openseadragon.min.js.map'
             },
             openseadragon: {
                 src: [ distribution ],
@@ -161,11 +161,7 @@ module.exports = function(grunt) {
             afterconcat: [ distribution ]
         },
         "git-describe": {
-            build: {
-                options: {
-                    prop: "gitInfo"
-                }
-            }
+            build: {}
         }
     });
 

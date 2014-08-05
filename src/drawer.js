@@ -302,6 +302,22 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      */
     canRotate: function() {
         return this.useCanvas;
+    },
+
+    /**
+     * Destroy the drawer (unload current loaded tiles)
+     * @method
+     * @return null
+     */
+    destroy: function() {
+        //unload current loaded tiles (=empty TILE_CACHE)
+        for ( var i = 0; i < this.tilesLoaded.length; ++i ) {
+            this.tilesLoaded[i].unload();
+        }
+
+        //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
+        this.canvas.width  = 1;
+        this.canvas.height = 1;
     }
 };
 
@@ -695,6 +711,7 @@ function loadTile( drawer, tile, time ) {
         tile.loading = true;
         drawer.imageLoader.addJob({
             src: tile.url,
+            crossOriginPolicy: drawer.crossOriginPolicy,
             callback: function( image ){
                 onTileLoad( drawer, tile, time, image );
             }
@@ -733,11 +750,10 @@ function onTileLoad( drawer, tile, time, image ) {
     tile.loaded = true;
     tile.image  = image;
 
-
     insertionIndex = drawer.tilesLoaded.length;
 
     if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
-        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
+        cutoff = Math.ceil( Math.log( drawer.source.getTileSize(tile.level) ) / Math.log( 2 ) );
 
         worstTile       = null;
         worstTileIndex  = -1;
