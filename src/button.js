@@ -212,7 +212,6 @@ $.Button = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( event ) {
-            $.console.log('Enter ');// + event.currentTarget.className);
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 /**
@@ -247,7 +246,6 @@ $.Button = function( options ) {
         },
 
         exitHandler: function( event ) {
-            $.console.log('Exit ');// + event.currentTarget.className);
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
