@@ -112,6 +112,12 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
+    if ( this.element.style[ "touch-action" ] !== undefined ) {
+        this.element.style[ "touch-action" ] = "none";
+    } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
+        this.element.style[ "-ms-touch-action" ] = "none";
+    }
+
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.

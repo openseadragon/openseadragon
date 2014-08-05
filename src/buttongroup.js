@@ -80,6 +80,12 @@ $.ButtonGroup = function( options ) {
         }
     }
 
+    if ( this.element.style[ "touch-action" ] !== undefined ) {
+        this.element.style[ "touch-action" ] = "none";
+    } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
+        this.element.style[ "-ms-touch-action" ] = "none";
+    }
+
     /**
      * Tracks mouse/touch/key events accross the group of buttons.
      * @member {OpenSeadragon.MouseTracker} tracker

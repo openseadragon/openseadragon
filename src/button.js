@@ -137,6 +137,11 @@ $.Button = function( options ) {
             this.tooltip;
 
         this.element.style.position = "relative";
+        if ( this.element.style[ "touch-action" ] !== undefined ) {
+            this.element.style[ "touch-action" ] = "none";
+        } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
+            this.element.style[ "-ms-touch-action" ] = "none";
+        }
 
         this.imgGroup.style.position =
         this.imgHover.style.position =
@@ -207,6 +212,7 @@ $.Button = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( event ) {
+            $.console.log('Enter ');// + event.currentTarget.className);
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 /**
@@ -241,6 +247,7 @@ $.Button = function( options ) {
         },
 
         exitHandler: function( event ) {
+            $.console.log('Exit ');// + event.currentTarget.className);
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**

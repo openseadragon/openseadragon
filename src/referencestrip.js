@@ -114,6 +114,12 @@ $.ReferenceStrip = function ( options ) {
     style.background    = '#000';
     style.position      = 'relative';
 
+    if ( this.element.style[ "touch-action" ] !== undefined ) {
+        this.element.style[ "touch-action" ] = "none";
+    } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
+        this.element.style[ "-ms-touch-action" ] = "none";
+    }
+
     $.setElementOpacity( this.element, 0.8 );
 
     this.viewer = viewer;
@@ -189,6 +195,11 @@ $.ReferenceStrip = function ( options ) {
         element.style.cssFloat      = 'left'; //Firefox
         element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
+        if ( element.style[ "touch-action" ] !== undefined ) {
+            element.style[ "touch-action" ] = "none";
+        } else if ( element.style[ "-ms-touch-action" ] !== undefined ) {
+            element.style[ "-ms-touch-action" ] = "none";
+        }
 
         element.innerTracker = new $.MouseTracker( {
             element:            element,

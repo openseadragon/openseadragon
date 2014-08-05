@@ -2161,7 +2161,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                             )
                         );
                     } else {
-                        regex = new RegExp( "Trident/.*rv:([0-9]{1,}[.0-9]{0,}) ");
+                        regex = new RegExp( "Trident/.*rv:([0-9]{1,}[.0-9]{0,})");
                         if ( regex.exec( ua ) !== null ) {
                             $.Browser.vendor = $.BROWSERS.IE;
                             $.Browser.version = parseFloat( RegExp.$1 );
