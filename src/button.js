@@ -137,10 +137,10 @@ $.Button = function( options ) {
             this.tooltip;
 
         this.element.style.position = "relative";
-        if ( this.element.style[ "touch-action" ] !== undefined ) {
-            this.element.style[ "touch-action" ] = "none";
-        } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
-            this.element.style[ "-ms-touch-action" ] = "none";
+        if ( typeof this.element.style.touchAction !== 'undefined' ) {
+            this.element.style.touchAction = 'none';
+        } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
+            this.element.style.msTouchAction = 'none';
         }
 
         this.imgGroup.style.position =

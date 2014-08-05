@@ -276,10 +276,10 @@ $.Viewer = function( options ) {
         style.top      = "0px";
         style.left     = "0px";
         // Disable browser default touch handling
-        if ( style[ "touch-action" ] !== undefined ) {
-            style[ "touch-action" ] = "none";
-        } else if ( style["-ms-touch-action"] !== undefined ) {
-            style[ "-ms-touch-action" ] = "none";
+        if ( typeof style.touchAction !== 'undefined' ) {
+            style.touchAction = 'none';
+        } else if ( typeof style.msTouchAction !== 'undefined' ) {
+            style.msTouchAction = 'none';
         }
     }(this.canvas.style));
 

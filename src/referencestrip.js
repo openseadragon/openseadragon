@@ -114,10 +114,10 @@ $.ReferenceStrip = function ( options ) {
     style.background    = '#000';
     style.position      = 'relative';
 
-    if ( this.element.style[ "touch-action" ] !== undefined ) {
-        this.element.style[ "touch-action" ] = "none";
-    } else if ( this.element.style[ "-ms-touch-action" ] !== undefined ) {
-        this.element.style[ "-ms-touch-action" ] = "none";
+    if ( typeof this.element.style.touchAction !== 'undefined' ) {
+        this.element.style.touchAction = 'none';
+    } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
+        this.element.style.msTouchAction = 'none';
     }
 
     $.setElementOpacity( this.element, 0.8 );
@@ -195,10 +195,10 @@ $.ReferenceStrip = function ( options ) {
         element.style.cssFloat      = 'left'; //Firefox
         element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
-        if ( element.style[ "touch-action" ] !== undefined ) {
-            element.style[ "touch-action" ] = "none";
-        } else if ( element.style[ "-ms-touch-action" ] !== undefined ) {
-            element.style[ "-ms-touch-action" ] = "none";
+        if ( typeof element.style.touchAction !== 'undefined' ) {
+            element.style.touchAction = 'none';
+        } else if ( typeof element.style.msTouchAction !== 'undefined' ) {
+            element.style.msTouchAction = 'none';
         }
 
         element.innerTracker = new $.MouseTracker( {
