@@ -80,11 +80,7 @@ $.ButtonGroup = function( options ) {
         }
     }
 
-    if ( typeof this.element.style.touchAction !== 'undefined' ) {
-        this.element.style.touchAction = 'none';
-    } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
-        this.element.style.msTouchAction = 'none';
-    }
+    $.setElementTouchActionNone( this.element );
 
     /**
      * Tracks mouse/touch/key events accross the group of buttons.

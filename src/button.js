@@ -137,11 +137,7 @@ $.Button = function( options ) {
             this.tooltip;
 
         this.element.style.position = "relative";
-        if ( typeof this.element.style.touchAction !== 'undefined' ) {
-            this.element.style.touchAction = 'none';
-        } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
-            this.element.style.msTouchAction = 'none';
-        }
+        $.setElementTouchActionNone( this.element );
 
         this.imgGroup.style.position =
         this.imgHover.style.position =

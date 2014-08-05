@@ -112,11 +112,7 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
-    if ( typeof this.element.style.touchAction !== 'undefined' ) {
-        this.element.style.touchAction = 'none';
-    } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
-        this.element.style.msTouchAction = 'none';
-    }
+    $.setElementTouchActionNone( this.element );
 
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to

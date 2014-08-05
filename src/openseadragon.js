@@ -1586,6 +1586,21 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 
         /**
+         * Sets the specified element's touch-action style attribute to 'none'.
+         * @function
+         * @param {Element|String} element
+         */
+        setElementTouchActionNone: function( element ) {
+            element = $.getElement( element );
+            if ( typeof element.style.touchAction !== 'undefined' ) {
+                element.style.touchAction = 'none';
+            } else if ( typeof element.style.msTouchAction !== 'undefined' ) {
+                element.style.msTouchAction = 'none';
+            }
+        },
+
+
+        /**
          * Add the specified CSS class to the element if not present.
          * @function
          * @param {Element|String} element

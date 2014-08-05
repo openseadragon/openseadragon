@@ -114,11 +114,7 @@ $.ReferenceStrip = function ( options ) {
     style.background    = '#000';
     style.position      = 'relative';
 
-    if ( typeof this.element.style.touchAction !== 'undefined' ) {
-        this.element.style.touchAction = 'none';
-    } else if ( typeof this.element.style.msTouchAction !== 'undefined' ) {
-        this.element.style.msTouchAction = 'none';
-    }
+    $.setElementTouchActionNone( this.element );
 
     $.setElementOpacity( this.element, 0.8 );
 
@@ -195,11 +191,7 @@ $.ReferenceStrip = function ( options ) {
         element.style.cssFloat      = 'left'; //Firefox
         element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
-        if ( typeof element.style.touchAction !== 'undefined' ) {
-            element.style.touchAction = 'none';
-        } else if ( typeof element.style.msTouchAction !== 'undefined' ) {
-            element.style.msTouchAction = 'none';
-        }
+        $.setElementTouchActionNone( element );
 
         element.innerTracker = new $.MouseTracker( {
             element:            element,

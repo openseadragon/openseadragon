@@ -275,13 +275,8 @@ $.Viewer = function( options ) {
         style.position = "absolute";
         style.top      = "0px";
         style.left     = "0px";
-        // Disable browser default touch handling
-        if ( typeof style.touchAction !== 'undefined' ) {
-            style.touchAction = 'none';
-        } else if ( typeof style.msTouchAction !== 'undefined' ) {
-            style.msTouchAction = 'none';
-        }
     }(this.canvas.style));
+    $.setElementTouchActionNone( this.canvas );
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
