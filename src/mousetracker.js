@@ -1475,7 +1475,7 @@
 
         event = $.getEvent( event );
 
-        if ( isParentChild( event.currentTarget, event.relatedTarget ) ) {//this === event.relatedTarget || 
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1500,7 +1500,7 @@
 
         event = $.getEvent( event );
 
-        if ( isParentChild( event.currentTarget, event.relatedTarget ) ) {//this === event.relatedTarget || 
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1821,7 +1821,7 @@
     function onPointerOver( tracker, event ) {
         var gPoint;
 
-        if ( isParentChild( event.currentTarget, event.relatedTarget ) ) {//this === event.relatedTarget || 
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1844,7 +1844,7 @@
     function onPointerOut( tracker, event ) {
         var gPoint;
 
-        if ( isParentChild( event.currentTarget, event.relatedTarget ) ) {//this === event.relatedTarget || 
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
