@@ -98,9 +98,9 @@ $.IIIFTileSource = function( options ){
     }
 
     if ( !options.maxLevel ) {
-        if ( !this.scale_factors ) { 
-            options.maxLevel = Number( Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ) ) ); 
-        } else { 
+        if ( !this.scale_factors ) {
+            options.maxLevel = Number( Math.ceil( Math.log( Math.max( this.width, this.height ), 2 ) ) );
+        } else {
             options.maxLevel = Math.floor( Math.pow( Math.max.apply(null, this.scale_factors), 0.5) );
         }
     }
@@ -128,7 +128,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             return true;
 
         // Version 1.0
-        } else if ( data.profile && 
+        } else if ( data.profile &&
             data.profile.indexOf("http://library.stanford.edu/iiif/image-api/compliance.html") === 0) {
             return true;
         } else if ( data.identifier && data.width && data.height ) {
@@ -166,7 +166,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     configure: function( data, url ){
         // Try to deduce our version and fake it upwards if needed
         if ( !$.isPlainObject(data) ) {
-            var options = configureFromXml10( data );            
+            var options = configureFromXml10( data );
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
             options['@id'] = url.replace('/info.xml', '');
             return options;

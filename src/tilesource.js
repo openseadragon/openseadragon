@@ -263,7 +263,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
             tiles;
         for( i = this.minLevel; i < this.maxLevel; i++ ){
             tiles = this.getNumTiles( i );
-            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.getTileSize(i) );            
+            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.getTileSize(i) );
             if( Math.max( tiles.x, tiles.y ) + 1 >= tilesPerSide ){
                 break;
             }
