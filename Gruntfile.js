@@ -48,7 +48,10 @@ module.exports = function(grunt) {
             "src/tile.js",
             "src/overlay.js",
             "src/drawer.js",
-            "src/viewport.js"
+            "src/viewport.js",
+            "src/tiledimage.js",
+            "src/tilecache.js",
+            "src/world.js"
         ];
 
     // ----------

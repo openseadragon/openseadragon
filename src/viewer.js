@@ -151,7 +151,7 @@ $.Viewer = function( options ) {
          * @memberof OpenSeadragon.Viewer#
          */
         drawer:             null,
-        drawers:            [],
+        world:              null,
         // Container inside the canvas where drawers (layers) are drawn.
         drawersContainer:   null,
         /**
@@ -554,7 +554,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.source     = null;
         this.drawer     = null;
-        this.drawers    = [];
+        this.world      = null;
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
 
@@ -1102,11 +1102,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return;
             }
 
-            var drawer = new $.Drawer({
+            var tiledImage = new $.TiledImage({
                 viewer: _this,
                 source: tileSource,
                 viewport: _this.viewport,
-                element: _this.drawersContainer,
                 x: options.x,
                 y: options.y,
                 width: options.width,
@@ -1126,7 +1125,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugMode: _this.debugMode,
                 debugGridColor: _this.debugGridColor
             });
-            _this.drawers.push( drawer );
+            _this.world.add( tiledImage );
             if ( options.level !== undefined ) {
                 _this.setLayerLevel( drawer, options.level );
             }
@@ -1971,17 +1970,16 @@ function openTileSource( viewer, source, options ) {
 
     _this.source.overlays = _this.source.overlays || [];
 
+    _this.tileCache = new $.TileCache({
+        maxImageCacheCount: _this.maxImageCacheCount
+    });
+
     _this.drawer = new $.Drawer({
         viewer:             _this,
         source:             _this.source,
         viewport:           _this.viewport,
         element:            _this.drawersContainer,
-        x:                  options.x,
-        y:                  options.y,
-        width:              options.width,
-        height:             options.height,
         opacity:            _this.opacity,
-        maxImageCacheCount: _this.maxImageCacheCount,
         imageLoaderLimit:   _this.imageLoaderLimit,
         minZoomImageRatio:  _this.minZoomImageRatio,
         wrapHorizontal:     _this.wrapHorizontal,
@@ -1995,6 +1993,32 @@ function openTileSource( viewer, source, options ) {
         debugGridColor:     _this.debugGridColor,
         crossOriginPolicy:  _this.crossOriginPolicy
     });
+
+    var tiledImage = new $.TiledImage({
+        viewer:             _this,
+        source:             _this.source,
+        viewport:           _this.viewport,
+        drawer:             _this.drawer,
+        tileCache:          _this.tileCache,
+        x:                  options.x,
+        y:                  options.y,
+        width:              options.width,
+        height:             options.height,
+        opacity:            _this.opacity,
+        imageLoaderLimit:   _this.imageLoaderLimit,
+        minZoomImageRatio:  _this.minZoomImageRatio,
+        wrapHorizontal:     _this.wrapHorizontal,
+        wrapVertical:       _this.wrapVertical,
+        immediateRender:    _this.immediateRender,
+        blendTime:          _this.blendTime,
+        alwaysBlend:        _this.alwaysBlend,
+        minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
+        timeout:            _this.timeout,
+        debugMode:          _this.debugMode,
+        debugGridColor:     _this.debugGridColor,
+        crossOriginPolicy:  _this.crossOriginPolicy
+    });
+
     _this.drawers = [_this.drawer];
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
@@ -2711,7 +2735,7 @@ function updateOnce( viewer ) {
     }
 
     if ( animated ) {
-        updateDrawers( viewer );
+        updateWorld( viewer );
         drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
@@ -2726,8 +2750,8 @@ function updateOnce( viewer ) {
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         viewer.raiseEvent( "animation" );
-    } else if ( THIS[ viewer.hash ].forceRedraw || drawersNeedUpdate( viewer ) ) {
-        updateDrawers( viewer );
+    } else if ( THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
+        updateWorld( viewer );
         drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
@@ -2782,19 +2806,9 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
     viewport.fitBounds( newBounds, true );
 }
 
-function updateDrawers( viewer ) {
-    for (var i = 0; i < viewer.drawers.length; i++ ) {
-        viewer.drawers[i].update();
-    }
-}
-
-function drawersNeedUpdate( viewer ) {
-    for (var i = 0; i < viewer.drawers.length; i++ ) {
-        if (viewer.drawers[i].needsUpdate()) {
-            return true;
-        }
-    }
-    return false;
+function updateWorld( viewer ) {
+    viewer.drawer.clear();
+    viewer.world.update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

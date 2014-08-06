@@ -2224,7 +2224,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
         debug:  nullfunction,
         info:   nullfunction,
         warn:   nullfunction,
-        error:  nullfunction
+        error:  nullfunction,
+        assert:  nullfunction
     };
 
 
