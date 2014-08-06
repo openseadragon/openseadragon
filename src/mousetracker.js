@@ -1074,73 +1074,16 @@
                 );
             }
 
-            releaseMouse( tracker );
             delegate.tracking = false;
         }
     }
 
     /**
-     * Begin capturing mouse events to the tracked element (legacy mouse events only).
+     * Begin capturing pointer events to the tracked element.
      * @private
      * @inner
      */
-    function captureMouse( tracker ) {
-        var delegate = THIS[ tracker.hash ];
-
-        if ( !delegate.capturing ) {
-            // We emulate mouse capture by hanging listeners on the window object.
-            //    (Note we listen on the capture phase so the captured handlers will get called first)
-            $.addEvent(
-                window,
-                "mouseup",
-                delegate.mouseupcaptured,
-                true
-            );
-            $.addEvent(
-                window,
-                "mousemove",
-                delegate.mousemovecaptured,
-                true
-            );
-            delegate.capturing = true;
-        }
-    }
-
-
-    /**
-     * Stop capturing mouse events to the tracked element (legacy mouse events only).
-     * @private
-     * @inner
-     */
-    function releaseMouse( tracker ) {
-        var delegate = THIS[ tracker.hash ];
-
-        if ( delegate.capturing ) {
-            // We emulate mouse capture by hanging listeners on the window object.
-            //    (Note we listen on the capture phase so the captured handlers will get called first)
-            $.removeEvent(
-                window,
-                "mousemove",
-                delegate.mousemovecaptured,
-                true
-            );
-            $.removeEvent(
-                window,
-                "mouseup",
-                delegate.mouseupcaptured,
-                true
-            );
-            delegate.capturing = false;
-        }
-    }
-
-
-    /**
-     * Begin capturing pointer events to the tracked element (pointer event model only).
-     * @private
-     * @inner
-     */
-    function capturePointer( tracker ) {
+    function capturePointer( tracker, isLegacyMouse ) {
         var delegate = THIS[ tracker.hash ];
 
         delegate.pointerCaptureCount++;
@@ -1151,27 +1094,26 @@
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             $.addEvent(
                 window,
-                $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
-                delegate.pointerupcaptured,
+                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
+                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
                 true
             );
             $.addEvent(
                 window,
-                $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
-                delegate.pointermovecaptured,
+                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
+                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
                 true
             );
-            delegate.capturing = true;
         }
     }
 
 
     /**
-     * Stop capturing pointer events to the tracked element (pointer event model only).
+     * Stop capturing pointer events to the tracked element.
      * @private
      * @inner
      */
-    function releasePointer( tracker ) {
+    function releasePointer( tracker, isLegacyMouse ) {
         var delegate = THIS[ tracker.hash ];
 
         delegate.pointerCaptureCount--;
@@ -1182,17 +1124,16 @@
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             $.removeEvent(
                 window,
-                $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
-                delegate.pointermovecaptured,
+                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
+                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
                 true
             );
             $.removeEvent(
                 window,
-                $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
-                delegate.pointerupcaptured,
+                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
+                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
                 true
             );
-            delegate.capturing = false;
         }
     }
 
@@ -1535,7 +1476,7 @@
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
             $.stopEvent( event );
-            captureMouse( tracker );
+            capturePointer( tracker, true );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
@@ -1583,7 +1524,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releaseMouse( tracker );
+            releasePointer( tracker, true );
         }
     }
 
@@ -1876,7 +1817,7 @@
         };
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
-            capturePointer( tracker );
+            capturePointer( tracker, false );
             $.stopEvent( event );
         }
 
@@ -1927,7 +1868,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releasePointer( tracker );
+            releasePointer( tracker, false );
             //$.stopEvent( event );
         }
     }
