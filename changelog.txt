@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * Fix memory leak while destroying the viewer (#421)
 * Added fitBoundsWithConstraints() to the viewport (#423)
 * Fixed MouseTracker cross-browser issues with tracking pointers over and out of the tracked element (pull request #448, fix for #152, #404, #420, and #427)
+* Fixed incorrect flick direction after image is rotated (#452)
 
 1.1.1:
 
