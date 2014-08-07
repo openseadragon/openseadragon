@@ -137,6 +137,7 @@ $.Button = function( options ) {
             this.tooltip;
 
         this.element.style.position = "relative";
+        $.setElementTouchActionNone( this.element );
 
         this.imgGroup.style.position =
         this.imgHover.style.position =

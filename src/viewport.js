@@ -326,7 +326,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Rect} constrained bounds.
-     */    
+     */
     _applyBoundaryConstraints: function( bounds, immediately ) {
         var horizontalThreshold,
             verticalThreshold,
@@ -402,9 +402,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
-        }        
+        }
         
-        return newBounds;    
+        return newBounds;
     },
     
     /**
@@ -523,7 +523,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         );
         
         return this.zoomTo( newZoom, referencePoint, immediately );
-    },    
+    },
     
     /**
      * @function

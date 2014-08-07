@@ -275,13 +275,8 @@ $.Viewer = function( options ) {
         style.position = "absolute";
         style.top      = "0px";
         style.left     = "0px";
-        // Disable browser default touch handling
-        if (style["touch-action"] !== undefined) {
-            style["touch-action"] = "none";
-        } else if (style["-ms-touch-action"] !== undefined) {
-            style["-ms-touch-action"] = "none";
-        }
     }(this.canvas.style));
+    $.setElementTouchActionNone( this.canvas );
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -2393,8 +2388,8 @@ function onCanvasDragEnd( event ) {
                 target.y = center.y;
             }
             this.viewport.panTo( target, false );
-            this.viewport.applyConstraints();
         }
+        this.viewport.applyConstraints();
     }
     /**
      * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
@@ -2422,15 +2417,6 @@ function onCanvasDragEnd( event ) {
 }
 
 function onCanvasRelease( event ) {
-    var gestureSettings;
-
-    if ( event.insideElementPressed && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-
-        if ( !gestureSettings.flickEnabled ) {
-            this.viewport.applyConstraints();
-        }
-    }
     /**
      * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
