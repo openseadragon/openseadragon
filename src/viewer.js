@@ -2382,8 +2382,8 @@ function onCanvasDragEnd( event ) {
     if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if ( gestureSettings.flickEnabled && event.speed >= gestureSettings.flickMinSpeed ) {
-            var amplitudeX = gestureSettings.flickMomentum * ( event.speed * Math.cos( event.direction ) ),
-                amplitudeY = gestureSettings.flickMomentum * ( event.speed * Math.sin( event.direction ) ),
+            var amplitudeX = gestureSettings.flickMomentum * ( event.speed * Math.cos( event.direction - (Math.PI / 180 * this.viewport.degrees) ) ),
+                amplitudeY = gestureSettings.flickMomentum * ( event.speed * Math.sin( event.direction - (Math.PI / 180 * this.viewport.degrees) ) ),
                 center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
                 target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
             if( !this.panHorizontal ) {
