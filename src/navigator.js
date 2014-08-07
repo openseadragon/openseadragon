@@ -112,6 +112,8 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
+    $.setElementTouchActionNone( this.element );
+
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
@@ -315,17 +317,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  * @function
  */
 function onCanvasClick( event ) {
-    var newBounds,
-        viewerPosition,
-        dimensions;
-    if (! this.drag) {
-        if ( this.viewer.viewport ) {
-            this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
-            this.viewer.viewport.applyConstraints();
-        }
-    }
-    else {
-        this.drag = false;
+    if ( event.quick && this.viewer.viewport ) {
+        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
+        this.viewer.viewport.applyConstraints();
     }
 }
 
@@ -336,7 +330,6 @@ function onCanvasClick( event ) {
  */
 function onCanvasDrag( event ) {
     if ( this.viewer.viewport ) {
-        this.drag = true;
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }

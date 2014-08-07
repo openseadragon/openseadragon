@@ -114,6 +114,8 @@ $.ReferenceStrip = function ( options ) {
     style.background    = '#000';
     style.position      = 'relative';
 
+    $.setElementTouchActionNone( this.element );
+
     $.setElementOpacity( this.element, 0.8 );
 
     this.viewer = viewer;
@@ -189,6 +191,7 @@ $.ReferenceStrip = function ( options ) {
         element.style.cssFloat      = 'left'; //Firefox
         element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
+        $.setElementTouchActionNone( element );
 
         element.innerTracker = new $.MouseTracker( {
             element:            element,
