@@ -34,6 +34,14 @@
 
 (function( $ ){
 
+var TileRecord = function( params ) {
+    $.console.assert( params, "[TileCache.cacheTile] params is required" );
+    $.console.assert( params.tile, "[TileCache.cacheTile] params.tile is required" );
+    $.console.assert( params.tiledImage, "[TileCache.cacheTile] params.tiledImage is required" );
+    this.tile = params.tile;
+    this.tiledImage = params.tiledImage;
+};
+
 /**
  * @class TileCache
  * @classdesc
@@ -56,17 +64,22 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         return this._tilesLoaded.length;
     },
 
-    cacheTile: function( tile, cutoff ) {
-        cutoff = cutoff || 0;
+    cacheTile: function( params ) {
+        $.console.assert( params, "[TileCache.cacheTile] params is required" );
+        $.console.assert( params.tile, "[TileCache.cacheTile] params.tile is required" );
+        $.console.assert( params.tiledImage, "[TileCache.cacheTile] params.tiledImage is required" );
+
+        var cutoff = params.cutoff || 0;
         var insertionIndex = this._tilesLoaded.length;
 
         if ( this._tilesLoaded.length >= this._maxImageCacheCount ) {
             var worstTile       = null;
             var worstTileIndex  = -1;
-            var prevTile, worstTime, worstLevel, prevTime, prevLevel;
+            var prevTile, worstTime, worstLevel, prevTime, prevLevel, prevTileRecord;
 
             for ( var i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
-                prevTile = this._tilesLoaded[ i ];
+                prevTileRecord = this._tilesLoaded[ i ];
+                prevTile = prevTileRecord.tile;
 
                 if ( prevTile.level <= cutoff || prevTile.beingDrawn ) {
                     continue;
@@ -94,19 +107,26 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
             }
         }
 
-        this._tilesLoaded[ insertionIndex ] = tile;
+        this._tilesLoaded[ insertionIndex ] = new TileRecord({
+            tile: params.tile,
+            tiledImage: params.tiledImage
+        });
     },
 
     /**
-     * Clears all tiles.
+     * Clears all tiles associated with the specified tiledImage.
      * @method
      */
-    reset: function() {
+    clearTilesFor: function( tiledImage ) {
+        var tileRecord;
         for ( var i = 0; i < this._tilesLoaded.length; ++i ) {
-            this._tilesLoaded[i].unload();
+            tileRecord = this._tilesLoaded[ i ];
+            if ( tileRecord.tiledImage === tiledImage ) {
+                tileRecord.tile.unload();
+                this._tilesLoaded.splice( i, 1 );
+                i--;
+            }
         }
-
-        this._tilesLoaded = [];
     }
 };
 
