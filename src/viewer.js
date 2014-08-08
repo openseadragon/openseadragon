@@ -152,8 +152,6 @@ $.Viewer = function( options ) {
          */
         drawer:             null,
         world:              null,
-        // Container inside the canvas where drawers (layers) are drawn.
-        drawersContainer:   null,
         /**
          * Handles coordinate-related functionality - zoom, pan, rotation, etc. Created for each TileSource opened.
          * @member {OpenSeadragon.Viewport} viewport
@@ -264,7 +262,6 @@ $.Viewer = function( options ) {
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
     this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
-    this.drawersContainer     = $.makeNeutralElement( "div" );
     this.overlaysContainer    = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
@@ -304,7 +301,6 @@ $.Viewer = function( options ) {
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
-    this.canvas.appendChild( this.drawersContainer );
     this.canvas.appendChild( this.overlaysContainer );
 
     //Used for toggling between fullscreen and default container size
@@ -540,7 +536,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         this.clearOverlays();
-        this.drawersContainer.innerHTML = "";
         this.overlaysContainer.innerHTML = "";
 
         if ( this.drawer ) {
@@ -1101,6 +1096,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 viewer: _this,
                 source: tileSource,
                 viewport: _this.viewport,
+                drawer: _this.drawer,
+                tileCache: _this.tileCache,
                 x: options.x,
                 y: options.y,
                 width: options.width,
@@ -1120,9 +1117,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugMode: _this.debugMode,
                 debugGridColor: _this.debugGridColor
             });
-            _this.world.add( tiledImage );
+            _this.world.addItem( tiledImage );
             if ( options.level !== undefined ) {
-                _this.setLayerLevel( drawer, options.level );
+                _this.world.setItemLevel( tiledImage, options.level );
             }
             THIS[ _this.hash ].forceRedraw = true;
             /**
@@ -1137,7 +1134,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              */
             _this.raiseEvent( 'add-layer', {
                 options: options,
-                drawer: drawer
+                drawer: tiledImage
             });
         }, function( event ) {
             event.options = options;
@@ -1153,10 +1150,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {OpenSeadragon.Drawer} The layer at the specified level.
      */
     getLayerAtLevel: function( level ) {
-        if ( level >= this.drawers.length ) {
-            throw new Error( "Level bigger than number of layers." );
-        }
-        return this.drawers[ level ];
+        $.console.error( "[Viewer.getLayerAtLevel] this function is deprecated." );
+        return null;
     },
 
     /**
@@ -1166,7 +1161,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Number} The level of the layer or -1 if not present.
      */
     getLevelOfLayer: function( drawer ) {
-        return $.indexOf( this.drawers, drawer );
+        $.console.error( "[Viewer.getLevelOfLayer] this function is deprecated." );
+        return -1;
     },
 
     /**
@@ -1174,7 +1170,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Number} The number of layers used.
      */
     getLayersCount: function() {
-        return this.drawers.length;
+        $.console.error( "[Viewer.getLayersCount] this function is deprecated." );
+        return 0;
     },
 
     /**
@@ -1186,54 +1183,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:layer-level-changed
      */
     setLayerLevel: function( drawer, level ) {
-        var oldLevel = this.getLevelOfLayer( drawer );
-
-        if ( level >= this.drawers.length ) {
-            throw new Error( "Level bigger than number of layers." );
-        }
-        if ( level === oldLevel || oldLevel === -1 ) {
-            return this;
-        }
-        if ( level === 0 || oldLevel === 0 ) {
-            if ( THIS[ this.hash ].sequenced ) {
-                throw new Error( "Cannot reassign base level when in sequence mode." );
-            }
-            // We need to re-assign the base drawer and the source
-            this.drawer = level === 0 ? drawer : this.getLayerAtLevel( level );
-            this.source = this.drawer.source;
-        }
-        this.drawers.splice( oldLevel, 1 );
-        this.drawers.splice( level, 0, drawer );
-        this.drawersContainer.removeChild( drawer.canvas );
-        if ( level === 0 ) {
-            var nextLevelCanvas = this.drawers[ 1 ].canvas;
-            nextLevelCanvas.parentNode.insertBefore( drawer.canvas,
-                nextLevelCanvas );
-        } else {
-            // Insert right after layer at level - 1
-            var prevLevelCanvas = this.drawers[level - 1].canvas;
-            prevLevelCanvas.parentNode.insertBefore( drawer.canvas,
-                prevLevelCanvas.nextSibling );
-        }
-
-        /**
-         * Raised when the order of the layers has been changed.
-         * @event layer-level-changed
-         * @memberOf OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Drawer} drawer - The drawer which level has
-         * been changed
-         * @property {Number} previousLevel - The previous level of the drawer
-         * @property {Number} newLevel - The new level of the drawer
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'layer-level-changed', {
-            drawer: drawer,
-            previousLevel: oldLevel,
-            newLevel: level
-        } );
-
+        $.console.error( "[Viewer.setLayerLevel] this function is deprecated." );
         return this;
     },
 
@@ -1246,38 +1196,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:remove-layer
      */
     removeLayer: function( drawer ) {
-        var index = this.drawers.indexOf( drawer );
-        if ( index === -1 ) {
-            return this;
-        }
-        if ( index === 0 ) {
-            if ( THIS[ this.hash ].sequenced ) {
-                throw new Error( "Cannot remove base layer when in sequence mode." );
-            }
-            if ( this.drawers.length === 1 ) {
-                this.close();
-                return this;
-            }
-            this.drawer = this.drawers[ 1 ];
-        }
-
-        this.drawers.splice( index, 1 );
-        this.drawersContainer.removeChild( drawer.canvas );
-        /**
-         * Raised when a layer is removed.
-         * @event remove-layer
-         * @memberOf OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'remove-layer', { drawer: drawer } );
+        $.console.error( "[Viewer.removeLayer] this function is deprecated." );
         return this;
     },
 
     /**
-     * Force the viewer to redraw its drawers.
+     * Force the viewer to redraw its contents.
      * @returns {OpenSeadragon.Viewer} Chainable.
      */
     forceRedraw: function() {
@@ -1969,11 +1893,14 @@ function openTileSource( viewer, source, options ) {
         maxImageCacheCount: _this.maxImageCacheCount
     });
 
+    _this.world = new $.World({
+        viewer: _this
+    });
+
     _this.drawer = new $.Drawer({
         viewer:             _this,
-        source:             _this.source,
         viewport:           _this.viewport,
-        element:            _this.drawersContainer,
+        element:            _this.canvas,
         opacity:            _this.opacity,
         imageLoaderLimit:   _this.imageLoaderLimit,
         minZoomImageRatio:  _this.minZoomImageRatio,
@@ -2014,7 +1941,7 @@ function openTileSource( viewer, source, options ) {
         crossOriginPolicy:  _this.crossOriginPolicy
     });
 
-    _this.drawers = [_this.drawer];
+    _this.world.addItem( tiledImage );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!_this.drawer.canRotate()) {

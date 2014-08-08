@@ -297,7 +297,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @return {OpenSeadragon.Drawer} Chainable.
      */
     reset: function() {
-        clearTiles( this );
         this.lastResetTime = $.now();
         this.updateAgain = true;
         return this;
@@ -311,7 +310,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     update: function() {
         //this.profiler.beginUpdate();
         this.midUpdate = true;
-        updateViewport( this );
         this.midUpdate = false;
         //this.profiler.endUpdate();
         return this;
