@@ -378,12 +378,24 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.context.font = 'small-caps bold 13px ariel';
             this.context.strokeStyle = this.debugGridColor;
             this.context.fillStyle = this.debugGridColor;
+
+            this._offsetForRotation( tile, this.canvas, this.context, this.viewport.degrees );
+
             this.context.strokeRect(
                 tile.position.x,
                 tile.position.y,
                 tile.size.x,
                 tile.size.y
             );
+
+            var tileCenterX = tile.position.x + (tile.size.x / 2);
+            var tileCenterY = tile.position.y + (tile.size.y / 2);
+
+            // Rotate the text the right way around.
+            this.context.translate( tileCenterX, tileCenterY );
+            this.context.rotate( Math.PI / 180 * -this.viewport.degrees );
+            this.context.translate( -tileCenterX, -tileCenterY );
+
             if( tile.x === 0 && tile.y === 0 ){
                 this.context.fillText(
                     "Zoom: " + this.viewport.getZoom(),
@@ -426,6 +438,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
                 tile.position.x + 10,
                 tile.position.y + 70
             );
+            this._restoreRotationChanges( tile, this.canvas, this.context );
             this.context.restore();
         }
     },
