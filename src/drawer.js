@@ -1181,12 +1181,24 @@ function drawDebugInfo( drawer, tile, count, i ){
         drawer.context.font = 'small-caps bold 13px ariel';
         drawer.context.strokeStyle = drawer.debugGridColor;
         drawer.context.fillStyle = drawer.debugGridColor;
+
+        offsetForRotation( tile, drawer.canvas, drawer.context, drawer.viewport.degrees );
+
         drawer.context.strokeRect(
             tile.position.x,
             tile.position.y,
             tile.size.x,
             tile.size.y
         );
+
+        var tileCenterX = tile.position.x + (tile.size.x / 2);
+        var tileCenterY = tile.position.y + (tile.size.y / 2);
+
+        // Rotate the text the right way around.
+        drawer.context.translate( tileCenterX, tileCenterY );
+        drawer.context.rotate( Math.PI / 180 * -drawer.viewport.degrees );
+        drawer.context.translate( -tileCenterX, -tileCenterY );
+
         if( tile.x === 0 && tile.y === 0 ){
             drawer.context.fillText(
                 "Zoom: " + drawer.viewport.getZoom(),
@@ -1229,6 +1241,7 @@ function drawDebugInfo( drawer, tile, count, i ){
             tile.position.x + 10,
             tile.position.y + 70
         );
+        restoreRotationChanges( tile, drawer.canvas, drawer.context );
         drawer.context.restore();
     }
 }
