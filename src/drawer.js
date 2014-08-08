@@ -750,11 +750,10 @@ function onTileLoad( drawer, tile, time, image ) {
     tile.loaded = true;
     tile.image  = image;
 
-
     insertionIndex = drawer.tilesLoaded.length;
 
     if ( drawer.tilesLoaded.length >= drawer.maxImageCacheCount ) {
-        cutoff = Math.ceil( Math.log( drawer.source.tileSize ) / Math.log( 2 ) );
+        cutoff = Math.ceil( Math.log( drawer.source.getTileSize(tile.level) ) / Math.log( 2 ) );
 
         worstTile       = null;
         worstTileIndex  = -1;

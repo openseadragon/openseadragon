@@ -122,28 +122,28 @@
          * @member {Number} clickTimeThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
-        this.clickTimeThreshold = options.clickTimeThreshold;
+        this.clickTimeThreshold = options.clickTimeThreshold || $.DEFAULT_SETTINGS.clickTimeThreshold;
         /**
          * The maximum distance allowed between a pointer down event and a pointer up event
          * to be treated as a click gesture.
          * @member {Number} clickDistThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
-        this.clickDistThreshold = options.clickDistThreshold;
+        this.clickDistThreshold = options.clickDistThreshold || $.DEFAULT_SETTINGS.clickDistThreshold;
         /**
          * The number of milliseconds within which two pointer down-up event combinations
          * will be treated as a double-click gesture.
          * @member {Number} dblClickTimeThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
-        this.dblClickTimeThreshold = options.dblClickTimeThreshold;
+        this.dblClickTimeThreshold = options.dblClickTimeThreshold || $.DEFAULT_SETTINGS.dblClickTimeThreshold;
         /**
          * The maximum distance allowed between two pointer click events
          * to be treated as a click gesture.
          * @member {Number} clickDistThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
-        this.dblClickDistThreshold = options.dblClickDistThreshold;
+        this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
         this.userData           = options.userData        || null;
         this.stopDelay          = options.stopDelay       || 50;
 
@@ -187,8 +187,6 @@
 
             mouseover:             function ( event ) { onMouseOver( _this, event ); },
             mouseout:              function ( event ) { onMouseOut( _this, event ); },
-            mouseenter:            function ( event ) { onMouseEnter( _this, event ); },
-            mouseleave:            function ( event ) { onMouseLeave( _this, event ); },
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
             mouseup:               function ( event ) { onMouseUp( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
@@ -205,10 +203,10 @@
             gesturestart:          function ( event ) { onGestureStart( _this, event ); },
             gesturechange:         function ( event ) { onGestureChange( _this, event ); },
 
-            pointerenter:          function ( event ) { onPointerEnter( _this, event ); },
-            MSPointerEnter:        function ( event ) { onPointerEnter( _this, event ); },
-            pointerleave:          function ( event ) { onPointerLeave( _this, event ); },
-            MSPointerLeave:        function ( event ) { onPointerLeave( _this, event ); },
+            pointerover:           function ( event ) { onPointerOver( _this, event ); },
+            MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
+            pointerout:            function ( event ) { onPointerOut( _this, event ); },
+            MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -217,6 +215,8 @@
             MSPointerMove:         function ( event ) { onPointerMove( _this, event ); },
             pointercancel:         function ( event ) { onPointerCancel( _this, event ); },
             MSPointerCancel:       function ( event ) { onPointerCancel( _this, event ); },
+            pointerupcaptured:     function ( event ) { onPointerUpCaptured( _this, event ); },
+            pointermovecaptured:   function ( event ) { onPointerMoveCaptured( _this, event ); },
 
             tracking:              false,
 
@@ -226,8 +226,11 @@
             //     of the element (for hover-capable devices) and/or have contact or a button press initiated in the element.
             activePointersLists:   [],
 
-            // Legacy mouse event tracking
+            // Legacy mouse capture tracking
             capturing:             false,
+
+            // Pointer event model capture tracking
+            pointerCaptureCount:   0,
 
             // Tracking for double-click gesture
             lastClickPos:          null,
@@ -816,29 +819,28 @@
 
     if ( window.PointerEvent ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
-        $.MouseTracker.subscribeEvents.push( "pointerenter", "pointerleave", "pointerdown", "pointerup", "pointermove", "pointercancel" );
+        $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         $.MouseTracker.unprefixedPointerEvents = true;
         if( navigator.maxTouchPoints ) {
             $.MouseTracker.maxTouchPoints = navigator.maxTouchPoints;
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = true;
-        $.MouseTracker.haveMouseEnter = true;
+        $.MouseTracker.haveTouchEnter = false;
+        $.MouseTracker.haveMouseEnter = false;
     } else if ( window.MSPointerEvent ) {
         // IE10
-        $.MouseTracker.subscribeEvents.push( "MSPointerEnter", "MSPointerLeave", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
+        $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
         $.MouseTracker.unprefixedPointerEvents = false;
         if( navigator.msMaxTouchPoints ) {
             $.MouseTracker.maxTouchPoints = navigator.msMaxTouchPoints;
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = true;
-        $.MouseTracker.haveMouseEnter = true;
+        $.MouseTracker.haveTouchEnter = false;
+        $.MouseTracker.haveMouseEnter = false;
     } else {
         // Legacy W3C mouse events
-        // TODO: Favor mouseenter/mouseleave over mouseover/mouseout when Webkit browser support is better
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
         $.MouseTracker.haveMouseEnter = false;
         if ( 'ontouchstart' in window ) {
@@ -1072,73 +1074,66 @@
                 );
             }
 
-            releaseMouse( tracker );
             delegate.tracking = false;
         }
     }
 
     /**
-     * Begin capturing mouse events to the tracked element (legacy mouse events only).
+     * Begin capturing pointer events to the tracked element.
      * @private
      * @inner
      */
-    function captureMouse( tracker ) {
+    function capturePointer( tracker, isLegacyMouse ) {
         var delegate = THIS[ tracker.hash ];
 
-        if ( !delegate.capturing ) {
-            if ( $.MouseTracker.supportsMouseCapture ) {
-                // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
-                tracker.element.setCapture( true );
-            } else {
-                // For browsers without setCapture()/releaseCapture(), we emulate mouse capture by hanging listeners on the window object.
-                //    (Note we listen on the capture phase so the captured handlers will get called first)
-                $.addEvent(
-                    window,
-                    "mouseup",
-                    delegate.mouseupcaptured,
-                    true
-                );
-                $.addEvent(
-                    window,
-                    "mousemove",
-                    delegate.mousemovecaptured,
-                    true
-                );
-            }
-            delegate.capturing = true;
+        delegate.pointerCaptureCount++;
+        //$.console.log('pointerCaptureCount++ ', delegate.pointerCaptureCount);
+
+        if ( delegate.pointerCaptureCount === 1 ) {
+            // We emulate mouse capture by hanging listeners on the window object.
+            //    (Note we listen on the capture phase so the captured handlers will get called first)
+            $.addEvent(
+                window,
+                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
+                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
+                true
+            );
+            $.addEvent(
+                window,
+                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
+                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
+                true
+            );
         }
     }
 
 
     /**
-     * Stop capturing mouse events to the tracked element (legacy mouse events only).
+     * Stop capturing pointer events to the tracked element.
      * @private
      * @inner
      */
-    function releaseMouse( tracker ) {
+    function releasePointer( tracker, isLegacyMouse ) {
         var delegate = THIS[ tracker.hash ];
 
-        if ( delegate.capturing ) {
-            if ( $.MouseTracker.supportsMouseCapture ) {
-                // IE<10, Firefox, other browsers with setCapture()/releaseCapture()
-                tracker.element.releaseCapture();
-            } else {
-                // For browsers without setCapture()/releaseCapture(), we emulate mouse capture by hanging listeners on the window object.
-                //    (Note we listen on the capture phase so the captured handlers will get called first)
-                $.removeEvent(
-                    window,
-                    "mousemove",
-                    delegate.mousemovecaptured,
-                    true
-                );
-                $.removeEvent(
-                    window,
-                    "mouseup",
-                    delegate.mouseupcaptured,
-                    true
-                );
-            }
-            delegate.capturing = false;
+        delegate.pointerCaptureCount--;
+        //$.console.log('pointerCaptureCount-- ', delegate.pointerCaptureCount);
+
+        if ( delegate.pointerCaptureCount === 0 ) {
+            // We emulate mouse capture by hanging listeners on the window object.
+            //    (Note we listen on the capture phase so the captured handlers will get called first)
+            $.removeEvent(
+                window,
+                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
+                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
+                true
+            );
+            $.removeEvent(
+                window,
+                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
+                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
+                true
+            );
         }
     }
 
@@ -1421,7 +1416,7 @@
 
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( this, event.relatedTarget ) ) {
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1446,51 +1441,9 @@
 
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( this, event.relatedTarget ) ) {
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
-
-        gPoint = {
-            id: $.MouseTracker.mousePointerId,
-            type: 'mouse',
-            isPrimary: true,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        updatePointersExit( tracker, event, [ gPoint ] );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onMouseEnter( tracker, event ) {
-        var gPoint;
-
-        event = $.getEvent( event );
-
-        gPoint = {
-            id: $.MouseTracker.mousePointerId,
-            type: 'mouse',
-            isPrimary: true,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        updatePointersEnter( tracker, event, [ gPoint ] );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onMouseLeave( tracker, event ) {
-        var gPoint;
-
-        event = $.getEvent( event );
 
         gPoint = {
             id: $.MouseTracker.mousePointerId,
@@ -1523,7 +1476,7 @@
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
             $.stopEvent( event );
-            captureMouse( tracker );
+            capturePointer( tracker, true );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
@@ -1542,8 +1495,6 @@
 
     /**
      * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
-     * Only triggered in W3C browsers that don't have setCapture/releaseCapture 
-     * methods or don't support the new pointer events model.
      * onMouseUp is still attached to the tracked element, so stop propagation to avoid processing twice.
      *
      * @private
@@ -1573,7 +1524,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releaseMouse( tracker );
+            releasePointer( tracker, true );
         }
     }
 
@@ -1589,8 +1540,6 @@
     
     /**
      * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
-     * Only triggered in W3C browsers that don't have setCapture/releaseCapture 
-     * methods or don't support the new pointer events model.
      * onMouseMove is still attached to the tracked element, so stop propagation to avoid processing twice.
      *
      * @private
@@ -1810,8 +1759,12 @@
      * @private
      * @inner
      */
-    function onPointerEnter( tracker, event ) {
+    function onPointerOver( tracker, event ) {
         var gPoint;
+
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+            return;
+        }
 
         gPoint = {
             id: event.pointerId,
@@ -1829,8 +1782,12 @@
      * @private
      * @inner
      */
-    function onPointerLeave( tracker, event ) {
+    function onPointerOut( tracker, event ) {
         var gPoint;
+
+        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+            return;
+        }
 
         gPoint = {
             id: event.pointerId,
@@ -1860,11 +1817,7 @@
         };
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
-            if ( $.MouseTracker.unprefixedPointerEvents ) {
-                event.currentTarget.setPointerCapture( event.pointerId );
-            } else {
-                event.currentTarget.msSetPointerCapture( event.pointerId );
-            }
+            capturePointer( tracker, false );
             $.stopEvent( event );
         }
 
@@ -1879,6 +1832,31 @@
      * @inner
      */
     function onPointerUp( tracker, event ) {
+        handlePointerUp( tracker, event );
+    }
+
+
+    /**
+     * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
+     * onPointerUp is still attached to the tracked element, so stop propagation to avoid processing twice.
+     *
+     * @private
+     * @inner
+     */
+    function onPointerUpCaptured( tracker, event ) {
+        var pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
+        if ( pointsList.getById( event.pointerId ) ) {
+            handlePointerUp( tracker, event );
+        }
+        $.stopEvent( event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handlePointerUp( tracker, event ) {
         var gPoint;
 
         gPoint = {
@@ -1890,11 +1868,8 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            if ( $.MouseTracker.unprefixedPointerEvents ) {
-                event.currentTarget.releasePointerCapture( event.pointerId );
-            } else {
-                event.currentTarget.msReleasePointerCapture( event.pointerId );
-            }
+            releasePointer( tracker, false );
+            //$.stopEvent( event );
         }
     }
 
@@ -1904,6 +1879,31 @@
      * @inner
      */
     function onPointerMove( tracker, event ) {
+        handlePointerMove( tracker, event );
+    }
+
+
+    /**
+     * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
+     * onPointerMove is still attached to the tracked element, so stop propagation to avoid processing twice.
+     *
+     * @private
+     * @inner
+     */
+    function onPointerMoveCaptured( tracker, event ) {
+        var pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
+        if ( pointsList.getById( event.pointerId ) ) {
+            handlePointerMove( tracker, event );
+        }
+        $.stopEvent( event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handlePointerMove( tracker, event ) {
         // Pointer changed coordinates, button state, pressure, tilt, or contact geometry (e.g. width and height)
         var gPoint;
 
@@ -2216,6 +2216,7 @@
             }
 
             pointsList.contacts++;
+            //$.console.log('contacts++ ', pointsList.contacts);
 
             if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
                 $.MouseTracker.gesturePointVelocityTracker.addPoint( tracker, curGPoint );
@@ -2342,6 +2343,7 @@
                     // Pointer was activated in our element but could have been removed in any element since events are captured to our element
 
                     pointsList.contacts--;
+                    //$.console.log('contacts-- ', pointsList.contacts);
 
                     if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
                         $.MouseTracker.gesturePointVelocityTracker.removePoint( tracker, updateGPoint );

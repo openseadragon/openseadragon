@@ -112,6 +112,8 @@ $.Navigator = function( options ){
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
+    $.setElementTouchActionNone( this.element );
+
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
@@ -298,12 +300,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     open: function( source ) {
         this.updateSize();
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
-        if( source.tileSize > containerSize.x ||
-            source.tileSize > containerSize.y ){
-            this.minPixelRatio = Math.min(
-                containerSize.x,
-                containerSize.y
-            ) / source.tileSize;
+        var ts = source.getTileSize(source.maxLevel);
+        if ( ts > containerSize.x || ts > containerSize.y ) {
+            this.minPixelRatio = Math.min( containerSize.x, containerSize.y ) / ts;
         } else {
             this.minPixelRatio = this.viewer.minPixelRatio;
         }
@@ -318,17 +317,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  * @function
  */
 function onCanvasClick( event ) {
-    var newBounds,
-        viewerPosition,
-        dimensions;
-    if (! this.drag) {
-        if ( this.viewer.viewport ) {
-            this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
-            this.viewer.viewport.applyConstraints();
-        }
-    }
-    else {
-        this.drag = false;
+    if ( event.quick && this.viewer.viewport ) {
+        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
+        this.viewer.viewport.applyConstraints();
     }
 }
 
@@ -339,7 +330,6 @@ function onCanvasClick( event ) {
  */
 function onCanvasDrag( event ) {
     if ( this.viewer.viewport ) {
-        this.drag = true;
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }
