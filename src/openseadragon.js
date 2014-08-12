@@ -378,6 +378,9 @@
   *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
   *     Setting to false can also improve performance when the navigator is configured to a fixed size.
   *
+  * @property {Boolean} [navigatorRotate=true]
+  *     If true, the navigator will be rotated together with the viewer.
+  *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -955,6 +958,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorHeight:            null,
             navigatorWidth:             null,
             navigatorAutoResize:        true,
+            navigatorRotate:            true,
 
             // INITIAL ROTATION
             degrees:                0,

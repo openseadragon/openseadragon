@@ -713,6 +713,20 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
+     * @function
+     * @private
+     * @param {Object} element
+     * @param {Number} degrees
+     */
+    _setTransformRotate: function (element, degrees) {
+        element.style.webkitTransform = "rotate(" + degrees + "deg)";
+        element.style.mozTransform = "rotate(" + degrees + "deg)";
+        element.style.msTransform = "rotate(" + degrees + "deg)";
+        element.style.oTransform = "rotate(" + degrees + "deg)";
+        element.style.transform = "rotate(" + degrees + "deg)";
+    },
+
+    /**
      * Currently only 90 degree rotation is supported and it only works
      * with the canvas. Additionally, the navigator does not rotate yet,
      * debug mode doesn't rotate yet, and overlay rotation is only
@@ -728,6 +742,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         degrees = ( degrees + 360 ) % 360;
         if( degrees % 90 !== 0 ) {
             throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
+        }
+        if (this.viewer.navigator !== null && this.navigatorRotate) {
+            this._setTransformRotate(this.viewer.navigator.displayRegionContainer, degrees);
+            this._setTransformRotate(this.viewer.navigator.displayRegion, -degrees);
+            this.viewer.navigator.viewport.setRotation(degrees);
         }
         this.degrees = degrees;
         this.viewer.forceRedraw();

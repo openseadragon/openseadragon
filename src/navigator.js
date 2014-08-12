@@ -161,6 +161,11 @@ $.Navigator = function( options ){
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
 
+    this.displayRegionContainer = $.makeNeutralElement("div");
+    this.displayRegionContainer.id = this.element.id + '-displayregioncontainer';
+    this.displayRegionContainer.className = "displayregioncontainer";
+    this.displayRegionContainer.style.width = "100%";
+    this.displayRegionContainer.style.height = "100%";
 
     this.element.innerTracker = new $.MouseTracker({
         element:         this.element,
@@ -203,7 +208,8 @@ $.Navigator = function( options ){
 
     $.Viewer.apply( this, [ options ] );
 
-    this.element.getElementsByTagName( 'div' )[0].appendChild( this.displayRegion );
+    this.displayRegionContainer.appendChild(this.displayRegion);
+    this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
     unneededElement = this.element.getElementsByTagName('textarea')[0];
     if (unneededElement) {
         unneededElement.parentNode.removeChild(unneededElement);
@@ -225,7 +231,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
                 );
             if ( !containerSize.equals( this.oldContainerSize ) ) {
-                var oldBounds = this.viewport.getBounds();
+                var oldBounds = this.viewport.getBounds().rotate(this.viewport.degrees);
                 var oldCenter = this.viewport.getCenter();
                 this.viewport.resize( containerSize, true );
                 var imageHeight = 1 / this.source.aspectRatio;
@@ -318,7 +324,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
+        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ).rotate( -this.viewer.viewport.degrees, this.viewer.viewport.getHomeBounds().getCenter() ) );
         this.viewer.viewport.applyConstraints();
     }
 }
