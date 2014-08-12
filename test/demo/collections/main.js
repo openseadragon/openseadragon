@@ -38,6 +38,7 @@
             var addLayerHandler = function( event ) {
                 if ( event.options === options ) {
                     self.viewer.removeHandler( "add-layer", addLayerHandler );
+                    self.viewer.goHome();
                 }
             };
             this.viewer.addHandler( "add-layer", addLayerHandler );

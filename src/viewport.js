@@ -105,7 +105,6 @@ $.Viewport = function( options ) {
     });
 
     this.resetContentSize( this.contentSize );
-    this.goHome( true );
     this.update();
 };
 
@@ -178,26 +177,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * @function
-     * @param {Boolean} immediately
-     * @fires OpenSeadragon.Viewer.event:home
+     * @private
      */
     goHome: function( immediately ) {
+        $.console.error("[Viewport.goHome] this function is deprecated; use Viewer.goHome instead");
         if( this.viewer ){
-            /**
-             * Raised when the "home" operation occurs (see {@link OpenSeadragon.Viewport#goHome}).
-             *
-             * @event home
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-             * @property {Boolean} immediately
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            this.viewer.raiseEvent( 'home', {
-                immediately: immediately
-            });
+            this.viewer.goHome(immediately);
         }
-        return this.fitBounds( this.getHomeBounds(), immediately );
+
+        return this;
     },
 
     /**

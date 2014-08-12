@@ -333,7 +333,7 @@ $.Viewer = function( options ) {
                             _this.viewport.applyConstraints();
                             return false;
                         case 48://0|)
-                            _this.viewport.goHome();
+                            _this.goHome();
                             _this.viewport.applyConstraints();
                             return false;
                         case 119://w
@@ -622,6 +622,28 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.element = null;
     },
 
+    /**
+     * @function
+     * @param {Boolean} immediately
+     * @fires OpenSeadragon.Viewer.event:home
+     */
+    goHome: function(immediately) {
+        /**
+         * Raised when the "home" operation occurs (see {@link OpenSeadragon.Viewport#goHome}).
+         *
+         * @event home
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {Boolean} immediately
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'home', {
+            immediately: immediately
+        });
+
+        this.viewport.fitBounds( this.world.getHomeBounds(), immediately );
+    },
 
     /**
      * @function
@@ -1929,6 +1951,7 @@ function openTileSource( viewer, source, options ) {
     });
 
     _this.world.addItem( tiledImage );
+    _this.goHome( true );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!_this.drawer.canRotate()) {
@@ -2793,9 +2816,7 @@ function lightUp() {
 
 
 function onHome() {
-    if ( this.viewport ) {
-        this.viewport.goHome();
-    }
+    this.goHome();
 }
 
 
