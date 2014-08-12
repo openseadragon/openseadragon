@@ -146,24 +146,46 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
     },
 
     resetTiles: function() {
-        for (var i = 0; i < this._items.length; i++ ) {
+        for ( var i = 0; i < this._items.length; i++ ) {
             this._items[i].reset();
         }
     },
 
     update: function() {
-        for (var i = 0; i < this._items.length; i++ ) {
+        for ( var i = 0; i < this._items.length; i++ ) {
             this._items[i].update();
         }
     },
 
     needsUpdate: function() {
-        for (var i = 0; i < this._items.length; i++ ) {
-            if (this._items[i].needsUpdate()) {
+        for ( var i = 0; i < this._items.length; i++ ) {
+            if ( this._items[i].needsUpdate() ) {
                 return true;
             }
         }
         return false;
+    },
+
+    getHomeBounds: function() {
+        if ( !this._items.length ) {
+            return new $.Rect(0, 0, 1, 1);
+        }
+
+        var bounds = this._items[0].getWorldBounds();
+        var left = bounds.x;
+        var top = bounds.y;
+        var right = bounds.x + bounds.width;
+        var bottom = bounds.y + bounds.height;
+        var box;
+        for ( var i = 1; i < this._items.length; i++ ) {
+            box = this._items[i].getWorldBounds();
+            left = Math.min( left, box.x );
+            top = Math.min( top, box.y );
+            right = Math.max( right, box.x + box.width );
+            bottom = Math.max( bottom, box.y + box.height );
+        }
+
+        return new $.Rect( left, top, right - left, bottom - top );
     }
 };
 

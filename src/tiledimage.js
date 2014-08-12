@@ -151,6 +151,10 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
      */
     destroy: function() {
         this.reset();
+    },
+
+    getWorldBounds: function() {
+        return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
     }
 };
 
