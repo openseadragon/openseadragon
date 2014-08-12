@@ -145,6 +145,12 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         this.raiseEvent( 'remove-layer', { drawer: item } );
     },
 
+    resetTiles: function() {
+        for (var i = 0; i < this._items.length; i++ ) {
+            this._items[i].reset();
+        }
+    },
+
     update: function() {
         for (var i = 0; i < this._items.length; i++ ) {
             this._items[i].update();

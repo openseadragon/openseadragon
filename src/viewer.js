@@ -1102,9 +1102,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 y: options.y,
                 width: options.width,
                 height: options.height,
-                opacity: options.opacity !== undefined ?
-                    options.opacity : _this.opacity,
-                maxImageCacheCount: _this.maxImageCacheCount,
                 imageLoaderLimit: _this.imageLoaderLimit,
                 minZoomImageRatio: _this.minZoomImageRatio,
                 wrapHorizontal: _this.wrapHorizontal,
@@ -1113,7 +1110,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 blendTime: _this.blendTime,
                 alwaysBlend: _this.alwaysBlend,
                 minPixelRatio: _this.minPixelRatio,
-                timeout: _this.timeout,
                 debugMode: _this.debugMode,
                 debugGridColor: _this.debugGridColor
             });
@@ -1889,6 +1885,8 @@ function openTileSource( viewer, source, options ) {
 
     _this.source.overlays = _this.source.overlays || [];
 
+    _this.imageLoader = new $.ImageLoader();
+
     _this.tileCache = new $.TileCache({
         maxImageCacheCount: _this.maxImageCacheCount
     });
@@ -1901,19 +1899,7 @@ function openTileSource( viewer, source, options ) {
         viewer:             _this,
         viewport:           _this.viewport,
         element:            _this.canvas,
-        opacity:            _this.opacity,
-        imageLoaderLimit:   _this.imageLoaderLimit,
-        minZoomImageRatio:  _this.minZoomImageRatio,
-        wrapHorizontal:     _this.wrapHorizontal,
-        wrapVertical:       _this.wrapVertical,
-        immediateRender:    _this.immediateRender,
-        blendTime:          _this.blendTime,
-        alwaysBlend:        _this.alwaysBlend,
-        minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
-        timeout:            _this.timeout,
-        debugMode:          _this.debugMode,
-        debugGridColor:     _this.debugGridColor,
-        crossOriginPolicy:  _this.crossOriginPolicy
+        opacity:            _this.opacity
     });
 
     var tiledImage = new $.TiledImage({
@@ -1922,11 +1908,11 @@ function openTileSource( viewer, source, options ) {
         viewport:           _this.viewport,
         drawer:             _this.drawer,
         tileCache:          _this.tileCache,
+        imageLoader:        _this.imageLoader,
         x:                  options.x,
         y:                  options.y,
         width:              options.width,
         height:             options.height,
-        opacity:            _this.opacity,
         imageLoaderLimit:   _this.imageLoaderLimit,
         minZoomImageRatio:  _this.minZoomImageRatio,
         wrapHorizontal:     _this.wrapHorizontal,
@@ -1935,7 +1921,6 @@ function openTileSource( viewer, source, options ) {
         blendTime:          _this.blendTime,
         alwaysBlend:        _this.alwaysBlend,
         minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
-        timeout:            _this.timeout,
         debugMode:          _this.debugMode,
         debugGridColor:     _this.debugGridColor,
         crossOriginPolicy:  _this.crossOriginPolicy

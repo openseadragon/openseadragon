@@ -34,19 +34,6 @@
 
 (function( $ ){
 
-var DEVICE_SCREEN       = $.getWindowSize(),
-    BROWSER             = $.Browser.vendor,
-    BROWSER_VERSION     = $.Browser.version,
-
-    SUBPIXEL_RENDERING = (
-        ( BROWSER == $.BROWSERS.FIREFOX ) ||
-        ( BROWSER == $.BROWSERS.OPERA )   ||
-        ( BROWSER == $.BROWSERS.SAFARI && BROWSER_VERSION >= 4 ) ||
-        ( BROWSER == $.BROWSERS.CHROME && BROWSER_VERSION >= 2 ) ||
-        ( BROWSER == $.BROWSERS.IE     && BROWSER_VERSION >= 9 )
-    );
-
-
 /**
  * @class Drawer
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
@@ -63,8 +50,7 @@ $.Drawer = function( options ) {
 
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
-    var args  = arguments,
-        i;
+    var args  = arguments;
 
     if( !$.isPlainObject( options ) ){
         options = {
@@ -74,42 +60,15 @@ $.Drawer = function( options ) {
         };
     }
 
+    $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
+    $.console.assert( options.element, "[Drawer] options.element is required" );
+
     if ( options.source ) {
         $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
     }
 
-    $.extend( true, this, {
-
-        //internal state properties
-        viewer:         null,
-        imageLoader:    new $.ImageLoader(),
-        tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
-        tilesLoaded:    [],    // An unordered list of Tiles with loaded images.
-        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
-        lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
-        lastResetTime:  0,     // Last time for which the drawer was reset.
-        midUpdate:      false, // Is the drawer currently updating the viewport?
-        updateAgain:    true,  // Does the drawer need to update the viewport again?
-
-
-        //internal state / configurable settings
-        collectionOverlays: {}, // For collection mode. Here an overlay is actually a viewer.
-
-        //configurable settings
-        opacity:            $.DEFAULT_SETTINGS.opacity,
-        maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
-        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:          $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        timeout:            $.DEFAULT_SETTINGS.timeout,
-        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
-
-    }, options );
+    this.viewer = options.viewer;
+    this.opacity = options.opacity === undefined ? $.DEFAULT_SETTINGS.opacity : options.opacity;
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
     /**
@@ -118,7 +77,7 @@ $.Drawer = function( options ) {
      * @member {Element} container
      * @memberof OpenSeadragon.Drawer#
      */
-    this.container  = $.getElement( this.element );
+    this.container  = $.getElement( options.element );
     /**
      * A &lt;canvas&gt; element if the browser supports them, otherwise a &lt;div&gt; element.
      * Child element of {@link OpenSeadragon.Drawer#container}.
@@ -269,6 +228,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     getOpacity: function() {
         return this.opacity;
     },
+
     /**
      * Returns whether the Drawer is scheduled for an update at the
      *      soonest possible opportunity.
@@ -277,7 +237,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      soonest possible opportunity.
      */
     needsUpdate: function() {
-        return this.updateAgain;
+        $.console.error( "[Drawer.needsUpdate] this function is deprecated." );
+        return false;
     },
 
     /**
@@ -287,7 +248,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      *      this Drawer.
      */
     numTilesLoaded: function() {
-        return this.tilesLoaded.length;
+        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated." );
+        return 0;
     },
 
     /**
@@ -297,8 +259,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @return {OpenSeadragon.Drawer} Chainable.
      */
     reset: function() {
-        this.lastResetTime = $.now();
-        this.updateAgain = true;
+        $.console.error( "[Drawer.reset] this function is deprecated." );
         return this;
     },
 
@@ -308,10 +269,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @return {OpenSeadragon.Drawer} Chainable.
      */
     update: function() {
-        //this.profiler.beginUpdate();
-        this.midUpdate = true;
-        this.midUpdate = false;
-        //this.profiler.endUpdate();
+        $.console.error( "[Drawer.update] this function is deprecated." );
         return this;
     },
 
@@ -330,11 +288,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @return null
      */
     destroy: function() {
-        //unload current loaded tiles (=empty TILE_CACHE)
-        for ( var i = 0; i < this.tilesLoaded.length; ++i ) {
-            this.tilesLoaded[i].unload();
-        }
-
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.width  = 1;
         this.canvas.height = 1;

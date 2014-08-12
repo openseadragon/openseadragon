@@ -44,12 +44,17 @@
 $.TiledImage = function( options ) {
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
+    $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
+    $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
 
     this._drawer = options.drawer;
     delete options.drawer;
+
+    this._imageLoader = options.imageLoader;
+    delete options.imageLoader;
 
     this._worldX = options.x || 0;
     delete options.x;
@@ -81,7 +86,6 @@ $.TiledImage = function( options ) {
 
         //internal state properties
         viewer:         null,
-        imageLoader:    new $.ImageLoader(),
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
@@ -89,13 +93,7 @@ $.TiledImage = function( options ) {
         midUpdate:      false, // Is the tiledImage currently updating the viewport?
         updateAgain:    true,  // Does the tiledImage need to update the viewport again?
 
-
-        //internal state / configurable settings
-        collectionOverlays: {}, // For collection mode. Here an overlay is actually a viewer.
-
         //configurable settings
-        opacity:            $.DEFAULT_SETTINGS.opacity,
-        maxImageCacheCount: $.DEFAULT_SETTINGS.maxImageCacheCount,
         minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
         wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
         wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
@@ -104,34 +102,12 @@ $.TiledImage = function( options ) {
         alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        timeout:            $.DEFAULT_SETTINGS.timeout,
         crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
 };
 
 $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
-    /**
-     * Set the opacity of the TiledImage.
-     * @method
-     * @param {Number} opacity
-     * @return {OpenSeadragon.TiledImage} Chainable.
-     */
-    setOpacity: function( opacity ) {
-        this.opacity = opacity;
-        // TODO: trigger update
-        return this;
-    },
-
-    /**
-     * Get the opacity of the TiledImage.
-     * @method
-     * @returns {Number}
-     */
-    getOpacity: function() {
-        return this.opacity;
-    },
-
     /**
      * Returns whether the TiledImage is scheduled for an update at the
      *      soonest possible opportunity.
@@ -558,7 +534,7 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
 
 function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
-    tiledImage.imageLoader.addJob({
+    tiledImage._imageLoader.addJob({
         src: tile.url,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         callback: function( image ){
