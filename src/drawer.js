@@ -68,6 +68,8 @@ $.Drawer = function( options ) {
     }
 
     this.viewer = options.viewer;
+    this.viewport = options.viewport;
+    this.debugGridColor = options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
     this.opacity = options.opacity === undefined ? $.DEFAULT_SETTINGS.opacity : options.opacity;
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );

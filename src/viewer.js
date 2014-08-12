@@ -1098,6 +1098,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 viewport: _this.viewport,
                 drawer: _this.drawer,
                 tileCache: _this.tileCache,
+                imageLoader: _this.imageLoader,
                 x: options.x,
                 y: options.y,
                 width: options.width,
@@ -1899,7 +1900,8 @@ function openTileSource( viewer, source, options ) {
         viewer:             _this,
         viewport:           _this.viewport,
         element:            _this.canvas,
-        opacity:            _this.opacity
+        opacity:            _this.opacity,
+        debugGridColor:     _this.debugGridColor
     });
 
     var tiledImage = new $.TiledImage({
