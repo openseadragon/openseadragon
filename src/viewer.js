@@ -2025,7 +2025,8 @@ function openTileSource( viewer, source ) {
                 tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
-                viewer:            _this
+                viewer:            _this,
+                navigatorRotate:   _this.navigatorRotate
             });
         }
     }

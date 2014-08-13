@@ -215,6 +215,16 @@ $.Navigator = function( options ){
         unneededElement.parentNode.removeChild(unneededElement);
     }
 
+    if (options.navigatorRotate)
+    {
+        var _this = this;
+        options.viewer.addHandler("rotate", function (args) {
+            _setTransformRotate(_this.viewer.navigator.displayRegionContainer, args.degrees);
+            _setTransformRotate(_this.viewer.navigator.displayRegion, -args.degrees);
+            _this.viewport.setRotation(args.degrees);
+        });
+
+    }
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
@@ -396,5 +406,18 @@ function onCanvasScroll( event ) {
     return false;
 }
 
+/**
+    * @function
+    * @private
+    * @param {Object} element
+    * @param {Number} degrees
+    */
+function _setTransformRotate (element, degrees) {
+    element.style.webkitTransform = "rotate(" + degrees + "deg)";
+    element.style.mozTransform = "rotate(" + degrees + "deg)";
+    element.style.msTransform = "rotate(" + degrees + "deg)";
+    element.style.oTransform = "rotate(" + degrees + "deg)";
+    element.style.transform = "rotate(" + degrees + "deg)";
+}
 
 }( OpenSeadragon ));
