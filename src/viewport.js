@@ -726,9 +726,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         degrees = ( degrees + 360 ) % 360;
-        if( degrees % 90 !== 0 ) {
-            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
-        }
         this.degrees = degrees;
         this.viewer.forceRedraw();
         

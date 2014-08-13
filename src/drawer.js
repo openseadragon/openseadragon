@@ -398,10 +398,17 @@ function updateViewport( drawer ) {
     }
 
     //Change bounds for rotation
-    if (degrees === 90 || degrees === 270) {
+    if (degrees !== 0) {
         var rotatedBounds = viewportBounds.rotate( degrees );
         viewportTL = rotatedBounds.getTopLeft();
         viewportBR = rotatedBounds.getBottomRight();
+    }
+    else if (degrees !== 0) {
+        var factor = 0.5 / drawer.viewer.viewport.getZoom();
+        viewportTL.x -= factor;
+        viewportTL.y -= factor;
+        viewportBR.x += factor;
+        viewportBR.y += factor;
     }
 
     //Don't draw if completely outside of the viewport
