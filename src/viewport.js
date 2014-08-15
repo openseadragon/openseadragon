@@ -732,6 +732,20 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.degrees = degrees;
         this.viewer.forceRedraw();
         
+        /**
+         * Raised when rotation has been changed.
+         *
+         * @event update-viewport
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Number} degrees - The number of degrees the rotation was set to.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        if (this.viewer !== null)
+        {
+            this.viewer.raiseEvent('rotate', {"degrees": degrees});
+        }
         return this;
     },
 

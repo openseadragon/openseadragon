@@ -50,6 +50,7 @@
 $.Navigator = function( options ){
 
     var viewer      = options.viewer,
+        _this = this,
         viewerSize,
         navigatorSize,
         unneededElement;
@@ -161,6 +162,11 @@ $.Navigator = function( options ){
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
 
+    this.displayRegionContainer = $.makeNeutralElement("div");
+    this.displayRegionContainer.id = this.element.id + '-displayregioncontainer';
+    this.displayRegionContainer.className = "displayregioncontainer";
+    this.displayRegionContainer.style.width = "100%";
+    this.displayRegionContainer.style.height = "100%";
 
     this.element.innerTracker = new $.MouseTracker({
         element:         this.element,
@@ -203,12 +209,22 @@ $.Navigator = function( options ){
 
     $.Viewer.apply( this, [ options ] );
 
-    this.element.getElementsByTagName( 'div' )[0].appendChild( this.displayRegion );
+    this.displayRegionContainer.appendChild(this.displayRegion);
+    this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
     unneededElement = this.element.getElementsByTagName('textarea')[0];
     if (unneededElement) {
         unneededElement.parentNode.removeChild(unneededElement);
     }
 
+    if (options.navigatorRotate)
+    {
+        options.viewer.addHandler("rotate", function (args) {
+            _setTransformRotate(_this.displayRegionContainer, args.degrees);
+            _setTransformRotate(_this.displayRegion, -args.degrees);
+            _this.viewport.setRotation(args.degrees);
+        });
+
+    }
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
@@ -225,7 +241,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
                 );
             if ( !containerSize.equals( this.oldContainerSize ) ) {
-                var oldBounds = this.viewport.getBounds();
+                var oldBounds = this.viewport.getBounds().rotate(this.viewport.degrees);
                 var oldCenter = this.viewport.getCenter();
                 this.viewport.resize( containerSize, true );
                 var imageHeight = 1 / this.source.aspectRatio;
@@ -318,7 +334,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ) );
+        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ).rotate( -this.viewer.viewport.degrees, this.viewer.viewport.getHomeBounds().getCenter() ) );
         this.viewer.viewport.applyConstraints();
     }
 }
@@ -390,5 +406,18 @@ function onCanvasScroll( event ) {
     return false;
 }
 
+/**
+    * @function
+    * @private
+    * @param {Object} element
+    * @param {Number} degrees
+    */
+function _setTransformRotate (element, degrees) {
+    element.style.webkitTransform = "rotate(" + degrees + "deg)";
+    element.style.mozTransform = "rotate(" + degrees + "deg)";
+    element.style.msTransform = "rotate(" + degrees + "deg)";
+    element.style.oTransform = "rotate(" + degrees + "deg)";
+    element.style.transform = "rotate(" + degrees + "deg)";
+}
 
 }( OpenSeadragon ));
