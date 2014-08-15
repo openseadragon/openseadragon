@@ -107,7 +107,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         var ns;
         if ( data.Image ) {
             ns = data.Image.xmlns;
-        } else if ( data.documentElement && "Image" == data.documentElement.tagName ) {
+        } else if ( data.documentElement && "Image" == data.documentElement.localName ) {
             ns = data.documentElement.namespaceURI;
         }
 
@@ -221,7 +221,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     var root           = xmlDoc.documentElement,
-        rootName       = root.tagName,
+        rootName       = root.localName,
         configuration  = null,
         displayRects   = [],
         dispRectNodes,
