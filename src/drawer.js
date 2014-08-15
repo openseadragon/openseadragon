@@ -398,13 +398,20 @@ function updateViewport( drawer ) {
     }
 
     //Change bounds for rotation
-    if (degrees !== 0) {
+    if (degrees === 90 || degrees === 270) {
         var rotatedBounds = viewportBounds.rotate( degrees );
         viewportTL = rotatedBounds.getTopLeft();
         viewportBR = rotatedBounds.getBottomRight();
     }
     else if (degrees !== 0) {
-        var factor = 0.5 / drawer.viewer.viewport.getZoom();
+        /*
+        var factor1 = drawer.viewer.viewport.imageToViewportRectangle(0, 0, 256, 256);
+        viewportBounds.width += factor1.width;
+        viewportBounds.height += factor1.width;
+        viewportTL = viewportBounds.getTopLeft();
+        viewportBR = viewportBounds.getBottomRight();
+        */
+        var factor = 0.3 / drawer.viewer.viewport.getZoom();
         viewportTL.x -= factor;
         viewportTL.y -= factor;
         viewportBR.x += factor;
