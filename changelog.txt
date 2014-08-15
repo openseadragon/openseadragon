@@ -14,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed incorrect flick direction after image is rotated (#452)
 * Debug mode now works with rotate images (#453)
 * Now supporting dzi xml with namespaces (#462)
+* You can now rotate the navigator along with the main viewer (#455)
 
 1.1.1:
 
