@@ -742,7 +742,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
          * @property {Number} degrees - The number of degrees the rotation was set to.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        if (this.viewer.navigator !== null)
+        if (this.viewer !== null)
         {
             this.viewer.raiseEvent('rotate', {"degrees": degrees});
         }
