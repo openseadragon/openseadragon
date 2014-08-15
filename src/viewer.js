@@ -1898,7 +1898,8 @@ function openTileSource( viewer, source, options ) {
             minZoomLevel:       _this.minZoomLevel,
             maxZoomLevel:       _this.maxZoomLevel,
             viewer:             _this,
-            degrees:            _this.degrees
+            degrees:            _this.degrees,
+            navigatorRotate:    _this.navigatorRotate
         });
     }
 
@@ -1988,7 +1989,8 @@ function openTileSource( viewer, source, options ) {
                 tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
-                viewer:            _this
+                viewer:            _this,
+                navigatorRotate:   _this.navigatorRotate
             });
         }
     }
