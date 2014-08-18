@@ -133,7 +133,7 @@
             };
 
             viewer.addHandler('animation-finish', homeHandler);
-            viewer.goHome(true);
+            viewer.viewport.goHome(true);
         }
 
         viewer.addHandler("open", opener);
