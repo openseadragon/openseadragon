@@ -262,7 +262,7 @@ function configureFromXML( tileSource, xmlDoc ){
             }
 
             dispRectNodes = root.getElementsByTagName( "DisplayRect" );
-            if (dispRectNodes === undefined) {
+            if (dispRectNodes.length === 0) {
                 dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" )[ 0 ];
             }
             for ( i = 0; i < dispRectNodes.length; i++ ) {
