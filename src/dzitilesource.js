@@ -222,6 +222,7 @@ function configureFromXML( tileSource, xmlDoc ){
 
     var root           = xmlDoc.documentElement,
         rootName       = root.localName,
+        ns             = xmlDoc.documentElement.namespaceURI,
         configuration  = null,
         displayRects   = [],
         dispRectNodes,
@@ -234,6 +235,11 @@ function configureFromXML( tileSource, xmlDoc ){
 
         try {
             sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
+            // if finding by tag name failed, attempt to find with namespace
+            if (sizeNode === undefined) {
+                sizeNode = root.getElementsByTagNameNS(ns, "Size" )[ 0 ];
+            }
+
             configuration = {
                 Image: {
                     xmlns:       "http://schemas.microsoft.com/deepzoom/2008",
@@ -256,9 +262,15 @@ function configureFromXML( tileSource, xmlDoc ){
             }
 
             dispRectNodes = root.getElementsByTagName( "DisplayRect" );
+            if (dispRectNodes === undefined) {
+                dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" )[ 0 ];
+            }
             for ( i = 0; i < dispRectNodes.length; i++ ) {
                 dispRectNode = dispRectNodes[ i ];
                 rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
+                if (rectNode === undefined) {
+                    rectNode = dispRectNode.getElementsByTagNameNS(ns, "Rect" )[ 0 ];
+                }
 
                 displayRects.push({
                     Rect: {
