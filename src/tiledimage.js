@@ -155,6 +155,10 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
 
     getWorldBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
+    },
+
+    getContentSize: function() {
+        return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     }
 };
 

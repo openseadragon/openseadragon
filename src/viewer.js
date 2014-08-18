@@ -333,7 +333,7 @@ $.Viewer = function( options ) {
                             _this.viewport.applyConstraints();
                             return false;
                         case 48://0|)
-                            _this.goHome();
+                            _this.viewport.goHome();
                             _this.viewport.applyConstraints();
                             return false;
                         case 119://w
@@ -620,29 +620,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
-    },
-
-    /**
-     * @function
-     * @param {Boolean} immediately
-     * @fires OpenSeadragon.Viewer.event:home
-     */
-    goHome: function(immediately) {
-        /**
-         * Raised when the "home" operation occurs (see {@link OpenSeadragon.Viewport#goHome}).
-         *
-         * @event home
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-         * @property {Boolean} immediately
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'home', {
-            immediately: immediately
-        });
-
-        this.viewport.fitBounds( this.world.getHomeBounds(), immediately );
     },
 
     /**
@@ -1137,6 +1114,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugGridColor: _this.debugGridColor
             });
             _this.world.addItem( tiledImage );
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
             if ( options.level !== undefined ) {
                 _this.world.setItemLevel( tiledImage, options.level );
             }
@@ -1868,7 +1846,6 @@ function openTileSource( viewer, source, options ) {
             collectionMode:         true,
             collectionTileSource:   _this.source,
             containerSize:          THIS[ _this.hash ].prevContainerSize,
-            contentSize:            _this.source.dimensions,
             springStiffness:        _this.springStiffness,
             animationTime:          _this.animationTime,
             showNavigator:          false,
@@ -1886,7 +1863,6 @@ function openTileSource( viewer, source, options ) {
         }
         _this.viewport = _this.viewport ? _this.viewport : new $.Viewport({
             containerSize:      THIS[ _this.hash ].prevContainerSize,
-            contentSize:        _this.source.dimensions,
             springStiffness:    _this.springStiffness,
             animationTime:      _this.animationTime,
             minZoomImageRatio:  _this.minZoomImageRatio,
@@ -1903,9 +1879,10 @@ function openTileSource( viewer, source, options ) {
         });
     }
 
-    if( _this.preserveViewport ){
-        _this.viewport.resetContentSize( _this.source.dimensions );
-    }
+    // TODO: what to do about this?
+    // if( _this.preserveViewport ){
+    //     _this.viewport.resetContentSize( _this.source.dimensions );
+    // }
 
     _this.source.overlays = _this.source.overlays || [];
 
@@ -1952,7 +1929,8 @@ function openTileSource( viewer, source, options ) {
     });
 
     _this.world.addItem( tiledImage );
-    _this.goHome( true );
+    _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+    _this.viewport.goHome( true );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!_this.drawer.canRotate()) {
@@ -2818,7 +2796,7 @@ function lightUp() {
 
 
 function onHome() {
-    this.goHome();
+    this.viewport.goHome();
 }
 
 

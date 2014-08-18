@@ -75,6 +75,13 @@ $.Rect = function( x, y, width, height ) {
 };
 
 $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
+    /**
+     * @function
+     * @returns {OpenSeadragon.Rect} a duplicate of this Rect
+     */
+    clone: function() {
+        return new $.Rect(this.x, this.y, this.width, this.height);
+    },
 
     /**
      * The aspect ratio is simply the ratio of width to height.

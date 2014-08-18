@@ -1,6 +1,8 @@
+/* globals $, App */
+
 (function() {
 
-    var App = {
+    window.App = {
         init: function() {
             var self = this;
 
@@ -38,7 +40,7 @@
             var addLayerHandler = function( event ) {
                 if ( event.options === options ) {
                     self.viewer.removeHandler( "add-layer", addLayerHandler );
-                    self.viewer.goHome();
+                    self.viewer.viewport.goHome();
                 }
             };
             this.viewer.addHandler( "add-layer", addLayerHandler );

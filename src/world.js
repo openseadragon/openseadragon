@@ -43,11 +43,13 @@ $.World = function( options ) {
 
     this.viewer = options.viewer;
     this._items = [];
+    this._figureSizes();
 };
 
 $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
     addItem: function( item ) {
         this._items.push( item );
+        this._figureSizes();
     },
 
     /**
@@ -132,6 +134,8 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         }
 
         this._items.splice( index, 1 );
+        this._figureSizes();
+
         /**
          * Raised when a layer is removed.
          * @event remove-layer
@@ -167,11 +171,26 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
     },
 
     getHomeBounds: function() {
+        return this._homeBounds.clone();
+    },
+
+    getContentSize: function() {
+        return this._contentSize.clone();
+    },
+
+    getContentFactor: function() {
+        return this._contentFactor;
+    },
+
+    _figureSizes: function() {
         if ( !this._items.length ) {
-            return new $.Rect(0, 0, 1, 1);
+            this._homeBounds = new $.Rect(0, 0, 1, 1);
+            this._contentSize = new $.Point(1, 1);
+            return;
         }
 
         var bounds = this._items[0].getWorldBounds();
+        this._contentFactor = this._items[0].getContentSize().x / bounds.width;
         var left = bounds.x;
         var top = bounds.y;
         var right = bounds.x + bounds.width;
@@ -179,13 +198,16 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         var box;
         for ( var i = 1; i < this._items.length; i++ ) {
             box = this._items[i].getWorldBounds();
+            this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / bounds.width);
             left = Math.min( left, box.x );
             top = Math.min( top, box.y );
             right = Math.max( right, box.x + box.width );
             bottom = Math.max( bottom, box.y + box.height );
         }
 
-        return new $.Rect( left, top, right - left, bottom - top );
+        this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
+        this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
+            this._homeBounds.height * this._contentFactor);
     }
 };
 
