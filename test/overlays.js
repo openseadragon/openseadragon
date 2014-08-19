@@ -270,7 +270,7 @@
             waitForViewer( function() {
                 checkOverlayPosition( "after zoom and pan using image coordinates" );
 
-                viewer.goHome();
+                viewer.viewport.goHome();
                 waitForViewer( function() {
                     checkOverlayPosition( "after goHome using image coordinates" );
                     start();
@@ -333,7 +333,7 @@
             waitForViewer( function() {
                 checkOverlayPosition( "after zoom and pan using viewport coordinates" );
 
-                viewer.goHome();
+                viewer.viewport.goHome();
                 waitForViewer( function() {
                     checkOverlayPosition( "after goHome using viewport coordinates" );
                     start();
