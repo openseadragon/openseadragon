@@ -50,6 +50,7 @@
 $.Navigator = function( options ){
 
     var viewer      = options.viewer,
+        _this = this,
         viewerSize,
         navigatorSize,
         unneededElement;
@@ -217,10 +218,9 @@ $.Navigator = function( options ){
 
     if (options.navigatorRotate)
     {
-        var _this = this;
         options.viewer.addHandler("rotate", function (args) {
-            _setTransformRotate(_this.viewer.navigator.displayRegionContainer, args.degrees);
-            _setTransformRotate(_this.viewer.navigator.displayRegion, -args.degrees);
+            _setTransformRotate(_this.displayRegionContainer, args.degrees);
+            _setTransformRotate(_this.displayRegion, -args.degrees);
             _this.viewport.setRotation(args.degrees);
         });
 
