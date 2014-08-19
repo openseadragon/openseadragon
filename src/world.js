@@ -35,41 +35,77 @@
 (function( $ ){
 
 /**
+ * Keeps track of all of the tiled images in the scene.
+ *
  * @class World
  * @classdesc
- */
+ *
+ * @memberof OpenSeadragon
+ * @extends OpenSeadragon.EventSource
+ * @param {OpenSeadragon.Options} options - World options.
+ **/
 $.World = function( options ) {
     $.console.assert( options.viewer, "[World] options.viewer is required" );
+
+    $.EventSource.call( this );
 
     this.viewer = options.viewer;
     this._items = [];
     this._figureSizes();
 };
 
-$.World.prototype = /** @lends OpenSeadragon.World.prototype */{
-    addItem: function( item ) {
-        this._items.push( item );
-        this._figureSizes();
-    },
-
+$.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.World.prototype */{
     /**
-     * Get the item at the specified level.
-     * @param {Number} level The item to retrieve level.
-     * @returns {OpenSeadragon.TiledImage} The item at the specified level.
+     * Add the specified item.
+     * @param {OpenSeadragon.TiledImage} item - The item to add.
+     * @param {Number} options.index - index for the item (optional).
+     * @fires OpenSeadragon.World.event:add-item
      */
-    getItemAt: function( level ) {
-        if ( level >= this._items.length ) {
-            throw new Error( "Level bigger than number of items." );
+    addItem: function( item, options ) {
+        $.console.assert(item, "[World.addItem] item is required");
+        $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
+
+        options = options || {};
+        if (options.index !== undefined) {
+            var index = Math.max(0, Math.min(this._items.length, options.index));
+            this._items.splice(index, 0, item);
+        } else {
+            this._items.push( item );
         }
-        return this._items[ level ];
+
+        this._figureSizes();
+
+        /**
+         * Raised when an item is added to the World.
+         * @event add-item
+         * @memberOf OpenSeadragon.World
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the World which raised the event.
+         * @property {OpenSeadragon.Drawer} item - The item that has been added
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'add-item', {
+            item: item
+        } );
     },
 
     /**
-     * Get the level of the given item or -1 if not present.
-     * @param {OpenSeadragon.TiledImage} item The item.
-     * @returns {Number} The level of the item or -1 if not present.
+     * Get the item at the specified index.
+     * @param {Number} index - The item's index.
+     * @returns {OpenSeadragon.TiledImage} The item at the specified index.
      */
-    getLevelOfItem: function( item ) {
+    getItemAt: function( index ) {
+        $.console.assert(index !== 'undefined', "[World.getItemAt] index is required");
+        return this._items[ index ];
+    },
+
+    /**
+     * Get the index of the given item or -1 if not present.
+     * @param {OpenSeadragon.TiledImage} item - The item.
+     * @returns {Number} The index of the item or -1 if not present.
+     */
+    getIndexOfItem: function( item ) {
+        $.console.assert(item, "[World.getIndexOfItem] item is required");
         return $.indexOf( this._items, item );
     },
 
@@ -82,52 +118,56 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
     },
 
     /**
-     * Change the level of a layer so that it appears over or under others.
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the changing
-     * level layer.
-     * @param {Number} level The new level
-     * @fires OpenSeadragon.Viewer.event:layer-level-changed
+     * Change the index of a item so that it appears over or under others.
+     * @param {OpenSeadragon.TiledImage} item - The item to move.
+     * @param {Number} index - The new index.
+     * @fires OpenSeadragon.World.event:item-index-changed
      */
-    setItemLevel: function( item, level ) {
-        var oldLevel = this.getLevelOfItem( item );
+    setItemIndex: function( item, index ) {
+        $.console.assert(item, "[World.setItemIndex] item is required");
+        $.console.assert(index !== 'undefined', "[World.setItemIndex] index is required");
 
-        if ( level >= this._items.length ) {
-            throw new Error( "Level bigger than number of layers." );
+        var oldIndex = this.getIndexOfItem( item );
+
+        if ( index >= this._items.length ) {
+            throw new Error( "Index bigger than number of layers." );
         }
-        if ( level === oldLevel || oldLevel === -1 ) {
+
+        if ( index === oldIndex || oldIndex === -1 ) {
             return;
         }
-        this._items.splice( oldLevel, 1 );
-        this._items.splice( level, 0, item );
+
+        this._items.splice( oldIndex, 1 );
+        this._items.splice( index, 0, item );
 
         /**
-         * Raised when the order of the layers has been changed.
-         * @event layer-level-changed
-         * @memberOf OpenSeadragon.Viewer
+         * Raised when the order of the indexes has been changed.
+         * @event item-index-changed
+         * @memberOf OpenSeadragon.World
          * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Drawer} drawer - The drawer which level has
+         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+         * @property {OpenSeadragon.TiledImage} item - The item whose index has
          * been changed
-         * @property {Number} previousLevel - The previous level of the drawer
-         * @property {Number} newLevel - The new level of the drawer
+         * @property {Number} previousIndex - The previous index of the item
+         * @property {Number} newIndex - The new index of the item
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        // TODO: deprecate
-        this.viewer.raiseEvent( 'layer-level-changed', {
-            drawer: item,
-            previousLevel: oldLevel,
-            newLevel: level
+        this.raiseEvent( 'item-index-changed', {
+            item: item,
+            previousIndex: oldIndex,
+            newIndex: index
         } );
     },
 
     /**
-     * Remove a layer. If there is only one layer, close the viewer.
+     * Remove an item.
      * @function
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer
-     * to remove
-     * @fires OpenSeadragon.Viewer.event:remove-layer
+     * @param {OpenSeadragon.TiledImage} item - The item to remove.
+     * @fires OpenSeadragon.World.event:remove-item
      */
     removeItem: function( item ) {
+        $.console.assert(item, "[World.removeItem] item is required");
+
         var index = this._items.indexOf( item );
         if ( index === -1 ) {
             return;
@@ -137,30 +177,41 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         this._figureSizes();
 
         /**
-         * Raised when a layer is removed.
-         * @event remove-layer
-         * @memberOf OpenSeadragon.Viewer
+         * Raised when a item is removed.
+         * @event remove-item
+         * @memberOf OpenSeadragon.World
          * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
+         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+         * @property {OpenSeadragon.TiledImage} item - The item's underlying item.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        // TODO: deprecate
-        this.raiseEvent( 'remove-layer', { drawer: item } );
+        this.raiseEvent( 'remove-item', { item: item } );
     },
 
-    resetTiles: function() {
+    /**
+     * Clears all tiles and triggers updates for all items.
+     * @function
+     */
+    resetItems: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
             this._items[i].reset();
         }
     },
 
+    /**
+     * Updates (i.e. draws) all items.
+     * @function
+     */
     update: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
             this._items[i].update();
         }
     },
 
+    /**
+     * @function
+     * @returns {Boolean} true if any items need updating.
+     */
     needsUpdate: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
             if ( this._items[i].needsUpdate() ) {
@@ -170,18 +221,29 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         return false;
     },
 
+    /**
+     * @function
+     * @returns {OpenSeadragon.Rect} the smallest rectangle that encloses all items, in world coordinates.
+     */
     getHomeBounds: function() {
         return this._homeBounds.clone();
     },
 
-    getContentSize: function() {
-        return this._contentSize.clone();
-    },
-
+    /**
+     * To facilitate zoom constraints, we keep track of the pixel density of the
+     * densest item in the World (i.e. the item whose content size to world size
+     * ratio is the highest) and save it as this "content factor".
+     * @function
+     * @returns {Number} the number of content units per world unit.
+     */
     getContentFactor: function() {
         return this._contentFactor;
     },
 
+    /**
+     * @function
+     * @private
+     */
     _figureSizes: function() {
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
@@ -209,6 +271,6 @@ $.World.prototype = /** @lends OpenSeadragon.World.prototype */{
         this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
             this._homeBounds.height * this._contentFactor);
     }
-};
+});
 
 }( OpenSeadragon ));

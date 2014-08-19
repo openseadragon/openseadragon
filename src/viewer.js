@@ -1032,59 +1032,54 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Add a layer.
+     * Add a tiled image to the viewer.
      * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
-     *  supports except arrays of images as layers cannot be sequences.
+     *  supports except arrays of images.
      * Note that you can specify options.width or options.height, but not both.
-     * The other dimension will be calculated according to the layer's aspect ratio.
+     * The other dimension will be calculated according to the item's aspect ratio.
      * @function
      * @param {Object} options
-     * @param {String|Object|Function} options.tileSource The TileSource of the layer.
-     * @param {Number} [options.opacity=1] The opacity of the layer.
-     * @param {Number} [options.level] The level of the layer. Added on top of
-     * all other layers if not specified.
+     * @param {String|Object|Function} options.tileSource - The TileSource of the item.
+     * @param {Number} [options.index] The index of the item. Added on top of
+     * all other items if not specified.
      * @param {Number} [options.x=0] The X position for the image in world coordinates.
      * @param {Number} [options.y=0] The Y position for the image in world coordinates.
      * @param {Number} [options.width=1] The width for the image in world coordinates.
      * @param {Number} [options.height] The height for the image in world coordinates.
-     * @returns {OpenSeadragon.Viewer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:add-layer
-     * @fires OpenSeadragon.Viewer.event:add-layer-failed
+     * @fires OpenSeadragon.World.event:add-item
+     * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
-    addLayer: function( options ) {
+    addTiledImage: function( options ) {
+        $.console.assert(options, "[Viewer.addTiledImage] options is required");
+        $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
+
         var _this = this,
             tileSource = options.tileSource;
 
         if ( !this.isOpen() ) {
-            throw new Error( "An image must be loaded before adding layers." );
-        }
-        if ( !tileSource ) {
-            throw new Error( "No tile source provided as new layer." );
-        }
-        if ( this.collectionMode ) {
-            throw new Error( "Layers not supported in collection mode." );
+            throw new Error( "An image must be loaded before adding additional images." );
         }
 
-        function raiseAddLayerFailed( event ) {
+        function raiseAddItemFailed( event ) {
              /**
-             * Raised when an error occurs while adding a layer.
-             * @event add-layer-failed
+             * Raised when an error occurs while adding a item.
+             * @event add-item-failed
              * @memberOf OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
              * @property {String} message
              * @property {String} source
-             * @property {Object} options The options passed to the addLayer method.
+             * @property {Object} options The options passed to the addTiledImage method.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( 'add-layer-failed', event );
+            _this.raiseEvent( 'add-item-failed', event );
         }
 
         getTileSourceImplementation( this, tileSource, function( tileSource ) {
 
             if ( tileSource instanceof Array ) {
-                raiseAddLayerFailed({
-                    message: "Sequences can not be added as layers.",
+                raiseAddItemFailed({
+                    message: "[Viewer.addTiledImage] Sequences can not be added.",
                     source: tileSource,
                     options: options
                 });
@@ -1113,88 +1108,87 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugMode: _this.debugMode,
                 debugGridColor: _this.debugGridColor
             });
-            _this.world.addItem( tiledImage );
-            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-            if ( options.level !== undefined ) {
-                _this.world.setItemLevel( tiledImage, options.level );
-            }
-            THIS[ _this.hash ].forceRedraw = true;
-            /**
-             * Raised when a layer is successfully added.
-             * @event add-layer
-             * @memberOf OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Object} options The options passed to the addLayer method.
-             * @property {OpenSeadragon.Drawer} drawer The layer's underlying drawer.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            _this.raiseEvent( 'add-layer', {
-                options: options,
-                drawer: tiledImage
+
+            _this.world.addItem( tiledImage, {
+                index: options.index
             });
         }, function( event ) {
             event.options = options;
-            raiseAddLayerFailed(event);
+            raiseAddItemFailed(event);
         } );
+    },
 
+    /**
+     * @function
+     * @private
+     */
+    addLayer: function( options ) {
+        var self = this;
+
+        $.console.error( "[Viewer.addLayer] this function is deprecated; use Viewer.addTiledImage() instead." );
+
+        var addItemHandler = function(event) {
+            self.world.removeHandler("add-item", addItemHandler);
+            self.raiseEvent("add-layer", {
+                options: options,
+                drawer: event.item
+            });
+        };
+
+        var failureHandler = function(event) {
+            self.removeHandler("add-item-failed", failureHandler);
+            self.raiseEvent("add-layer-failed", event);
+        };
+
+        this.world.addHandler("add-item", addItemHandler);
+        this.addHandler("add-item-failed", failureHandler);
+        this.addTiledImage(options);
         return this;
     },
 
     /**
-     * Get the layer at the specified level.
-     * @param {Number} level The layer to retrieve level.
-     * @returns {OpenSeadragon.Drawer} The layer at the specified level.
+     * @function
+     * @private
      */
     getLayerAtLevel: function( level ) {
-        $.console.error( "[Viewer.getLayerAtLevel] this function is deprecated." );
-        return null;
+        $.console.error( "[Viewer.getLayerAtLevel] this function is deprecated; use World.getItemAt() instead." );
+        return this.world.getItemAt(level);
     },
 
     /**
-     * Get the level of the layer associated with the given drawer or -1 if not
-     * present.
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer.
-     * @returns {Number} The level of the layer or -1 if not present.
+     * @function
+     * @private
      */
     getLevelOfLayer: function( drawer ) {
-        $.console.error( "[Viewer.getLevelOfLayer] this function is deprecated." );
-        return -1;
+        $.console.error( "[Viewer.getLevelOfLayer] this function is deprecated; use World.getIndexOfItem() instead." );
+        return this.world.getIndexOfItem(drawer);
     },
 
     /**
-     * Get the number of layers used.
-     * @returns {Number} The number of layers used.
+     * @function
+     * @private
      */
     getLayersCount: function() {
-        $.console.error( "[Viewer.getLayersCount] this function is deprecated." );
-        return 0;
+        $.console.error( "[Viewer.getLayersCount] this function is deprecated; use World.getItemCount() instead." );
+        return this.world.getItemCount();
     },
 
     /**
-     * Change the level of a layer so that it appears over or under others.
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the changing
-     * level layer.
-     * @param {Number} level The new level
-     * @returns {OpenSeadragon.Viewer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:layer-level-changed
+     * @function
+     * @private
      */
     setLayerLevel: function( drawer, level ) {
-        $.console.error( "[Viewer.setLayerLevel] this function is deprecated." );
-        return this;
+        $.console.error( "[Viewer.setLayerLevel] this function is deprecated; use World.setItemIndex() instead." );
+        return this.world.setItemIndex(drawer, level);
     },
 
     /**
-     * Remove a layer. If there is only one layer, close the viewer.
      * @function
-     * @param {OpenSeadragon.Drawer} drawer The underlying drawer of the layer
-     * to remove
-     * @returns {OpenSeadragon.Viewer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:remove-layer
+     * @private
      */
     removeLayer: function( drawer ) {
-        $.console.error( "[Viewer.removeLayer] this function is deprecated." );
-        return this;
+        $.console.error( "[Viewer.removeLayer] this function is deprecated; use World.removeItem() instead." );
+        return this.world.removeItem(drawer);
     },
 
     /**
@@ -1896,6 +1890,16 @@ function openTileSource( viewer, source, options ) {
         viewer: _this
     });
 
+    _this.world.addHandler('add-item', function(event) {
+        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
+    _this.world.addHandler('remove-item', function(event) {
+        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
     _this.drawer = new $.Drawer({
         viewer:             _this,
         viewport:           _this.viewport,
@@ -1929,7 +1933,6 @@ function openTileSource( viewer, source, options ) {
     });
 
     _this.world.addItem( tiledImage );
-    _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
     _this.viewport.goHome( true );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
