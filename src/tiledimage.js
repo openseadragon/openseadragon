@@ -173,19 +173,6 @@ function updateViewport( tiledImage ) {
 
     tiledImage.updateAgain = false;
 
-    if( tiledImage.viewer ){
-        /**
-         * <em>- Needs documentation -</em>
-         *
-         * @event update-viewport
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        tiledImage.viewer.raiseEvent( 'update-viewport', {} );
-    }
-
     var tile,
         level,
         best            = null,

@@ -2715,6 +2715,17 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 function updateWorld( viewer ) {
     viewer.drawer.clear();
     viewer.world.update();
+
+    /**
+     * <em>- Needs documentation -</em>
+     *
+     * @event update-viewport
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    viewer.raiseEvent( 'update-viewport', {} );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

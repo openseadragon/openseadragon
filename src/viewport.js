@@ -768,7 +768,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         /**
          * Raised when rotation has been changed.
          *
-         * @event update-viewport
+         * @event rotate
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
