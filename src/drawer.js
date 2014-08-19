@@ -404,18 +404,15 @@ function updateViewport( drawer ) {
         viewportBR = rotatedBounds.getBottomRight();
     }
     else if (degrees !== 0) {
-        /*
-        var factor1 = drawer.viewer.viewport.imageToViewportRectangle(0, 0, 256, 256);
-        viewportBounds.width += factor1.width;
-        viewportBounds.height += factor1.width;
+        var orthBounds = viewportBounds.rotate(90);
+        var halfWidth = orthBounds.width / 2;
+        var halfHeight = orthBounds.height / 2;
+        viewportBounds.x -= halfWidth / 2;
+        viewportBounds.y -= halfHeight / 2;
+        viewportBounds.width += halfWidth;
+        viewportBounds.height += halfHeight;
         viewportTL = viewportBounds.getTopLeft();
         viewportBR = viewportBounds.getBottomRight();
-        */
-        var factor = 0.3 / drawer.viewer.viewport.getZoom();
-        viewportTL.x -= factor;
-        viewportTL.y -= factor;
-        viewportBR.x += factor;
-        viewportBR.y += factor;
     }
 
     //Don't draw if completely outside of the viewport
