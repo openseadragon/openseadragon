@@ -405,12 +405,10 @@ function updateViewport( drawer ) {
     }
     else if (degrees !== 0) {
         var orthBounds = viewportBounds.rotate(90);
-        var halfWidth = orthBounds.width / 2;
-        var halfHeight = orthBounds.height / 2;
-        viewportBounds.x -= halfWidth / 2;
-        viewportBounds.y -= halfHeight / 2;
-        viewportBounds.width += halfWidth;
-        viewportBounds.height += halfHeight;
+        viewportBounds.x -= orthBounds.width / 2;
+        viewportBounds.y -= orthBounds.height / 2;
+        viewportBounds.width += orthBounds.width;
+        viewportBounds.height += orthBounds.height;
         viewportTL = viewportBounds.getTopLeft();
         viewportBR = viewportBounds.getBottomRight();
     }
