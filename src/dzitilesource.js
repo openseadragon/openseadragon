@@ -234,11 +234,7 @@ function configureFromXML( tileSource, xmlDoc ){
     if ( rootName == "Image" ) {
 
         try {
-            sizeNode = root.getElementsByTagName( "Size" )[ 0 ];
-            // if finding by tag name failed, attempt to find with namespace
-            if (sizeNode === undefined) {
-                sizeNode = root.getElementsByTagNameNS(ns, "Size" )[ 0 ];
-            }
+            sizeNode = root.getElementsByTagNameNS(ns, "Size" )[ 0 ];
 
             configuration = {
                 Image: {
@@ -261,16 +257,11 @@ function configureFromXML( tileSource, xmlDoc ){
                 );
             }
 
-            dispRectNodes = root.getElementsByTagName( "DisplayRect" );
-            if (dispRectNodes.length === 0) {
-                dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" );
-            }
+            dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" );
+
             for ( i = 0; i < dispRectNodes.length; i++ ) {
                 dispRectNode = dispRectNodes[ i ];
-                rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
-                if (rectNode === undefined) {
-                    rectNode = dispRectNode.getElementsByTagNameNS(ns, "Rect" )[ 0 ];
-                }
+                rectNode     = dispRectNode.getElementsByTagNameNS(ns, "Rect" )[ 0 ];
 
                 displayRects.push({
                     Rect: {
