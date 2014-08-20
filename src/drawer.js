@@ -404,6 +404,7 @@ function updateViewport( drawer ) {
         viewportBR = rotatedBounds.getBottomRight();
     }
     else if (degrees !== 0) {
+        // This is just an approximation.
         var orthBounds = viewportBounds.rotate(90);
         viewportBounds.x -= orthBounds.width / 2;
         viewportBounds.y -= orthBounds.height / 2;
