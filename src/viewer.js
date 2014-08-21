@@ -2810,7 +2810,9 @@ function lightUp() {
 
 
 function onHome() {
-    this.viewport.goHome();
+    if ( this.viewport ) {
+        this.viewport.goHome();
+    }
 }
 
 
