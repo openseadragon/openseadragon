@@ -22,14 +22,16 @@
          reassignments which could be done by other test. -->
     <script src="/test/polyfills.js"></script>
     <script src="/test/basic.js"></script>
-    <script src="/test/navigator.js"></script>
     <script src="/test/strings.js"></script>
     <script src="/test/formats.js"></script>
     <script src="/test/utils.js"></script>
     <script src="/test/events.js"></script>
     <script src="/test/units.js"></script>
-    <script src="/test/layers.js"></script>
+    <script src="/test/multi-image.js"></script>
     <script src="/test/overlays.js"></script>
     <script src="/test/controls.js"></script>
+    <!-- The navigator tests are the slowest (for now; hopefully they can be sped up)
+    so we put them last. -->
+    <script src="/test/navigator.js"></script>
 </body>
 </html>

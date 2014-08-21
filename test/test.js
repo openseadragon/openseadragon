@@ -134,6 +134,12 @@
         }
     }
 
+    testConsole.assert = function(condition, message) {
+        if (condition) {
+            testConsole.error(message);
+        }
+    };
+
     OpenSeadragon.console = testConsole;
 } )();
 

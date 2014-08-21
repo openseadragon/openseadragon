@@ -104,44 +104,82 @@ $.Viewport = function( options ) {
         animationTime:   this.animationTime
     });
 
-    this.resetContentSize( this.contentSize );
+    if (this.contentSize) {
+        this.resetContentSize( this.contentSize );
+    } else {
+        this.setHomeBounds(new $.Rect(0, 0, 1, 1), 1);
+    }
+
     this.goHome( true );
     this.update();
 };
 
 $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
-
     /**
+     * Updates the viewport's home bounds and constraints for the given content size.
      * @function
+     * @param {OpenSeadragon.Point} contentSize - size of the content in content units
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:reset-size
      */
     resetContentSize: function( contentSize ){
-        this.contentSize    = contentSize;
+        $.console.assert(contentSize, "[Viewport.resetContentSize] contentSize is required");
+        $.console.assert(contentSize instanceof $.Point, "[Viewport.resetContentSize] contentSize must be an OpenSeadragon.Point");
+        $.console.assert(contentSize.x > 0, "[Viewport.resetContentSize] contentSize.x must be greater than 0");
+        $.console.assert(contentSize.y > 0, "[Viewport.resetContentSize] contentSize.y must be greater than 0");
+
+        this.setHomeBounds(new $.Rect(0, 0, 1, contentSize.y / contentSize.x), contentSize.x);
+        return this;
+    },
+
+    /**
+     * Updates the viewport's home bounds and constraints.
+     * @function
+     * @param {OpenSeadragon.Rect} bounds - the new bounds in world coordinates
+     * @param {Number} contentFactor - how many content units per world unit
+     * @fires OpenSeadragon.Viewer.event:reset-size
+     */
+    setHomeBounds: function(bounds, contentFactor) {
+        $.console.assert(bounds, "[Viewport.setHomeBounds] bounds is required");
+        $.console.assert(bounds instanceof $.Rect, "[Viewport.setHomeBounds] bounds must be an OpenSeadragon.Rect");
+        $.console.assert(bounds.width > 0, "[Viewport.setHomeBounds] bounds.width must be greater than 0");
+        $.console.assert(bounds.height > 0, "[Viewport.setHomeBounds] bounds.height must be greater than 0");
+
+        this.homeBounds = bounds.clone();
+        this.contentSize = this.homeBounds.getSize().times(contentFactor);
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-        this.fitWidthBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
-        this.fitHeightBounds = new $.Rect( 0, 0, this.contentAspectY, this.contentAspectY);
 
-        this.homeBounds = new $.Rect( 0, 0, 1, this.contentAspectY );
+        // TODO: seems like fitWidthBounds and fitHeightBounds should be thin slices
+        // across the appropriate axis, centered in the image, rather than what we have
+        // here.
+        this.fitWidthBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
+            this.homeBounds.width, this.homeBounds.width);
+
+        this.fitHeightBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
+            this.homeBounds.height, this.homeBounds.height);
 
         if( this.viewer ){
             /**
-             * Raised when the viewer's content size is reset (see {@link OpenSeadragon.Viewport#resetContentSize}).
+             * Raised when the viewer's content size or home bounds are reset
+             * (see {@link OpenSeadragon.Viewport#resetContentSize},
+             * {@link OpenSeadragon.Viewport#setHomeBounds}).
              *
              * @event reset-size
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
              * @property {OpenSeadragon.Point} contentSize
+             * @property {OpenSeadragon.Rect} homeBounds
+             * @property {Number} contentFactor
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'reset-size', {
-                contentSize: contentSize
+                contentSize: this.contentSize.clone(),
+                contentFactor: contentFactor,
+                homeBounds: this.homeBounds.clone()
             });
         }
-
-        return this;
     },
 
     /**
@@ -154,9 +192,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         if( this.defaultZoomLevel ){
             return this.defaultZoomLevel;
         } else {
-            return ( aspectFactor >= 1 ) ?
+            var output = ( aspectFactor >= 1 ) ?
                 1 :
                 aspectFactor;
+
+            return output / this.homeBounds.width;
         }
     },
 
@@ -164,16 +204,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     getHomeBounds: function() {
-        var center = this.homeBounds.getCenter( ),
-            width  = 1.0 / this.getHomeZoom( ),
-            height = width / this.getAspectRatio();
-
-        return new $.Rect(
-            center.x - ( width / 2.0 ),
-            center.y - ( height / 2.0 ),
-            width,
-            height
-        );
+        return this.homeBounds.clone();
     },
 
     /**
@@ -216,9 +247,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     getMaxZoom: function() {
-        var zoom = this.maxZoomLevel ?
-            this.maxZoomLevel :
-                ( this.contentSize.x * this.maxZoomPixelRatio / this.containerSize.x );
+        var zoom = this.maxZoomLevel;
+        if (!zoom) {
+            zoom = this.contentSize.x * this.maxZoomPixelRatio / this.containerSize.x;
+            zoom /= this.homeBounds.width;
+        }
 
         return Math.max( zoom, this.getHomeZoom() );
     },
@@ -347,9 +380,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         verticalThreshold   = this.visibilityRatio * newBounds.height;
 
         left   = newBounds.x + newBounds.width;
-        right  = 1 - newBounds.x;
+        right  = this.homeBounds.width - newBounds.x;
         top    = newBounds.y + newBounds.height;
-        bottom = this.contentAspectY - newBounds.y;
+        bottom = this.homeBounds.height - newBounds.y;
 
         if ( this.wrapHorizontal ) {
             //do nothing
@@ -380,11 +413,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         if ( dx || dy || immediately ) {
             newBounds.x += dx;
             newBounds.y += dy;
-            if( newBounds.width > 1  ){
-                newBounds.x = 0.5 - newBounds.width/2;
+            if( newBounds.width > this.homeBounds.width  ){
+                newBounds.x = this.homeBounds.width / 2 - newBounds.width/2;
             }
-            if( newBounds.height > this.contentAspectY ){
-                newBounds.y = this.contentAspectY/2 - newBounds.height/2;
+            if( newBounds.height > this.homeBounds.height){
+                newBounds.y = this.homeBounds.height / 2 - newBounds.height/2;
             }
         }
 
@@ -413,10 +446,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function( immediately ) {
-        if (true) {
-            return; // TEMP
-        }
-
         var actualZoom = this.getZoom(),
             constrainedZoom = Math.max(
                 Math.min( actualZoom, this.getMaxZoom() ),
@@ -739,7 +768,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         /**
          * Raised when rotation has been changed.
          *
-         * @event update-viewport
+         * @event rotate
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.

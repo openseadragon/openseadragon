@@ -60,6 +60,13 @@ $.Point = function( x, y ) {
 };
 
 $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
+    /**
+     * @function
+     * @returns {OpenSeadragon.Point} a duplicate of this Point
+     */
+    clone: function() {
+        return new $.Point(this.x, this.y);
+    },
 
     /**
      * Add another Point to this point and return a new Point.
