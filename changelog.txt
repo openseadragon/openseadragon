@@ -3,6 +3,34 @@ OPENSEADRAGON CHANGELOG
 
 2.0.0: (in progress)
 
+* True multi-image mode (#450)
+    * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
+        * addTiledImage supports positioning config properties
+    * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel
+    * DEPRECATION: use World.getIndexOfItem instead of Viewer.getLevelOfLayer
+    * DEPRECATION: use World.getItemCount instead of Viewer.getLayersCount
+    * DEPRECATION: use World.setItemIndex instead of Viewer.setLayerLevel
+    * DEPRECATION: use World.removeItem instead of Viewer.removeLayer
+    * DEPRECATION: use World.needsUpdate instead of Drawer.needsUpdate
+    * DEPRECATION: use TileCache.numTilesLoaded instead of Drawer.numTilesLoaded
+    * DEPRECATION: use World.resetItems instead of Drawer.reset
+    * DEPRECATION: use Drawer.clear and World.update instead of Drawer.update
+    * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
+    * DEPRECATION: Viewer.drawers and Viewer.drawersContainer no longer exist
+    * DEPRECATION: Viewer's add-layer event is now World's add-item event
+    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-changed event
+    * DEPRECATION: Viewer's remove-layer event is now World's remove-item event
+    * DEPRECATION: Viewer's add-layer-failed event is now add-item-failed
+    * Drawer has been split into three classes:
+        * TiledImage, tile management and positioning for a single tiled image
+        * TileCache, tile caching for all images
+        * Drawer, tile drawing for all images
+    * New class: World, keeps track of multiple images in the scene
+    * Viewer now has world and tileCache properties
+    * Rect and Point now have clone functions
+    * New Viewport method for managing homeBounds as well as constraints: setHomeBounds
+    * Viewport.open supports positioning config properties
+
 1.2.0: (in progress)
 
 * New combined IIIF TileSource for 1.0 through 2.0 (#441)
