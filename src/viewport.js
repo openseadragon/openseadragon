@@ -361,13 +361,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @return {OpenSeadragon.Rect} constrained bounds.
      */
     _applyBoundaryConstraints: function( bounds, immediately ) {
-        var horizontalThreshold,
-            verticalThreshold,
-            left,
-            right,
-            top,
-            bottom,
-            dx = 0,
+        var dx = 0,
             dy = 0,
             newBounds = new $.Rect(
                 bounds.x,
@@ -376,49 +370,52 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 bounds.height
             );
 
-        horizontalThreshold = this.visibilityRatio * newBounds.width;
-        verticalThreshold   = this.visibilityRatio * newBounds.height;
-
-        left   = newBounds.x + newBounds.width;
-        right  = this.homeBounds.width - newBounds.x;
-        top    = newBounds.y + newBounds.height;
-        bottom = this.homeBounds.height - newBounds.y;
+        var horizontalThreshold = this.visibilityRatio * newBounds.width;
+        var verticalThreshold   = this.visibilityRatio * newBounds.height;
 
         if ( this.wrapHorizontal ) {
             //do nothing
         } else {
-            if ( left < horizontalThreshold ) {
-                dx = horizontalThreshold - left;
+            var thresholdLeft = newBounds.x + (newBounds.width - horizontalThreshold);
+            if (this.homeBounds.x > thresholdLeft) {
+                dx = this.homeBounds.x - thresholdLeft;
             }
-            if ( right < horizontalThreshold ) {
-                dx = dx ?
-                    ( dx + right - horizontalThreshold ) / 2 :
-                    ( right - horizontalThreshold );
+
+            var homeRight = this.homeBounds.x + this.homeBounds.width;
+            var thresholdRight = newBounds.x + horizontalThreshold;
+            if (homeRight < thresholdRight) {
+                var newDx = homeRight - thresholdRight;
+                if (dx) {
+                    dx = (dx + newDx) / 2;
+                } else {
+                    dx = newDx;
+                }
             }
         }
 
         if ( this.wrapVertical ) {
             //do nothing
         } else {
-            if ( top < verticalThreshold ) {
-                dy = ( verticalThreshold - top );
+            var thresholdTop = newBounds.y + (newBounds.height - verticalThreshold);
+            if (this.homeBounds.y > thresholdTop) {
+                dy = this.homeBounds.y - thresholdTop;
             }
-            if ( bottom < verticalThreshold ) {
-                dy =  dy ?
-                    ( dy + bottom - verticalThreshold ) / 2 :
-                    ( bottom - verticalThreshold );
+
+            var homeBottom = this.homeBounds.y + this.homeBounds.height;
+            var thresholdBottom = newBounds.y + verticalThreshold;
+            if (homeBottom < thresholdBottom) {
+                var newDy = homeBottom - thresholdBottom;
+                if (dy) {
+                    dy = (dy + newDy) / 2;
+                } else {
+                    dy = newDy;
+                }
             }
         }
 
-        if ( dx || dy || immediately ) {
+        if ( dx || dy ) {
             newBounds.x += dx;
             newBounds.y += dy;
-            if( newBounds.width > this.homeBounds.width  ){
-                newBounds.x = this.homeBounds.width / 2 - newBounds.width/2;
-            }
-            if( newBounds.height > this.homeBounds.height){
-                newBounds.y = this.homeBounds.height / 2 - newBounds.height/2;
-            }
         }
 
         if( this.viewer ){
