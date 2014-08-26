@@ -713,10 +713,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Currently only 90 degree rotation is supported and it only works
-     * with the canvas. Additionally, the navigator does not rotate yet,
-     * debug mode doesn't rotate yet, and overlay rotation is only
-     * partially supported.
+     * Rotates this viewport to the angle specified.
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
      */
