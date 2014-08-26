@@ -241,7 +241,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
                 );
             if ( !containerSize.equals( this.oldContainerSize ) ) {
-                var oldBounds = this.viewport.getBounds().rotate(this.viewport.degrees);
+                var oldBounds = this.viewport.getBounds();
                 var oldCenter = this.viewport.getCenter();
                 this.viewport.resize( containerSize, true );
                 var imageHeight = 1 / this.source.aspectRatio;

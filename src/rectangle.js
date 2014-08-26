@@ -201,7 +201,7 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
             newTopLeft;
 
         degrees = ( degrees + 360 ) % 360;
-        if( degrees % 90 !== 0 ) {
+        if (degrees % 90 !== 0) {
             throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
         }
 
