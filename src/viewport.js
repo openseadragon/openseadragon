@@ -713,10 +713,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Currently only 90 degree rotation is supported and it only works
-     * with the canvas. Additionally, the navigator does not rotate yet,
-     * debug mode doesn't rotate yet, and overlay rotation is only
-     * partially supported.
+     * Rotates this viewport to the angle specified.
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
      */
@@ -726,9 +723,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         degrees = ( degrees + 360 ) % 360;
-        if( degrees % 90 !== 0 ) {
-            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
-        }
         this.degrees = degrees;
         this.viewer.forceRedraw();
         
