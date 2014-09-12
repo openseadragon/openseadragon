@@ -174,6 +174,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         var center = this.homeBounds.getCenter( ),
             width  = 1.0 / this.getHomeZoom( ),
             height = width / this.getAspectRatio();
+
         return new $.Rect(
             center.x - ( width / 2.0 ),
             center.y - ( height / 2.0 ),
@@ -325,7 +326,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             return this.zoomSpring.target.value;
         }
     },
-    
+
     /**
      * @function
      * @private
@@ -348,7 +349,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 bounds.width,
                 bounds.height
             );
-    
+
         horizontalThreshold = this.visibilityRatio * newBounds.width;
         verticalThreshold   = this.visibilityRatio * newBounds.height;
 
@@ -393,7 +394,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 newBounds.y = this.contentAspectY/2 - newBounds.height/2;
             }
         }
-        
+
         if( this.viewer ){
             /**
              * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
@@ -409,10 +410,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 immediately: immediately
             });
         }
-        
+
         return newBounds;
     },
-    
+
     /**
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
@@ -426,7 +427,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             ),
             bounds,
             constrainedBounds;
-        
+
         if ( actualZoom != constrainedZoom ) {
             this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
         }
@@ -434,11 +435,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         bounds = this.getBounds();
 
         constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
-        
+
         if ( bounds.x !== constrainedBounds.x || bounds.y !== constrainedBounds.y || immediately ){
             this.fitBounds( constrainedBounds, immediately );
         }
-        
+
         return this;
     },
 
@@ -449,7 +450,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     ensureVisible: function( immediately ) {
         return this.applyConstraints( immediately );
     },
-    
+
     /**
      * @function
      * @private
@@ -461,7 +462,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         options = options || {};
         var immediately = options.immediately || false;
         var constraints = options.constraints || false;
-    
+
         var aspect = this.getAspectRatio(),
             center = bounds.getCenter(),
             newBounds = new $.Rect(
@@ -476,7 +477,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             referencePoint,
             newBoundsAspectRatio,
             newConstrainedZoom;
-        
+
         if ( newBounds.getAspectRatio() >= aspect ) {
             newBounds.height = bounds.width / aspect;
             newBounds.y      = center.y - newBounds.height / 2;
@@ -484,24 +485,24 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             newBounds.width = bounds.height * aspect;
             newBounds.x     = center.x - newBounds.width / 2;
         }
-        
+
         if ( constraints ) {
             newBoundsAspectRatio = newBounds.getAspectRatio();
         }
-        
+
         this.panTo( this.getCenter( true ), true );
         this.zoomTo( this.getZoom( true ), null, true );
-        
+
         oldBounds = this.getBounds();
         oldZoom   = this.getZoom();
         newZoom   = 1.0 / newBounds.width;
-        
+
         if ( constraints ) {
             newConstrainedZoom = Math.max(
                 Math.min(newZoom, this.getMaxZoom() ),
                 this.getMinZoom()
             );
-            
+
             if (newZoom !== newConstrainedZoom) {
                 newZoom = newConstrainedZoom;
                 newBounds.width = 1.0 / newZoom;
@@ -509,14 +510,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 newBounds.height = newBounds.width / newBoundsAspectRatio;
                 newBounds.y = center.y - newBounds.height / 2;
             }
-            
+
             newBounds = this._applyBoundaryConstraints( newBounds, immediately );
         }
-        
+
         if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
             return this.panTo( constraints ? newBounds.getCenter() : center, immediately );
         }
-        
+
         referencePoint = oldBounds.getTopLeft().times(
             this.containerSize.x / oldBounds.width
         ).minus(
@@ -527,10 +528,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.containerSize.x / oldBounds.width -
             this.containerSize.x / newBounds.width
         );
-        
+
         return this.zoomTo( newZoom, referencePoint, immediately );
     },
-    
+
     /**
      * @function
      * @param {OpenSeadragon.Rect} bounds
@@ -543,7 +544,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             constraints: false
         } );
     },
-    
+
     /**
      * @function
      * @param {OpenSeadragon.Rect} bounds
@@ -556,7 +557,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             constraints: true
         } );
     },
-    
+
     /**
      * @function
      * @param {Boolean} immediately
@@ -737,7 +738,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
         this.degrees = degrees;
         this.viewer.forceRedraw();
-        
+
         /**
          * Raised when rotation has been changed.
          *
@@ -1089,7 +1090,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         return viewerCoordinates.plus(
                 OpenSeadragon.getElementPosition( this.viewer.element ));
     },
-    
+
     /**
      * Convert a viewport zoom to an image zoom.
      * Image zoom: ratio of the original image size to displayed image size.
@@ -1107,7 +1108,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         var viewportToImageZoomRatio = containerWidth / imageWidth;
         return viewportZoom * viewportToImageZoomRatio;
     },
-    
+
     /**
      * Convert an image zoom to a viewport zoom.
      * Image zoom: ratio of the original image size to displayed image size.
