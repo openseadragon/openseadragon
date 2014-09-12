@@ -403,6 +403,16 @@ function updateViewport( drawer ) {
         viewportTL = rotatedBounds.getTopLeft();
         viewportBR = rotatedBounds.getBottomRight();
     }
+    else if (degrees !== 0) {
+        // This is just an approximation.
+        var orthBounds = viewportBounds.rotate(90);
+        viewportBounds.x -= orthBounds.width / 2;
+        viewportBounds.y -= orthBounds.height / 2;
+        viewportBounds.width += orthBounds.width;
+        viewportBounds.height += orthBounds.height;
+        viewportTL = viewportBounds.getTopLeft();
+        viewportBR = viewportBounds.getBottomRight();
+    }
 
     //Don't draw if completely outside of the viewport
     if  ( !drawer.wrapHorizontal &&

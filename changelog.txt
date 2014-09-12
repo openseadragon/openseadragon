@@ -14,6 +14,9 @@ OPENSEADRAGON CHANGELOG
 * Fixed incorrect flick direction after image is rotated (#452)
 * Debug mode now works with rotate images (#453)
 * Now supporting dzi xml with namespaces (#462)
+* You can now rotate the navigator along with the main viewer (#455)
+* Viewport.setRotation now allows all rotation angles (#466)
+* Pinch rotate is now available (defaults to off) (#468)
 
 1.1.1:
 
