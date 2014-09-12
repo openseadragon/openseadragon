@@ -192,6 +192,8 @@
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
+            
+            mouseoutdocument:      function ( event ) { onMouseUp( _this, event ); },
 
             touchenter:            function ( event ) { onTouchEnter( _this, event ); },
             touchleave:            function ( event ) { onTouchLeave( _this, event ); },
@@ -1049,6 +1051,10 @@
                     false
                 );
             }
+
+            // handle mouse out of document area
+            $.addEvent(document, "mouseout",  delegate['mouseoutdocument']);
+
             delegate.tracking = true;
         }
     }
@@ -1073,6 +1079,9 @@
                     false
                 );
             }
+
+            // handle mouse out of document area
+            $.removeEvent(document, "mouseout",  delegate['mouseoutdocument']);
 
             delegate.tracking = false;
         }
