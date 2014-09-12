@@ -912,6 +912,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null,
+            homeFillsViewer:        false,
 
             //UI RESPONSIVENESS AND FEEL
             clickTimeThreshold:     300,
