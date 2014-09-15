@@ -17,6 +17,7 @@ OPENSEADRAGON CHANGELOG
 * You can now rotate the navigator along with the main viewer (#455)
 * Viewport.setRotation now allows all rotation angles (#466)
 * Pinch rotate is now available (defaults to off) (#468)
+* Added option for home button to fill viewer (#474)
 
 1.1.1:
 
