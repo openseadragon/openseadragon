@@ -1937,7 +1937,8 @@ function openTileSource( viewer, source ) {
             degrees:                 _this.degrees //,
             //TODO: figure out how to support these in a way that makes sense
             //minZoomLevel:           this.minZoomLevel,
-            //maxZoomLevel:           this.maxZoomLevel
+            //maxZoomLevel:           this.maxZoomLevel,
+            //homeFillsViewer:        this.homeFillsViewer
         });
     } else {
         if( source ){
@@ -1958,7 +1959,8 @@ function openTileSource( viewer, source ) {
             maxZoomLevel:       _this.maxZoomLevel,
             viewer:             _this,
             degrees:            _this.degrees,
-            navigatorRotate:    _this.navigatorRotate
+            navigatorRotate:    _this.navigatorRotate,
+            homeFillsViewer:    _this.homeFillsViewer
         });
     }
 
