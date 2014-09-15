@@ -4,7 +4,7 @@
   "protocol": "http://iiif.io/api/image",
   "height": 1024,
   "width": 775,
-  "tiles" : [{"width":256, "scale_factors":[1,2,4,8]}],
+  "tiles" : [{"width":256, "scaleFactors":[1,2,4,8]}],
 
   "profile": ["http://iiif.io/api/image/2/level1.json",
     {
