@@ -84,7 +84,8 @@ $.Viewport = function( options ) {
         defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
-        degrees:            $.DEFAULT_SETTINGS.degrees
+        degrees:            $.DEFAULT_SETTINGS.degrees,
+        homeFillsViewer:    $.DEFAULT_SETTINGS.homeFillsViewer
 
     }, options );
 
@@ -186,15 +187,22 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     getHomeZoom: function() {
-        var aspectFactor =
-            this.contentAspectX / this.getAspectRatio();
-
         if( this.defaultZoomLevel ){
             return this.defaultZoomLevel;
         } else {
-            var output = ( aspectFactor >= 1 ) ?
-                1 :
-                aspectFactor;
+            var aspectFactor =
+                this.contentAspectX / this.getAspectRatio();
+
+            var output;
+            if( this.homeFillsViewer ){ // fill the viewer and clip the image
+                output = ( aspectFactor >= 1) ?
+                    aspectFactor :
+                    1;
+            } else {
+                output = ( aspectFactor >= 1 ) ?
+                    1 :
+                    aspectFactor;
+            }
 
             return output / this.homeBounds.width;
         }

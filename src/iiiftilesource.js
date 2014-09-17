@@ -54,6 +54,7 @@ $.IIIFTileSource = function( options ){
 
     options.tileSizePerScaleFactor = {};
 
+    // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width ) {
         options.tileSize = this.tile_width;
     } else if ( this.tile_height ) {
@@ -62,13 +63,13 @@ $.IIIFTileSource = function( options ){
         // Version 2.0 forwards
         if ( this.tiles.length == 1 ) {
             options.tileSize = this.tiles[0].width;
-            this.scale_factors = this.tiles[0].scale_factors;
+            this.scale_factors = this.tiles[0].scaleFactors;
         } else {
             // Multiple tile sizes at different levels
             this.scale_factors = [];
             for (var t = 0; t < this.tiles.length; t++ ) {
-                for (var sf = 0; sf < this.tiles[t].scale_factors.length; sf++) {
-                    var scaleFactor = this.tiles[t].scale_factors[sf];
+                for (var sf = 0; sf < this.tiles[t].scaleFactors.length; sf++) {
+                    var scaleFactor = this.tiles[t].scaleFactors[sf];
                     this.scale_factors.push(scaleFactor);
                     options.tileSizePerScaleFactor[scaleFactor] = this.tiles[t].width;
                 }
