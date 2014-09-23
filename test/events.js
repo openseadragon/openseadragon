@@ -454,7 +454,7 @@
             });
 
 
-            // enter-press-move-exit-move-release (drag, release outside tracked element)
+            // enter-press-move-exit-move-release-outside (drag, release outside iframe)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
