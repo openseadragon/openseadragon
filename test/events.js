@@ -459,9 +459,9 @@
             simulateEnter(0, 0);
             simulateDown(0, 0);
             simulateMove(1, 1, 5);
-            simulateMove(105, 105, 5);
-            simulateLeaveFrame(105, 105);
-            simulateMove(105, 105, 5);
+            simulateMove(-1, -1, 5);
+            simulateLeaveFrame(-1, -1);
+            simulateMove(-1, -1, 5);
             // you don't actually receive the mouseup if you mouseup outside of the document
             assessGestureExpectations({
                 description:           'enter-press-move-exit-move-release-outside (drag, release outside iframe):  ',
