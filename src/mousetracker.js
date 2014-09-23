@@ -193,7 +193,7 @@
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
 
-            mouseoutdocument:      function ( event ) { onMouseUp( _this, event ); },
+            mouseoutdocument:      function ( event ) { onMouseOutDocument( _this, event ); },
 
             touchenter:            function ( event ) { onTouchEnter( _this, event ); },
             touchleave:            function ( event ) { onTouchLeave( _this, event ); },
@@ -1053,7 +1053,7 @@
             }
 
             // handle mouse out of document area
-            $.addEvent(document, "mouseout",  delegate.mouseoutdocument);
+            $.addEvent(document.body, "mouseout",  delegate.mouseoutdocument);
 
             delegate.tracking = true;
         }
@@ -1081,7 +1081,7 @@
             }
 
             // handle mouse out of document area
-            $.removeEvent(document, "mouseout",  delegate.mouseoutdocument);
+            $.removeEvent(document.body, "mouseout",  delegate.mouseoutdocument);
 
             delegate.tracking = false;
         }
@@ -1537,6 +1537,17 @@
         }
     }
 
+    function onMouseOutDocument( tracker, event ) {
+        event = $.getEvent( event );
+
+        var html = document.getElementsByTagName("html")[0];
+        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
+            return; // not a mouseout of the iframe
+        }
+        event.buttons = undefined;
+        event.button = 0;
+        handleMouseUp(tracker,event);
+    }
 
     /**
      * @private
