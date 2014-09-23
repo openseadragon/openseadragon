@@ -9,7 +9,7 @@
             this.viewer = OpenSeadragon( {
                 debugMode: true,
                 zoomPerScroll: 1.02,
-                // showNavigator: true,
+                showNavigator: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             } );
@@ -86,6 +86,15 @@
                 x: startX,
                 y: 0,
                 width: 1
+            });
+        },
+
+        // ----------
+        bigTest: function() {
+            this.viewer.open("../../data/testpattern.dzi", {
+                x: -2,
+                y: -2,
+                width: 6
             });
         }
     };

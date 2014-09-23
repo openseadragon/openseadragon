@@ -1112,6 +1112,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             _this.world.addItem( tiledImage, {
                 index: options.index
             });
+
+            if (_this.navigator) {
+                var optionsClone = $.extend({}, options, {
+                    tileSource: tileSource
+                });
+
+                _this.navigator.addTiledImage(optionsClone);
+            }
         }, function( event ) {
             event.options = options;
             raiseAddItemFailed(event);
@@ -1956,9 +1964,7 @@ function openTileSource( viewer, source, options ) {
     if ( _this.showNavigator  && !_this.collectionMode ){
         // Note: By passing the fully parsed source, the navigator doesn't
         // have to load it again.
-        if ( _this.navigator ) {
-            _this.navigator.open( source );
-        } else {
+        if (!_this.navigator) {
             _this.navigator = new $.Navigator({
                 id:                _this.navigatorId,
                 position:          _this.navigatorPosition,
@@ -1969,13 +1975,14 @@ function openTileSource( viewer, source, options ) {
                 width:             _this.navigatorWidth,
                 height:            _this.navigatorHeight,
                 autoResize:        _this.navigatorAutoResize,
-                tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
                 viewer:            _this,
                 navigatorRotate:   _this.navigatorRotate
             });
         }
+
+        _this.navigator.open(source, options);
     }
 
     //Instantiate a referencestrip if configured
