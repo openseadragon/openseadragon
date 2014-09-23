@@ -209,6 +209,10 @@
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
+
+            pointeroutdocument:    function ( event ) { onPointerOutDocument( _this, event ); },
+            MSPointerOutdocument:  function ( event ) { onPointerOutDocument( _this, event ); },
+
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -1051,9 +1055,15 @@
                     false
                 );
             }
-
-            // handle mouse out of document area
-            $.addEvent(document.body, "mouseout",  delegate.mouseoutdocument);
+            
+            // handle pointer/mouse out of document body
+            if ( window.PointerEvent ) {
+              $.addEvent(document.body, "pointerout",  delegate.pointeroutdocument);
+            } else if ( window.MSPointerEvent ) {
+              $.addEvent(document.body, "pointerout",  delegate.MSPointerOutdocument);
+            } else {
+              $.addEvent(document.body, "mouseout",  delegate.mouseoutdocument);
+            }
 
             delegate.tracking = true;
         }
@@ -1080,8 +1090,14 @@
                 );
             }
 
-            // handle mouse out of document area
-            $.removeEvent(document.body, "mouseout",  delegate.mouseoutdocument);
+            // handle pointer/mouse out of document body
+            if ( window.PointerEvent ) {
+              $.removeEvent(document.body, "pointerout",  delegate.pointeroutdocument);
+            } else if ( window.MSPointerEvent ) {
+              $.removeEvent(document.body, "MSPointerOut",  delegate.MSPointerOutdocument);
+            } else {
+              $.removeEvent(document.body, "mouseout",  delegate.mouseoutdocument);
+            }
 
             delegate.tracking = false;
         }
@@ -1465,6 +1481,35 @@
         updatePointersExit( tracker, event, [ gPoint ] );
     }
 
+    /**
+     * This handler is used to handle the case where the mouse is dragged out of the window, it should cause the drag to be properly released.
+     *
+     * @private
+     * @inner
+     */
+    function onMouseOutDocument( tracker, event ) {
+        event = $.getEvent( event );
+
+        var html = document.getElementsByTagName("html")[0];
+        var target = event.target || event.srcElement;
+        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
+            return; // not a mouseout of the iframe
+        }
+
+        var gPoint = {
+            id: $.MouseTracker.mousePointerId,
+            type: 'mouse',
+            isPrimary: true,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        event.buttons = undefined;
+
+        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
+            releasePointer( tracker, true );
+        }
+    }
 
     /**
      * @private
@@ -1535,18 +1580,6 @@
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
             releasePointer( tracker, true );
         }
-    }
-
-    function onMouseOutDocument( tracker, event ) {
-        event = $.getEvent( event );
-
-        var html = document.getElementsByTagName("html")[0];
-        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
-            return; // not a mouseout of the iframe
-        }
-        event.buttons = undefined;
-        event.button = 0;
-        handleMouseUp(tracker,event);
     }
 
     /**
@@ -1820,6 +1853,32 @@
         updatePointersExit( tracker, event, [ gPoint ] );
     }
 
+    /**
+     * This handler is used to handle the case where the pointer is dragged out of the window, it should cause the drag to be properly released.
+     *
+     * @private
+     * @inner
+     */
+    function onPointerOutDocument( tracker, event ) {
+        event = $.getEvent( event );
+
+        var html = document.getElementsByTagName("html")[0];
+        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
+            return; // not a mouseout of the iframe
+        }
+        
+        var gPoint = {
+            id: event.pointerId,
+            type: getPointerType( event ),
+            isPrimary: event.isPrimary,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
+            releasePointer( tracker, false );
+        }
+    }
 
     /**
      * @private
