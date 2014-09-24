@@ -175,17 +175,22 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._items.splice( index, 1 );
         this._figureSizes();
+        this._raiseRemoveItem(item);
+    },
 
-        /**
-         * Raised when a item is removed.
-         * @event remove-item
-         * @memberOf OpenSeadragon.World
-         * @type {object}
-         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
-         * @property {OpenSeadragon.TiledImage} item - The item's underlying item.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'remove-item', { item: item } );
+    /**
+     * Remove all items.
+     * @function
+     * @fires OpenSeadragon.World.event:remove-item
+     */
+    removeAll: function() {
+        var removedItems = this._items;
+        this._items = [];
+        this._figureSizes();
+
+        for (var i = 0; i < removedItems.length; i++) {
+            this._raiseRemoveItem(removedItems[i]);
+        }
     },
 
     /**
@@ -270,6 +275,23 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
         this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
             this._homeBounds.height * this._contentFactor);
+    },
+
+    /**
+     * @function
+     * @private
+     */
+    _raiseRemoveItem: function(item) {
+        /**
+         * Raised when a item is removed.
+         * @event remove-item
+         * @memberOf OpenSeadragon.World
+         * @type {object}
+         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+         * @property {OpenSeadragon.TiledImage} item - The item's underlying item.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'remove-item', { item: item } );
     }
 });
 

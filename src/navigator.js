@@ -229,6 +229,21 @@ $.Navigator = function( options ){
             _this.viewport.goHome(true);
         }
     });
+
+    this.addHandler("reset-size", function() {
+        if (_this.viewport) {
+            _this.viewport.goHome(true);
+        }
+    });
+
+    this.world.addHandler("item-index-changed", function(event) {
+        var item = _this.world.getItemAt(event.previousIndex);
+        _this.world.setItemIndex(item, event.newIndex);
+    });
+
+    this.world.addHandler("remove-item", function(event) {
+        // TODO
+    });
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{

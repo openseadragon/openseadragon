@@ -409,6 +409,26 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
     this.bindSequenceControls();
 
+    this.world = new $.World({
+        viewer: this
+    });
+
+    this.world.addHandler('add-item', function(event) {
+        if (_this.viewport) {
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        }
+
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
+    this.world.addHandler('remove-item', function(event) {
+        if (_this.viewport) {
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        }
+
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
     if ( initialTileSource ) {
         this.open( initialTileSource );
 
@@ -544,7 +564,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.source     = null;
         this.drawer     = null;
-        this.world      = null;
+
+        this.world.removeAll();
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
 
@@ -1894,20 +1915,6 @@ function openTileSource( viewer, source, options ) {
 
     _this.tileCache = new $.TileCache({
         maxImageCacheCount: _this.maxImageCacheCount
-    });
-
-    _this.world = new $.World({
-        viewer: _this
-    });
-
-    _this.world.addHandler('add-item', function(event) {
-        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        THIS[ _this.hash ].forceRedraw = true;
-    });
-
-    _this.world.addHandler('remove-item', function(event) {
-        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        THIS[ _this.hash ].forceRedraw = true;
     });
 
     _this.drawer = new $.Drawer({
