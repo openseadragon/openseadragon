@@ -23,6 +23,10 @@
             viewer = null;
         }
     });
+    // helper
+    var getRandom = function(min, max){
+        return min + Math.floor(Math.random() * (max - min + 1));
+    }
 
     // ----------
 /*
@@ -47,14 +51,14 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig_x = Math.floor(Math.random() * 10000);
-            var orig_y = Math.floor(Math.random() * 10000);
+            var orig_x = getRandom(500, 10000);
+            var orig_y = getRandom(500, 10000);
             var orig = new OpenSeadragon.Point(orig_x, orig_y);
-            // why does the math work this way?
-            var expected = new OpenSeadragon.Point((orig_x / 500) + 20, (orig_x / 500) + 20);
+
+            // 500 is the viewport container size; there's 20 px of padding (I think)
+            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
             var actual = viewport.windowToViewportCoordinates(orig);
-            equal(actual.x, expected.x, "x coordinate for " + orig_x);
-            equal(actual.y, expected.y, "y coordinate for " + orig_y);
+            ok(actual.equals(expected), "Coordinates converted correctly for " + orig);
 
             start();
         };
@@ -67,14 +71,14 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig_x = Math.floor(Math.random() * 1000);
-            var orig_y = Math.floor(Math.random() * 1000);
+            var orig_x = getRandom(0, 1000);
+            var orig_y = getRandom(0, 1000);
             var orig = new OpenSeadragon.Point(orig_x, orig_y);
-            // why does the math work this way?
-            var expected = new OpenSeadragon.Point((orig_x - 20) * 500, (orig_y -20) * 500);
+
+            // 500 is the viewport container size; there's 20 px of padding (I think)
+            var expected = orig.minus( new OpenSeadragon.Point(20, 20) ).times(500);
             var actual = viewport.viewportToWindowCoordinates(orig);
-            equal(actual.x, expected.x, "x coordinate for " + orig_x);
-            equal(actual.y, expected.y, "y coordinate for " + orig_y);
+            ok(actual.equals(expected), "Coordinates converted correctly for " + orig);
 
             start();
         };
@@ -87,7 +91,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig = Math.floor(Math.random() * 4);
+            var orig = getRandom(0, 4);
             var expected = orig / 2; // because the container is 500 x 500
             var actual = viewport.viewportToImageZoom(orig);
             equal(expected, actual, "Expected " + expected + ", got " + actual);
@@ -103,7 +107,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig = Math.floor(Math.random() * 4);
+            var orig = getRandom(0, 4);
             var expected = orig * 2; // because the container is 500 x 500
             var actual = viewport.imageToViewportZoom(orig);
             equal(expected, actual, "Expected " + expected + ", got " + actual);
