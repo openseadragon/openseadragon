@@ -47,22 +47,24 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 */
-/*    asyncTest('windowToImageCoordinates', function() {
+   asyncTest('windowToImageCoordinates', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            // do stuff here
-            var orig = ;
-            var expected = ;
-            var actual = ;
-            equal(expected, actual, "what are you testing");
+            var orig = new OpenSeadragon.Point(
+                    getRandom(100, 3000), getRandom(100, 3000)
+                );
+            // 500 is the viewer size; there's 20 px of padding (I think)
+            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
+            var actual = viewport.windowToViewportCoordinates(orig);
+            propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
             start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open('/test/data/testpattern.dzi');
-    });*/
+    });
 
 /*  Need imagetoViewerElementCoordinates first to figure out this one
     asyncTest('imageToWindowCoordinates', function() {
@@ -91,9 +93,9 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig_x = getRandom(100, 3000);
-            var orig_y = getRandom(100, 3000);
-            var orig = new OpenSeadragon.Point(orig_x, orig_y);
+            var orig = new OpenSeadragon.Point(
+                    getRandom(100, 3000), getRandom(100, 3000)
+                );
 
             // 500 is the viewport container size; there's 20 px of padding (I think)
             var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
@@ -111,9 +113,9 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig_x = getRandom(0, 1000);
-            var orig_y = getRandom(0, 1000);
-            var orig = new OpenSeadragon.Point(orig_x, orig_y);
+            var orig = new OpenSeadragon.Point(
+                    getRandom(0, 1000), getRandom(0, 1000)
+                );
 
             // 500 is the viewport container size; there's 20 px of padding (I think)
             var expected = orig.minus( new OpenSeadragon.Point(20, 20) ).times(500);
