@@ -89,6 +89,16 @@ $.Viewport = function( options ) {
 
     }, options );
 
+    this.margins = $.extend({
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0
+    }, this.margins || {});
+
+    this.containerSize.x -= this.margins.left + this.margins.right;
+    this.containerSize.y -= this.margins.top + this.margins.bottom;
+
     this.centerSpringX = new $.Spring({
         initial: 0,
         springStiffness: this.springStiffness,
@@ -283,6 +293,16 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * @function
+     */
+    getContainerSizeWithMargins: function() {
+        return new $.Point(
+            this.containerSize.x + this.margins.left + this.margins.right,
+            this.containerSize.y + this.margins.top + this.margins.bottom
+        );
+    },
+
+    /**
+     * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getBounds: function( current ) {
@@ -302,14 +322,33 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
+    getBoundsWithMargins: function( current ) {
+        var bounds = this.getBounds(current);
+        var factor = this.containerSize.x * this.getZoom(current);
+        // var fullSize = this.getContainerSizeWithMargins();
+        bounds.x -= this.margins.left / factor;
+        bounds.y -= this.margins.top / factor;
+        bounds.width += (this.margins.left + this.margins.right) / factor;
+        bounds.height += (this.margins.top + this.margins.bottom) / factor;
+        // $.console.log(this.margins.top / (this.containerSize.x * this.getZoom(current)), bounds.height - (bounds.height * (fullSize.y / this.containerSize.y)));
+        // bounds.width *= fullSize.x / this.containerSize.x;
+        // bounds.height *= fullSize.y / this.containerSize.y;
+        return bounds;
+    },
+
+    /**
+     * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     */
     getCenter: function( current ) {
+        var factor = this.containerSize.x * this.getZoom(current) * 2;
         var centerCurrent = new $.Point(
-                this.centerSpringX.current.value,
-                this.centerSpringY.current.value
+                this.centerSpringX.current.value - (this.margins.left / factor),
+                this.centerSpringY.current.value - (this.margins.top / factor)
             ),
             centerTarget = new $.Point(
-                this.centerSpringX.target.value,
-                this.centerSpringY.target.value
+                this.centerSpringX.target.value - (this.margins.left / factor),
+                this.centerSpringY.target.value - (this.margins.top / factor)
             ),
             oldZoomPixel,
             zoom,
@@ -801,8 +840,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             widthDeltaFactor;
 
         this.containerSize = new $.Point(
-            newContainerSize.x,
-            newContainerSize.y
+            newContainerSize.x - (this.margins.left + this.margins.right),
+            newContainerSize.y - (this.margins.top + this.margins.bottom)
         );
 
         if ( maintain ) {

@@ -179,7 +179,7 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportSize    = tiledImage.viewport.getContainerSize(),
-        viewportBounds  = tiledImage.viewport.getBounds( true ),
+        viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
         viewportTL      = viewportBounds.getTopLeft(),
         viewportBR      = viewportBounds.getBottomRight(),
         zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
