@@ -47,6 +47,25 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 */
+asyncTest('viewerElementToImageCoordinates', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            var orig = new OpenSeadragon.Point(
+                    getRandom(0, 500), getRandom(0, 500)
+                );
+            // The image is twice as large as the viewer.
+            var expected = orig.times(2);
+            var actual = viewport.viewerElementToImageCoordinates(orig);
+            propEqual(actual, expected, "Coordinates converted correctly for " + orig);
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     asyncTest('imageToViewerElementCoordinates', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
