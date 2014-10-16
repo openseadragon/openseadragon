@@ -298,7 +298,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     clear: function() {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
-            var viewportSize = this.viewport.getContainerSizeWithMargins();
+            var viewportSize = this.viewport.getContainerSize();
             if( this.canvas.width != viewportSize.x ||
                 this.canvas.height != viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
