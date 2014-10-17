@@ -14,12 +14,13 @@
                 prefixUrl: "../../../build/openseadragon/images/"
             };
 
-            config.viewportMargins = {
-                // top: 250,
-                // left: 250,
-                right: 250,
-                bottom: 250
-            };
+            // config.viewportMargins = {
+            //     top: 250,
+            //     left: 250,
+            //     right: 250,
+            //     bottom: 250
+            // };
+
             this.viewer = OpenSeadragon(config);
 
             this.basicTest();

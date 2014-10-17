@@ -321,14 +321,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     getBoundsWithMargins: function( current ) {
         var bounds = this.getBounds(current);
         var factor = this.containerInnerSize.x * this.getZoom(current);
-        // var fullSize = this.getContainerSizeWithMargins();
         bounds.x -= this.margins.left / factor;
         bounds.y -= this.margins.top / factor;
         bounds.width += (this.margins.left + this.margins.right) / factor;
         bounds.height += (this.margins.top + this.margins.bottom) / factor;
-        // $.console.log(this.margins.top / (this.containerInnerSize.x * this.getZoom(current)), bounds.height - (bounds.height * (fullSize.y / this.containerInnerSize.y)));
-        // bounds.width *= fullSize.x / this.containerInnerSize.x;
-        // bounds.height *= fullSize.y / this.containerInnerSize.y;
         return bounds;
     },
 
@@ -337,14 +333,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getCenter: function( current ) {
-        var factor = this.containerInnerSize.x * this.getZoom(current) * 2;
         var centerCurrent = new $.Point(
-                this.centerSpringX.current.value - (this.margins.left / factor),
-                this.centerSpringY.current.value - (this.margins.top / factor)
+                this.centerSpringX.current.value,
+                this.centerSpringY.current.value
             ),
             centerTarget = new $.Point(
-                this.centerSpringX.target.value - (this.margins.left / factor),
-                this.centerSpringY.target.value - (this.margins.top / factor)
+                this.centerSpringX.target.value,
+                this.centerSpringY.target.value
             ),
             oldZoomPixel,
             zoom,
@@ -835,6 +830,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             newBounds = oldBounds,
             widthDeltaFactor;
 
+        this.containerSize.x = newContainerSize.x;
+        this.containerSize.y = newContainerSize.y;
+
         this.containerInnerSize = new $.Point(
             Math.max(1, newContainerSize.x - (this.margins.left + this.margins.right)),
             Math.max(1, newContainerSize.y - (this.margins.top + this.margins.bottom))
@@ -939,6 +937,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             bounds.getTopLeft()
         ).times(
             this.containerInnerSize.x / bounds.width
+        ).plus(
+            new $.Point(this.margins.left, this.margins.top)
         );
     },
 
@@ -949,7 +949,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
-        return pixel.divide(
+        return pixel.minus(
+            new $.Point(this.margins.left, this.margins.top)
+        ).divide(
             this.containerInnerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
