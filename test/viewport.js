@@ -47,7 +47,34 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 */
-asyncTest('viewerElementToImageCoordinates', function() {
+    asyncTest('viewportToImageRectangle', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            // do stuff here
+            var orig = new OpenSeadragon.Rect(
+                getRandom(0, 500),
+                getRandom(0, 500),
+                getRandom(0, 500),
+                getRandom(0, 500)
+            );
+            var expected = new OpenSeadragon.Rect(
+                orig.x * 1000,
+                orig.y * 1000,
+                orig.width * 1000,
+                orig.height * 1000
+            );
+            var actual = viewport.viewportToImageRectangle(orig);
+            propEqual(actual, expected, "Coordinates converted correctly for " + orig);
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('viewerElementToImageCoordinates', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -75,8 +102,7 @@ asyncTest('viewerElementToImageCoordinates', function() {
                     getRandom(0, 1000), getRandom(0, 1000)
                 );
             // The image is twice as large as the viewer.
-            // Multiplying instead of dividing to avoid precision errors
-            var expected = orig.times(0.500);
+            var expected = orig.divide(2);
             var actual = viewport.imageToViewerElementCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -95,8 +121,7 @@ asyncTest('viewerElementToImageCoordinates', function() {
                     getRandom(100, 3000), getRandom(100, 3000)
                 );
             // 500 is the viewer size; there's 20 px of padding (I think)
-            // Multiplying instead of dividing to avoid precision errors
-            var expected = orig.times(0.002).plus( new OpenSeadragon.Point(20, 20) );
+            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
             var actual = viewport.windowToViewportCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -116,9 +141,8 @@ asyncTest('viewerElementToImageCoordinates', function() {
                     getRandom(0, 1000), getRandom(0, 1000)
                 );
             // The image is twice as large as the viewer.
-            // Multiplying instead of dividing to avoid precision errors
             // don't know why I have to subtract 10000 though.
-            var expected = orig.times(0.500).minus( new OpenSeadragon.Point(10000, 10000) );
+            var expected = orig.divide(2).minus( new OpenSeadragon.Point(10000, 10000) );
             var actual = viewport.imageToWindowCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -138,8 +162,7 @@ asyncTest('viewerElementToImageCoordinates', function() {
                 );
 
             // 500 is the viewport container size; there's 20 px of padding (I think)
-            // Multiplying instead of dividing to avoid precision errors
-            var expected = orig.times(0.002).plus( new OpenSeadragon.Point(20, 20) );
+            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
             var actual = viewport.windowToViewportCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
