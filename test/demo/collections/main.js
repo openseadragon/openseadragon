@@ -14,20 +14,43 @@
                 prefixUrl: "../../../build/openseadragon/images/"
             };
 
-            // config.viewportMargins = {
-            //     top: 250,
-            //     left: 250,
-            //     right: 250,
-            //     bottom: 250
-            // };
+            var testMargins = false;
+
+            var margins;
+
+            if (testMargins) {
+                margins = {
+                    top: 250,
+                    left: 250,
+                    right: 250,
+                    bottom: 250
+                };
+
+                config.viewportMargins = margins;
+            }
 
             this.viewer = OpenSeadragon(config);
+
+            if (testMargins) {
+                this.viewer.addHandler('animation', function() {
+                    var box = new OpenSeadragon.Rect(margins.left, margins.top,
+                        $('#contentDiv').width() - (margins.left + margins.right),
+                        $('#contentDiv').height() - (margins.top + margins.bottom));
+
+                    self.viewer.drawer.debugRect(box);
+                });
+            }
 
             this.basicTest();
         },
 
         // ----------
         basicTest: function() {
+            var self = this;
+
+            this.viewer.addHandler('open', function() {
+            });
+
             this.viewer.open("../../data/testpattern.dzi");
         },
 

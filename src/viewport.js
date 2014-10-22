@@ -63,6 +63,15 @@ $.Viewport = function( options ) {
         delete options.config;
     }
 
+    this._margins = $.extend({
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0
+    }, options.margins || {});
+
+    delete options.margins;
+
     $.extend( true, this, {
 
         //required settings
@@ -89,16 +98,9 @@ $.Viewport = function( options ) {
 
     }, options );
 
-    this.margins = $.extend({
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0
-    }, this.margins || {});
-
-    this.containerInnerSize = new $.Point(
-        Math.max(1, this.containerSize.x - (this.margins.left + this.margins.right)),
-        Math.max(1, this.containerSize.y - (this.margins.top + this.margins.bottom))
+    this._containerInnerSize = new $.Point(
+        Math.max(1, this.containerSize.x - (this._margins.left + this._margins.right)),
+        Math.max(1, this.containerSize.y - (this._margins.top + this._margins.bottom))
     );
 
     this.centerSpringX = new $.Spring({
@@ -269,7 +271,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     getMaxZoom: function() {
         var zoom = this.maxZoomLevel;
         if (!zoom) {
-            zoom = this.contentSize.x * this.maxZoomPixelRatio / this.containerInnerSize.x;
+            zoom = this.contentSize.x * this.maxZoomPixelRatio / this._containerInnerSize.x;
             zoom /= this.homeBounds.width;
         }
 
@@ -280,7 +282,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     getAspectRatio: function() {
-        return this.containerInnerSize.x / this.containerInnerSize.y;
+        return this._containerInnerSize.x / this._containerInnerSize.y;
     },
 
     /**
@@ -320,11 +322,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     getBoundsWithMargins: function( current ) {
         var bounds = this.getBounds(current);
-        var factor = this.containerInnerSize.x * this.getZoom(current);
-        bounds.x -= this.margins.left / factor;
-        bounds.y -= this.margins.top / factor;
-        bounds.width += (this.margins.left + this.margins.right) / factor;
-        bounds.height += (this.margins.top + this.margins.bottom) / factor;
+        var factor = this._containerInnerSize.x * this.getZoom(current);
+        bounds.x -= this._margins.left / factor;
+        bounds.y -= this._margins.top / factor;
+        bounds.width += (this._margins.left + this._margins.right) / factor;
+        bounds.height += (this._margins.top + this._margins.bottom) / factor;
         return bounds;
     },
 
@@ -368,13 +370,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             height
         );
 
-        newZoomPixel    = this.zoomPoint.minus(
-            bounds.getTopLeft()
-        ).times(
-            this.containerInnerSize.x / bounds.width
-        );
+        newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
         deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
-        deltaZoomPoints = deltaZoomPixels.divide( this.containerInnerSize.x * zoom );
+        deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
 
         return centerTarget.plus( deltaZoomPoints );
     },
@@ -580,14 +578,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         referencePoint = oldBounds.getTopLeft().times(
-            this.containerInnerSize.x / oldBounds.width
+            this._containerInnerSize.x / oldBounds.width
         ).minus(
             newBounds.getTopLeft().times(
-                this.containerInnerSize.x / newBounds.width
+                this._containerInnerSize.x / newBounds.width
             )
         ).divide(
-            this.containerInnerSize.x / oldBounds.width -
-            this.containerInnerSize.x / newBounds.width
+            this._containerInnerSize.x / oldBounds.width -
+            this._containerInnerSize.x / newBounds.width
         );
 
         return this.zoomTo( newZoom, referencePoint, immediately );
@@ -833,9 +831,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.containerSize.x = newContainerSize.x;
         this.containerSize.y = newContainerSize.y;
 
-        this.containerInnerSize = new $.Point(
-            Math.max(1, newContainerSize.x - (this.margins.left + this.margins.right)),
-            Math.max(1, newContainerSize.y - (this.margins.top + this.margins.bottom))
+        this._containerInnerSize = new $.Point(
+            Math.max(1, newContainerSize.x - (this._margins.left + this._margins.right)),
+            Math.max(1, newContainerSize.y - (this._margins.top + this._margins.bottom))
         );
 
         if ( maintain ) {
@@ -911,7 +909,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
-            this.containerInnerSize.x * this.getZoom( current )
+            this._containerInnerSize.x * this.getZoom( current )
         );
     },
 
@@ -922,7 +920,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
-            this.containerInnerSize.x * this.getZoom( current )
+            this._containerInnerSize.x * this.getZoom( current )
         );
     },
 
@@ -932,13 +930,19 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     pixelFromPoint: function( point, current ) {
-        var bounds = this.getBounds( current );
+        return this._pixelFromPoint(point, this.getBounds( current ));
+    },
+
+    /**
+     * @private
+     */
+    _pixelFromPoint: function( point, bounds ) {
         return point.minus(
             bounds.getTopLeft()
         ).times(
-            this.containerInnerSize.x / bounds.width
+            this._containerInnerSize.x / bounds.width
         ).plus(
-            new $.Point(this.margins.left, this.margins.top)
+            new $.Point(this._margins.left, this._margins.top)
         );
     },
 
@@ -950,9 +954,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
         return pixel.minus(
-            new $.Point(this.margins.left, this.margins.top)
+            new $.Point(this._margins.left, this._margins.top)
         ).divide(
-            this.containerInnerSize.x / bounds.width
+            this._containerInnerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
         );
@@ -1167,7 +1171,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     viewportToImageZoom: function( viewportZoom ) {
         var imageWidth = this.viewer.source.dimensions.x;
-        var containerWidth = this.containerInnerSize.x;
+        var containerWidth = this._containerInnerSize.x;
         var viewportToImageZoomRatio = containerWidth / imageWidth;
         return viewportZoom * viewportToImageZoomRatio;
     },
@@ -1185,7 +1189,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     imageToViewportZoom: function( imageZoom ) {
         var imageWidth = this.viewer.source.dimensions.x;
-        var containerWidth = this.containerInnerSize.x;
+        var containerWidth = this._containerInnerSize.x;
         var viewportToImageZoomRatio = imageWidth / containerWidth;
         return imageZoom * viewportToImageZoomRatio;
     }

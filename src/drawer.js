@@ -324,6 +324,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
+    /**
+     * @private
+     */
     drawDebugInfo: function( tile, count, i ){
         if ( this.useCanvas ) {
             this.context.save();
@@ -396,6 +399,30 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
+    /**
+     * @private
+     */
+    debugRect: function(rect) {
+        if ( this.useCanvas ) {
+            this.context.save();
+            this.context.lineWidth = 2;
+            this.context.strokeStyle = this.debugGridColor;
+            this.context.fillStyle = this.debugGridColor;
+
+            this.context.strokeRect(
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height
+            );
+
+            this.context.restore();
+        }
+    },
+
+    /**
+     * @private
+     */
     _offsetForRotation: function( tile, degrees ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,
@@ -410,6 +437,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         tile.position.y = py;
     },
 
+    /**
+     * @private
+     */
     _restoreRotationChanges: function( tile ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,
