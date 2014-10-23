@@ -29,6 +29,8 @@
     };
 
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
+    var VIEWER_SIZE = 500; // We set up the viewer to be 500 px x 500 px.
+    var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
 
     // ----------
 /*
@@ -151,8 +153,7 @@
             var orig = new OpenSeadragon.Point(
                     getRandom(100, 3000), getRandom(100, 3000)
                 );
-            // 500 is the viewer size; there's 20 px of padding (I think)
-            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
+            var expected = orig.divide(VIEWER_SIZE).plus(VIEWER_PADDING);
             var actual = viewport.windowToViewportCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -193,8 +194,7 @@
                     getRandom(100, 3000), getRandom(100, 3000)
                 );
 
-            // 500 is the viewport container size; there's 20 px of padding (I think)
-            var expected = orig.divide(500).plus( new OpenSeadragon.Point(20, 20) );
+            var expected = orig.divide(VIEWER_SIZE).plus(VIEWER_PADDING);
             var actual = viewport.windowToViewportCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -214,8 +214,7 @@
                     getRandom(0, 1000), getRandom(0, 1000)
                 );
 
-            // 500 is the viewport container size; there's 20 px of padding (I think)
-            var expected = orig.minus( new OpenSeadragon.Point(20, 20) ).times(500);
+            var expected = orig.minus(VIEWER_PADDING).times(VIEWER_SIZE);
             var actual = viewport.viewportToWindowCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
