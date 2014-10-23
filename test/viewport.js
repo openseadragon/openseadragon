@@ -26,7 +26,9 @@
     // helper
     var getRandom = function(min, max){
         return min + Math.floor(Math.random() * (max - min + 1));
-    }
+    };
+
+    var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
 
     // ----------
 /*
@@ -34,6 +36,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // do stuff here
             var orig = ;
@@ -47,12 +50,39 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 */
+    asyncTest('imageToViewportRectangle', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            var orig = new OpenSeadragon.Rect(
+                getRandom(0, 1000),
+                getRandom(0, 1000),
+                getRandom(0, 1000),
+                getRandom(0, 1000)
+            );
+            var expected = new OpenSeadragon.Rect(
+                orig.x / 1000,
+                orig.y / 1000,
+                orig.width / 1000,
+                orig.height / 1000
+            );
+            var actual = viewport.imageToViewportRectangle(orig);
+            propEqual(actual, expected, "Coordinates converted correctly for " + orig);
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     asyncTest('viewportToImageRectangle', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            // do stuff here
             var orig = new OpenSeadragon.Rect(
                 getRandom(0, 500),
                 getRandom(0, 500),
@@ -78,12 +108,12 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = new OpenSeadragon.Point(
                     getRandom(0, 500), getRandom(0, 500)
                 );
-            // The image is twice as large as the viewer.
-            var expected = orig.times(2);
+            var expected = orig.times(ZOOM_FACTOR);
             var actual = viewport.viewerElementToImageCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -97,12 +127,12 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = new OpenSeadragon.Point(
                     getRandom(0, 1000), getRandom(0, 1000)
                 );
-            // The image is twice as large as the viewer.
-            var expected = orig.divide(2);
+            var expected = orig.divide(ZOOM_FACTOR);
             var actual = viewport.imageToViewerElementCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -116,6 +146,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = new OpenSeadragon.Point(
                     getRandom(100, 3000), getRandom(100, 3000)
@@ -135,14 +166,14 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // test image is 1000 x 1000
             var orig = new OpenSeadragon.Point(
                     getRandom(0, 1000), getRandom(0, 1000)
                 );
-            // The image is twice as large as the viewer.
-            // don't know why I have to subtract 10000 though.
-            var expected = orig.divide(2).minus( new OpenSeadragon.Point(10000, 10000) );
+            var position = viewer.element.getBoundingClientRect();
+            var expected = orig.divide(ZOOM_FACTOR).plus( new OpenSeadragon.Point(position.top, position.left) );
             var actual = viewport.imageToWindowCoordinates(orig);
             propEqual(actual, expected, "Coordinates converted correctly for " + orig);
 
@@ -156,6 +187,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = new OpenSeadragon.Point(
                     getRandom(100, 3000), getRandom(100, 3000)
@@ -176,6 +208,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = new OpenSeadragon.Point(
                     getRandom(0, 1000), getRandom(0, 1000)
@@ -196,10 +229,10 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = getRandom(0, 4);
-            // because the container is 500 x 500 and the image is 1000 x 1000
-            var expected = orig / 2;
+            var expected = orig / ZOOM_FACTOR;
             var actual = viewport.viewportToImageZoom(orig);
             equal(expected, actual, "Coordinates converted correctly for " + orig);
             start();
@@ -213,10 +246,10 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             var orig = getRandom(0, 4);
-            // because the container is 500 x 500 and the image is 1000 x 1000
-            var expected = orig * 2;
+            var expected = orig * ZOOM_FACTOR;
             var actual = viewport.imageToViewportZoom(orig);
             equal(expected, actual, "Coordinates converted correctly for " + orig);
             start();
