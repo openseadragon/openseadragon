@@ -9,7 +9,7 @@
             var config = {
                 debugMode: true,
                 zoomPerScroll: 1.02,
-                // showNavigator: true,
+                showNavigator: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             };
