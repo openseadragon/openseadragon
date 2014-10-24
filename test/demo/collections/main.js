@@ -14,7 +14,7 @@
                 prefixUrl: "../../../build/openseadragon/images/"
             } );
 
-            this.gridTest();
+            this.crossTest();
         },
 
         // ----------

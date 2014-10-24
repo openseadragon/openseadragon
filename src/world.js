@@ -51,6 +51,7 @@ $.World = function( options ) {
 
     this.viewer = options.viewer;
     this._items = [];
+    this._needsUpdate = false;
     this._figureSizes();
 };
 
@@ -74,6 +75,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         }
 
         this._figureSizes();
+        this._needsUpdate = true;
 
         /**
          * Raised when an item is added to the World.
@@ -139,6 +141,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._items.splice( oldIndex, 1 );
         this._items.splice( index, 0, item );
+        this._needsUpdate = true;
 
         /**
          * Raised when the order of the indexes has been changed.
@@ -175,6 +178,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._items.splice( index, 1 );
         this._figureSizes();
+        this._needsUpdate = true;
         this._raiseRemoveItem(item);
     },
 
@@ -187,6 +191,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var removedItems = this._items;
         this._items = [];
         this._figureSizes();
+        this._needsUpdate = true;
 
         for (var i = 0; i < removedItems.length; i++) {
             this._raiseRemoveItem(removedItems[i]);
@@ -211,6 +216,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         for ( var i = 0; i < this._items.length; i++ ) {
             this._items[i].update();
         }
+
+        this._needsUpdate = false;
     },
 
     /**
@@ -223,7 +230,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 return true;
             }
         }
-        return false;
+        return this._needsUpdate;
     },
 
     /**

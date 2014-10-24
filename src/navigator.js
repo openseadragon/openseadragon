@@ -236,13 +236,21 @@ $.Navigator = function( options ){
         }
     });
 
-    this.world.addHandler("item-index-changed", function(event) {
+    viewer.world.addHandler("item-index-changed", function(event) {
         var item = _this.world.getItemAt(event.previousIndex);
         _this.world.setItemIndex(item, event.newIndex);
     });
 
-    this.world.addHandler("remove-item", function(event) {
-        // TODO
+    viewer.world.addHandler("remove-item", function(event) {
+        var count = _this.world.getItemCount();
+        var item;
+        for (var i = 0; i < count; i++) {
+            item = _this.world.getItemAt(i);
+            if (item._originalForNavigator === event.item) {
+                _this.world.removeItem(item);
+                break;
+            }
+        }
     });
 };
 
@@ -332,7 +340,16 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     },
 
+    /**
+     * Overrides Viewer.open
+     * @private
+     */
     open: function(source, options) {
+        var _this = this;
+
+        var original = options.originalTiledImage;
+        delete options.original;
+
         this.updateSize();
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
         var ts = source.getTileSize(source.maxLevel);
@@ -341,9 +358,31 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         } else {
             this.minPixelRatio = this.viewer.minPixelRatio;
         }
-        return $.Viewer.prototype.open.apply( this, [source, options] );
-    }
 
+        this.addHandler('open', function openHandler() {
+            _this.removeHandler(openHandler);
+            _this.world.getItemAt(0)._originalForNavigator = original;
+        });
+
+        return $.Viewer.prototype.open.apply( this, [source, options] );
+    },
+
+    /**
+     * Overrides Viewer.addTiledImage
+     * @private
+     */
+    addTiledImage: function(options) {
+        var original = options.originalTiledImage;
+        delete options.original;
+
+        var optionsClone = $.extend({}, options, {
+            success: function(item) {
+                item._originalForNavigator = original;
+            }
+        });
+
+        return $.Viewer.prototype.addTiledImage.apply(this, [optionsClone]);
+    }
 });
 
 /**

@@ -1067,6 +1067,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Number} [options.y=0] The Y position for the image in world coordinates.
      * @param {Number} [options.width=1] The width for the image in world coordinates.
      * @param {Number} [options.height] The height for the image in world coordinates.
+     * @param {Function} [options.success] A function that gets called when the image is
+     * successfully added. It's passed a single parameter: the resulting TiledImage.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1136,10 +1138,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (_this.navigator) {
                 var optionsClone = $.extend({}, options, {
+                    originalTiledImage: tiledImage,
                     tileSource: tileSource
                 });
 
                 _this.navigator.addTiledImage(optionsClone);
+            }
+
+            if (options.success) {
+                options.success(tiledImage);
             }
         }, function( event ) {
             event.options = options;
@@ -1989,7 +1996,11 @@ function openTileSource( viewer, source, options ) {
             });
         }
 
-        _this.navigator.open(source, options);
+        var optionsClone = $.extend({}, options, {
+            originalTiledImage: tiledImage
+        });
+
+        _this.navigator.open(source, optionsClone);
     }
 
     //Instantiate a referencestrip if configured
