@@ -409,6 +409,26 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
     this.bindSequenceControls();
 
+    this.world = new $.World({
+        viewer: this
+    });
+
+    this.world.addHandler('add-item', function(event) {
+        if (_this.viewport) {
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        }
+
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
+    this.world.addHandler('remove-item', function(event) {
+        if (_this.viewport) {
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        }
+
+        THIS[ _this.hash ].forceRedraw = true;
+    });
+
     if ( initialTileSource ) {
         this.open( initialTileSource );
 
@@ -544,7 +564,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.source     = null;
         this.drawer     = null;
-        this.world      = null;
+
+        this.world.removeAll();
 
         this.viewport   = this.preserveViewport ? this.viewport : null;
 
@@ -1046,6 +1067,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Number} [options.y=0] The Y position for the image in world coordinates.
      * @param {Number} [options.width=1] The width for the image in world coordinates.
      * @param {Number} [options.height] The height for the image in world coordinates.
+     * @param {Function} [options.success] A function that gets called when the image is
+     * successfully added. It's passed a single parameter: the resulting TiledImage.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1112,6 +1135,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             _this.world.addItem( tiledImage, {
                 index: options.index
             });
+
+            if (_this.navigator) {
+                var optionsClone = $.extend({}, options, {
+                    originalTiledImage: tiledImage,
+                    tileSource: tileSource
+                });
+
+                _this.navigator.addTiledImage(optionsClone);
+            }
+
+            if (options.success) {
+                options.success(tiledImage);
+            }
         }, function( event ) {
             event.options = options;
             raiseAddItemFailed(event);
@@ -1888,20 +1924,6 @@ function openTileSource( viewer, source, options ) {
         maxImageCacheCount: _this.maxImageCacheCount
     });
 
-    _this.world = new $.World({
-        viewer: _this
-    });
-
-    _this.world.addHandler('add-item', function(event) {
-        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        THIS[ _this.hash ].forceRedraw = true;
-    });
-
-    _this.world.addHandler('remove-item', function(event) {
-        _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        THIS[ _this.hash ].forceRedraw = true;
-    });
-
     _this.drawer = new $.Drawer({
         viewer:             _this,
         viewport:           _this.viewport,
@@ -1956,9 +1978,7 @@ function openTileSource( viewer, source, options ) {
     if ( _this.showNavigator  && !_this.collectionMode ){
         // Note: By passing the fully parsed source, the navigator doesn't
         // have to load it again.
-        if ( _this.navigator ) {
-            _this.navigator.open( source );
-        } else {
+        if (!_this.navigator) {
             _this.navigator = new $.Navigator({
                 id:                _this.navigatorId,
                 position:          _this.navigatorPosition,
@@ -1969,13 +1989,18 @@ function openTileSource( viewer, source, options ) {
                 width:             _this.navigatorWidth,
                 height:            _this.navigatorHeight,
                 autoResize:        _this.navigatorAutoResize,
-                tileSources:       source,
                 tileHost:          _this.tileHost,
                 prefixUrl:         _this.prefixUrl,
                 viewer:            _this,
                 navigatorRotate:   _this.navigatorRotate
             });
         }
+
+        var optionsClone = $.extend({}, options, {
+            originalTiledImage: tiledImage
+        });
+
+        _this.navigator.open(source, optionsClone);
     }
 
     //Instantiate a referencestrip if configured

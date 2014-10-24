@@ -83,7 +83,7 @@ $.Navigator = function( options ){
                options.controlOptions.width = options.width;
             }
         }
-        
+
     } else {
         this.element            = document.getElementById( options.id );
         options.controlOptions  = {
@@ -216,21 +216,48 @@ $.Navigator = function( options ){
         unneededElement.parentNode.removeChild(unneededElement);
     }
 
-    if (options.navigatorRotate)
-    {
+    if (options.navigatorRotate) {
         options.viewer.addHandler("rotate", function (args) {
             _setTransformRotate(_this.displayRegionContainer, args.degrees);
             _setTransformRotate(_this.displayRegion, -args.degrees);
             _this.viewport.setRotation(args.degrees);
         });
-
     }
+
+    this.addHandler("reset-size", function() {
+        if (_this.viewport) {
+            _this.viewport.goHome(true);
+        }
+    });
+
+    this.addHandler("reset-size", function() {
+        if (_this.viewport) {
+            _this.viewport.goHome(true);
+        }
+    });
+
+    viewer.world.addHandler("item-index-changed", function(event) {
+        var item = _this.world.getItemAt(event.previousIndex);
+        _this.world.setItemIndex(item, event.newIndex);
+    });
+
+    viewer.world.addHandler("remove-item", function(event) {
+        var count = _this.world.getItemCount();
+        var item;
+        for (var i = 0; i < count; i++) {
+            item = _this.world.getItemAt(i);
+            if (item._originalForNavigator === event.item) {
+                _this.world.removeItem(item);
+                break;
+            }
+        }
+    });
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
 
     /**
-     * Used to notify the navigator when its size has changed. 
+     * Used to notify the navigator when its size has changed.
      * Especially useful when {@link OpenSeadragon.Options}.navigatorAutoResize is set to false and the navigator is resizable.
      * @function
      */
@@ -313,7 +340,16 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     },
 
-    open: function( source ) {
+    /**
+     * Overrides Viewer.open
+     * @private
+     */
+    open: function(source, options) {
+        var _this = this;
+
+        var original = options.originalTiledImage;
+        delete options.original;
+
         this.updateSize();
         var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
         var ts = source.getTileSize(source.maxLevel);
@@ -322,9 +358,31 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         } else {
             this.minPixelRatio = this.viewer.minPixelRatio;
         }
-        return $.Viewer.prototype.open.apply( this, [ source ] );
-    }
 
+        this.addHandler('open', function openHandler() {
+            _this.removeHandler(openHandler);
+            _this.world.getItemAt(0)._originalForNavigator = original;
+        });
+
+        return $.Viewer.prototype.open.apply( this, [source, options] );
+    },
+
+    /**
+     * Overrides Viewer.addTiledImage
+     * @private
+     */
+    addTiledImage: function(options) {
+        var original = options.originalTiledImage;
+        delete options.original;
+
+        var optionsClone = $.extend({}, options, {
+            success: function(item) {
+                item._originalForNavigator = original;
+            }
+        });
+
+        return $.Viewer.prototype.addTiledImage.apply(this, [optionsClone]);
+    }
 });
 
 /**
