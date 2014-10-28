@@ -28,6 +28,7 @@
 
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
     var VIEWER_SIZE = 500; // We set up the viewer to be 500 px x 500 px.
+    var IMAGE_SIZE = ZOOM_FACTOR * VIEWER_SIZE; // mostly for convenience
     var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
@@ -88,12 +89,12 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(1000);
+                orig = testRects[i].times(IMAGE_SIZE);
                 expected = new OpenSeadragon.Rect(
-                orig.x / 1000,
-                orig.y / 1000,
-                orig.width / 1000,
-                orig.height / 1000
+                orig.x / IMAGE_SIZE,
+                orig.y / IMAGE_SIZE,
+                orig.width / IMAGE_SIZE,
+                orig.height / IMAGE_SIZE
                 );
                 actual = viewport.imageToViewportRectangle(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -113,12 +114,12 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(500);
+                orig = testRects[i].times(VIEWER_SIZE);
                 expected = new OpenSeadragon.Rect(
-                    orig.x * 1000,
-                    orig.y * 1000,
-                    orig.width * 1000,
-                    orig.height * 1000
+                    orig.x * IMAGE_SIZE,
+                    orig.y * IMAGE_SIZE,
+                    orig.width * IMAGE_SIZE,
+                    orig.height * IMAGE_SIZE
                 );
                 actual = viewport.viewportToImageRectangle(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -138,7 +139,7 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(500);
+                orig = testPoints[i].times(VIEWER_SIZE);
                 expected = orig.times(ZOOM_FACTOR);
                 actual = viewport.viewerElementToImageCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -158,7 +159,7 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(1000);
+                orig = testPoints[i].times(IMAGE_SIZE);
                 expected = orig.divide(ZOOM_FACTOR);
                 actual = viewport.imageToViewerElementCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -198,8 +199,8 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                // Test image is 1000 x 1000
-                orig = testPoints[i].times(1000);
+                // Test image is IMAGE_SIZE x IMAGE_SIZE
+                orig = testPoints[i].times(IMAGE_SIZE);
                 position = viewer.element.getBoundingClientRect();
                 expected = orig.divide(ZOOM_FACTOR).plus( new OpenSeadragon.Point(position.top, position.left) );
                 actual = viewport.imageToWindowCoordinates(orig);
@@ -240,8 +241,8 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                // Test image is 1000 x 1000
-                orig = testPoints[i].times(1000);
+                // Test image is IMAGE_SIZE x IMAGE_SIZE
+                orig = testPoints[i].times(IMAGE_SIZE);
                 expected = orig.minus(VIEWER_PADDING).times(VIEWER_SIZE);
                 actual = viewport.viewportToWindowCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
