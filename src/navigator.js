@@ -252,6 +252,8 @@ $.Navigator = function( options ){
             }
         }
     });
+
+    this.update(viewer.viewport);
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
@@ -323,21 +325,21 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         if( viewport && this.viewport ) {
             bounds      = viewport.getBounds( true );
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft(), false );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false ).minus( this.totalBorderWidths );
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false )
+                .minus( this.totalBorderWidths );
 
             //update style for navigator-box
-            (function(style) {
+            var style = this.displayRegion.style;
+            style.display = this.world.getItemCount() ? 'block' : 'none';
 
-                style.top    = Math.round( topleft.y ) + 'px';
-                style.left   = Math.round( topleft.x ) + 'px';
+            style.top    = Math.round( topleft.y ) + 'px';
+            style.left   = Math.round( topleft.x ) + 'px';
 
-                var width = Math.abs( topleft.x - bottomright.x );
-                var height = Math.abs( topleft.y - bottomright.y );
-                // make sure width and height are non-negative so IE doesn't throw
-                style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
-                style.height = Math.round( Math.max( height, 0 ) ) + 'px';
-
-            }( this.displayRegion.style ));
+            var width = Math.abs( topleft.x - bottomright.x );
+            var height = Math.abs( topleft.y - bottomright.y );
+            // make sure width and height are non-negative so IE doesn't throw
+            style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
+            style.height = Math.round( Math.max( height, 0 ) ) + 'px';
         }
 
     },

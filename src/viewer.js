@@ -745,7 +745,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:close
      */
     close: function ( ) {
-
         if ( !THIS[ this.hash ] ) {
             //this viewer has already been destroyed: returning immediately
             return this;
@@ -791,6 +790,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      */
     destroy: function( ) {
+        if ( !THIS[ this.hash ] ) {
+            //this viewer has already been destroyed: returning immediately
+            return;
+        }
+
         this.close();
 
         //TODO: implement this...
