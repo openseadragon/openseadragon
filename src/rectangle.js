@@ -179,6 +179,22 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     },
 
     /**
+    * Multiply all dimensions in this Rect by a factor and return a new Rect.
+    * @function
+    * @param {Number} factor The factor to multiply vector components.
+    * @returns {OpenSeadragon.Rect} A new rect representing the multiplication
+    *  of the vector components by the factor
+    */
+    times: function( factor ) {
+        return new OpenSeadragon.Rect(
+            this.x * factor,
+            this.y * factor,
+            this.width * factor,
+            this.height * factor
+        );
+    },
+
+    /**
      * Rotates a rectangle around a point. Currently only 90, 180, and 270
      * degrees are supported.
      * @function

@@ -27,9 +27,8 @@
     // helpers and constants
 
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
-    var VIEWER_SIZE = 500; // We set up the viewer to be 500 px x 500 px.
-    var IMAGE_SIZE = ZOOM_FACTOR * VIEWER_SIZE; // mostly for convenience
     var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
+    var DZI_PATH = '/test/data/testpattern.dzi'
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
 
@@ -37,7 +36,7 @@
         new OpenSeadragon.Point(0, 0),
         new OpenSeadragon.Point(0.001, 0.001),
         new OpenSeadragon.Point(0.25, 0.5),
-        new OpenSeadragon.Point(0.999, 0.999),
+        new OpenSeadragon.Point(0.99, 0.99),
         new OpenSeadragon.Point(1, 1)
     ];
 
@@ -48,18 +47,6 @@
         new OpenSeadragon.Rect(0.999, 0.999, 0.999, 0.999),
         new OpenSeadragon.Rect(1, 1, 1, 1)
     ];
-
-    // If this is something we might want to add to the Rect class, I can do that.
-    // But I assumed that since it isn't there already, that's not functionality
-    // that we want to make broadly available.
-    OpenSeadragon.Rect.prototype.times = function( factor ) {
-        return new OpenSeadragon.Rect(
-            this.x * factor,
-            this.y * factor,
-            this.width * factor,
-            this.height * factor
-        );
-    }
 
     // ----------
 /*
@@ -78,7 +65,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 */
     asyncTest('imageToViewportRectangle', function() {
@@ -89,12 +76,12 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(IMAGE_SIZE);
+                orig = testRects[i].times(viewer.source.dimensions.x);
                 expected = new OpenSeadragon.Rect(
-                orig.x / IMAGE_SIZE,
-                orig.y / IMAGE_SIZE,
-                orig.width / IMAGE_SIZE,
-                orig.height / IMAGE_SIZE
+                    orig.x / viewer.source.dimensions.x,
+                    orig.y / viewer.source.dimensions.x,
+                    orig.width / viewer.source.dimensions.x,
+                    orig.height / viewer.source.dimensions.x
                 );
                 actual = viewport.imageToViewportRectangle(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -103,7 +90,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('viewportToImageRectangle', function() {
@@ -114,12 +101,12 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(VIEWER_SIZE);
+                orig = testRects[i].times(viewport.getContainerSize().x);
                 expected = new OpenSeadragon.Rect(
-                    orig.x * IMAGE_SIZE,
-                    orig.y * IMAGE_SIZE,
-                    orig.width * IMAGE_SIZE,
-                    orig.height * IMAGE_SIZE
+                    orig.x * viewer.source.dimensions.x,
+                    orig.y * viewer.source.dimensions.x,
+                    orig.width * viewer.source.dimensions.x,
+                    orig.height * viewer.source.dimensions.x
                 );
                 actual = viewport.viewportToImageRectangle(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -128,7 +115,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('viewerElementToImageCoordinates', function() {
@@ -139,7 +126,7 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(VIEWER_SIZE);
+                orig = testPoints[i].times(viewport.getContainerSize().x);
                 expected = orig.times(ZOOM_FACTOR);
                 actual = viewport.viewerElementToImageCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -148,7 +135,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('imageToViewerElementCoordinates', function() {
@@ -159,7 +146,7 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(IMAGE_SIZE);
+                orig = testPoints[i].times(viewer.source.dimensions.x);
                 expected = orig.divide(ZOOM_FACTOR);
                 actual = viewport.imageToViewerElementCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
@@ -168,7 +155,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
    asyncTest('windowToImageCoordinates', function() {
@@ -177,10 +164,11 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
+            var window_boundary = Math.min(window.innerWidth, window.innerHeight);
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(3000);
-                expected = orig.divide(VIEWER_SIZE).plus(VIEWER_PADDING);
+                orig = testPoints[i].times(window_boundary);
+                expected = orig.divide(viewport.getContainerSize().x).plus(VIEWER_PADDING);
                 actual = viewport.windowToViewportCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -188,7 +176,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('imageToWindowCoordinates', function() {
@@ -199,8 +187,7 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                // Test image is IMAGE_SIZE x IMAGE_SIZE
-                orig = testPoints[i].times(IMAGE_SIZE);
+                orig = testPoints[i].times(viewer.source.dimensions.x);
                 position = viewer.element.getBoundingClientRect();
                 expected = orig.divide(ZOOM_FACTOR).plus( new OpenSeadragon.Point(position.top, position.left) );
                 actual = viewport.imageToWindowCoordinates(orig);
@@ -210,19 +197,20 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
-    asyncTest('WindowToViewportCoordinates', function() {
+    asyncTest('windowToViewportCoordinates', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
+            var window_boundary = Math.min(window.innerWidth, window.innerHeight);
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(3000);
-                expected = orig.divide(VIEWER_SIZE).plus(VIEWER_PADDING);
+                orig = testPoints[i].times(window_boundary);
+                expected = orig.divide(viewport.getContainerSize().x).plus(VIEWER_PADDING);
                 actual = viewport.windowToViewportCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -230,7 +218,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('viewportToWindowCoordinates', function() {
@@ -241,9 +229,8 @@
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
-                // Test image is IMAGE_SIZE x IMAGE_SIZE
-                orig = testPoints[i].times(IMAGE_SIZE);
-                expected = orig.minus(VIEWER_PADDING).times(VIEWER_SIZE);
+                orig = testPoints[i].times(viewer.source.dimensions.x);
+                expected = orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x);
                 actual = viewport.viewportToWindowCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -251,7 +238,7 @@
             start();
         };
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('viewportToImageZoom', function() {
@@ -271,7 +258,7 @@
         };
 
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('imageToViewportZoom', function() {
@@ -292,7 +279,7 @@
         };
 
         viewer.addHandler('open', openHandler);
-        viewer.open('/test/data/testpattern.dzi');
+        viewer.open(DZI_PATH);
     });
 
 })();
