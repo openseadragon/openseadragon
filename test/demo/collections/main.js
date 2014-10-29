@@ -7,14 +7,14 @@
             var self = this;
 
             this.viewer = OpenSeadragon( {
-                debugMode: true,
+                // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             } );
 
-            this.crossTest();
+            this.crossTest3();
         },
 
         // ----------
@@ -44,6 +44,53 @@
                 x: 1.5,
                 y: 0,
                 width: 1
+            });
+        },
+
+        // ----------
+        crossTest2: function() {
+            this.viewer.open([
+                {
+                    tileSource: "../../data/tall.dzi",
+                    x: 1.5,
+                    y: 0,
+                    width: 1
+                }, {
+                    tileSource: '../../data/wide.dzi',
+                    opacity: 1,
+                    x: 0,
+                    y: 1.5,
+                    height: 1
+                }
+            ]);
+        },
+
+        // ----------
+        crossTest3: function() {
+            var self = this;
+            var expected = 2;
+            var loaded = 0;
+
+            this.viewer.world.addHandler('add-item', function() {
+                loaded++;
+                if (loaded === expected) {
+                    // self.viewer.viewport.goHome();
+                }
+            });
+
+            this.viewer.addTiledImage({
+                tileSource: "../../data/tall.dzi",
+                x: 1.5,
+                y: 0,
+                width: 1
+            });
+
+            this.viewer.addTiledImage({
+                tileSource: '../../data/wide.dzi',
+                opacity: 1,
+                x: 0,
+                y: 1.5,
+                height: 1
             });
         },
 

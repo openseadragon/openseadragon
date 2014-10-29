@@ -35,10 +35,7 @@
 (function( $ ){
 
 // dictionary from hash to private properties
-var THIS = {},
-// We keep a list of viewers so we can 'wake-up' each viewer on
-// a page after toggling between fullpage modes
-    VIEWERS = {};
+var THIS = {};
 
 /**
  *
@@ -409,6 +406,9 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
     this.bindSequenceControls();
 
+    THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
+
+    // Create the world
     this.world = new $.World({
         viewer: this
     });
@@ -418,7 +418,14 @@ $.Viewer = function( options ) {
             _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
 
+        // For backwards compatibility, we maintain the source property
+        _this.source = _this.world.getItemAt(0).source;
+
         THIS[ _this.hash ].forceRedraw = true;
+
+        if (!_this._updateRequestId) {
+            _this._updateRequestId = scheduleUpdate( _this, updateMulti );
+        }
     });
 
     this.world.addHandler('remove-item', function(event) {
@@ -426,9 +433,113 @@ $.Viewer = function( options ) {
             _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
 
+        // For backwards compatibility, we maintain the source property
+        if (_this.world.getItemCount()) {
+            _this.source = _this.world.getItemAt(0).source;
+        } else {
+            _this.source = null;
+        }
+
         THIS[ _this.hash ].forceRedraw = true;
     });
 
+    this.world.addHandler('item-index-changed', function(event) {
+        // For backwards compatibility, we maintain the source property
+        _this.source = _this.world.getItemAt(0).source;
+    });
+
+    // Create the viewport
+    this.viewport = new $.Viewport({
+        containerSize:      THIS[ this.hash ].prevContainerSize,
+        springStiffness:    this.springStiffness,
+        animationTime:      this.animationTime,
+        minZoomImageRatio:  this.minZoomImageRatio,
+        maxZoomPixelRatio:  this.maxZoomPixelRatio,
+        visibilityRatio:    this.visibilityRatio,
+        wrapHorizontal:     this.wrapHorizontal,
+        wrapVertical:       this.wrapVertical,
+        defaultZoomLevel:   this.defaultZoomLevel,
+        minZoomLevel:       this.minZoomLevel,
+        maxZoomLevel:       this.maxZoomLevel,
+        viewer:             this,
+        degrees:            this.degrees,
+        navigatorRotate:    this.navigatorRotate,
+        homeFillsViewer:    this.homeFillsViewer
+    });
+
+    // Create the image loader
+    this.imageLoader = new $.ImageLoader();
+
+    // Create the tile cache
+    this.tileCache = new $.TileCache({
+        maxImageCacheCount: this.maxImageCacheCount
+    });
+
+    // Create the drawer
+    this.drawer = new $.Drawer({
+        viewer:             this,
+        viewport:           this.viewport,
+        element:            this.canvas,
+        opacity:            this.opacity,
+        debugGridColor:     this.debugGridColor
+    });
+
+    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
+    if (!this.drawer.canRotate()) {
+        // Disable/remove the rotate left/right buttons since they aren't supported
+        if (this.rotateLeft) {
+            i = this.buttons.buttons.indexOf(this.rotateLeft);
+            this.buttons.buttons.splice(i, 1);
+            this.buttons.element.removeChild(this.rotateLeft.element);
+        }
+        if (this.rotateRight) {
+            i = this.buttons.buttons.indexOf(this.rotateRight);
+            this.buttons.buttons.splice(i, 1);
+            this.buttons.element.removeChild(this.rotateRight.element);
+        }
+    }
+
+    //Instantiate a navigator if configured
+    if ( this.showNavigator){
+        this.navigator = new $.Navigator({
+            id:                this.navigatorId,
+            position:          this.navigatorPosition,
+            sizeRatio:         this.navigatorSizeRatio,
+            maintainSizeRatio: this.navigatorMaintainSizeRatio,
+            top:               this.navigatorTop,
+            left:              this.navigatorLeft,
+            width:             this.navigatorWidth,
+            height:            this.navigatorHeight,
+            autoResize:        this.navigatorAutoResize,
+            tileHost:          this.tileHost,
+            prefixUrl:         this.prefixUrl,
+            viewer:            this,
+            navigatorRotate:   this.navigatorRotate
+        });
+    }
+
+    //Instantiate a referencestrip if configured
+    if ( this.showReferenceStrip ){
+        this.referenceStrip = new $.ReferenceStrip({
+            id:          this.referenceStripElement,
+            position:    this.referenceStripPosition,
+            sizeRatio:   this.referenceStripSizeRatio,
+            scroll:      this.referenceStripScroll,
+            height:      this.referenceStripHeight,
+            width:       this.referenceStripWidth,
+            tileSources: this.tileSources,
+            tileHost:    this.tileHost,
+            prefixUrl:   this.prefixUrl,
+            viewer:      this
+        });
+    }
+
+    // Create initial overlays
+    for ( i = 0; i < this.overlays.length; i++ ) {
+        this.currentOverlays[ i ] = getOverlayObject( this, this.overlays[ i ] );
+    }
+
+    // Open initial tilesources
     if ( initialTileSource ) {
         this.open( initialTileSource );
 
@@ -437,6 +548,7 @@ $.Viewer = function( options ) {
         }
     }
 
+    // Add custom controls
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
             this.customControls[ i ].id,
@@ -444,10 +556,10 @@ $.Viewer = function( options ) {
         );
     }
 
+    // Initial fade out
     $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
-    } );    // initial fade out
-
+    } );
 };
 
 $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, /** @lends OpenSeadragon.Viewer.prototype */{
@@ -458,7 +570,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {Boolean}
      */
     isOpen: function () {
-        return !!this.source;
+        return !!this.world.getItemCount();
     },
 
     /**
@@ -508,27 +620,120 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function ( tileSource, options ) {
+    open: function (tileSources) {
         var _this = this;
 
-        _this._hideMessage();
+        this.close();
 
-        getTileSourceImplementation( _this, tileSource, function( tileSource ) {
-            openTileSource( _this, tileSource, options );
-        }, function( event ) {
-            /**
-             * Raised when an error occurs loading a TileSource.
-             *
-             * @event open-failed
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {String} message
-             * @property {String} source
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            _this.raiseEvent( 'open-failed', event );
-        });
+        if (!tileSources) {
+            return;
+        }
+
+        if (!$.isArray(tileSources)) {
+            tileSources = [tileSources];
+        }
+
+        if (!tileSources.length) {
+            return;
+        }
+
+        var expected = tileSources.length;
+        var successes = 0;
+        var failures = 0;
+        var failEvent;
+
+        var checkCompletion = function() {
+            if (successes + failures === expected) {
+                if (successes) {
+                    if (!_this.preserveViewport) {
+                        _this.viewport.goHome( true );
+                    }
+
+                    var source = tileSources[0];
+                    if (source.tileSource) {
+                        source = source.tileSource;
+                    }
+
+                    /**
+                     * Raised when the viewer has opened and loaded one or more TileSources.
+                     *
+                     * @event open
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                     * @property {OpenSeadragon.TileSource} source - The tile source that was opened.
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    // TODO: what if there are multiple sources?
+                    _this.raiseEvent( 'open', { source: source } );
+                } else {
+                    /**
+                     * Raised when an error occurs loading a TileSource.
+                     *
+                     * @event open-failed
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                     * @property {String} message - Information about what failed.
+                     * @property {String} source - The tile source that failed.
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    _this.raiseEvent( 'open-failed', failEvent );
+                }
+            }
+        };
+
+        var doOne = function(options) {
+            if (!$.isPlainObject(options) || !options.tileSource) {
+                options = {
+                    tileSource: options
+                };
+            }
+
+            if (options.index !== undefined) {
+                $.console.error('[Viewer.open] setting indexes here is not supported; use addTiledImage instead');
+                delete options.index;
+            }
+
+            var originalSuccess = options.success;
+            options.success = function(event) {
+                successes++;
+
+                if (originalSuccess) {
+                    originalSuccess(event);
+                }
+
+                checkCompletion();
+            };
+
+            var originalError = options.error;
+            options.error = function(event) {
+                failures++;
+
+                if (!failEvent) {
+                    failEvent = event;
+                }
+
+                if (originalError) {
+                    originalError(event);
+                }
+
+                checkCompletion();
+            };
+
+            _this.addTiledImage(options);
+
+            // For backwards compatibility. TODO: deprecate.
+            if (options.tileSource.overlays) {
+                for (var i = 0; i < options.tileSource.overlays.length; i++) {
+                    _this.addOverlay(options.tileSource.overlays[i]);
+                }
+            }
+        };
+
+        for (var i = 0; i < tileSources.length; i++) {
+            doOne(tileSources[i]);
+        }
 
         return this;
     },
@@ -546,11 +751,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        if ( this._updateRequestId !== null ) {
-            $.cancelAnimationFrame( this._updateRequestId );
-            this._updateRequestId = null;
-        }
-
         if ( this.navigator ) {
             this.navigator.close();
         }
@@ -558,20 +758,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.clearOverlays();
         this.overlaysContainer.innerHTML = "";
 
-        if ( this.drawer ) {
-            this.drawer.destroy();
-        }
-
-        this.source     = null;
-        this.drawer     = null;
-
+        THIS[ this.hash ].animating = false;
         this.world.removeAll();
-
-        this.viewport   = this.preserveViewport ? this.viewport : null;
-
-
-        VIEWERS[ this.hash ] = null;
-        delete VIEWERS[ this.hash ];
 
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
@@ -608,6 +796,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+
+        if ( this._updateRequestId !== null ) {
+            $.cancelAnimationFrame( this._updateRequestId );
+            this._updateRequestId = null;
+        }
+
+        if ( this.drawer ) {
+            this.drawer.destroy();
+        }
 
         this.removeAllHandlers();
 
@@ -1068,7 +1265,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Number} [options.width=1] The width for the image in world coordinates.
      * @param {Number} [options.height] The height for the image in world coordinates.
      * @param {Function} [options.success] A function that gets called when the image is
-     * successfully added. It's passed a single parameter: the resulting TiledImage.
+     * successfully added. It's passed the event object which contains a single property:
+     * "item", the resulting TiledImage.
+     * @param {Function} [options.error] A function that gets called if the image is
+     * unable to be added. It's passed the error event object, which contains "message"
+     * and "source" properties.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1079,9 +1280,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var _this = this,
             tileSource = options.tileSource;
 
-        if ( !this.isOpen() ) {
-            throw new Error( "An image must be loaded before adding additional images." );
-        }
+        this._hideMessage();
 
         function raiseAddItemFailed( event ) {
              /**
@@ -1096,13 +1295,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             _this.raiseEvent( 'add-item-failed', event );
+
+            if (options.error) {
+                options.error(event);
+            }
         }
 
         getTileSourceImplementation( this, tileSource, function( tileSource ) {
 
             if ( tileSource instanceof Array ) {
                 raiseAddItemFailed({
-                    message: "[Viewer.addTiledImage] Sequences can not be added.",
+                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
                     source: tileSource,
                     options: options
                 });
@@ -1136,6 +1339,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 index: options.index
             });
 
+            if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
+                _this.viewport.goHome(true);
+            }
+
             if (_this.navigator) {
                 var optionsClone = $.extend({}, options, {
                     originalTiledImage: tiledImage,
@@ -1146,7 +1353,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             if (options.success) {
-                options.success(tiledImage);
+                options.success({
+                    item: tiledImage
+                });
             }
         }, function( event ) {
             event.options = options;
@@ -1163,22 +1372,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         $.console.error( "[Viewer.addLayer] this function is deprecated; use Viewer.addTiledImage() instead." );
 
-        var addItemHandler = function(event) {
-            self.world.removeHandler("add-item", addItemHandler);
-            self.raiseEvent("add-layer", {
-                options: options,
-                drawer: event.item
-            });
-        };
+        var optionsClone = $.extend({}, options, {
+            success: function(event) {
+                self.raiseEvent("add-layer", {
+                    options: options,
+                    drawer: event.item
+                });
+            },
+            error: function(event) {
+                self.raiseEvent("add-layer-failed", event);
+            }
+        });
 
-        var failureHandler = function(event) {
-            self.removeHandler("add-item-failed", failureHandler);
-            self.raiseEvent("add-layer-failed", event);
-        };
-
-        this.world.addHandler("add-item", addItemHandler);
-        this.addHandler("add-item-failed", failureHandler);
-        this.addTiledImage(options);
+        this.addTiledImage(optionsClone);
         return this;
     },
 
@@ -1778,8 +1984,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
 /**
  * _getSafeElemSize is like getElementSize(), but refuses to return 0 for x or y,
- * which was causing some calling operations in updateOnce and openTileSource to
- * return NaN.
+ * which was causing some calling operations to return NaN.
  * @returns {Point}
  * @private
  */
@@ -1845,214 +2050,6 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
             successCallback( tileSource );
         }
     }, 1 );
-}
-
-/**
- * @function
- * @private
- */
-function openTileSource( viewer, source, options ) {
-    var i,
-        _this = viewer;
-
-    options = options || {};
-
-    if ( _this.source ) {
-        _this.close( );
-    }
-
-    THIS[ _this.hash ].prevContainerSize = _getSafeElemSize( _this.container );
-
-
-    if( _this.collectionMode ){
-        _this.source = new $.TileSourceCollection({
-            rows: _this.collectionRows,
-            layout: _this.collectionLayout,
-            tileSize: _this.collectionTileSize,
-            tileSources: _this.tileSources,
-            tileMargin: _this.collectionTileMargin
-        });
-        _this.viewport = _this.viewport ? _this.viewport : new $.Viewport({
-            collectionMode:         true,
-            collectionTileSource:   _this.source,
-            containerSize:          THIS[ _this.hash ].prevContainerSize,
-            springStiffness:        _this.springStiffness,
-            animationTime:          _this.animationTime,
-            showNavigator:          false,
-            minZoomImageRatio:      1,
-            maxZoomPixelRatio:      1,
-            viewer:                 _this,
-            degrees:                 _this.degrees //,
-            //TODO: figure out how to support these in a way that makes sense
-            //minZoomLevel:           this.minZoomLevel,
-            //maxZoomLevel:           this.maxZoomLevel,
-            //homeFillsViewer:        this.homeFillsViewer
-        });
-    } else {
-        if( source ){
-            _this.source = source;
-        }
-        _this.viewport = _this.viewport ? _this.viewport : new $.Viewport({
-            containerSize:      THIS[ _this.hash ].prevContainerSize,
-            springStiffness:    _this.springStiffness,
-            animationTime:      _this.animationTime,
-            minZoomImageRatio:  _this.minZoomImageRatio,
-            maxZoomPixelRatio:  _this.maxZoomPixelRatio,
-            visibilityRatio:    _this.visibilityRatio,
-            wrapHorizontal:     _this.wrapHorizontal,
-            wrapVertical:       _this.wrapVertical,
-            defaultZoomLevel:   _this.defaultZoomLevel,
-            minZoomLevel:       _this.minZoomLevel,
-            maxZoomLevel:       _this.maxZoomLevel,
-            viewer:             _this,
-            degrees:            _this.degrees,
-            navigatorRotate:    _this.navigatorRotate,
-            homeFillsViewer:    _this.homeFillsViewer
-        });
-    }
-
-    // TODO: what to do about this?
-    // if( _this.preserveViewport ){
-    //     _this.viewport.resetContentSize( _this.source.dimensions );
-    // }
-
-    _this.source.overlays = _this.source.overlays || [];
-
-    _this.imageLoader = new $.ImageLoader();
-
-    _this.tileCache = new $.TileCache({
-        maxImageCacheCount: _this.maxImageCacheCount
-    });
-
-    _this.drawer = new $.Drawer({
-        viewer:             _this,
-        viewport:           _this.viewport,
-        element:            _this.canvas,
-        opacity:            _this.opacity,
-        debugGridColor:     _this.debugGridColor
-    });
-
-    var tiledImage = new $.TiledImage({
-        viewer:             _this,
-        source:             _this.source,
-        viewport:           _this.viewport,
-        drawer:             _this.drawer,
-        tileCache:          _this.tileCache,
-        imageLoader:        _this.imageLoader,
-        x:                  options.x,
-        y:                  options.y,
-        width:              options.width,
-        height:             options.height,
-        imageLoaderLimit:   _this.imageLoaderLimit,
-        minZoomImageRatio:  _this.minZoomImageRatio,
-        wrapHorizontal:     _this.wrapHorizontal,
-        wrapVertical:       _this.wrapVertical,
-        immediateRender:    _this.immediateRender,
-        blendTime:          _this.blendTime,
-        alwaysBlend:        _this.alwaysBlend,
-        minPixelRatio:      _this.collectionMode ? 0 : _this.minPixelRatio,
-        debugMode:          _this.debugMode,
-        debugGridColor:     _this.debugGridColor,
-        crossOriginPolicy:  _this.crossOriginPolicy
-    });
-
-    _this.world.addItem( tiledImage );
-    _this.viewport.goHome( true );
-
-    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
-    if (!_this.drawer.canRotate()) {
-        // Disable/remove the rotate left/right buttons since they aren't supported
-        if (_this.rotateLeft) {
-            i = _this.buttons.buttons.indexOf(_this.rotateLeft);
-            _this.buttons.buttons.splice(i, 1);
-            _this.buttons.element.removeChild(_this.rotateLeft.element);
-        }
-        if (_this.rotateRight) {
-            i = _this.buttons.buttons.indexOf(_this.rotateRight);
-            _this.buttons.buttons.splice(i, 1);
-            _this.buttons.element.removeChild(_this.rotateRight.element);
-        }
-    }
-
-    //Instantiate a navigator if configured
-    if ( _this.showNavigator  && !_this.collectionMode ){
-        // Note: By passing the fully parsed source, the navigator doesn't
-        // have to load it again.
-        if (!_this.navigator) {
-            _this.navigator = new $.Navigator({
-                id:                _this.navigatorId,
-                position:          _this.navigatorPosition,
-                sizeRatio:         _this.navigatorSizeRatio,
-                maintainSizeRatio: _this.navigatorMaintainSizeRatio,
-                top:               _this.navigatorTop,
-                left:              _this.navigatorLeft,
-                width:             _this.navigatorWidth,
-                height:            _this.navigatorHeight,
-                autoResize:        _this.navigatorAutoResize,
-                tileHost:          _this.tileHost,
-                prefixUrl:         _this.prefixUrl,
-                viewer:            _this,
-                navigatorRotate:   _this.navigatorRotate
-            });
-        }
-
-        var optionsClone = $.extend({}, options, {
-            originalTiledImage: tiledImage
-        });
-
-        _this.navigator.open(source, optionsClone);
-    }
-
-    //Instantiate a referencestrip if configured
-    if ( _this.showReferenceStrip  && !_this.referenceStrip ){
-        _this.referenceStrip = new $.ReferenceStrip({
-            id:          _this.referenceStripElement,
-            position:    _this.referenceStripPosition,
-            sizeRatio:   _this.referenceStripSizeRatio,
-            scroll:      _this.referenceStripScroll,
-            height:      _this.referenceStripHeight,
-            width:       _this.referenceStripWidth,
-            tileSources: _this.tileSources,
-            tileHost:    _this.tileHost,
-            prefixUrl:   _this.prefixUrl,
-            viewer:      _this
-        });
-    }
-
-    //this.profiler = new $.Profiler();
-
-    THIS[ _this.hash ].animating = false;
-    THIS[ _this.hash ].forceRedraw = true;
-    _this._updateRequestId = scheduleUpdate( _this, updateMulti );
-
-    VIEWERS[ _this.hash ] = _this;
-
-    loadOverlays( _this );
-
-    /**
-     * Raised when the viewer has opened and loaded one or more TileSources.
-     *
-     * @event open
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-     * @property {OpenSeadragon.TileSource} source
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    _this.raiseEvent( 'open', { source: source } );
-
-    return _this;
-}
-
-function loadOverlays( _this ) {
-    _this.currentOverlays = [];
-    for ( var i = 0; i < _this.overlays.length; i++ ) {
-        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
-    }
-    for ( var j = 0; j < _this.source.overlays.length; j++ ) {
-        _this.currentOverlays[ i + j ] =
-            getOverlayObject( _this, _this.source.overlays[ j ] );
-    }
 }
 
 function getOverlayObject( viewer, overlay ) {
@@ -2619,16 +2616,13 @@ function onContainerEnter( event ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateMulti( viewer ) {
-    if ( !viewer.source ) {
-        viewer._updateRequestId = null;
-        return;
-    }
-
     updateOnce( viewer );
 
-    // Request the next frame, unless we've been closed during the updateOnce()
-    if ( viewer.source ) {
+    // Request the next frame, unless we've been closed
+    if ( viewer.isOpen() ) {
         viewer._updateRequestId = scheduleUpdate( viewer, updateMulti );
+    } else {
+        viewer._updateRequestId = false;
     }
 }
 
@@ -2636,10 +2630,6 @@ function updateOnce( viewer ) {
 
     var containerSize,
         animated;
-
-    if ( !viewer.source ) {
-        return;
-    }
 
     //viewer.profiler.beginUpdate();
 
@@ -2675,29 +2665,27 @@ function updateOnce( viewer ) {
         abortControlsAutoHide( viewer );
     }
 
-    if ( animated ) {
+    if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
         updateWorld( viewer );
         drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
-        /**
-         * Raised when any spring animation update occurs (zoom, pan, etc.).
-         *
-         * @event animation
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        viewer.raiseEvent( "animation" );
-    } else if ( THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
-        updateWorld( viewer );
-        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
-        if( viewer.navigator ){
-            viewer.navigator.update( viewer.viewport );
-        }
+
         THIS[ viewer.hash ].forceRedraw = false;
+
+        if (animated) {
+            /**
+             * Raised when any spring animation update occurs (zoom, pan, etc.).
+             *
+             * @event animation
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            viewer.raiseEvent( "animation" );
+        }
     }
 
     if ( THIS[ viewer.hash ].animating && !animated ) {
@@ -2733,7 +2721,9 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
     viewport.resize( containerSize, true );
 
     // We try to remove blanks as much as possible
-    var imageHeight = 1 / viewer.source.aspectRatio;
+    var worldBounds = viewer.world.getHomeBounds();
+    var aspectRatio = worldBounds.width / worldBounds.height;
+    var imageHeight = 1 / aspectRatio;
     var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
     var newHeight = oldBounds.height <= imageHeight ?
         oldBounds.height : imageHeight;
