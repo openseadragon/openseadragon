@@ -221,39 +221,9 @@ $.Viewer = function( options ) {
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
-    var initialTileSource;
-
     if ( this.xmlPath  ){
         //Deprecated option.  Now it is preferred to use the tileSources option
         this.tileSources = [ this.xmlPath ];
-    }
-
-    if ( this.tileSources  ){
-        // tileSources is a complex option...
-        //
-        // It can be a string, object, or an array of any of strings and objects.
-        // At this point we only care about if it is an Array or not.
-        //
-        if( $.isArray( this.tileSources ) ){
-
-            //must be a sequence of tileSource since the first item
-            //is a legacy tile source
-            if( this.tileSources.length > 1 ){
-                THIS[ this.hash ].sequenced = true;
-            }
-
-            //Keeps the initial page within bounds
-            if ( this.initialPage > this.tileSources.length - 1 ){
-                this.initialPage = this.tileSources.length - 1;
-            }
-
-            initialTileSource = this.tileSources[ this.initialPage ];
-
-            //Update the sequence (aka currrent page) property
-            THIS[ this.hash ].sequence = this.initialPage;
-        } else {
-            initialTileSource = this.tileSources;
-        }
     }
 
     this.element              = this.element || document.getElementById( this.id );
@@ -540,8 +510,8 @@ $.Viewer = function( options ) {
     }
 
     // Open initial tilesources
-    if ( initialTileSource ) {
-        this.open( initialTileSource );
+    if ( this.tileSources ) {
+        this.open( this.tileSources );
 
         if ( this.tileSources.length > 1 ) {
             this._updateSequenceButtons( this.initialPage );
