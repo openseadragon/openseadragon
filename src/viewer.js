@@ -560,11 +560,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Open tiled images into the viewer.
+     * Open tiled images into the viewer, closing any others.
      * @function
      * @param {Array|String|Object|Function} tileSources - This can be a TiledImage
      * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
-     * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage},
+     * except for the index property; images are added in sequence.
      * A TileSource specifier is anything you could pass as the tileSource property
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
      * @return {OpenSeadragon.Viewer} Chainable.
