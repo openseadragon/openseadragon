@@ -574,48 +574,29 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * A deprecated function, renamed to 'open' to match event name and
-     * match current 'close' method.
-     * @function
-     * @param {String} dzi xml string or the url to a DZI xml document.
-     * @return {OpenSeadragon.Viewer} Chainable.
-     *
-     * @deprecated - use {@link OpenSeadragon.Viewer#open} instead.
+     * @private
      */
     openDzi: function ( dzi ) {
+        $.console.error( "[Viewer.openDzi] this function is deprecated; use Viewer.open() instead." );
         return this.open( dzi );
     },
 
     /**
-     * A deprecated function, renamed to 'open' to match event name and
-     * match current 'close' method.
-     * @function
-     * @param {String|Object|Function} See OpenSeadragon.Viewer.prototype.open
-     * @return {OpenSeadragon.Viewer} Chainable.
-     *
-     * @deprecated - use {@link OpenSeadragon.Viewer#open} instead.
+     * @private
      */
     openTileSource: function ( tileSource ) {
+        $.console.error( "[Viewer.openTileSource] this function is deprecated; use Viewer.open() instead." );
         return this.open( tileSource );
     },
 
     /**
-     * Open a TileSource object into the viewer.
-     *
-     * tileSources is a complex option...
-     *
-     * It can be a string, object, function, or an array of any of these:
-     *
-     * - A String implies a url used to determine the tileSource implementation
-     *      based on the file extension of url. JSONP is implied by *.js,
-     *      otherwise the url is retrieved as text and the resulting text is
-     *      introspected to determine if its json, xml, or text and parsed.
-     * - An Object implies an inline configuration which has a single
-     *      property sufficient for being able to determine tileSource
-     *      implementation. If the object has a property which is a function
-     *      named 'getTileUrl', it is treated as a custom TileSource.
+     * Open tiled images into the viewer.
      * @function
-     * @param {String|Object|Function}
+     * @param {Array|String|Object|Function} tileSources - This can be a TiledImage
+     * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
+     * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * A TileSource specifier is anything you could pass as the tileSource property
+     * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
@@ -1261,7 +1242,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * The other dimension will be calculated according to the item's aspect ratio.
      * @function
      * @param {Object} options
-     * @param {String|Object|Function} options.tileSource - The TileSource of the item.
+     * @param {String|Object|Function} options.tileSource - The TileSource specifier.
+     * A String implies a url used to determine the tileSource implementation
+     *      based on the file extension of url. JSONP is implied by *.js,
+     *      otherwise the url is retrieved as text and the resulting text is
+     *      introspected to determine if its json, xml, or text and parsed.
+     * An Object implies an inline configuration which has a single
+     *      property sufficient for being able to determine tileSource
+     *      implementation. If the object has a property which is a function
+     *      named 'getTileUrl', it is treated as a custom TileSource.
      * @param {Number} [options.index] The index of the item. Added on top of
      * all other items if not specified.
      * @param {Number} [options.x=0] The X position for the image in world coordinates.
