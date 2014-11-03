@@ -234,6 +234,11 @@ $.Viewer = function( options ) {
     }
 
     if ( this.tileSources  ){
+        if(typeof this.tileSources === 'string') {
+            // Wrap the String into an array, to show a proper referenceStrip
+            this.tileSources = [this.tileSources];
+        }
+
         // tileSources is a complex option...
         //
         // It can be a string, object, or an array of any of strings and objects.
@@ -246,14 +251,14 @@ $.Viewer = function( options ) {
             if( this.tileSources.length > 1 ){
                 THIS[ this.hash ].sequenced = true;
             }
-            
+
             //Keeps the initial page within bounds
             if ( this.initialPage > this.tileSources.length - 1 ){
                 this.initialPage = this.tileSources.length - 1;
             }
-            
+
             initialTileSource = this.tileSources[ this.initialPage ];
-            
+
             //Update the sequence (aka currrent page) property
             THIS[ this.hash ].sequence = this.initialPage;
         } else {
