@@ -504,11 +504,6 @@ $.Viewer = function( options ) {
         });
     }
 
-    // Create initial overlays
-    for ( i = 0; i < this.overlays.length; i++ ) {
-        this.currentOverlays[ i ] = getOverlayObject( this, this.overlays[ i ] );
-    }
-
     // Open initial tilesources
     if ( this.tileSources ) {
         this.open( this.tileSources );
@@ -606,6 +601,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         source = source.tileSource;
                     }
 
+                    // Global overlays
+                    for ( var i = 0; i < _this.overlays.length; i++ ) {
+                        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+                    }
+
                     /**
                      * Raised when the viewer has opened and loaded one or more TileSources.
                      *
@@ -683,6 +683,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         };
 
+        // TileSources
         for (var i = 0; i < tileSources.length; i++) {
             doOne(tileSources[i]);
         }

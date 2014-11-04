@@ -27,8 +27,26 @@
                 showNavigator: true,
                 id: "contentDiv",
                 tileSources: tileSources,
-                prefixUrl: "../../../build/openseadragon/images/"
+                prefixUrl: "../../../build/openseadragon/images/",
+                overlays: [ {
+                        px: 13,
+                        py: 120,
+                        width: 124,
+                        height: 132,
+                        id: "overlay"
+                    }, {
+                        px: 400,
+                        py: 500,
+                        width: 400,
+                        height: 400,
+                        id: "fixed-overlay",
+                        placement: "TOP_LEFT"
+                    } ]
             } );
+
+            this.viewer.addHandler( "open", function() {
+                // console.log(self.viewer.viewport.contentSize);
+            });
 
             // this.crossTest3();
         },

@@ -144,7 +144,7 @@
             viewer.addHandler( "add-item-failed",
                 function addItemFailedHandler( event ) {
                     viewer.removeHandler( "add-item-failed", addItemFailedHandler );
-                    equal( event.message, "[Viewer.addTiledImage] Sequences can not be added." );
+                    equal( event.message, "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead." );
                     equal( event.options, options, "Item failed event should give the options." );
                     start();
                 } );
