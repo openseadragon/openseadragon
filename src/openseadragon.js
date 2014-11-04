@@ -126,15 +126,9 @@
   *     The element to append the viewer's container element to. If not provided, the 'id' property must be provided.
   *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
   *
-  * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
-  *     As an Array, the tileSource can hold either Objects or mixed
-  *     types of Arrays of Objects, Strings, or Functions. When a value is a String,
-  *     the tileSource is used to create a {@link OpenSeadragon.DziTileSource}.
-  *     When a value is a Function, the function is used to create a new
-  *     {@link OpenSeadragon.TileSource} whose abstract method
-  *     getUrl( level, x, y ) is implemented by the function. Finally, when it
-  *     is an Array of objects, it is used to create a
-  *     {@link OpenSeadragon.LegacyTileSource}.
+  * @property {Array|String|Function|Object} [tileSources=null]
+  *     Tile source(s) to open initially. This is a complex parameter; see
+  *     {@link OpenSeadragon.Viewer#open} for details.
   *
   * @property {Array} overlays Array of objects defining permanent overlays of
   *     the viewer. The overlays added via this option and later removed with

@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.0.0: (in progress)
 
 * True multi-image mode (#450)
+    * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
     * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
         * addTiledImage supports positioning config properties
     * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel

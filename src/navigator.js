@@ -252,6 +252,8 @@ $.Navigator = function( options ){
             }
         }
     });
+
+    this.update(viewer.viewport);
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
@@ -271,7 +273,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 var oldBounds = this.viewport.getBounds();
                 var oldCenter = this.viewport.getCenter();
                 this.viewport.resize( containerSize, true );
-                var imageHeight = 1 / this.source.aspectRatio;
+                var worldBounds = this.world.getHomeBounds();
+                var aspectRatio = worldBounds.width / worldBounds.height;
+                var imageHeight = 1 / aspectRatio;
                 var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
                 var newHeight = oldBounds.height <= imageHeight ?
                     oldBounds.height : imageHeight;
@@ -321,50 +325,23 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         if( viewport && this.viewport ) {
             bounds      = viewport.getBounds( true );
             topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft(), false );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false ).minus( this.totalBorderWidths );
+            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false )
+                .minus( this.totalBorderWidths );
 
             //update style for navigator-box
-            (function(style) {
+            var style = this.displayRegion.style;
+            style.display = this.world.getItemCount() ? 'block' : 'none';
 
-                style.top    = Math.round( topleft.y ) + 'px';
-                style.left   = Math.round( topleft.x ) + 'px';
+            style.top    = Math.round( topleft.y ) + 'px';
+            style.left   = Math.round( topleft.x ) + 'px';
 
-                var width = Math.abs( topleft.x - bottomright.x );
-                var height = Math.abs( topleft.y - bottomright.y );
-                // make sure width and height are non-negative so IE doesn't throw
-                style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
-                style.height = Math.round( Math.max( height, 0 ) ) + 'px';
-
-            }( this.displayRegion.style ));
+            var width = Math.abs( topleft.x - bottomright.x );
+            var height = Math.abs( topleft.y - bottomright.y );
+            // make sure width and height are non-negative so IE doesn't throw
+            style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
+            style.height = Math.round( Math.max( height, 0 ) ) + 'px';
         }
 
-    },
-
-    /**
-     * Overrides Viewer.open
-     * @private
-     */
-    open: function(source, options) {
-        var _this = this;
-
-        var original = options.originalTiledImage;
-        delete options.original;
-
-        this.updateSize();
-        var containerSize = this.viewer.viewport.containerSize.times( this.sizeRatio );
-        var ts = source.getTileSize(source.maxLevel);
-        if ( ts > containerSize.x || ts > containerSize.y ) {
-            this.minPixelRatio = Math.min( containerSize.x, containerSize.y ) / ts;
-        } else {
-            this.minPixelRatio = this.viewer.minPixelRatio;
-        }
-
-        this.addHandler('open', function openHandler() {
-            _this.removeHandler(openHandler);
-            _this.world.getItemAt(0)._originalForNavigator = original;
-        });
-
-        return $.Viewer.prototype.open.apply( this, [source, options] );
     },
 
     /**
@@ -376,8 +353,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         delete options.original;
 
         var optionsClone = $.extend({}, options, {
-            success: function(item) {
-                item._originalForNavigator = original;
+            success: function(event) {
+                event.item._originalForNavigator = original;
             }
         });
 

@@ -106,7 +106,7 @@
                 placement: placement
             };
         }
-        
+
         this.element    = options.element;
         this.scales     = options.location instanceof $.Rect;
         this.bounds     = new $.Rect(

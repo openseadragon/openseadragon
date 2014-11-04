@@ -154,7 +154,7 @@ module.exports = function(grunt) {
         },
         watch: {
             files: [ "Gruntfile.js", "src/*.js", "images/*" ],
-            tasks: "build"
+            tasks: "watchTask"
         },
         jshint: {
             options: {
@@ -209,11 +209,25 @@ module.exports = function(grunt) {
     });
 
     // ----------
+    // Bower task.
+    // Generates the Bower file for site-build.
     grunt.registerTask("bower", function() {
         var path = "../site-build/bower.json";
         var data = grunt.file.readJSON(path);
         data.version = packageJson.version;
         grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
+    });
+
+    // ----------
+    // Watch task.
+    // Called from the watch feature; does a full build or a minbuild, depending on
+    // whether you used --min on the command line.
+    grunt.registerTask("watchTask", function() {
+        if (grunt.option('min')) {
+            grunt.task.run("minbuild");
+        } else {
+            grunt.task.run("build");
+        }
     });
 
     // ----------
@@ -226,7 +240,7 @@ module.exports = function(grunt) {
 
     // ----------
     // Minimal build task.
-    // For use during development as desired.
+    // For use during development as desired. Creates only the unminified version.
     grunt.registerTask("minbuild", [
         "git-describe", "concat", "copy:build"
     ]);

@@ -272,7 +272,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var box;
         for ( var i = 1; i < this._items.length; i++ ) {
             box = this._items[i].getWorldBounds();
-            this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / bounds.width);
+            this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
             left = Math.min( left, box.x );
             top = Math.min( top, box.y );
             right = Math.max( right, box.x + box.width );

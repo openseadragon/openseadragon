@@ -6,6 +6,11 @@
         init: function() {
             var self = this;
 
+            var testInitialOpen = false;
+            var testOverlays = false;
+            var testMargins = false;
+            var margins;
+
             var config = {
                 debugMode: true,
                 zoomPerScroll: 1.02,
@@ -14,9 +19,39 @@
                 prefixUrl: "../../../build/openseadragon/images/"
             };
 
-            var testMargins = false;
+            if (testInitialOpen) {
+                config.tileSources = [
+                    {
+                        tileSource: "../../data/tall.dzi",
+                        x: 1.5,
+                        y: 0,
+                        width: 1
+                    }, {
+                        tileSource: '../../data/wide.dzi',
+                        opacity: 1,
+                        x: 0,
+                        y: 1.5,
+                        height: 1
+                    }
+                ];
+            }
 
-            var margins;
+            if (testOverlays) {
+                config.overlays = [ {
+                    px: 13,
+                    py: 120,
+                    width: 124,
+                    height: 132,
+                    id: "overlay"
+                }, {
+                    px: 400,
+                    py: 500,
+                    width: 400,
+                    height: 400,
+                    id: "fixed-overlay",
+                    placement: "TOP_LEFT"
+                } ];
+            }
 
             if (testMargins) {
                 margins = {
@@ -31,6 +66,12 @@
 
             this.viewer = OpenSeadragon(config);
 
+            if (testInitialOpen) {
+                this.viewer.addHandler( "open", function() {
+                    // console.log(self.viewer.viewport.contentSize);
+                });
+            }
+
             if (testMargins) {
                 this.viewer.addHandler('animation', function() {
                     var box = new OpenSeadragon.Rect(margins.left, margins.top,
@@ -41,6 +82,7 @@
                 });
             }
 
+            // this.crossTest3();
             this.basicTest();
         },
 
@@ -81,6 +123,53 @@
                 x: 1.5,
                 y: 0,
                 width: 1
+            });
+        },
+
+        // ----------
+        crossTest2: function() {
+            this.viewer.open([
+                {
+                    tileSource: "../../data/tall.dzi",
+                    x: 1.5,
+                    y: 0,
+                    width: 1
+                }, {
+                    tileSource: '../../data/wide.dzi',
+                    opacity: 1,
+                    x: 0,
+                    y: 1.5,
+                    height: 1
+                }
+            ]);
+        },
+
+        // ----------
+        crossTest3: function() {
+            var self = this;
+            var expected = 2;
+            var loaded = 0;
+
+            this.viewer.world.addHandler('add-item', function() {
+                loaded++;
+                if (loaded === expected) {
+                    // self.viewer.viewport.goHome();
+                }
+            });
+
+            this.viewer.addTiledImage({
+                tileSource: "../../data/tall.dzi",
+                x: 1.5,
+                y: 0,
+                width: 1
+            });
+
+            this.viewer.addTiledImage({
+                tileSource: '../../data/wide.dzi',
+                opacity: 1,
+                x: 0,
+                y: 1.5,
+                height: 1
             });
         },
 
