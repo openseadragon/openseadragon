@@ -256,6 +256,10 @@
   *     achieved.  Setting this to 0 and wrapHorizontal ( or wrapVertical ) to
   *     true will provide the effect of an infinitely scrolling viewport.
   *
+  * @property {Object} [viewportMargins={}]
+  *     Pushes the "home" region in from the sides by the specified amounts.
+  *     Possible subproperties (Numbers, in screen coordinates): left, top, right, bottom.
+  *
   * @property {Number} [imageLoaderLimit=0]
   *     The maximum number of image requests to make concurrently.  By default
   *     it is set to 0 allowing the browser to make the maximum number of

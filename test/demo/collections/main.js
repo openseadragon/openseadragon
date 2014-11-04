@@ -6,49 +6,94 @@
         init: function() {
             var self = this;
 
-            var tileSources = [
-                {
-                    tileSource: "../../data/tall.dzi",
-                    x: 1.5,
-                    y: 0,
-                    width: 1
-                }, {
-                    tileSource: '../../data/wide.dzi',
-                    opacity: 1,
-                    x: 0,
-                    y: 1.5,
-                    height: 1
-                }
-            ];
+            var testInitialOpen = false;
+            var testOverlays = false;
+            var testMargins = false;
+            var margins;
 
-            this.viewer = OpenSeadragon( {
-                // debugMode: true,
+            var config = {
+                debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: true,
                 id: "contentDiv",
-                tileSources: tileSources,
-                prefixUrl: "../../../build/openseadragon/images/",
-                overlays: [ {
-                        px: 13,
-                        py: 120,
-                        width: 124,
-                        height: 132,
-                        id: "overlay"
-                    }, {
-                        px: 400,
-                        py: 500,
-                        width: 400,
-                        height: 400,
-                        id: "fixed-overlay",
-                        placement: "TOP_LEFT"
-                    } ]
-            } );
+                prefixUrl: "../../../build/openseadragon/images/"
+            };
 
-            this.viewer.addHandler( "open", function() {
-                // console.log(self.viewer.viewport.contentSize);
-            });
+            if (testInitialOpen) {
+                config.tileSources = [
+                    {
+                        tileSource: "../../data/tall.dzi",
+                        x: 1.5,
+                        y: 0,
+                        width: 1
+                    }, {
+                        tileSource: '../../data/wide.dzi',
+                        opacity: 1,
+                        x: 0,
+                        y: 1.5,
+                        height: 1
+                    }
+                ];
+            }
+
+            if (testOverlays) {
+                config.overlays = [ {
+                    px: 13,
+                    py: 120,
+                    width: 124,
+                    height: 132,
+                    id: "overlay"
+                }, {
+                    px: 400,
+                    py: 500,
+                    width: 400,
+                    height: 400,
+                    id: "fixed-overlay",
+                    placement: "TOP_LEFT"
+                } ];
+            }
+
+            if (testMargins) {
+                margins = {
+                    top: 250,
+                    left: 250,
+                    right: 250,
+                    bottom: 250
+                };
+
+                config.viewportMargins = margins;
+            }
+
+            this.viewer = OpenSeadragon(config);
+
+            if (testInitialOpen) {
+                this.viewer.addHandler( "open", function() {
+                    // console.log(self.viewer.viewport.contentSize);
+                });
+            }
+
+            if (testMargins) {
+                this.viewer.addHandler('animation', function() {
+                    var box = new OpenSeadragon.Rect(margins.left, margins.top,
+                        $('#contentDiv').width() - (margins.left + margins.right),
+                        $('#contentDiv').height() - (margins.top + margins.bottom));
+
+                    self.viewer.drawer.debugRect(box);
+                });
+            }
 
             // this.crossTest3();
+            this.basicTest();
+        },
+
+        // ----------
+        basicTest: function() {
+            var self = this;
+
+            this.viewer.addHandler('open', function() {
+            });
+
+            this.viewer.open("../../data/testpattern.dzi");
         },
 
         // ----------
@@ -177,6 +222,40 @@
                 y: -2,
                 width: 6
             });
+        },
+
+        // ----------
+        cjTest: function() {
+            var imageKey = "e-pluribus-unum";
+            var imageXML = '<?xml version="1.0" encoding="UTF-8"?><Image TileSize="254" Overlap="1" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="88560" Height="88560"/></Image>';
+            var $xml = $($.parseXML(imageXML));
+            var $image = $xml.find('Image');
+            var $size = $xml.find('Size');
+
+            var dzi = {
+                Image: {
+                    xmlns: $image.attr('xmlns'),
+                    Url: "http://chrisjordan.com/dzi/" + imageKey + '_files/',
+                    Format: $image.attr('Format'),
+                    Overlap: $image.attr('Overlap'),
+                    TileSize: $image.attr('TileSize'),
+                    Size: {
+                        Height: $size.attr('Height'),
+                        Width: $size.attr('Width')
+                    }
+                }
+            };
+
+            this.viewer.open(dzi, {
+                width: 100
+            });
+        },
+
+        // ----------
+        stanfordTest: function() {
+            var info = {"@context":"http://library.stanford.edu/iiif/image-api/1.1/context.json","@id":"http://ids.lib.harvard.edu/ids/iiif/48530377","width":6251,"height":109517,"scale_factors":[1,2,4,8,16,32],"tile_width":256,"tile_height":256,"formats":["jpg"],"qualities":["native"],"profile":"http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"};
+
+            this.viewer.open(info);
         }
     };
 

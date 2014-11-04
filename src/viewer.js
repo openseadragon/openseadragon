@@ -434,7 +434,8 @@ $.Viewer = function( options ) {
         viewer:             this,
         degrees:            this.degrees,
         navigatorRotate:    this.navigatorRotate,
-        homeFillsViewer:    this.homeFillsViewer
+        homeFillsViewer:    this.homeFillsViewer,
+        margins:            this.viewportMargins
     });
 
     // Create the image loader
