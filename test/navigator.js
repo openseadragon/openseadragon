@@ -765,11 +765,11 @@ QUnit.config.autostart = false;
         var openHandler1 = function(event) {
             viewer.removeHandler('open', openHandler1);
             ok(viewer.navigator, 'navigator exists');
-            viewer.navigator.addHandler('open', navOpenHandler1);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler1);
         };
 
         var navOpenHandler1 = function(event) {
-            viewer.navigator.removeHandler('open', navOpenHandler1);
+            viewer.navigator.world.removeHandler('add-item', navOpenHandler1);
             equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             ok(viewer.navigator._updateRequestId, 'navigator timer is on');
             viewer.addHandler('close', closeHandler1);
@@ -785,11 +785,11 @@ QUnit.config.autostart = false;
 
         var openHandler2 = function(event) {
             viewer.removeHandler('open', openHandler2);
-            viewer.navigator.addHandler('open', navOpenHandler2);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler2);
         };
 
         var navOpenHandler2 = function(event) {
-            viewer.navigator.removeHandler('open', navOpenHandler2);
+            viewer.navigator.world.removeHandler('add-item', navOpenHandler2);
             equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             viewer.addHandler('close', closeHandler2);
             viewer.close();
@@ -797,9 +797,8 @@ QUnit.config.autostart = false;
 
         var closeHandler2 = function(event) {
             viewer.removeHandler('close', closeHandler2);
-            ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
             setTimeout(function() {
-                ok(!viewer.navigator._updateRequestId, 'navigator timer is still off');
+                ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
                 timeWatcher.done();
             }, 100);
         };
