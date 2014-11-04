@@ -1907,7 +1907,8 @@ function openTileSource( viewer, source, options ) {
             viewer:             _this,
             degrees:            _this.degrees,
             navigatorRotate:    _this.navigatorRotate,
-            homeFillsViewer:    _this.homeFillsViewer
+            homeFillsViewer:    _this.homeFillsViewer,
+            margins:            _this.viewportMargins
         });
     }
 
