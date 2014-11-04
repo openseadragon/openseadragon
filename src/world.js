@@ -35,14 +35,12 @@
 (function( $ ){
 
 /**
- * Keeps track of all of the tiled images in the scene.
- *
  * @class World
- * @classdesc
- *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
- * @param {OpenSeadragon.Options} options - World options.
+ * @classdesc Keeps track of all of the tiled images in the scene.
+ * @param {Object} options - World options.
+ * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
  **/
 $.World = function( options ) {
     $.console.assert( options.viewer, "[World] options.viewer is required" );
@@ -59,7 +57,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Add the specified item.
      * @param {OpenSeadragon.TiledImage} item - The item to add.
-     * @param {Number} options.index - index for the item (optional).
+     * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
      */
     addItem: function( item, options ) {
@@ -83,7 +81,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
          * @memberOf OpenSeadragon.World
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the World which raised the event.
-         * @property {OpenSeadragon.Drawer} item - The item that has been added
+         * @property {OpenSeadragon.TiledImage} item - The item that has been added.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'add-item', {
@@ -112,7 +110,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
-     * Get the number of items used.
      * @returns {Number} The number of items used.
      */
     getItemCount: function() {
@@ -164,7 +161,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Remove an item.
-     * @function
      * @param {OpenSeadragon.TiledImage} item - The item to remove.
      * @fires OpenSeadragon.World.event:remove-item
      */
@@ -184,7 +180,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Remove all items.
-     * @function
      * @fires OpenSeadragon.World.event:remove-item
      */
     removeAll: function() {
@@ -200,7 +195,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Clears all tiles and triggers updates for all items.
-     * @function
      */
     resetItems: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
@@ -210,7 +204,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Updates (i.e. draws) all items.
-     * @function
      */
     update: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
@@ -221,7 +214,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
-     * @function
      * @returns {Boolean} true if any items need updating.
      */
     needsUpdate: function() {
@@ -234,8 +226,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
-     * @function
-     * @returns {OpenSeadragon.Rect} the smallest rectangle that encloses all items, in world coordinates.
+     * @returns {OpenSeadragon.Rect} The smallest rectangle that encloses all items, in world coordinates.
      */
     getHomeBounds: function() {
         return this._homeBounds.clone();
@@ -245,17 +236,13 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * To facilitate zoom constraints, we keep track of the pixel density of the
      * densest item in the World (i.e. the item whose content size to world size
      * ratio is the highest) and save it as this "content factor".
-     * @function
      * @returns {Number} the number of content units per world unit.
      */
     getContentFactor: function() {
         return this._contentFactor;
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // private
     _figureSizes: function() {
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
@@ -284,10 +271,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             this._homeBounds.height * this._contentFactor);
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // private
     _raiseRemoveItem: function(item) {
         /**
          * Raised when a item is removed.

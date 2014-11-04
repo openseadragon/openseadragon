@@ -36,16 +36,35 @@
 
 /**
  * @class TiledImage
+ * @memberof OpenSeadragon
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened.
- *
- * @memberof OpenSeadragon
+ * @param {Object} options - Configuration for this TiledImage.
+ * @param {OpenSeadragon.TileSource} options.source - The TileSource that defines this TiledImage.
+ * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this TiledImage.
+ * @param {OpenSeadragon.TileCache} options.tileCache - The TileCache for this TiledImage to use.
+ * @param {OpenSeadragon.Drawer} options.drawer - The Drawer for this TiledImage to draw onto.
+ * @param {OpenSeadragon.ImageLoader} options.imageLoader - The ImageLoader for this TiledImage to use.
+ * @param {Number} [options.x=0] - Left position, in world coordinates.
+ * @param {Number} [options.y=0] - Top position, in world coordinates.
+ * @param {Number} [options.width=1] - Width, in world coordinates.
+ * @param {Number} [options.height] - Height, in world coordinates.
+ * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapHorizontal] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapVertical] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.immediateRender] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
+    $.console.assert( options.source, "[TiledImage] options.source is required" );
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
@@ -109,11 +128,8 @@ $.TiledImage = function( options ) {
 
 $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
-     * Returns whether the TiledImage is scheduled for an update at the
-     *      soonest possible opportunity.
-     * @method
-     * @returns {Boolean} - Whether the TiledImage is scheduled for an update at the
-     *      soonest possible opportunity.
+     * @returns {Boolean} Whether the TiledImage is scheduled for an update at the
+     * soonest possible opportunity.
      */
     needsUpdate: function() {
         return this.updateAgain;
@@ -121,42 +137,40 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
 
     /**
      * Clears all tiles and triggers an update on the next call to
-     * TiledImage.prototype.update().
-     * @method
-     * @return {OpenSeadragon.TiledImage} Chainable.
+     * {@link OpenSeadragon.TiledImage#update}.
      */
     reset: function() {
         this._tileCache.clearTilesFor(this);
         this.lastResetTime = $.now();
         this.updateAgain = true;
-        return this;
     },
 
     /**
      * Forces the TiledImage to update.
-     * @method
-     * @return {OpenSeadragon.TiledImage} Chainable.
      */
     update: function() {
         this.midUpdate = true;
         updateViewport( this );
         this.midUpdate = false;
-        return this;
     },
 
     /**
-     * Destroy the TiledImage (unload current loaded tiles)
-     * @method
-     * @return null
+     * Destroy the TiledImage (unload current loaded tiles).
      */
     destroy: function() {
         this.reset();
     },
 
+    /**
+     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
+     */
     getWorldBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
     },
 
+    /**
+     * @returns {OpenSeadragon.Point} This TiledImage's content size, in original pixels.
+     */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     }

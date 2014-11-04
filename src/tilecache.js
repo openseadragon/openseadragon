@@ -34,17 +34,22 @@
 
 (function( $ ){
 
-var TileRecord = function( params ) {
-    $.console.assert( params, "[TileCache.cacheTile] params is required" );
-    $.console.assert( params.tile, "[TileCache.cacheTile] params.tile is required" );
-    $.console.assert( params.tiledImage, "[TileCache.cacheTile] params.tiledImage is required" );
-    this.tile = params.tile;
-    this.tiledImage = params.tiledImage;
+// private
+var TileRecord = function( options ) {
+    $.console.assert( options, "[TileCache.cacheTile] options is required" );
+    $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
+    $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
+    this.tile = options.tile;
+    this.tiledImage = options.tiledImage;
 };
 
 /**
  * @class TileCache
- * @classdesc
+ * @memberof OpenSeadragon
+ * @classdesc Stores all the tiles displayed in a {@link OpenSeadragon.Viewer}.
+ * @param {Object} options - Configuration for this TileCache.
+ * @param {Number} [options.maxImageCacheCount] - See maxImageCacheCount in
+ * {@link OpenSeadragon.Options} for details.
  */
 $.TileCache = function( options ) {
     options = options || {};
@@ -55,21 +60,29 @@ $.TileCache = function( options ) {
 
 $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
     /**
-     * Returns the total number of tiles that have been loaded by this TileCache.
-     * @method
-     * @returns {Number} - The total number of tiles that have been loaded by
-     *      this TileCache.
+     * @returns {Number} The total number of tiles that have been loaded by
+     * this TileCache.
      */
     numTilesLoaded: function() {
         return this._tilesLoaded.length;
     },
 
-    cacheTile: function( params ) {
-        $.console.assert( params, "[TileCache.cacheTile] params is required" );
-        $.console.assert( params.tile, "[TileCache.cacheTile] params.tile is required" );
-        $.console.assert( params.tiledImage, "[TileCache.cacheTile] params.tiledImage is required" );
+    /**
+     * Caches the specified tile, removing an old tile if necessary to stay under the
+     * maxImageCacheCount specified on construction.
+     * @param {Object} options - Tile info.
+     * @param {OpenSeadragon.Tile} options.tile - The tile to cache.
+     * @param {OpenSeadragon.TiledImage} options.tiledImage - The TiledImage that owns that tile.
+     * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this
+     * function will release an old tile. The cutoff option specifies a tile level at or below which
+     * tiles will not be released.
+     */
+    cacheTile: function( options ) {
+        $.console.assert( options, "[TileCache.cacheTile] options is required" );
+        $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
+        $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
-        var cutoff = params.cutoff || 0;
+        var cutoff = options.cutoff || 0;
         var insertionIndex = this._tilesLoaded.length;
 
         if ( this._tilesLoaded.length >= this._maxImageCacheCount ) {
@@ -108,14 +121,13 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         }
 
         this._tilesLoaded[ insertionIndex ] = new TileRecord({
-            tile: params.tile,
-            tiledImage: params.tiledImage
+            tile: options.tile,
+            tiledImage: options.tiledImage
         });
     },
 
     /**
      * Clears all tiles associated with the specified tiledImage.
-     * @method
      */
     clearTilesFor: function( tiledImage ) {
         var tileRecord;

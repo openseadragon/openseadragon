@@ -37,10 +37,23 @@
 
 /**
  * @class Viewport
- * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.) for an {@link OpenSeadragon.Viewer}.
- * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#viewport}).
- *
  * @memberof OpenSeadragon
+ * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.)
+ * for an {@link OpenSeadragon.Viewer}.
+ * @param {Object} options - Options for this Viewport.
+ * @param {Object} [margins] - See viewportMargins in {@link OpenSeadragon.Options}.
+ * @param {Number} [springStiffness] - See springStiffness in {@link OpenSeadragon.Options}.
+ * @param {Number} [animationTime] - See animationTime in {@link OpenSeadragon.Options}.
+ * @param {Number} [minZoomImageRatio] - See minZoomImageRatio in {@link OpenSeadragon.Options}.
+ * @param {Number} [maxZoomPixelRatio] - See maxZoomPixelRatio in {@link OpenSeadragon.Options}.
+ * @param {Number} [visibilityRatio] - See visibilityRatio in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [wrapHorizontal] - See wrapHorizontal in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [wrapVertical] - See wrapVertical in {@link OpenSeadragon.Options}.
+ * @param {Number} [defaultZoomLevel] - See defaultZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [minZoomLevel] - See minZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [maxZoomLevel] - See maxZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [degrees] - See degrees in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [homeFillsViewer] - See homeFillsViewer in {@link OpenSeadragon.Options}.
  */
 $.Viewport = function( options ) {
 
@@ -933,9 +946,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         return this._pixelFromPoint(point, this.getBounds( current ));
     },
 
-    /**
-     * @private
-     */
+    // private
     _pixelFromPoint: function( point, bounds ) {
         return point.minus(
             bounds.getTopLeft()
