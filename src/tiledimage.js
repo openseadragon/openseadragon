@@ -35,6 +35,8 @@
 (function( $ ){
 
 /**
+ * You shouldn't have to create a TiledImage directly; use {@link OpenSeadragon.Viewer#open}
+ * or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
  * @memberof OpenSeadragon
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.

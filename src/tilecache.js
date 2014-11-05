@@ -34,7 +34,7 @@
 
 (function( $ ){
 
-// private
+// private class
 var TileRecord = function( options ) {
     $.console.assert( options, "[TileCache.cacheTile] options is required" );
     $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
@@ -43,7 +43,7 @@ var TileRecord = function( options ) {
     this.tiledImage = options.tiledImage;
 };
 
-// private
+// private class
 var ImageRecord = function(options) {
     $.console.assert( options, "[ImageRecord] options is required" );
     $.console.assert( options.image, "[ImageRecord] options.image is required" );
@@ -71,6 +71,7 @@ ImageRecord.prototype = {
     },
 
     addTile: function(tile) {
+        $.console.assert(tile, '[ImageRecord.addTile] tile is required');
         this._tiles.push(tile);
     },
 
@@ -94,6 +95,7 @@ ImageRecord.prototype = {
  * @class TileCache
  * @memberof OpenSeadragon
  * @classdesc Stores all the tiles displayed in a {@link OpenSeadragon.Viewer}.
+ * You generally won't have to interact with the TileCache directly.
  * @param {Object} options - Configuration for this TileCache.
  * @param {Number} [options.maxImageCacheCount] - See maxImageCacheCount in
  * {@link OpenSeadragon.Options} for details.
@@ -196,8 +198,10 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
 
     /**
      * Clears all tiles associated with the specified tiledImage.
+     * @param {OpenSeadragon.TiledImage} tiledImage
      */
     clearTilesFor: function( tiledImage ) {
+        $.console.assert(tiledImage, '[TileCache.clearTilesFor] tiledImage is required');
         var tileRecord;
         for ( var i = 0; i < this._tilesLoaded.length; ++i ) {
             tileRecord = this._tilesLoaded[ i ];
@@ -209,12 +213,15 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         }
     },
 
+    // private
     getImageRecord: function(url) {
+        $.console.assert(url, '[TileCache.getImageRecord] url is required');
         return this._imagesLoaded[url];
     },
 
     // private
     _unloadTile: function(tile) {
+        $.console.assert(tile, '[TileCache._unloadTile] tile is required');
         tile.unload();
         tile.cacheImageRecord = null;
 
