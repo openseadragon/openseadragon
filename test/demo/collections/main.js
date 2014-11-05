@@ -9,12 +9,15 @@
             var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
+            var testNavigator = false;
             var margins;
 
             var config = {
                 debugMode: true,
                 zoomPerScroll: 1.02,
-                showNavigator: true,
+                showNavigator: testNavigator,
+                wrapHorizontal: true,
+                wrapVertical: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             };
@@ -83,7 +86,7 @@
             }
 
             // this.crossTest3();
-            this.basicTest();
+            this.crossTest2();
         },
 
         // ----------
@@ -119,7 +122,8 @@
                 self.viewer.addTiledImage( options );
             });
 
-            this.viewer.open("../../data/tall.dzi", {
+            this.viewer.open({
+                tileSource: "../../data/tall.dzi",
                 x: 1.5,
                 y: 0,
                 width: 1
@@ -129,12 +133,13 @@
         // ----------
         crossTest2: function() {
             this.viewer.open([
+                // {
+                //     tileSource: "../../data/tall.dzi",
+                //     x: 1.5,
+                //     y: 0,
+                //     width: 1
+                // },
                 {
-                    tileSource: "../../data/tall.dzi",
-                    x: 1.5,
-                    y: 0,
-                    width: 1
-                }, {
                     tileSource: '../../data/wide.dzi',
                     opacity: 1,
                     x: 0,
@@ -184,7 +189,7 @@
                 self.viewer.world.addHandler('add-item', function() {
                     loaded++;
                     if (loaded === expected) {
-                        self.viewer.viewport.goHome();
+                        self.viewer.viewport.goHome(true);
                     }
                 });
 
@@ -208,7 +213,8 @@
                 }
             });
 
-            this.viewer.open("../../data/testpattern.dzi", {
+            this.viewer.open({
+                tileSource: "../../data/testpattern.dzi",
                 x: startX,
                 y: 0,
                 width: 1
@@ -217,7 +223,8 @@
 
         // ----------
         bigTest: function() {
-            this.viewer.open("../../data/testpattern.dzi", {
+            this.viewer.open({
+                tileSource: "../../data/testpattern.dzi",
                 x: -2,
                 y: -2,
                 width: 6
@@ -246,7 +253,8 @@
                 }
             };
 
-            this.viewer.open(dzi, {
+            this.viewer.open({
+                tileSource: dzi,
                 width: 100
             });
         },

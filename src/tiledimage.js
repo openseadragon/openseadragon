@@ -485,6 +485,19 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         tiledImage
     );
 
+    if (!tile.loaded) {
+        var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+        if (imageRecord) {
+            tile.loaded = true;
+            tile.image = imageRecord.getImage();
+
+            tiledImage._tileCache.cacheTile({
+                tile: tile,
+                tiledImage: tiledImage
+            });
+        }
+    }
+
     if ( tile.loaded ) {
         var needsUpdate = blendTile(
             tiledImage,

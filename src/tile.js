@@ -33,7 +33,7 @@
  */
 
 (function( $ ){
-    var TILE_CACHE       = {};
+
 /**
  * @class Tile
  * @memberof OpenSeadragon
@@ -241,16 +241,23 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             rendered,
             canvas;
 
-        if ( !this.loaded || !( this.image || TILE_CACHE[ this.url ] ) ){
+        if (!this.cacheImageRecord) {
+            $.console.warn('[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached', this.toString());
+            return;
+        }
+
+        rendered = this.cacheImageRecord.getRenderedContext();
+
+        if ( !this.loaded || !( this.image || rendered) ){
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
+
             return;
         }
-        context.globalAlpha = this.opacity;
 
-        //context.save();
+        context.globalAlpha = this.opacity;
 
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
@@ -268,24 +275,21 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         }
 
-        if( !TILE_CACHE[ this.url ] ){
+        if(!rendered){
             canvas = document.createElement( 'canvas' );
             canvas.width = this.image.width;
             canvas.height = this.image.height;
             rendered = canvas.getContext('2d');
             rendered.drawImage( this.image, 0, 0 );
-            TILE_CACHE[ this.url ] = rendered;
+            this.cacheImageRecord.setRenderedContext(rendered);
             //since we are caching the prerendered image on a canvas
             //allow the image to not be held in memory
             this.image = null;
         }
 
-        rendered = TILE_CACHE[ this.url ];
-
         // This gives the application a chance to make image manipulation changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
-        //rendered.save();
         context.drawImage(
             rendered.canvas,
             0,
@@ -297,9 +301,6 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             size.x,
             size.y
         );
-        //rendered.restore();
-
-        //context.restore();
     },
 
     /**
@@ -312,9 +313,6 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         }
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
-        }
-        if ( TILE_CACHE[ this.url ]){
-            delete TILE_CACHE[ this.url ];
         }
 
         this.element    = null;
