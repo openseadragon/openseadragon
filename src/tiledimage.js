@@ -545,8 +545,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
 
-        bounds.x += worldWidth * ( x - xMod ) / numTiles.x;
-        bounds.y += worldHeight * ( y - yMod ) / numTiles.y;
+        bounds.x += ( x - xMod ) / numTiles.x;
+        bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
 
         tilesMatrix[ level ][ x ][ y ] = new $.Tile(
             level,

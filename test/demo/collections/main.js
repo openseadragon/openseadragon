@@ -16,8 +16,8 @@
                 debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                wrapHorizontal: true,
-                wrapVertical: true,
+                // wrapHorizontal: true,
+                // wrapVertical: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
             };
@@ -96,7 +96,9 @@
             this.viewer.addHandler('open', function() {
             });
 
-            this.viewer.open("../../data/testpattern.dzi");
+            this.viewer.open({
+                tileSource: "../../data/testpattern.dzi"
+            });
         },
 
         // ----------
@@ -133,15 +135,14 @@
         // ----------
         crossTest2: function() {
             this.viewer.open([
-                // {
-                //     tileSource: "../../data/tall.dzi",
-                //     x: 1.5,
-                //     y: 0,
-                //     width: 1
-                // },
+                {
+                    tileSource: "../../data/tall.dzi",
+                    x: 1.5,
+                    y: 0,
+                    width: 1
+                },
                 {
                     tileSource: '../../data/wide.dzi',
-                    opacity: 1,
                     x: 0,
                     y: 1.5,
                     height: 1
