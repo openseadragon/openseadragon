@@ -178,15 +178,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
 
-        // TODO: seems like fitWidthBounds and fitHeightBounds should be thin slices
-        // across the appropriate axis, centered in the image, rather than what we have
-        // here.
-        this.fitWidthBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
-            this.homeBounds.width, this.homeBounds.width);
-
-        this.fitHeightBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
-            this.homeBounds.height, this.homeBounds.height);
-
         if( this.viewer ){
             /**
              * Raised when the viewer's content size or home bounds are reset
@@ -631,53 +622,27 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * @function
+     * Zooms so the image just fills the viewer vertically.
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function( immediately ) {
-        var center = this.getCenter();
+        var box = new $.Rect(this.homeBounds.x + (this.homeBounds.width / 2), this.homeBounds.y,
+            0, this.homeBounds.height);
 
-        if ( this.wrapHorizontal ) {
-            center.x = ( 1 + ( center.x % 1 ) ) % 1;
-            this.centerSpringX.resetTo( center.x );
-            this.centerSpringX.update();
-        }
-
-        if ( this.wrapVertical ) {
-            center.y = (
-                this.contentAspectY + ( center.y % this.contentAspectY )
-            ) % this.contentAspectY;
-            this.centerSpringY.resetTo( center.y );
-            this.centerSpringY.update();
-        }
-
-        return this.fitBounds( this.fitHeightBounds, immediately );
+        return this.fitBounds( box, immediately );
     },
 
     /**
-     * @function
+     * Zooms so the image just fills the viewer horizontally.
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function( immediately ) {
-        var center = this.getCenter();
+        var box = new $.Rect(this.homeBounds.x, this.homeBounds.y + (this.homeBounds.height / 2),
+            this.homeBounds.width, 0);
 
-        if ( this.wrapHorizontal ) {
-            center.x = (
-                this.contentAspectX + ( center.x % this.contentAspectX )
-            ) % this.contentAspectX;
-            this.centerSpringX.resetTo( center.x );
-            this.centerSpringX.update();
-        }
-
-        if ( this.wrapVertical ) {
-            center.y = ( 1 + ( center.y % 1 ) ) % 1;
-            this.centerSpringY.resetTo( center.y );
-            this.centerSpringY.update();
-        }
-
-        return this.fitBounds( this.fitWidthBounds, immediately );
+        return this.fitBounds( box, immediately );
     },
 
 
