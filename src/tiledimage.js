@@ -195,8 +195,6 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        viewportTL      = viewportBounds.getTopLeft(),
-        viewportBR      = viewportBounds.getBottomRight(),
         zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( 0 ),
             true
@@ -223,10 +221,8 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportTL.x -= tiledImage._worldX;
-    viewportTL.y -= tiledImage._worldY;
-    viewportBR.x -= tiledImage._worldX;
-    viewportBR.y -= tiledImage._worldY;
+    viewportBounds.x -= tiledImage._worldX;
+    viewportBounds.y -= tiledImage._worldY;
 
     // Reset tile's internal drawn state
     while ( tiledImage.lastDrawn.length > 0 ) {
@@ -236,27 +232,25 @@ function updateViewport( tiledImage ) {
 
     //Change bounds for rotation
     if (degrees === 90 || degrees === 270) {
-        var rotatedBounds = viewportBounds.rotate( degrees );
-        viewportTL = rotatedBounds.getTopLeft();
-        viewportBR = rotatedBounds.getBottomRight();
-    } else if (degrees !== 0) {
+        viewportBounds = viewportBounds.rotate( degrees );
+    } else if (degrees !== 0 && degrees !== 180) {
         // This is just an approximation.
         var orthBounds = viewportBounds.rotate(90);
         viewportBounds.x -= orthBounds.width / 2;
         viewportBounds.y -= orthBounds.height / 2;
         viewportBounds.width += orthBounds.width;
         viewportBounds.height += orthBounds.height;
-        viewportTL = viewportBounds.getTopLeft();
-        viewportBR = viewportBounds.getBottomRight();
     }
 
+    var viewportTL = viewportBounds.getTopLeft();
+    var viewportBR = viewportBounds.getBottomRight();
+
     //Don't draw if completely outside of the viewport
-    if  ( !tiledImage.wrapHorizontal &&
-        ( viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidth ) ) {
+    if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidth ) ) {
         return;
-    } else if
-        ( !tiledImage.wrapVertical &&
-        ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeight ) ) {
+    }
+
+    if ( !tiledImage.wrapVertical && ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeight ) ) {
         return;
     }
 
@@ -265,6 +259,7 @@ function updateViewport( tiledImage ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
         viewportBR.x = Math.min( viewportBR.x, tiledImage._worldWidth );
     }
+
     if ( !tiledImage.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
         viewportBR.y = Math.min( viewportBR.y, tiledImage._worldHeight );

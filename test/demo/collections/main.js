@@ -13,7 +13,7 @@
             var margins;
 
             var config = {
-                debugMode: true,
+                // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
                 // wrapHorizontal: true,
@@ -86,7 +86,7 @@
             }
 
             // this.crossTest3();
-            this.basicTest();
+            this.gridTest();
         },
 
         // ----------
