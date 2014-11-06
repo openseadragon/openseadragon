@@ -40,20 +40,30 @@
             }
 
             if (testOverlays) {
-                config.overlays = [ {
-                    px: 13,
-                    py: 120,
-                    width: 124,
-                    height: 132,
-                    id: "overlay"
-                }, {
-                    px: 400,
-                    py: 500,
-                    width: 400,
-                    height: 400,
-                    id: "fixed-overlay",
-                    placement: "TOP_LEFT"
-                } ];
+                config.overlays = [
+                    {
+                        id: "overlay1",
+                        x: 0,
+                        y: 0,
+                        width: 0.25,
+                        height: 0.25
+                    },
+                    {
+                        px: 13,
+                        py: 120,
+                        width: 124,
+                        height: 132,
+                        id: "overlay"
+                    },
+                    {
+                        px: 400,
+                        py: 500,
+                        width: 400,
+                        height: 400,
+                        id: "fixed-overlay",
+                        placement: "TOP_LEFT"
+                    }
+                ];
             }
 
             if (testMargins) {
@@ -86,7 +96,7 @@
             }
 
             // this.crossTest3();
-            this.gridTest();
+            this.basicTest();
         },
 
         // ----------
