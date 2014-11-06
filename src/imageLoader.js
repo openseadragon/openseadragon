@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2013 OpenSeadragon contributors
- 
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
@@ -34,23 +34,14 @@
 
 (function( $ ){
 
-/**
- * @private
- * @class ImageJob
- * @classdesc Handles loading a single image for use in a single {@link OpenSeadragon.Tile}.
- *
- * @memberof OpenSeadragon
- * @param {String} source - URL of image to download.
- * @param {String} crossOriginPolicy - CORS policy to use for downloads
- * @param {Function} callback - Called once image has finished downloading.
- */
+// private class
 function ImageJob ( options ) {
-    
+
     $.extend( true, this, {
         timeout:        $.DEFAULT_SETTINGS.timeout,
         jobId:          null
     }, options );
-    
+
     /**
      * Image object which will contain downloaded image.
      * @member {Image} image
@@ -60,11 +51,6 @@ function ImageJob ( options ) {
 }
 
 ImageJob.prototype = {
-
-    /**
-     * Initiates downloading of associated image.
-     * @method
-     */
     start: function(){
         var _this = this;
 
@@ -104,11 +90,13 @@ ImageJob.prototype = {
 };
 
 /**
- * @class
+ * @class ImageLoader
+ * @memberof OpenSeadragon
  * @classdesc Handles downloading of a set of images using asynchronous queue pattern.
+ * You generally won't have to interact with the ImageLoader directly.
  */
 $.ImageLoader = function() {
-    
+
     $.extend( true, this, {
         jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
         jobQueue:       [],
@@ -117,8 +105,8 @@ $.ImageLoader = function() {
 
 };
 
-$.ImageLoader.prototype = {
-    
+$.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
+
     /**
      * Add an unloaded image to the loader queue.
      * @method

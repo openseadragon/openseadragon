@@ -36,15 +36,17 @@
 
 /**
  * @class Drawer
- * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
- *
  * @memberof OpenSeadragon
- * @param {OpenSeadragon.TileSource} source - Reference to Viewer tile source.
- * @param {OpenSeadragon.Viewport} viewport - Reference to Viewer viewport.
- * @param {Element} element - Parent element.
+ * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
+ * @param {Object} options - Options for this Drawer.
+ * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
+ * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
+ * @param {Element} options.element - Parent element.
+ * @param {Number} [options.opacity=1] - See opacity in {@link OpenSeadragon.Options} for details.
+ * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 $.Drawer = function( options ) {
-    var self = this;
+    var _this = this;
 
     $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
@@ -117,7 +119,7 @@ $.Drawer = function( options ) {
 
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
-        if (self.viewer) {
+        if (_this.viewer) {
           /**
            * This event is fired just before the tile is drawn giving the application a chance to alter the image.
            *
@@ -130,80 +132,34 @@ $.Drawer = function( options ) {
            * @property {OpenSeadragon.Tile} tile
            * @property {?Object} userData - 'context', 'tile' and 'rendered'.
            */
-            self.viewer.raiseEvent('tile-drawing', args);
+            _this.viewer.raiseEvent('tile-drawing', args);
         }
     };
 };
 
 $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
-
-    /**
-     * Adds an html element as an overlay to the current viewport.  Useful for
-     * highlighting words or areas of interest on an image or other zoomable
-     * interface.
-     * @method
-     * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
-     *      rectangle which will be overlayed.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
-     *      viewport which the location coordinates will be treated as relative
-     *      to.
-     * @param {function} onDraw - If supplied the callback is called when the overlay
-     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
-     *      It is passed position, size and element.
-     * @fires OpenSeadragon.Viewer.event:add-overlay
-     * @deprecated - use {@link OpenSeadragon.Viewer#addOverlay} instead.
-     */
+    // deprecated
     addOverlay: function( element, location, placement, onDraw ) {
         $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
         this.viewer.addOverlay( element, location, placement, onDraw );
         return this;
     },
 
-    /**
-     * Updates the overlay represented by the reference to the element or
-     * element id moving it to the new location, relative to the new placement.
-     * @method
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
-     *      rectangle which will be overlayed.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
-     *      viewport which the location coordinates will be treated as relative
-     *      to.
-     * @return {OpenSeadragon.Drawer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:update-overlay
-     * @deprecated - use {@link OpenSeadragon.Viewer#updateOverlay} instead.
-     */
+    // deprecated
     updateOverlay: function( element, location, placement ) {
         $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
         this.viewer.updateOverlay( element, location, placement );
         return this;
     },
 
-    /**
-     * Removes and overlay identified by the reference element or element id
-     *      and schedules and update.
-     * @method
-     * @param {Element|String} element - A reference to the element or an
-     *      element id which represent the ovelay content to be removed.
-     * @return {OpenSeadragon.Drawer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:remove-overlay
-     * @deprecated - use {@link OpenSeadragon.Viewer#removeOverlay} instead.
-     */
+    // deprecated
     removeOverlay: function( element ) {
         $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
         this.viewer.removeOverlay( element );
         return this;
     },
 
-    /**
-     * Removes all currently configured Overlays from this Drawer and schedules
-     *      and update.
-     * @method
-     * @return {OpenSeadragon.Drawer} Chainable.
-     * @fires OpenSeadragon.Viewer.event:clear-overlay
-     * @deprecated - use {@link OpenSeadragon.Viewer#clearOverlays} instead.
-     */
+    // deprecated
     clearOverlays: function() {
         $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
         this.viewer.clearOverlays();
@@ -212,7 +168,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
      * Set the opacity of the drawer.
-     * @method
      * @param {Number} opacity
      * @return {OpenSeadragon.Drawer} Chainable.
      */
@@ -224,60 +179,37 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
      * Get the opacity of the drawer.
-     * @method
      * @returns {Number}
      */
     getOpacity: function() {
         return this.opacity;
     },
 
-    /**
-     * Returns whether the Drawer is scheduled for an update at the
-     *      soonest possible opportunity.
-     * @method
-     * @returns {Boolean} - Whether the Drawer is scheduled for an update at the
-     *      soonest possible opportunity.
-     */
+    // deprecated
     needsUpdate: function() {
         $.console.error( "[Drawer.needsUpdate] this function is deprecated." );
         return false;
     },
 
-    /**
-     * Returns the total number of tiles that have been loaded by this Drawer.
-     * @method
-     * @returns {Number} - The total number of tiles that have been loaded by
-     *      this Drawer.
-     */
+    // deprecated
     numTilesLoaded: function() {
         $.console.error( "[Drawer.numTilesLoaded] this function is deprecated." );
         return 0;
     },
 
-    /**
-     * Clears all tiles and triggers an update on the next call to
-     * Drawer.prototype.update().
-     * @method
-     * @return {OpenSeadragon.Drawer} Chainable.
-     */
+    // deprecated
     reset: function() {
         $.console.error( "[Drawer.reset] this function is deprecated." );
         return this;
     },
 
-    /**
-     * Forces the Drawer to update.
-     * @method
-     * @return {OpenSeadragon.Drawer} Chainable.
-     */
+    // deprecated
     update: function() {
         $.console.error( "[Drawer.update] this function is deprecated." );
         return this;
     },
 
     /**
-     * Returns whether rotation is supported or not.
-     * @method
      * @return {Boolean} True if rotation is supported.
      */
     canRotate: function() {
@@ -286,8 +218,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
      * Destroy the drawer (unload current loaded tiles)
-     * @method
-     * @return null
      */
     destroy: function() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
@@ -295,6 +225,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         this.canvas.height = 1;
     },
 
+    /**
+     * Clears the Drawer so it's ready to draw another frame.
+     */
     clear: function() {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
@@ -308,6 +241,10 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
+    /**
+     * Draws the given tile.
+     * @param {OpenSeadragon.Tile} tile - The tile to draw.
+     */
     drawTile: function( tile ) {
         if ( this.useCanvas ) {
             // TODO do this in a more performant way
@@ -324,9 +261,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
-    /**
-     * @private
-     */
+    // private
     drawDebugInfo: function( tile, count, i ){
         if ( this.useCanvas ) {
             this.context.save();
@@ -399,9 +334,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
-    /**
-     * @private
-     */
+    // private
     debugRect: function(rect) {
         if ( this.useCanvas ) {
             this.context.save();
@@ -420,9 +353,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
-    /**
-     * @private
-     */
+    // private
     _offsetForRotation: function( tile, degrees ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,
@@ -437,9 +368,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         tile.position.y = py;
     },
 
-    /**
-     * @private
-     */
+    // private
     _restoreRotationChanges: function( tile ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,

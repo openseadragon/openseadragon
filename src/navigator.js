@@ -344,10 +344,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     },
 
-    /**
-     * Overrides Viewer.addTiledImage
-     * @private
-     */
+    // overrides Viewer.addTiledImage
     addTiledImage: function(options) {
         var original = options.originalTiledImage;
         delete options.original;

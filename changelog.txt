@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * True multi-image mode (#450)
     * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
+    * BREAKING CHANGE: Viewer.drawers and Viewer.drawersContainer no longer exist
     * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
         * addTiledImage supports positioning config properties
     * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel
@@ -17,7 +18,6 @@ OPENSEADRAGON CHANGELOG
     * DEPRECATION: use World.resetItems instead of Drawer.reset
     * DEPRECATION: use Drawer.clear and World.update instead of Drawer.update
     * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
-    * DEPRECATION: Viewer.drawers and Viewer.drawersContainer no longer exist
     * DEPRECATION: Viewer's add-layer event is now World's add-item event
     * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-changed event
     * DEPRECATION: Viewer's remove-layer event is now World's remove-item event
@@ -31,6 +31,7 @@ OPENSEADRAGON CHANGELOG
     * Rect and Point now have clone functions
     * New Viewport method for managing homeBounds as well as constraints: setHomeBounds
     * Viewport.open supports positioning config properties
+* Margins option to push the home region in from the edges of the Viewer (#505)
 
 1.2.0: (in progress)
 

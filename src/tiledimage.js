@@ -35,17 +35,38 @@
 (function( $ ){
 
 /**
+ * You shouldn't have to create a TiledImage directly; use {@link OpenSeadragon.Viewer#open}
+ * or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
+ * @memberof OpenSeadragon
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened.
- *
- * @memberof OpenSeadragon
+ * @param {Object} options - Configuration for this TiledImage.
+ * @param {OpenSeadragon.TileSource} options.source - The TileSource that defines this TiledImage.
+ * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this TiledImage.
+ * @param {OpenSeadragon.TileCache} options.tileCache - The TileCache for this TiledImage to use.
+ * @param {OpenSeadragon.Drawer} options.drawer - The Drawer for this TiledImage to draw onto.
+ * @param {OpenSeadragon.ImageLoader} options.imageLoader - The ImageLoader for this TiledImage to use.
+ * @param {Number} [options.x=0] - Left position, in world coordinates.
+ * @param {Number} [options.y=0] - Top position, in world coordinates.
+ * @param {Number} [options.width=1] - Width, in world coordinates.
+ * @param {Number} [options.height] - Height, in world coordinates.
+ * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapHorizontal] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapVertical] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.immediateRender] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
+    $.console.assert( options.source, "[TiledImage] options.source is required" );
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
@@ -109,11 +130,8 @@ $.TiledImage = function( options ) {
 
 $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
-     * Returns whether the TiledImage is scheduled for an update at the
-     *      soonest possible opportunity.
-     * @method
-     * @returns {Boolean} - Whether the TiledImage is scheduled for an update at the
-     *      soonest possible opportunity.
+     * @returns {Boolean} Whether the TiledImage is scheduled for an update at the
+     * soonest possible opportunity.
      */
     needsUpdate: function() {
         return this.updateAgain;
@@ -121,42 +139,40 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
 
     /**
      * Clears all tiles and triggers an update on the next call to
-     * TiledImage.prototype.update().
-     * @method
-     * @return {OpenSeadragon.TiledImage} Chainable.
+     * {@link OpenSeadragon.TiledImage#update}.
      */
     reset: function() {
         this._tileCache.clearTilesFor(this);
         this.lastResetTime = $.now();
         this.updateAgain = true;
-        return this;
     },
 
     /**
      * Forces the TiledImage to update.
-     * @method
-     * @return {OpenSeadragon.TiledImage} Chainable.
      */
     update: function() {
         this.midUpdate = true;
         updateViewport( this );
         this.midUpdate = false;
-        return this;
     },
 
     /**
-     * Destroy the TiledImage (unload current loaded tiles)
-     * @method
-     * @return null
+     * Destroy the TiledImage (unload current loaded tiles).
      */
     destroy: function() {
         this.reset();
     },
 
+    /**
+     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
+     */
     getWorldBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
     },
 
+    /**
+     * @returns {OpenSeadragon.Point} This TiledImage's content size, in original pixels.
+     */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     }
@@ -179,8 +195,6 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        viewportTL      = viewportBounds.getTopLeft(),
-        viewportBR      = viewportBounds.getBottomRight(),
         zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( 0 ),
             true
@@ -207,10 +221,8 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportTL.x -= tiledImage._worldX;
-    viewportTL.y -= tiledImage._worldY;
-    viewportBR.x -= tiledImage._worldX;
-    viewportBR.y -= tiledImage._worldY;
+    viewportBounds.x -= tiledImage._worldX;
+    viewportBounds.y -= tiledImage._worldY;
 
     // Reset tile's internal drawn state
     while ( tiledImage.lastDrawn.length > 0 ) {
@@ -220,27 +232,25 @@ function updateViewport( tiledImage ) {
 
     //Change bounds for rotation
     if (degrees === 90 || degrees === 270) {
-        var rotatedBounds = viewportBounds.rotate( degrees );
-        viewportTL = rotatedBounds.getTopLeft();
-        viewportBR = rotatedBounds.getBottomRight();
-    } else if (degrees !== 0) {
+        viewportBounds = viewportBounds.rotate( degrees );
+    } else if (degrees !== 0 && degrees !== 180) {
         // This is just an approximation.
         var orthBounds = viewportBounds.rotate(90);
         viewportBounds.x -= orthBounds.width / 2;
         viewportBounds.y -= orthBounds.height / 2;
         viewportBounds.width += orthBounds.width;
         viewportBounds.height += orthBounds.height;
-        viewportTL = viewportBounds.getTopLeft();
-        viewportBR = viewportBounds.getBottomRight();
     }
 
+    var viewportTL = viewportBounds.getTopLeft();
+    var viewportBR = viewportBounds.getBottomRight();
+
     //Don't draw if completely outside of the viewport
-    if  ( !tiledImage.wrapHorizontal &&
-        ( viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidth ) ) {
+    if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidth ) ) {
         return;
-    } else if
-        ( !tiledImage.wrapVertical &&
-        ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeight ) ) {
+    }
+
+    if ( !tiledImage.wrapVertical && ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeight ) ) {
         return;
     }
 
@@ -249,6 +259,7 @@ function updateViewport( tiledImage ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
         viewportBR.x = Math.min( viewportBR.x, tiledImage._worldWidth );
     }
+
     if ( !tiledImage.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
         viewportBR.y = Math.min( viewportBR.y, tiledImage._worldHeight );
@@ -471,6 +482,19 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         tiledImage
     );
 
+    if (!tile.loaded) {
+        var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+        if (imageRecord) {
+            tile.loaded = true;
+            tile.image = imageRecord.getImage();
+
+            tiledImage._tileCache.cacheTile({
+                tile: tile,
+                tiledImage: tiledImage
+            });
+        }
+    }
+
     if ( tile.loaded ) {
         var needsUpdate = blendTile(
             tiledImage,
@@ -516,8 +540,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
 
-        bounds.x += worldWidth * ( x - xMod ) / numTiles.x;
-        bounds.y += worldHeight * ( y - yMod ) / numTiles.y;
+        bounds.x += ( x - xMod ) / numTiles.x;
+        bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
 
         tilesMatrix[ level ][ x ][ y ] = new $.Tile(
             level,

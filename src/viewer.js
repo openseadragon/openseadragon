@@ -539,17 +539,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return !!this.world.getItemCount();
     },
 
-    /**
-     * @private
-     */
+    // deprecated
     openDzi: function ( dzi ) {
         $.console.error( "[Viewer.openDzi] this function is deprecated; use Viewer.open() instead." );
         return this.open( dzi );
     },
 
-    /**
-     * @private
-     */
+    // deprecated
     openTileSource: function ( tileSource ) {
         $.console.error( "[Viewer.openTileSource] this function is deprecated; use Viewer.open() instead." );
         return this.open( tileSource );
@@ -1329,24 +1325,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } );
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     addLayer: function( options ) {
-        var self = this;
+        var _this = this;
 
         $.console.error( "[Viewer.addLayer] this function is deprecated; use Viewer.addTiledImage() instead." );
 
         var optionsClone = $.extend({}, options, {
             success: function(event) {
-                self.raiseEvent("add-layer", {
+                _this.raiseEvent("add-layer", {
                     options: options,
                     drawer: event.item
                 });
             },
             error: function(event) {
-                self.raiseEvent("add-layer-failed", event);
+                _this.raiseEvent("add-layer-failed", event);
             }
         });
 
@@ -1354,46 +1347,31 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     getLayerAtLevel: function( level ) {
         $.console.error( "[Viewer.getLayerAtLevel] this function is deprecated; use World.getItemAt() instead." );
         return this.world.getItemAt(level);
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     getLevelOfLayer: function( drawer ) {
         $.console.error( "[Viewer.getLevelOfLayer] this function is deprecated; use World.getIndexOfItem() instead." );
         return this.world.getIndexOfItem(drawer);
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     getLayersCount: function() {
         $.console.error( "[Viewer.getLayersCount] this function is deprecated; use World.getItemCount() instead." );
         return this.world.getItemCount();
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     setLayerLevel: function( drawer, level ) {
         $.console.error( "[Viewer.setLayerLevel] this function is deprecated; use World.setItemIndex() instead." );
         return this.world.setItemIndex(drawer, level);
     },
 
-    /**
-     * @function
-     * @private
-     */
+    // deprecated
     removeLayer: function( drawer ) {
         $.console.error( "[Viewer.removeLayer] this function is deprecated; use World.removeItem() instead." );
         return this.world.removeItem(drawer);

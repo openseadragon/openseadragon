@@ -37,10 +37,23 @@
 
 /**
  * @class Viewport
- * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.) for an {@link OpenSeadragon.Viewer}.
- * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#viewport}).
- *
  * @memberof OpenSeadragon
+ * @classdesc Handles coordinate-related functionality (zoom, pan, rotation, etc.)
+ * for an {@link OpenSeadragon.Viewer}.
+ * @param {Object} options - Options for this Viewport.
+ * @param {Object} [options.margins] - See viewportMargins in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.springStiffness] - See springStiffness in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.animationTime] - See animationTime in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.minZoomImageRatio] - See minZoomImageRatio in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.maxZoomPixelRatio] - See maxZoomPixelRatio in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.visibilityRatio] - See visibilityRatio in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapHorizontal] - See wrapHorizontal in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.wrapVertical] - See wrapVertical in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.defaultZoomLevel] - See defaultZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.minZoomLevel] - See minZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.maxZoomLevel] - See maxZoomLevel in {@link OpenSeadragon.Options}.
+ * @param {Number} [options.degrees] - See degrees in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.homeFillsViewer] - See homeFillsViewer in {@link OpenSeadragon.Options}.
  */
 $.Viewport = function( options ) {
 
@@ -164,15 +177,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.contentSize = this.homeBounds.getSize().times(contentFactor);
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
-
-        // TODO: seems like fitWidthBounds and fitHeightBounds should be thin slices
-        // across the appropriate axis, centered in the image, rather than what we have
-        // here.
-        this.fitWidthBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
-            this.homeBounds.width, this.homeBounds.width);
-
-        this.fitHeightBounds = new $.Rect(this.homeBounds.x, this.homeBounds.y,
-            this.homeBounds.height, this.homeBounds.height);
 
         if( this.viewer ){
             /**
@@ -618,53 +622,27 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * @function
+     * Zooms so the image just fills the viewer vertically.
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function( immediately ) {
-        var center = this.getCenter();
+        var box = new $.Rect(this.homeBounds.x + (this.homeBounds.width / 2), this.homeBounds.y,
+            0, this.homeBounds.height);
 
-        if ( this.wrapHorizontal ) {
-            center.x = ( 1 + ( center.x % 1 ) ) % 1;
-            this.centerSpringX.resetTo( center.x );
-            this.centerSpringX.update();
-        }
-
-        if ( this.wrapVertical ) {
-            center.y = (
-                this.contentAspectY + ( center.y % this.contentAspectY )
-            ) % this.contentAspectY;
-            this.centerSpringY.resetTo( center.y );
-            this.centerSpringY.update();
-        }
-
-        return this.fitBounds( this.fitHeightBounds, immediately );
+        return this.fitBounds( box, immediately );
     },
 
     /**
-     * @function
+     * Zooms so the image just fills the viewer horizontally.
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function( immediately ) {
-        var center = this.getCenter();
+        var box = new $.Rect(this.homeBounds.x, this.homeBounds.y + (this.homeBounds.height / 2),
+            this.homeBounds.width, 0);
 
-        if ( this.wrapHorizontal ) {
-            center.x = (
-                this.contentAspectX + ( center.x % this.contentAspectX )
-            ) % this.contentAspectX;
-            this.centerSpringX.resetTo( center.x );
-            this.centerSpringX.update();
-        }
-
-        if ( this.wrapVertical ) {
-            center.y = ( 1 + ( center.y % 1 ) ) % 1;
-            this.centerSpringY.resetTo( center.y );
-            this.centerSpringY.update();
-        }
-
-        return this.fitBounds( this.fitWidthBounds, immediately );
+        return this.fitBounds( box, immediately );
     },
 
 
@@ -933,9 +911,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         return this._pixelFromPoint(point, this.getBounds( current ));
     },
 
-    /**
-     * @private
-     */
+    // private
     _pixelFromPoint: function( point, bounds ) {
         return point.minus(
             bounds.getTopLeft()
