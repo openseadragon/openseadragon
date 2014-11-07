@@ -56,7 +56,6 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            // do stuff here
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = ;
@@ -71,6 +70,54 @@
         viewer.open(DZI_PATH);
     });
 */
+        asyncTest('deltaPixelsFromPoints', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            var orig, expected, actual;
+            for (var i = 0; i < testPoints.length; i++){
+                orig = testPoints[i].times(viewer.source.dimensions.x);
+                expected = orig.times(viewport.getContainerSize().x * ZOOM_FACTOR);
+                actual = viewport.deltaPixelsFromPoints(orig);
+                propEqual(actual, expected, "Correctly got delta pixels from points with current = false " + orig);
+
+                expected_current = orig.times(viewport.getContainerSize().x);
+                actual_current = viewport.deltaPixelsFromPoints(orig, true);
+                propEqual(actual_current, expected_current, "Correctly got delta pixels from points with current = true " + orig);
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('deltaPointsFromPixels', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            var orig, expected, actual;
+            for (var i = 0; i < testPoints.length; i++){
+                orig = testPoints[i].times(viewport.getContainerSize().x);
+
+                expected = orig.divide(viewport.getContainerSize().x * ZOOM_FACTOR);
+                actual = viewport.deltaPointsFromPixels(orig);
+                propEqual(actual, expected, "Correctly got delta points from pixels with current = false " + orig);
+
+                expected_current = orig.divide(viewport.getContainerSize().x);
+                actual_current = viewport.deltaPointsFromPixels(orig, true);
+                propEqual(actual_current, expected_current, "Correctly got delta points from pixels with current = true " + orig);
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
     asyncTest('pixelFromPoint', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
@@ -80,7 +127,7 @@
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
-                // todo: wtf is up with this magic point?
+                // todo: this magic point is something to do with the target location but I don't entirely understand why it's here
                 expected = orig.plus(new OpenSeadragon.Point(0.25, 0.25)).times(viewport.getContainerSize().x * ZOOM_FACTOR).minus(viewport.getContainerSize());
                 actual = viewport.pixelFromPoint(orig, false);
                 propEqual(
@@ -112,7 +159,7 @@
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewport.getContainerSize().x);
-                // todo: what is up with this magic point?
+                // todo: this magic point is something to do with the target location but I don't entirely understand why it's here
                 expected = orig.divide(viewer.source.dimensions.x).plus(new OpenSeadragon.Point(0.25, 0.25));
                 actual = viewport.pointFromPixel(orig, false);
                 propEqual(
