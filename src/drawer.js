@@ -36,12 +36,6 @@
 
 /**
  * @class Drawer
-<<<<<<< HEAD
-=======
- * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
- * A new instance is created for each TileSource opened (see {@link OpenSeadragon.Viewer#drawer}).
- *
->>>>>>> master
  * @memberof OpenSeadragon
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
