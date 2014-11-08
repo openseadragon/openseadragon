@@ -18,6 +18,7 @@ OPENSEADRAGON CHANGELOG
 * Viewport.setRotation now allows all rotation angles (#466)
 * Pinch rotate is now available (defaults to off) (#468)
 * Added option for home button to fill viewer (#474)
+* Now handling iframe/frame mouseouts properly (#481)
 
 1.1.1:
 

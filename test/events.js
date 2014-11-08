@@ -461,7 +461,6 @@
             simulateMove(1, 1, 5);
             simulateMove(-1, -1, 5);
             simulateLeaveFrame(-1, -1);
-            simulateMove(-1, -1, 5);
             // you don't actually receive the mouseup if you mouseup outside of the document
             assessGestureExpectations({
                 description:           'enter-press-move-exit-move-release-outside (drag, release outside iframe):  ',
@@ -469,7 +468,7 @@
                 exitCount:             1,
                 pressCount:            1,
                 releaseCount:          1,
-                moveCount:             15,
+                moveCount:             10,
                 clickCount:            0,
                 dblClickCount:         0,
                 dragCount:             10,
@@ -624,7 +623,7 @@
 
         var checkOriginalEventReceivedViewer = function ( event ) {
             eventsHandledViewer++;
-            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object
             //   with arbitrary user data.
             if ( event && event.originalEvent ) {
                 originalEventsPassedViewer++;
@@ -656,7 +655,7 @@
             if ( event && event.eventSource === mouseTracker ) {
                 eventSourcePassedMouseTracker++;
             }
-            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object
             //   with arbitrary user data.
             if ( event && event.originalEvent ) {
                 originalEventsPassedMouseTracker++;
