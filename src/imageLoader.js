@@ -133,7 +133,14 @@ $.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
         else {
            this.jobQueue.push( newJob );
         }
+    },
 
+    /**
+     * Clear any unstarted image loading jobs from the queue.
+     * @method
+     */
+    clear: function() {
+        this.jobQueue = [];
     }
 };
 
