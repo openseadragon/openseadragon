@@ -571,31 +571,40 @@ function loadTile( tiledImage, tile, time ) {
 }
 
 function onTileLoad( tiledImage, tile, time, image ) {
-    tile.loading = false;
-
-    if ( tiledImage.midUpdate ) {
-        $.console.warn( "Tile load callback in middle of drawing routine." );
-        return;
-    } else if ( !image ) {
+    if ( !image ) {
         $.console.log( "Tile %s failed to load: %s", tile, tile.url );
         if( !tiledImage.debugMode ){
+            tile.loading = false;
             tile.exists = false;
             return;
         }
     } else if ( time < tiledImage.lastResetTime ) {
         $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        tile.loading = false;
         return;
     }
 
-    tile.loaded = true;
-    tile.image  = image;
+    var finish = function() {
+        tile.loading = false;
+        tile.loaded = true;
+        tile.image  = image;
 
-    var cutoff = Math.ceil( Math.log( tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
-    tiledImage._tileCache.cacheTile({
-        tile: tile,
-        cutoff: cutoff,
-        tiledImage: tiledImage
-    });
+        var cutoff = Math.ceil( Math.log( tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
+        tiledImage._tileCache.cacheTile({
+            tile: tile,
+            cutoff: cutoff,
+            tiledImage: tiledImage
+        });
+    };
+
+    // Check if we're mid-update; this can happen on IE8 because image load events for
+    // cached images happen immediately there
+    if ( !tiledImage.midUpdate ) {
+        finish();
+    } else {
+        // Wait until after the update, in case caching unloads any tiles
+        window.setTimeout( finish, 1);
+    }
 
     tiledImage.updateAgain = true;
 }
