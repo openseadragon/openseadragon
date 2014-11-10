@@ -165,6 +165,13 @@
         var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
+            simEvent.relatedTarget = document.body;
+            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
+        };
+        var simulateLeaveFrame = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            simEvent.relatedTarget = document.getElementsByTagName("html")[0];
             $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
         };
 
@@ -446,6 +453,32 @@
                 quickClick:            false
             });
 
+
+            // enter-press-move-exit-move-release-outside (drag, release outside iframe)
+            resetForAssessment();
+            simulateEnter(0, 0);
+            simulateDown(0, 0);
+            simulateMove(1, 1, 5);
+            simulateMove(-1, -1, 5);
+            simulateLeaveFrame(-1, -1);
+            // you don't actually receive the mouseup if you mouseup outside of the document
+            assessGestureExpectations({
+                description:           'enter-press-move-exit-move-release-outside (drag, release outside iframe):  ',
+                enterCount:            1,
+                exitCount:             1,
+                pressCount:            1,
+                releaseCount:          1,
+                moveCount:             10,
+                clickCount:            0,
+                dblClickCount:         0,
+                dragCount:             10,
+                dragEndCount:          1,
+                insideElementPressed:  true,
+                insideElementReleased: false,
+                contacts:              0,
+                trackedPointers:       0,
+                quickClick:            false
+            });
             unhookViewerHandlers();
 
             viewer.close();
@@ -590,7 +623,7 @@
 
         var checkOriginalEventReceivedViewer = function ( event ) {
             eventsHandledViewer++;
-            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object
             //   with arbitrary user data.
             if ( event && event.originalEvent ) {
                 originalEventsPassedViewer++;
@@ -622,7 +655,7 @@
             if ( event && event.eventSource === mouseTracker ) {
                 eventSourcePassedMouseTracker++;
             }
-            //TODO Provide a better check for the original event...simulate doesn't currently extend the object 
+            //TODO Provide a better check for the original event...simulate doesn't currently extend the object
             //   with arbitrary user data.
             if ( event && event.originalEvent ) {
                 originalEventsPassedMouseTracker++;
