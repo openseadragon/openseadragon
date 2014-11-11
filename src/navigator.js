@@ -191,7 +191,10 @@ $.Navigator = function( options ){
         options.controlOptions
     );
 
-    if ( options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE && options.controlOptions.anchor != $.ControlAnchor.NONE ) {
+    this._resizeWithViewer = options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE &&
+        options.controlOptions.anchor != $.ControlAnchor.NONE;
+
+    if ( this._resizeWithViewer ) {
         if ( options.width && options.height ) {
             this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
             this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
@@ -307,18 +310,24 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             bottomright;
 
         viewerSize = $.getElementSize( this.viewer.element );
-        if ( !viewerSize.equals( this.oldViewerSize ) ) {
+        if ( this._resizeWithViewer && !viewerSize.equals( this.oldViewerSize ) ) {
             this.oldViewerSize = viewerSize;
-            if ( this.maintainSizeRatio ) {
+
+            if ( this.maintainSizeRatio || !this.elementArea) {
                 newWidth  = viewerSize.x * this.sizeRatio;
                 newHeight = viewerSize.y * this.sizeRatio;
-            }
-            else {
+            } else {
                 newWidth = Math.sqrt(this.elementArea * (viewerSize.x / viewerSize.y));
                 newHeight = this.elementArea / newWidth;
             }
+
             this.element.style.width  = Math.round( newWidth ) + 'px';
             this.element.style.height = Math.round( newHeight ) + 'px';
+
+            if (!this.elementArea) {
+                this.elementArea = newWidth * newHeight;
+            }
+
             this.updateSize();
         }
 
