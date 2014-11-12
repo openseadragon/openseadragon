@@ -89,7 +89,7 @@ $.TiledImage = function( options ) {
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
 
     if ( options.width ) {
-        this._scale = options.width;
+        this._setScale(options.width);
         delete options.width;
 
         if ( options.height ) {
@@ -97,14 +97,11 @@ $.TiledImage = function( options ) {
             delete options.height;
         }
     } else if ( options.height ) {
-        this._scale = options.height / this.normHeight;
+        this._setScale(options.height / this.normHeight);
         delete options.height;
     } else {
-        this._scale = 1;
+        this._setScale(1);
     }
-
-    this._worldWidth = this._scale;
-    this._worldHeight = this.normHeight * this._scale;
 
     $.extend( true, this, {
 
@@ -184,10 +181,46 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-changed
      */
     setPosition: function(position) {
+        if (this._worldX === position.x && this._worldY === position.y) {
+            return;
+        }
+
         this._worldX = position.x;
         this._worldY = position.y;
         this.updateAgain = true;
         this._raiseBoundsChanged();
+    },
+
+    /**
+     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     */
+    setWidth: function(width) {
+        if (this._worldWidth === width) {
+            return;
+        }
+
+        this._setScale(width);
+        this.updateAgain = true;
+        this._raiseBoundsChanged();
+    },
+
+    /**
+     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     */
+    setHeight: function(height) {
+        if (this._worldHeight === height) {
+            return;
+        }
+
+        this._setScale(height / this.normHeight);
+        this.updateAgain = true;
+        this._raiseBoundsChanged();
+    },
+
+    _setScale: function(scale) {
+        this._scale = scale;
+        this._worldWidth = this._scale;
+        this._worldHeight = this.normHeight * this._scale;
     },
 
     _raiseBoundsChanged: function() {

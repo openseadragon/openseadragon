@@ -252,26 +252,43 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     layout: function(config) {
         var layout = config.layout || $.DEFAULT_SETTINGS.collectionLayout;
         var rows = config.rows || $.DEFAULT_SETTINGS.collectionRows;
+        var tileSize = config.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
+        var tileMargin = config.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
+        var increment = tileSize + tileMargin;
         var wrap = Math.ceil(this._items.length / rows);
         var x = 0;
         var y = 0;
+        var item, box, width, height, position;
         for (var i = 0; i < this._items.length; i++) {
             if (i && (i % wrap) === 0) {
                 if (layout === 'horizontal') {
-                    y += 1;
+                    y += increment;
                     x = 0;
                 } else {
-                    x += 1;
+                    x += increment;
                     y = 0;
                 }
             }
 
-            this._items[i].setPosition(new $.Point(x, y));
+            item = this._items[i];
+            box = item.getWorldBounds();
+            if (box.width > box.height) {
+                width = tileSize;
+            } else {
+                width = tileSize * (box.width / box.height);
+            }
+
+            height = width * (box.height / box.width);
+            position = new $.Point(x + ((tileSize - width) / 2),
+                y + ((tileSize - height) / 2));
+
+            item.setPosition(position);
+            item.setWidth(width);
 
             if (layout === 'horizontal') {
-                x += 1;
+                x += increment;
             } else {
-                y += 1;
+                y += increment;
             }
         }
     },

@@ -19,6 +19,8 @@
                 collectionMode: true,
                 collectionRows: 3,
                 collectionLayout: 'vertical',
+                // collectionTileSize: 10,
+                // collectionTileMargin: 10,
                 // wrapHorizontal: true,
                 // wrapVertical: true,
                 id: "contentDiv",
@@ -195,8 +197,16 @@
         // ----------
         collectionTest: function() {
             var tileSources = [];
+            var random;
             for (var i = 0; i < 10; i++) {
-                tileSources.push('../../data/testpattern.dzi');
+                random = Math.random();
+                if (random < 0.33) {
+                    tileSources.push('../../data/testpattern.dzi');
+                } else if (random < 0.66) {
+                    tileSources.push('../../data/tall.dzi');
+                } else {
+                    tileSources.push('../../data/wide.dzi');
+                }
             }
 
             this.viewer.open(tileSources);
