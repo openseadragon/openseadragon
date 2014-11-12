@@ -384,10 +384,6 @@ $.Viewer = function( options ) {
     });
 
     this.world.addHandler('add-item', function(event) {
-        if (_this.viewport) {
-            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        }
-
         // For backwards compatibility, we maintain the source property
         _this.source = _this.world.getItemAt(0).source;
 
@@ -399,10 +395,6 @@ $.Viewer = function( options ) {
     });
 
     this.world.addHandler('remove-item', function(event) {
-        if (_this.viewport) {
-            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
-        }
-
         // For backwards compatibility, we maintain the source property
         if (_this.world.getItemCount()) {
             _this.source = _this.world.getItemAt(0).source;
@@ -411,6 +403,12 @@ $.Viewer = function( options ) {
         }
 
         THIS[ _this.hash ].forceRedraw = true;
+    });
+
+    this.world.addHandler('home-bounds-changed', function(event) {
+        if (_this.viewport) {
+            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+        }
     });
 
     this.world.addHandler('item-index-changed', function(event) {
@@ -1300,6 +1298,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             _this.world.addItem( tiledImage, {
                 index: options.index
             });
+
+            if (_this.collectionMode) {
+                _this.world.layout({
+                    rows: _this.collectionRows,
+                    layout: _this.collectionLayout,
+                    tileSize: _this.collectionTileSize,
+                    tileMargin: _this.collectionTileMargin
+                });
+            }
 
             if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
                 _this.viewport.goHome(true);

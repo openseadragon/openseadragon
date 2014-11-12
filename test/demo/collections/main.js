@@ -16,6 +16,9 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
+                collectionMode: true,
+                collectionRows: 3,
+                collectionLayout: 'vertical',
                 // wrapHorizontal: true,
                 // wrapVertical: true,
                 id: "contentDiv",
@@ -96,7 +99,7 @@
             }
 
             // this.crossTest3();
-            this.basicTest();
+            this.collectionTest();
         },
 
         // ----------
@@ -187,6 +190,16 @@
                 y: 1.5,
                 height: 1
             });
+        },
+
+        // ----------
+        collectionTest: function() {
+            var tileSources = [];
+            for (var i = 0; i < 10; i++) {
+                tileSources.push('../../data/testpattern.dzi');
+            }
+
+            this.viewer.open(tileSources);
         },
 
         // ----------

@@ -39,6 +39,7 @@
  * or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
  * @memberof OpenSeadragon
+ * @extends OpenSeadragon.EventSource
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened.
  * @param {Object} options - Configuration for this TiledImage.
@@ -67,6 +68,8 @@ $.TiledImage = function( options ) {
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
     $.console.assert( options.source, "[TiledImage] options.source is required" );
+
+    $.EventSource.call( this );
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
@@ -128,7 +131,7 @@ $.TiledImage = function( options ) {
     }, options );
 };
 
-$.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
+$.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
      * @returns {Boolean} Whether the TiledImage is scheduled for an update at the
      * soonest possible opportunity.
@@ -175,8 +178,30 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
      */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
+    },
+
+    /**
+     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     */
+    setPosition: function(position) {
+        this._worldX = position.x;
+        this._worldY = position.y;
+        this.updateAgain = true;
+        this._raiseBoundsChanged();
+    },
+
+    _raiseBoundsChanged: function() {
+        /**
+         * Raised when the TiledImage's bounds are changed.
+         * @event bounds-changed
+         * @memberOf OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {OpenSeadragon.World} eventSource - A reference to the TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('bounds-changed');
     }
-};
+});
 
 /**
  * @private
@@ -794,8 +819,7 @@ function drawTiles( tiledImage, lastDrawn ){
         viewer,
         viewport,
         position,
-        tileSource,
-        collectionTileSource;
+        tileSource;
 
     // We need a callback to give image manipulation a chance to happen
     var drawingHandler = function(args) {

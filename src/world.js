@@ -61,6 +61,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @fires OpenSeadragon.World.event:add-item
      */
     addItem: function( item, options ) {
+        var _this = this;
+
         $.console.assert(item, "[World.addItem] item is required");
         $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
 
@@ -74,6 +76,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._figureSizes();
         this._needsUpdate = true;
+
+        // TODO: remove handler when removing item from world
+        item.addHandler('bounds-changed', function(event) {
+            _this._figureSizes();
+        });
 
         /**
          * Raised when an item is added to the World.
@@ -242,39 +249,79 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         return this._contentFactor;
     },
 
+    layout: function(config) {
+        var layout = config.layout || $.DEFAULT_SETTINGS.collectionLayout;
+        var rows = config.rows || $.DEFAULT_SETTINGS.collectionRows;
+        var wrap = Math.ceil(this._items.length / rows);
+        var x = 0;
+        var y = 0;
+        for (var i = 0; i < this._items.length; i++) {
+            if (i && (i % wrap) === 0) {
+                if (layout === 'horizontal') {
+                    y += 1;
+                    x = 0;
+                } else {
+                    x += 1;
+                    y = 0;
+                }
+            }
+
+            this._items[i].setPosition(new $.Point(x, y));
+
+            if (layout === 'horizontal') {
+                x += 1;
+            } else {
+                y += 1;
+            }
+        }
+    },
+
     // private
     _figureSizes: function() {
+        var oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
+
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
             this._contentSize = new $.Point(1, 1);
-            return;
+        } else {
+            var bounds = this._items[0].getWorldBounds();
+            this._contentFactor = this._items[0].getContentSize().x / bounds.width;
+            var left = bounds.x;
+            var top = bounds.y;
+            var right = bounds.x + bounds.width;
+            var bottom = bounds.y + bounds.height;
+            var box;
+            for ( var i = 1; i < this._items.length; i++ ) {
+                box = this._items[i].getWorldBounds();
+                this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
+                left = Math.min( left, box.x );
+                top = Math.min( top, box.y );
+                right = Math.max( right, box.x + box.width );
+                bottom = Math.max( bottom, box.y + box.height );
+            }
+
+            this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
+            this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
+                this._homeBounds.height * this._contentFactor);
         }
 
-        var bounds = this._items[0].getWorldBounds();
-        this._contentFactor = this._items[0].getContentSize().x / bounds.width;
-        var left = bounds.x;
-        var top = bounds.y;
-        var right = bounds.x + bounds.width;
-        var bottom = bounds.y + bounds.height;
-        var box;
-        for ( var i = 1; i < this._items.length; i++ ) {
-            box = this._items[i].getWorldBounds();
-            this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
-            left = Math.min( left, box.x );
-            top = Math.min( top, box.y );
-            right = Math.max( right, box.x + box.width );
-            bottom = Math.max( bottom, box.y + box.height );
+        if (!this._homeBounds.equals(oldHomeBounds)) {
+            /**
+             * Raised when the home bounds change.
+             * @event home-bounds-changed
+             * @memberOf OpenSeadragon.World
+             * @type {object}
+             * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent('home-bounds-changed');
         }
-
-        this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
-        this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
-            this._homeBounds.height * this._contentFactor);
     },
 
     // private
     _raiseRemoveItem: function(item) {
         /**
-         * Raised when a item is removed.
+         * Raised when an item is removed.
          * @event remove-item
          * @memberOf OpenSeadragon.World
          * @type {object}
