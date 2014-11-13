@@ -166,8 +166,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
      */
-    getWorldBounds: function() {
+    getBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
+    },
+
+    // deprecated
+    getWorldBounds: function() {
+        $.console.error('[TiledImage.getWorldBounds] is deprecated; use TiledImage.getBounds instead');
+        return this.getBounds();
     },
 
     /**
@@ -178,7 +184,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     * Sets the TiledImage's position in the world.
+     * @param {OpenSeadragon.Point} position - The new position, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setPosition: function(position) {
         if (this._worldX === position.x && this._worldY === position.y) {
@@ -188,11 +196,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._worldX = position.x;
         this._worldY = position.y;
         this.updateAgain = true;
-        this._raiseBoundsChanged();
+        this._raiseBoundsChange();
     },
 
     /**
-     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     * Sets the TiledImage's width in the world, adjusting the height to match based on aspect ratio.
+     * @param {Number} width - The new width, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setWidth: function(width) {
         if (this._worldWidth === width) {
@@ -201,11 +211,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         this._setScale(width);
         this.updateAgain = true;
-        this._raiseBoundsChanged();
+        this._raiseBoundsChange();
     },
 
     /**
-     * @fires OpenSeadragon.TiledImage.event:bounds-changed
+     * Sets the TiledImage's height in the world, adjusting the width to match based on aspect ratio.
+     * @param {Number} height - The new height, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setHeight: function(height) {
         if (this._worldHeight === height) {
@@ -214,25 +226,27 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         this._setScale(height / this.normHeight);
         this.updateAgain = true;
-        this._raiseBoundsChanged();
+        this._raiseBoundsChange();
     },
 
+    // private
     _setScale: function(scale) {
         this._scale = scale;
         this._worldWidth = this._scale;
         this._worldHeight = this.normHeight * this._scale;
     },
 
-    _raiseBoundsChanged: function() {
+    // private
+    _raiseBoundsChange: function() {
         /**
          * Raised when the TiledImage's bounds are changed.
-         * @event bounds-changed
+         * @event bounds-change
          * @memberOf OpenSeadragon.TiledImage
          * @type {object}
          * @property {OpenSeadragon.World} eventSource - A reference to the TiledImage which raised the event.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.raiseEvent('bounds-changed');
+        this.raiseEvent('bounds-change');
     }
 });
 

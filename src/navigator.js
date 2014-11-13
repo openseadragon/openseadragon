@@ -239,7 +239,7 @@ $.Navigator = function( options ){
         }
     });
 
-    viewer.world.addHandler("item-index-changed", function(event) {
+    viewer.world.addHandler("item-index-change", function(event) {
         var item = _this.world.getItemAt(event.previousIndex);
         _this.world.setItemIndex(item, event.newIndex);
     });

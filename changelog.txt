@@ -19,9 +19,11 @@ OPENSEADRAGON CHANGELOG
     * DEPRECATION: use Drawer.clear and World.update instead of Drawer.update
     * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
     * DEPRECATION: Viewer's add-layer event is now World's add-item event
-    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-changed event
+    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-change event
     * DEPRECATION: Viewer's remove-layer event is now World's remove-item event
     * DEPRECATION: Viewer's add-layer-failed event is now add-item-failed
+    * DEPRECATION: TileSourceCollection has been retired in favor of World
+    * DEPRECATION: collectionMode no longer draws outlines or reflections for items
     * Drawer has been split into three classes:
         * TiledImage, tile management and positioning for a single tiled image
         * TileCache, tile caching for all images

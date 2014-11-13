@@ -405,13 +405,13 @@ $.Viewer = function( options ) {
         THIS[ _this.hash ].forceRedraw = true;
     });
 
-    this.world.addHandler('home-bounds-changed', function(event) {
+    this.world.addHandler('home-bounds-change', function(event) {
         if (_this.viewport) {
             _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
     });
 
-    this.world.addHandler('item-index-changed', function(event) {
+    this.world.addHandler('item-index-change', function(event) {
         // For backwards compatibility, we maintain the source property
         _this.source = _this.world.getItemAt(0).source;
     });
@@ -1300,7 +1300,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             });
 
             if (_this.collectionMode) {
-                _this.world.layout({
+                _this.world.arrange({
                     rows: _this.collectionRows,
                     layout: _this.collectionLayout,
                     tileSize: _this.collectionTileSize,

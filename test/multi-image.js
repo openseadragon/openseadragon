@@ -63,9 +63,9 @@
                     equal( viewer.world.getItemAt( 2 ), item2,
                         "The item at index 2 should be the second added item." );
 
-                    viewer.world.addHandler( "item-index-changed",
+                    viewer.world.addHandler( "item-index-change",
                         function itemIndexChangedHandler( event ) {
-                            viewer.world.removeHandler( "item-index-changed",
+                            viewer.world.removeHandler( "item-index-change",
                                 itemIndexChangedHandler );
                             equal( event.item, item2,
                                 "The item which changed index should be item2" );
