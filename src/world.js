@@ -43,6 +43,8 @@
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
  **/
 $.World = function( options ) {
+    var _this = this;
+
     $.console.assert( options.viewer, "[World] options.viewer is required" );
 
     $.EventSource.call( this );
@@ -50,6 +52,10 @@ $.World = function( options ) {
     this.viewer = options.viewer;
     this._items = [];
     this._needsUpdate = false;
+    this._delegatedFigureSizes = function(event) {
+        _this._figureSizes();
+    };
+
     this._figureSizes();
 };
 
@@ -62,8 +68,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @fires OpenSeadragon.World.event:home-bounds-change
      */
     addItem: function( item, options ) {
-        var _this = this;
-
         $.console.assert(item, "[World.addItem] item is required");
         $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
 
@@ -78,10 +82,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         this._figureSizes();
         this._needsUpdate = true;
 
-        // TODO: remove handler when removing item from world
-        item.addHandler('bounds-change', function(event) {
-            _this._figureSizes();
-        });
+        item.addHandler('bounds-change', this._delegatedFigureSizes);
 
         /**
          * Raised when an item is added to the World.
@@ -181,6 +182,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return;
         }
 
+        item.removeHandler('bounds-change', this._delegatedFigureSizes);
         this._items.splice( index, 1 );
         this._figureSizes();
         this._needsUpdate = true;
@@ -193,13 +195,20 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @fires OpenSeadragon.World.event:home-bounds-change
      */
     removeAll: function() {
+        var item;
+        for (var i = 0; i < this._items.length; i++) {
+            item = this._items[i];
+            item.removeHandler('bounds-change', this._delegatedFigureSizes);
+        }
+
         var removedItems = this._items;
         this._items = [];
         this._figureSizes();
         this._needsUpdate = true;
 
-        for (var i = 0; i < removedItems.length; i++) {
-            this._raiseRemoveItem(removedItems[i]);
+        for (i = 0; i < removedItems.length; i++) {
+            item = removedItems[i];
+            this._raiseRemoveItem(item);
         }
     },
 
