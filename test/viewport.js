@@ -29,6 +29,7 @@
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
     var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
     var DZI_PATH = '/test/data/testpattern.dzi'
+    var TALL_PATH = '/test/data/tall.dzi'
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
 
@@ -56,21 +57,219 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = ;
-                expected = ;
-                actual = ;
-                propEqual(actual, expected, "message " + orig);
-            }
-
             start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open(DZI_PATH);
     });
 */
-        asyncTest('deltaPixelsFromPoints', function() {
+    asyncTest('getMinZoomDefault', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            equal(viewport.getMinZoom(), .9, "Test min zoom level")
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getMaxZoomDefault', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            equal(viewport.getMaxZoom(), 2.2, "Test max zoom level")
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getMinZoom', function() {
+        var expected, level, i = 0;
+        var openHandler = function(event) {
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            if(level == 0) { // 0 means use the default
+                expected = 0.9;
+            }
+            else if(level > 1){
+                expected = 1; // min zoom won't go bigger than 1.
+            }
+
+            equal(
+                viewport.getMinZoom(),
+                expected,
+                "Test getMinZoom with zoom level of " + level
+            );
+            i++;
+            if(i < testZoomLevels.length){
+                level = testZoomLevels[i];
+                viewer.minZoomLevel = level;
+                expected = level;
+                viewer.open(DZI_PATH);
+            }
+            else {
+                viewer.removeHandler('open', openHandler);
+                start();
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+        level = testZoomLevels[i];
+        viewer.minZoomLevel = level;
+        expected = level;
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getMaxZoom', function() {
+        var expected, level, i = 0;
+        var openHandler = function(event) {
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            if(level == 0){ // 0 means use the default
+                expected = 2.2;
+            }
+            else if(level < 1){
+                expected = 1; // max zoom won't go smaller than 1.
+            }
+
+            equal(
+                viewport.getMaxZoom(),
+                expected,
+                "Test getMaxZoom with zoom level of " + level
+            );
+            i++;
+            if(i < testZoomLevels.length){
+                level = testZoomLevels[i];
+                viewer.maxZoomLevel = level;
+                expected = level;
+                viewer.open(DZI_PATH);
+            }
+            else {
+                viewer.removeHandler('open', openHandler);
+                start();
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+        level = testZoomLevels[i];
+        viewer.maxZoomLevel = level;
+        expected = level;
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeBounds', function() {
+        var expected, i = 0;
+        var openHandler = function(event) {
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            // Have to special case this to avoid dividing by 0
+            if(testZoomLevels[i] == 0){
+                expected = new OpenSeadragon.Rect(0, 0, 1, 1);
+            }
+            else{
+                var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
+                var position = 0.5 - (sideLength / 2.0);
+                expected = new OpenSeadragon.Rect(position, position, sideLength, sideLength);
+            }
+            propEqual(
+                viewport.getHomeBounds(),
+                expected,
+                "Test getHomeBounds with default zoom level of " + viewer.defaultZoomLevel
+            );
+            i++;
+            if(i < testZoomLevels.length){
+                viewer.defaultZoomLevel = testZoomLevels[i];
+                viewer.open(DZI_PATH);
+            }
+            else {
+                viewer.removeHandler('open', openHandler);
+                start();
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.defaultZoomLevel = testZoomLevels[i];
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeZoom', function() {
+        var expected, i = 0;
+        var openHandler = function(event) {
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            // If the default zoom level is set to 0, then we expect the home zoom to be 1.
+            if(expected == 0){
+                expected = 1;
+            }
+            equal(
+                viewport.getHomeZoom(),
+                expected,
+                "Test getHomeZoom with default zoom level of " + expected
+            );
+            i++;
+            if(i < testZoomLevels.length){
+                expected = testZoomLevels[i];
+                viewer.defaultZoomLevel = expected;
+                viewer.open(DZI_PATH);
+            }
+            else {
+                viewer.removeHandler('open', openHandler);
+                start();
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+        expected = testZoomLevels[i];
+        viewer.defaultZoomLevel = expected;
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeZoomWithHomeFillsViewer', function() {
+        var expected, i = 0;
+        var openHandler = function(event) {
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            // If the default zoom level is set to 0, then we expect the home zoom to be 1.
+            if(expected == 0){
+                expected = 1;
+            }
+
+            equal(
+                viewport.getHomeZoom(),
+                expected,
+                "Test getHomeZoom with homeFillsViewer = true and default zoom level of " + expected
+            );
+            i++;
+            if(i < testZoomLevels.length){
+                expected = testZoomLevels[i];
+                viewer.defaultZoomLevel = expected;
+                viewer.open(TALL_PATH);  // use a different image for homeFillsViewer
+            }
+            else {
+                viewer.removeHandler('open', openHandler);
+                start();
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+        expected = testZoomLevels[i];
+        viewer.homeFillsViewer = true;
+        viewer.defaultZoomLevel = expected;
+        viewer.open(TALL_PATH); // use a different image for homeFillsViewer
+    });
+
+    asyncTest('deltaPixelsFromPoints', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
