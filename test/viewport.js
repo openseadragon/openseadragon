@@ -63,13 +63,26 @@
         viewer.open(DZI_PATH);
     });
 */
+    asyncTest('getAspectRatio', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            equal(viewport.getAspectRatio(), 1, "Test aspect ratio")
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('getMinZoomDefault', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            equal(viewport.getMinZoom(), .9, "Test min zoom level")
+            equal(viewport.getMinZoom(), .9, "Test default min zoom level")
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -82,7 +95,7 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            equal(viewport.getMaxZoom(), 2.2, "Test max zoom level")
+            equal(viewport.getMaxZoom(), 2.2, "Test default max zoom level")
             start();
         };
         viewer.addHandler('open', openHandler);
