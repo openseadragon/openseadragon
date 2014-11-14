@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * True multi-image mode (#450)
     * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
     * BREAKING CHANGE: Viewer.drawers and Viewer.drawersContainer no longer exist
+    * BREAKING CHANGE: A Viewer's Drawer and Viewport are now made once per Viewer and reused for every image that Viewer opens (rather than being recreated for every open); this means if you change Viewer options between opens, the behavior is different now.
     * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
         * addTiledImage supports positioning config properties
     * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel
