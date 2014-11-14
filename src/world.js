@@ -65,7 +65,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {OpenSeadragon.TiledImage} item - The item to add.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
-     * @fires OpenSeadragon.World.event:home-bounds-change
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     addItem: function( item, options ) {
         $.console.assert(item, "[World.addItem] item is required");
@@ -172,7 +172,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Remove an item.
      * @param {OpenSeadragon.TiledImage} item - The item to remove.
      * @fires OpenSeadragon.World.event:remove-item
-     * @fires OpenSeadragon.World.event:home-bounds-change
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     removeItem: function( item ) {
         $.console.assert(item, "[World.removeItem] item is required");
@@ -192,7 +192,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Remove all items.
      * @fires OpenSeadragon.World.event:remove-item
-     * @fires OpenSeadragon.World.event:home-bounds-change
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     removeAll: function() {
         var item;
@@ -268,7 +268,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {Number} [options.rows] - See collectionRows in {@link OpenSeadragon.Options}.
      * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
      * @param {Number} [options.tileMargin] - See collectionTileMargin in {@link OpenSeadragon.Options}.
-     * @fires OpenSeadragon.World.event:home-bounds-change
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     arrange: function(options) {
         options = options || {};
@@ -318,6 +318,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     // private
     _figureSizes: function() {
         var oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
+        var oldContentSize = this._contentSize ? this._contentSize.clone() : null;
+        var oldContentFactor = this._contentFactor || 0;
 
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
@@ -344,16 +346,17 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 this._homeBounds.height * this._contentFactor);
         }
 
-        if (!this._homeBounds.equals(oldHomeBounds)) {
+        if (this._contentFactor !== oldContentFactor || !this._homeBounds.equals(oldHomeBounds) ||
+                !this._contentSize.equals(oldContentSize)) {
             /**
-             * Raised when the home bounds change.
-             * @event home-bounds-change
+             * Raised when the home bounds, content size, or content factor change.
+             * @event metrics-change
              * @memberOf OpenSeadragon.World
              * @type {object}
              * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            this.raiseEvent('home-bounds-change');
+            this.raiseEvent('metrics-change', {});
         }
     },
 

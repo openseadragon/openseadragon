@@ -405,7 +405,7 @@ $.Viewer = function( options ) {
         THIS[ _this.hash ].forceRedraw = true;
     });
 
-    this.world.addHandler('home-bounds-change', function(event) {
+    this.world.addHandler('metrics-change', function(event) {
         if (_this.viewport) {
             _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
@@ -435,6 +435,8 @@ $.Viewer = function( options ) {
         homeFillsViewer:    this.homeFillsViewer,
         margins:            this.viewportMargins
     });
+
+    this.viewport.setHomeBounds(this.world.getHomeBounds(), this.world.getContentFactor());
 
     // Create the image loader
     this.imageLoader = new $.ImageLoader();
