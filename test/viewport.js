@@ -63,6 +63,19 @@
         viewer.open(DZI_PATH);
     });
 */
+    asyncTest('getContainerSize', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+
+            propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size")
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('getAspectRatio', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
