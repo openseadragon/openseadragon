@@ -16,6 +16,11 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
+                collectionMode: true,
+                collectionRows: 3,
+                collectionLayout: 'vertical',
+                // collectionTileSize: 10,
+                // collectionTileMargin: 10,
                 // wrapHorizontal: true,
                 // wrapVertical: true,
                 id: "contentDiv",
@@ -96,7 +101,7 @@
             }
 
             // this.crossTest3();
-            this.basicTest();
+            this.collectionTest();
         },
 
         // ----------
@@ -187,6 +192,24 @@
                 y: 1.5,
                 height: 1
             });
+        },
+
+        // ----------
+        collectionTest: function() {
+            var tileSources = [];
+            var random;
+            for (var i = 0; i < 10; i++) {
+                random = Math.random();
+                if (random < 0.33) {
+                    tileSources.push('../../data/testpattern.dzi');
+                } else if (random < 0.66) {
+                    tileSources.push('../../data/tall.dzi');
+                } else {
+                    tileSources.push('../../data/wide.dzi');
+                }
+            }
+
+            this.viewer.open(tileSources);
         },
 
         // ----------

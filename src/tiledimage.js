@@ -39,6 +39,7 @@
  * or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
  * @memberof OpenSeadragon
+ * @extends OpenSeadragon.EventSource
  * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * A new instance is created for each TileSource opened.
  * @param {Object} options - Configuration for this TiledImage.
@@ -68,6 +69,8 @@ $.TiledImage = function( options ) {
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
     $.console.assert( options.source, "[TiledImage] options.source is required" );
 
+    $.EventSource.call( this );
+
     this._tileCache = options.tileCache;
     delete options.tileCache;
 
@@ -86,7 +89,7 @@ $.TiledImage = function( options ) {
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
 
     if ( options.width ) {
-        this._scale = options.width;
+        this._setScale(options.width);
         delete options.width;
 
         if ( options.height ) {
@@ -94,14 +97,11 @@ $.TiledImage = function( options ) {
             delete options.height;
         }
     } else if ( options.height ) {
-        this._scale = options.height / this.normHeight;
+        this._setScale(options.height / this.normHeight);
         delete options.height;
     } else {
-        this._scale = 1;
+        this._setScale(1);
     }
-
-    this._worldWidth = this._scale;
-    this._worldHeight = this.normHeight * this._scale;
 
     $.extend( true, this, {
 
@@ -128,7 +128,7 @@ $.TiledImage = function( options ) {
     }, options );
 };
 
-$.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
+$.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
      * @returns {Boolean} Whether the TiledImage is scheduled for an update at the
      * soonest possible opportunity.
@@ -166,8 +166,14 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
      * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
      */
-    getWorldBounds: function() {
+    getBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
+    },
+
+    // deprecated
+    getWorldBounds: function() {
+        $.console.error('[TiledImage.getWorldBounds] is deprecated; use TiledImage.getBounds instead');
+        return this.getBounds();
     },
 
     /**
@@ -175,8 +181,74 @@ $.TiledImage.prototype = /** @lends OpenSeadragon.TiledImage.prototype */{
      */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
+    },
+
+    /**
+     * Sets the TiledImage's position in the world.
+     * @param {OpenSeadragon.Point} position - The new position, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    setPosition: function(position) {
+        if (this._worldX === position.x && this._worldY === position.y) {
+            return;
+        }
+
+        this._worldX = position.x;
+        this._worldY = position.y;
+        this.updateAgain = true;
+        this._raiseBoundsChange();
+    },
+
+    /**
+     * Sets the TiledImage's width in the world, adjusting the height to match based on aspect ratio.
+     * @param {Number} width - The new width, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    setWidth: function(width) {
+        if (this._worldWidth === width) {
+            return;
+        }
+
+        this._setScale(width);
+        this.updateAgain = true;
+        this._raiseBoundsChange();
+    },
+
+    /**
+     * Sets the TiledImage's height in the world, adjusting the width to match based on aspect ratio.
+     * @param {Number} height - The new height, in world coordinates.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    setHeight: function(height) {
+        if (this._worldHeight === height) {
+            return;
+        }
+
+        this._setScale(height / this.normHeight);
+        this.updateAgain = true;
+        this._raiseBoundsChange();
+    },
+
+    // private
+    _setScale: function(scale) {
+        this._scale = scale;
+        this._worldWidth = this._scale;
+        this._worldHeight = this.normHeight * this._scale;
+    },
+
+    // private
+    _raiseBoundsChange: function() {
+        /**
+         * Raised when the TiledImage's bounds are changed.
+         * @event bounds-change
+         * @memberOf OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {OpenSeadragon.World} eventSource - A reference to the TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('bounds-change');
     }
-};
+});
 
 /**
  * @private
@@ -794,8 +866,7 @@ function drawTiles( tiledImage, lastDrawn ){
         viewer,
         viewport,
         position,
-        tileSource,
-        collectionTileSource;
+        tileSource;
 
     // We need a callback to give image manipulation a chance to happen
     var drawingHandler = function(args) {

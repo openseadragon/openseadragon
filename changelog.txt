@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * True multi-image mode (#450)
     * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
     * BREAKING CHANGE: Viewer.drawers and Viewer.drawersContainer no longer exist
+    * BREAKING CHANGE: A Viewer's Drawer and Viewport are now made once per Viewer and reused for every image that Viewer opens (rather than being recreated for every open); this means if you change Viewer options between opens, the behavior is different now.
     * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
         * addTiledImage supports positioning config properties
     * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel
@@ -19,9 +20,11 @@ OPENSEADRAGON CHANGELOG
     * DEPRECATION: use Drawer.clear and World.update instead of Drawer.update
     * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
     * DEPRECATION: Viewer's add-layer event is now World's add-item event
-    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-changed event
+    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-change event
     * DEPRECATION: Viewer's remove-layer event is now World's remove-item event
     * DEPRECATION: Viewer's add-layer-failed event is now add-item-failed
+    * DEPRECATION: TileSourceCollection has been retired in favor of World
+    * DEPRECATION: collectionMode no longer draws outlines or reflections for items
     * Drawer has been split into three classes:
         * TiledImage, tile management and positioning for a single tiled image
         * TileCache, tile caching for all images

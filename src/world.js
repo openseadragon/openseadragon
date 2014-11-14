@@ -43,6 +43,8 @@
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
  **/
 $.World = function( options ) {
+    var _this = this;
+
     $.console.assert( options.viewer, "[World] options.viewer is required" );
 
     $.EventSource.call( this );
@@ -50,6 +52,10 @@ $.World = function( options ) {
     this.viewer = options.viewer;
     this._items = [];
     this._needsUpdate = false;
+    this._delegatedFigureSizes = function(event) {
+        _this._figureSizes();
+    };
+
     this._figureSizes();
 };
 
@@ -59,6 +65,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {OpenSeadragon.TiledImage} item - The item to add.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     addItem: function( item, options ) {
         $.console.assert(item, "[World.addItem] item is required");
@@ -74,6 +81,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._figureSizes();
         this._needsUpdate = true;
+
+        item.addHandler('bounds-change', this._delegatedFigureSizes);
 
         /**
          * Raised when an item is added to the World.
@@ -120,7 +129,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Change the index of a item so that it appears over or under others.
      * @param {OpenSeadragon.TiledImage} item - The item to move.
      * @param {Number} index - The new index.
-     * @fires OpenSeadragon.World.event:item-index-changed
+     * @fires OpenSeadragon.World.event:item-index-change
      */
     setItemIndex: function( item, index ) {
         $.console.assert(item, "[World.setItemIndex] item is required");
@@ -142,7 +151,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         /**
          * Raised when the order of the indexes has been changed.
-         * @event item-index-changed
+         * @event item-index-change
          * @memberOf OpenSeadragon.World
          * @type {object}
          * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
@@ -152,7 +161,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
          * @property {Number} newIndex - The new index of the item
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.raiseEvent( 'item-index-changed', {
+        this.raiseEvent( 'item-index-change', {
             item: item,
             previousIndex: oldIndex,
             newIndex: index
@@ -163,6 +172,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Remove an item.
      * @param {OpenSeadragon.TiledImage} item - The item to remove.
      * @fires OpenSeadragon.World.event:remove-item
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     removeItem: function( item ) {
         $.console.assert(item, "[World.removeItem] item is required");
@@ -172,6 +182,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return;
         }
 
+        item.removeHandler('bounds-change', this._delegatedFigureSizes);
         this._items.splice( index, 1 );
         this._figureSizes();
         this._needsUpdate = true;
@@ -181,15 +192,23 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Remove all items.
      * @fires OpenSeadragon.World.event:remove-item
+     * @fires OpenSeadragon.World.event:metrics-change
      */
     removeAll: function() {
+        var item;
+        for (var i = 0; i < this._items.length; i++) {
+            item = this._items[i];
+            item.removeHandler('bounds-change', this._delegatedFigureSizes);
+        }
+
         var removedItems = this._items;
         this._items = [];
         this._figureSizes();
         this._needsUpdate = true;
 
-        for (var i = 0; i < removedItems.length; i++) {
-            this._raiseRemoveItem(removedItems[i]);
+        for (i = 0; i < removedItems.length; i++) {
+            item = removedItems[i];
+            this._raiseRemoveItem(item);
         }
     },
 
@@ -242,39 +261,109 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         return this._contentFactor;
     },
 
+    /**
+     * Arranges all of the TiledImages with the specified settings.
+     * @param {Object} options - Specifies how to arrange.
+     * @param {String} [options.layout] - See collectionLayout in {@link OpenSeadragon.Options}.
+     * @param {Number} [options.rows] - See collectionRows in {@link OpenSeadragon.Options}.
+     * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
+     * @param {Number} [options.tileMargin] - See collectionTileMargin in {@link OpenSeadragon.Options}.
+     * @fires OpenSeadragon.World.event:metrics-change
+     */
+    arrange: function(options) {
+        options = options || {};
+        var layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
+        var rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
+        var tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
+        var tileMargin = options.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
+        var increment = tileSize + tileMargin;
+        var wrap = Math.ceil(this._items.length / rows);
+        var x = 0;
+        var y = 0;
+        var item, box, width, height, position;
+        for (var i = 0; i < this._items.length; i++) {
+            if (i && (i % wrap) === 0) {
+                if (layout === 'horizontal') {
+                    y += increment;
+                    x = 0;
+                } else {
+                    x += increment;
+                    y = 0;
+                }
+            }
+
+            item = this._items[i];
+            box = item.getBounds();
+            if (box.width > box.height) {
+                width = tileSize;
+            } else {
+                width = tileSize * (box.width / box.height);
+            }
+
+            height = width * (box.height / box.width);
+            position = new $.Point(x + ((tileSize - width) / 2),
+                y + ((tileSize - height) / 2));
+
+            item.setPosition(position);
+            item.setWidth(width);
+
+            if (layout === 'horizontal') {
+                x += increment;
+            } else {
+                y += increment;
+            }
+        }
+    },
+
     // private
     _figureSizes: function() {
+        var oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
+        var oldContentSize = this._contentSize ? this._contentSize.clone() : null;
+        var oldContentFactor = this._contentFactor || 0;
+
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
             this._contentSize = new $.Point(1, 1);
-            return;
+        } else {
+            var bounds = this._items[0].getBounds();
+            this._contentFactor = this._items[0].getContentSize().x / bounds.width;
+            var left = bounds.x;
+            var top = bounds.y;
+            var right = bounds.x + bounds.width;
+            var bottom = bounds.y + bounds.height;
+            var box;
+            for ( var i = 1; i < this._items.length; i++ ) {
+                box = this._items[i].getBounds();
+                this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
+                left = Math.min( left, box.x );
+                top = Math.min( top, box.y );
+                right = Math.max( right, box.x + box.width );
+                bottom = Math.max( bottom, box.y + box.height );
+            }
+
+            this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
+            this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
+                this._homeBounds.height * this._contentFactor);
         }
 
-        var bounds = this._items[0].getWorldBounds();
-        this._contentFactor = this._items[0].getContentSize().x / bounds.width;
-        var left = bounds.x;
-        var top = bounds.y;
-        var right = bounds.x + bounds.width;
-        var bottom = bounds.y + bounds.height;
-        var box;
-        for ( var i = 1; i < this._items.length; i++ ) {
-            box = this._items[i].getWorldBounds();
-            this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
-            left = Math.min( left, box.x );
-            top = Math.min( top, box.y );
-            right = Math.max( right, box.x + box.width );
-            bottom = Math.max( bottom, box.y + box.height );
+        if (this._contentFactor !== oldContentFactor || !this._homeBounds.equals(oldHomeBounds) ||
+                !this._contentSize.equals(oldContentSize)) {
+            /**
+             * Raised when the home bounds, content size, or content factor change.
+             * @event metrics-change
+             * @memberOf OpenSeadragon.World
+             * @type {object}
+             * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent('metrics-change', {});
         }
-
-        this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
-        this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
-            this._homeBounds.height * this._contentFactor);
     },
 
     // private
     _raiseRemoveItem: function(item) {
         /**
-         * Raised when a item is removed.
+         * Raised when an item is removed.
          * @event remove-item
          * @memberOf OpenSeadragon.World
          * @type {object}
