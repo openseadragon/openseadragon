@@ -32,12 +32,12 @@
 
             if (testInitialOpen) {
                 config.tileSources = [
-                    // {
-                    //     tileSource: "../../data/tall.dzi",
-                    //     x: 1.5,
-                    //     y: 0,
-                    //     width: 1
-                    // },
+                    {
+                        tileSource: "../../data/tall.dzi",
+                        x: 1.5,
+                        y: 0,
+                        width: 1
+                    },
                     {
                         tileSource: '../../data/wide.dzi',
                         opacity: 1,

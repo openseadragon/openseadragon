@@ -200,13 +200,11 @@ $.Viewer = function( options ) {
         // how much we should be continuously zooming by
         "zoomFactor":        null,
         "lastZoomTime":      null,
-        // did we decide this viewer has a sequence of tile sources
-        "sequenced":         false,
-        "sequence":          0,
         "fullPage":          false,
         "onfullscreenchange": null
     };
 
+    this._sequenceIndex = 0;
     this._firstOpen = true;
     this._updateRequestId = null;
     this.currentOverlays = [];
@@ -507,17 +505,18 @@ $.Viewer = function( options ) {
 
     // Sequence mode
     if (this.sequenceMode) {
-        THIS[ this.hash ].sequenced = true;
-        this.initialPage = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
-        THIS[ this.hash ].sequence = this.initialPage;
+        if (this.tileSources && this.tileSources.length) {
+            this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+        }
+
         this.bindSequenceControls();
     }
 
     // Open initial tilesources
-    if ( this.tileSources ) {
+    if ( this.tileSources && this.tileSources.length) {
         if (this.sequenceMode) {
-            this.open(this.tileSources[this.initialPage]);
-            this._updateSequenceButtons( this.initialPage );
+            this.open(this.tileSources[this._sequenceIndex]);
+            this._updateSequenceButtons( this._sequenceIndex );
         } else {
             this.open( this.tileSources );
         }
@@ -1422,7 +1421,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             navImages               = this.navImages,
             useGroup                = true ;
 
-        if( this.showSequenceControl && THIS[ this.hash ].sequenced ){
+        if( this.showSequenceControl ){
 
             if( this.previousButton || this.nextButton ){
                 //if we are binding to custom buttons then layout and
@@ -1460,6 +1459,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if( !this.navPrevNextWrap ){
                 this.previousButton.disable();
+            }
+
+            if (!this.tileSources || !this.tileSources.length) {
+                this.nextButton.disable();
             }
 
             if( useGroup ){
@@ -1659,7 +1662,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {Number}
      */
     currentPage: function() {
-        return THIS[ this.hash ].sequence;
+        return this._sequenceIndex;
     },
 
     /**
@@ -1668,7 +1671,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:page
      */
     goToPage: function( page ){
-        if( page >= 0 && page < this.tileSources.length ){
+        if( this.tileSources && page >= 0 && page < this.tileSources.length ){
             /**
              * Raised when the page is changed on a viewer configured with multiple image sources (see {@link OpenSeadragon.Viewer#goToPage}).
              *
@@ -1681,7 +1684,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              */
             this.raiseEvent( 'page', { page: page } );
 
-            THIS[ this.hash ].sequence = page;
+            this._sequenceIndex = page;
 
             this._updateSequenceButtons( page );
 
@@ -1871,7 +1874,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     _updateSequenceButtons: function( page ) {
 
             if ( this.nextButton ) {
-                if( ( this.tileSources.length - 1 ) === page ) {
+                if(!this.tileSources || this.tileSources.length - 1 === page) {
                     //Disable next button
                     if ( !this.navPrevNextWrap ) {
                         this.nextButton.disable();
@@ -2856,7 +2859,7 @@ function onRotateRight() {
 
 
 function onPrevious(){
-    var previous = THIS[ this.hash ].sequence - 1;
+    var previous = this._sequenceIndex - 1;
     if(this.navPrevNextWrap && previous < 0){
         previous += this.tileSources.length;
     }
@@ -2865,7 +2868,7 @@ function onPrevious(){
 
 
 function onNext(){
-    var next = THIS[ this.hash ].sequence + 1;
+    var next = this._sequenceIndex + 1;
     if(this.navPrevNextWrap && next >= this.tileSources.length){
         next = 0;
     }
