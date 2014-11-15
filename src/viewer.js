@@ -207,6 +207,7 @@ $.Viewer = function( options ) {
         "onfullscreenchange": null
     };
 
+    this._firstOpen = true;
     this._updateRequestId = null;
     this.currentOverlays = [];
 
@@ -374,7 +375,6 @@ $.Viewer = function( options ) {
     }
 
     this.bindStandardControls();
-    this.bindSequenceControls();
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
@@ -505,12 +505,21 @@ $.Viewer = function( options ) {
         });
     }
 
+    // Sequence mode
+    if (this.sequenceMode) {
+        THIS[ this.hash ].sequenced = true;
+        this.initialPage = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+        THIS[ this.hash ].sequence = this.initialPage;
+        this.bindSequenceControls();
+    }
+
     // Open initial tilesources
     if ( this.tileSources ) {
-        this.open( this.tileSources );
-
-        if ( this.tileSources.length > 1 ) {
+        if (this.sequenceMode) {
+            this.open(this.tileSources[this.initialPage]);
             this._updateSequenceButtons( this.initialPage );
+        } else {
+            this.open( this.tileSources );
         }
     }
 
@@ -589,9 +598,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var checkCompletion = function() {
             if (successes + failures === expected) {
                 if (successes) {
-                    if (!_this.preserveViewport) {
+                    if (_this._firstOpen || !_this.preserveViewport) {
                         _this.viewport.goHome( true );
                     }
+
+                    _this._firstOpen = false;
 
                     var source = tileSources[0];
                     if (source.tileSource) {

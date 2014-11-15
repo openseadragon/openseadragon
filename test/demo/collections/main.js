@@ -6,7 +6,7 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = false;
+            var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
             var testNavigator = false;
@@ -16,9 +16,12 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                collectionMode: true,
-                collectionRows: 3,
-                collectionLayout: 'vertical',
+                sequenceMode: true,
+                navPrevNextWrap: false,
+                preserveViewport: false,
+                // collectionMode: true,
+                // collectionRows: 3,
+                // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
                 // collectionTileMargin: 10,
                 // wrapHorizontal: true,
@@ -29,12 +32,13 @@
 
             if (testInitialOpen) {
                 config.tileSources = [
+                    // {
+                    //     tileSource: "../../data/tall.dzi",
+                    //     x: 1.5,
+                    //     y: 0,
+                    //     width: 1
+                    // },
                     {
-                        tileSource: "../../data/tall.dzi",
-                        x: 1.5,
-                        y: 0,
-                        width: 1
-                    }, {
                         tileSource: '../../data/wide.dzi',
                         opacity: 1,
                         x: 0,
@@ -101,7 +105,7 @@
             }
 
             // this.crossTest3();
-            this.collectionTest();
+            // this.collectionTest();
         },
 
         // ----------
