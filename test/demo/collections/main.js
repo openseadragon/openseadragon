@@ -17,6 +17,8 @@
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
                 sequenceMode: true,
+                showReferenceStrip: true,
+                // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
                 // collectionMode: true,
