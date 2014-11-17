@@ -581,6 +581,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
+        if (this.sequenceMode && $.isArray(tileSources)) {
+            this.tileSources = tileSources;
+            this._sequenceIndex = 0;
+            if (tileSources.length) {
+                this.open(tileSources[0]);
+            }
+
+            this._updateSequenceButtons( this._sequenceIndex );
+            return;
+        }
+
         if (!$.isArray(tileSources)) {
             tileSources = [tileSources];
         }
