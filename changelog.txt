@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.0.0: (in progress)
 
 * True multi-image mode (#450)
+    * BREAKING CHANGE: Passing an array for the tileSources option is no longer enough to trigger sequence mode; you have to set the sequenceMode option to true as well
     * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
     * BREAKING CHANGE: Viewer.drawers and Viewer.drawersContainer no longer exist
     * BREAKING CHANGE: A Viewer's Drawer and Viewport are now made once per Viewer and reused for every image that Viewer opens (rather than being recreated for every open); this means if you change Viewer options between opens, the behavior is different now.

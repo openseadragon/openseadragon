@@ -446,8 +446,8 @@
   *     this setting when set to false.
   *
   * @property {Boolean} [showSequenceControl=true]
-  *     If the viewer has been configured with a sequence of tile sources, then
-  *     provide buttons for navigating forward and backward through the images.
+  *     If sequenceMode is true, then provide buttons for navigating forward and
+  *     backward through the images.
   *
   * @property {OpenSeadragon.ControlAnchor} [sequenceControlAnchor=TOP_LEFT]
   *     Placement of the default sequence controls.
@@ -505,18 +505,21 @@
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
+  * @property {Boolean} [sequenceMode=false]
+  *     Set to true to have the viewer treat your tilesources as a sequence of images to
+  *     be opened one at a time rather than all at once.
+  *
   * @property {Number} [initialPage=0]
-  *     If the viewer has been configured with a sequence of tile sources, display this page initially.
+  *     If sequenceMode is true, display this page initially.
   *
   * @property {Boolean} [preserveViewport=false]
-  *     If the viewer has been configured with a sequence of tile sources, then
-  *     normally navigating to through each image resets the viewport to 'home'
-  *     position.  If preserveViewport is set to true, then the viewport position
-  *     is preserved when navigating between images in the sequence.
+  *     If sequenceMode is true, then normally navigating to through each image resets the
+  *     viewport to 'home' position.  If preserveViewport is set to true, then the viewport
+  *     position is preserved when navigating between images in the sequence.
   *
   * @property {Boolean} [showReferenceStrip=false]
-  *     If the viewer has been configured with a sequence of tile sources, then
-  *     display a scrolling strip of image thumbnails for navigating through the images.
+  *     If sequenceMode is true, then display a scrolling strip of image thumbnails for
+  *     navigating through the images.
   *
   * @property {String} [referenceStripScroll='horizontal']
   *
