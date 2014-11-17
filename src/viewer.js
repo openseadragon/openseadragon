@@ -487,39 +487,14 @@ $.Viewer = function( options ) {
         });
     }
 
-    //Instantiate a referencestrip if configured
-    if ( this.showReferenceStrip ){
-        this.referenceStrip = new $.ReferenceStrip({
-            id:          this.referenceStripElement,
-            position:    this.referenceStripPosition,
-            sizeRatio:   this.referenceStripSizeRatio,
-            scroll:      this.referenceStripScroll,
-            height:      this.referenceStripHeight,
-            width:       this.referenceStripWidth,
-            tileSources: this.tileSources,
-            tileHost:    this.tileHost,
-            prefixUrl:   this.prefixUrl,
-            viewer:      this
-        });
-    }
-
     // Sequence mode
     if (this.sequenceMode) {
-        if (this.tileSources && this.tileSources.length) {
-            this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
-        }
-
         this.bindSequenceControls();
     }
 
     // Open initial tilesources
     if ( this.tileSources && this.tileSources.length) {
-        if (this.sequenceMode) {
-            this.open(this.tileSources[this._sequenceIndex]);
-            this._updateSequenceButtons( this._sequenceIndex );
-        } else {
-            this.open( this.tileSources );
-        }
+        this.open( this.tileSources );
     }
 
     // Add custom controls
@@ -582,10 +557,30 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         if (this.sequenceMode && $.isArray(tileSources)) {
+            if (this.referenceStrip) {
+                this.referenceStrip.destroy();
+                this.referenceStrip = null;
+            }
+
             this.tileSources = tileSources;
-            this._sequenceIndex = 0;
-            if (tileSources.length) {
-                this.open(tileSources[0]);
+            this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+            if (this.tileSources.length) {
+                this.open(this.tileSources[this._sequenceIndex]);
+
+                if ( this.showReferenceStrip ){
+                    this.referenceStrip = new $.ReferenceStrip({
+                        id:          this.referenceStripElement,
+                        position:    this.referenceStripPosition,
+                        sizeRatio:   this.referenceStripSizeRatio,
+                        scroll:      this.referenceStripScroll,
+                        height:      this.referenceStripHeight,
+                        width:       this.referenceStripWidth,
+                        tileSources: this.tileSources,
+                        tileHost:    this.tileHost,
+                        prefixUrl:   this.prefixUrl,
+                        viewer:      this
+                    });
+                }
             }
 
             this._updateSequenceButtons( this._sequenceIndex );
@@ -771,6 +766,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+
+        if (this.referenceStrip) {
+            this.referenceStrip.destroy();
+            this.referenceStrip = null;
+        }
 
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );

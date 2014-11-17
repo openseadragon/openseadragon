@@ -6,7 +6,7 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = true;
+            var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
             var testNavigator = false;
@@ -106,8 +106,9 @@
                 });
             }
 
-            // this.crossTest2();
-            // this.collectionTest();
+            if (!testInitialOpen) {
+                this.collectionTest();
+            }
         },
 
         // ----------
