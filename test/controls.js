@@ -278,10 +278,6 @@
 
     asyncTest('SequenceControlOnPrevNextWrapOff', function () {
 
-        expect(0);
-        start();
-        return; // Temporarily disabling
-
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
             ok(viewer.showSequenceControl, 'showSequenceControl should be on');
@@ -333,16 +329,13 @@
             ],
             springStiffness: 100, // Faster animation = faster tests
             showSequenceControl: true,
+            sequenceMode: true,
             navPrevNextWrap: false
         });
         viewer.addHandler('open', openHandler);
     });
 
     asyncTest('SequenceControlOnPrevNextWrapOn', function () {
-
-        expect(0);
-        start();
-        return; // Temporarily disabling
 
         var openHandler = function () {
             viewer.removeHandler('open', openHandler);
@@ -388,6 +381,7 @@
             ],
             springStiffness: 100, // Faster animation = faster tests
             showSequenceControl: true,
+            sequenceMode: true,
             navPrevNextWrap: true
         });
         viewer.addHandler('open', openHandler);
