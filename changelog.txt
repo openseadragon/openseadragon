@@ -36,6 +36,7 @@ OPENSEADRAGON CHANGELOG
     * New Viewport method for managing homeBounds as well as constraints: setHomeBounds
     * Viewport.open supports positioning config properties
 * Margins option to push the home region in from the edges of the Viewer (#505)
+* Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 
 1.2.0: (in progress)
 
