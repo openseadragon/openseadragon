@@ -324,6 +324,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         if ( !this._items.length ) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
             this._contentSize = new $.Point(1, 1);
+            this._contentFactor = 1;
         } else {
             var bounds = this._items[0].getBounds();
             this._contentFactor = this._items[0].getContentSize().x / bounds.width;
@@ -349,7 +350,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         if (this._contentFactor !== oldContentFactor || !this._homeBounds.equals(oldHomeBounds) ||
                 !this._contentSize.equals(oldContentSize)) {
             /**
-             * Raised when the home bounds, content size, or content factor change.
+             * Raised when the home bounds or content factor change.
              * @event metrics-change
              * @memberOf OpenSeadragon.World
              * @type {object}

@@ -264,10 +264,10 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      */
     toString: function() {
         return "[" +
-            Math.round(this.x*100) + "," +
-            Math.round(this.y*100) + "," +
-            Math.round(this.width*100) + "x" +
-            Math.round(this.height*100) +
+            (Math.round(this.x*100) / 100) + "," +
+            (Math.round(this.y*100) / 100) + "," +
+            (Math.round(this.width*100) / 100) + "x" +
+            (Math.round(this.height*100) / 100) +
         "]";
     }
 };

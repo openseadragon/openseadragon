@@ -16,9 +16,14 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                collectionMode: true,
-                collectionRows: 3,
-                collectionLayout: 'vertical',
+                sequenceMode: true,
+                showReferenceStrip: true,
+                // referenceStripScroll: 'vertical',
+                navPrevNextWrap: false,
+                preserveViewport: false,
+                // collectionMode: true,
+                // collectionRows: 3,
+                // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
                 // collectionTileMargin: 10,
                 // wrapHorizontal: true,
@@ -34,7 +39,8 @@
                         x: 1.5,
                         y: 0,
                         width: 1
-                    }, {
+                    },
+                    {
                         tileSource: '../../data/wide.dzi',
                         opacity: 1,
                         x: 0,
@@ -100,8 +106,9 @@
                 });
             }
 
-            // this.crossTest3();
-            this.collectionTest();
+            if (!testInitialOpen) {
+                this.collectionTest();
+            }
         },
 
         // ----------

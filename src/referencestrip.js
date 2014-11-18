@@ -289,6 +289,13 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
             return true;
         }
         return false;
+    },
+
+    // Overrides Viewer.destroy
+    destroy: function() {
+        if (this.element) {
+            this.element.parentNode.removeChild(this.element);
+        }
     }
 
 } );
@@ -467,7 +474,7 @@ function loadPanels( strip, viewerSize, scroll ) {
  */
 function onStripEnter( event ) {
     var element = event.eventSource.element;
-    
+
     //$.setElementOpacity(element, 0.8);
 
     //element.style.border = '1px solid #555';
@@ -495,7 +502,7 @@ function onStripEnter( event ) {
  */
 function onStripExit( event ) {
     var element = event.eventSource.element;
-    
+
     if ( 'horizontal' == this.scroll ) {
 
         //element.style.paddingTop = "10px";

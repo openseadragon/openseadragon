@@ -196,7 +196,7 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
      * @returns {String} A string representation of this point.
      */
     toString: function() {
-        return "(" + Math.round(this.x) + "," + Math.round(this.y) + ")";
+        return "(" + (Math.round(this.x * 100) / 100) + "," + (Math.round(this.y * 100) / 100) + ")";
     }
 };
 

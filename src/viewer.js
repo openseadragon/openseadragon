@@ -200,13 +200,12 @@ $.Viewer = function( options ) {
         // how much we should be continuously zooming by
         "zoomFactor":        null,
         "lastZoomTime":      null,
-        // did we decide this viewer has a sequence of tile sources
-        "sequenced":         false,
-        "sequence":          0,
         "fullPage":          false,
         "onfullscreenchange": null
     };
 
+    this._sequenceIndex = 0;
+    this._firstOpen = true;
     this._updateRequestId = null;
     this.currentOverlays = [];
 
@@ -374,7 +373,6 @@ $.Viewer = function( options ) {
     }
 
     this.bindStandardControls();
-    this.bindSequenceControls();
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
@@ -489,29 +487,14 @@ $.Viewer = function( options ) {
         });
     }
 
-    //Instantiate a referencestrip if configured
-    if ( this.showReferenceStrip ){
-        this.referenceStrip = new $.ReferenceStrip({
-            id:          this.referenceStripElement,
-            position:    this.referenceStripPosition,
-            sizeRatio:   this.referenceStripSizeRatio,
-            scroll:      this.referenceStripScroll,
-            height:      this.referenceStripHeight,
-            width:       this.referenceStripWidth,
-            tileSources: this.tileSources,
-            tileHost:    this.tileHost,
-            prefixUrl:   this.prefixUrl,
-            viewer:      this
-        });
+    // Sequence mode
+    if (this.sequenceMode) {
+        this.bindSequenceControls();
     }
 
     // Open initial tilesources
-    if ( this.tileSources ) {
+    if ( this.tileSources && this.tileSources.length) {
         this.open( this.tileSources );
-
-        if ( this.tileSources.length > 1 ) {
-            this._updateSequenceButtons( this.initialPage );
-        }
     }
 
     // Add custom controls
@@ -573,6 +556,37 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
+        if (this.sequenceMode && $.isArray(tileSources)) {
+            if (this.referenceStrip) {
+                this.referenceStrip.destroy();
+                this.referenceStrip = null;
+            }
+
+            this.tileSources = tileSources;
+            this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+            if (this.tileSources.length) {
+                this.open(this.tileSources[this._sequenceIndex]);
+
+                if ( this.showReferenceStrip ){
+                    this.referenceStrip = new $.ReferenceStrip({
+                        id:          this.referenceStripElement,
+                        position:    this.referenceStripPosition,
+                        sizeRatio:   this.referenceStripSizeRatio,
+                        scroll:      this.referenceStripScroll,
+                        height:      this.referenceStripHeight,
+                        width:       this.referenceStripWidth,
+                        tileSources: this.tileSources,
+                        tileHost:    this.tileHost,
+                        prefixUrl:   this.prefixUrl,
+                        viewer:      this
+                    });
+                }
+            }
+
+            this._updateSequenceButtons( this._sequenceIndex );
+            return;
+        }
+
         if (!$.isArray(tileSources)) {
             tileSources = [tileSources];
         }
@@ -589,9 +603,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var checkCompletion = function() {
             if (successes + failures === expected) {
                 if (successes) {
-                    if (!_this.preserveViewport) {
+                    if (_this._firstOpen || !_this.preserveViewport) {
                         _this.viewport.goHome( true );
                     }
+
+                    _this._firstOpen = false;
 
                     var source = tileSources[0];
                     if (source.tileSource) {
@@ -750,6 +766,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+
+        if (this.referenceStrip) {
+            this.referenceStrip.destroy();
+            this.referenceStrip = null;
+        }
 
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
@@ -1411,7 +1432,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             navImages               = this.navImages,
             useGroup                = true ;
 
-        if( this.showSequenceControl && THIS[ this.hash ].sequenced ){
+        if( this.showSequenceControl ){
 
             if( this.previousButton || this.nextButton ){
                 //if we are binding to custom buttons then layout and
@@ -1449,6 +1470,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if( !this.navPrevNextWrap ){
                 this.previousButton.disable();
+            }
+
+            if (!this.tileSources || !this.tileSources.length) {
+                this.nextButton.disable();
             }
 
             if( useGroup ){
@@ -1648,7 +1673,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {Number}
      */
     currentPage: function() {
-        return THIS[ this.hash ].sequence;
+        return this._sequenceIndex;
     },
 
     /**
@@ -1657,7 +1682,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:page
      */
     goToPage: function( page ){
-        if( page >= 0 && page < this.tileSources.length ){
+        if( this.tileSources && page >= 0 && page < this.tileSources.length ){
             /**
              * Raised when the page is changed on a viewer configured with multiple image sources (see {@link OpenSeadragon.Viewer#goToPage}).
              *
@@ -1670,7 +1695,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              */
             this.raiseEvent( 'page', { page: page } );
 
-            THIS[ this.hash ].sequence = page;
+            this._sequenceIndex = page;
 
             this._updateSequenceButtons( page );
 
@@ -1860,7 +1885,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     _updateSequenceButtons: function( page ) {
 
             if ( this.nextButton ) {
-                if( ( this.tileSources.length - 1 ) === page ) {
+                if(!this.tileSources || this.tileSources.length - 1 === page) {
                     //Disable next button
                     if ( !this.navPrevNextWrap ) {
                         this.nextButton.disable();
@@ -2845,7 +2870,7 @@ function onRotateRight() {
 
 
 function onPrevious(){
-    var previous = THIS[ this.hash ].sequence - 1;
+    var previous = this._sequenceIndex - 1;
     if(this.navPrevNextWrap && previous < 0){
         previous += this.tileSources.length;
     }
@@ -2854,7 +2879,7 @@ function onPrevious(){
 
 
 function onNext(){
-    var next = THIS[ this.hash ].sequence + 1;
+    var next = this._sequenceIndex + 1;
     if(this.navPrevNextWrap && next >= this.tileSources.length){
         next = 0;
     }
