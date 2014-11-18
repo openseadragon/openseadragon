@@ -2,6 +2,9 @@
 
 (function () {
     var viewer;
+    var VIEWER_ID = "example";
+    var PREFIX_URL = "/build/openseadragon/images";
+    var SPRING_STIFFNESS = 100; // Faster animation = faster tests
 
      module("viewport", {
         setup: function () {
@@ -10,9 +13,9 @@
             testLog.reset();
 
             viewer = OpenSeadragon({
-                id:            'example',
-                prefixUrl:     '/build/openseadragon/images/',
-                springStiffness: 100 // Faster animation = faster tests
+                id:            VIEWER_ID,
+                prefixUrl:     PREFIX_URL,
+                springStiffness: SPRING_STIFFNESS
             });
         },
         teardown: function () {
@@ -93,7 +96,6 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             equal(viewport.getMinZoom(), .9, "Test default min zoom level")
             start();
@@ -106,7 +108,6 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             equal(viewport.getMaxZoom(), 2.2, "Test default max zoom level")
             start();
@@ -118,13 +119,12 @@
     asyncTest('getMinZoom', function() {
         var expected, level, i = 0;
         var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             if(level == 0) { // 0 means use the default
                 expected = 0.9;
-            }
-            else if(level > 1){
+            } else if(level > 1){
                 expected = 1; // min zoom won't go bigger than 1.
             }
 
@@ -135,34 +135,34 @@
             );
             i++;
             if(i < testZoomLevels.length){
-                level = testZoomLevels[i];
-                viewer.minZoomLevel = level;
-                expected = level;
+                level = expected = testZoomLevels[i];
+                viewer = OpenSeadragon({
+                    id:            VIEWER_ID,
+                    prefixUrl:     PREFIX_URL,
+                    springStiffness: SPRING_STIFFNESS,
+                    minZoomLevel: level
+                });
+                viewer.addHandler('open', openHandler);
                 viewer.open(DZI_PATH);
-            }
-            else {
-                viewer.removeHandler('open', openHandler);
+            } else {
                 start();
             }
         };
-
         viewer.addHandler('open', openHandler);
-        level = testZoomLevels[i];
+        level = expected = testZoomLevels[i];
         viewer.minZoomLevel = level;
-        expected = level;
         viewer.open(DZI_PATH);
     });
 
     asyncTest('getMaxZoom', function() {
         var expected, level, i = 0;
         var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             if(level == 0){ // 0 means use the default
                 expected = 2.2;
-            }
-            else if(level < 1){
+            } else if(level < 1){
                 expected = 1; // max zoom won't go smaller than 1.
             }
 
@@ -173,35 +173,36 @@
             );
             i++;
             if(i < testZoomLevels.length){
-                level = testZoomLevels[i];
-                viewer.maxZoomLevel = level;
-                expected = level;
+                level = expected = testZoomLevels[i];
+                viewer = OpenSeadragon({
+                    id:            VIEWER_ID,
+                    prefixUrl:     PREFIX_URL,
+                    springStiffness: SPRING_STIFFNESS,
+                    maxZoomLevel: level
+                });
+                viewer.addHandler('open', openHandler);
                 viewer.open(DZI_PATH);
-            }
-            else {
-                viewer.removeHandler('open', openHandler);
+            } else {
                 start();
             }
         };
-
         viewer.addHandler('open', openHandler);
-        level = testZoomLevels[i];
+        level = expected = testZoomLevels[i];
         viewer.maxZoomLevel = level;
-        expected = level;
         viewer.open(DZI_PATH);
     });
 
     asyncTest('getHomeBounds', function() {
         var expected, i = 0;
         var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // Have to special case this to avoid dividing by 0
             if(testZoomLevels[i] == 0){
                 expected = new OpenSeadragon.Rect(0, 0, 1, 1);
-            }
-            else{
+            } else {
                 var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
                 var position = 0.5 - (sideLength / 2.0);
                 expected = new OpenSeadragon.Rect(position, position, sideLength, sideLength);
@@ -213,15 +214,18 @@
             );
             i++;
             if(i < testZoomLevels.length){
-                viewer.defaultZoomLevel = testZoomLevels[i];
+                viewer = OpenSeadragon({
+                    id:            VIEWER_ID,
+                    prefixUrl:     PREFIX_URL,
+                    springStiffness: SPRING_STIFFNESS,
+                    defaultZoomLevel: testZoomLevels[i]
+                });
+                viewer.addHandler('open', openHandler);
                 viewer.open(DZI_PATH);
-            }
-            else {
-                viewer.removeHandler('open', openHandler);
+            } else {
                 start();
             }
         };
-
         viewer.addHandler('open', openHandler);
         viewer.defaultZoomLevel = testZoomLevels[i];
         viewer.open(DZI_PATH);
@@ -230,6 +234,7 @@
     asyncTest('getHomeZoom', function() {
         var expected, i = 0;
         var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
@@ -245,15 +250,18 @@
             i++;
             if(i < testZoomLevels.length){
                 expected = testZoomLevels[i];
-                viewer.defaultZoomLevel = expected;
+                viewer = OpenSeadragon({
+                    id:            VIEWER_ID,
+                    prefixUrl:     PREFIX_URL,
+                    springStiffness: SPRING_STIFFNESS,
+                    defaultZoomLevel: expected
+                });
+                viewer.addHandler('open', openHandler);
                 viewer.open(DZI_PATH);
-            }
-            else {
-                viewer.removeHandler('open', openHandler);
+            } else {
                 start();
             }
         };
-
         viewer.addHandler('open', openHandler);
         expected = testZoomLevels[i];
         viewer.defaultZoomLevel = expected;
@@ -261,13 +269,14 @@
     });
 
     asyncTest('getHomeZoomWithHomeFillsViewer', function() {
-        var expected, i = 0;
+        var expected, level, i = 0;
         var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // If the default zoom level is set to 0, then we expect the home zoom to be 1.
-            if(expected == 0){
+            if(level == 0){
                 expected = 1;
             }
 
@@ -278,18 +287,22 @@
             );
             i++;
             if(i < testZoomLevels.length){
-                expected = testZoomLevels[i];
-                viewer.defaultZoomLevel = expected;
+                level = expected = testZoomLevels[i];
+                viewer = OpenSeadragon({
+                    id:            VIEWER_ID,
+                    prefixUrl:     PREFIX_URL,
+                    springStiffness: SPRING_STIFFNESS,
+                    defaultZoomLevel: level,
+                    homeFillsViewer: true
+                });
+                viewer.addHandler('open', openHandler);
                 viewer.open(TALL_PATH);  // use a different image for homeFillsViewer
-            }
-            else {
-                viewer.removeHandler('open', openHandler);
+            } else {
                 start();
             }
         };
-
         viewer.addHandler('open', openHandler);
-        expected = testZoomLevels[i];
+        level = expected = testZoomLevels[i];
         viewer.homeFillsViewer = true;
         viewer.defaultZoomLevel = expected;
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
