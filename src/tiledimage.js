@@ -868,25 +868,6 @@ function drawTiles( tiledImage, lastDrawn ){
         position,
         tileSource;
 
-    // We need a callback to give image manipulation a chance to happen
-    var drawingHandler = function(args) {
-        if (tiledImage.viewer) {
-          /**
-           * This event is fired just before the tile is drawn giving the application a chance to alter the image.
-           *
-           * NOTE: This event is only fired when the tiledImage is using a <canvas>.
-           *
-           * @event tile-drawing
-           * @memberof OpenSeadragon.Viewer
-           * @type {object}
-           * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-           * @property {OpenSeadragon.Tile} tile
-           * @property {?Object} userData - 'context', 'tile' and 'rendered'.
-           */
-            tiledImage.viewer.raiseEvent('tile-drawing', args);
-        }
-    };
-
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile );

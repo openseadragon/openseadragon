@@ -129,8 +129,10 @@ $.Drawer = function( options ) {
            * @memberof OpenSeadragon.Viewer
            * @type {object}
            * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-           * @property {OpenSeadragon.Tile} tile
-           * @property {?Object} userData - 'context', 'tile' and 'rendered'.
+           * @property {OpenSeadragon.Tile} tile - The Tile being drawn. 
+           * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into. 
+           * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery. 
+           * @property {?Object} userData - Arbitrary subscriber-defined object.
            */
             _this.viewer.raiseEvent('tile-drawing', args);
         }
