@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>OpenSeadragon QUnit</title>
+    <link rel="stylesheet" href="/node_modules/qunitjs/qunit/qunit.css">
+    <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+    <link rel="stylesheet" href="/test/test.css">
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="/node_modules/qunitjs/qunit/qunit.js"></script>
+    <script src="/test/lib/jquery-1.9.1.min.js"></script>
+    <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
+    <script src="/test/lib/jquery.simulate.js"></script>
+
+    <!-- OpenSeadragon sources -->
+    <script src="/src/openseadragon.js"></script>
+    <script src="/src/fullscreen.js"></script>
+    <script src="/src/eventsource.js"></script>
+    <script src="/src/mousetracker.js"></script>
+    <script src="/src/control.js"></script>
+    <script src="/src/controldock.js"></script>
+    <script src="/src/viewer.js"></script>
+    <script src="/src/navigator.js"></script>
+    <script src="/src/strings.js"></script>
+    <script src="/src/point.js"></script>
+    <script src="/src/tilesource.js"></script>
+    <script src="/src/dzitilesource.js"></script>
+    <script src="/src/iiiftilesource.js"></script>
+    <script src="/src/osmtilesource.js"></script>
+    <script src="/src/tmstilesource.js"></script>
+    <script src="/src/legacytilesource.js"></script>
+    <script src="/src/tilesourcecollection.js"></script>
+    <script src="/src/button.js"></script>
+    <script src="/src/buttongroup.js"></script>
+    <script src="/src/rectangle.js"></script>
+    <script src="/src/referencestrip.js"></script>
+    <script src="/src/displayrectangle.js"></script>
+    <script src="/src/spring.js"></script>
+    <script src="/src/imageLoader.js"></script>
+    <script src="/src/tile.js"></script>
+    <script src="/src/overlay.js"></script>
+    <script src="/src/drawer.js"></script>
+    <script src="/src/viewport.js"></script>
+    <script src="/src/tiledimage.js"></script>
+    <script src="/src/tilecache.js"></script>
+    <script src="/src/world.js"></script>
+
+    <!-- Helpers -->
+    <script src="/test/legacy.mouse.shim.js"></script>
+    <script src="/test/test.js"></script>
+
+    <!-- Modules -->
+    <!-- Polyfill must be inserted first because it is testing functions
+         reassignments which could be done by other test. -->
+    <script src="/test/polyfills.js"></script>
+    <script src="/test/basic.js"></script>
+    <script src="/test/strings.js"></script>
+    <script src="/test/formats.js"></script>
+    <script src="/test/utils.js"></script>
+    <script src="/test/events.js"></script>
+    <script src="/test/units.js"></script>
+    <script src="/test/multi-image.js"></script>
+    <script src="/test/overlays.js"></script>
+    <script src="/test/controls.js"></script>
+    <script src="/test/viewport.js"></script>
+    <script src="/test/modules/world.js"></script>
+    <script src="/test/modules/drawer.js"></script>
+    <script src="/test/modules/tiledimage.js"></script>
+    <!-- The navigator tests are the slowest (for now; hopefully they can be sped up)
+    so we put them last. -->
+    <script src="/test/navigator.js"></script>
+</body>
+</html>

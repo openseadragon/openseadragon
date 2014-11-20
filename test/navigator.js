@@ -1,7 +1,5 @@
 /* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
 
-QUnit.config.autostart = false;
-
 (function () {
     var debug = false,
         viewer,
@@ -29,10 +27,6 @@ QUnit.config.autostart = false;
 
             resetTestVariables();
         }
-    });
-
-    $(document).ready(function () {
-        start();
     });
 
     var resetTestVariables = function () {
