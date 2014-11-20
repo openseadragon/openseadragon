@@ -5,7 +5,7 @@
     <title>OpenSeadragon QUnit</title>
     <link rel="stylesheet" href="/node_modules/qunitjs/qunit/qunit.css">
     <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
-    <link rel="stylesheet" href="/test/test.css">
+    <link rel="stylesheet" href="/test/helpers/test.css">
 </head>
 <body>
     <div id="qunit"></div>
@@ -15,27 +15,27 @@
     <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
     <script src="/test/lib/jquery.simulate.js"></script>
     <script src="/build/openseadragon/openseadragon.js"></script>
-    <script src="/test/legacy.mouse.shim.js"></script>
-    <script src="/test/test.js"></script>
+    <script src="/test/helpers/legacy.mouse.shim.js"></script>
+    <script src="/test/helpers/test.js"></script>
 
     <!-- Polyfill must be inserted first because it is testing functions
          reassignments which could be done by other test. -->
-    <script src="/test/polyfills.js"></script>
-    <script src="/test/basic.js"></script>
-    <script src="/test/strings.js"></script>
-    <script src="/test/formats.js"></script>
-    <script src="/test/utils.js"></script>
-    <script src="/test/events.js"></script>
-    <script src="/test/units.js"></script>
-    <script src="/test/multi-image.js"></script>
-    <script src="/test/overlays.js"></script>
-    <script src="/test/controls.js"></script>
+    <script src="/test/modules/polyfills.js"></script>
+    <script src="/test/modules/basic.js"></script>
+    <script src="/test/modules/strings.js"></script>
+    <script src="/test/modules/formats.js"></script>
+    <script src="/test/modules/utils.js"></script>
+    <script src="/test/modules/events.js"></script>
+    <script src="/test/modules/units.js"></script>
+    <script src="/test/modules/multi-image.js"></script>
+    <script src="/test/modules/overlays.js"></script>
+    <script src="/test/modules/controls.js"></script>
     <script src="/test/viewport.js"></script>
     <script src="/test/modules/world.js"></script>
     <script src="/test/modules/drawer.js"></script>
     <script src="/test/modules/tiledimage.js"></script>
     <!-- The navigator tests are the slowest (for now; hopefully they can be sped up)
     so we put them last. -->
-    <script src="/test/navigator.js"></script>
+    <script src="/test/modules/navigator.js"></script>
 </body>
 </html>
