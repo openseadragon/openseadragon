@@ -50,6 +50,7 @@
                 .simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', event );
         },
 
+        // ----------
         initializeTestDOM: function () {
             $( "#qunit-fixture" )
                 .append( '<div><div id="example"></div><div id="exampleNavigator"></div></div>' )
@@ -57,14 +58,17 @@
                 .append( '<div id="tallexample"></div>' );
         },
 
+        // ----------
         equalsWithVariance: function ( value1, value2, variance ) {
             return Math.abs( value1 - value2 ) <= variance;
         },
 
+        // ----------
         assessNumericValue: function ( value1, value2, variance, message ) {
             ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
         },
 
+        // ----------
         timeWatcher: function ( time ) {
             time = time || 2000;
             var finished = false;
@@ -85,8 +89,21 @@
                     }
                 }
             };
-        }
+        },
 
+        // ----------
+        spyOnce: function(obj, functionName, callback) {
+            var original = obj[functionName];
+            obj[functionName] = function() {
+                obj[functionName] = original;
+                var result = callback.apply(this, arguments);
+                if (result === undefined) {
+                    result = original.apply(this, arguments);
+                }
+
+                return result;
+            };
+        }
     };
 
     /*

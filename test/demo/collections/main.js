@@ -6,7 +6,7 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = false;
+            var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
             var testNavigator = false;
@@ -16,8 +16,8 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                sequenceMode: true,
-                showReferenceStrip: true,
+                // sequenceMode: true,
+                // showReferenceStrip: true,
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
