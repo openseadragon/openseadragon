@@ -229,7 +229,6 @@ $.Viewer = function( options ) {
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
     this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
-    this.overlaysContainer    = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
     (function( style ){
@@ -268,7 +267,6 @@ $.Viewer = function( options ) {
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
-    this.canvas.appendChild( this.overlaysContainer );
 
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
@@ -453,6 +451,10 @@ $.Viewer = function( options ) {
         opacity:            this.opacity,
         debugGridColor:     this.debugGridColor
     });
+
+    // Overlay container
+    this.overlaysContainer    = $.makeNeutralElement( "div" );
+    this.canvas.appendChild( this.overlaysContainer );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!this.drawer.canRotate()) {
@@ -689,7 +691,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             _this.addTiledImage(options);
 
-            // For backwards compatibility. TODO: deprecate.
+            // TODO: now that options has other things besides tileSource, the overlays
+            // should probably be at the options level, not the tileSource level.
             if (options.tileSource.overlays) {
                 for (var i = 0; i < options.tileSource.overlays.length; i++) {
                     _this.addOverlay(options.tileSource.overlays[i]);

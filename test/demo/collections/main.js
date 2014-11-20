@@ -7,7 +7,7 @@
             var self = this;
 
             var testInitialOpen = true;
-            var testOverlays = false;
+            var testOverlays = true;
             var testMargins = false;
             var testNavigator = false;
             var margins;
@@ -54,7 +54,7 @@
                 config.overlays = [
                     {
                         id: "overlay1",
-                        x: 0,
+                        x: 2,
                         y: 0,
                         width: 0.25,
                         height: 0.25
@@ -92,7 +92,14 @@
 
             if (testInitialOpen) {
                 this.viewer.addHandler( "open", function() {
-                    // console.log(self.viewer.viewport.contentSize);
+                    // setTimeout(function() {
+                    //     // console.log(self.viewer.viewport.contentSize);
+                    //     var $el = $('#overlay1').click(function() {
+                    //         console.log('foo');
+                    //     });
+
+                    //     console.log($el.length, $el.css('background'));
+                    // }, 1000);
                 });
             }
 
