@@ -622,6 +622,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
                     }
 
+                    _this._drawOverlays();
+
                     /**
                      * Raised when the viewer has opened and loaded one or more TileSources.
                      *
@@ -1776,8 +1778,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             // they're trying to add a duplicate overlay
             return this;
         }
-        this.currentOverlays.push( getOverlayObject( this, options ) );
-        THIS[ this.hash ].forceRedraw = true;
+
+        var overlay = getOverlayObject( this, options);
+        this.currentOverlays.push(overlay);
+        overlay.drawHTML( this.overlaysContainer, this.viewport );
+
         /**
          * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Viewer#addOverlay}).
          *
@@ -1984,8 +1989,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             default:
                 return this.gestureSettingsUnknown;
         }
-    }
+    },
 
+    // private
+    _drawOverlays: function() {
+        var i,
+            length = this.currentOverlays.length;
+        for ( i = 0; i < length; i++ ) {
+            this.currentOverlays[ i ].drawHTML( this.overlaysContainer, this.viewport );
+        }
+    }
 });
 
 
@@ -2141,14 +2154,6 @@ function getOverlayIndex( overlays, element ) {
     }
 
     return -1;
-}
-
-function drawOverlays( viewport, overlays, container ) {
-    var i,
-        length = overlays.length;
-    for ( i = 0; i < length; i++ ) {
-        overlays[ i ].drawHTML( container, viewport );
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2674,7 +2679,7 @@ function updateOnce( viewer ) {
 
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
         updateWorld( viewer );
-        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
+        viewer._drawOverlays();
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }

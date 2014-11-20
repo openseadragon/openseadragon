@@ -92,14 +92,6 @@
 
             if (testInitialOpen) {
                 this.viewer.addHandler( "open", function() {
-                    // setTimeout(function() {
-                    //     // console.log(self.viewer.viewport.contentSize);
-                    //     var $el = $('#overlay1').click(function() {
-                    //         console.log('foo');
-                    //     });
-
-                    //     console.log($el.length, $el.css('background'));
-                    // }, 1000);
                 });
             }
 
