@@ -129,8 +129,10 @@ $.Drawer = function( options ) {
            * @memberof OpenSeadragon.Viewer
            * @type {object}
            * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-           * @property {OpenSeadragon.Tile} tile
-           * @property {?Object} userData - 'context', 'tile' and 'rendered'.
+           * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
+           * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
+           * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
+           * @property {?Object} userData - Arbitrary subscriber-defined object.
            */
             _this.viewer.raiseEvent('tile-drawing', args);
         }
@@ -187,25 +189,28 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     // deprecated
     needsUpdate: function() {
-        $.console.error( "[Drawer.needsUpdate] this function is deprecated." );
-        return false;
+        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsUpdate instead." );
+        return this.viewer.world.needsUpdate();
     },
 
     // deprecated
     numTilesLoaded: function() {
-        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated." );
-        return 0;
+        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
+        return this.viewer.tileCache.numTilesLoaded();
     },
 
     // deprecated
     reset: function() {
-        $.console.error( "[Drawer.reset] this function is deprecated." );
+        $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
+        this.viewer.world.resetItems();
         return this;
     },
 
     // deprecated
     update: function() {
-        $.console.error( "[Drawer.update] this function is deprecated." );
+        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.update instead." );
+        this.clear();
+        this.viewer.world.update();
         return this;
     },
 

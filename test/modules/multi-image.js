@@ -118,8 +118,8 @@
         viewer.open( '/test/data/testpattern.dzi' );
     });
 
+    // ----------
     asyncTest( 'Sequences as items', function() {
-
         var options = {
             tileSource: [{
                     type: 'legacy-image-pyramid',
@@ -152,6 +152,27 @@
 
         });
         viewer.open( '/test/data/testpattern.dzi' );
+    });
+
+    // ----------
+    asyncTest('items are added in order', function() {
+        viewer.addHandler('open', function(event) {
+            equal(viewer.world.getItemAt(0).getContentSize().y, 2000, 'first image is tall');
+            equal(viewer.world.getItemAt(0).getBounds().width, 4, 'first image has 4 width');
+            equal(viewer.world.getItemAt(1).getContentSize().x, 2000, 'second image is wide');
+            equal(viewer.world.getItemAt(1).getBounds().width, 2, 'second image has 2 width');
+            start();
+        });
+
+        viewer.open([
+            {
+                tileSource: '/test/data/tall.dzi',
+                width: 4
+            }, {
+                tileSource: '/test/data/wide.dzi',
+                width: 2
+            }
+        ]);
     });
 
 })();

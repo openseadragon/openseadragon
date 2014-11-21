@@ -1,3 +1,5 @@
+/* global module */
+
 module.exports = function(grunt) {
 
     // ----------
@@ -5,7 +7,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-jshint");
     grunt.loadNpmTasks("grunt-contrib-uglify");
-    grunt.loadNpmTasks("grunt-contrib-qunit");
+    grunt.loadNpmTasks("grunt-qunit-istanbul");
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
@@ -72,6 +74,7 @@ module.exports = function(grunt) {
         clean: {
             build: ["build"],
             package: [packageDir],
+            coverage: ["coverage"],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -137,10 +140,26 @@ module.exports = function(grunt) {
             }
         },
         qunit: {
+            normal: {
+                options: {
+                    urls: [ "http://localhost:8000/test/test.html" ]
+                }
+            },
+            coverage: {
+                options: {
+                    urls: [ "http://localhost:8000/test/coverage.html" ],
+                    coverage: {
+                        src: ['src/*.js'],
+                        htmlReport: 'coverage/html/',
+                        instrumentedFiles: 'temp/',
+                        baseUrl: '.',
+                        disposeCollector: true
+                    }
+                }
+            },
             all: {
                 options: {
-                    timeout: 10000,
-                    urls: [ "http://localhost:8000/test/test.html" ]
+                    timeout: 10000
                 }
             }
         },
@@ -248,7 +267,12 @@ module.exports = function(grunt) {
     // ----------
     // Test task.
     // Builds and runs unit tests.
-    grunt.registerTask("test", ["build", "connect", "qunit"]);
+    grunt.registerTask("test", ["build", "connect", "qunit:normal"]);
+
+    // ----------
+    // Coverage task.
+    // Outputs unit test code coverage report.
+    grunt.registerTask("coverage", ["clean:coverage", "connect", "qunit:coverage"]);
 
     // ----------
     // Package task.

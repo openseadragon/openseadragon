@@ -6,8 +6,8 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = false;
-            var testOverlays = false;
+            var testInitialOpen = true;
+            var testOverlays = true;
             var testMargins = false;
             var testNavigator = false;
             var margins;
@@ -16,8 +16,8 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                sequenceMode: true,
-                showReferenceStrip: true,
+                // sequenceMode: true,
+                // showReferenceStrip: true,
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
@@ -54,7 +54,7 @@
                 config.overlays = [
                     {
                         id: "overlay1",
-                        x: 0,
+                        x: 2,
                         y: 0,
                         width: 0.25,
                         height: 0.25
@@ -92,7 +92,6 @@
 
             if (testInitialOpen) {
                 this.viewer.addHandler( "open", function() {
-                    // console.log(self.viewer.viewport.contentSize);
                 });
             }
 

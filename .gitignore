@@ -2,3 +2,5 @@
 node_modules
 build/
 sftp-config.json
+coverage/
+temp/

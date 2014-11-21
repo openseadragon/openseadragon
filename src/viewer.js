@@ -207,6 +207,7 @@ $.Viewer = function( options ) {
     this._sequenceIndex = 0;
     this._firstOpen = true;
     this._updateRequestId = null;
+    this._loadQueue = [];
     this.currentOverlays = [];
 
     //Inherit some behaviors and properties
@@ -228,7 +229,6 @@ $.Viewer = function( options ) {
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
     this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
-    this.overlaysContainer    = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
     (function( style ){
@@ -267,7 +267,6 @@ $.Viewer = function( options ) {
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
-    this.canvas.appendChild( this.overlaysContainer );
 
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
@@ -453,6 +452,10 @@ $.Viewer = function( options ) {
         debugGridColor:     this.debugGridColor
     });
 
+    // Overlay container
+    this.overlaysContainer    = $.makeNeutralElement( "div" );
+    this.canvas.appendChild( this.overlaysContainer );
+
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!this.drawer.canRotate()) {
         // Disable/remove the rotate left/right buttons since they aren't supported
@@ -619,6 +622,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
                     }
 
+                    _this._drawOverlays();
+
                     /**
                      * Raised when the viewer has opened and loaded one or more TileSources.
                      *
@@ -688,7 +693,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             _this.addTiledImage(options);
 
-            // For backwards compatibility. TODO: deprecate.
+            // TODO: now that options has other things besides tileSource, the overlays
+            // should probably be at the options level, not the tileSource level.
             if (options.tileSource.overlays) {
                 for (var i = 0; i < options.tileSource.overlays.length; i++) {
                     _this.addOverlay(options.tileSource.overlays[i]);
@@ -1260,12 +1266,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         $.console.assert(options, "[Viewer.addTiledImage] options is required");
         $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
 
-        var _this = this,
-            tileSource = options.tileSource;
+        var _this = this;
 
         this._hideMessage();
 
+        var myQueueItem = {
+            options: options
+        };
+
         function raiseAddItemFailed( event ) {
+            for (var i = 0; i < _this._loadQueue; i++) {
+                if (_this._loadQueue[i] === myQueueItem) {
+                    _this._loadQueue.splice(i, 1);
+                    break;
+                }
+            }
+
              /**
              * Raised when an error occurs while adding a item.
              * @event add-item-failed
@@ -1284,7 +1300,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
 
-        getTileSourceImplementation( this, tileSource, function( tileSource ) {
+        this._loadQueue.push(myQueueItem);
+
+        getTileSourceImplementation( this, options.tileSource, function( tileSource ) {
 
             if ( tileSource instanceof Array ) {
                 raiseAddItemFailed({
@@ -1295,59 +1313,72 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return;
             }
 
-            var tiledImage = new $.TiledImage({
-                viewer: _this,
-                source: tileSource,
-                viewport: _this.viewport,
-                drawer: _this.drawer,
-                tileCache: _this.tileCache,
-                imageLoader: _this.imageLoader,
-                x: options.x,
-                y: options.y,
-                width: options.width,
-                height: options.height,
-                imageLoaderLimit: _this.imageLoaderLimit,
-                minZoomImageRatio: _this.minZoomImageRatio,
-                wrapHorizontal: _this.wrapHorizontal,
-                wrapVertical: _this.wrapVertical,
-                immediateRender: _this.immediateRender,
-                blendTime: _this.blendTime,
-                alwaysBlend: _this.alwaysBlend,
-                minPixelRatio: _this.minPixelRatio,
-                debugMode: _this.debugMode,
-                debugGridColor: _this.debugGridColor
-            });
+            myQueueItem.tileSource = tileSource;
 
-            _this.world.addItem( tiledImage, {
-                index: options.index
-            });
+            // add everybody at the front of the queue that's ready to go
+            var queueItem, tiledImage, optionsClone;
+            while (_this._loadQueue.length) {
+                queueItem = _this._loadQueue[0];
+                if (!queueItem.tileSource) {
+                    break;
+                }
 
-            if (_this.collectionMode) {
-                _this.world.arrange({
-                    rows: _this.collectionRows,
-                    layout: _this.collectionLayout,
-                    tileSize: _this.collectionTileSize,
-                    tileMargin: _this.collectionTileMargin
-                });
-            }
+                _this._loadQueue.splice(0, 1);
 
-            if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
-                _this.viewport.goHome(true);
-            }
-
-            if (_this.navigator) {
-                var optionsClone = $.extend({}, options, {
-                    originalTiledImage: tiledImage,
-                    tileSource: tileSource
+                tiledImage = new $.TiledImage({
+                    viewer: _this,
+                    source: queueItem.tileSource,
+                    viewport: _this.viewport,
+                    drawer: _this.drawer,
+                    tileCache: _this.tileCache,
+                    imageLoader: _this.imageLoader,
+                    x: queueItem.options.x,
+                    y: queueItem.options.y,
+                    width: queueItem.options.width,
+                    height: queueItem.options.height,
+                    imageLoaderLimit: _this.imageLoaderLimit,
+                    minZoomImageRatio: _this.minZoomImageRatio,
+                    wrapHorizontal: _this.wrapHorizontal,
+                    wrapVertical: _this.wrapVertical,
+                    immediateRender: _this.immediateRender,
+                    blendTime: _this.blendTime,
+                    alwaysBlend: _this.alwaysBlend,
+                    minPixelRatio: _this.minPixelRatio,
+                    debugMode: _this.debugMode,
+                    debugGridColor: _this.debugGridColor
                 });
 
-                _this.navigator.addTiledImage(optionsClone);
-            }
-
-            if (options.success) {
-                options.success({
-                    item: tiledImage
+                _this.world.addItem( tiledImage, {
+                    index: queueItem.options.index
                 });
+
+                if (_this.collectionMode) {
+                    _this.world.arrange({
+                        rows: _this.collectionRows,
+                        layout: _this.collectionLayout,
+                        tileSize: _this.collectionTileSize,
+                        tileMargin: _this.collectionTileMargin
+                    });
+                }
+
+                if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
+                    _this.viewport.goHome(true);
+                }
+
+                if (_this.navigator) {
+                    optionsClone = $.extend({}, queueItem.options, {
+                        originalTiledImage: tiledImage,
+                        tileSource: queueItem.tileSource
+                    });
+
+                    _this.navigator.addTiledImage(optionsClone);
+                }
+
+                if (queueItem.options.success) {
+                    queueItem.options.success({
+                        item: tiledImage
+                    });
+                }
             }
         }, function( event ) {
             event.options = options;
@@ -1747,8 +1778,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             // they're trying to add a duplicate overlay
             return this;
         }
-        this.currentOverlays.push( getOverlayObject( this, options ) );
-        THIS[ this.hash ].forceRedraw = true;
+
+        var overlay = getOverlayObject( this, options);
+        this.currentOverlays.push(overlay);
+        overlay.drawHTML( this.overlaysContainer, this.viewport );
+
         /**
          * Raised when an overlay is added to the viewer (see {@link OpenSeadragon.Viewer#addOverlay}).
          *
@@ -1955,8 +1989,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             default:
                 return this.gestureSettingsUnknown;
         }
-    }
+    },
 
+    // private
+    _drawOverlays: function() {
+        var i,
+            length = this.currentOverlays.length;
+        for ( i = 0; i < length; i++ ) {
+            this.currentOverlays[ i ].drawHTML( this.overlaysContainer, this.viewport );
+        }
+    }
 });
 
 
@@ -2112,14 +2154,6 @@ function getOverlayIndex( overlays, element ) {
     }
 
     return -1;
-}
-
-function drawOverlays( viewport, overlays, container ) {
-    var i,
-        length = overlays.length;
-    for ( i = 0; i < length; i++ ) {
-        overlays[ i ].drawHTML( container, viewport );
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2645,7 +2679,7 @@ function updateOnce( viewer ) {
 
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
         updateWorld( viewer );
-        drawOverlays( viewer.viewport, viewer.currentOverlays, viewer.overlaysContainer );
+        viewer._drawOverlays();
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }
