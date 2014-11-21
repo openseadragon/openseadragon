@@ -608,6 +608,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 if (successes) {
                     if (_this._firstOpen || !_this.preserveViewport) {
                         _this.viewport.goHome( true );
+                        _this.viewport.update();
                     }
 
                     _this._firstOpen = false;

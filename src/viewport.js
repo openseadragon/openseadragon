@@ -953,7 +953,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             //they passed a point instead of individual components
             return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
         }
-        return new $.Point( viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX );
+
+        var scale = this.homeBounds.width;
+        return new $.Point((viewerX - this.homeBounds.x) * (this.contentSize.x / scale),
+            (viewerY - this.homeBounds.y) * ((this.contentSize.y * this.contentAspectX) / scale));
     },
 
     /**
@@ -971,7 +974,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             //they passed a point instead of individual components
             return this.imageToViewportCoordinates( imageX.x, imageX.y );
         }
-        return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX );
+
+        var scale = this.homeBounds.width;
+        return new $.Point(this.homeBounds.x + ((imageX / this.contentSize.x) * scale),
+            this.homeBounds.y + ((imageY / this.contentSize.y / this.contentAspectX) * scale));
     },
 
     /**
@@ -1003,13 +1009,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             imageX, imageY
         );
         coordB = this.imageToViewportCoordinates(
-            pixelWidth, pixelHeight
+            imageX + pixelWidth, imageY + pixelHeight
         );
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x,
-            coordB.y
+            coordB.x - coordA.x,
+            coordB.y - coordA.y
         );
     },
 
@@ -1039,12 +1045,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             );
         }
         coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this.viewportToImageCoordinates( pointWidth, pointHeight );
+        coordB = this.viewportToImageCoordinates(viewerX + pointWidth, viewerY + pointHeight);
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x,
-            coordB.y
+            coordB.x - coordA.x,
+            coordB.y - coordA.y
         );
     },
 
@@ -1148,7 +1154,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     viewportToImageZoom: function( viewportZoom ) {
         var imageWidth = this.viewer.source.dimensions.x;
         var containerWidth = this._containerInnerSize.x;
-        var viewportToImageZoomRatio = containerWidth / imageWidth;
+        var scale = this.homeBounds.width;
+        var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
 
@@ -1166,7 +1173,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     imageToViewportZoom: function( imageZoom ) {
         var imageWidth = this.viewer.source.dimensions.x;
         var containerWidth = this._containerInnerSize.x;
-        var viewportToImageZoomRatio = imageWidth / containerWidth;
+        var scale = this.homeBounds.width;
+        var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     }
 };
