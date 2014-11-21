@@ -29,31 +29,6 @@
     };
 
     // ----------
-    var testDeprecation = function(obj0, member0, obj1, member1) {
-        var called = false;
-        var errored = false;
-
-        if (obj1 && member1) {
-            Util.spyOnce(obj1, member1, function() {
-                called = true;
-                return false;
-            });
-        } else {
-            called = true;
-        }
-
-        Util.spyOnce(OpenSeadragon.console, 'error', function(message) {
-            if (/deprecated/.test(message)) {
-                errored = true;
-            }
-        });
-
-        obj0[member0]();
-        equal(called, true, 'called through for ' + member0);
-        equal(errored, true, 'errored for ' + member0);
-    };
-
-    // ----------
     asyncTest('basics', function() {
         createViewer();
         ok(viewer.drawer, 'Drawer exists');
@@ -111,14 +86,14 @@
     // ----------
     asyncTest('deprecations', function() {
         createViewer();
-        testDeprecation(viewer.drawer, 'addOverlay', viewer, 'addOverlay');
-        testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
-        testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
-        testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
-        testDeprecation(viewer.drawer, 'needsUpdate');
-        testDeprecation(viewer.drawer, 'numTilesLoaded');
-        testDeprecation(viewer.drawer, 'reset');
-        testDeprecation(viewer.drawer, 'update');
+        Util.testDeprecation(viewer.drawer, 'addOverlay', viewer, 'addOverlay');
+        Util.testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
+        Util.testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
+        Util.testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
+        Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsUpdate');
+        Util.testDeprecation(viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
+        Util.testDeprecation(viewer.drawer, 'reset', viewer.world, 'resetItems');
+        Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'update');
         start();
     });
 

@@ -103,6 +103,31 @@
 
                 return result;
             };
+        },
+
+        // ----------
+        testDeprecation: function(obj0, member0, obj1, member1) {
+            var called = false;
+            var errored = false;
+
+            if (obj1 && member1) {
+                this.spyOnce(obj1, member1, function() {
+                    called = true;
+                    return false;
+                });
+            } else {
+                called = true;
+            }
+
+            this.spyOnce(OpenSeadragon.console, 'error', function(message) {
+                if (/deprecated/.test(message)) {
+                    errored = true;
+                }
+            });
+
+            obj0[member0]();
+            equal(called, true, 'called through for ' + member0);
+            equal(errored, true, 'errored for ' + member0);
         }
     };
 
