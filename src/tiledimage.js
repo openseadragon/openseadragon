@@ -438,6 +438,7 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
          * @property {Object} havedrawn
          * @property {Object} level
          * @property {Object} opacity
@@ -449,6 +450,7 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         tiledImage.viewer.raiseEvent( 'update-level', {
+            tiledImage: tiledImage,
             havedrawn: haveDrawn,
             level: level,
             opacity: levelOpacity,
@@ -519,10 +521,12 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
          * @property {OpenSeadragon.Tile} tile
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         tiledImage.viewer.raiseEvent( 'update-tile', {
+            tiledImage: tiledImage,
             tile: tile
         });
     }
@@ -889,10 +893,12 @@ function drawTiles( tiledImage, lastDrawn ){
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
              * @property {OpenSeadragon.Tile} tile
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             tiledImage.viewer.raiseEvent( 'tile-drawn', {
+                tiledImage: tiledImage,
                 tile: tile
             });
         }

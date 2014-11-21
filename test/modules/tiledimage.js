@@ -83,6 +83,7 @@
                 viewer.removeHandler('update-level', updateLevelHandler);
                 handlerCount++;
                 equal(event.eventSource, viewer, 'sender of update-level event was viewer');
+                equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
                 ok('havedrawn' in event, 'update-level event includes havedrawn');
                 ok('level' in event, 'update-level event includes level');
                 ok('opacity' in event, 'update-level event includes opacity');
@@ -97,6 +98,7 @@
                 viewer.removeHandler('update-tile', updateTileHandler);
                 handlerCount++;
                 equal(event.eventSource, viewer, 'sender of update-tile event was viewer');
+                equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
                 ok(event.tile, 'update-tile event includes tile');
             });
 
@@ -104,6 +106,7 @@
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 handlerCount++;
                 equal(event.eventSource, viewer, 'sender of tile-drawn event was viewer');
+                equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
                 ok(event.tile, 'tile-drawn event includes tile');
 
                 equal(handlerCount, 3, 'correct number of handlers called');
