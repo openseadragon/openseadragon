@@ -87,6 +87,7 @@ $.TiledImage = function( options ) {
 
     // Ratio of zoomable image height to width.
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
+    this.contentAspectX = options.source.dimensions.x / options.source.dimensions.y;
 
     if ( options.width ) {
         this._setScale(options.width);
@@ -181,6 +182,122 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
+    },
+
+    /**
+     * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
+     * This method can be called either by passing X,Y coordinates or an
+     * OpenSeadragon.Point
+     * @function
+     * @param {OpenSeadragon.Point} viewerX the point in viewport coordinate system.
+     * @param {Number} viewerX X coordinate in viewport coordinate system.
+     * @param {Number} viewerY Y coordinate in viewport coordinate system.
+     * @return {OpenSeadragon.Point} a point representing the coordinates in the image.
+     */
+    viewportToImageCoordinates: function( viewerX, viewerY ) {
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
+        }
+
+        var contentSize = this.source.dimensions;
+        return new $.Point((viewerX - this._worldX) * (contentSize.x / this._scale),
+            (viewerY - this._worldY) * ((contentSize.y * this.contentAspectX) / this._scale));
+    },
+
+    /**
+     * Translates from image coordinate system to OpenSeadragon viewer coordinate system
+     * This method can be called either by passing X,Y coordinates or an
+     * OpenSeadragon.Point
+     * @function
+     * @param {OpenSeadragon.Point} imageX the point in image coordinate system.
+     * @param {Number} imageX X coordinate in image coordinate system.
+     * @param {Number} imageY Y coordinate in image coordinate system.
+     * @return {OpenSeadragon.Point} a point representing the coordinates in the viewport.
+     */
+    imageToViewportCoordinates: function( imageX, imageY ) {
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.imageToViewportCoordinates( imageX.x, imageX.y );
+        }
+
+        var contentSize = this.source.dimensions;
+        return new $.Point(this._worldX + ((imageX / contentSize.x) * this._scale),
+            this._worldY + ((imageY / contentSize.y / this.contentAspectX) * this._scale));
+    },
+
+    /**
+     * Translates from a rectangle which describes a portion of the image in
+     * pixel coordinates to OpenSeadragon viewport rectangle coordinates.
+     * This method can be called either by passing X,Y,width,height or an
+     * OpenSeadragon.Rect
+     * @function
+     * @param {OpenSeadragon.Rect} imageX the rectangle in image coordinate system.
+     * @param {Number} imageX the X coordinate of the top left corner of the rectangle
+     * in image coordinate system.
+     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
+     * in image coordinate system.
+     * @param {Number} pixelWidth the width in pixel of the rectangle.
+     * @param {Number} pixelHeight the height in pixel of the rectangle.
+     */
+    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if( arguments.length == 1 ) {
+            //they passed a rectangle instead of individual components
+            rect = imageX;
+            return this.imageToViewportRectangle(
+                rect.x, rect.y, rect.width, rect.height
+            );
+        }
+        coordA = this.imageToViewportCoordinates(
+            imageX, imageY
+        );
+        coordB = this.imageToViewportCoordinates(
+            imageX + pixelWidth, imageY + pixelHeight
+        );
+        return new $.Rect(
+            coordA.x,
+            coordA.y,
+            coordB.x - coordA.x,
+            coordB.y - coordA.y
+        );
+    },
+
+    /**
+     * Translates from a rectangle which describes a portion of
+     * the viewport in point coordinates to image rectangle coordinates.
+     * This method can be called either by passing X,Y,width,height or an
+     * OpenSeadragon.Rect
+     * @function
+     * @param {OpenSeadragon.Rect} viewerX the rectangle in viewport coordinate system.
+     * @param {Number} viewerX the X coordinate of the top left corner of the rectangle
+     * in viewport coordinate system.
+     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
+     * in viewport coordinate system.
+     * @param {Number} pointWidth the width of the rectangle in viewport coordinate system.
+     * @param {Number} pointHeight the height of the rectangle in viewport coordinate system.
+     */
+    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if ( arguments.length == 1 ) {
+            //they passed a rectangle instead of individual components
+            rect = viewerX;
+            return this.viewportToImageRectangle(
+                rect.x, rect.y, rect.width, rect.height
+            );
+        }
+        coordA = this.viewportToImageCoordinates( viewerX, viewerY );
+        coordB = this.viewportToImageCoordinates(viewerX + pointWidth, viewerY + pointHeight);
+        return new $.Rect(
+            coordA.x,
+            coordA.y,
+            coordB.x - coordA.x,
+            coordB.y - coordA.y
+        );
     },
 
     /**
