@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual */
 
 (function() {
     var viewer;
@@ -44,6 +44,20 @@
             equal(contentSize.y, 2000, 'contentSize.y');
 
             checkBounds(image, new OpenSeadragon.Rect(5, 6, 10, 40), 'initial bounds');
+
+            var scale = image.getContentSize().x / image.getBounds().width;
+            var viewportPoint = new OpenSeadragon.Point(10, 11);
+            var imagePoint = viewportPoint.minus(image.getBounds().getTopLeft()).times(scale);
+
+            propEqual(image.viewportToImageCoordinates(viewportPoint), imagePoint, 'viewportToImageCoordinates');
+            propEqual(image.imageToViewportCoordinates(imagePoint), viewportPoint, 'imageToViewportCoordinates');
+
+            var viewportRect = new OpenSeadragon.Rect(viewportPoint.x, viewportPoint.y, 6, 7);
+            var imageRect = new OpenSeadragon.Rect(imagePoint.x, imagePoint.y,
+                viewportRect.width * scale, viewportRect.height * scale);
+
+            propEqual(image.viewportToImageRectangle(viewportRect), imageRect, 'viewportToImageRectangle');
+            propEqual(image.imageToViewportRectangle(imageRect), viewportRect, 'imageToViewportRectangle');
 
             image.addHandler('bounds-change', function boundsChangeHandler(event) {
                 image.removeHandler('bounds-change', boundsChangeHandler);
