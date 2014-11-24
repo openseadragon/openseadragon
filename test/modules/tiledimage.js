@@ -116,6 +116,16 @@
                 ok(event.tile, 'update-tile event includes tile');
             });
 
+            viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
+                viewer.removeHandler('tile-drawing', tileDrawingHandler);
+                handlerCount++;
+                equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
+                equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
+                ok(event.tile, 'tile-drawing event includes a tile');
+                ok(event.context, 'tile-drawing event includes a context');
+                ok(event.rendered, 'tile-drawing event includes a rendered');
+            });
+
             viewer.addHandler('tile-drawn', function tileDrawnHandler(event) {
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
                 handlerCount++;
@@ -123,7 +133,7 @@
                 equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
                 ok(event.tile, 'tile-drawn event includes tile');
 
-                equal(handlerCount, 3, 'correct number of handlers called');
+                equal(handlerCount, 4, 'correct number of handlers called');
                 start();
             });
 

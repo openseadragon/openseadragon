@@ -63,6 +63,8 @@
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
+    var _this = this;
+
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
@@ -127,6 +129,28 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
+
+    // We need a callback to give image manipulation a chance to happen
+    this._drawingHandler = function(args) {
+      /**
+       * This event is fired just before the tile is drawn giving the application a chance to alter the image.
+       *
+       * NOTE: This event is only fired when the drawer is using a <canvas>.
+       *
+       * @event tile-drawing
+       * @memberof OpenSeadragon.Viewer
+       * @type {object}
+       * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+       * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
+       * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+       * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
+       * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
+       * @property {?Object} userData - Arbitrary subscriber-defined object.
+       */
+        _this.viewer.raiseEvent('tile-drawing', $.extend({
+            tiledImage: _this
+        }, args));
+    };
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -1002,7 +1026,7 @@ function drawTiles( tiledImage, lastDrawn ){
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
         tile.beingDrawn = true;
 
         if( tiledImage.debugMode ){
