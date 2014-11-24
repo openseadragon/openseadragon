@@ -938,6 +938,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         );
     },
 
+    // private
+    _viewportToImageDelta: function( viewerX, viewerY ) {
+        var scale = this.homeBounds.width;
+        return new $.Point(viewerX * (this.contentSize.x / scale),
+            viewerY * ((this.contentSize.y * this.contentAspectX) / scale));
+    },
+
     /**
      * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
      * This method can be called either by passing X,Y coordinates or an
@@ -959,9 +966,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             $.console.error('[Viewport.viewportToImageCoordinates] is not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.');
         }
 
+        return this._viewportToImageDelta(viewerX - this.homeBounds.x, viewerY - this.homeBounds.y);
+    },
+
+    // private
+    _imageToViewportDelta: function( imageX, imageY ) {
         var scale = this.homeBounds.width;
-        return new $.Point((viewerX - this.homeBounds.x) * (this.contentSize.x / scale),
-            (viewerY - this.homeBounds.y) * ((this.contentSize.y * this.contentAspectX) / scale));
+        return new $.Point((imageX / this.contentSize.x) * scale,
+            (imageY / this.contentSize.y / this.contentAspectX) * scale);
     },
 
     /**
@@ -985,9 +997,10 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             $.console.error('[Viewport.imageToViewportCoordinates] is not accurate with multi-image; use TiledImage.imageToViewportCoordinates instead.');
         }
 
-        var scale = this.homeBounds.width;
-        return new $.Point(this.homeBounds.x + ((imageX / this.contentSize.x) * scale),
-            this.homeBounds.y + ((imageY / this.contentSize.y / this.contentAspectX) * scale));
+        var point = this._imageToViewportDelta(imageX, imageY);
+        point.x += this.homeBounds.x;
+        point.y += this.homeBounds.y;
+        return point;
     },
 
     /**
@@ -1020,14 +1033,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         coordA = this.imageToViewportCoordinates(
             imageX, imageY
         );
-        coordB = this.imageToViewportCoordinates(
-            imageX + pixelWidth, imageY + pixelHeight
+        coordB = this._imageToViewportDelta(
+            pixelWidth, pixelHeight
         );
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x - coordA.x,
-            coordB.y - coordA.y
+            coordB.x,
+            coordB.y
         );
     },
 
@@ -1059,12 +1072,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this.viewportToImageCoordinates(viewerX + pointWidth, viewerY + pointHeight);
+        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x - coordA.x,
-            coordB.y - coordA.y
+            coordB.x,
+            coordB.y
         );
     },
 

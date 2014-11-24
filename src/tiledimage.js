@@ -184,6 +184,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     },
 
+    // private
+    _viewportToImageDelta: function( viewerX, viewerY ) {
+        return new $.Point(viewerX * (this.source.dimensions.x / this._scale),
+            viewerY * ((this.source.dimensions.y * this.contentAspectX) / this._scale));
+    },
+
     /**
      * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
      * This method can be called either by passing X,Y coordinates or an
@@ -200,9 +206,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
         }
 
-        var contentSize = this.source.dimensions;
-        return new $.Point((viewerX - this._worldX) * (contentSize.x / this._scale),
-            (viewerY - this._worldY) * ((contentSize.y * this.contentAspectX) / this._scale));
+        return this._viewportToImageDelta(viewerX - this._worldX, viewerY - this._worldY);
+    },
+
+    // private
+    _imageToViewportDelta: function( imageX, imageY ) {
+        return new $.Point((imageX / this.source.dimensions.x) * this._scale,
+            (imageY / this.source.dimensions.y / this.contentAspectX) * this._scale);
     },
 
     /**
@@ -221,9 +231,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return this.imageToViewportCoordinates( imageX.x, imageX.y );
         }
 
-        var contentSize = this.source.dimensions;
-        return new $.Point(this._worldX + ((imageX / contentSize.x) * this._scale),
-            this._worldY + ((imageY / contentSize.y / this.contentAspectX) * this._scale));
+        var point = this._imageToViewportDelta(imageX, imageY);
+        point.x += this._worldX;
+        point.y += this._worldY;
+        return point;
     },
 
     /**
@@ -254,14 +265,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         coordA = this.imageToViewportCoordinates(
             imageX, imageY
         );
-        coordB = this.imageToViewportCoordinates(
-            imageX + pixelWidth, imageY + pixelHeight
+        coordB = this._imageToViewportDelta(
+            pixelWidth, pixelHeight
         );
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x - coordA.x,
-            coordB.y - coordA.y
+            coordB.x,
+            coordB.y
         );
     },
 
@@ -291,12 +302,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
         }
         coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this.viewportToImageCoordinates(viewerX + pointWidth, viewerY + pointHeight);
+        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
         return new $.Rect(
             coordA.x,
             coordA.y,
-            coordB.x - coordA.x,
-            coordB.y - coordA.y
+            coordB.x,
+            coordB.y
         );
     },
 
