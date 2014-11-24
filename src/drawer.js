@@ -116,27 +116,6 @@ $.Drawer = function( options ) {
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
-
-    // We need a callback to give image manipulation a chance to happen
-    this._drawingHandler = function(args) {
-        if (_this.viewer) {
-          /**
-           * This event is fired just before the tile is drawn giving the application a chance to alter the image.
-           *
-           * NOTE: This event is only fired when the drawer is using a <canvas>.
-           *
-           * @event tile-drawing
-           * @memberof OpenSeadragon.Viewer
-           * @type {object}
-           * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-           * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
-           * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
-           * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
-           * @property {?Object} userData - Arbitrary subscriber-defined object.
-           */
-            _this.viewer.raiseEvent('tile-drawing', args);
-        }
-    };
 };
 
 $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
@@ -249,17 +228,23 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     /**
      * Draws the given tile.
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
+     * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
+     * drawingHandler({context, tile, rendered})
+     * where <code>rendered</code> is the context with the pre-drawn image.
      */
-    drawTile: function( tile ) {
+    drawTile: function( tile, drawingHandler ) {
+        $.console.assert(tile, '[Drawer.drawTile] tile is required');
+        $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
+
         if ( this.useCanvas ) {
             // TODO do this in a more performant way
             // specifically, don't save,rotate,restore every time we draw a tile
             if( this.viewport.degrees !== 0 ) {
                 this._offsetForRotation( tile, this.viewport.degrees );
-                tile.drawCanvas( this.context, this._drawingHandler );
+                tile.drawCanvas( this.context, drawingHandler );
                 this._restoreRotationChanges( tile );
             } else {
-                tile.drawCanvas( this.context, this._drawingHandler );
+                tile.drawCanvas( this.context, drawingHandler );
             }
         } else {
             tile.drawHTML( this.canvas );

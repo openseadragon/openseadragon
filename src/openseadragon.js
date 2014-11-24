@@ -544,11 +544,11 @@
   *     If collectionMode is true, specifies whether to arrange vertically or horizontally.
   *
   * @property {Number} [collectionTileSize=800]
-  *     If collectionMode is true, specifies the size, in world coordinates, for each TiledImage to fit into.
+  *     If collectionMode is true, specifies the size, in viewport coordinates, for each TiledImage to fit into.
   *     The TiledImage will be centered within a square of the specified size.
   *
   * @property {Number} [collectionTileMargin=80]
-  *     If collectionMode is true, specifies the margin, in world coordinates, between each TiledImage.
+  *     If collectionMode is true, specifies the margin, in viewport coordinates, between each TiledImage.
   *
   * @property {String|Boolean} [crossOriginPolicy=false]
   *      Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will

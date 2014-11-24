@@ -7,7 +7,7 @@
             var self = this;
 
             var testInitialOpen = true;
-            var testOverlays = true;
+            var testOverlays = false;
             var testMargins = false;
             var testNavigator = false;
             var margins;
@@ -34,6 +34,12 @@
 
             if (testInitialOpen) {
                 config.tileSources = [
+                    {
+                        tileSource: "../../data/testpattern.dzi",
+                        x: 4,
+                        y: 2,
+                        width: 2
+                    },
                     {
                         tileSource: "../../data/tall.dzi",
                         x: 1.5,

@@ -608,6 +608,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 if (successes) {
                     if (_this._firstOpen || !_this.preserveViewport) {
                         _this.viewport.goHome( true );
+                        _this.viewport.update();
                     }
 
                     _this._firstOpen = false;
@@ -1249,10 +1250,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @param {Number} [options.index] The index of the item. Added on top of
      * all other items if not specified.
-     * @param {Number} [options.x=0] The X position for the image in world coordinates.
-     * @param {Number} [options.y=0] The Y position for the image in world coordinates.
-     * @param {Number} [options.width=1] The width for the image in world coordinates.
-     * @param {Number} [options.height] The height for the image in world coordinates.
+     * @param {Number} [options.x=0] The X position for the image in viewport coordinates.
+     * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
+     * @param {Number} [options.width=1] The width for the image in viewport coordinates.
+     * @param {Number} [options.height] The height for the image in viewport coordinates.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", the resulting TiledImage.

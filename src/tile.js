@@ -231,7 +231,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * Renders the tile in a canvas-based context.
      * @function
      * @param {Canvas} context
-     * @param {Function} method for firing the drawing event. drawingHandler({context, tile, rendered})
+     * @param {Function} drawingHandler - Method for firing the drawing event.
+     * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      */
     drawCanvas: function( context, drawingHandler ) {

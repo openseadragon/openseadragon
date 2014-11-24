@@ -40,22 +40,6 @@
     });
 
     // ----------
-    asyncTest('tile-drawing event', function() {
-        createViewer({
-            tileSources: '/test/data/testpattern.dzi'
-        });
-
-        viewer.addHandler('tile-drawing', function handler(event) {
-            viewer.removeHandler('tile-drawing', handler);
-            equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
-            ok(event.tile, 'tile-drawing event includes a tile');
-            ok(event.context, 'tile-drawing event includes a context');
-            ok(event.rendered, 'tile-drawing event includes a rendered');
-            start();
-        });
-    });
-
-    // ----------
     asyncTest('rotation', function() {
         createViewer({
             tileSources: '/test/data/testpattern.dzi'

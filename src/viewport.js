@@ -163,8 +163,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * Updates the viewport's home bounds and constraints.
      * @function
-     * @param {OpenSeadragon.Rect} bounds - the new bounds in world coordinates
-     * @param {Number} contentFactor - how many content units per world unit
+     * @param {OpenSeadragon.Rect} bounds - the new bounds in viewport coordinates
+     * @param {Number} contentFactor - how many content units per viewport unit
      * @fires OpenSeadragon.Viewer.event:reset-size
      */
     setHomeBounds: function(bounds, contentFactor) {
@@ -303,7 +303,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in world coordinates.
+     * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in viewport coordinates.
      */
     getBounds: function( current ) {
         var center = this.getCenter( current ),
@@ -322,7 +322,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to,
-     * including the space taken by margins, in world coordinates.
+     * including the space taken by margins, in viewport coordinates.
      */
     getBoundsWithMargins: function( current ) {
         var bounds = this.getBounds(current);
@@ -938,10 +938,18 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         );
     },
 
+    // private
+    _viewportToImageDelta: function( viewerX, viewerY ) {
+        var scale = this.homeBounds.width;
+        return new $.Point(viewerX * (this.contentSize.x / scale),
+            viewerY * ((this.contentSize.y * this.contentAspectX) / scale));
+    },
+
     /**
      * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
      * This method can be called either by passing X,Y coordinates or an
      * OpenSeadragon.Point
+     * Note: not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.
      * @function
      * @param {OpenSeadragon.Point} viewerX the point in viewport coordinate system.
      * @param {Number} viewerX X coordinate in viewport coordinate system.
@@ -953,13 +961,26 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             //they passed a point instead of individual components
             return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
         }
-        return new $.Point( viewerX * this.contentSize.x, viewerY * this.contentSize.y * this.contentAspectX );
+
+        if (this.viewer && this.viewer.world.getItemCount() > 1) {
+            $.console.error('[Viewport.viewportToImageCoordinates] is not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.');
+        }
+
+        return this._viewportToImageDelta(viewerX - this.homeBounds.x, viewerY - this.homeBounds.y);
+    },
+
+    // private
+    _imageToViewportDelta: function( imageX, imageY ) {
+        var scale = this.homeBounds.width;
+        return new $.Point((imageX / this.contentSize.x) * scale,
+            (imageY / this.contentSize.y / this.contentAspectX) * scale);
     },
 
     /**
      * Translates from image coordinate system to OpenSeadragon viewer coordinate system
      * This method can be called either by passing X,Y coordinates or an
      * OpenSeadragon.Point
+     * Note: not accurate with multi-image; use TiledImage.imageToViewportCoordinates instead.
      * @function
      * @param {OpenSeadragon.Point} imageX the point in image coordinate system.
      * @param {Number} imageX X coordinate in image coordinate system.
@@ -971,7 +992,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             //they passed a point instead of individual components
             return this.imageToViewportCoordinates( imageX.x, imageX.y );
         }
-        return new $.Point( imageX / this.contentSize.x, imageY / this.contentSize.y / this.contentAspectX );
+
+        if (this.viewer && this.viewer.world.getItemCount() > 1) {
+            $.console.error('[Viewport.imageToViewportCoordinates] is not accurate with multi-image; use TiledImage.imageToViewportCoordinates instead.');
+        }
+
+        var point = this._imageToViewportDelta(imageX, imageY);
+        point.x += this.homeBounds.x;
+        point.y += this.homeBounds.y;
+        return point;
     },
 
     /**
@@ -979,6 +1008,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * pixel coordinates to OpenSeadragon viewport rectangle coordinates.
      * This method can be called either by passing X,Y,width,height or an
      * OpenSeadragon.Rect
+     * Note: not accurate with multi-image; use TiledImage.imageToViewportRectangle instead.
      * @function
      * @param {OpenSeadragon.Rect} imageX the rectangle in image coordinate system.
      * @param {Number} imageX the X coordinate of the top left corner of the rectangle
@@ -999,10 +1029,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 rect.x, rect.y, rect.width, rect.height
             );
         }
+
         coordA = this.imageToViewportCoordinates(
             imageX, imageY
         );
-        coordB = this.imageToViewportCoordinates(
+        coordB = this._imageToViewportDelta(
             pixelWidth, pixelHeight
         );
         return new $.Rect(
@@ -1018,6 +1049,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * the viewport in point coordinates to image rectangle coordinates.
      * This method can be called either by passing X,Y,width,height or an
      * OpenSeadragon.Rect
+     * Note: not accurate with multi-image; use TiledImage.viewportToImageRectangle instead.
      * @function
      * @param {OpenSeadragon.Rect} viewerX the rectangle in viewport coordinate system.
      * @param {Number} viewerX the X coordinate of the top left corner of the rectangle
@@ -1038,8 +1070,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
                 rect.x, rect.y, rect.width, rect.height
             );
         }
+
         coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this.viewportToImageCoordinates( pointWidth, pointHeight );
+        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
         return new $.Rect(
             coordA.x,
             coordA.y,
@@ -1051,6 +1084,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * Convert pixel coordinates relative to the viewer element to image
      * coordinates.
+     * Note: not accurate with multi-image.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -1062,6 +1096,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * Convert pixel coordinates relative to the image to
      * viewer element coordinates.
+     * Note: not accurate with multi-image.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -1072,6 +1107,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * Convert pixel coordinates relative to the window to image coordinates.
+     * Note: not accurate with multi-image.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -1083,6 +1119,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     /**
      * Convert image coordinates to pixel coordinates relative to the window.
+     * Note: not accurate with multi-image.
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
@@ -1140,15 +1177,21 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
+     * Note: not accurate with multi-image.
      * @function
      * @param {Number} viewportZoom The viewport zoom
      * target zoom.
      * @returns {Number} imageZoom The image zoom
      */
     viewportToImageZoom: function( viewportZoom ) {
-        var imageWidth = this.viewer.source.dimensions.x;
+        if (this.viewer && this.viewer.world.getItemCount() > 1) {
+            $.console.error('[Viewport.viewportToImageZoom] is not accurate with multi-image.');
+        }
+
+        var imageWidth = this.contentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var viewportToImageZoomRatio = containerWidth / imageWidth;
+        var scale = this.homeBounds.width;
+        var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
 
@@ -1158,15 +1201,21 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
+     * Note: not accurate with multi-image.
      * @function
      * @param {Number} imageZoom The image zoom
      * target zoom.
      * @returns {Number} viewportZoom The viewport zoom
      */
     imageToViewportZoom: function( imageZoom ) {
-        var imageWidth = this.viewer.source.dimensions.x;
+        if (this.viewer && this.viewer.world.getItemCount() > 1) {
+            $.console.error('[Viewport.imageToViewportZoom] is not accurate with multi-image.');
+        }
+
+        var imageWidth = this.contentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var viewportToImageZoomRatio = imageWidth / containerWidth;
+        var scale = this.homeBounds.width;
+        var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     }
 };

@@ -48,10 +48,10 @@
  * @param {OpenSeadragon.TileCache} options.tileCache - The TileCache for this TiledImage to use.
  * @param {OpenSeadragon.Drawer} options.drawer - The Drawer for this TiledImage to draw onto.
  * @param {OpenSeadragon.ImageLoader} options.imageLoader - The ImageLoader for this TiledImage to use.
- * @param {Number} [options.x=0] - Left position, in world coordinates.
- * @param {Number} [options.y=0] - Top position, in world coordinates.
- * @param {Number} [options.width=1] - Width, in world coordinates.
- * @param {Number} [options.height] - Height, in world coordinates.
+ * @param {Number} [options.x=0] - Left position, in viewport coordinates.
+ * @param {Number} [options.y=0] - Top position, in viewport coordinates.
+ * @param {Number} [options.width=1] - Width, in viewport coordinates.
+ * @param {Number} [options.height] - Height, in viewport coordinates.
  * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapHorizontal] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapVertical] - See {@link OpenSeadragon.Options}.
@@ -63,6 +63,8 @@
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
+    var _this = this;
+
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
@@ -87,6 +89,7 @@ $.TiledImage = function( options ) {
 
     // Ratio of zoomable image height to width.
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
+    this.contentAspectX = options.source.dimensions.x / options.source.dimensions.y;
 
     if ( options.width ) {
         this._setScale(options.width);
@@ -126,6 +129,28 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
+
+    // We need a callback to give image manipulation a chance to happen
+    this._drawingHandler = function(args) {
+      /**
+       * This event is fired just before the tile is drawn giving the application a chance to alter the image.
+       *
+       * NOTE: This event is only fired when the drawer is using a <canvas>.
+       *
+       * @event tile-drawing
+       * @memberof OpenSeadragon.Viewer
+       * @type {object}
+       * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+       * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
+       * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+       * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
+       * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
+       * @property {?Object} userData - Arbitrary subscriber-defined object.
+       */
+        _this.viewer.raiseEvent('tile-drawing', $.extend({
+            tiledImage: _this
+        }, args));
+    };
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -164,7 +189,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
+     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
      */
     getBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
@@ -183,9 +208,136 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     },
 
+    // private
+    _viewportToImageDelta: function( viewerX, viewerY ) {
+        return new $.Point(viewerX * (this.source.dimensions.x / this._scale),
+            viewerY * ((this.source.dimensions.y * this.contentAspectX) / this._scale));
+    },
+
+    /**
+     * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
+     * This method can be called either by passing X,Y coordinates or an
+     * OpenSeadragon.Point
+     * @function
+     * @param {OpenSeadragon.Point} viewerX the point in viewport coordinate system.
+     * @param {Number} viewerX X coordinate in viewport coordinate system.
+     * @param {Number} viewerY Y coordinate in viewport coordinate system.
+     * @return {OpenSeadragon.Point} a point representing the coordinates in the image.
+     */
+    viewportToImageCoordinates: function( viewerX, viewerY ) {
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
+        }
+
+        return this._viewportToImageDelta(viewerX - this._worldX, viewerY - this._worldY);
+    },
+
+    // private
+    _imageToViewportDelta: function( imageX, imageY ) {
+        return new $.Point((imageX / this.source.dimensions.x) * this._scale,
+            (imageY / this.source.dimensions.y / this.contentAspectX) * this._scale);
+    },
+
+    /**
+     * Translates from image coordinate system to OpenSeadragon viewer coordinate system
+     * This method can be called either by passing X,Y coordinates or an
+     * OpenSeadragon.Point
+     * @function
+     * @param {OpenSeadragon.Point} imageX the point in image coordinate system.
+     * @param {Number} imageX X coordinate in image coordinate system.
+     * @param {Number} imageY Y coordinate in image coordinate system.
+     * @return {OpenSeadragon.Point} a point representing the coordinates in the viewport.
+     */
+    imageToViewportCoordinates: function( imageX, imageY ) {
+        if ( arguments.length == 1 ) {
+            //they passed a point instead of individual components
+            return this.imageToViewportCoordinates( imageX.x, imageX.y );
+        }
+
+        var point = this._imageToViewportDelta(imageX, imageY);
+        point.x += this._worldX;
+        point.y += this._worldY;
+        return point;
+    },
+
+    /**
+     * Translates from a rectangle which describes a portion of the image in
+     * pixel coordinates to OpenSeadragon viewport rectangle coordinates.
+     * This method can be called either by passing X,Y,width,height or an
+     * OpenSeadragon.Rect
+     * @function
+     * @param {OpenSeadragon.Rect} imageX the rectangle in image coordinate system.
+     * @param {Number} imageX the X coordinate of the top left corner of the rectangle
+     * in image coordinate system.
+     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
+     * in image coordinate system.
+     * @param {Number} pixelWidth the width in pixel of the rectangle.
+     * @param {Number} pixelHeight the height in pixel of the rectangle.
+     */
+    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if( arguments.length == 1 ) {
+            //they passed a rectangle instead of individual components
+            rect = imageX;
+            return this.imageToViewportRectangle(
+                rect.x, rect.y, rect.width, rect.height
+            );
+        }
+        coordA = this.imageToViewportCoordinates(
+            imageX, imageY
+        );
+        coordB = this._imageToViewportDelta(
+            pixelWidth, pixelHeight
+        );
+        return new $.Rect(
+            coordA.x,
+            coordA.y,
+            coordB.x,
+            coordB.y
+        );
+    },
+
+    /**
+     * Translates from a rectangle which describes a portion of
+     * the viewport in point coordinates to image rectangle coordinates.
+     * This method can be called either by passing X,Y,width,height or an
+     * OpenSeadragon.Rect
+     * @function
+     * @param {OpenSeadragon.Rect} viewerX the rectangle in viewport coordinate system.
+     * @param {Number} viewerX the X coordinate of the top left corner of the rectangle
+     * in viewport coordinate system.
+     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
+     * in viewport coordinate system.
+     * @param {Number} pointWidth the width of the rectangle in viewport coordinate system.
+     * @param {Number} pointHeight the height of the rectangle in viewport coordinate system.
+     */
+    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight ) {
+        var coordA,
+            coordB,
+            rect;
+        if ( arguments.length == 1 ) {
+            //they passed a rectangle instead of individual components
+            rect = viewerX;
+            return this.viewportToImageRectangle(
+                rect.x, rect.y, rect.width, rect.height
+            );
+        }
+        coordA = this.viewportToImageCoordinates( viewerX, viewerY );
+        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
+        return new $.Rect(
+            coordA.x,
+            coordA.y,
+            coordB.x,
+            coordB.y
+        );
+    },
+
     /**
      * Sets the TiledImage's position in the world.
-     * @param {OpenSeadragon.Point} position - The new position, in world coordinates.
+     * @param {OpenSeadragon.Point} position - The new position, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setPosition: function(position) {
@@ -201,7 +353,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Sets the TiledImage's width in the world, adjusting the height to match based on aspect ratio.
-     * @param {Number} width - The new width, in world coordinates.
+     * @param {Number} width - The new width, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setWidth: function(width) {
@@ -216,7 +368,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Sets the TiledImage's height in the world, adjusting the width to match based on aspect ratio.
-     * @param {Number} height - The new height, in world coordinates.
+     * @param {Number} height - The new height, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setHeight: function(height) {
@@ -874,7 +1026,7 @@ function drawTiles( tiledImage, lastDrawn ){
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
         tile.beingDrawn = true;
 
         if( tiledImage.debugMode ){
