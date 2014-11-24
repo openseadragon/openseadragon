@@ -245,7 +245,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
-     * @returns {OpenSeadragon.Rect} The smallest rectangle that encloses all items, in world coordinates.
+     * @returns {OpenSeadragon.Rect} The smallest rectangle that encloses all items, in viewport coordinates.
      */
     getHomeBounds: function() {
         return this._homeBounds.clone();
@@ -253,9 +253,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * To facilitate zoom constraints, we keep track of the pixel density of the
-     * densest item in the World (i.e. the item whose content size to world size
+     * densest item in the World (i.e. the item whose content size to viewport size
      * ratio is the highest) and save it as this "content factor".
-     * @returns {Number} the number of content units per world unit.
+     * @returns {Number} the number of content units per viewport unit.
      */
     getContentFactor: function() {
         return this._contentFactor;

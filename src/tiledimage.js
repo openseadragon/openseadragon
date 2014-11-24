@@ -48,10 +48,10 @@
  * @param {OpenSeadragon.TileCache} options.tileCache - The TileCache for this TiledImage to use.
  * @param {OpenSeadragon.Drawer} options.drawer - The Drawer for this TiledImage to draw onto.
  * @param {OpenSeadragon.ImageLoader} options.imageLoader - The ImageLoader for this TiledImage to use.
- * @param {Number} [options.x=0] - Left position, in world coordinates.
- * @param {Number} [options.y=0] - Top position, in world coordinates.
- * @param {Number} [options.width=1] - Width, in world coordinates.
- * @param {Number} [options.height] - Height, in world coordinates.
+ * @param {Number} [options.x=0] - Left position, in viewport coordinates.
+ * @param {Number} [options.y=0] - Top position, in viewport coordinates.
+ * @param {Number} [options.width=1] - Width, in viewport coordinates.
+ * @param {Number} [options.height] - Height, in viewport coordinates.
  * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapHorizontal] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapVertical] - See {@link OpenSeadragon.Options}.
@@ -165,7 +165,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in world coordinates.
+     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
      */
     getBounds: function() {
         return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
@@ -313,7 +313,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Sets the TiledImage's position in the world.
-     * @param {OpenSeadragon.Point} position - The new position, in world coordinates.
+     * @param {OpenSeadragon.Point} position - The new position, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setPosition: function(position) {
@@ -329,7 +329,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Sets the TiledImage's width in the world, adjusting the height to match based on aspect ratio.
-     * @param {Number} width - The new width, in world coordinates.
+     * @param {Number} width - The new width, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setWidth: function(width) {
@@ -344,7 +344,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Sets the TiledImage's height in the world, adjusting the width to match based on aspect ratio.
-     * @param {Number} height - The new height, in world coordinates.
+     * @param {Number} height - The new height, in viewport coordinates.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setHeight: function(height) {

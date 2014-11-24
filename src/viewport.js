@@ -163,8 +163,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * Updates the viewport's home bounds and constraints.
      * @function
-     * @param {OpenSeadragon.Rect} bounds - the new bounds in world coordinates
-     * @param {Number} contentFactor - how many content units per world unit
+     * @param {OpenSeadragon.Rect} bounds - the new bounds in viewport coordinates
+     * @param {Number} contentFactor - how many content units per viewport unit
      * @fires OpenSeadragon.Viewer.event:reset-size
      */
     setHomeBounds: function(bounds, contentFactor) {
@@ -303,7 +303,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     /**
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in world coordinates.
+     * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in viewport coordinates.
      */
     getBounds: function( current ) {
         var center = this.getCenter( current ),
@@ -322,7 +322,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to,
-     * including the space taken by margins, in world coordinates.
+     * including the space taken by margins, in viewport coordinates.
      */
     getBoundsWithMargins: function( current ) {
         var bounds = this.getBounds(current);
