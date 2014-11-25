@@ -82,17 +82,18 @@ $.TiledImage = function( options ) {
     this._imageLoader = options.imageLoader;
     delete options.imageLoader;
 
-    this._worldX = options.x || 0;
+    var x = options.x || 0;
     delete options.x;
-    this._worldY = options.y || 0;
+    var y = options.y || 0;
     delete options.y;
 
     // Ratio of zoomable image height to width.
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
     this.contentAspectX = options.source.dimensions.x / options.source.dimensions.y;
 
+    var scale = 1;
     if ( options.width ) {
-        this._setScale(options.width);
+        scale = options.width;
         delete options.width;
 
         if ( options.height ) {
@@ -100,10 +101,8 @@ $.TiledImage = function( options ) {
             delete options.height;
         }
     } else if ( options.height ) {
-        this._setScale(options.height / this.normHeight);
+        scale = options.height / this.normHeight;
         delete options.height;
-    } else {
-        this._setScale(1);
     }
 
     $.extend( true, this, {
@@ -118,6 +117,8 @@ $.TiledImage = function( options ) {
         updateAgain:    true,  // Does the tiledImage need to update the viewport again?
 
         //configurable settings
+        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:      $.DEFAULT_SETTINGS.animationTime,
         minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
         wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
         wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
@@ -129,6 +130,26 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
 
     }, options );
+
+    this._xSpring = new $.Spring({
+        initial: x,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
+    this._ySpring = new $.Spring({
+        initial: y,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
+    this._scaleSpring = new $.Spring({
+        initial: scale,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
+    this._updateForScale();
 
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
@@ -190,9 +211,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
+     * @param {Boolean} [current=false] - Pass true for the current location; false for target location.
      */
-    getBounds: function() {
-        return new $.Rect( this._worldX, this._worldY, this._worldWidth, this._worldHeight );
+    getBounds: function(current) {
+        if (current) {
+            return new $.Rect( this._xSpring.current.value, this._ySpring.current.value,
+                this._worldWidthCurrent, this._worldHeightCurrent );
+        }
+
+        return new $.Rect( this._xSpring.target.value, this._ySpring.target.value,
+            this._worldWidthTarget, this._worldHeightTarget );
     },
 
     // deprecated
@@ -209,89 +237,96 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     // private
-    _viewportToImageDelta: function( viewerX, viewerY ) {
-        return new $.Point(viewerX * (this.source.dimensions.x / this._scale),
-            viewerY * ((this.source.dimensions.y * this.contentAspectX) / this._scale));
+    _viewportToImageDelta: function( viewerX, viewerY, current ) {
+        var scale = current ? this._scaleSpring.current.value : this._scaleSpring.target.value;
+        return new $.Point(viewerX * (this.source.dimensions.x / scale),
+            viewerY * ((this.source.dimensions.y * this.contentAspectX) / scale));
     },
 
     /**
      * Translates from OpenSeadragon viewer coordinate system to image coordinate system.
-     * This method can be called either by passing X,Y coordinates or an
-     * OpenSeadragon.Point
-     * @function
-     * @param {OpenSeadragon.Point} viewerX the point in viewport coordinate system.
-     * @param {Number} viewerX X coordinate in viewport coordinate system.
-     * @param {Number} viewerY Y coordinate in viewport coordinate system.
-     * @return {OpenSeadragon.Point} a point representing the coordinates in the image.
+     * This method can be called either by passing X,Y coordinates or an {@link OpenSeadragon.Point}.
+     * @param {Number|OpenSeadragon.Point} viewerX - The X coordinate or point in viewport coordinate system.
+     * @param {Number} [viewerY] - The Y coordinate in viewport coordinate system.
+     * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
+     * @return {OpenSeadragon.Point} A point representing the coordinates in the image.
      */
-    viewportToImageCoordinates: function( viewerX, viewerY ) {
-        if ( arguments.length == 1 ) {
+    viewportToImageCoordinates: function( viewerX, viewerY, current ) {
+        if (viewerX instanceof $.Point) {
             //they passed a point instead of individual components
-            return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
+            current = viewerY;
+            viewerY = viewerX.y;
+            viewerX = viewerX.x;
         }
 
-        return this._viewportToImageDelta(viewerX - this._worldX, viewerY - this._worldY);
+        if (current) {
+            return this._viewportToImageDelta(viewerX - this._xSpring.current.value,
+                viewerY - this._ySpring.current.value);
+        }
+
+        return this._viewportToImageDelta(viewerX - this._xSpring.target.value,
+            viewerY - this._ySpring.target.value);
     },
 
     // private
-    _imageToViewportDelta: function( imageX, imageY ) {
-        return new $.Point((imageX / this.source.dimensions.x) * this._scale,
-            (imageY / this.source.dimensions.y / this.contentAspectX) * this._scale);
+    _imageToViewportDelta: function( imageX, imageY, current ) {
+        var scale = current ? this._scaleSpring.current.value : this._scaleSpring.target.value;
+        return new $.Point((imageX / this.source.dimensions.x) * scale,
+            (imageY / this.source.dimensions.y / this.contentAspectX) * scale);
     },
 
     /**
      * Translates from image coordinate system to OpenSeadragon viewer coordinate system
-     * This method can be called either by passing X,Y coordinates or an
-     * OpenSeadragon.Point
-     * @function
-     * @param {OpenSeadragon.Point} imageX the point in image coordinate system.
-     * @param {Number} imageX X coordinate in image coordinate system.
-     * @param {Number} imageY Y coordinate in image coordinate system.
-     * @return {OpenSeadragon.Point} a point representing the coordinates in the viewport.
+     * This method can be called either by passing X,Y coordinates or an {@link OpenSeadragon.Point}.
+     * @param {Number|OpenSeadragon.Point} imageX - The X coordinate or point in image coordinate system.
+     * @param {Number} [imageY] - The Y coordinate in image coordinate system.
+     * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
+     * @return {OpenSeadragon.Point} A point representing the coordinates in the viewport.
      */
-    imageToViewportCoordinates: function( imageX, imageY ) {
-        if ( arguments.length == 1 ) {
+    imageToViewportCoordinates: function( imageX, imageY, current ) {
+        if (imageX instanceof $.Point) {
             //they passed a point instead of individual components
-            return this.imageToViewportCoordinates( imageX.x, imageX.y );
+            current = imageY;
+            imageY = imageX.y;
+            imageX = imageX.x;
         }
 
         var point = this._imageToViewportDelta(imageX, imageY);
-        point.x += this._worldX;
-        point.y += this._worldY;
+        if (current) {
+            point.x += this._xSpring.current.value;
+            point.y += this._ySpring.current.value;
+        } else {
+            point.x += this._xSpring.target.value;
+            point.y += this._ySpring.target.value;
+        }
+
         return point;
     },
 
     /**
      * Translates from a rectangle which describes a portion of the image in
      * pixel coordinates to OpenSeadragon viewport rectangle coordinates.
-     * This method can be called either by passing X,Y,width,height or an
-     * OpenSeadragon.Rect
-     * @function
-     * @param {OpenSeadragon.Rect} imageX the rectangle in image coordinate system.
-     * @param {Number} imageX the X coordinate of the top left corner of the rectangle
-     * in image coordinate system.
-     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
-     * in image coordinate system.
-     * @param {Number} pixelWidth the width in pixel of the rectangle.
-     * @param {Number} pixelHeight the height in pixel of the rectangle.
+     * This method can be called either by passing X,Y,width,height or an {@link OpenSeadragon.Rect}.
+     * @param {Number|OpenSeadragon.Rect} imageX - The left coordinate or rectangle in image coordinate system.
+     * @param {Number} [imageY] - The top coordinate in image coordinate system.
+     * @param {Number} [pixelWidth] - The width in pixel of the rectangle.
+     * @param {Number} [pixelHeight] - The height in pixel of the rectangle.
+     * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
+     * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
-    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
-        var coordA,
-            coordB,
-            rect;
-        if( arguments.length == 1 ) {
-            //they passed a rectangle instead of individual components
-            rect = imageX;
-            return this.imageToViewportRectangle(
-                rect.x, rect.y, rect.width, rect.height
-            );
+    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight, current ) {
+        if (imageX instanceof $.Rect) {
+            //they passed a rect instead of individual components
+            current = imageY;
+            pixelWidth = imageX.width;
+            pixelHeight = imageX.height;
+            imageY = imageX.y;
+            imageX = imageX.x;
         }
-        coordA = this.imageToViewportCoordinates(
-            imageX, imageY
-        );
-        coordB = this._imageToViewportDelta(
-            pixelWidth, pixelHeight
-        );
+
+        var coordA = this.imageToViewportCoordinates(imageX, imageY, current);
+        var coordB = this._imageToViewportDelta(pixelWidth, pixelHeight, current);
+
         return new $.Rect(
             coordA.x,
             coordA.y,
@@ -303,30 +338,27 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Translates from a rectangle which describes a portion of
      * the viewport in point coordinates to image rectangle coordinates.
-     * This method can be called either by passing X,Y,width,height or an
-     * OpenSeadragon.Rect
-     * @function
-     * @param {OpenSeadragon.Rect} viewerX the rectangle in viewport coordinate system.
-     * @param {Number} viewerX the X coordinate of the top left corner of the rectangle
-     * in viewport coordinate system.
-     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
-     * in viewport coordinate system.
-     * @param {Number} pointWidth the width of the rectangle in viewport coordinate system.
-     * @param {Number} pointHeight the height of the rectangle in viewport coordinate system.
+     * This method can be called either by passing X,Y,width,height or an {@link OpenSeadragon.Rect}.
+     * @param {Number|OpenSeadragon.Rect} viewerX - The left coordinate or rectangle in viewport coordinate system.
+     * @param {Number} [viewerY] - The top coordinate in viewport coordinate system.
+     * @param {Number} [pointWidth] - The width in viewport coordinate system.
+     * @param {Number} [pointHeight] - The height in viewport coordinate system.
+     * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
+     * @return {OpenSeadragon.Rect} A rect representing the coordinates in the image.
      */
-    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight ) {
-        var coordA,
-            coordB,
-            rect;
-        if ( arguments.length == 1 ) {
-            //they passed a rectangle instead of individual components
-            rect = viewerX;
-            return this.viewportToImageRectangle(
-                rect.x, rect.y, rect.width, rect.height
-            );
+    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
+        if (viewerX instanceof $.Rect) {
+            //they passed a rect instead of individual components
+            current = viewerY;
+            pointWidth = viewerX.width;
+            pointHeight = viewerX.height;
+            viewerY = viewerX.y;
+            viewerX = viewerX.x;
         }
-        coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
+
+        var coordA = this.viewportToImageCoordinates(viewerX, viewerY, current);
+        var coordB = this._viewportToImageDelta(pointWidth, pointHeight, current);
+
         return new $.Rect(
             coordA.x,
             coordA.y,
@@ -338,46 +370,87 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Sets the TiledImage's position in the world.
      * @param {OpenSeadragon.Point} position - The new position, in viewport coordinates.
+     * @param {Boolean} [immediately=false] - Whether to animate to the new position or snap immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    setPosition: function(position) {
-        if (this._worldX === position.x && this._worldY === position.y) {
-            return;
+    setPosition: function(position, immediately) {
+        if (immediately) {
+            if (this._xSpring.target.value === position.x && this._ySpring.target.value === position.y &&
+                    this._xSpring.current.value === position.x && this._ySpring.current.value === position.y) {
+                return;
+            }
+
+            this._xSpring.resetTo(position.x);
+            this._ySpring.resetTo(position.y);
+            this._xSpring.update();
+            this._ySpring.update();
+            this.updateAgain = true;
+        } else {
+            if (this._xSpring.target.value === position.x && this._ySpring.target.value === position.y) {
+                return;
+            }
+
+            this._xSpring.springTo(position.x);
+            this._ySpring.springTo(position.y);
         }
 
-        this._worldX = position.x;
-        this._worldY = position.y;
-        this.updateAgain = true;
         this._raiseBoundsChange();
     },
 
     /**
      * Sets the TiledImage's width in the world, adjusting the height to match based on aspect ratio.
      * @param {Number} width - The new width, in viewport coordinates.
+     * @param {Boolean} [immediately=false] - Whether to animate to the new size or snap immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    setWidth: function(width) {
-        if (this._worldWidth === width) {
-            return;
+    setWidth: function(width, immediately) {
+        if (immediately) {
+            if (this._worldWidthTarget === width && this._worldWidthCurrent === width) {
+                return;
+            }
+
+            this._scaleSpring.resetTo(width);
+            this._scaleSpring.update();
+            this._updateForScale();
+            this.updateAgain = true;
+        } else {
+            if (this._worldWidthTarget === width) {
+                return;
+            }
+
+            this._scaleSpring.springTo(width);
+            this._updateForScale();
         }
 
-        this._setScale(width);
-        this.updateAgain = true;
         this._raiseBoundsChange();
     },
 
     /**
      * Sets the TiledImage's height in the world, adjusting the width to match based on aspect ratio.
      * @param {Number} height - The new height, in viewport coordinates.
+     * @param {Boolean} [immediately=false] - Whether to animate to the new size or snap immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    setHeight: function(height) {
-        if (this._worldHeight === height) {
-            return;
+    setHeight: function(height, immediately) {
+        var scale = height / this.normHeight;
+        if (immediately) {
+            if (this._worldHeightTarget === height && this._worldHeightCurrent === height) {
+                return;
+            }
+
+            this._scaleSpring.resetTo(scale);
+            this._scaleSpring.update();
+            this._updateForScale();
+            this.updateAgain = true;
+        } else {
+            if (this._worldHeightTarget === height) {
+                return;
+            }
+
+            this._scaleSpring.springTo(scale);
+            this._updateForScale();
         }
 
-        this._setScale(height / this.normHeight);
-        this.updateAgain = true;
         this._raiseBoundsChange();
     },
 
@@ -386,6 +459,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._scale = scale;
         this._worldWidth = this._scale;
         this._worldHeight = this.normHeight * this._scale;
+    },
+
+    // private
+    _updateForScale: function() {
+        this._worldWidthTarget = this._scale.target.value;
+        this._worldHeightTarget = this.normHeight * this._scale.target.value;
+        this._worldWidthCurrent = this._scale.current.value;
+        this._worldHeightCurrent = this.normHeight * this._scale.current.value;
     },
 
     // private
@@ -445,8 +526,8 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportBounds.x -= tiledImage._worldX;
-    viewportBounds.y -= tiledImage._worldY;
+    viewportBounds.x -= tiledImage._xSpring.current.value;
+    viewportBounds.y -= tiledImage._ySpring.current.value;
 
     // Reset tile's internal drawn state
     while ( tiledImage.lastDrawn.length > 0 ) {
@@ -843,8 +924,8 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
 
     boundsTL.x *= tiledImage._scale;
     boundsTL.y *= tiledImage._scale;
-    boundsTL.x += tiledImage._worldX;
-    boundsTL.y += tiledImage._worldY;
+    boundsTL.x += tiledImage._xSpring.current.value;
+    boundsTL.y += tiledImage._ySpring.current.value;
 
     var boundsSize   = tile.bounds.getSize();
 
