@@ -117,6 +117,12 @@
         },
 
         // ----------
+        toggle: function() {
+            var $el = $(this.viewer.element);
+            $el.toggleClass('small');
+        },
+
+        // ----------
         basicTest: function() {
             var self = this;
 
