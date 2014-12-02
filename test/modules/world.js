@@ -144,24 +144,24 @@
     });
 
     // ----------
-    asyncTest('update', function() {
+    asyncTest('draw', function() {
         var handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
-            equal(viewer.world.needsUpdate(), true, 'needs update after open');
+            equal(viewer.world.needsDraw(), true, 'needs draw after open');
 
             viewer.addHandler('update-level', function updateHandler() {
                 viewer.removeHandler('update-level', updateHandler);
                 handlerCount++;
             });
 
-            viewer.world.update();
+            viewer.world.draw();
 
             equal(handlerCount, 1, 'correct number of handlers called');
             start();
         });
 
-        equal(viewer.world.needsUpdate(), false, 'needs no update at first');
+        equal(viewer.world.needsDraw(), false, 'needs no draw at first');
 
         viewer.open('/test/data/testpattern.dzi');
     });

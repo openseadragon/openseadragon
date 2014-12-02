@@ -91,7 +91,7 @@
 
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
-            equal(image.needsUpdate(), true, 'needs update after open');
+            equal(image.needsDraw(), true, 'needs draw after open');
 
             viewer.addHandler('update-level', function updateLevelHandler(event) {
                 viewer.removeHandler('update-level', updateLevelHandler);
@@ -137,7 +137,7 @@
                 start();
             });
 
-            image.update();
+            image.draw();
         });
 
         viewer.open('/test/data/testpattern.dzi');

@@ -1337,7 +1337,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     y: queueItem.options.y,
                     width: queueItem.options.width,
                     height: queueItem.options.height,
-                    imageLoaderLimit: _this.imageLoaderLimit,
+                    springStiffness: _this.springStiffness,
+                    animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
                     wrapHorizontal: _this.wrapHorizontal,
                     wrapVertical: _this.wrapVertical,
@@ -1345,8 +1346,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     blendTime: _this.blendTime,
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
-                    debugMode: _this.debugMode,
-                    debugGridColor: _this.debugGridColor
+                    debugMode: _this.debugMode
                 });
 
                 _this.world.addItem( tiledImage, {
@@ -2659,6 +2659,7 @@ function updateOnce( viewer ) {
     }
 
     animated = viewer.viewport.update();
+    animated = viewer.world.update() || animated;
 
     if( viewer.referenceStrip ){
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
@@ -2678,8 +2679,8 @@ function updateOnce( viewer ) {
         abortControlsAutoHide( viewer );
     }
 
-    if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsUpdate() ) {
-        updateWorld( viewer );
+    if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
+        drawWorld( viewer );
         viewer._drawOverlays();
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
@@ -2750,9 +2751,9 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
     viewport.fitBounds( newBounds, true );
 }
 
-function updateWorld( viewer ) {
+function drawWorld( viewer ) {
     viewer.drawer.clear();
-    viewer.world.update();
+    viewer.world.draw();
 
     /**
      * <em>- Needs documentation -</em>

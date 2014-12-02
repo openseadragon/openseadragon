@@ -6,10 +6,10 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = true;
+            var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = false;
+            var testNavigator = true;
             var margins;
 
             var config = {
@@ -112,8 +112,24 @@
             }
 
             if (!testInitialOpen) {
-                this.collectionTest();
+                this.gridTest();
             }
+        },
+
+        // ----------
+        shrink: function(index) {
+            index = index || 0;
+            var image = this.viewer.world.getItemAt(index);
+            image.setWidth(image.getBounds().width * 0.3);
+        },
+
+        // ----------
+        move: function(index) {
+            index = index || 0;
+            var image = this.viewer.world.getItemAt(index);
+            var point = image.getBounds().getTopLeft();
+            point.x += image.getBounds().width * 0.3;
+            image.setPosition(point);
         },
 
         // ----------
@@ -124,7 +140,8 @@
             });
 
             this.viewer.open({
-                tileSource: "../../data/testpattern.dzi"
+                tileSource: "../../data/testpattern.dzi",
+                width: 1
             });
         },
 

@@ -52,6 +52,8 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {Number} [options.springStiffness] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.animationTime] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapHorizontal] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.wrapVertical] - See {@link OpenSeadragon.Options}.
@@ -113,8 +115,8 @@ $.TiledImage = function( options ) {
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        midUpdate:      false, // Is the tiledImage currently updating the viewport?
-        updateAgain:    true,  // Does the tiledImage need to update the viewport again?
+        _midDraw:      false, // Is the tiledImage currently updating the viewport?
+        _needsDraw:    true,  // Does the tiledImage need to update the viewport again?
 
         //configurable settings
         springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
@@ -176,11 +178,10 @@ $.TiledImage = function( options ) {
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
     /**
-     * @returns {Boolean} Whether the TiledImage is scheduled for an update at the
-     * soonest possible opportunity.
+     * @returns {Boolean} Whether the TiledImage needs to be drawn.
      */
-    needsUpdate: function() {
-        return this.updateAgain;
+    needsDraw: function() {
+        return this._needsDraw;
     },
 
     /**
@@ -190,16 +191,38 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     reset: function() {
         this._tileCache.clearTilesFor(this);
         this.lastResetTime = $.now();
-        this.updateAgain = true;
+        this._needsDraw = true;
     },
 
     /**
-     * Forces the TiledImage to update.
+     * Updates the TiledImage's bounds, animating if needed.
+     * @returns {Boolean} Whether the TiledImage animated.
      */
     update: function() {
-        this.midUpdate = true;
+        var oldX = this._xSpring.current.value;
+        var oldY = this._ySpring.current.value;
+        var oldScale = this._scaleSpring.current.value;
+
+        this._xSpring.update();
+        this._ySpring.update();
+        this._scaleSpring.update();
+
+        if (this._xSpring.current.value !== oldX || this._ySpring.current.value !== oldY ||
+                this._scaleSpring.current.value !== oldScale) {
+            this._needsDraw = true;
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Draws the TiledImage to its Drawer.
+     */
+    draw: function() {
+        this._midDraw = true;
         updateViewport( this );
-        this.midUpdate = false;
+        this._midDraw = false;
     },
 
     /**
@@ -374,9 +397,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setPosition: function(position, immediately) {
+        var sameTarget = (this._xSpring.target.value === position.x &&
+            this._ySpring.target.value === position.y);
+
         if (immediately) {
-            if (this._xSpring.target.value === position.x && this._ySpring.target.value === position.y &&
-                    this._xSpring.current.value === position.x && this._ySpring.current.value === position.y) {
+            if (sameTarget && this._xSpring.current.value === position.x &&
+                    this._ySpring.current.value === position.y) {
                 return;
             }
 
@@ -384,9 +410,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._ySpring.resetTo(position.y);
             this._xSpring.update();
             this._ySpring.update();
-            this.updateAgain = true;
         } else {
-            if (this._xSpring.target.value === position.x && this._ySpring.target.value === position.y) {
+            if (sameTarget) {
                 return;
             }
 
@@ -394,7 +419,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._ySpring.springTo(position.y);
         }
 
-        this._raiseBoundsChange();
+        if (!sameTarget) {
+            this._raiseBoundsChange();
+        }
     },
 
     /**
@@ -404,25 +431,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setWidth: function(width, immediately) {
-        if (immediately) {
-            if (this._worldWidthTarget === width && this._worldWidthCurrent === width) {
-                return;
-            }
-
-            this._scaleSpring.resetTo(width);
-            this._scaleSpring.update();
-            this._updateForScale();
-            this.updateAgain = true;
-        } else {
-            if (this._worldWidthTarget === width) {
-                return;
-            }
-
-            this._scaleSpring.springTo(width);
-            this._updateForScale();
-        }
-
-        this._raiseBoundsChange();
+        this._setScale(width, immediately);
     },
 
     /**
@@ -432,18 +441,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setHeight: function(height, immediately) {
-        var scale = height / this.normHeight;
+        this._setScale(height / this.normHeight, immediately);
+    },
+
+    // private
+    _setScale: function(scale, immediately) {
+        var sameTarget = (this._scaleSpring.target.value === scale);
         if (immediately) {
-            if (this._worldHeightTarget === height && this._worldHeightCurrent === height) {
+            if (sameTarget && this._scaleSpring.current.value === scale) {
                 return;
             }
 
             this._scaleSpring.resetTo(scale);
             this._scaleSpring.update();
             this._updateForScale();
-            this.updateAgain = true;
         } else {
-            if (this._worldHeightTarget === height) {
+            if (sameTarget) {
                 return;
             }
 
@@ -451,28 +464,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._updateForScale();
         }
 
-        this._raiseBoundsChange();
-    },
-
-    // private
-    _setScale: function(scale) {
-        this._scale = scale;
-        this._worldWidth = this._scale;
-        this._worldHeight = this.normHeight * this._scale;
+        if (!sameTarget) {
+            this._raiseBoundsChange();
+        }
     },
 
     // private
     _updateForScale: function() {
-        this._worldWidthTarget = this._scale.target.value;
-        this._worldHeightTarget = this.normHeight * this._scale.target.value;
-        this._worldWidthCurrent = this._scale.current.value;
-        this._worldHeightCurrent = this.normHeight * this._scale.current.value;
+        this._worldWidthTarget = this._scaleSpring.target.value;
+        this._worldHeightTarget = this.normHeight * this._scaleSpring.target.value;
+        this._worldWidthCurrent = this._scaleSpring.current.value;
+        this._worldHeightCurrent = this.normHeight * this._scaleSpring.current.value;
     },
 
     // private
     _raiseBoundsChange: function() {
         /**
          * Raised when the TiledImage's bounds are changed.
+         * Note that this event is triggered only when the animation target is changed;
+         * not for every frame of animation.
          * @event bounds-change
          * @memberOf OpenSeadragon.TiledImage
          * @type {object}
@@ -492,7 +502,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
  */
 function updateViewport( tiledImage ) {
 
-    tiledImage.updateAgain = false;
+    tiledImage._needsDraw = false;
 
     var tile,
         level,
@@ -503,7 +513,7 @@ function updateViewport( tiledImage ) {
         zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( 0 ),
             true
-        ).x * tiledImage._scale,
+        ).x * tiledImage._scaleSpring.current.value,
         lowestLevel     = Math.max(
             tiledImage.source.minLevel,
             Math.floor(
@@ -551,23 +561,23 @@ function updateViewport( tiledImage ) {
     var viewportBR = viewportBounds.getBottomRight();
 
     //Don't draw if completely outside of the viewport
-    if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidth ) ) {
+    if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidthCurrent ) ) {
         return;
     }
 
-    if ( !tiledImage.wrapVertical && ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeight ) ) {
+    if ( !tiledImage.wrapVertical && ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeightCurrent ) ) {
         return;
     }
 
     // Calculate viewport rect / bounds
     if ( !tiledImage.wrapHorizontal ) {
         viewportTL.x = Math.max( viewportTL.x, 0 );
-        viewportBR.x = Math.min( viewportBR.x, tiledImage._worldWidth );
+        viewportBR.x = Math.min( viewportBR.x, tiledImage._worldWidthCurrent );
     }
 
     if ( !tiledImage.wrapVertical ) {
         viewportTL.y = Math.max( viewportTL.y, 0 );
-        viewportBR.y = Math.min( viewportBR.y, tiledImage._worldHeight );
+        viewportBR.y = Math.min( viewportBR.y, tiledImage._worldHeightCurrent );
     }
 
     // Calculations for the interval of levels to draw
@@ -584,7 +594,7 @@ function updateViewport( tiledImage ) {
         renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( level ),
             true
-        ).x * tiledImage._scale;
+        ).x * tiledImage._scaleSpring.current.value;
 
         if ( ( !haveDrawn && renderPixelRatioC >= tiledImage.minPixelRatio ) ||
              ( level == lowestLevel ) ) {
@@ -598,7 +608,7 @@ function updateViewport( tiledImage ) {
         renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( level ),
             false
-        ).x * tiledImage._scale;
+        ).x * tiledImage._scaleSpring.current.value;
 
         zeroRatioT      = tiledImage.viewport.deltaPixelsFromPoints(
             tiledImage.source.getPixelRatio(
@@ -608,7 +618,7 @@ function updateViewport( tiledImage ) {
                 )
             ),
             false
-        ).x * tiledImage._scale;
+        ).x * tiledImage._scaleSpring.current.value;
 
         optimalRatio    = tiledImage.immediateRender ?
             1 :
@@ -648,7 +658,7 @@ function updateViewport( tiledImage ) {
     if ( best ) {
         loadTile( tiledImage, best, currentTime );
         // because we haven't finished drawing, so
-        tiledImage.updateAgain = true;
+        tiledImage._needsDraw = true;
     }
 
 }
@@ -696,8 +706,8 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
     }
 
     //OK, a new drawing so do your calculations
-    tileTL    = tiledImage.source.getTileAtPoint( level, viewportTL.divide( tiledImage._scale ));
-    tileBR    = tiledImage.source.getTileAtPoint( level, viewportBR.divide( tiledImage._scale ));
+    tileTL    = tiledImage.source.getTileAtPoint( level, viewportTL.divide( tiledImage._scaleSpring.current.value ));
+    tileBR    = tiledImage.source.getTileAtPoint( level, viewportBR.divide( tiledImage._scaleSpring.current.value ));
     numberOfTiles  = tiledImage.source.getNumTiles( level );
 
     resetCoverage( tiledImage.coverage, level );
@@ -741,8 +751,8 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
             tiledImage.tilesMatrix,
             currentTime,
             numberOfTiles,
-            tiledImage._worldWidth,
-            tiledImage._worldHeight
+            tiledImage._worldWidthCurrent,
+            tiledImage._worldHeightCurrent
         ),
         drawTile = drawLevel;
 
@@ -805,7 +815,7 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     }
 
     if ( tile.loaded ) {
-        var needsUpdate = blendTile(
+        var needsDraw = blendTile(
             tiledImage,
             tile,
             x, y,
@@ -814,8 +824,8 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
             currentTime
         );
 
-        if ( needsUpdate ) {
-            tiledImage.updateAgain = true;
+        if ( needsDraw ) {
+            tiledImage._needsDraw = true;
         }
     } else if ( tile.loading ) {
         // the tile is already in the download queue
@@ -908,29 +918,29 @@ function onTileLoad( tiledImage, tile, time, image ) {
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
     // cached images happen immediately there
-    if ( !tiledImage.midUpdate ) {
+    if ( !tiledImage._midDraw ) {
         finish();
     } else {
         // Wait until after the update, in case caching unloads any tiles
         window.setTimeout( finish, 1);
     }
 
-    tiledImage.updateAgain = true;
+    tiledImage._needsDraw = true;
 }
 
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
 
-    boundsTL.x *= tiledImage._scale;
-    boundsTL.y *= tiledImage._scale;
+    boundsTL.x *= tiledImage._scaleSpring.current.value;
+    boundsTL.y *= tiledImage._scaleSpring.current.value;
     boundsTL.x += tiledImage._xSpring.current.value;
     boundsTL.y += tiledImage._ySpring.current.value;
 
     var boundsSize   = tile.bounds.getSize();
 
-    boundsSize.x *= tiledImage._scale;
-    boundsSize.y *= tiledImage._scale;
+    boundsSize.x *= tiledImage._scaleSpring.current.value;
+    boundsSize.y *= tiledImage._scaleSpring.current.value;
 
     var positionC    = viewport.pixelFromPoint( boundsTL, true ),
         positionT    = viewport.pixelFromPoint( boundsTL, false ),

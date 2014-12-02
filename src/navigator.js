@@ -290,7 +290,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     );
                 this.viewport.fitBounds( newBounds, true );
                 this.oldContainerSize = containerSize;
-                this.drawer.update();
+                this.drawer.clear();
+                this.world.draw();
             }
         }
     },

@@ -15,10 +15,10 @@ OPENSEADRAGON CHANGELOG
     * DEPRECATION: use World.getItemCount instead of Viewer.getLayersCount
     * DEPRECATION: use World.setItemIndex instead of Viewer.setLayerLevel
     * DEPRECATION: use World.removeItem instead of Viewer.removeLayer
-    * DEPRECATION: use World.needsUpdate instead of Drawer.needsUpdate
+    * DEPRECATION: use World.needsDraw instead of Drawer.needsUpdate
     * DEPRECATION: use TileCache.numTilesLoaded instead of Drawer.numTilesLoaded
     * DEPRECATION: use World.resetItems instead of Drawer.reset
-    * DEPRECATION: use Drawer.clear and World.update instead of Drawer.update
+    * DEPRECATION: use Drawer.clear and World.draw instead of Drawer.update
     * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
     * DEPRECATION: Viewer's add-layer event is now World's add-item event
     * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-change event

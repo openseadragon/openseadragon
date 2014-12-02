@@ -29,7 +29,7 @@
         }
         var ready = viewer.isOpen() &&
             viewer.drawer !== null &&
-            !viewer.drawer.needsUpdate() &&
+            !viewer.world.needsDraw() &&
             Util.equalsWithVariance( viewer.viewport.getBounds( true ).x,
                 viewer.viewport.getBounds().x, 0.000 ) &&
             Util.equalsWithVariance( viewer.viewport.getBounds( true ).y,
@@ -46,7 +46,7 @@
             }, 100 );
         } else {
             console.log( "waitForViewer:" + viewer.isOpen( ) + ":" + viewer.drawer +
-                ":" + viewer.drawer.needsUpdate() );
+                ":" + viewer.world.needsDraw() );
             handler();
         }
     }

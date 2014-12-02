@@ -51,7 +51,7 @@ $.World = function( options ) {
 
     this.viewer = options.viewer;
     this._items = [];
-    this._needsUpdate = false;
+    this._needsDraw = false;
     this._delegatedFigureSizes = function(event) {
         _this._figureSizes();
     };
@@ -80,7 +80,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         }
 
         this._figureSizes();
-        this._needsUpdate = true;
+        this._needsDraw = true;
 
         item.addHandler('bounds-change', this._delegatedFigureSizes);
 
@@ -147,7 +147,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         this._items.splice( oldIndex, 1 );
         this._items.splice( index, 0, item );
-        this._needsUpdate = true;
+        this._needsDraw = true;
 
         /**
          * Raised when the order of the indexes has been changed.
@@ -185,7 +185,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         item.removeHandler('bounds-change', this._delegatedFigureSizes);
         this._items.splice( index, 1 );
         this._figureSizes();
-        this._needsUpdate = true;
+        this._needsDraw = true;
         this._raiseRemoveItem(item);
     },
 
@@ -204,7 +204,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var removedItems = this._items;
         this._items = [];
         this._figureSizes();
-        this._needsUpdate = true;
+        this._needsDraw = true;
 
         for (i = 0; i < removedItems.length; i++) {
             item = removedItems[i];
@@ -222,26 +222,38 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
-     * Updates (i.e. draws) all items.
+     * Updates (i.e. animates bounds of) all items.
      */
     update: function() {
+        var animated = false;
         for ( var i = 0; i < this._items.length; i++ ) {
-            this._items[i].update();
+            animated = this._items[i].update() || animated;
         }
 
-        this._needsUpdate = false;
+        return animated;
+    },
+
+    /**
+     * Draws all items.
+     */
+    draw: function() {
+        for ( var i = 0; i < this._items.length; i++ ) {
+            this._items[i].draw();
+        }
+
+        this._needsDraw = false;
     },
 
     /**
      * @returns {Boolean} true if any items need updating.
      */
-    needsUpdate: function() {
+    needsDraw: function() {
         for ( var i = 0; i < this._items.length; i++ ) {
-            if ( this._items[i].needsUpdate() ) {
+            if ( this._items[i].needsDraw() ) {
                 return true;
             }
         }
-        return this._needsUpdate;
+        return this._needsDraw;
     },
 
     /**
@@ -264,6 +276,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Arranges all of the TiledImages with the specified settings.
      * @param {Object} options - Specifies how to arrange.
+     * @param {Boolean} [options.immediately=false] - Whether to animate to the new arrangement.
      * @param {String} [options.layout] - See collectionLayout in {@link OpenSeadragon.Options}.
      * @param {Number} [options.rows] - See collectionRows in {@link OpenSeadragon.Options}.
      * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
@@ -272,6 +285,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     arrange: function(options) {
         options = options || {};
+        var immediately = options.immediately || false;
         var layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
         var rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
         var tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
@@ -304,8 +318,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             position = new $.Point(x + ((tileSize - width) / 2),
                 y + ((tileSize - height) / 2));
 
-            item.setPosition(position);
-            item.setWidth(width);
+            item.setPosition(position, immediately);
+            item.setWidth(width, immediately);
 
             if (layout === 'horizontal') {
                 x += increment;
