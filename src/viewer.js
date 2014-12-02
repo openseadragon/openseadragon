@@ -666,6 +666,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 delete options.index;
             }
 
+            if (options.collectionImmediately === undefined) {
+                options.collectionImmediately = true;
+            }
+
             var originalSuccess = options.success;
             options.success = function(event) {
                 successes++;
@@ -1237,6 +1241,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *  supports except arrays of images.
      * Note that you can specify options.width or options.height, but not both.
      * The other dimension will be calculated according to the item's aspect ratio.
+     * If collectionMode is on (see {@link OpenSeadragon.Options}), the new image is
+     * automatically arranged with the others.
      * @function
      * @param {Object} options
      * @param {String|Object|Function} options.tileSource - The TileSource specifier.
@@ -1260,6 +1266,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Function} [options.error] A function that gets called if the image is
      * unable to be added. It's passed the error event object, which contains "message"
      * and "source" properties.
+     * @param {Boolean} [options.collectionImmediately=false] If collectionMode is on,
+     * specifies whether to snap to the new arrangement immediately or to animate to it.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1355,6 +1363,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 if (_this.collectionMode) {
                     _this.world.arrange({
+                        immediately: queueItem.options.collectionImmediately,
                         rows: _this.collectionRows,
                         layout: _this.collectionLayout,
                         tileSize: _this.collectionTileSize,

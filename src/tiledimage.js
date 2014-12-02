@@ -209,6 +209,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (this._xSpring.current.value !== oldX || this._ySpring.current.value !== oldY ||
                 this._scaleSpring.current.value !== oldScale) {
+            this._updateForScale();
             this._needsDraw = true;
             return true;
         }

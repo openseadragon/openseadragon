@@ -9,7 +9,7 @@
             var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = true;
+            var testNavigator = false;
             var margins;
 
             var config = {
@@ -21,7 +21,7 @@
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
-                // collectionMode: true,
+                collectionMode: true,
                 // collectionRows: 3,
                 // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
@@ -112,7 +112,7 @@
             }
 
             if (!testInitialOpen) {
-                this.gridTest();
+                this.basicTest();
             }
         },
 
@@ -130,6 +130,19 @@
             var point = image.getBounds().getTopLeft();
             point.x += image.getBounds().width * 0.3;
             image.setPosition(point);
+        },
+
+        // ----------
+        add: function() {
+            var self = this;
+
+            this.viewer.addTiledImage({
+                tileSource: "../../data/testpattern.dzi",
+                width: 1,
+                success: function() {
+                    self.viewer.viewport.goHome();
+                }
+            });
         },
 
         // ----------
