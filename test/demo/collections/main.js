@@ -9,7 +9,7 @@
             var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = false;
+            var testNavigator = true;
             var margins;
 
             var config = {
@@ -114,6 +114,12 @@
             if (!testInitialOpen) {
                 this.collectionTest();
             }
+        },
+
+        // ----------
+        toggle: function() {
+            var $el = $(this.viewer.element);
+            $el.toggleClass('small');
         },
 
         // ----------
