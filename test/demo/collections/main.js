@@ -9,7 +9,7 @@
             var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = false;
+            var testNavigator = true;
             var margins;
 
             var config = {
@@ -143,6 +143,12 @@
                     self.viewer.viewport.goHome();
                 }
             });
+        },
+
+        // ----------
+        toggle: function() {
+            var $el = $(this.viewer.element);
+            $el.toggleClass('small');
         },
 
         // ----------

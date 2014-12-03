@@ -272,23 +272,10 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     (this.container.clientWidth === 0 ? 1 : this.container.clientWidth),
                     (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
                 );
+
             if ( !containerSize.equals( this.oldContainerSize ) ) {
-                var oldBounds = this.viewport.getBounds();
-                var oldCenter = this.viewport.getCenter();
                 this.viewport.resize( containerSize, true );
-                var worldBounds = this.world.getHomeBounds();
-                var aspectRatio = worldBounds.width / worldBounds.height;
-                var imageHeight = 1 / aspectRatio;
-                var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
-                var newHeight = oldBounds.height <= imageHeight ?
-                    oldBounds.height : imageHeight;
-                var newBounds = new $.Rect(
-                    oldCenter.x - ( newWidth / 2.0 ),
-                    oldCenter.y - ( newHeight / 2.0 ),
-                    newWidth,
-                    newHeight
-                    );
-                this.viewport.fitBounds( newBounds, true );
+                this.viewport.goHome(true);
                 this.oldContainerSize = containerSize;
                 this.drawer.clear();
                 this.world.draw();

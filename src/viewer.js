@@ -2745,11 +2745,9 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 
     // We try to remove blanks as much as possible
     var worldBounds = viewer.world.getHomeBounds();
-    var aspectRatio = worldBounds.width / worldBounds.height;
-    var imageHeight = 1 / aspectRatio;
-    var newWidth = oldBounds.width <= 1 ? oldBounds.width : 1;
-    var newHeight = oldBounds.height <= imageHeight ?
-        oldBounds.height : imageHeight;
+    var newWidth = oldBounds.width <= worldBounds.width ? oldBounds.width : worldBounds.width;
+    var newHeight = oldBounds.height <= worldBounds.height ?
+        oldBounds.height : worldBounds.height;
 
     var newBounds = new $.Rect(
         oldCenter.x - ( newWidth / 2.0 ),
