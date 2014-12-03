@@ -168,8 +168,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     // deprecated
     needsUpdate: function() {
-        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsUpdate instead." );
-        return this.viewer.world.needsUpdate();
+        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
+        return this.viewer.world.needsDraw();
     },
 
     // deprecated
@@ -187,9 +187,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     // deprecated
     update: function() {
-        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.update instead." );
+        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
         this.clear();
-        this.viewer.world.update();
+        this.viewer.world.draw();
         return this;
     },
 

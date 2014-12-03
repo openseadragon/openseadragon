@@ -140,7 +140,7 @@
                 currentDisplayRegionLeft = displayRegion.position().left;
                 currentDisplayWidth = displayRegion.width();
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
-                    !viewer.drawer.needsUpdate() &&
+                    !viewer.world.needsDraw() &&
                     currentDisplayWidth > 0 &&
                     Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
                     Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, 0.0001) &&
@@ -160,7 +160,7 @@
             else {
                 if (count === 40) {
                     console.log("waitForViewer:" +
-                        viewer.drawer + ":" + viewer.drawer.needsUpdate() + ":" +
+                        viewer.drawer + ":" + viewer.world.needsDraw() + ":" +
                         viewerAndNavigatorDisplayReady + ":" +
                         lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" +
                         lastDisplayWidth + ":" + currentDisplayWidth + ":" +

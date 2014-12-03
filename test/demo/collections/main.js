@@ -6,7 +6,7 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = true;
+            var testInitialOpen = false;
             var testOverlays = false;
             var testMargins = false;
             var testNavigator = true;
@@ -21,7 +21,7 @@
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
-                // collectionMode: true,
+                collectionMode: true,
                 // collectionRows: 3,
                 // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
@@ -112,8 +112,37 @@
             }
 
             if (!testInitialOpen) {
-                this.collectionTest();
+                this.basicTest();
             }
+        },
+
+        // ----------
+        shrink: function(index) {
+            index = index || 0;
+            var image = this.viewer.world.getItemAt(index);
+            image.setWidth(image.getBounds().width * 0.3);
+        },
+
+        // ----------
+        move: function(index) {
+            index = index || 0;
+            var image = this.viewer.world.getItemAt(index);
+            var point = image.getBounds().getTopLeft();
+            point.x += image.getBounds().width * 0.3;
+            image.setPosition(point);
+        },
+
+        // ----------
+        add: function() {
+            var self = this;
+
+            this.viewer.addTiledImage({
+                tileSource: "../../data/testpattern.dzi",
+                width: 1,
+                success: function() {
+                    self.viewer.viewport.goHome();
+                }
+            });
         },
 
         // ----------
@@ -130,7 +159,8 @@
             });
 
             this.viewer.open({
-                tileSource: "../../data/testpattern.dzi"
+                tileSource: "../../data/testpattern.dzi",
+                width: 1
             });
         },
 

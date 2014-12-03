@@ -86,12 +86,38 @@
     });
 
     // ----------
+    asyncTest('animation', function() {
+        viewer.addHandler("open", function () {
+            var image = viewer.world.getItemAt(0);
+            propEqual(image.getBounds(), new OpenSeadragon.Rect(0, 0, 1, 1), 'target bounds on open');
+            propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds on open');
+
+            image.setPosition(new OpenSeadragon.Point(1, 2));
+            propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 1, 1), 'target bounds after position');
+            propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds after position');
+
+            image.setWidth(3);
+            propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 3, 3), 'target bounds after width');
+            propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds after width');
+
+            viewer.addHandler('animation-finish', function animationHandler() {
+                viewer.removeHandler('animation-finish', animationHandler);
+                propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 3, 3), 'target bounds after animation');
+                propEqual(image.getBounds(true), new OpenSeadragon.Rect(1, 2, 3, 3), 'current bounds after animation');
+                start();
+            });
+        });
+
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    // ----------
     asyncTest('update', function() {
         var handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
-            equal(image.needsUpdate(), true, 'needs update after open');
+            equal(image.needsDraw(), true, 'needs draw after open');
 
             viewer.addHandler('update-level', function updateLevelHandler(event) {
                 viewer.removeHandler('update-level', updateLevelHandler);
@@ -137,7 +163,7 @@
                 start();
             });
 
-            image.update();
+            image.draw();
         });
 
         viewer.open('/test/data/testpattern.dzi');

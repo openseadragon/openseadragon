@@ -74,10 +74,10 @@
         Util.testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
         Util.testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
         Util.testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
-        Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsUpdate');
+        Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
         Util.testDeprecation(viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
         Util.testDeprecation(viewer.drawer, 'reset', viewer.world, 'resetItems');
-        Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'update');
+        Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'draw');
         start();
     });
 
