@@ -9,7 +9,7 @@
             var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = false;
+            var testNavigator = true;
             var margins;
 
             var config = {
