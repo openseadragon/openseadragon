@@ -2265,6 +2265,13 @@ function onBlur(){
 function onCanvasClick( event ) {
     var gestureSettings;
 
+    var haveKeyboardFocus = document.activeElement == this.keyboardCommandArea;
+
+    // If we don't have keyboard focus, request it.
+    if ( !haveKeyboardFocus ) {
+        this.keyboardCommandArea.focus();
+    }
+
     if ( !event.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if ( gestureSettings.clickToZoom ) {
