@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon Collections Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <style type="text/css">
+
+            html,
+            body,
+            .openseadragon1 {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+        </style>
+        <script>
+
+            // ----------
+            App = {
+                itemCount: 20,
+                positionRange: 100,
+                sizeRange: 30,
+                delay: 100,
+
+                // ----------
+                init: function() {
+                    var self = this;
+
+                    this.index = 0;
+
+                    var tileSources = [];
+                    for (var i = 0; i < this.itemCount; i++) {
+                        tileSources.push('../data/testpattern.dzi');
+                    }
+
+                    this.viewer = OpenSeadragon({
+                        showNavigationControl: false,
+                        mouseNavEnabled: false,
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: tileSources
+                    });
+
+                    this.viewer.addHandler('open', function() {
+                        self.animate();
+                    });
+                },
+
+                // ----------
+                animate: function() {
+                    var self = this;
+
+                    var item = this.viewer.world.getItemAt(this.index);
+                    item.setPosition(new OpenSeadragon.Point(Math.random() * this.positionRange,
+                        Math.random() * this.positionRange));
+
+                    item.setWidth(Math.random() * this.sizeRange);
+
+                    this.index = (this.index + 1) % this.viewer.world.getItemCount();
+                    this.viewer.viewport.goHome();
+
+                    setTimeout(function() {
+                        self.animate();
+                    }, this.delay);
+                }
+            };
+
+            // ----------
+            $(document).ready(function() {
+                App.init();
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="contentDiv" class="openseadragon1"></div>
+    </body>
+</html>
