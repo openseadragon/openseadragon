@@ -30,20 +30,36 @@
 
                     this.index = 0;
 
+                    var tileSource = {
+                        Image: {
+                            xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                            Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                            Format: "jpg",
+                            Overlap: "2",
+                            TileSize: "256",
+                            Size: {
+                                Height: "9221",
+                                Width:  "7026"
+                            }
+                        }
+                    };
+
                     var tileSources = [];
                     for (var i = 0; i < this.itemCount; i++) {
-                        tileSources.push('../data/testpattern.dzi');
+                        tileSources.push(tileSource);
                     }
 
                     this.viewer = OpenSeadragon({
-                        showNavigationControl: false,
-                        mouseNavEnabled: false,
                         id: "contentDiv",
                         prefixUrl: "../../build/openseadragon/images/",
                         tileSources: tileSources
                     });
 
                     this.viewer.addHandler('open', function() {
+                        self.viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0,
+                            self.positionRange + self.sizeRange,
+                            self.positionRange + self.sizeRange));
+
                         self.animate();
                     });
                 },
@@ -59,7 +75,6 @@
                     item.setWidth(Math.random() * this.sizeRange);
 
                     this.index = (this.index + 1) % this.viewer.world.getItemCount();
-                    this.viewer.viewport.goHome();
 
                     setTimeout(function() {
                         self.animate();
