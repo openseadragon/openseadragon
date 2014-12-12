@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon Collections Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <style type="text/css">
+
+            html,
+            body,
+            .openseadragon1 {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+        </style>
+        <script>
+
+            // ----------
+            App = {
+                itemCount: 20,
+                positionRange: 100,
+                sizeRange: 30,
+                delay: 100,
+
+                // ----------
+                init: function() {
+                    var self = this;
+
+                    this.index = 0;
+
+                    var tileSource = {
+                        Image: {
+                            xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                            Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                            Format: "jpg",
+                            Overlap: "2",
+                            TileSize: "256",
+                            Size: {
+                                Height: "9221",
+                                Width:  "7026"
+                            }
+                        }
+                    };
+
+                    var tileSources = [];
+                    for (var i = 0; i < this.itemCount; i++) {
+                        tileSources.push(tileSource);
+                    }
+
+                    this.viewer = OpenSeadragon({
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: tileSources
+                    });
+
+                    this.viewer.addHandler('open', function() {
+                        self.viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0,
+                            self.positionRange + self.sizeRange,
+                            self.positionRange + self.sizeRange));
+
+                        self.animate();
+                    });
+                },
+
+                // ----------
+                animate: function() {
+                    var self = this;
+
+                    var item = this.viewer.world.getItemAt(this.index);
+                    item.setPosition(new OpenSeadragon.Point(Math.random() * this.positionRange,
+                        Math.random() * this.positionRange));
+
+                    item.setWidth(Math.random() * this.sizeRange);
+
+                    this.index = (this.index + 1) % this.viewer.world.getItemCount();
+
+                    setTimeout(function() {
+                        self.animate();
+                    }, this.delay);
+                }
+            };
+
+            // ----------
+            $(document).ready(function() {
+                App.init();
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="contentDiv" class="openseadragon1"></div>
+    </body>
+</html>
