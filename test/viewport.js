@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual */
 
 (function () {
     var viewer;
@@ -31,8 +31,8 @@
 
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
     var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
-    var DZI_PATH = '/test/data/testpattern.dzi'
-    var TALL_PATH = '/test/data/tall.dzi'
+    var DZI_PATH = '/test/data/testpattern.dzi';
+    var TALL_PATH = '/test/data/tall.dzi';
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
 
@@ -72,7 +72,7 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size")
+            propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size");
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -85,7 +85,7 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            equal(viewport.getAspectRatio(), 1, "Test aspect ratio")
+            equal(viewport.getAspectRatio(), 1, "Test aspect ratio");
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -97,7 +97,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            equal(viewport.getMinZoom(), .9, "Test default min zoom level")
+            equal(viewport.getMinZoom(), .9, "Test default min zoom level");
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -109,7 +109,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            equal(viewport.getMaxZoom(), 2.2, "Test default max zoom level")
+            equal(viewport.getMaxZoom(), 2.2, "Test default max zoom level");
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -122,7 +122,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            if(level == 0) { // 0 means use the default
+            if(level === 0) { // 0 means use the default
                 expected = 0.9;
             } else if(level > 1){
                 expected = 1; // min zoom won't go bigger than 1.
@@ -160,7 +160,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            if(level == 0){ // 0 means use the default
+            if(level === 0){ // 0 means use the default
                 expected = 2.2;
             } else if(level < 1){
                 expected = 1; // max zoom won't go smaller than 1.
@@ -200,7 +200,7 @@
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // Have to special case this to avoid dividing by 0
-            if(testZoomLevels[i] == 0){
+            if(testZoomLevels[i] === 0){
                 expected = new OpenSeadragon.Rect(0, 0, 1, 1);
             } else {
                 var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
@@ -239,7 +239,7 @@
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // If the default zoom level is set to 0, then we expect the home zoom to be 1.
-            if(expected == 0){
+            if(expected === 0){
                 expected = 1;
             }
             equal(
@@ -276,7 +276,7 @@
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
             // If the default zoom level is set to 0, then we expect the home zoom to be 1.
-            if(level == 0){
+            if(level === 0){
                 expected = 1;
             }
 
@@ -321,6 +321,7 @@
                 actual = viewport.deltaPixelsFromPoints(orig);
                 propEqual(actual, expected, "Correctly got delta pixels from points with current = false " + orig);
 
+                var expected_current, actual_current;
                 expected_current = orig.times(viewport.getContainerSize().x);
                 actual_current = viewport.deltaPixelsFromPoints(orig, true);
                 propEqual(actual_current, expected_current, "Correctly got delta pixels from points with current = true " + orig);
@@ -346,6 +347,7 @@
                 actual = viewport.deltaPointsFromPixels(orig);
                 propEqual(actual, expected, "Correctly got delta points from pixels with current = false " + orig);
 
+                var expected_current, actual_current;
                 expected_current = orig.divide(viewport.getContainerSize().x);
                 actual_current = viewport.deltaPointsFromPixels(orig, true);
                 propEqual(actual_current, expected_current, "Correctly got delta points from pixels with current = true " + orig);
@@ -373,6 +375,8 @@
                     expected,
                     "Correctly converted coordinates with current = false " + orig
                 );
+
+                var expected_current, actual_current;
                 expected_current = orig.times(viewport.getContainerSize().x);
                 actual_current = viewport.pixelFromPoint(orig, true);
                 propEqual(
@@ -405,6 +409,8 @@
                     expected,
                     "Correctly converted coordinates with current = false " + orig
                 );
+
+                var expected_current, actual_current;
                 expected_current = orig.divide(viewer.source.dimensions.x / ZOOM_FACTOR);
                 actual_current = viewport.pointFromPixel(orig, true);
                 propEqual(
@@ -575,7 +581,7 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            var orig, expected, actual;
+            var position, orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
                 position = viewer.element.getBoundingClientRect();
