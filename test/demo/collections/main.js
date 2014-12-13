@@ -98,8 +98,11 @@
             this.viewer = OpenSeadragon(config);
 
             if (testInitialOpen) {
-                this.viewer.addHandler( "open", function() {
-                });
+                function openHandler() {
+                    self.viewer.removeHandler('open', openHandler);
+                }
+
+                this.viewer.addHandler( "open", openHandler);
             }
 
             if (testMargins) {
