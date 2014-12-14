@@ -30,7 +30,7 @@
     // helpers and constants
 
     var ZOOM_FACTOR = 2; // the image will be twice as large as the viewer.
-    var VIEWER_PADDING = new OpenSeadragon.Point(20, 20);
+    var VIEWER_PADDING = new OpenSeadragon.Point(0.25, 0.25);
     var DZI_PATH = '/test/data/testpattern.dzi';
     var TALL_PATH = '/test/data/tall.dzi';
 
@@ -71,6 +71,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size");
             start();
@@ -84,6 +85,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             equal(viewport.getAspectRatio(), 1, "Test aspect ratio");
             start();
@@ -97,7 +99,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            equal(viewport.getMinZoom(), .9, "Test default min zoom level");
+            equal(viewport.getMinZoom(), 0.9, "Test default min zoom level");
             start();
         };
         viewer.addHandler('open', openHandler);
@@ -198,6 +200,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             // Have to special case this to avoid dividing by 0
             if(testZoomLevels[i] === 0){
@@ -237,6 +240,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             // If the default zoom level is set to 0, then we expect the home zoom to be 1.
             if(expected === 0){
@@ -274,6 +278,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             // If the default zoom level is set to 0, then we expect the home zoom to be 1.
             if(level === 0){
@@ -313,18 +318,14 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
                 expected = orig.times(viewport.getContainerSize().x * ZOOM_FACTOR);
                 actual = viewport.deltaPixelsFromPoints(orig);
-                propEqual(actual, expected, "Correctly got delta pixels from points with current = false " + orig);
-
-                var expected_current, actual_current;
-                expected_current = orig.times(viewport.getContainerSize().x);
-                actual_current = viewport.deltaPixelsFromPoints(orig, true);
-                propEqual(actual_current, expected_current, "Correctly got delta pixels from points with current = true " + orig);
+                propEqual(actual, expected, "Correctly got delta pixels from points" + orig);
             }
 
             start();
@@ -338,6 +339,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
@@ -345,12 +347,7 @@
 
                 expected = orig.divide(viewport.getContainerSize().x * ZOOM_FACTOR);
                 actual = viewport.deltaPointsFromPixels(orig);
-                propEqual(actual, expected, "Correctly got delta points from pixels with current = false " + orig);
-
-                var expected_current, actual_current;
-                expected_current = orig.divide(viewport.getContainerSize().x);
-                actual_current = viewport.deltaPointsFromPixels(orig, true);
-                propEqual(actual_current, expected_current, "Correctly got delta points from pixels with current = true " + orig);
+                propEqual(actual, expected, "Correctly got delta points from pixels " + orig);
             }
 
             start();
@@ -363,26 +360,17 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
-                // todo: this magic point is something to do with the target location but I don't entirely understand why it's here
-                expected = orig.plus(new OpenSeadragon.Point(0.25, 0.25)).times(viewport.getContainerSize().x * ZOOM_FACTOR).minus(viewport.getContainerSize());
+                expected = orig.plus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).minus(viewport.getContainerSize());
                 actual = viewport.pixelFromPoint(orig, false);
                 propEqual(
                     actual,
                     expected,
-                    "Correctly converted coordinates with current = false " + orig
-                );
-
-                var expected_current, actual_current;
-                expected_current = orig.times(viewport.getContainerSize().x);
-                actual_current = viewport.pixelFromPoint(orig, true);
-                propEqual(
-                    actual_current,
-                    expected_current,
-                    "Correctly converted coordinates with current = true " + orig
+                    "Correctly converted coordinates " + orig
                 );
             }
 
@@ -397,26 +385,17 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewport.getContainerSize().x);
-                // todo: this magic point is something to do with the target location but I don't entirely understand why it's here
-                expected = orig.divide(viewer.source.dimensions.x).plus(new OpenSeadragon.Point(0.25, 0.25));
+                expected = orig.divide(viewer.source.dimensions.x).plus(VIEWER_PADDING);
                 actual = viewport.pointFromPixel(orig, false);
                 propEqual(
                     actual,
                     expected,
-                    "Correctly converted coordinates with current = false " + orig
-                );
-
-                var expected_current, actual_current;
-                expected_current = orig.divide(viewer.source.dimensions.x / ZOOM_FACTOR);
-                actual_current = viewport.pointFromPixel(orig, true);
-                propEqual(
-                    actual_current,
-                    expected_current,
-                    "Correctly converted coordinates with current = true " + orig
+                    "Correctly converted coordinates " + orig
                 );
             }
 
@@ -430,6 +409,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
@@ -450,6 +430,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
@@ -469,6 +450,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
@@ -494,6 +476,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testRects.length; i++){
@@ -519,11 +502,12 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewport.getContainerSize().x);
-                expected = orig.times(ZOOM_FACTOR);
+                expected = orig.plus(viewport.getContainerSize().divide(2));
                 actual = viewport.viewerElementToImageCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -539,11 +523,12 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.divide(ZOOM_FACTOR);
+                expected = orig.minus(viewport.getContainerSize().divide(2));
                 actual = viewport.imageToViewerElementCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -559,12 +544,15 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var window_boundary = Math.min(window.innerWidth, window.innerHeight);
-            var orig, expected, actual;
+            var orig, expected, actual, position, pos_point;
+            position = viewer.element.getBoundingClientRect();
+            pos_point = new OpenSeadragon.Point(position.top, position.left);
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(window_boundary);
-                expected = orig.divide(viewport.getContainerSize().x).plus(VIEWER_PADDING);
+                expected = orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
                 actual = viewport.windowToViewportCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -580,12 +568,14 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
-            var position, orig, expected, actual;
+            var position, orig, expected, actual, pos_point;
+            position = viewer.element.getBoundingClientRect();
+            pos_point = new OpenSeadragon.Point(position.top, position.left);
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
-                position = viewer.element.getBoundingClientRect();
-                expected = orig.divide(ZOOM_FACTOR).plus( new OpenSeadragon.Point(position.top, position.left) );
+                expected = orig.plus(pos_point).minus(VIEWER_PADDING.times(viewport.getContainerSize().x * ZOOM_FACTOR));
                 actual = viewport.imageToWindowCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -601,12 +591,15 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var window_boundary = Math.min(window.innerWidth, window.innerHeight);
-            var orig, expected, actual;
+            var orig, expected, actual, position;
+            position = viewer.element.getBoundingClientRect();
+            pos_point = new OpenSeadragon.Point(position.top, position.left);
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(window_boundary);
-                expected = orig.divide(viewport.getContainerSize().x).plus(VIEWER_PADDING);
+                expected = orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
                 actual = viewport.windowToViewportCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -622,11 +615,14 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
-            var orig, expected, actual;
+            var orig, expected, actual, position;
+            position = viewer.element.getBoundingClientRect();
+            pos_point = new OpenSeadragon.Point(position.top, position.left);
             for (var i = 0; i < testPoints.length; i++){
                 orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x);
+                expected = orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).plus(pos_point);
                 actual = viewport.viewportToWindowCoordinates(orig);
                 propEqual(actual, expected, "Coordinates converted correctly for " + orig);
             }
@@ -642,6 +638,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
@@ -662,7 +659,7 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-
+            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < testPoints.length; i++){
