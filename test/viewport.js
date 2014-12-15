@@ -90,6 +90,33 @@
         viewer.open(DZI_PATH);
     };
 
+    // Test helper - a lot of these tests loop through a test data
+    // array and test different values. This helper does not reopen the viewer.
+    var loopingTestHelper = function(config) {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update(); // need to call this even with immediately=true
+
+            var orig, expected, actual;
+            for (var i = 0; i < config.testArray.length; i++){
+                orig = config.getOrig(config.testArray[i], viewport);
+                expected = config.getExpected(orig, viewport);
+                actual = viewport[config.method](orig);
+                propEqual(
+                    actual,
+                    expected,
+                    "Correctly converted coordinates " + orig
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    };
+
 // Tests start here.
     asyncTest('getContainerSize', function() {
         var openHandler = function(event) {
@@ -207,7 +234,7 @@
     });
 
     // I don't use the helper for this one because it sets a couple more
-    // properties that would need a lot of special casing.
+    // properties that would need special casing.
     asyncTest('getHomeZoomWithHomeFillsViewer', function() {
         var expected, level, i = 0;
         var openHandler = function(event) {
@@ -250,365 +277,234 @@
     });
 
     asyncTest('deltaPixelsFromPoints', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.times(viewport.getContainerSize().x * ZOOM_FACTOR);
-                actual = viewport.deltaPixelsFromPoints(orig);
-                propEqual(actual, expected, "Correctly got delta pixels from points" + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+         loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport){
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport){
+                return orig.times(viewport.getContainerSize().x * ZOOM_FACTOR);
+            },
+            method: 'deltaPixelsFromPoints'
+        });
     });
 
     asyncTest('deltaPointsFromPixels', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewport.getContainerSize().x);
-
-                expected = orig.divide(viewport.getContainerSize().x * ZOOM_FACTOR);
-                actual = viewport.deltaPointsFromPixels(orig);
-                propEqual(actual, expected, "Correctly got delta points from pixels " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewport.getContainerSize().x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.divide(viewport.getContainerSize().x * ZOOM_FACTOR);
+            },
+            method: 'deltaPointsFromPixels'
+        });
     });
+
     asyncTest('pixelFromPoint', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.plus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).minus(viewport.getContainerSize());
-                actual = viewport.pixelFromPoint(orig, false);
-                propEqual(
-                    actual,
-                    expected,
-                    "Correctly converted coordinates " + orig
-                );
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.plus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).minus(viewport.getContainerSize());
+            },
+            method: 'pixelFromPoint'
+        });
     });
 
     asyncTest('pointFromPixel', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewport.getContainerSize().x);
-                expected = orig.divide(viewer.source.dimensions.x).plus(VIEWER_PADDING);
-                actual = viewport.pointFromPixel(orig, false);
-                propEqual(
-                    actual,
-                    expected,
-                    "Correctly converted coordinates " + orig
-                );
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewport.getContainerSize().x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.divide(viewer.source.dimensions.x).plus(VIEWER_PADDING);
+            },
+            method: 'pointFromPixel'
+        });
     });
+
     asyncTest('viewportToImageCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewport.getContainerSize().x);
-                expected = orig.divide(viewer.source.dimensions.x);
-                actual = viewport.imageToViewportCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewport.getContainerSize().x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.divide(viewer.source.dimensions.x);
+            },
+            method: 'imageToViewportCoordinates'
+        });
     });
 
     asyncTest('imageToViewportCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.divide(ZOOM_FACTOR * viewport.getContainerSize().x);
-                actual = viewport.imageToViewportCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.divide(ZOOM_FACTOR * viewport.getContainerSize().x);
+            },
+            method: 'imageToViewportCoordinates'
+        });
     });
     asyncTest('imageToViewportRectangle', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(viewer.source.dimensions.x);
-                expected = new OpenSeadragon.Rect(
+        loopingTestHelper({
+            testArray: testRects,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                return new OpenSeadragon.Rect(
                     orig.x / viewer.source.dimensions.x,
                     orig.y / viewer.source.dimensions.x,
                     orig.width / viewer.source.dimensions.x,
                     orig.height / viewer.source.dimensions.x
                 );
-                actual = viewport.imageToViewportRectangle(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+            },
+            method: 'imageToViewportRectangle'
+        });
     });
 
     asyncTest('viewportToImageRectangle', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testRects.length; i++){
-                orig = testRects[i].times(viewport.getContainerSize().x);
-                expected = new OpenSeadragon.Rect(
+        loopingTestHelper({
+            testArray: testRects,
+            getOrig: function(el, viewport) {
+                return el.times(viewport.getContainerSize().x);
+            },
+            getExpected: function(orig, viewport) {
+                return new OpenSeadragon.Rect(
                     orig.x * viewer.source.dimensions.x,
                     orig.y * viewer.source.dimensions.x,
                     orig.width * viewer.source.dimensions.x,
                     orig.height * viewer.source.dimensions.x
                 );
-                actual = viewport.viewportToImageRectangle(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+            },
+            method: 'viewportToImageRectangle'
+        });
     });
 
     asyncTest('viewerElementToImageCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewport.getContainerSize().x);
-                expected = orig.plus(viewport.getContainerSize().divide(2));
-                actual = viewport.viewerElementToImageCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewport.getContainerSize().x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.plus(viewport.getContainerSize().divide(2));
+            },
+            method: 'viewerElementToImageCoordinates'
+        });
     });
 
     asyncTest('imageToViewerElementCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.minus(viewport.getContainerSize().divide(2));
-                actual = viewport.imageToViewerElementCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                return orig.minus(viewport.getContainerSize().divide(2));
+            },
+            method: 'imageToViewerElementCoordinates'
+        });
     });
 
    asyncTest('windowToImageCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var window_boundary = Math.min(window.innerWidth, window.innerHeight);
-            var orig, expected, actual, position, pos_point;
-            position = viewer.element.getBoundingClientRect();
-            pos_point = new OpenSeadragon.Point(position.top, position.left);
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(window_boundary);
-                expected = orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
-                actual = viewport.windowToViewportCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                var window_boundary = Math.min(window.innerWidth, window.innerHeight);
+                return el.times(window_boundary);
+            },
+            getExpected: function(orig, viewport) {
+                var position, pos_point;
+                position = viewer.element.getBoundingClientRect();
+                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                return orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
+            },
+            method: 'windowToViewportCoordinates'
+        });
     });
 
     asyncTest('imageToWindowCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var position, orig, expected, actual, pos_point;
-            position = viewer.element.getBoundingClientRect();
-            pos_point = new OpenSeadragon.Point(position.top, position.left);
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.plus(pos_point).minus(VIEWER_PADDING.times(viewport.getContainerSize().x * ZOOM_FACTOR));
-                actual = viewport.imageToWindowCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                var position, pos_point;
+                position = viewer.element.getBoundingClientRect();
+                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                return orig.plus(pos_point).minus(VIEWER_PADDING.times(viewport.getContainerSize().x * ZOOM_FACTOR));
+            },
+            method: 'imageToWindowCoordinates'
+        });
     });
 
     asyncTest('windowToViewportCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var window_boundary = Math.min(window.innerWidth, window.innerHeight);
-            var orig, expected, actual, position;
-            position = viewer.element.getBoundingClientRect();
-            pos_point = new OpenSeadragon.Point(position.top, position.left);
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(window_boundary);
-                expected = orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
-                actual = viewport.windowToViewportCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                var window_boundary = Math.min(window.innerWidth, window.innerHeight);
+                return el.times(window_boundary);
+            },
+            getExpected: function(orig, viewport) {
+                var position, pos_point;
+                position = viewer.element.getBoundingClientRect();
+                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                return orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
+            },
+            method: 'windowToViewportCoordinates'
+        });
     });
 
     asyncTest('viewportToWindowCoordinates', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual, position;
-            position = viewer.element.getBoundingClientRect();
-            pos_point = new OpenSeadragon.Point(position.top, position.left);
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testPoints[i].times(viewer.source.dimensions.x);
-                expected = orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).plus(pos_point);
-                actual = viewport.viewportToWindowCoordinates(orig);
-                propEqual(actual, expected, "Coordinates converted correctly for " + orig);
-            }
-
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el.times(viewer.source.dimensions.x);
+            },
+            getExpected: function(orig, viewport) {
+                var position, pos_point;
+                position = viewer.element.getBoundingClientRect();
+                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                return orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).plus(pos_point);
+            },
+            method: 'viewportToWindowCoordinates'
+        });
     });
 
     asyncTest('viewportToImageZoom', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testZoomLevels[i];
-                expected = orig / ZOOM_FACTOR;
-                actual = viewport.viewportToImageZoom(orig);
-                equal(expected, actual, "Coordinates converted correctly for " + orig);
-            }
-            start();
-        };
-
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el;
+            },
+            getExpected: function(orig, viewport) {
+                return orig / ZOOM_FACTOR;
+            },
+            method: 'viewportToImageZoom'
+        });
     });
 
     asyncTest('imageToViewportZoom', function() {
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
-
-            var orig, expected, actual;
-            for (var i = 0; i < testPoints.length; i++){
-                orig = testZoomLevels[i];
-                expected = orig * ZOOM_FACTOR;
-                actual = viewport.imageToViewportZoom(orig);
-                equal(expected, actual, "Coordinates converted correctly for " + orig);
-            }
-            start();
-        };
-
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
+        loopingTestHelper({
+            testArray: testPoints,
+            getOrig: function(el, viewport) {
+                return el;
+            },
+            getExpected: function(orig, viewport) {
+                return orig * ZOOM_FACTOR;
+            },
+            method: 'imageToViewportZoom'
+        });
     });
 
 })();
