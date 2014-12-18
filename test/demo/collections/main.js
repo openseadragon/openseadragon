@@ -6,7 +6,7 @@
         init: function() {
             var self = this;
 
-            var testInitialOpen = false;
+            var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
             var testNavigator = true;
@@ -21,7 +21,7 @@
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
-                collectionMode: true,
+                // collectionMode: true,
                 // collectionRows: 3,
                 // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
