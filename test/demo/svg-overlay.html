@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon SVG Overlay Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <style type="text/css">
+
+            html,
+            body,
+            .openseadragon1 {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+            .svg-overlay {
+                left: 0;
+                position: absolute;
+                pointer-events: none;
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+        </style>
+        <script>
+
+            // ----------
+            App = {
+                itemCount: 20,
+                positionRange: 100,
+                sizeRange: 30,
+                delay: 100,
+
+                // ----------
+                init: function() {
+                    var self = this;
+
+                    var tileSource = {
+                        Image: {
+                            xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                            Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                            Format: "jpg",
+                            Overlap: "2",
+                            TileSize: "256",
+                            Size: {
+                                Height: "9221",
+                                Width:  "7026"
+                            }
+                        }
+                    };
+
+                    this.viewer = OpenSeadragon({
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: [{
+                            tileSource: tileSource,
+                            width: 2,
+                            y: 0.5,
+                            x: 0.5
+                        }],
+                        minZoomImageRatio: 0
+                    });
+
+                    this.viewer.addHandler("animation", function() {
+                        self.update();
+                    });
+
+                    this.viewer.addHandler('open', function() {
+                        var svg = d3.select(self.viewer.canvas).append("svg")
+                            .attr('class', 'svg-overlay')
+                            .attr("width", $(window).width())
+                            .attr("height", $(window).height());
+
+                        self.node = svg.append("g");
+
+                        self.node.append("rect")
+                            .style('fill', '#f00')
+                            .attr("x", 0.5)
+                            .attr("width", 0.25)
+                            .attr("y", 0.5)
+                            .attr("height", 0.25);
+
+                        self.update();
+                    });
+                },
+
+                // ----------
+                update: function() {
+                    var p = this.viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0, 0), true);
+                    var zoom = this.viewer.viewport.getZoom(true);
+                    var scale = $(window).width() * zoom;
+                    this.node.attr('transform', 'translate(' + p.x + ',' + p.y + ') scale(' + scale + ')');
+                }
+            };
+
+            // ----------
+            $(document).ready(function() {
+                App.init();
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="contentDiv" class="openseadragon1"></div>
+    </body>
+</html>
