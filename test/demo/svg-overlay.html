@@ -18,7 +18,6 @@
             .svg-overlay {
                 left: 0;
                 position: absolute;
-                pointer-events: none;
                 top: 0;
                 width: 100%;
                 height: 100%;
@@ -69,19 +68,29 @@
                     });
 
                     this.viewer.addHandler('open', function() {
-                        var svg = d3.select(self.viewer.canvas).append("svg")
+                        // var svg = document.createElement('svg');
+                        // self.viewer.container.insertBefore(svg, self.viewer.canvas.nextSibling);
+
+                        var svgD3 = d3.select(self.viewer.container).insert('svg', function() {
+                                return self.viewer.canvas.nextSibling;
+                            })
                             .attr('class', 'svg-overlay')
                             .attr("width", $(window).width())
-                            .attr("height", $(window).height());
+                            .attr("height", $(window).height())
+                            .attr("pointer-events", "none");
 
-                        self.node = svg.append("g");
+                        self.node = svgD3.append("g");
 
                         self.node.append("rect")
                             .style('fill', '#f00')
                             .attr("x", 0.5)
                             .attr("width", 0.25)
                             .attr("y", 0.5)
-                            .attr("height", 0.25);
+                            .attr("height", 0.25)
+                            .attr("pointer-events", "fill")
+                            .on("click", function() {
+                                console.log('click', arguments);
+                            });
 
                         self.update();
                     });
