@@ -133,7 +133,7 @@ $.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
             this.jobsInProgress++;
         }
         else {
-           this.jobQueue.push( newJob );
+            this.jobQueue.push( newJob );
         }
     },
 
@@ -162,6 +162,7 @@ function completeJob( loader, job, callback ) {
     if ( (!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.jobQueue.length > 0) {
         nextJob = loader.jobQueue.shift();
         nextJob.start();
+        loader.jobsInProgress++;
     }
 
     callback( job.image );
