@@ -496,7 +496,7 @@ $.Viewer = function( options ) {
     }
 
     // Open initial tilesources
-    if ( this.tileSources && this.tileSources.length) {
+    if (this.tileSources) {
         this.open( this.tileSources );
     }
 
