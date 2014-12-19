@@ -9,20 +9,21 @@
             var testInitialOpen = true;
             var testOverlays = false;
             var testMargins = false;
-            var testNavigator = true;
+            var testNavigator = false;
             var margins;
 
             var config = {
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
+                useCanvas: true,
                 // sequenceMode: true,
                 // showReferenceStrip: true,
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
-                // collectionMode: true,
-                // collectionRows: 3,
+                collectionMode: true,
+                collectionRows: 1,
                 // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
                 // collectionTileMargin: 10,
@@ -97,8 +98,11 @@
             this.viewer = OpenSeadragon(config);
 
             if (testInitialOpen) {
-                this.viewer.addHandler( "open", function() {
-                });
+                function openHandler() {
+                    self.viewer.removeHandler('open', openHandler);
+                }
+
+                this.viewer.addHandler( "open", openHandler);
             }
 
             if (testMargins) {

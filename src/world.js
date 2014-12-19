@@ -177,7 +177,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     removeItem: function( item ) {
         $.console.assert(item, "[World.removeItem] item is required");
 
-        var index = this._items.indexOf( item );
+        var index = $.indexOf(this._items, item );
         if ( index === -1 ) {
             return;
         }
