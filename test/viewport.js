@@ -243,8 +243,10 @@
             viewport.zoomTo(ZOOM_FACTOR, null, true);
             viewport.update(); // need to call this even with immediately=true
 
-            // If the default zoom level is set to 0, then we expect the home zoom to be 1.
-            if(level === 0){
+            // Special cases for oddball levels
+            if (level === -1) {
+                expected = 0.25;
+            } else if(level === 0){
                 expected = 1;
             }
 
