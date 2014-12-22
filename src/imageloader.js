@@ -95,7 +95,7 @@ ImageJob.prototype = {
  * @classdesc Handles downloading of a set of images using asynchronous queue pattern.
  * You generally won't have to interact with the ImageLoader directly.
  * @param {Object} options - Options for this ImageLoader.
- * @param {Number} options.jobLimit - The number of concurrent image requests.
+ * @param {Number} [options.jobLimit] - The number of concurrent image requests. See imageLoaderLimit in {@link OpenSeadragon.Options} for details.
  */
 $.ImageLoader = function( options ) {
 
