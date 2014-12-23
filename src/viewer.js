@@ -300,6 +300,8 @@ $.Viewer = function( options ) {
         style.left     = "0px";
         style.resize   = "none";
     }(  this.keyboardCommandArea.style ));
+    // Set read-only - hides keyboard on mobile devices, still allows input.
+    this.keyboardCommandArea.readOnly = true;
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
