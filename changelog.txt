@@ -20,6 +20,7 @@ OPENSEADRAGON CHANGELOG
 * Added option for home button to fill viewer (#474)
 * Better handling of mid-update image loaded callbacks (#409)
 * Tracked pointers are now cleaned up when Viewer.setMouseNavEnabled(false) is called (#518)
+* Added explicit pointer capture for touch event model touchstart events (#552)
 
 1.1.1:
 
