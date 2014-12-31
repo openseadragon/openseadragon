@@ -46,7 +46,7 @@ module.exports = function(grunt) {
             "src/referencestrip.js",
             "src/displayrectangle.js",
             "src/spring.js",
-            "src/imageLoader.js",
+            "src/imageloader.js",
             "src/tile.js",
             "src/overlay.js",
             "src/drawer.js",

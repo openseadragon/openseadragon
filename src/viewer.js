@@ -436,7 +436,9 @@ $.Viewer = function( options ) {
     this.viewport.setHomeBounds(this.world.getHomeBounds(), this.world.getContentFactor());
 
     // Create the image loader
-    this.imageLoader = new $.ImageLoader();
+    this.imageLoader = new $.ImageLoader({
+        jobLimit: this.imageLoaderLimit
+    });
 
     // Create the tile cache
     this.tileCache = new $.TileCache({
