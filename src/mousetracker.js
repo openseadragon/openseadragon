@@ -193,8 +193,6 @@
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
 
-            mouseoutdocument:      function ( event ) { onMouseOutDocument( _this, event ); },
-
             touchenter:            function ( event ) { onTouchEnter( _this, event ); },
             touchleave:            function ( event ) { onTouchLeave( _this, event ); },
             touchstart:            function ( event ) { onTouchStart( _this, event ); },
@@ -209,9 +207,6 @@
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
-
-            pointeroutdocument:    function ( event ) { onPointerOutDocument( _this, event ); },
-            MSPointerOutdocument:  function ( event ) { onPointerOutDocument( _this, event ); },
 
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
@@ -797,6 +792,8 @@
 // Pointer event model and feature detection
 ///////////////////////////////////////////////////////////////////////////////
 
+    $.MouseTracker.captureElement = document;
+
     /**
      * Detect available mouse wheel event name.
      */
@@ -1036,6 +1033,50 @@
 ///////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Removes all tracked pointers.
+     * @private
+     * @inner
+     */
+    function clearTrackedPointers( tracker ) {
+        var delegate = THIS[ tracker.hash ],
+            i,
+            pointerListCount = delegate.activePointersLists.length;
+
+        if ( delegate.pointerCaptureCount > 0 ) {
+            $.removeEvent(
+                $.MouseTracker.captureElement,
+                'mousemove',
+                delegate.mousemovecaptured,
+                true
+            );
+            $.removeEvent(
+                $.MouseTracker.captureElement,
+                'mouseup',
+                delegate.mouseupcaptured,
+                true
+            );
+            $.removeEvent(
+                $.MouseTracker.captureElement,
+                $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
+                delegate.pointermovecaptured,
+                true
+            );
+            $.removeEvent(
+                $.MouseTracker.captureElement,
+                $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
+                delegate.pointerupcaptured,
+                true
+            );
+
+            delegate.pointerCaptureCount = 0;
+        }
+
+        for ( i = 0; i < pointerListCount; i++ ) {
+            delegate.activePointersLists.pop();
+        }
+    }
+
+    /**
      * Starts tracking pointer events on the tracked element.
      * @private
      * @inner
@@ -1056,14 +1097,7 @@
                 );
             }
             
-            // handle pointer/mouse out of document body
-            if ( window.PointerEvent ) {
-              $.addEvent(document.body, "pointerout",  delegate.pointeroutdocument);
-            } else if ( window.MSPointerEvent ) {
-              $.addEvent(document.body, "pointerout",  delegate.MSPointerOutdocument);
-            } else {
-              $.addEvent(document.body, "mouseout",  delegate.mouseoutdocument);
-            }
+            clearTrackedPointers( tracker );
 
             delegate.tracking = true;
         }
@@ -1090,14 +1124,7 @@
                 );
             }
 
-            // handle pointer/mouse out of document body
-            if ( window.PointerEvent ) {
-              $.removeEvent(document.body, "pointerout",  delegate.pointeroutdocument);
-            } else if ( window.MSPointerEvent ) {
-              $.removeEvent(document.body, "MSPointerOut",  delegate.MSPointerOutdocument);
-            } else {
-              $.removeEvent(document.body, "mouseout",  delegate.mouseoutdocument);
-            }
+            clearTrackedPointers( tracker );
 
             delegate.tracking = false;
         }
@@ -1112,19 +1139,18 @@
         var delegate = THIS[ tracker.hash ];
 
         delegate.pointerCaptureCount++;
-        //$.console.log('pointerCaptureCount++ ', delegate.pointerCaptureCount);
 
         if ( delegate.pointerCaptureCount === 1 ) {
             // We emulate mouse capture by hanging listeners on the window object.
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             $.addEvent(
-                window,
+                $.MouseTracker.captureElement,
                 isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
                 isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
                 true
             );
             $.addEvent(
-                window,
+                $.MouseTracker.captureElement,
                 isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
                 isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
                 true
@@ -1142,19 +1168,18 @@
         var delegate = THIS[ tracker.hash ];
 
         delegate.pointerCaptureCount--;
-        //$.console.log('pointerCaptureCount-- ', delegate.pointerCaptureCount);
 
         if ( delegate.pointerCaptureCount === 0 ) {
             // We emulate mouse capture by hanging listeners on the window object.
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             $.removeEvent(
-                window,
+                $.MouseTracker.captureElement,
                 isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
                 isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
                 true
             );
             $.removeEvent(
-                window,
+                $.MouseTracker.captureElement,
                 isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
                 isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
                 true
@@ -1481,35 +1506,6 @@
         updatePointersExit( tracker, event, [ gPoint ] );
     }
 
-    /**
-     * This handler is used to handle the case where the mouse is dragged out of the window, it should cause the drag to be properly released.
-     *
-     * @private
-     * @inner
-     */
-    function onMouseOutDocument( tracker, event ) {
-        event = $.getEvent( event );
-
-        var html = document.getElementsByTagName("html")[0];
-        var target = event.target || event.srcElement;
-        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
-            return; // not a mouseout of the iframe
-        }
-
-        var gPoint = {
-            id: $.MouseTracker.mousePointerId,
-            type: 'mouse',
-            isPrimary: true,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        event.buttons = undefined;
-
-        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
-            releasePointer( tracker, true );
-        }
-    }
 
     /**
      * @private
@@ -1700,6 +1696,7 @@
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
             // Touch event model start, end, and move events are always captured so we don't need to capture explicitly
+            $.stopEvent( event );
         }
 
         $.cancelEvent( event );
@@ -1851,33 +1848,6 @@
         };
 
         updatePointersExit( tracker, event, [ gPoint ] );
-    }
-
-    /**
-     * This handler is used to handle the case where the pointer is dragged out of the window, it should cause the drag to be properly released.
-     *
-     * @private
-     * @inner
-     */
-    function onPointerOutDocument( tracker, event ) {
-        event = $.getEvent( event );
-
-        var html = document.getElementsByTagName("html")[0];
-        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
-            return; // not a mouseout of the iframe
-        }
-        
-        var gPoint = {
-            id: event.pointerId,
-            type: getPointerType( event ),
-            isPrimary: event.isPrimary,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
-            releasePointer( tracker, false );
-        }
     }
 
     /**
