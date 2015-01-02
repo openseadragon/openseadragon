@@ -230,7 +230,16 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     getHomeBounds: function() {
-        return this.homeBounds.clone();
+        var center = this.homeBounds.getCenter( ),
+            width  = 1.0 / this.getHomeZoom( ),
+            height = width / this.getAspectRatio();
+
+        return new $.Rect(
+            center.x - ( width / 2.0 ),
+            center.y - ( height / 2.0 ),
+            width,
+            height
+        );
     },
 
     /**

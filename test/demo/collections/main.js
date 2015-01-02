@@ -17,6 +17,8 @@
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
                 useCanvas: true,
+                // defaultZoomLevel: 2,
+                // homeFillsViewer: true,
                 // sequenceMode: true,
                 // showReferenceStrip: true,
                 // referenceStripScroll: 'vertical',
@@ -70,7 +72,10 @@
                     }
                 ];
 
-                // config.tileSources = highsmith;
+                // config.tileSources = {
+                //     tileSource: highsmith,
+                //     width: 1
+                // };
             }
 
             if (testOverlays) {

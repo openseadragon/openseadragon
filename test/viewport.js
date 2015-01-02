@@ -207,7 +207,7 @@
             method: 'getHomeBounds',
             processExpected: function(level, expected) {
                 // Have to special case this to avoid dividing by 0
-                if(level === 0){
+                if(level === -1 || level === 0){
                     expected = new OpenSeadragon.Rect(0, 0, 1, 1);
                 } else {
                     var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
