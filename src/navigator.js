@@ -245,14 +245,10 @@ $.Navigator = function( options ){
     });
 
     viewer.world.addHandler("remove-item", function(event) {
-        var count = _this.world.getItemCount();
-        var item;
-        for (var i = 0; i < count; i++) {
-            item = _this.world.getItemAt(i);
-            if (item._originalForNavigator === event.item) {
-                _this.world.removeItem(item);
-                break;
-            }
+        var theirItem = event.item;
+        var myItem = _this._getMatchingItem(theirItem);
+        if (myItem) {
+            _this.world.removeItem(myItem);
         }
     });
 
@@ -343,16 +339,45 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // overrides Viewer.addTiledImage
     addTiledImage: function(options) {
+        var _this = this;
+
         var original = options.originalTiledImage;
         delete options.original;
 
         var optionsClone = $.extend({}, options, {
             success: function(event) {
-                event.item._originalForNavigator = original;
+                var myItem = event.item;
+                myItem._originalForNavigator = original;
+                _this._matchBounds(myItem, original, true);
+
+                original.addHandler('bounds-change', function() {
+                    _this._matchBounds(myItem, original);
+                });
             }
         });
 
         return $.Viewer.prototype.addTiledImage.apply(this, [optionsClone]);
+    },
+
+    // private
+    _getMatchingItem: function(theirItem) {
+        var count = this.world.getItemCount();
+        var item;
+        for (var i = 0; i < count; i++) {
+            item = this.world.getItemAt(i);
+            if (item._originalForNavigator === theirItem) {
+                return item;
+            }
+        }
+
+        return null;
+    },
+
+    // private
+    _matchBounds: function(myItem, theirItem, immediately) {
+        var bounds = theirItem.getBounds();
+        myItem.setPosition(bounds.getTopLeft(), immediately);
+        myItem.setWidth(bounds.width, immediately);
     }
 });
 

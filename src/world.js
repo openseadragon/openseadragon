@@ -104,7 +104,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @returns {OpenSeadragon.TiledImage} The item at the specified index.
      */
     getItemAt: function( index ) {
-        $.console.assert(index !== 'undefined', "[World.getItemAt] index is required");
+        $.console.assert(index !== undefined, "[World.getItemAt] index is required");
         return this._items[ index ];
     },
 
@@ -133,7 +133,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     setItemIndex: function( item, index ) {
         $.console.assert(item, "[World.setItemIndex] item is required");
-        $.console.assert(index !== 'undefined', "[World.setItemIndex] index is required");
+        $.console.assert(index !== undefined, "[World.setItemIndex] index is required");
 
         var oldIndex = this.getIndexOfItem( item );
 

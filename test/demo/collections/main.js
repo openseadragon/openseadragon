@@ -17,13 +17,15 @@
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
                 useCanvas: true,
+                // defaultZoomLevel: 2,
+                // homeFillsViewer: true,
                 // sequenceMode: true,
                 // showReferenceStrip: true,
                 // referenceStripScroll: 'vertical',
                 navPrevNextWrap: false,
                 preserveViewport: false,
-                collectionMode: true,
-                collectionRows: 1,
+                // collectionMode: true,
+                // collectionRows: 1,
                 // collectionLayout: 'vertical',
                 // collectionTileSize: 10,
                 // collectionTileMargin: 10,
@@ -31,6 +33,20 @@
                 // wrapVertical: true,
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/"
+            };
+
+            var highsmith = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Height: "9221",
+                        Width:  "7026"
+                    }
+                }
             };
 
             if (testInitialOpen) {
@@ -55,6 +71,11 @@
                         height: 1
                     }
                 ];
+
+                // config.tileSources = {
+                //     tileSource: highsmith,
+                //     width: 1
+                // };
             }
 
             if (testOverlays) {

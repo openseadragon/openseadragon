@@ -1,4 +1,4 @@
-/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
+/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal, propEqual */
 
 (function () {
     var debug = false,
@@ -799,4 +799,48 @@
 
         viewer.addHandler('open', openHandler1);
     });
+
+    asyncTest('Item positions including collection mode', function() {
+        var navAddCount = 0;
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   ['/test/data/testpattern.dzi', '/test/data/testpattern.dzi'],
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            collectionMode: true
+        });
+
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler);
+        };
+
+        var navOpenHandler = function(event) {
+            navAddCount++;
+            if (navAddCount === 2) {
+                viewer.navigator.world.removeHandler('add-item', navOpenHandler);
+
+                setTimeout(function() {
+                    // Test initial formation
+                    equal(viewer.navigator.world.getItemCount(), 2, 'navigator has both items');
+                    for (var i = 0; i < 2; i++) {
+                        propEqual(viewer.navigator.world.getItemAt(i).getBounds(),
+                            viewer.world.getItemAt(i).getBounds(), 'bounds are the same');
+                    }
+
+                    // Try moving one
+                    viewer.world.getItemAt(0).setPosition(new OpenSeadragon.Point(-200, -200));
+                    propEqual(viewer.navigator.world.getItemAt(0).getBounds(),
+                        viewer.world.getItemAt(0).getBounds(), 'bounds are the same after move');
+
+                    start();
+                }, 1);
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+    });
+
 })();
