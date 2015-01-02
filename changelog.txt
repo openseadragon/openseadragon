@@ -38,6 +38,7 @@ OPENSEADRAGON CHANGELOG
 * Margins option to push the home region in from the edges of the Viewer (#505)
 * Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
+* imageLoaderLimit now works (#544)
 
 1.2.0: (in progress)
 

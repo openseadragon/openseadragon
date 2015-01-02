@@ -3,7 +3,7 @@
 (function () {
     var viewer;
     var VIEWER_ID = "example";
-    var PREFIX_URL = "/build/openseadragon/images";
+    var PREFIX_URL = "/build/openseadragon/images/";
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
 
      module("viewport", {
@@ -425,9 +425,7 @@
                 return el.times(window_boundary);
             },
             getExpected: function(orig, viewport) {
-                var position, pos_point;
-                position = viewer.element.getBoundingClientRect();
-                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                var pos_point = OpenSeadragon.getElementOffset(viewer.element);
                 return orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
             },
             method: 'windowToViewportCoordinates'
@@ -441,9 +439,7 @@
                 return el.times(viewer.source.dimensions.x);
             },
             getExpected: function(orig, viewport) {
-                var position, pos_point;
-                position = viewer.element.getBoundingClientRect();
-                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                var pos_point = OpenSeadragon.getElementOffset(viewer.element);
                 return orig.plus(pos_point).minus(VIEWER_PADDING.times(viewport.getContainerSize().x * ZOOM_FACTOR));
             },
             method: 'imageToWindowCoordinates'
@@ -458,9 +454,7 @@
                 return el.times(window_boundary);
             },
             getExpected: function(orig, viewport) {
-                var position, pos_point;
-                position = viewer.element.getBoundingClientRect();
-                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                var pos_point = OpenSeadragon.getElementOffset(viewer.element);
                 return orig.minus(pos_point).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
             },
             method: 'windowToViewportCoordinates'
@@ -474,9 +468,7 @@
                 return el.times(viewer.source.dimensions.x);
             },
             getExpected: function(orig, viewport) {
-                var position, pos_point;
-                position = viewer.element.getBoundingClientRect();
-                pos_point = new OpenSeadragon.Point(position.top, position.left);
+                var pos_point = OpenSeadragon.getElementOffset(viewer.element);
                 return orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).plus(pos_point);
             },
             method: 'viewportToWindowCoordinates'

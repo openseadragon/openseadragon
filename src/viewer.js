@@ -36,6 +36,7 @@
 
 // dictionary from hash to private properties
 var THIS = {};
+var nextHash = 1;
 
 /**
  *
@@ -89,7 +90,7 @@ $.Viewer = function( options ) {
 
         //internal state and dom identifiers
         id:             options.id,
-        hash:           options.hash || options.id,
+        hash:           options.hash || nextHash++,
 
         //dom nodes
         /**
