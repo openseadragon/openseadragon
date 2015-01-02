@@ -551,8 +551,11 @@
   *     If collectionMode is true, specifies the margin, in viewport coordinates, between each TiledImage.
   *
   * @property {String|Boolean} [crossOriginPolicy=false]
-  *      Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
-  *      not use CORS, and the canvas will be tainted.
+  *     Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
+  *     not use CORS, and the canvas will be tainted.
+  *
+  * @property {Boolean} [ajaxWithCredentials=false]
+  *     Whether to set the withCredentials XHR flag for AJAX requests (when loading tile sources).
   *
   */
 
@@ -911,6 +914,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             tileHost:               null,
             initialPage:            0,
             crossOriginPolicy:      false,
+            ajaxWithCredentials:    false,
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -1923,6 +1927,15 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
          * @throws {Error}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
+            var withCredentials;
+
+            if( $.isPlainObject( url ) ){
+                onSuccess = url.success;
+                onError = url.error;
+                withCredentials = url.withCredentials;
+                url = url.url;
+            }
+
             var protocol = $.getUrlProtocol( url );
             var request = $.createAjaxRequest( protocol === "file:" );
 
@@ -1948,6 +1961,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     }
                 }
             };
+
+            if (withCredentials) {
+                request.withCredentials = true;
+            }
 
             try {
                 request.open( "GET", url, true );
