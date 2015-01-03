@@ -38,39 +38,46 @@
 /**
  * @class TileSource
  * @classdesc The TileSource contains the most basic implementation required to create a
- * smooth transition between layer in an image pyramid. It has only a single key
- * interface that must be implemented to complete it key functionality:
+ * smooth transition between layers in an image pyramid. It has only a single key
+ * interface that must be implemented to complete its key functionality:
  * 'getTileUrl'.  It also has several optional interfaces that can be
  * implemented if a new TileSource wishes to support configuration via a simple
  * object or array ('configure') and if the tile source supports or requires
- * configuration via retreival of a document on the network ala AJAX or JSONP,
+ * configuration via retrieval of a document on the network ala AJAX or JSONP,
  * ('getImageInfo').
  * <br/>
- * By default the image pyramid is split into N layers where the images longest
+ * By default the image pyramid is split into N layers where the image's longest
  * side in M (in pixels), where N is the smallest integer which satisfies
  *      <strong>2^(N+1) >= M</strong>.
  *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
- * @param {Number|Object|Array|String} width
- *      If more than a single argument is supplied, the traditional use of
- *      positional parameters is supplied and width is expected to be the width
- *      source image at its max resolution in pixels.  If a single argument is supplied and
- *      it is an Object or Array, the construction is assumed to occur through
- *      the extending classes implementation of 'configure'.  Finally if only a
- *      single argument is supplied and it is a String, the extending class is
- *      expected to implement 'getImageInfo' and 'configure'.
- * @param {Number} height
+ * @param {Object} options
+ *      You can either specify a URL, or literally define the TileSource (by specifying
+ *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
+ *      the extending class is expected to implement 'getImageInfo' and 'configure'.
+ *      For the latter, the construction is assumed to occur through
+ *      the extending classes implementation of 'configure'.
+ * @param {String} [options.url]
+ *      The URL for the data necessary for this TileSource.
+ * @param {Function} [options.success]
+ *      A function to be called upon successful creation.
+ * @param {Boolean} [options.ajaxWithCredentials]
+ *      If this TileSource needs to make an AJAX call, this specifies whether to set
+ *      the XHR's withCredentials (for accessing secure data).
+ * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
- * @param {Number} tileSize
+ * @param {Number} [options.height]
+ *      Height of the source image at max resolution in pixels.
+ * @param {Number} [options.tileSize]
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
  *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
- * @param {Number} tileOverlap
+ * @param {Number} [options.tileOverlap]
  *      The number of pixels each tile is expected to overlap touching tiles.
- * @param {Number} minLevel
+ * @param {Number} [options.minLevel]
  *      The minimum level to attempt to load.
- * @param {Number} maxLevel
+ * @param {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
  */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {

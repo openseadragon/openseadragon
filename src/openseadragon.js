@@ -556,6 +556,7 @@
   *
   * @property {Boolean} [ajaxWithCredentials=false]
   *     Whether to set the withCredentials XHR flag for AJAX requests (when loading tile sources).
+  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
   *
   */
 
@@ -1920,15 +1921,18 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
         /**
          * Makes an AJAX request.
-         * @function
-         * @param {String} url - the url to request
-         * @param {Function} onSuccess - a function to call on a successful response
-         * @param {Function} onError - a function to call on when an error occurs
+         * @param {Object} options
+         * @param {String} options.url - the url to request
+         * @param {Function} options.success - a function to call on a successful response
+         * @param {Function} options.error - a function to call on when an error occurs
+         * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;
 
+            // Note that our preferred API is that you pass in a single object; the named
+            // arguments are for legacy support.
             if( $.isPlainObject( url ) ){
                 onSuccess = url.success;
                 onError = url.error;
