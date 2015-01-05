@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.2.1: (in progress)
+
 1.2.0:
 
 * New combined IIIF TileSource for 1.0 through 2.0 (#441)
