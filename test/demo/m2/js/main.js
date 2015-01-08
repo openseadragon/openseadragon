@@ -41,11 +41,32 @@
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
+                // zoomPerClick: 1,
                 tileSources: tileSources
             });
 
             this.viewer.addHandler('open', function() {
                 self.setMode('thumbs');
+            });
+
+            this.viewer.addHandler('canvas-click', function(event) {
+                if (self.mode !== 'thumbs') {
+                    return;
+                }
+
+                var pos = self.viewer.viewport.pointFromPixel(event.position);
+                var count = self.viewer.world.getItemCount();
+                var item, box;
+
+                for (var i = 0; i < count; i++) {
+                    item = self.viewer.world.getItemAt(i);
+                    box = item.getBounds();
+                    if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
+                            pos.y < box.y + box.height) {
+                        self.setMode('page', i);
+                        break;
+                    }
+                }
             });
 
             $.each(this.modeNames, function(i, v) {
@@ -89,12 +110,20 @@
         },
 
         // ----------
-        setMode: function(mode) {
+        setMode: function(mode, page) {
             if (this.mode === mode) {
+                if (page !== undefined) {
+                    this.goToPage(page);
+                }
+
                 return;
             }
 
             this.mode = mode;
+
+            if (page !== undefined) {
+                this.page = page; // Need to do this before layout
+            }
 
             if (this.mode === 'thumbs') {
                 this.doThumbnails();
@@ -110,6 +139,10 @@
 
             if (this.mode === 'page') {
                 this.doPage();
+            }
+
+            if (page !== undefined) {
+                this.goToPage(page); // Need to do this after layout; does the zoom/pan
             }
 
             this.update();
@@ -160,11 +193,12 @@
             var count = this.viewer.world.getItemCount();
             var x = 0;
             var y = 0;
+            var points = [];
 
             var item;
             for (var i = 0; i < count; i++) {
                 item = this.viewer.world.getItemAt(i);
-                item.setPosition(new OpenSeadragon.Point(x, y));
+                points.push(new OpenSeadragon.Point(x, y));
                 if (config.columns && i % config.columns === config.columns - 1) {
                     x = 0;
                     y += item.getBounds().height + config.buffer;
@@ -175,6 +209,13 @@
 
                     x += 1;
                 }
+            }
+
+            var tl = this.viewer.world.getItemAt(this.page).getBounds().getTopLeft();
+            var offset = tl.minus(points[this.page]);
+            for (i = 0; i < count; i++) {
+                item = this.viewer.world.getItemAt(i);
+                item.setPosition(points[i].plus(offset));
             }
         },
 
