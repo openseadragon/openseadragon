@@ -1,6 +1,5 @@
 # To Do
 
-* Correct page height for thumbs
 * Scroll view: go to current page when entering mode; clamp at first and last
 
 * Constraints

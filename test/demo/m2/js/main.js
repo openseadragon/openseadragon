@@ -11,6 +11,7 @@
 
             this.mode = 'none';
             this.pageBuffer = 0.05;
+            this.bigBuffer = 0.2;
             this.page = 0;
             this.modeNames = [
                 'thumbs',
@@ -130,6 +131,8 @@
                 this.page = page; // Need to do this before layout
             }
 
+            var layout = this.createLayout();
+
             var oldSize = new OpenSeadragon.Point(this.$el.width(), this.$el.height());
             var oldBounds = this.viewer.viewport.getBounds();
             var scrollTop = $(window).scrollTop();
@@ -139,16 +142,20 @@
             if (this.mode === 'thumbs') {
                 this.viewer.gestureSettingsMouse.scrollToZoom = false;
                 this.viewer.zoomPerClick = 1;
-                $('.openseadragon1')
+                var viewerWidth = this.$el.width();
+                var width = layout.bounds.width + (this.bigBuffer * 2);
+                var height = layout.bounds.height + (this.bigBuffer * 2);
+                var newHeight = viewerWidth * (height / width);
+                this.$el
                     .addClass('thumbs')
                     .removeClass('full')
                     .css({
-                        height: 2000
+                        height: newHeight
                     });
             } else {
                 this.viewer.gestureSettingsMouse.scrollToZoom = true;
                 this.viewer.zoomPerClick = 2;
-                $('.openseadragon1')
+                this.$el
                     .addClass('full')
                     .removeClass('thumbs')
                     .css({
@@ -169,24 +176,12 @@
                 this.viewer.viewport.update();
             }
 
-            if (this.mode === 'thumbs') {
-                this.doThumbnails();
-            }
-
-            if (this.mode === 'scroll') {
-                this.doScroll();
-            }
-
-            if (this.mode === 'book') {
-                this.doBook();
-            }
-
-            if (this.mode === 'page') {
-                this.doPage();
-            }
+            this.setLayout(layout);
 
             if (page !== undefined) {
                 this.goToPage(page); // Need to do this after layout; does the zoom/pan
+            } else {
+                this.goHome();
             }
 
             this.update();
@@ -233,7 +228,28 @@
         },
 
         // ----------
-        doLayout: function(config) {
+        createLayout: function() {
+            var viewerWidth = this.$el.width();
+            var viewerHeight = this.$el.height();
+            var layoutConfig = {};
+
+            if (this.mode === 'thumbs') {
+                layoutConfig.columns = Math.floor(viewerWidth / 150);
+                layoutConfig.buffer = this.bigBuffer;
+            } else if (this.mode === 'scroll') {
+                layoutConfig.buffer = this.pageBuffer;
+            } else if (this.mode === 'book') {
+                layoutConfig.book = true;
+                layoutConfig.buffer = this.bigBuffer;
+            } else if (this.mode === 'page') {
+                layoutConfig.buffer = 2;
+            }
+
+            var layout = {
+                bounds: null,
+                specs: []
+            };
+
             var count = this.viewer.world.getItemCount();
             var x = 0;
             var y = 0;
@@ -243,12 +259,12 @@
             for (var i = 0; i < count; i++) {
                 item = this.viewer.world.getItemAt(i);
                 points.push(new OpenSeadragon.Point(x, y));
-                if (config.columns && i % config.columns === config.columns - 1) {
+                if (layoutConfig.columns && i % layoutConfig.columns === layoutConfig.columns - 1) {
                     x = 0;
-                    y += item.getBounds().height + config.buffer;
+                    y += item.getBounds().height + layoutConfig.buffer;
                 } else {
-                    if (!config.book || i % 2 === 0) {
-                        x += config.buffer;
+                    if (!layoutConfig.book || i % 2 === 0) {
+                        x += layoutConfig.buffer;
                     }
 
                     x += 1;
@@ -257,68 +273,79 @@
 
             var tl = this.viewer.world.getItemAt(this.page).getBounds().getTopLeft();
             var offset = tl.minus(points[this.page]);
+            var box, pos;
+
             for (i = 0; i < count; i++) {
                 item = this.viewer.world.getItemAt(i);
-                item.setPosition(points[i].plus(offset));
+                box = item.getBounds();
+                pos = points[i].plus(offset);
+                box.x = pos.x;
+                box.y = pos.y;
+                layout.specs.push({
+                    item: item,
+                    bounds: box
+                });
+
+                if (layout.bounds) {
+                    layout.bounds = this.union(layout.bounds, box);
+                } else {
+                    layout.bounds = box.clone();
+                }
+            }
+
+            return layout;
+        },
+
+        // ----------
+        setLayout: function(layout) {
+            var spec;
+
+            for (var i = 0; i < layout.specs.length; i++) {
+                spec = layout.specs[i];
+                spec.item.setPosition(spec.bounds.getTopLeft());
             }
         },
 
         // ----------
-        doThumbnails: function() {
-            var viewerWidth = $(this.viewer.element).width();
-            var viewerHeight = $(this.viewer.element).height();
-            var columns = Math.floor(viewerWidth / 150);
-            var buffer = 0.2;
-            this.doLayout({
-                columns: columns,
-                buffer: buffer
-            });
+        goHome: function() {
+            var viewerWidth = this.$el.width();
+            var viewerHeight = this.$el.height();
+            var layoutConfig = {};
 
-            var bounds = this.viewer.world.getItemAt(0).getBounds();
-            var x = bounds.x - buffer;
-            var y = bounds.y - buffer;
-            var width = columns + (buffer * (columns + 1));
-            var height = width * (viewerHeight / viewerWidth);
-
-            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
+            var box;
+            if (this.mode === 'thumbs') {
+                box = this.viewer.world.getHomeBounds();
+                box.x -= this.bigBuffer;
+                box.y -= this.bigBuffer;
+                box.width += (this.bigBuffer * 2);
+                box.height = box.width * (viewerHeight / viewerWidth);
+                this.viewer.viewport.fitBounds(box);
+            } else if (this.mode === 'scroll') {
+                this.goToPage(this.page);
+            } else if (this.mode === 'book') {
+                this.goToPage(this.page);
+            } else if (this.mode === 'page') {
+                this.goToPage(this.page);
+            }
         },
 
         // ----------
         doScroll: function() {
-            var viewerWidth = $(this.viewer.element).width();
-            var viewerHeight = $(this.viewer.element).height();
-            var buffer = 0.05;
-
-            this.doLayout({
-                buffer: buffer
-            });
-
-            var bounds = this.viewer.world.getItemAt(0).getBounds();
-            var x = bounds.x - buffer;
-            var y = bounds.y - buffer;
-            var height = bounds.height + (buffer * 2);
-            var width = height * (viewerWidth / viewerHeight);
-
-            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
+            // var bounds = this.viewer.world.getItemAt(0).getBounds();
+            // var x = bounds.x - buffer;
+            // var y = bounds.y - buffer;
+            // var height = bounds.height + (buffer * 2);
+            // var width = height * (viewerWidth / viewerHeight);
         },
 
         // ----------
-        doBook: function() {
-            this.doLayout({
-                buffer: 0.2,
-                book: true
-            });
+        union: function(box1, box2) {
+            var left = Math.min(box1.x, box2.x);
+            var top = Math.min(box1.y, box2.y);
+            var right = Math.max(box1.x + box1.width, box2.x + box2.width);
+            var bottom = Math.max(box1.y + box1.height, box2.y + box2.height);
 
-            this.goToPage(this.page);
-        },
-
-        // ----------
-        doPage: function() {
-            this.doLayout({
-                buffer: 2
-            });
-
-            this.goToPage(this.page);
+            return new OpenSeadragon.Rect(left, top, right - left, bottom - top);
         }
     };
 
