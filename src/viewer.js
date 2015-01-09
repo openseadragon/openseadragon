@@ -2534,8 +2534,11 @@ function onCanvasScroll( event ) {
         shift: event.shift,
         originalEvent: event.originalEvent
     });
-    //cancels event
-    return false;
+
+    if (gestureSettings && gestureSettings.scrollToZoom) {
+        //cancels event
+        return false;
+    }
 }
 
 function onContainerExit( event ) {

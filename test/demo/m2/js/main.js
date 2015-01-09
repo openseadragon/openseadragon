@@ -41,16 +41,19 @@
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
-                // zoomPerClick: 1,
+                autoResize: false,
+                // animationTime: 10,
+                // springStiffness: 2,
                 tileSources: tileSources
             });
 
             this.viewer.addHandler('open', function() {
+                self.$el = $(self.viewer.element);
                 self.setMode('thumbs');
             });
 
             this.viewer.addHandler('canvas-click', function(event) {
-                if (self.mode !== 'thumbs') {
+                if (self.mode !== 'thumbs' || !event.quick) {
                     return;
                 }
 
@@ -111,6 +114,8 @@
 
         // ----------
         setMode: function(mode, page) {
+            var self = this;
+
             if (this.mode === mode) {
                 if (page !== undefined) {
                     this.goToPage(page);
@@ -123,6 +128,45 @@
 
             if (page !== undefined) {
                 this.page = page; // Need to do this before layout
+            }
+
+            var oldSize = new OpenSeadragon.Point(this.$el.width(), this.$el.height());
+            var oldBounds = this.viewer.viewport.getBounds();
+            var scrollTop = $(window).scrollTop();
+            var scrollMax = $(document).height() - $(window).height();
+            var scrollFactor = (scrollMax > 0 ? scrollTop / scrollMax : 0);
+
+            if (this.mode === 'thumbs') {
+                this.viewer.gestureSettingsMouse.scrollToZoom = false;
+                this.viewer.zoomPerClick = 1;
+                $('.openseadragon1')
+                    .addClass('thumbs')
+                    .removeClass('full')
+                    .css({
+                        height: 2000
+                    });
+            } else {
+                this.viewer.gestureSettingsMouse.scrollToZoom = true;
+                this.viewer.zoomPerClick = 2;
+                $('.openseadragon1')
+                    .addClass('full')
+                    .removeClass('thumbs')
+                    .css({
+                        height: 'auto'
+                    });
+            }
+
+            var newSize = new OpenSeadragon.Point(this.$el.width(), this.$el.height());
+            if (oldSize.x !== newSize.x || oldSize.y !== newSize.y) {
+                this.viewer.viewport.resize(newSize, false);
+                var newBounds = this.viewer.viewport.getBounds();
+                var box = oldBounds.clone();
+                box.height = box.width * (newBounds.height / newBounds.width);
+
+                var boxMax = oldBounds.height - box.height;
+                box.y += boxMax * scrollFactor;
+                this.viewer.viewport.fitBounds(box, true);
+                this.viewer.viewport.update();
             }
 
             if (this.mode === 'thumbs') {
@@ -230,10 +274,13 @@
                 buffer: buffer
             });
 
+            var bounds = this.viewer.world.getItemAt(0).getBounds();
+            var x = bounds.x - buffer;
+            var y = bounds.y - buffer;
             var width = columns + (buffer * (columns + 1));
             var height = width * (viewerHeight / viewerWidth);
 
-            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(-buffer, -buffer, width, height));
+            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
         },
 
         // ----------
@@ -246,11 +293,13 @@
                 buffer: buffer
             });
 
-            var height = this.viewer.world.getItemAt(0).getBounds().height;
-            height += buffer * 2;
+            var bounds = this.viewer.world.getItemAt(0).getBounds();
+            var x = bounds.x - buffer;
+            var y = bounds.y - buffer;
+            var height = bounds.height + (buffer * 2);
             var width = height * (viewerWidth / viewerHeight);
 
-            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(-buffer, -buffer, width, height));
+            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
         },
 
         // ----------

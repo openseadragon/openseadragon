@@ -39,6 +39,7 @@ OPENSEADRAGON CHANGELOG
 * Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
 * imageLoaderLimit now works (#544)
+* Turning off scrollToZoom in gestureSettings now allows scroll events to propagate
 
 1.2.0: (in progress)
 
