@@ -195,6 +195,8 @@
 
             this.page = page;
 
+            var viewerWidth = this.$el.width();
+            var viewerHeight = this.$el.height();
             var bounds = this.viewer.world.getItemAt(this.page).getBounds();
             var x = bounds.x;
             var y = bounds.y;
@@ -222,6 +224,17 @@
             y -= this.pageBuffer;
             width += (this.pageBuffer * 2);
             height += (this.pageBuffer * 2);
+
+            if (this.mode === 'scroll') {
+                if (this.page === 0) {
+                    x = -this.pageBuffer;
+                    width = height * (viewerWidth / viewerHeight);
+                } else if (this.page === this.viewer.world.getItemCount() - 1) {
+                    width = height * (viewerWidth / viewerHeight);
+                    x = (bounds.x + bounds.width + this.pageBuffer) - width;
+                }
+            }
+
             this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
 
             this.update();
