@@ -7,7 +7,7 @@
         init: function() {
             var self = this;
 
-            var count = 50;
+            var count = 70;
 
             this.mode = 'none';
             this.pageBuffer = 0.05;
@@ -20,32 +20,13 @@
                 'page'
             ];
 
-            var tileSource = {
-                Image: {
-                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
-                    Format: "jpg",
-                    Overlap: "2",
-                    TileSize: "256",
-                    Size: {
-                        Height: "9221",
-                        Width:  "7026"
-                    }
-                }
-            };
-
-            var tileSources = [];
-            for (var i = 0; i < count; i++) {
-                tileSources.push(tileSource);
-            }
-
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
                 autoResize: false,
                 // animationTime: 10,
                 // springStiffness: 2,
-                tileSources: tileSources
+                tileSources: this.tileSources.slice(0, count)
             });
 
             this.viewer.addHandler('open', function() {
@@ -65,12 +46,12 @@
                 }
             });
 
-            this.viewer.addHandler('pan', function(event) {
+            this.viewer.addHandler('canvas-drag', function() {
                 if (self.mode !== 'scroll') {
                     return;
                 }
 
-                var result = self.hitTest(event.center);
+                var result = self.hitTest(self.viewer.viewport.getCenter());
                 if (result) {
                     self.page = result.index;
                 }
