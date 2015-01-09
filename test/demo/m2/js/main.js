@@ -59,17 +59,20 @@
                 }
 
                 var pos = self.viewer.viewport.pointFromPixel(event.position);
-                var count = self.viewer.world.getItemCount();
-                var item, box;
+                var result = self.hitTest(pos);
+                if (result) {
+                    self.setMode('page', result.index);
+                }
+            });
 
-                for (var i = 0; i < count; i++) {
-                    item = self.viewer.world.getItemAt(i);
-                    box = item.getBounds();
-                    if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
-                            pos.y < box.y + box.height) {
-                        self.setMode('page', i);
-                        break;
-                    }
+            this.viewer.addHandler('pan', function(event) {
+                if (self.mode !== 'scroll') {
+                    return;
+                }
+
+                var result = self.hitTest(event.center);
+                if (result) {
+                    self.page = result.index;
                 }
             });
 
@@ -80,31 +83,73 @@
             });
 
             $('.next').click(function() {
-                var page = self.page + (self.mode === 'book' ? 2 : 1);
-                if (self.mode === 'book' && page % 2 === 0 && page !== 0) {
-                    page --;
-                }
-
-                self.goToPage(page);
+                self.next();
             });
 
             $('.previous').click(function() {
-                var page = self.page - (self.mode === 'book' ? 2 : 1);
-                if (self.mode === 'book' && page % 2 === 0 && page !== 0) {
-                    page --;
+                self.previous();
+            });
+
+            $(window).keyup(function(event) {
+                if (self.mode === 'thumbs') {
+                    return;
                 }
 
-                self.goToPage(page);
+                if (event.which === 39) { // Right arrow
+                    self.next();
+                } else if (event.which === 37) { // Left arrow
+                    self.previous();
+                }
             });
 
             this.update();
         },
 
         // ----------
+        next: function() {
+            var page = this.page + (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
+                page --;
+            }
+
+            this.goToPage(page);
+        },
+
+        // ----------
+        previous: function() {
+            var page = this.page - (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
+                page --;
+            }
+
+            this.goToPage(page);
+        },
+
+        // ----------
+        hitTest: function(pos) {
+            var count = this.viewer.world.getItemCount();
+            var item, box;
+
+            for (var i = 0; i < count; i++) {
+                item = this.viewer.world.getItemAt(i);
+                box = item.getBounds();
+                if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
+                        pos.y < box.y + box.height) {
+                    return {
+                        item: item,
+                        index: i
+                    };
+                }
+            }
+
+            return null;
+        },
+
+        // ----------
         update: function() {
             var self = this;
 
-            $('.nav').toggle(this.mode === 'book' || this.mode === 'page');
+            $('.nav').toggle(this.mode === 'scroll' || this.mode === 'book' || this.mode === 'page');
             $('.previous').toggleClass('hidden', this.page <= 0);
             $('.next').toggleClass('hidden', this.page >= this.viewer.world.getItemCount() - 1);
 
@@ -227,7 +272,7 @@
 
             if (this.mode === 'scroll') {
                 if (this.page === 0) {
-                    x = -this.pageBuffer;
+                    x = bounds.x - this.pageBuffer;
                     width = height * (viewerWidth / viewerHeight);
                 } else if (this.page === this.viewer.world.getItemCount() - 1) {
                     width = height * (viewerWidth / viewerHeight);
