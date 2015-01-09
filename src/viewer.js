@@ -539,9 +539,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        this.clearOverlays();
+        if( ! this.preserveOverlays)
+        {
+            this.clearOverlays();
+            this.overlaysContainer.innerHTML = "";
+        }
+
         this.drawersContainer.innerHTML = "";
-        this.overlaysContainer.innerHTML = "";
 
         if ( this.drawer ) {
             this.drawer.destroy();
@@ -1968,7 +1972,12 @@ function openTileSource( viewer, source ) {
         _this.viewport.resetContentSize( _this.source.dimensions );
     }
 
-    _this.source.overlays = _this.source.overlays || [];
+    if( _this.preserveOverlays ){
+        _this.source.overlays = _this.currentOverlays;
+    }
+    else{
+        _this.source.overlays = _this.source.overlays || [];
+    }
 
     _this.drawer = new $.Drawer({
         viewer:             _this,
