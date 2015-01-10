@@ -3,6 +3,9 @@ OPENSEADRAGON CHANGELOG
 
 1.2.1: (in progress)
 
+* Exposed secondary pointer button (middle, right, etc.) events from MouseTracker and through viewer (#479)
+* MouseTracker - Improved IE 8 compatibility
+
 1.2.0:
 
 * New combined IIIF TileSource for 1.0 through 2.0 (#441)

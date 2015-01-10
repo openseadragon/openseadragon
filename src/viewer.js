@@ -390,6 +390,8 @@ $.Viewer = function( options ) {
         dragHandler:           $.delegate( this, onCanvasDrag ),
         dragEndHandler:        $.delegate( this, onCanvasDragEnd ),
         releaseHandler:        $.delegate( this, onCanvasRelease ),
+        auxPressHandler:       $.delegate( this, onCanvasAuxPress ),
+        auxReleaseHandler:     $.delegate( this, onCanvasAuxRelease ),
         scrollHandler:         $.delegate( this, onCanvasScroll ),
         pinchHandler:          $.delegate( this, onCanvasPinch )
     }).setTracking( this.mouseNavEnabled ? true : false ); // default state
@@ -2422,7 +2424,7 @@ function onCanvasDragEnd( event ) {
 
 function onCanvasRelease( event ) {
     /**
-     * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
+     * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
      * @event canvas-release
      * @memberof OpenSeadragon.Viewer
@@ -2440,6 +2442,62 @@ function onCanvasRelease( event ) {
         position: event.position,
         insideElementPressed: event.insideElementPressed,
         insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasAuxPress( event ) {
+    /**
+     * Raised when any non-primary pointer button is pressed on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-aux-press
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {Number} button - Button which caused the event.
+     *      -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
+     * @property {Number} buttons - Current buttons pressed.
+     *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-aux-press', {
+        tracker: event.eventSource,
+        position: event.position,
+        pointerType: event.pointerType,
+        button: event.button,
+        buttons: event.buttons,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasAuxRelease( event ) {
+    /**
+     * Raised when any non-primary pointer button is released on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-aux-release
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {Number} button - Button which caused the event.
+     *      -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
+     * @property {Number} buttons - Current buttons pressed.
+     *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-aux-release', {
+        tracker: event.eventSource,
+        position: event.position,
+        pointerType: event.pointerType,
+        button: event.button,
+        buttons: event.buttons,
         originalEvent: event.originalEvent
     });
 }
@@ -2593,7 +2651,7 @@ function onContainerRelease( event ) {
         }
     }
     /**
-     * Raised when the mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#container} element.
+     * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#container} element.
      *
      * @event container-release
      * @memberof OpenSeadragon.Viewer
