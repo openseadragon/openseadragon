@@ -1973,11 +1973,10 @@ function openTileSource( viewer, source ) {
     }
 
     if( _this.preserveOverlays ){
-        _this.source.overlays = _this.currentOverlays;
+        _this.overlays = _this.currentOverlays;
     }
-    else{
-        _this.source.overlays = _this.source.overlays || [];
-    }
+
+    _this.source.overlays = _this.source.overlays || [];
 
     _this.drawer = new $.Drawer({
         viewer:             _this,
