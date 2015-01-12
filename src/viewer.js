@@ -539,9 +539,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        this.clearOverlays();
+        if( ! this.preserveOverlays)
+        {
+            this.clearOverlays();
+            this.overlaysContainer.innerHTML = "";
+        }
+
         this.drawersContainer.innerHTML = "";
-        this.overlaysContainer.innerHTML = "";
 
         if ( this.drawer ) {
             this.drawer.destroy();
@@ -1966,6 +1970,10 @@ function openTileSource( viewer, source ) {
 
     if( _this.preserveViewport ){
         _this.viewport.resetContentSize( _this.source.dimensions );
+    }
+
+    if( _this.preserveOverlays ){
+        _this.overlays = _this.currentOverlays;
     }
 
     _this.source.overlays = _this.source.overlays || [];
