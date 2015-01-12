@@ -622,8 +622,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
 
                     // Global overlays
-                    for ( var i = 0; i < _this.overlays.length; i++ ) {
-                        _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+                    if( _this.overlays && !_this.preserveOverlays ){
+                        for ( var i = 0; i < _this.overlays.length; i++ ) {
+                            _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+                        }
                     }
 
                     _this._drawOverlays();
@@ -734,8 +736,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        this.clearOverlays();
-        this.overlaysContainer.innerHTML = "";
+        if( ! this.preserveOverlays)
+        {
+            this.clearOverlays();
+            this.overlaysContainer.innerHTML = "";
+        }
 
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
