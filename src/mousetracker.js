@@ -1250,17 +1250,17 @@
      * @private
      * @inner
      */
-    function capturePointer( tracker, pointerType, isPointerEventModel ) {
+    function capturePointer( tracker, pointerType ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
         pointsList.captureCount++;
 
         if ( pointsList.captureCount === 1 ) {
-            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 10 ) {
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
                 tracker.element.setCapture( true );
             } else {
-                eventParams = getCaptureEventParams( tracker, tracker, isPointerEventModel ? 'pointerevent' : pointerType );
+                eventParams = getCaptureEventParams( tracker, pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
                 $.addEvent(
@@ -1285,17 +1285,17 @@
      * @private
      * @inner
      */
-    function releasePointer( tracker, pointerType, isPointerEventModel ) {
+    function releasePointer( tracker, pointerType ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
         pointsList.captureCount--;
 
         if ( pointsList.captureCount === 0 ) {
-            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 10 ) {
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
                 tracker.element.releaseCapture();
             } else {
-                eventParams = getCaptureEventParams( tracker, isPointerEventModel ? 'pointerevent' : pointerType );
+                eventParams = getCaptureEventParams( tracker, pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
                 $.removeEvent(
@@ -1718,7 +1718,7 @@
 
         if ( updatePointersDown( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ) ) {
             $.stopEvent( event );
-            capturePointer( tracker, 'mouse', false );
+            capturePointer( tracker, 'mouse' );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
@@ -1766,7 +1766,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ) ) {
-            releasePointer( tracker, 'mouse', false );
+            releasePointer( tracker, 'mouse' );
         }
     }
 
@@ -1889,7 +1889,7 @@
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
             $.stopEvent( event );
-            capturePointer( tracker, 'touch', false );
+            capturePointer( tracker, 'touch' );
         }
 
         $.cancelEvent( event );
@@ -1941,7 +1941,7 @@
         }
 
         if ( updatePointersUp( tracker, event, gPoints, 0 ) ) {
-            releasePointer( tracker, 'touch', false );
+            releasePointer( tracker, 'touch' );
         }
 
         // simulate touchleave if not natively available
@@ -2104,7 +2104,7 @@
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
             $.stopEvent( event );
-            capturePointer( tracker, gPoint.type, true );
+            capturePointer( tracker, gPoint.type );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
@@ -2154,7 +2154,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releasePointer( tracker, gPoint.type, true );
+            releasePointer( tracker, gPoint.type );
         }
     }
 
