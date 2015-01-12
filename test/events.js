@@ -35,8 +35,8 @@
             origExitHandler,
             origPressHandler,
             origReleaseHandler,
-            origAuxPressHandler,
-            origAuxReleaseHandler,
+            origNonPrimaryPressHandler,
+            origNonPrimaryReleaseHandler,
             origMoveHandler,
             origClickHandler,
             origDblClickHandler,
@@ -48,8 +48,8 @@
             releaseCount,
             rightPressCount,
             rightReleaseCount,
-            auxPressCount,
-            auxReleaseCount,
+            middlePressCount,
+            middleReleaseCount,
             moveCount,
             clickCount,
             dblClickCount,
@@ -100,32 +100,32 @@
                     return true;
                 }
             };
-            origAuxPressHandler = tracker.auxPressHandler;
-            tracker.auxPressHandler = function ( event ) {
+            origNonPrimaryPressHandler = tracker.nonPrimaryPressHandler;
+            tracker.nonPrimaryPressHandler = function ( event ) {
                 if (event.button === 0) {
                     pressCount++;
                 } else if (event.button === 1) {
-                    auxPressCount++;
+                    middlePressCount++;
                 } else if (event.button === 2) {
                     rightPressCount++;
                 }
-                if (origAuxPressHandler) {
-                    return origAuxPressHandler( event );
+                if (origNonPrimaryPressHandler) {
+                    return origNonPrimaryPressHandler( event );
                 } else {
                     return true;
                 }
             };
-            origAuxReleaseHandler = tracker.auxReleaseHandler;
-            tracker.auxReleaseHandler = function ( event ) {
+            origNonPrimaryReleaseHandler = tracker.nonPrimaryReleaseHandler;
+            tracker.nonPrimaryReleaseHandler = function ( event ) {
                 if (event.button === 0) {
                     releaseCount++;
                 } else if (event.button === 1) {
-                    auxReleaseCount++;
+                    middleReleaseCount++;
                 } else if (event.button === 2) {
                     rightReleaseCount++;
                 }
-                if (origAuxReleaseHandler) {
-                    return origAuxReleaseHandler( event );
+                if (origNonPrimaryReleaseHandler) {
+                    return origNonPrimaryReleaseHandler( event );
                 } else {
                     return true;
                 }
@@ -225,14 +225,14 @@
             $canvas.simulate( 'mouseup', simEvent );
         };
 
-        var simulateAuxDown = function (x, y, button) {
+        var simulateNonPrimaryDown = function (x, y, button) {
             simEvent.button = button;
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
             $canvas.simulate( 'mousedown', simEvent );
         };
 
-        var simulateAuxUp = function (x, y, button) {
+        var simulateNonPrimaryUp = function (x, y, button) {
             simEvent.button = button;
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
@@ -260,8 +260,8 @@
             releaseCount = 0;
             rightPressCount = 0;
             rightReleaseCount = 0;
-            auxPressCount = 0;
-            auxReleaseCount = 0;
+            middlePressCount = 0;
+            middleReleaseCount = 0;
             moveCount = 0;
             clickCount = 0;
             dblClickCount = 0;
@@ -289,16 +289,16 @@
                 equal( releaseCount, expected.releaseCount, expected.description + 'releaseHandler event count matches expected (' + expected.releaseCount + ')' );
             }
             if ('rightPressCount' in expected) {
-                equal( rightPressCount, expected.rightPressCount, expected.description + 'auxPressHandler event count (secondary/right button) matches expected (' + expected.rightPressCount + ')' );
+                equal( rightPressCount, expected.rightPressCount, expected.description + 'nonPrimaryPressHandler event count (secondary/right button) matches expected (' + expected.rightPressCount + ')' );
             }
             if ('rightReleaseCount' in expected) {
-                equal( rightReleaseCount, expected.rightReleaseCount, expected.description + 'auxReleaseHandler event count (secondary/right button) matches expected (' + expected.rightReleaseCount + ')' );
+                equal( rightReleaseCount, expected.rightReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (secondary/right button) matches expected (' + expected.rightReleaseCount + ')' );
             }
-            if ('auxPressCount' in expected) {
-                equal( auxPressCount, expected.auxPressCount, expected.description + 'auxPressHandler event count (aux/middle button) matches expected (' + expected.auxPressCount + ')' );
+            if ('middlePressCount' in expected) {
+                equal( middlePressCount, expected.middlePressCount, expected.description + 'nonPrimaryPressHandler event count (aux/middle button) matches expected (' + expected.middlePressCount + ')' );
             }
-            if ('auxReleaseCount' in expected) {
-                equal( auxReleaseCount, expected.auxReleaseCount, expected.description + 'auxReleaseHandler event count (aux/middle button) matches expected (' + expected.auxReleaseCount + ')' );
+            if ('middleReleaseCount' in expected) {
+                equal( middleReleaseCount, expected.middleReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (aux/middle button) matches expected (' + expected.middleReleaseCount + ')' );
             }
             if ('moveCount' in expected) {
                 equal( moveCount, expected.moveCount, expected.description + 'moveHandler event count matches expected (' + expected.moveCount + ')' );
@@ -361,8 +361,8 @@
                 releaseCount:          1,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             20,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -390,8 +390,8 @@
                 releaseCount:          0,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             20,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -417,8 +417,8 @@
                 releaseCount:          0,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             20,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -447,8 +447,8 @@
                 releaseCount:          2,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             0,
                 clickCount:            2,
                 dblClickCount:         1,
@@ -475,8 +475,8 @@
                 releaseCount:          1,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             0,
                 clickCount:            1,
                 dblClickCount:         0,
@@ -489,22 +489,22 @@
                 quickClick:            true
             });
 
-            // enter-auxpress-auxrelease-exit (secondary/right click)
+            // enter-nonprimarypress-nonprimaryrelease-exit (secondary/right click)
             resetForAssessment();
             simulateEnter(0, 0);
-            simulateAuxDown(0, 0, 2);
-            simulateAuxUp(0, 0, 2);
+            simulateNonPrimaryDown(0, 0, 2);
+            simulateNonPrimaryUp(0, 0, 2);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-auxpress-auxrelease-exit (secondary/right click):  ',
+                description:           'enter-nonprimarypress-nonprimaryrelease-exit (secondary/right click):  ',
                 enterCount:            1,
                 exitCount:             1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       1,
                 rightReleaseCount:     1,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             0,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -517,22 +517,22 @@
                 //quickClick:            true
             });
 
-            // enter-auxpress-auxrelease-exit (aux/middle click)
+            // enter-nonprimarypress-nonprimaryrelease-exit (aux/middle click)
             resetForAssessment();
             simulateEnter(0, 0);
-            simulateAuxDown(0, 0, 1);
-            simulateAuxUp(0, 0, 1);
+            simulateNonPrimaryDown(0, 0, 1);
+            simulateNonPrimaryUp(0, 0, 1);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-auxpress-auxrelease-exit (aux/middle click):  ',
+                description:           'enter-nonprimarypress-nonprimaryrelease-exit (aux/middle click):  ',
                 enterCount:            1,
                 exitCount:             1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         1,
-                auxReleaseCount:       1,
+                middlePressCount:      1,
+                middleReleaseCount:    1,
                 moveCount:             0,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -545,24 +545,24 @@
                 //quickClick:            true
             });
 
-            // enter-auxpress-move-auxrelease-move-exit (secondary/right button drag, release in tracked element)
+            // enter-nonprimarypress-move-nonprimaryrelease-move-exit (secondary/right button drag, release in tracked element)
             resetForAssessment();
             simulateEnter(0, 0);
-            simulateAuxDown(0, 0, 2);
+            simulateNonPrimaryDown(0, 0, 2);
             simulateMove(1, 1, 100);
-            simulateAuxUp(10, 10, 2);
+            simulateNonPrimaryUp(10, 10, 2);
             simulateMove(-1, -1, 100);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-auxpress-move-auxrelease-move-exit (secondary/right button drag, release in tracked element):  ',
+                description:           'enter-nonprimarypress-move-nonprimaryrelease-move-exit (secondary/right button drag, release in tracked element):  ',
                 enterCount:            1,
                 exitCount:             1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       1,
                 rightReleaseCount:     1,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             200,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -591,8 +591,8 @@
                 releaseCount:          1,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             200,
                 clickCount:            1,
                 dblClickCount:         0,
@@ -622,8 +622,8 @@
                 releaseCount:          1,
                 rightPressCount:       0,
                 rightReleaseCount:     0,
-                auxPressCount:         0,
-                auxReleaseCount:       0,
+                middlePressCount:      0,
+                middleReleaseCount:    0,
                 moveCount:             15,
                 clickCount:            0,
                 dblClickCount:         0,
@@ -652,8 +652,8 @@
             //    releaseCount:          1,
             //    rightPressCount:       0,
             //    rightReleaseCount:     0,
-            //    auxPressCount:         0,
-            //    auxReleaseCount:       0,
+            //    middlePressCount:      0,
+            //    middleReleaseCount:    0,
             //    moveCount:             10,
             //    clickCount:            0,
             //    dblClickCount:         0,

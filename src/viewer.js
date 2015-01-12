@@ -380,20 +380,20 @@ $.Viewer = function( options ) {
 
 
     this.innerTracker = new $.MouseTracker({
-        element:               this.canvas,
-        clickTimeThreshold:    this.clickTimeThreshold,
-        clickDistThreshold:    this.clickDistThreshold,
-        dblClickTimeThreshold: this.dblClickTimeThreshold,
-        dblClickDistThreshold: this.dblClickDistThreshold,
-        clickHandler:          $.delegate( this, onCanvasClick ),
-        dblClickHandler:       $.delegate( this, onCanvasDblClick ),
-        dragHandler:           $.delegate( this, onCanvasDrag ),
-        dragEndHandler:        $.delegate( this, onCanvasDragEnd ),
-        releaseHandler:        $.delegate( this, onCanvasRelease ),
-        auxPressHandler:       $.delegate( this, onCanvasAuxPress ),
-        auxReleaseHandler:     $.delegate( this, onCanvasAuxRelease ),
-        scrollHandler:         $.delegate( this, onCanvasScroll ),
-        pinchHandler:          $.delegate( this, onCanvasPinch )
+        element:                  this.canvas,
+        clickTimeThreshold:       this.clickTimeThreshold,
+        clickDistThreshold:       this.clickDistThreshold,
+        dblClickTimeThreshold:    this.dblClickTimeThreshold,
+        dblClickDistThreshold:    this.dblClickDistThreshold,
+        clickHandler:             $.delegate( this, onCanvasClick ),
+        dblClickHandler:          $.delegate( this, onCanvasDblClick ),
+        dragHandler:              $.delegate( this, onCanvasDrag ),
+        dragEndHandler:           $.delegate( this, onCanvasDragEnd ),
+        releaseHandler:           $.delegate( this, onCanvasRelease ),
+        nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
+        nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
+        scrollHandler:            $.delegate( this, onCanvasScroll ),
+        pinchHandler:             $.delegate( this, onCanvasPinch )
     }).setTracking( this.mouseNavEnabled ? true : false ); // default state
 
     this.outerTracker = new $.MouseTracker({
@@ -2446,11 +2446,11 @@ function onCanvasRelease( event ) {
     });
 }
 
-function onCanvasAuxPress( event ) {
+function onCanvasNonPrimaryPress( event ) {
     /**
      * Raised when any non-primary pointer button is pressed on the {@link OpenSeadragon.Viewer#canvas} element.
      *
-     * @event canvas-aux-press
+     * @event canvas-nonprimary-press
      * @memberof OpenSeadragon.Viewer
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
@@ -2464,7 +2464,7 @@ function onCanvasAuxPress( event ) {
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-aux-press', {
+    this.raiseEvent( 'canvas-nonprimary-press', {
         tracker: event.eventSource,
         position: event.position,
         pointerType: event.pointerType,
@@ -2474,11 +2474,11 @@ function onCanvasAuxPress( event ) {
     });
 }
 
-function onCanvasAuxRelease( event ) {
+function onCanvasNonPrimaryRelease( event ) {
     /**
      * Raised when any non-primary pointer button is released on the {@link OpenSeadragon.Viewer#canvas} element.
      *
-     * @event canvas-aux-release
+     * @event canvas-nonprimary-release
      * @memberof OpenSeadragon.Viewer
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
@@ -2492,7 +2492,7 @@ function onCanvasAuxRelease( event ) {
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-aux-release', {
+    this.raiseEvent( 'canvas-nonprimary-release', {
         tracker: event.eventSource,
         position: event.position,
         pointerType: event.pointerType,

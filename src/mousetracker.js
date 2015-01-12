@@ -72,11 +72,11 @@
      *      An optional handler for pointer exit.
      * @param {OpenSeadragon.EventHandler} [options.pressHandler=null]
      *      An optional handler for pointer press.
-     * @param {OpenSeadragon.EventHandler} [options.auxPressHandler=null]
+     * @param {OpenSeadragon.EventHandler} [options.nonPrimaryPressHandler=null]
      *      An optional handler for pointer non-primary button press.
      * @param {OpenSeadragon.EventHandler} [options.releaseHandler=null]
      *      An optional handler for pointer release.
-     * @param {OpenSeadragon.EventHandler} [options.auxReleaseHandler=null]
+     * @param {OpenSeadragon.EventHandler} [options.nonPrimaryReleaseHandler=null]
      *      An optional handler for pointer non-primary button release.
      * @param {OpenSeadragon.EventHandler} [options.moveHandler=null]
      *      An optional handler for pointer move.
@@ -148,26 +148,26 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
-        this.userData           = options.userData          || null;
-        this.stopDelay          = options.stopDelay         || 50;
+        this.userData              = options.userData          || null;
+        this.stopDelay             = options.stopDelay         || 50;
 
-        this.enterHandler       = options.enterHandler      || null;
-        this.exitHandler        = options.exitHandler       || null;
-        this.pressHandler       = options.pressHandler      || null;
-        this.auxPressHandler    = options.auxPressHandler   || null;
-        this.releaseHandler     = options.releaseHandler    || null;
-        this.auxReleaseHandler  = options.auxReleaseHandler || null;
-        this.moveHandler        = options.moveHandler       || null;
-        this.scrollHandler      = options.scrollHandler     || null;
-        this.clickHandler       = options.clickHandler      || null;
-        this.dblClickHandler    = options.dblClickHandler   || null;
-        this.dragHandler        = options.dragHandler       || null;
-        this.dragEndHandler     = options.dragEndHandler    || null;
-        this.pinchHandler       = options.pinchHandler      || null;
-        this.stopHandler        = options.stopHandler       || null;
-        this.keyHandler         = options.keyHandler        || null;
-        this.focusHandler       = options.focusHandler      || null;
-        this.blurHandler        = options.blurHandler       || null;
+        this.enterHandler             = options.enterHandler             || null;
+        this.exitHandler              = options.exitHandler              || null;
+        this.pressHandler             = options.pressHandler             || null;
+        this.nonPrimaryPressHandler   = options.nonPrimaryPressHandler   || null;
+        this.releaseHandler           = options.releaseHandler           || null;
+        this.nonPrimaryReleaseHandler = options.nonPrimaryReleaseHandler || null;
+        this.moveHandler              = options.moveHandler              || null;
+        this.scrollHandler            = options.scrollHandler            || null;
+        this.clickHandler             = options.clickHandler             || null;
+        this.dblClickHandler          = options.dblClickHandler          || null;
+        this.dragHandler              = options.dragHandler              || null;
+        this.dragEndHandler           = options.dragEndHandler           || null;
+        this.pinchHandler             = options.pinchHandler             || null;
+        this.stopHandler              = options.stopHandler              || null;
+        this.keyHandler               = options.keyHandler               || null;
+        this.focusHandler             = options.focusHandler             || null;
+        this.blurHandler              = options.blurHandler              || null;
 
         //Store private properties in a scope sealed hash map
         var _this = this;
@@ -424,7 +424,7 @@
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
-        auxPressHandler: function () { },
+        nonPrimaryPressHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -482,7 +482,7 @@
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
-        auxReleaseHandler: function () { },
+        nonPrimaryReleaseHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -2494,8 +2494,8 @@
         // Only capture and track primary button, pen, and touch contacts
         if ( buttonChanged !== 0 ) {
             // Aux Press
-            if ( tracker.auxPressHandler ) {
-                propagate = tracker.auxPressHandler(
+            if ( tracker.nonPrimaryPressHandler ) {
+                propagate = tracker.nonPrimaryPressHandler(
                     {
                         eventSource:          tracker,
                         pointerType:          gPoints[ 0 ].type,
@@ -2662,8 +2662,8 @@
         // Only capture and track primary button, pen, and touch contacts
         if ( buttonChanged !== 0 ) {
             // Aux Release
-            if ( tracker.auxReleaseHandler ) {
-                propagate = tracker.auxReleaseHandler(
+            if ( tracker.nonPrimaryReleaseHandler ) {
+                propagate = tracker.nonPrimaryReleaseHandler(
                     {
                         eventSource:           tracker,
                         pointerType:           gPoints[ 0 ].type,
