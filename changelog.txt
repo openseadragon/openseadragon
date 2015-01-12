@@ -43,6 +43,7 @@ OPENSEADRAGON CHANGELOG
 1.2.1: (in progress)
 
 * Added preserveOverlays option (#561)
+* Fixed: DZI tilesource was broken (#563)
 
 1.2.0:
 

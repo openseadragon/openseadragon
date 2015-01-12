@@ -518,10 +518,12 @@
   *     position is preserved when navigating between images in the sequence.
   *
   * @property {Boolean} [preserveOverlays=false]
-  *     If the viewer has been configured with a sequence of tile sources, then
-  *     normally navigating to through each image resets the overlays.
+  *     If sequenceMode is true, then normally navigating to through each image
+  *     resets the overlays.
   *     If preserveOverlays is set to true, then the overlays
   *     are preserved when navigating between images in the sequence.
+  *     Note: setting preserveOverlays overrides any overlays specified in the
+  *     "overlays" property.
   *
   * @property {Boolean} [showReferenceStrip=false]
   *     If sequenceMode is true, then display a scrolling strip of image thumbnails for
