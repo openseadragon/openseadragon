@@ -107,8 +107,10 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         var ns;
         if ( data.Image ) {
             ns = data.Image.xmlns;
-        } else if ( data.documentElement && "Image" == data.documentElement.localName ) {
-            ns = data.documentElement.namespaceURI;
+        } else if ( data.documentElement) {
+            if ("Image" == data.documentElement.localName || "Image" == data.documentElement.tagName) {
+                ns = data.documentElement.namespaceURI;
+            }
         }
 
         return ( "http://schemas.microsoft.com/deepzoom/2008" == ns ||
@@ -221,7 +223,7 @@ function configureFromXML( tileSource, xmlDoc ){
     }
 
     var root           = xmlDoc.documentElement,
-        rootName       = root.localName,
+        rootName       = root.localName || root.tagName,
         ns             = xmlDoc.documentElement.namespaceURI,
         configuration  = null,
         displayRects   = [],
@@ -234,7 +236,10 @@ function configureFromXML( tileSource, xmlDoc ){
     if ( rootName == "Image" ) {
 
         try {
-            sizeNode = root.getElementsByTagNameNS(ns, "Size" )[ 0 ];
+            sizeNode = root.getElementsByTagName("Size" )[ 0 ];
+            if (sizeNode === undefined) {
+                sizeNode = root.getElementsByTagNameNS(ns, "Size" )[ 0 ];
+            }
 
             configuration = {
                 Image: {
@@ -257,11 +262,17 @@ function configureFromXML( tileSource, xmlDoc ){
                 );
             }
 
-            dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" );
+            dispRectNodes = root.getElementsByTagName("DisplayRect" );
+            if (dispRectNodes === undefined) {
+                dispRectNodes = root.getElementsByTagNameNS(ns, "DisplayRect" )[ 0 ];
+            }
 
             for ( i = 0; i < dispRectNodes.length; i++ ) {
                 dispRectNode = dispRectNodes[ i ];
-                rectNode     = dispRectNode.getElementsByTagNameNS(ns, "Rect" )[ 0 ];
+                rectNode     = dispRectNode.getElementsByTagName("Rect" )[ 0 ];
+                if (rectNode === undefined) {
+                    rectNode = dispRectNode.getElementsByTagNameNS(ns, "Rect" )[ 0 ];
+                }
 
                 displayRects.push({
                     Rect: {
