@@ -880,6 +880,7 @@
 
     if ( window.PointerEvent ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
+        $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         $.MouseTracker.unprefixedPointerEvents = true;
         if( navigator.maxTouchPoints ) {
@@ -891,6 +892,7 @@
         $.MouseTracker.haveMouseEnter = false;
     } else if ( window.MSPointerEvent ) {
         // IE10
+        $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
         $.MouseTracker.unprefixedPointerEvents = false;
         if( navigator.msMaxTouchPoints ) {
@@ -902,6 +904,7 @@
         $.MouseTracker.haveMouseEnter = false;
     } else {
         // Legacy W3C mouse events
+        $.MouseTracker.havePointerEvents = false;
         if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
             $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
             $.MouseTracker.haveMouseEnter = true;
@@ -1221,7 +1224,14 @@
     function getCaptureEventParams( tracker, pointerType ) {
         var delegate = THIS[ tracker.hash ];
 
-        if ( pointerType === 'mouse' ) {
+        if ( pointerType === 'pointerevent' ) {
+            return {
+                upName: $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
+                upHandler: delegate.pointerupcaptured,
+                moveName: $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
+                moveHandler: delegate.pointermovecaptured
+            };
+        } else if ( pointerType === 'mouse' ) {
             return {
                 upName: 'mouseup',
                 upHandler: delegate.mouseupcaptured,
@@ -1236,12 +1246,7 @@
                 moveHandler: delegate.touchmovecaptured
             };
         } else {
-            return {
-                upName: $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
-                upHandler: delegate.pointerupcaptured,
-                moveName: $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
-                moveHandler: delegate.pointermovecaptured
-            };
+            throw new Error( "MouseTracker.getCaptureEventParams: Unknown pointer type." );
         }
     }
 
@@ -1260,7 +1265,7 @@
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
                 tracker.element.setCapture( true );
             } else {
-                eventParams = getCaptureEventParams( tracker, pointerType );
+                eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
                 $.addEvent(
@@ -1295,7 +1300,7 @@
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
                 tracker.element.releaseCapture();
             } else {
-                eventParams = getCaptureEventParams( tracker, pointerType );
+                eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
                 $.removeEvent(
@@ -2104,7 +2109,7 @@
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
             $.stopEvent( event );
-            capturePointer( tracker, 'pointer' );
+            capturePointer( tracker, gPoint.type );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
@@ -2154,7 +2159,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releasePointer( tracker, 'pointer' );
+            releasePointer( tracker, gPoint.type );
         }
     }
 
