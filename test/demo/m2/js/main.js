@@ -53,13 +53,14 @@
                 }
 
                 if (self.panBounds) {
-                    var viewBounds = self.viewer.viewport.getBounds();
                     var center = self.viewer.viewport.getCenter();
+                    var currentCenter = self.viewer.viewport.getCenter(true);
+                    var viewBounds = self.viewer.viewport.getBounds();
                     var bounds = self.panBounds.clone();
-                    var left = bounds.x + (viewBounds.width / 2);
-                    var top = bounds.y + (viewBounds.height / 2);
-                    var right = (bounds.x + bounds.width) - (viewBounds.width / 2);
-                    var bottom = (bounds.y + bounds.height) - (viewBounds.height / 2);
+                    var left = Math.min(currentCenter.x, bounds.x + (viewBounds.width / 2));
+                    var top = Math.min(currentCenter.y, bounds.y + (viewBounds.height / 2));
+                    var right = Math.max(currentCenter.x, (bounds.x + bounds.width) - (viewBounds.width / 2));
+                    var bottom = Math.max(currentCenter.y, (bounds.y + bounds.height) - (viewBounds.height / 2));
 
                     var x;
                     if (left <= right) {
