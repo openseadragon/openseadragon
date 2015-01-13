@@ -24,6 +24,7 @@
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
                 autoResize: false,
+                showHomeControl: false,
                 // animationTime: 10,
                 // springStiffness: 2,
                 tileSources: this.tileSources.slice(0, count)
@@ -47,13 +48,43 @@
             });
 
             this.viewer.addHandler('canvas-drag', function() {
-                if (self.mode !== 'scroll') {
+                if (self.mode === 'thumbs') {
                     return;
                 }
 
-                var result = self.hitTest(self.viewer.viewport.getCenter());
-                if (result) {
-                    self.page = result.index;
+                if (self.panBounds) {
+                    var viewBounds = self.viewer.viewport.getBounds();
+                    var center = self.viewer.viewport.getCenter();
+                    var bounds = self.panBounds.clone();
+                    var left = bounds.x + (viewBounds.width / 2);
+                    var top = bounds.y + (viewBounds.height / 2);
+                    var right = (bounds.x + bounds.width) - (viewBounds.width / 2);
+                    var bottom = (bounds.y + bounds.height) - (viewBounds.height / 2);
+
+                    var x;
+                    if (left <= right) {
+                        x = Math.max(left, Math.min(right, center.x));
+                    } else {
+                        x = bounds.x + (bounds.width / 2);
+                    }
+
+                    var y;
+                    if (top <= bottom) {
+                        y = Math.max(top, Math.min(bottom, center.y));
+                    } else {
+                        y = bounds.y + (bounds.height / 2);
+                    }
+
+                    if (x !== center.x || y !== center.y) {
+                        self.viewer.viewport.panTo(new OpenSeadragon.Point(x, y));
+                    }
+                }
+
+                if (self.mode === 'scroll') {
+                    var result = self.hitTest(self.viewer.viewport.getCenter());
+                    if (result) {
+                        self.page = result.index;
+                    }
                 }
             });
 
@@ -168,6 +199,8 @@
             if (this.mode === 'thumbs') {
                 this.viewer.gestureSettingsMouse.scrollToZoom = false;
                 this.viewer.zoomPerClick = 1;
+                this.viewer.panHorizontal = false;
+                this.viewer.panVertical = false;
                 var viewerWidth = this.$el.width();
                 var width = layout.bounds.width + (this.bigBuffer * 2);
                 var height = layout.bounds.height + (this.bigBuffer * 2);
@@ -181,6 +214,8 @@
             } else {
                 this.viewer.gestureSettingsMouse.scrollToZoom = true;
                 this.viewer.zoomPerClick = 2;
+                this.viewer.panHorizontal = true;
+                this.viewer.panVertical = true;
                 this.$el
                     .addClass('full')
                     .removeClass('thumbs')
@@ -210,15 +245,15 @@
                 this.goHome();
             }
 
+            this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
+
             this.update();
         },
 
         // ----------
         goToPage: function(page) {
-            if (page < 0 || page >= this.viewer.world.getItemCount()) {
-                return;
-            }
-
+            var itemCount = this.viewer.world.getItemCount();
+            page = Math.max(0, Math.min(itemCount - 1, page));
             this.page = page;
 
             var viewerWidth = this.$el.width();
@@ -228,6 +263,7 @@
             var y = bounds.y;
             var width = bounds.width;
             var height = bounds.height;
+            var box;
 
             if (this.mode === 'book') {
                 var item;
@@ -239,7 +275,7 @@
                 } else {
                     item = this.viewer.world.getItemAt(this.page - 1);
                     if (item) {
-                        var box = item.getBounds();
+                        box = item.getBounds();
                         x -= width;
                         width += box.width;
                     }
@@ -261,7 +297,22 @@
                 }
             }
 
-            this.viewer.viewport.fitBounds(new OpenSeadragon.Rect(x, y, width, height));
+            box = new OpenSeadragon.Rect(x, y, width, height);
+            this.viewer.viewport.fitBounds(box);
+
+            if (this.mode === 'page' || this.mode === 'book') {
+                this.panBounds = box;
+            } else if (this.mode === 'scroll') {
+                this.panBounds = this.viewer.world.getItemAt(0).getBounds()
+                    .union(this.viewer.world.getItemAt(itemCount - 1).getBounds());
+
+                this.panBounds.x -= this.pageBuffer;
+                this.panBounds.y -= this.pageBuffer;
+                this.panBounds.width += (this.pageBuffer * 2);
+                this.panBounds.height += (this.pageBuffer * 2);
+            }
+
+            this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
 
             this.update();
         },
@@ -326,7 +377,7 @@
                 });
 
                 if (layout.bounds) {
-                    layout.bounds = this.union(layout.bounds, box);
+                    layout.bounds = layout.bounds.union(box);
                 } else {
                     layout.bounds = box.clone();
                 }
@@ -359,32 +410,9 @@
                 box.width += (this.bigBuffer * 2);
                 box.height = box.width * (viewerHeight / viewerWidth);
                 this.viewer.viewport.fitBounds(box);
-            } else if (this.mode === 'scroll') {
-                this.goToPage(this.page);
-            } else if (this.mode === 'book') {
-                this.goToPage(this.page);
-            } else if (this.mode === 'page') {
+            } else {
                 this.goToPage(this.page);
             }
-        },
-
-        // ----------
-        doScroll: function() {
-            // var bounds = this.viewer.world.getItemAt(0).getBounds();
-            // var x = bounds.x - buffer;
-            // var y = bounds.y - buffer;
-            // var height = bounds.height + (buffer * 2);
-            // var width = height * (viewerWidth / viewerHeight);
-        },
-
-        // ----------
-        union: function(box1, box2) {
-            var left = Math.min(box1.x, box2.x);
-            var top = Math.min(box1.y, box2.y);
-            var right = Math.max(box1.x + box1.width, box2.x + box2.width);
-            var bottom = Math.max(box1.y + box1.height, box2.y + box2.height);
-
-            return new OpenSeadragon.Rect(left, top, right - left, bottom - top);
         }
     };
 

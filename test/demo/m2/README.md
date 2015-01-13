@@ -1,9 +1,5 @@
 # To Do
 
-* Constraints
-  * Thumbs: no zoom, no pan
-  * Scroll: can't zoom out much, can't pan up and down
-  * Book, Page: just the shown item
 * Consistent height for all pages (rather than width)
 * Make sure adjacent pages aren't visible
 * Thumbs hover and active state (SVG overlay?)
