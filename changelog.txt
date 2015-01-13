@@ -40,6 +40,8 @@ OPENSEADRAGON CHANGELOG
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
 * imageLoaderLimit now works (#544)
 * Turning off scrollToZoom in gestureSettings now allows scroll events to propagate
+* You can now set a minZoomLevel that's greater than the home zoom level
+* Added union() to OpenSeadragon.Rect
 
 1.2.1: (in progress)
 

@@ -275,7 +275,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.minZoomLevel :
                 this.minZoomImageRatio * homeZoom;
 
-        return Math.min( zoom, homeZoom );
+        return zoom;
     },
 
     /**
