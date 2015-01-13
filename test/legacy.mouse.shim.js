@@ -11,8 +11,15 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
-    $.MouseTracker.haveMouseEnter = false;
+    $.MouseTracker.havePointerEvents = false;
+    if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+        $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+        $.MouseTracker.haveMouseEnter = true;
+    } else {
+        $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
+        $.MouseTracker.haveMouseEnter = false;
+    }
+    $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
     if ( 'ontouchstart' in window ) {
         // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
         $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
@@ -32,5 +39,6 @@
     }
     $.MouseTracker.mousePointerId = "legacy-mouse";
     $.MouseTracker.maxTouchPoints = 10;
+
 
 }(OpenSeadragon));

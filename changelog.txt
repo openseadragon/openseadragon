@@ -5,6 +5,8 @@ OPENSEADRAGON CHANGELOG
 
 * Added preserveOverlays option (#561)
 * Fixed: DZI tilesource was broken (#563)
+* Exposed secondary pointer button (middle, right, etc.) events from MouseTracker and through viewer (#479)
+* MouseTracker - Improved IE 8 compatibility (#562)
 
 1.2.0:
 
