@@ -201,15 +201,16 @@
         var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
-        //    simEvent.relatedTarget = document.body;
-        //    $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
-        //};
+            simEvent.relatedTarget = document.body;
+            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
+        };
+
         //var simulateLeaveFrame = function (x, y) {
         //    simEvent.clientX = offset.left + x;
         //    simEvent.clientY = offset.top  + y;
         //    simEvent.relatedTarget = document.getElementsByTagName("html")[0];
-            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
-        };
+        //    $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
+        //};
 
         var simulateDown = function (x, y) {
             simEvent.button = 0;
