@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: DZI tilesource was broken on IE8/IE9 (#563)
 * Exposed secondary pointer button (middle, right, etc.) events from MouseTracker and through viewer (#479)
 * MouseTracker - Improved IE 8 compatibility (#562)
+* MouseTracker - Improved IE 9+ compatibility (#564)
 
 1.2.0:
 
