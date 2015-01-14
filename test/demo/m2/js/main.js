@@ -330,11 +330,12 @@
                 layoutConfig.sameWidth = true;
             } else if (this.mode === 'scroll') {
                 layoutConfig.buffer = this.pageBuffer;
-            } else if (this.mode === 'book') {
-                layoutConfig.book = true;
-                layoutConfig.buffer = this.bigBuffer;
-            } else if (this.mode === 'page') {
-                layoutConfig.buffer = 2;
+            } else if (this.mode === 'book' || this.mode === 'page') {
+                layoutConfig.book = (this.mode === 'book');
+                var height = 1 + (this.pageBuffer * 2);
+                // Note that using window here is approximate, but that's close enough.
+                // We can't use viewer, because it may be stretched for the thumbs view.
+                layoutConfig.buffer = (height * ($(window).width() / $(window).height())) / 2;
             }
 
             var layout = {
