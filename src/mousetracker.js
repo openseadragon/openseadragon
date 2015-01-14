@@ -215,7 +215,6 @@
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
-
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -1609,7 +1608,7 @@
     function onMouseOver( tracker, event ) {
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1654,7 +1653,7 @@
     function onMouseOut( tracker, event ) {
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -2054,7 +2053,7 @@
     function onPointerOver( tracker, event ) {
         var gPoint;
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -2077,7 +2076,7 @@
     function onPointerOut( tracker, event ) {
         var gPoint;
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -2091,6 +2090,7 @@
 
         updatePointersExit( tracker, event, [ gPoint ] );
     }
+
 
     /**
      * @private
