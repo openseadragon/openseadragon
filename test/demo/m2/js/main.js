@@ -327,6 +327,7 @@
             if (this.mode === 'thumbs') {
                 layoutConfig.columns = Math.floor(viewerWidth / 150);
                 layoutConfig.buffer = this.bigBuffer;
+                layoutConfig.sameWidth = true;
             } else if (this.mode === 'scroll') {
                 layoutConfig.buffer = this.pageBuffer;
             } else if (this.mode === 'book') {
@@ -344,43 +345,58 @@
             var count = this.viewer.world.getItemCount();
             var x = 0;
             var y = 0;
-            var points = [];
-
-            var item;
+            var offset = new OpenSeadragon.Point();
+            var rowHeight = 0;
+            var item, box;
             for (var i = 0; i < count; i++) {
                 item = this.viewer.world.getItemAt(i);
-                points.push(new OpenSeadragon.Point(x, y));
-                if (layoutConfig.columns && i % layoutConfig.columns === layoutConfig.columns - 1) {
-                    x = 0;
-                    y += item.getBounds().height + layoutConfig.buffer;
-                } else {
-                    if (!layoutConfig.book || i % 2 === 0) {
-                        x += layoutConfig.buffer;
-                    }
-
-                    x += 1;
-                }
-            }
-
-            var tl = this.viewer.world.getItemAt(this.page).getBounds().getTopLeft();
-            var offset = tl.minus(points[this.page]);
-            var box, pos;
-
-            for (i = 0; i < count; i++) {
-                item = this.viewer.world.getItemAt(i);
                 box = item.getBounds();
-                pos = points[i].plus(offset);
-                box.x = pos.x;
-                box.y = pos.y;
+
+                if (i === this.page) {
+                    offset = box.getTopLeft().minus(new OpenSeadragon.Point(x, y));
+                }
+
+                box.x = x;
+                box.y = y;
+                if (layoutConfig.sameWidth) {
+                    box.height = box.height / box.width;
+                    box.width = 1;
+                } else {
+                    box.width = box.width / box.height;
+                    box.height = 1;
+                }
+
+                rowHeight = Math.max(rowHeight, box.height);
+
                 layout.specs.push({
                     item: item,
                     bounds: box
                 });
 
-                if (layout.bounds) {
-                    layout.bounds = layout.bounds.union(box);
+                if (layoutConfig.columns && i % layoutConfig.columns === layoutConfig.columns - 1) {
+                    x = 0;
+                    y += rowHeight + layoutConfig.buffer;
+                    rowHeight = 0;
                 } else {
-                    layout.bounds = box.clone();
+                    if (!layoutConfig.book || i % 2 === 0) {
+                        x += layoutConfig.buffer;
+                    }
+
+                    x += box.width;
+                }
+            }
+
+            var pos, spec;
+            for (i = 0; i < count; i++) {
+                spec = layout.specs[i];
+                pos = spec.bounds.getTopLeft().plus(offset);
+                spec.bounds.x = pos.x;
+                spec.bounds.y = pos.y;
+
+                if (layout.bounds) {
+                    layout.bounds = layout.bounds.union(spec.bounds);
+                } else {
+                    layout.bounds = spec.bounds.clone();
                 }
             }
 
@@ -394,6 +410,7 @@
             for (var i = 0; i < layout.specs.length; i++) {
                 spec = layout.specs[i];
                 spec.item.setPosition(spec.bounds.getTopLeft());
+                spec.item.setWidth(spec.bounds.width);
             }
         },
 
