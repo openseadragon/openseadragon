@@ -586,7 +586,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             newBounds = this._applyBoundaryConstraints( newBounds, immediately );
         }
 
-        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
+        if (Math.abs(newZoom - oldZoom) < 0.00000000001 ||
+                Math.abs(newBounds.width - oldBounds.width) < 0.00000000001) {
             return this.panTo( constraints ? newBounds.getCenter() : center, immediately );
         }
 

@@ -42,6 +42,7 @@ OPENSEADRAGON CHANGELOG
 * Turning off scrollToZoom in gestureSettings now allows scroll events to propagate
 * You can now set a minZoomLevel that's greater than the home zoom level
 * Added union() to OpenSeadragon.Rect
+* Fixed an error in fitBounds if the new and old bounds were extremely close in size
 
 1.2.1: (in progress)
 
