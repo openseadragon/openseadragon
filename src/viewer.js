@@ -2714,6 +2714,7 @@ function onContainerEnter( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
      * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
      * @property {Object} originalEvent - The original DOM event.
@@ -2723,6 +2724,7 @@ function onContainerEnter( event ) {
         tracker: event.eventSource,
         position: event.position,
         buttons: event.buttons,
+        pointers: event.pointers,
         insideElementPressed: event.insideElementPressed,
         buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
@@ -2746,6 +2748,7 @@ function onContainerExit( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
      * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
      * @property {Object} originalEvent - The original DOM event.
@@ -2755,6 +2758,7 @@ function onContainerExit( event ) {
         tracker: event.eventSource,
         position: event.position,
         buttons: event.buttons,
+        pointers: event.pointers,
         insideElementPressed: event.insideElementPressed,
         buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
