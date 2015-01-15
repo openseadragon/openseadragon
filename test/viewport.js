@@ -118,6 +118,7 @@
     };
 
 // Tests start here.
+
     asyncTest('getContainerSize', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
@@ -274,6 +275,84 @@
         viewer.homeFillsViewer = true;
         viewer.defaultZoomLevel = expected;
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
+    });
+
+    asyncTest('zoomBy', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            var orig, expected, actual;
+            for (var i = 0; i < testZoomLevels.length; i++){
+                viewport.zoomBy(testZoomLevels[i], null, true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed by the correct amount."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('zoomTo', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            var orig, expected, actual;
+            for (var i = 0; i < testZoomLevels.length; i++){
+                viewport.zoomTo(testZoomLevels[i], null, true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed to the correct level."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('rotation', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            propEqual(viewport.getRotation, 0, "Original rotation should be 0 degrees");
+            viewport.setRotation(90);
+            propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
+            viewport.setRotation(-75);
+            propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+            start();
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('resize', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testPoints.length; i++){
+                var new_size = testPoints[i].times(viewer.source.dimensions.x);
+                viewport.resize(new_size);
+                viewport.update();
+                propEqual(viewport.getContainerSize(), new_size, "Viewport resized successfully.");
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('deltaPixelsFromPoints', function() {
