@@ -1,4 +1,4 @@
-/* globals $, App */
+/* globals $, App, d3 */
 
 (function() {
     // ----------
@@ -89,6 +89,18 @@
                 }
             });
 
+            var tracker = new OpenSeadragon.MouseTracker({
+                element: this.viewer.container,
+                moveHandler: function(event) {
+                    if (self.mode === 'thumbs') {
+                        var result = self.hitTest(self.viewer.viewport.pointFromPixel(event.position));
+                        self.updateHover(result ? result.index : -1);
+                    }
+                }
+            });
+
+            tracker.setTracking(true);
+
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).click(function() {
                     self.setMode(v);
@@ -113,6 +125,26 @@
                 } else if (event.which === 37) { // Left arrow
                     self.previous();
                 }
+            });
+
+            var svgNode = this.viewer.svgOverlay();
+
+            this.highlight = d3.select(svgNode).append("rect")
+                .style('fill', 'none')
+                .style('stroke', '#08f')
+                .style('opacity', 0)
+                .style('stroke-width', 0.05)
+                .attr("pointer-events", "none");
+
+            this.hover = d3.select(svgNode).append("rect")
+                .style('fill', 'none')
+                .style('stroke', '#08f')
+                .style('opacity', 0)
+                .style('stroke-width', 0.05)
+                .attr("pointer-events", "none");
+
+            $(window).resize(function() {
+                self.viewer.svgOverlay('resize');
             });
 
             this.update();
@@ -249,6 +281,52 @@
             this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
 
             this.update();
+            this.updateHighlight();
+            this.updateHover(-1);
+        },
+
+        // ----------
+        updateHighlight: function() {
+            if (this.mode !== 'thumbs') {
+                this.highlight.style('opacity', 0);
+                return;
+            }
+
+            var item = this.viewer.world.getItemAt(this.page);
+            var box = item.getBounds();
+
+            this.highlight
+                .style('opacity', 1)
+                .attr("x", box.x)
+                .attr("width", box.width)
+                .attr("y", box.y)
+                .attr("height", box.height);
+        },
+
+        // ----------
+        updateHover: function(page) {
+            if (page === -1 || this.mode !== 'thumbs') {
+                this.hover.style('opacity', 0);
+                this.$el.css({
+                    'cursor': 'default'
+                });
+
+                return;
+            }
+
+            this.$el.css({
+                'cursor': 'pointer'
+            });
+
+            var item = this.viewer.world.getItemAt(page);
+            var box = item.getBounds();
+
+            this.hover
+                .style('opacity', 0.3)
+                .attr("x", box.x)
+                .attr("width", box.width)
+                .attr("y", box.y)
+                .attr("height", box.height);
         },
 
         // ----------
