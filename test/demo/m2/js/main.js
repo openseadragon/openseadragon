@@ -32,7 +32,9 @@
 
             this.viewer.addHandler('open', function() {
                 self.$el = $(self.viewer.element);
-                self.setMode('thumbs');
+                self.setMode({
+                    mode: 'thumbs'
+                });
             });
 
             this.viewer.addHandler('canvas-click', function(event) {
@@ -43,7 +45,10 @@
                 var pos = self.viewer.viewport.pointFromPixel(event.position);
                 var result = self.hitTest(pos);
                 if (result) {
-                    self.setMode('page', result.index);
+                    self.setMode({
+                        mode: 'page',
+                        page: result.index
+                    });
                 }
             });
 
@@ -103,7 +108,9 @@
 
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).click(function() {
-                    self.setMode(v);
+                    self.setMode({
+                        mode: v
+                    });
                 });
             });
 
@@ -144,6 +151,13 @@
                 .attr("pointer-events", "none");
 
             $(window).resize(function() {
+                var newSize = new OpenSeadragon.Point(self.$el.width(), self.$el.height());
+                self.viewer.viewport.resize(newSize, false);
+                self.setMode({
+                    mode: self.mode,
+                    immediately: true
+                });
+
                 self.viewer.svgOverlay('resize');
             });
 
@@ -157,7 +171,9 @@
                 page --;
             }
 
-            this.goToPage(page);
+            this.goToPage({
+                page: page
+            });
         },
 
         // ----------
@@ -167,7 +183,9 @@
                 page --;
             }
 
-            this.goToPage(page);
+            this.goToPage({
+                page: page
+            });
         },
 
         // ----------
@@ -204,21 +222,13 @@
         },
 
         // ----------
-        setMode: function(mode, page) {
+        setMode: function(config) {
             var self = this;
 
-            if (this.mode === mode) {
-                if (page !== undefined) {
-                    this.goToPage(page);
-                }
+            this.mode = config.mode;
 
-                return;
-            }
-
-            this.mode = mode;
-
-            if (page !== undefined) {
-                this.page = page; // Need to do this before layout
+            if (config.page !== undefined) {
+                this.page = config.page; // Need to do this before layout
             }
 
             var layout = this.createLayout();
@@ -270,13 +280,14 @@
                 this.viewer.viewport.update();
             }
 
-            this.setLayout(layout);
+            this.setLayout({
+                layout: layout,
+                immediately: config.immediately
+            });
 
-            if (page !== undefined) {
-                this.goToPage(page); // Need to do this after layout; does the zoom/pan
-            } else {
-                this.goHome();
-            }
+            this.goHome({
+                immediately: config.immediately
+            });
 
             this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
 
@@ -330,10 +341,9 @@
         },
 
         // ----------
-        goToPage: function(page) {
+        goToPage: function(config) {
             var itemCount = this.viewer.world.getItemCount();
-            page = Math.max(0, Math.min(itemCount - 1, page));
-            this.page = page;
+            this.page = Math.max(0, Math.min(itemCount - 1, config.page));
 
             var viewerWidth = this.$el.width();
             var viewerHeight = this.$el.height();
@@ -377,7 +387,7 @@
             }
 
             box = new OpenSeadragon.Rect(x, y, width, height);
-            this.viewer.viewport.fitBounds(box);
+            this.viewer.viewport.fitBounds(box, config.immediately);
 
             if (this.mode === 'page' || this.mode === 'book') {
                 this.panBounds = box;
@@ -483,18 +493,18 @@
         },
 
         // ----------
-        setLayout: function(layout) {
+        setLayout: function(config) {
             var spec;
 
-            for (var i = 0; i < layout.specs.length; i++) {
-                spec = layout.specs[i];
-                spec.item.setPosition(spec.bounds.getTopLeft());
-                spec.item.setWidth(spec.bounds.width);
+            for (var i = 0; i < config.layout.specs.length; i++) {
+                spec = config.layout.specs[i];
+                spec.item.setPosition(spec.bounds.getTopLeft(), config.immediately);
+                spec.item.setWidth(spec.bounds.width, config.immediately);
             }
         },
 
         // ----------
-        goHome: function() {
+        goHome: function(config) {
             var viewerWidth = this.$el.width();
             var viewerHeight = this.$el.height();
             var layoutConfig = {};
@@ -506,9 +516,12 @@
                 box.y -= this.bigBuffer;
                 box.width += (this.bigBuffer * 2);
                 box.height = box.width * (viewerHeight / viewerWidth);
-                this.viewer.viewport.fitBounds(box);
+                this.viewer.viewport.fitBounds(box, config.immediately);
             } else {
-                this.goToPage(this.page);
+                this.goToPage({
+                    page: this.page,
+                    immediately: config.immediately
+                });
             }
         }
     };
