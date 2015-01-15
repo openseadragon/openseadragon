@@ -2058,14 +2058,22 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
     setTimeout( function() {
         if ( $.type( tileSource ) == 'string' ) {
             //If its still a string it means it must be a url at this point
-            tileSource = new $.TileSource( tileSource, function( event ) {
-                successCallback( event.tileSource );
+            tileSource = new $.TileSource({
+                url: tileSource,
+                ajaxWithCredentials: viewer.ajaxWithCredentials,
+                success: function( event ) {
+                    successCallback( event.tileSource );
+                }
             });
             tileSource.addHandler( 'open-failed', function( event ) {
                 failCallback( event );
             } );
 
         } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ) {
+            if (tileSource.ajaxWithCredentials === undefined) {
+                tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
+            }
+
             if ( $.isFunction( tileSource.getTileUrl ) ) {
                 //Custom tile source
                 var customTileSource = new $.TileSource( tileSource );

@@ -38,44 +38,52 @@
 /**
  * @class TileSource
  * @classdesc The TileSource contains the most basic implementation required to create a
- * smooth transition between layer in an image pyramid. It has only a single key
- * interface that must be implemented to complete it key functionality:
+ * smooth transition between layers in an image pyramid. It has only a single key
+ * interface that must be implemented to complete its key functionality:
  * 'getTileUrl'.  It also has several optional interfaces that can be
  * implemented if a new TileSource wishes to support configuration via a simple
  * object or array ('configure') and if the tile source supports or requires
- * configuration via retreival of a document on the network ala AJAX or JSONP,
+ * configuration via retrieval of a document on the network ala AJAX or JSONP,
  * ('getImageInfo').
  * <br/>
- * By default the image pyramid is split into N layers where the images longest
+ * By default the image pyramid is split into N layers where the image's longest
  * side in M (in pixels), where N is the smallest integer which satisfies
  *      <strong>2^(N+1) >= M</strong>.
  *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
- * @param {Number|Object|Array|String} width
- *      If more than a single argument is supplied, the traditional use of
- *      positional parameters is supplied and width is expected to be the width
- *      source image at its max resolution in pixels.  If a single argument is supplied and
- *      it is an Object or Array, the construction is assumed to occur through
- *      the extending classes implementation of 'configure'.  Finally if only a
- *      single argument is supplied and it is a String, the extending class is
- *      expected to implement 'getImageInfo' and 'configure'.
- * @param {Number} height
+ * @param {Object} options
+ *      You can either specify a URL, or literally define the TileSource (by specifying
+ *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
+ *      the extending class is expected to implement 'getImageInfo' and 'configure'.
+ *      For the latter, the construction is assumed to occur through
+ *      the extending classes implementation of 'configure'.
+ * @param {String} [options.url]
+ *      The URL for the data necessary for this TileSource.
+ * @param {Function} [options.success]
+ *      A function to be called upon successful creation.
+ * @param {Boolean} [options.ajaxWithCredentials]
+ *      If this TileSource needs to make an AJAX call, this specifies whether to set
+ *      the XHR's withCredentials (for accessing secure data).
+ * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
- * @param {Number} tileSize
+ * @param {Number} [options.height]
+ *      Height of the source image at max resolution in pixels.
+ * @param {Number} [options.tileSize]
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
  *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
- * @param {Number} tileOverlap
+ * @param {Number} [options.tileOverlap]
  *      The number of pixels each tile is expected to overlap touching tiles.
- * @param {Number} minLevel
+ * @param {Number} [options.minLevel]
  *      The minimum level to attempt to load.
- * @param {Number} maxLevel
+ * @param {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
  */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
-    var callback = null,
-        args = arguments,
+    var _this = this;
+
+    var args = arguments,
         options,
         i;
 
@@ -102,17 +110,21 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     //source
     $.extend( true, this, options );
 
-    //Any functions that are passed as arguments are bound to the ready callback
-    /*jshint loopfunc:true*/
-    for ( i = 0; i < arguments.length; i++ ) {
-        if ( $.isFunction( arguments[ i ] ) ) {
-            callback = arguments[ i ];
-            this.addHandler( 'ready', function ( event ) {
-                callback( event );
-            } );
-            //only one callback per constructor
-            break;
+    if (!this.success) {
+        //Any functions that are passed as arguments are bound to the ready callback
+        for ( i = 0; i < arguments.length; i++ ) {
+            if ( $.isFunction( arguments[ i ] ) ) {
+                this.success = arguments[ i ];
+                //only one callback per constructor
+                break;
+            }
         }
+    }
+
+    if (this.success) {
+        this.addHandler( 'ready', function ( event ) {
+            _this.success( event );
+        } );
     }
 
     /**
@@ -127,7 +139,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      */
     /**
      * The size of the image tiles used to compose the image.
-     * Please note that tileSize may be deprecated in a future release. 
+     * Please note that tileSize may be deprecated in a future release.
      * Instead the getTileSize(level) function should be used.
      * @member {Number} tileSize
      * @memberof OpenSeadragon.TileSource#
@@ -148,12 +160,16 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
     /**
-     * 
+     *
      * @member {Boolean} ready
      * @memberof OpenSeadragon.TileSource#
      */
 
     if( 'string' == $.type( arguments[ 0 ] ) ){
+        this.url = arguments[0];
+    }
+
+    if (this.url) {
         //in case the getImageInfo method is overriden and/or implies an
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
@@ -165,7 +181,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.ready       = false;
         //configuration via url implies the extending class
         //implements and 'configure'
-        this.getImageInfo( arguments[ 0 ] );
+        this.getImageInfo( this.url );
 
     } else {
 
@@ -185,8 +201,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
                     Math.log( 2 )
                 ) : 0
             );
-        if( callback && $.isFunction( callback ) ){
-            callback( this );
+        if( this.success && $.isFunction( this.success ) ){
+            this.success( this );
         }
     }
 
@@ -197,7 +213,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
 
     /**
-     * Return the tileSize for a given level. 
+     * Return the tileSize for a given level.
      * Subclasses should override this if tileSizes can be different at different levels
      *   such as in IIIFTileSource.  Code should use this function rather than reading
      *   from .tileSize directly.  tileSize may be deprecated in a future release.
@@ -355,6 +371,10 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
             }
 
             options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
+            if (options.ajaxWithCredentials === undefined) {
+                options.ajaxWithCredentials = _this.ajaxWithCredentials;
+            }
+
             readySource = new $TileSource( options );
             _this.ready = true;
             /**
@@ -383,45 +403,50 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
             });
         } else {
             // request info via xhr asynchronously.
-            $.makeAjaxRequest( url, function( xhr ) {
-                var data = processResponse( xhr );
-                callback( data );
-            }, function ( xhr, exc ) {
-                var msg;
+            $.makeAjaxRequest( {
+                url: url,
+                withCredentials: this.ajaxWithCredentials,
+                success: function( xhr ) {
+                    var data = processResponse( xhr );
+                    callback( data );
+                },
+                error: function ( xhr, exc ) {
+                    var msg;
 
-                /*
-                    IE < 10 will block XHR requests to different origins. Any property access on the request
-                    object will raise an exception which we'll attempt to handle by formatting the original
-                    exception rather than the second one raised when we try to access xhr.status
-                 */
-                try {
-                    msg = "HTTP " + xhr.status + " attempting to load TileSource";
-                } catch ( e ) {
-                    var formattedExc;
-                    if ( typeof( exc ) == "undefined" || !exc.toString ) {
-                        formattedExc = "Unknown error";
-                    } else {
-                        formattedExc = exc.toString();
+                    /*
+                        IE < 10 will block XHR requests to different origins. Any property access on the request
+                        object will raise an exception which we'll attempt to handle by formatting the original
+                        exception rather than the second one raised when we try to access xhr.status
+                     */
+                    try {
+                        msg = "HTTP " + xhr.status + " attempting to load TileSource";
+                    } catch ( e ) {
+                        var formattedExc;
+                        if ( typeof( exc ) == "undefined" || !exc.toString ) {
+                            formattedExc = "Unknown error";
+                        } else {
+                            formattedExc = exc.toString();
+                        }
+
+                        msg = formattedExc + " attempting to load TileSource";
                     }
 
-                    msg = formattedExc + " attempting to load TileSource";
+                    /***
+                     * Raised when an error occurs loading a TileSource.
+                     *
+                     * @event open-failed
+                     * @memberof OpenSeadragon.TileSource
+                     * @type {object}
+                     * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
+                     * @property {String} message
+                     * @property {String} source
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    _this.raiseEvent( 'open-failed', {
+                        message: msg,
+                        source: url
+                    });
                 }
-
-                /***
-                 * Raised when an error occurs loading a TileSource.
-                 *
-                 * @event open-failed
-                 * @memberof OpenSeadragon.TileSource
-                 * @type {object}
-                 * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
-                 * @property {String} message
-                 * @property {String} source
-                 * @property {?Object} userData - Arbitrary subscriber-defined object.
-                 */
-                _this.raiseEvent( 'open-failed', {
-                    message: msg,
-                    source: url
-                });
             });
         }
 
