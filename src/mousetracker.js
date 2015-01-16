@@ -1861,6 +1861,9 @@
         if ( abortGPoints.length > 0 ) {
             // simulate touchend
             updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
+            // release pointer capture
+            pointsList.captureCount = 1;
+            releasePointer( tracker, 'touch' );
             // simulate touchleave
             updatePointersExit( tracker, event, abortGPoints );
         }
