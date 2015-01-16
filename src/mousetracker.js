@@ -34,7 +34,10 @@
 
 (function ( $ ) {
 
-        // dictionary from hash to private properties
+    // All MouseTracker instances
+    var MOUSETRACKERS  = [];
+
+    // dictionary from hash to private properties
     var THIS           = {};
 
 
@@ -102,6 +105,8 @@
      *      Arbitrary object to be passed unchanged to any attached handler methods.
      */
     $.MouseTracker = function ( options ) {
+
+        MOUSETRACKERS.push( this );
 
         var args = arguments;
 
@@ -199,8 +204,6 @@
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
 
-            touchenter:            function ( event ) { onTouchEnter( _this, event ); },
-            touchleave:            function ( event ) { onTouchLeave( _this, event ); },
             touchstart:            function ( event ) { onTouchStart( _this, event ); },
             touchend:              function ( event ) { onTouchEnd( _this, event ); },
             touchendcaptured:      function ( event ) { onTouchEndCaptured( _this, event ); },
@@ -255,8 +258,17 @@
          * @function
          */
         destroy: function () {
+            var i;
+
             stopTracking( this );
             this.element = null;
+
+            for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+                if ( MOUSETRACKERS[ i ] === this ) {
+                    MOUSETRACKERS.splice( i, 1 );
+                    break;
+                }
+            }
 
             THIS[ this.hash ] = null;
             delete THIS[ this.hash ];
@@ -313,6 +325,24 @@
         },
 
         /**
+         * Returns the total number of pointers currently active on the tracked element.
+         * @function
+         * @returns {Number}
+         */
+        getActivePointerCount: function () {
+            var delegate = THIS[ this.hash ],
+                i,
+                len = delegate.activePointersLists.length,
+                count = 0;
+
+            for ( i = 0; i < len; i++ ) {
+                count += delegate.activePointersLists[ i ].getLength();
+            }
+
+            return count;
+        },
+
+        /**
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
@@ -326,6 +356,8 @@
          * @param {Number} event.buttons
          *      Current buttons pressed.
          *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
          * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
@@ -356,6 +388,8 @@
          * @param {Number} event.buttons
          *      Current buttons pressed.
          *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
          * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
@@ -887,7 +921,6 @@
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = false;
         $.MouseTracker.haveMouseEnter = false;
     } else if ( window.MSPointerEvent ) {
         // IE10
@@ -899,7 +932,6 @@
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = false;
         $.MouseTracker.haveMouseEnter = false;
     } else {
         // Legacy W3C mouse events
@@ -913,19 +945,14 @@
         }
         $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
         if ( 'ontouchstart' in window ) {
-            // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
+            // iOS, Android, and other W3c Touch Event implementations
+            //    (see http://www.w3.org/TR/touch-events/)
+            //    (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
+            //    (see https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
             $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
-            if ( 'ontouchenter' in window ) {
-                $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave" );
-                $.MouseTracker.haveTouchEnter = true;
-            } else {
-                $.MouseTracker.haveTouchEnter = false;
-            }
-        } else {
-            $.MouseTracker.haveTouchEnter = false;
         }
         if ( 'ongesturestart' in window ) {
-            // iOS (see https://developer.apple.com/library/safari/documentation/UserExperience/Reference/GestureEventClassReference/GestureEvent/GestureEvent.html)
+            // iOS (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
             //   Subscribe to these to prevent default gesture handling
             $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
         }
@@ -1822,45 +1849,24 @@
      * @private
      * @inner
      */
-    function onTouchEnter( tracker, event ) {
+    function abortTouchContacts( tracker, event, pointsList ) {
         var i,
-            touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPointCount = pointsList.getLength(),
+            abortGPoints = [];
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
-                currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
-                currentTime: $.now()
-            } );
+        for ( i = 0; i < gPointCount; i++ ) {
+            abortGPoints.push( pointsList.getByIndex( i ) );
         }
 
-        updatePointersEnter( tracker, event, gPoints );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onTouchLeave( tracker, event ) {
-        var i,
-            touchCount = event.changedTouches.length,
-            gPoints = [];
-
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
-                currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
-                currentTime: $.now()
-            } );
+        if ( abortGPoints.length > 0 ) {
+            // simulate touchend
+            updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
+            // release pointer capture
+            pointsList.captureCount = 1;
+            releasePointer( tracker, 'touch' );
+            // simulate touchleave
+            updatePointersExit( tracker, event, abortGPoints );
         }
-
-        updatePointersExit( tracker, event, gPoints );
     }
 
 
@@ -1871,10 +1877,18 @@
     function onTouchStart( tracker, event ) {
         var time,
             i,
+            j,
             touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPoints = [],
+            parentGPoints,
+            pointsList = tracker.getActivePointersListByType( 'touch' );
 
         time = $.now();
+
+        if ( pointsList.getLength() > event.touches.length - touchCount ) {
+            $.console.warn('Tracked touch contact count doesn\'t match event.touches.length. Removing all tracked touch pointers.');
+            abortTouchContacts( tracker, event, pointsList );
+        }
 
         for ( i = 0; i < touchCount; i++ ) {
             gPoints.push( {
@@ -1886,9 +1900,24 @@
             } );
         }
 
-        // simulate touchenter if not natively available
-        if ( !$.MouseTracker.haveTouchEnter ) {
-            updatePointersEnter( tracker, event, gPoints );
+        // simulate touchenter on our tracked element
+        updatePointersEnter( tracker, event, gPoints );
+
+        // simulate touchenter on our tracked element's tracked ancestor elements
+        for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+            if ( MOUSETRACKERS[ i ] !== tracker && MOUSETRACKERS[ i ].isTracking() && isParentChild( MOUSETRACKERS[ i ].element, tracker.element ) ) {
+                parentGPoints = [];
+                for ( j = 0; j < touchCount; j++ ) {
+                    parentGPoints.push( {
+                        id: event.changedTouches[ j ].identifier,
+                        type: 'touch',
+                        // isPrimary not set - let the updatePointers functions determine it
+                        currentPos: getMouseAbsolute( event.changedTouches[ j ] ),
+                        currentTime: time
+                    } );
+                }
+                updatePointersEnter( MOUSETRACKERS[ i ], event, parentGPoints );
+            }
         }
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
@@ -1929,8 +1958,10 @@
     function handleTouchEnd( tracker, event ) {
         var time,
             i,
+            j,
             touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPoints = [],
+            parentGPoints;
 
         time = $.now();
 
@@ -1948,9 +1979,24 @@
             releasePointer( tracker, 'touch' );
         }
 
-        // simulate touchleave if not natively available
-        if ( !$.MouseTracker.haveTouchEnter && touchCount > 0 ) {
-            updatePointersExit( tracker, event, gPoints );
+        // simulate touchleave on our tracked element
+        updatePointersExit( tracker, event, gPoints );
+
+        // simulate touchleave on our tracked element's tracked ancestor elements
+        for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+            if ( MOUSETRACKERS[ i ] !== tracker && MOUSETRACKERS[ i ].isTracking() && isParentChild( MOUSETRACKERS[ i ].element, tracker.element ) ) {
+                parentGPoints = [];
+                for ( j = 0; j < touchCount; j++ ) {
+                    parentGPoints.push( {
+                        id: event.changedTouches[ j ].identifier,
+                        type: 'touch',
+                        // isPrimary not set - let the updatePointers functions determine it
+                        currentPos: getMouseAbsolute( event.changedTouches[ j ] ),
+                        currentTime: time
+                    } );
+                }
+                updatePointersExit( MOUSETRACKERS[ i ], event, parentGPoints );
+            }
         }
 
         $.cancelEvent( event );
@@ -2344,6 +2390,7 @@
                         pointerType:          curGPoint.type,
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
+                        pointers:             tracker.getActivePointerCount(),
                         insideElementPressed: curGPoint.insideElementPressed,
                         buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
@@ -2407,6 +2454,7 @@
                         pointerType:          curGPoint.type,
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
+                        pointers:             tracker.getActivePointerCount(),
                         insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
                         buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
