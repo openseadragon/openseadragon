@@ -291,6 +291,15 @@
                     testZoomLevels[i],
                     "Zoomed by the correct amount."
                 );
+
+                // now use a ref point
+                viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
+                viewport.update();
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed by the correct amount."
+                );
             }
 
             start();
@@ -307,6 +316,15 @@
             var orig, expected, actual;
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomTo(testZoomLevels[i], null, true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed to the correct level."
+                );
+
+                // now use a ref point
+                viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
                 viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
