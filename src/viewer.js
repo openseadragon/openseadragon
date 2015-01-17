@@ -325,8 +325,44 @@ $.Viewer = function( options ) {
                 }
             },
 
+            keyDownHandler: function( event ){
+                if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+                    switch( event.keyCode ){
+                        case 38://up arrow
+                            if ( event.shift ) {
+                                _this.viewport.zoomBy(1.1);
+                            } else {
+                                _this.viewport.panBy(new $.Point(0, -0.05));
+                            }
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 40://down arrow
+                            if ( event.shift ) {
+                                _this.viewport.zoomBy(0.9);
+                            } else {
+                                _this.viewport.panBy(new $.Point(0, 0.05));
+                            }
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 37://left arrow
+                            _this.viewport.panBy(new $.Point(-0.05, 0));
+                            _this.viewport.applyConstraints();
+                            return false;
+                        case 39://right arrow
+                            _this.viewport.panBy(new $.Point(0.05, 0));
+                            _this.viewport.applyConstraints();
+                            return false;
+                        default:
+                            //console.log( 'navigator keycode %s', event.keyCode );
+                            return true;
+                    }
+                } else {
+                    return true;
+                }
+            },
+
             keyHandler:         function( event ){
-                if ( !event.preventDefaultAction ) {
+                if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
                     switch( event.keyCode ){
                         case 61://=|+
                             _this.viewport.zoomBy(1.1);
@@ -342,7 +378,6 @@ $.Viewer = function( options ) {
                             return false;
                         case 119://w
                         case 87://W
-                        case 38://up arrow
                             if ( event.shift ) {
                                 _this.viewport.zoomBy(1.1);
                             } else {
@@ -352,7 +387,6 @@ $.Viewer = function( options ) {
                             return false;
                         case 115://s
                         case 83://S
-                        case 40://down arrow
                             if ( event.shift ) {
                                 _this.viewport.zoomBy(0.9);
                             } else {
@@ -361,12 +395,10 @@ $.Viewer = function( options ) {
                             _this.viewport.applyConstraints();
                             return false;
                         case 97://a
-                        case 37://left arrow
                             _this.viewport.panBy(new $.Point(-0.05, 0));
                             _this.viewport.applyConstraints();
                             return false;
                         case 100://d
-                        case 39://right arrow
                             _this.viewport.panBy(new $.Point(0.05, 0));
                             _this.viewport.applyConstraints();
                             return false;
@@ -374,6 +406,8 @@ $.Viewer = function( options ) {
                             //console.log( 'navigator keycode %s', event.keyCode );
                             return true;
                     }
+                } else {
+                    return true;
                 }
             }
         }).setTracking( true ); // default state
