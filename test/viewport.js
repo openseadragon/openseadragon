@@ -286,9 +286,10 @@
             viewport.update();
             propEqual(
                 viewport.getBounds(),
-                new OpenSeadragon.Point(0,0),
+                new OpenSeadragon.Rect(-1.5,0,4,4),
                 "Viewport fit a tall image horizontally."
             );
+            start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open(TALL_PATH);
@@ -302,9 +303,10 @@
             viewport.update();
             propEqual(
                 viewport.getBounds(),
-                new OpenSeadragon.Point(0,0),
+                new OpenSeadragon.Rect(0,0,0.25,0.25),
                 "Viewport fit a wide image vertically."
             );
+            start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open(WIDE_PATH);
