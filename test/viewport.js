@@ -33,6 +33,7 @@
     var VIEWER_PADDING = new OpenSeadragon.Point(0.25, 0.25);
     var DZI_PATH = '/test/data/testpattern.dzi';
     var TALL_PATH = '/test/data/tall.dzi';
+    var WIDE_PATH = '/test/data/wide.dzi';
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
 
@@ -275,6 +276,38 @@
         viewer.homeFillsViewer = true;
         viewer.defaultZoomLevel = expected;
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
+    });
+
+    asyncTest('fitHorizontally', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.fitHorizontally(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                new OpenSeadragon.Point(0,0),
+                "Viewport fit a tall image horizontally."
+            );
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(TALL_PATH);
+    });
+
+    asyncTest('fitVertically', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.fitVertically(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                new OpenSeadragon.Point(0,0),
+                "Viewport fit a wide image vertically."
+            );
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(WIDE_PATH);
     });
 
     asyncTest('panBy', function(){
