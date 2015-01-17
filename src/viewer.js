@@ -109,14 +109,6 @@ $.Viewer = function( options ) {
          */
         container:      null,
         /**
-         * A &lt;textarea&gt; element, the element where keyboard events are handled.<br><br>
-         * Child element of {@link OpenSeadragon.Viewer#container},
-         * positioned below {@link OpenSeadragon.Viewer#canvas}. 
-         * @member {Element} keyboardCommandArea
-         * @memberof OpenSeadragon.Viewer#
-         */
-        keyboardCommandArea: null,
-        /**
          * A &lt;div&gt; element, the element where user-input events are handled for panning and zooming.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
          * positioned on top of {@link OpenSeadragon.Viewer#keyboardCommandArea}.<br><br>
@@ -263,7 +255,6 @@ $.Viewer = function( options ) {
 
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
-    this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
     this.drawersContainer     = $.makeNeutralElement( "div" );
     this.overlaysContainer    = $.makeNeutralElement( "div" );
 
@@ -277,6 +268,7 @@ $.Viewer = function( options ) {
         style.left     = "0px";
     }(this.canvas.style));
     $.setElementTouchActionNone( this.canvas );
+    this.canvas.tabIndex = 0;
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -290,21 +282,7 @@ $.Viewer = function( options ) {
         style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
 
-    this.keyboardCommandArea.className = "keyboard-command-area";
-    (function( style ){
-        style.width    = "100%";
-        style.height   = "100%";
-        style.overflow = "hidden";
-        style.position = "absolute";
-        style.top      = "0px";
-        style.left     = "0px";
-        style.resize   = "none";
-    }(  this.keyboardCommandArea.style ));
-    // Set read-only - hides keyboard on mobile devices, still allows input.
-    this.keyboardCommandArea.readOnly = true;
-
     this.container.insertBefore( this.canvas, this.container.firstChild );
-    this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
     this.canvas.appendChild( this.drawersContainer );
     this.canvas.appendChild( this.overlaysContainer );
@@ -317,110 +295,15 @@ $.Viewer = function( options ) {
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
 
-    this.keyboardCommandArea.innerTracker = new $.MouseTracker({
-            _this : this,
-            element:            this.keyboardCommandArea,
-            focusHandler:       function( event ){
-                if ( !event.preventDefaultAction ) {
-                    var point    = $.getElementPosition( this.element );
-                    window.scrollTo( 0, point.y );
-                }
-            },
-
-            keyDownHandler: function( event ){
-                if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-                    switch( event.keyCode ){
-                        case 38://up arrow
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(1.1);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, -0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 40://down arrow
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(0.9);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, 0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 37://left arrow
-                            _this.viewport.panBy(new $.Point(-0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 39://right arrow
-                            _this.viewport.panBy(new $.Point(0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        default:
-                            //console.log( 'navigator keycode %s', event.keyCode );
-                            return true;
-                    }
-                } else {
-                    return true;
-                }
-            },
-
-            keyHandler:         function( event ){
-                if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-                    switch( event.keyCode ){
-                        case 61://=|+
-                            _this.viewport.zoomBy(1.1);
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 45://-|_
-                            _this.viewport.zoomBy(0.9);
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 48://0|)
-                            _this.viewport.goHome();
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 119://w
-                        case 87://W
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(1.1);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, -0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 115://s
-                        case 83://S
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(0.9);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, 0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 97://a
-                            _this.viewport.panBy(new $.Point(-0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 100://d
-                            _this.viewport.panBy(new $.Point(0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        default:
-                            //console.log( 'navigator keycode %s', event.keyCode );
-                            return true;
-                    }
-                } else {
-                    return true;
-                }
-            }
-        }).setTracking( true ); // default state
-
-
     this.innerTracker = new $.MouseTracker({
         element:                  this.canvas,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
+        focusHandler:             $.delegate( this, onCanvasFocus ),
+        keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
+        keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
         dblClickHandler:          $.delegate( this, onCanvasDblClick ),
         dragHandler:              $.delegate( this, onCanvasDrag ),
@@ -648,9 +531,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         // destroy the mouse trackers
-        if (this.keyboardCommandArea){
-            this.keyboardCommandArea.innerTracker.destroy();
-        }
         if (this.innerTracker){
             this.innerTracker.destroy();
         }
@@ -663,7 +543,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear all our references to dom objects
         this.canvas = null;
-        this.keyboardCommandArea = null;
         this.container = null;
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
@@ -2309,14 +2188,107 @@ function onBlur(){
 
 }
 
+function onCanvasFocus( event ) {
+    if ( !event.preventDefaultAction ) {
+        var point    = $.getElementPosition( this.element );
+        window.scrollTo( 0, point.y );
+    }
+}
+
+function onCanvasKeyDown( event ) {
+    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+        switch( event.keyCode ){
+            case 38://up arrow
+                if ( event.shift ) {
+                    this.viewport.zoomBy(1.1);
+                } else {
+                    this.viewport.panBy(new $.Point(0, -0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 40://down arrow
+                if ( event.shift ) {
+                    this.viewport.zoomBy(0.9);
+                } else {
+                    this.viewport.panBy(new $.Point(0, 0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 37://left arrow
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            case 39://right arrow
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            default:
+                //console.log( 'navigator keycode %s', event.keyCode );
+                return true;
+        }
+    } else {
+        return true;
+    }
+}
+
+function onCanvasKeyPress( event ) {
+    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+        switch( event.keyCode ){
+            case 61://=|+
+                this.viewport.zoomBy(1.1);
+                this.viewport.applyConstraints();
+                return false;
+            case 45://-|_
+                this.viewport.zoomBy(0.9);
+                this.viewport.applyConstraints();
+                return false;
+            case 48://0|)
+                this.viewport.goHome();
+                this.viewport.applyConstraints();
+                return false;
+            case 119://w
+            case 87://W
+                if ( event.shift ) {
+                    this.viewport.zoomBy(1.1);
+                } else {
+                    this.viewport.panBy(new $.Point(0, -0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 115://s
+            case 83://S
+                if ( event.shift ) {
+                    this.viewport.zoomBy(0.9);
+                } else {
+                    this.viewport.panBy(new $.Point(0, 0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 97://a
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            case 100://d
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            default:
+                //console.log( 'navigator keycode %s', event.keyCode );
+                return true;
+        }
+    } else {
+        return true;
+    }
+}
+
 function onCanvasClick( event ) {
     var gestureSettings;
 
-    var haveKeyboardFocus = document.activeElement == this.keyboardCommandArea;
+    var haveKeyboardFocus = document.activeElement == this.canvas;
 
     // If we don't have keyboard focus, request it.
     if ( !haveKeyboardFocus ) {
-        this.keyboardCommandArea.focus();
+        this.canvas.focus();
     }
 
     if ( !event.preventDefaultAction && this.viewport && event.quick ) {
