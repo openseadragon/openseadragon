@@ -277,12 +277,54 @@
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
     });
 
+    asyncTest('panBy', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testPoints.length; i++){
+                var expected = viewport.getCenter().plus(testPoints[i]);
+                viewport.panBy(testPoints[i], true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getCenter(),
+                    expected,
+                    "Panned by the correct amount."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('panTo', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testPoints.length; i++){
+                viewport.panTo(testPoints[i], true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getCenter(),
+                    testPoints[i],
+                    "Panned to the correct location."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('zoomBy', function(){
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig, expected, actual;
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomBy(testZoomLevels[i], null, true);
                 viewport.update(); // need to call this even with immediately=true
@@ -313,7 +355,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            var orig, expected, actual;
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomTo(testZoomLevels[i], null, true);
                 viewport.update(); // need to call this even with immediately=true
