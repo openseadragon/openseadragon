@@ -15,6 +15,9 @@ OPENSEADRAGON CHANGELOG
 * Removed Viewer onContainerPress/onContainerRelease handlers (and the associated 'container-release' event ) that were never fired due to the canvas (child) element capturing the DOM events (#566)
 * Added 'canvas-enter', 'canvas-exit', and 'canvas-press' events to Viewer (#566)
 * ButtonGroup - removed obsolete MouseTracker event handlers (#566)
+* MouseTracker - added keydown and keyup handlers (#568)
+* Modifier keys ignored in keyboard navigation handlers (#503)
+* Arrow key navigation fixed across platforms (#565)
 
 1.2.0:
 
