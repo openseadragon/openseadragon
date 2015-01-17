@@ -2200,27 +2200,27 @@ function onCanvasKeyDown( event ) {
         switch( event.keyCode ){
             case 38://up arrow
                 if ( event.shift ) {
-                    _this.viewport.zoomBy(1.1);
+                    this.viewport.zoomBy(1.1);
                 } else {
-                    _this.viewport.panBy(new $.Point(0, -0.05));
+                    this.viewport.panBy(new $.Point(0, -0.05));
                 }
-                _this.viewport.applyConstraints();
+                this.viewport.applyConstraints();
                 return false;
             case 40://down arrow
                 if ( event.shift ) {
-                    _this.viewport.zoomBy(0.9);
+                    this.viewport.zoomBy(0.9);
                 } else {
-                    _this.viewport.panBy(new $.Point(0, 0.05));
+                    this.viewport.panBy(new $.Point(0, 0.05));
                 }
-                _this.viewport.applyConstraints();
+                this.viewport.applyConstraints();
                 return false;
             case 37://left arrow
-                _this.viewport.panBy(new $.Point(-0.05, 0));
-                _this.viewport.applyConstraints();
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
                 return false;
             case 39://right arrow
-                _this.viewport.panBy(new $.Point(0.05, 0));
-                _this.viewport.applyConstraints();
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
                 return false;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
@@ -2235,42 +2235,42 @@ function onCanvasKeyPress( event ) {
     if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
             case 61://=|+
-                _this.viewport.zoomBy(1.1);
-                _this.viewport.applyConstraints();
+                this.viewport.zoomBy(1.1);
+                this.viewport.applyConstraints();
                 return false;
             case 45://-|_
-                _this.viewport.zoomBy(0.9);
-                _this.viewport.applyConstraints();
+                this.viewport.zoomBy(0.9);
+                this.viewport.applyConstraints();
                 return false;
             case 48://0|)
-                _this.viewport.goHome();
-                _this.viewport.applyConstraints();
+                this.viewport.goHome();
+                this.viewport.applyConstraints();
                 return false;
             case 119://w
             case 87://W
                 if ( event.shift ) {
-                    _this.viewport.zoomBy(1.1);
+                    this.viewport.zoomBy(1.1);
                 } else {
-                    _this.viewport.panBy(new $.Point(0, -0.05));
+                    this.viewport.panBy(new $.Point(0, -0.05));
                 }
-                _this.viewport.applyConstraints();
+                this.viewport.applyConstraints();
                 return false;
             case 115://s
             case 83://S
                 if ( event.shift ) {
-                    _this.viewport.zoomBy(0.9);
+                    this.viewport.zoomBy(0.9);
                 } else {
-                    _this.viewport.panBy(new $.Point(0, 0.05));
+                    this.viewport.panBy(new $.Point(0, 0.05));
                 }
-                _this.viewport.applyConstraints();
+                this.viewport.applyConstraints();
                 return false;
             case 97://a
-                _this.viewport.panBy(new $.Point(-0.05, 0));
-                _this.viewport.applyConstraints();
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
                 return false;
             case 100://d
-                _this.viewport.panBy(new $.Point(0.05, 0));
-                _this.viewport.applyConstraints();
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
                 return false;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
