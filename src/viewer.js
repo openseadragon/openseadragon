@@ -107,14 +107,6 @@ $.Viewer = function( options ) {
          */
         container:      null,
         /**
-         * A &lt;textarea&gt; element, the element where keyboard events are handled.<br><br>
-         * Child element of {@link OpenSeadragon.Viewer#container},
-         * positioned below {@link OpenSeadragon.Viewer#canvas}.
-         * @member {Element} keyboardCommandArea
-         * @memberof OpenSeadragon.Viewer#
-         */
-        keyboardCommandArea: null,
-        /**
          * A &lt;div&gt; element, the element where user-input events are handled for panning and zooming.<br><br>
          * Child element of {@link OpenSeadragon.Viewer#container},
          * positioned on top of {@link OpenSeadragon.Viewer#keyboardCommandArea}.<br><br>
@@ -229,7 +221,6 @@ $.Viewer = function( options ) {
 
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
-    this.keyboardCommandArea  = $.makeNeutralElement( "textarea" );
 
     this.canvas.className = "openseadragon-canvas";
     (function( style ){
@@ -241,6 +232,7 @@ $.Viewer = function( options ) {
         style.left     = "0px";
     }(this.canvas.style));
     $.setElementTouchActionNone( this.canvas );
+    this.canvas.tabIndex = 0;
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -254,19 +246,7 @@ $.Viewer = function( options ) {
         style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
 
-    this.keyboardCommandArea.className = "keyboard-command-area";
-    (function( style ){
-        style.width    = "100%";
-        style.height   = "100%";
-        style.overflow = "hidden";
-        style.position = "absolute";
-        style.top      = "0px";
-        style.left     = "0px";
-        style.resize   = "none";
-    }(  this.keyboardCommandArea.style ));
-
     this.container.insertBefore( this.canvas, this.container.firstChild );
-    this.container.insertBefore( this.keyboardCommandArea, this.container.firstChild );
     this.element.appendChild( this.container );
 
     //Used for toggling between fullscreen and default container size
@@ -277,80 +257,22 @@ $.Viewer = function( options ) {
     this.bodyOverflow   = document.body.style.overflow;
     this.docOverflow    = document.documentElement.style.overflow;
 
-    this.keyboardCommandArea.innerTracker = new $.MouseTracker({
-            _this : this,
-            element:            this.keyboardCommandArea,
-            focusHandler:       function( event ){
-                if ( !event.preventDefaultAction ) {
-                    var point    = $.getElementPosition( this.element );
-                    window.scrollTo( 0, point.y );
-                }
-            },
-
-            keyHandler:         function( event ){
-                if ( !event.preventDefaultAction ) {
-                    switch( event.keyCode ){
-                        case 61://=|+
-                            _this.viewport.zoomBy(1.1);
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 45://-|_
-                            _this.viewport.zoomBy(0.9);
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 48://0|)
-                            _this.viewport.goHome();
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 119://w
-                        case 87://W
-                        case 38://up arrow
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(1.1);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, -0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 115://s
-                        case 83://S
-                        case 40://down arrow
-                            if ( event.shift ) {
-                                _this.viewport.zoomBy(0.9);
-                            } else {
-                                _this.viewport.panBy(new $.Point(0, 0.05));
-                            }
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 97://a
-                        case 37://left arrow
-                            _this.viewport.panBy(new $.Point(-0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        case 100://d
-                        case 39://right arrow
-                            _this.viewport.panBy(new $.Point(0.05, 0));
-                            _this.viewport.applyConstraints();
-                            return false;
-                        default:
-                            //console.log( 'navigator keycode %s', event.keyCode );
-                            return true;
-                    }
-                }
-            }
-        }).setTracking( true ); // default state
-
-
     this.innerTracker = new $.MouseTracker({
         element:                  this.canvas,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
+        focusHandler:             $.delegate( this, onCanvasFocus ),
+        keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
+        keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
         dblClickHandler:          $.delegate( this, onCanvasDblClick ),
         dragHandler:              $.delegate( this, onCanvasDrag ),
         dragEndHandler:           $.delegate( this, onCanvasDragEnd ),
+        enterHandler:             $.delegate( this, onCanvasEnter ),
+        exitHandler:              $.delegate( this, onCanvasExit ),
+        pressHandler:             $.delegate( this, onCanvasPress ),
         releaseHandler:           $.delegate( this, onCanvasRelease ),
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
@@ -365,9 +287,7 @@ $.Viewer = function( options ) {
         dblClickTimeThreshold: this.dblClickTimeThreshold,
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
-        exitHandler:           $.delegate( this, onContainerExit ),
-        pressHandler:          $.delegate( this, onContainerPress ),
-        releaseHandler:        $.delegate( this, onContainerRelease )
+        exitHandler:           $.delegate( this, onContainerExit )
     }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
 
     if( this.toolbar ){
@@ -814,9 +734,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         // destroy the mouse trackers
-        if (this.keyboardCommandArea){
-            this.keyboardCommandArea.innerTracker.destroy();
-        }
         if (this.innerTracker){
             this.innerTracker.destroy();
         }
@@ -829,7 +746,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear all our references to dom objects
         this.canvas = null;
-        this.keyboardCommandArea = null;
         this.container = null;
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
@@ -2058,14 +1974,22 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
     setTimeout( function() {
         if ( $.type( tileSource ) == 'string' ) {
             //If its still a string it means it must be a url at this point
-            tileSource = new $.TileSource( tileSource, function( event ) {
-                successCallback( event.tileSource );
+            tileSource = new $.TileSource({
+                url: tileSource,
+                ajaxWithCredentials: viewer.ajaxWithCredentials,
+                success: function( event ) {
+                    successCallback( event.tileSource );
+                }
             });
             tileSource.addHandler( 'open-failed', function( event ) {
                 failCallback( event );
             } );
 
         } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ) {
+            if (tileSource.ajaxWithCredentials === undefined) {
+                tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
+            }
+
             if ( $.isFunction( tileSource.getTileUrl ) ) {
                 //Custom tile source
                 var customTileSource = new $.TileSource( tileSource );
@@ -2261,8 +2185,108 @@ function onBlur(){
 
 }
 
+function onCanvasFocus( event ) {
+    if ( !event.preventDefaultAction ) {
+        var point    = $.getElementPosition( this.element );
+        window.scrollTo( 0, point.y );
+    }
+}
+
+function onCanvasKeyDown( event ) {
+    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+        switch( event.keyCode ){
+            case 38://up arrow
+                if ( event.shift ) {
+                    this.viewport.zoomBy(1.1);
+                } else {
+                    this.viewport.panBy(new $.Point(0, -0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 40://down arrow
+                if ( event.shift ) {
+                    this.viewport.zoomBy(0.9);
+                } else {
+                    this.viewport.panBy(new $.Point(0, 0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 37://left arrow
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            case 39://right arrow
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            default:
+                //console.log( 'navigator keycode %s', event.keyCode );
+                return true;
+        }
+    } else {
+        return true;
+    }
+}
+
+function onCanvasKeyPress( event ) {
+    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+        switch( event.keyCode ){
+            case 61://=|+
+                this.viewport.zoomBy(1.1);
+                this.viewport.applyConstraints();
+                return false;
+            case 45://-|_
+                this.viewport.zoomBy(0.9);
+                this.viewport.applyConstraints();
+                return false;
+            case 48://0|)
+                this.viewport.goHome();
+                this.viewport.applyConstraints();
+                return false;
+            case 119://w
+            case 87://W
+                if ( event.shift ) {
+                    this.viewport.zoomBy(1.1);
+                } else {
+                    this.viewport.panBy(new $.Point(0, -0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 115://s
+            case 83://S
+                if ( event.shift ) {
+                    this.viewport.zoomBy(0.9);
+                } else {
+                    this.viewport.panBy(new $.Point(0, 0.05));
+                }
+                this.viewport.applyConstraints();
+                return false;
+            case 97://a
+                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            case 100://d
+                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.applyConstraints();
+                return false;
+            default:
+                //console.log( 'navigator keycode %s', event.keyCode );
+                return true;
+        }
+    } else {
+        return true;
+    }
+}
+
 function onCanvasClick( event ) {
     var gestureSettings;
+
+    var haveKeyboardFocus = document.activeElement == this.canvas;
+
+    // If we don't have keyboard focus, request it.
+    if ( !haveKeyboardFocus ) {
+        this.canvas.focus();
+    }
 
     if ( !event.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
@@ -2419,6 +2443,92 @@ function onCanvasDragEnd( event ) {
     });
 }
 
+function onCanvasEnter( event ) {
+    /**
+     * Raised when a pointer enters the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-enter
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-enter', {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        buttons: event.buttons,
+        pointers: event.pointers,
+        insideElementPressed: event.insideElementPressed,
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasExit( event ) {
+    /**
+     * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-exit
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-exit', {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        buttons: event.buttons,
+        pointers: event.pointers,
+        insideElementPressed: event.insideElementPressed,
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasPress( event ) {
+    /**
+     * Raised when the primary mouse button is pressed or touch starts on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-press
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-press', {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        insideElementPressed: event.insideElementPressed,
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
+    });
+}
+
 function onCanvasRelease( event ) {
     /**
      * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
@@ -2428,6 +2538,7 @@ function onCanvasRelease( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
      * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
@@ -2436,6 +2547,7 @@ function onCanvasRelease( event ) {
      */
     this.raiseEvent( 'canvas-release', {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         insideElementPressed: event.insideElementPressed,
         insideElementReleased: event.insideElementReleased,
@@ -2604,8 +2716,38 @@ function onCanvasScroll( event ) {
     }
 }
 
+function onContainerEnter( event ) {
+    THIS[ this.hash ].mouseInside = true;
+    abortControlsAutoHide( this );
+    /**
+     * Raised when the cursor enters the {@link OpenSeadragon.Viewer#container} element.
+     *
+     * @event container-enter
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
+     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
+     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'container-enter', {
+        tracker: event.eventSource,
+        position: event.position,
+        buttons: event.buttons,
+        pointers: event.pointers,
+        insideElementPressed: event.insideElementPressed,
+        buttonDownAny: event.buttonDownAny,
+        originalEvent: event.originalEvent
+    });
+}
+
 function onContainerExit( event ) {
-    if ( !event.insideElementPressed ) {
+    if ( event.pointers < 1 ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
             beginControlsAutoHide( this );
@@ -2621,6 +2763,7 @@ function onContainerExit( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+     * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
      * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
      * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
      * @property {Object} originalEvent - The original DOM event.
@@ -2630,71 +2773,7 @@ function onContainerExit( event ) {
         tracker: event.eventSource,
         position: event.position,
         buttons: event.buttons,
-        insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny,
-        originalEvent: event.originalEvent
-    });
-}
-
-function onContainerPress( event ) {
-    if ( event.pointerType === 'touch' && !$.MouseTracker.haveTouchEnter ) {
-        THIS[ this.hash ].mouseInside = true;
-        abortControlsAutoHide( this );
-    }
-}
-
-function onContainerRelease( event ) {
-    if ( !event.insideElementReleased || ( event.pointerType === 'touch' && !$.MouseTracker.haveTouchEnter ) ) {
-        THIS[ this.hash ].mouseInside = false;
-        if ( !THIS[ this.hash ].animating ) {
-            beginControlsAutoHide( this );
-        }
-    }
-    /**
-     * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#container} element.
-     *
-     * @event container-release
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-     * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent( 'container-release', {
-        tracker: event.eventSource,
-        position: event.position,
-        insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased,
-        originalEvent: event.originalEvent
-    });
-}
-
-function onContainerEnter( event ) {
-    THIS[ this.hash ].mouseInside = true;
-    abortControlsAutoHide( this );
-    /**
-     * Raised when the cursor enters the {@link OpenSeadragon.Viewer#container} element.
-     *
-     * @event container-enter
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
-     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-     * @property {Boolean} buttonDownAny - Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent( 'container-enter', {
-        tracker: event.eventSource,
-        position: event.position,
-        buttons: event.buttons,
+        pointers: event.pointers,
         insideElementPressed: event.insideElementPressed,
         buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
