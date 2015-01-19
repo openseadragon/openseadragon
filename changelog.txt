@@ -17,6 +17,7 @@ OPENSEADRAGON CHANGELOG
 * ButtonGroup - removed obsolete MouseTracker event handlers (#566)
 * MouseTracker - added keydown and keyup handlers (#568)
 * Modifier keys ignored in keyboard navigation handlers (#503)
+* Requesting keyboard focus when viewer is clicked (#537)
 * Arrow key navigation fixed across platforms (#565)
 * Removed textarea element from viewer DOM. Viewer.canvas now handles keyboard navigation (#569)
 
