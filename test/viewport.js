@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual, console */
 
 (function () {
     var viewer;
@@ -276,6 +276,111 @@
         viewer.homeFillsViewer = true;
         viewer.defaultZoomLevel = expected;
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
+    });
+
+    asyncTest('resetContentSize', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRects.length; i++){
+                var rect = testRects[i].times(viewport.getContainerSize());
+                viewport.resetContentSize(rect);
+                viewport.update();
+                propEqual(
+                    viewport.contentSize,
+                    rect,
+                    "Reset content size correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('goHome', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            // zoom/pan somewhere
+            viewport.zoomTo(ZOOM_FACTOR, true);
+            viewport.update();
+
+            viewport.goHome(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                viewport.getHomeBounds(),
+                 "Went home."
+            );
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('ensureVisible', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            // zoom/pan so that the image is out of view
+            viewport.zoomTo(ZOOM_FACTOR * -50, true);
+            viewport.panBy(new OpenSeadragon.Point(5000, 5000), null, true);
+            viewport.update();
+
+            viewport.ensureVisible(true);
+            viewport.update();
+            var bounds = viewport.getBounds();
+            ok(bounds.getSize().x > 1 && bounds.getSize().y > 1, "Moved viewport so that image is visible.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRects.length; i++){
+                var rect = testRects[i].times(viewport.getContainerSize());
+                viewport.fitBounds(rect, true);
+                viewport.update();
+                propEqual(
+                    viewport.getBounds(),
+                    rect,
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBoundsWithConstraints', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRects.length; i++){
+                var rect = testRects[i].times(viewport.getContainerSize());
+                viewport.fitBoundsWithConstraints(rect, true);
+                viewport.update();
+                propEqual(
+                    viewport.getBounds(),
+                    rect,
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('fitHorizontally', function(){
