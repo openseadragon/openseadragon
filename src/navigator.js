@@ -230,6 +230,36 @@ $.Navigator = function( options ){
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
 
     /**
+     * @function
+     * @return {Boolean}
+     */
+    isMouseNavEnabled: function () {
+        return this.element.innerTracker.isTracking();
+    },
+
+    /**
+     * @function
+     * @param {Boolean} enabled - true to enable, false to disable
+     * @return {OpenSeadragon.Navigator} Chainable.
+     * @fires OpenSeadragon.Navigator.event:mouse-enabled
+     */
+    setMouseNavEnabled: function( enabled ){
+        this.element.innerTracker.setTracking( enabled );
+        /**
+         * Raised when mouse/touch navigation is enabled or disabled (see {@link OpenSeadragon.Navigator#setMouseNavEnabled}).
+         *
+         * @event mouse-enabled
+         * @memberof OpenSeadragon.Navigator
+         * @type {object}
+         * @property {OpenSeadragon.Navigator} eventSource - A reference to the Navigator which raised the event.
+         * @property {Boolean} enabled
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'mouse-enabled', { enabled: enabled } );
+        return this;
+    },
+
+    /**
      * Used to notify the navigator when its size has changed. 
      * Especially useful when {@link OpenSeadragon.Options}.navigatorAutoResize is set to false and the navigator is resizable.
      * @function

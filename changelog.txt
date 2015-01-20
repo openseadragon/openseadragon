@@ -20,6 +20,7 @@ OPENSEADRAGON CHANGELOG
 * Requesting keyboard focus when viewer is clicked (#537)
 * Arrow key navigation fixed across platforms (#565)
 * Removed textarea element from viewer DOM. Viewer.canvas now handles keyboard navigation (#569)
+* Added setMouseNavEnabled() and isMouseNavEnabled() method overrides to Navigator (#572)
 
 1.2.0:
 
