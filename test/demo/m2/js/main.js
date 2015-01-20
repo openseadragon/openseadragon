@@ -53,45 +53,16 @@
             });
 
             this.viewer.addHandler('canvas-drag', function() {
-                if (self.mode === 'thumbs') {
-                    return;
-                }
-
-                if (self.panBounds) {
-                    var center = self.viewer.viewport.getCenter();
-                    var currentCenter = self.viewer.viewport.getCenter(true);
-                    var viewBounds = self.viewer.viewport.getBounds();
-                    var bounds = self.panBounds.clone();
-                    var left = Math.min(currentCenter.x, bounds.x + (viewBounds.width / 2));
-                    var top = Math.min(currentCenter.y, bounds.y + (viewBounds.height / 2));
-                    var right = Math.max(currentCenter.x, (bounds.x + bounds.width) - (viewBounds.width / 2));
-                    var bottom = Math.max(currentCenter.y, (bounds.y + bounds.height) - (viewBounds.height / 2));
-
-                    var x;
-                    if (left <= right) {
-                        x = Math.max(left, Math.min(right, center.x));
-                    } else {
-                        x = bounds.x + (bounds.width / 2);
-                    }
-
-                    var y;
-                    if (top <= bottom) {
-                        y = Math.max(top, Math.min(bottom, center.y));
-                    } else {
-                        y = bounds.y + (bounds.height / 2);
-                    }
-
-                    if (x !== center.x || y !== center.y) {
-                        self.viewer.viewport.panTo(new OpenSeadragon.Point(x, y));
-                    }
-                }
-
-                if (self.mode === 'scroll') {
-                    var result = self.hitTest(self.viewer.viewport.getCenter());
+                if (this.mode === 'scroll') {
+                    var result = this.hitTest(this.viewer.viewport.getCenter());
                     if (result) {
-                        self.page = result.index;
+                        this.page = result.index;
                     }
                 }
+            });
+
+            this.viewer.addHandler('viewport-change', function(event) {
+                self.applyConstraints();
             });
 
             var tracker = new OpenSeadragon.MouseTracker({
@@ -222,6 +193,41 @@
         },
 
         // ----------
+        applyConstraints: function() {
+            if (this.mode === 'thumbs') {
+                return;
+            }
+
+            if (this.panBounds) {
+                var center = this.viewer.viewport.getCenter(true);
+                var viewBounds = this.viewer.viewport.getBounds(true);
+                var bounds = this.panBounds.clone();
+                var left = bounds.x + (viewBounds.width / 2);
+                var top = bounds.y + (viewBounds.height / 2);
+                var right = (bounds.x + bounds.width) - (viewBounds.width / 2);
+                var bottom = (bounds.y + bounds.height) - (viewBounds.height / 2);
+
+                var x;
+                if (left <= right) {
+                    x = Math.max(left, Math.min(right, center.x));
+                } else {
+                    x = bounds.x + (bounds.width / 2);
+                }
+
+                var y;
+                if (top <= bottom) {
+                    y = Math.max(top, Math.min(bottom, center.y));
+                } else {
+                    y = bounds.y + (bounds.height / 2);
+                }
+
+                if (x !== center.x || y !== center.y) {
+                    this.viewer.viewport.panTo(new OpenSeadragon.Point(x, y), true);
+                }
+            }
+        },
+
+        // ----------
         setMode: function(config) {
             var self = this;
 
@@ -342,6 +348,8 @@
 
         // ----------
         goToPage: function(config) {
+            var self = this;
+
             var itemCount = this.viewer.world.getItemCount();
             this.page = Math.max(0, Math.min(itemCount - 1, config.page));
 
@@ -389,16 +397,26 @@
             box = new OpenSeadragon.Rect(x, y, width, height);
             this.viewer.viewport.fitBounds(box, config.immediately);
 
-            if (this.mode === 'page' || this.mode === 'book') {
-                this.panBounds = box;
-            } else if (this.mode === 'scroll') {
-                this.panBounds = this.viewer.world.getItemAt(0).getBounds()
-                    .union(this.viewer.world.getItemAt(itemCount - 1).getBounds());
+            this.panBounds = null;
 
-                this.panBounds.x -= this.pageBuffer;
-                this.panBounds.y -= this.pageBuffer;
-                this.panBounds.width += (this.pageBuffer * 2);
-                this.panBounds.height += (this.pageBuffer * 2);
+            var setPanBounds = function() {
+                if (self.mode === 'page' || self.mode === 'book') {
+                    self.panBounds = box;
+                } else if (self.mode === 'scroll') {
+                    self.panBounds = self.viewer.world.getItemAt(0).getBounds()
+                        .union(self.viewer.world.getItemAt(itemCount - 1).getBounds());
+
+                    self.panBounds.x -= self.pageBuffer;
+                    self.panBounds.y -= self.pageBuffer;
+                    self.panBounds.width += (self.pageBuffer * 2);
+                    self.panBounds.height += (self.pageBuffer * 2);
+                }
+            };
+
+            if (config.immediately) {
+                setPanBounds();
+            } else {
+                setTimeout(setPanBounds, this.viewer.animationTime * 1000);
             }
 
             this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
