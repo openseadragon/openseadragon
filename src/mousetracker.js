@@ -977,7 +977,8 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    if ( window.PointerEvent ) {
+    // Note: window.navigator.pointerEnable is deprecated on IE 11 and not part of W3C spec.
+    if ( window.PointerEvent && ( window.navigator.pointerEnabled || $.Browser.vendor !== $.BROWSERS.IE ) ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
         $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
@@ -1518,7 +1519,6 @@
             propagate = tracker.keyDownHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
@@ -1548,7 +1548,6 @@
             propagate = tracker.keyUpHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
@@ -1578,7 +1577,6 @@
             propagate = tracker.keyHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
