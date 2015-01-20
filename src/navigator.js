@@ -52,8 +52,7 @@ $.Navigator = function( options ){
     var viewer      = options.viewer,
         _this = this,
         viewerSize,
-        navigatorSize,
-        unneededElement;
+        navigatorSize;
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
@@ -168,24 +167,6 @@ $.Navigator = function( options ){
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
 
-    this.element.innerTracker = new $.MouseTracker({
-        element:         this.element,
-        dragHandler:     $.delegate( this, onCanvasDrag ),
-        clickHandler:    $.delegate( this, onCanvasClick ),
-        releaseHandler:  $.delegate( this, onCanvasRelease ),
-        scrollHandler:   $.delegate( this, onCanvasScroll )
-    }).setTracking( true );
-
-    /*this.displayRegion.outerTracker = new $.MouseTracker({
-        element:            this.container,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        enterHandler:       $.delegate( this, onContainerEnter ),
-        exitHandler:        $.delegate( this, onContainerExit ),
-        releaseHandler:     $.delegate( this, onContainerRelease )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
-
-
     viewer.addControl(
         this.element,
         options.controlOptions
@@ -211,10 +192,6 @@ $.Navigator = function( options ){
 
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
-    unneededElement = this.element.getElementsByTagName('textarea')[0];
-    if (unneededElement) {
-        unneededElement.parentNode.removeChild(unneededElement);
-    }
 
     if (options.navigatorRotate)
     {
@@ -223,41 +200,29 @@ $.Navigator = function( options ){
             _setTransformRotate(_this.displayRegion, -args.degrees);
             _this.viewport.setRotation(args.degrees);
         });
-
     }
+
+    // Remove the base class' (Viewer's) innerTracker and replace it with our own
+    this.innerTracker.destroy();
+    this.innerTracker = new $.MouseTracker({
+        element:         this.element,
+        dragHandler:     $.delegate( this, onCanvasDrag ),
+        clickHandler:    $.delegate( this, onCanvasClick ),
+        releaseHandler:  $.delegate( this, onCanvasRelease ),
+        scrollHandler:   $.delegate( this, onCanvasScroll )
+    }).setTracking( true );
+
+    /*this.displayRegion.outerTracker = new $.MouseTracker({
+        element:            this.container,
+        clickTimeThreshold: this.clickTimeThreshold,
+        clickDistThreshold: this.clickDistThreshold,
+        enterHandler:       $.delegate( this, onContainerEnter ),
+        exitHandler:        $.delegate( this, onContainerExit ),
+        releaseHandler:     $.delegate( this, onContainerRelease )
+    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
 };
 
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
-
-    /**
-     * @function
-     * @return {Boolean}
-     */
-    isMouseNavEnabled: function () {
-        return this.element.innerTracker.isTracking();
-    },
-
-    /**
-     * @function
-     * @param {Boolean} enabled - true to enable, false to disable
-     * @return {OpenSeadragon.Navigator} Chainable.
-     * @fires OpenSeadragon.Navigator.event:mouse-enabled
-     */
-    setMouseNavEnabled: function( enabled ){
-        this.element.innerTracker.setTracking( enabled );
-        /**
-         * Raised when mouse/touch navigation is enabled or disabled (see {@link OpenSeadragon.Navigator#setMouseNavEnabled}).
-         *
-         * @event mouse-enabled
-         * @memberof OpenSeadragon.Navigator
-         * @type {object}
-         * @property {OpenSeadragon.Navigator} eventSource - A reference to the Navigator which raised the event.
-         * @property {Boolean} enabled
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'mouse-enabled', { enabled: enabled } );
-        return this;
-    },
 
     /**
      * Used to notify the navigator when its size has changed. 
