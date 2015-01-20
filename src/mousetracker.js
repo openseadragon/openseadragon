@@ -1518,7 +1518,6 @@
             propagate = tracker.keyDownHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
@@ -1548,7 +1547,6 @@
             propagate = tracker.keyUpHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
@@ -1578,7 +1576,6 @@
             propagate = tracker.keyHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
                     ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
