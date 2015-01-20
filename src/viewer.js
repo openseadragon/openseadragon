@@ -2798,13 +2798,10 @@ function updateMulti( viewer ) {
 
 function updateOnce( viewer ) {
 
-    var containerSize,
-        animated;
-
     //viewer.profiler.beginUpdate();
 
     if ( viewer.autoResize ) {
-        containerSize = _getSafeElemSize( viewer.container );
+        var containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             // maintain image position
             var oldBounds = viewer.viewport.getBounds();
@@ -2815,8 +2812,22 @@ function updateOnce( viewer ) {
         }
     }
 
-    animated = viewer.viewport.update();
-    animated = viewer.world.update() || animated;
+    var viewportChange = viewer.viewport.update();
+    var animated = viewer.world.update() || viewportChange;
+
+    if (viewportChange) {
+        /**
+         * Raised when any spring animation update occurs (zoom, pan, etc.),
+         * before the viewer has drawn the new location.
+         *
+         * @event viewport-change
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        viewer.raiseEvent('viewport-change');
+    }
 
     if( viewer.referenceStrip ){
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
@@ -2847,7 +2858,8 @@ function updateOnce( viewer ) {
 
         if (animated) {
             /**
-             * Raised when any spring animation update occurs (zoom, pan, etc.).
+             * Raised when any spring animation update occurs (zoom, pan, etc.),
+             * after the viewer has drawn the new location.
              *
              * @event animation
              * @memberof OpenSeadragon.Viewer

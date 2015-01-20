@@ -44,6 +44,8 @@ OPENSEADRAGON CHANGELOG
 * Added union() to OpenSeadragon.Rect
 * Fixed an error in fitBounds if the new and old bounds were extremely close in size
 * Added ajaxWithCredentials option (#543)
+* Added viewport-change event for after the viewport changes but before it's drawn
+* A spring's current value is now updated immediately on reset (#524)
 
 1.2.1: (in progress)
 
