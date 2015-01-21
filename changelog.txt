@@ -22,6 +22,7 @@ OPENSEADRAGON CHANGELOG
 * Removed textarea element from viewer DOM. Viewer.canvas now handles keyboard navigation (#569)
 * Removed 'position' property from MouseTracker keyDownHandler/keyUpHandler/keyHandler functions (#573)
 * Fixed pointer event model detection for IE 10 and IE 11 (#571)
+* Added setMouseNavEnabled() support to Navigator (#572)
 
 1.2.0:
 
