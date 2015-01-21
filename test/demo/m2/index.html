@@ -43,7 +43,7 @@
                 background: white;
             }
 
-            .openseadragon1.full {
+            .viewer-position {
                 position: absolute;
                 left: 0;
                 top: 30px;
@@ -51,7 +51,10 @@
                 bottom: 0;
             }
 
-            .openseadragon1.thumbs {
+            .scroll-cover {
+                display: none;
+                overflow: scroll;
+                z-index: 100;
             }
 
         </style>
@@ -67,6 +70,9 @@
                 <button class="next">Next</button>
             </div>
         </div>
-        <div id="contentDiv" class="openseadragon1"></div>
+        <div id="contentDiv" class="openseadragon1 viewer-position"></div>
+        <div class="scroll-cover viewer-position">
+            <div class="scroll-inner"></div>
+        </div>
     </body>
 </html>

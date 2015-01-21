@@ -20,6 +20,25 @@
                 'page'
             ];
 
+            var highsmith = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Height: "9221",
+                        Width:  "7026"
+                    }
+                }
+            };
+
+            // this.tileSources = [];
+            // for (var i = 0; i < count; i++) {
+            //     this.tileSources.push(highsmith);
+            // }
+
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
@@ -37,21 +56,6 @@
                 });
             });
 
-            this.viewer.addHandler('canvas-click', function(event) {
-                if (self.mode !== 'thumbs' || !event.quick) {
-                    return;
-                }
-
-                var pos = self.viewer.viewport.pointFromPixel(event.position);
-                var result = self.hitTest(pos);
-                if (result) {
-                    self.setMode({
-                        mode: 'page',
-                        page: result.index
-                    });
-                }
-            });
-
             this.viewer.addHandler('canvas-drag', function() {
                 if (this.mode === 'scroll') {
                     var result = this.hitTest(this.viewer.viewport.getCenter());
@@ -64,18 +68,6 @@
             this.viewer.addHandler('viewport-change', function(event) {
                 self.applyConstraints();
             });
-
-            var tracker = new OpenSeadragon.MouseTracker({
-                element: this.viewer.container,
-                moveHandler: function(event) {
-                    if (self.mode === 'thumbs') {
-                        var result = self.hitTest(self.viewer.viewport.pointFromPixel(event.position));
-                        self.updateHover(result ? result.index : -1);
-                    }
-                }
-            });
-
-            tracker.setTracking(true);
 
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).click(function() {
@@ -104,6 +96,37 @@
                     self.previous();
                 }
             });
+
+            this.$scrollInner = $('.scroll-inner');
+
+            this.$scrollCover = $('.scroll-cover')
+                .scroll(function(event) {
+                    var info = self.getScrollInfo();
+                    if (!info || self.ignoreScroll) {
+                        return;
+                    }
+
+                    var pos = new OpenSeadragon.Point(info.thumbBounds.getCenter().x,
+                        info.thumbBounds.y + (info.viewportHeight / 2) +
+                        (info.viewportMax * info.scrollFactor));
+
+                    self.viewer.viewport.panTo(pos, true);
+                })
+                .mousemove(function(event) {
+                    var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
+                    self.updateHover(result ? result.index : -1);
+                })
+                .click(function(event) {
+                    var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
+                    if (result) {
+                        self.setMode({
+                            mode: 'page',
+                            page: result.index
+                        });
+                    }
+                });
 
             var svgNode = this.viewer.svgOverlay();
 
@@ -180,6 +203,26 @@
         },
 
         // ----------
+        getScrollInfo: function() {
+            if (!this.thumbBounds) {
+                return null;
+            }
+
+            var output = {};
+
+            var viewerWidth = this.$el.width();
+            var viewerHeight = this.$el.height();
+            var scrollTop = this.$scrollCover.scrollTop();
+            output.scrollMax = this.$scrollInner.height() - this.$scrollCover.height();
+            output.scrollFactor = (output.scrollMax > 0 ? scrollTop / output.scrollMax : 0);
+
+            output.thumbBounds = this.thumbBounds;
+            output.viewportHeight = output.thumbBounds.width * (viewerHeight / viewerWidth);
+            output.viewportMax = Math.max(0, output.thumbBounds.height - output.viewportHeight);
+            return output;
+        },
+
+        // ----------
         update: function() {
             var self = this;
 
@@ -237,13 +280,10 @@
                 this.page = config.page; // Need to do this before layout
             }
 
-            var layout = this.createLayout();
+            this.ignoreScroll = true;
+            this.thumbBounds = null;
 
-            var oldSize = new OpenSeadragon.Point(this.$el.width(), this.$el.height());
-            var oldBounds = this.viewer.viewport.getBounds();
-            var scrollTop = $(window).scrollTop();
-            var scrollMax = $(document).height() - $(window).height();
-            var scrollFactor = (scrollMax > 0 ? scrollTop / scrollMax : 0);
+            var layout = this.createLayout();
 
             if (this.mode === 'thumbs') {
                 this.viewer.gestureSettingsMouse.scrollToZoom = false;
@@ -254,9 +294,8 @@
                 var width = layout.bounds.width + (this.bigBuffer * 2);
                 var height = layout.bounds.height + (this.bigBuffer * 2);
                 var newHeight = viewerWidth * (height / width);
-                this.$el
-                    .addClass('thumbs')
-                    .removeClass('full')
+                this.$scrollCover.show();
+                this.$scrollInner
                     .css({
                         height: newHeight
                     });
@@ -265,31 +304,45 @@
                 this.viewer.zoomPerClick = 2;
                 this.viewer.panHorizontal = true;
                 this.viewer.panVertical = true;
-                this.$el
-                    .addClass('full')
-                    .removeClass('thumbs')
-                    .css({
-                        height: 'auto'
-                    });
-            }
-
-            var newSize = new OpenSeadragon.Point(this.$el.width(), this.$el.height());
-            if (oldSize.x !== newSize.x || oldSize.y !== newSize.y) {
-                this.viewer.viewport.resize(newSize, false);
-                var newBounds = this.viewer.viewport.getBounds();
-                var box = oldBounds.clone();
-                box.height = box.width * (newBounds.height / newBounds.width);
-
-                var boxMax = oldBounds.height - box.height;
-                box.y += boxMax * scrollFactor;
-                this.viewer.viewport.fitBounds(box, true);
-                this.viewer.viewport.update();
+                this.$scrollCover.hide();
             }
 
             this.setLayout({
                 layout: layout,
                 immediately: config.immediately
             });
+
+            if (this.mode === 'thumbs') {
+                // Set up thumbBounds
+                this.thumbBounds = this.viewer.world.getHomeBounds();
+                this.thumbBounds.x -= this.bigBuffer;
+                this.thumbBounds.y -= this.bigBuffer;
+                this.thumbBounds.width += (this.bigBuffer * 2);
+                this.thumbBounds.height += (this.bigBuffer * 2);
+
+                // Scroll to the appropriate location
+                var info = this.getScrollInfo();
+
+                var viewportBounds = this.thumbBounds.clone();
+                viewportBounds.y += info.viewportMax * info.scrollFactor;
+                viewportBounds.height = info.viewportHeight;
+
+                var itemBounds = this.viewer.world.getItemAt(this.page).getBounds();
+                var top = itemBounds.y - this.bigBuffer;
+                var bottom = top + itemBounds.height + (this.bigBuffer * 2);
+
+                var normalY;
+                if (top < viewportBounds.y) {
+                    normalY = top - this.thumbBounds.y;
+                } else if (bottom > viewportBounds.y + viewportBounds.height) {
+                    normalY = (bottom - info.viewportHeight) - this.thumbBounds.y;
+                }
+
+                if (normalY !== undefined) {
+                    var viewportFactor = normalY / info.viewportMax;
+                    this.$scrollCover.scrollTop(info.scrollMax * viewportFactor);
+                }
+            }
 
             this.goHome({
                 immediately: config.immediately
@@ -300,6 +353,10 @@
             this.update();
             this.updateHighlight();
             this.updateHover(-1);
+
+            setTimeout(function() {
+                self.ignoreScroll = false;
+            }, this.viewer.animationTime * 1000);
         },
 
         // ----------
@@ -324,14 +381,14 @@
         updateHover: function(page) {
             if (page === -1 || this.mode !== 'thumbs') {
                 this.hover.style('opacity', 0);
-                this.$el.css({
+                this.$scrollCover.css({
                     'cursor': 'default'
                 });
 
                 return;
             }
 
-            this.$el.css({
+            this.$scrollCover.css({
                 'cursor': 'pointer'
             });
 
@@ -527,13 +584,11 @@
             var viewerHeight = this.$el.height();
             var layoutConfig = {};
 
-            var box;
             if (this.mode === 'thumbs') {
-                box = this.viewer.world.getHomeBounds();
-                box.x -= this.bigBuffer;
-                box.y -= this.bigBuffer;
-                box.width += (this.bigBuffer * 2);
+                var info = this.getScrollInfo();
+                var box = this.thumbBounds.clone();
                 box.height = box.width * (viewerHeight / viewerWidth);
+                box.y += info.viewportMax * info.scrollFactor;
                 this.viewer.viewport.fitBounds(box, config.immediately);
             } else {
                 this.goToPage({
