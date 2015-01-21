@@ -46,6 +46,7 @@ OPENSEADRAGON CHANGELOG
 * Added ajaxWithCredentials option (#543)
 * Added viewport-change event for after the viewport changes but before it's drawn
 * A spring's current value is now updated immediately on reset (#524)
+* Fixed an error in fitBounds that occurred sometimes with immediately = true
 
 1.2.1: (in progress)
 

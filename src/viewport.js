@@ -588,11 +588,17 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             }
 
             newBounds = this._applyBoundaryConstraints( newBounds, immediately );
+            center = newBounds.getCenter();
+        }
+
+        if (immediately) {
+            this.panTo( center, true );
+            return this.zoomTo(newZoom, null, true);
         }
 
         if (Math.abs(newZoom - oldZoom) < 0.00000000001 ||
                 Math.abs(newBounds.width - oldBounds.width) < 0.00000000001) {
-            return this.panTo( constraints ? newBounds.getCenter() : center, immediately );
+            return this.panTo( center, immediately );
         }
 
         referencePoint = oldBounds.getTopLeft().times(
