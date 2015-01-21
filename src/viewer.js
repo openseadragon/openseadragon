@@ -301,7 +301,6 @@ $.Viewer = function( options ) {
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
-        focusHandler:             $.delegate( this, onCanvasFocus ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
@@ -2186,13 +2185,6 @@ function onFocus(){
 function onBlur(){
     beginControlsAutoHide( this );
 
-}
-
-function onCanvasFocus( event ) {
-    if ( !event.preventDefaultAction ) {
-        var point    = $.getElementPosition( this.element );
-        window.scrollTo( 0, point.y );
-    }
 }
 
 function onCanvasKeyDown( event ) {
