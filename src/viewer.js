@@ -268,7 +268,7 @@ $.Viewer = function( options ) {
         style.left     = "0px";
     }(this.canvas.style));
     $.setElementTouchActionNone( this.canvas );
-    this.canvas.tabIndex = 0;
+    this.canvas.tabIndex = options.tabIndex || 0;
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -302,7 +302,6 @@ $.Viewer = function( options ) {
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
-        focusHandler:             $.delegate( this, onCanvasFocus ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
@@ -2188,13 +2187,6 @@ function onFocus(){
 function onBlur(){
     beginControlsAutoHide( this );
 
-}
-
-function onCanvasFocus( event ) {
-    if ( !event.preventDefaultAction ) {
-        var point    = $.getElementPosition( this.element );
-        window.scrollTo( 0, point.y );
-    }
 }
 
 function onCanvasKeyDown( event ) {
