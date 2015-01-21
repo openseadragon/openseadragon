@@ -152,6 +152,8 @@
                     immediately: true
                 });
 
+                self.viewer.forceRedraw();
+
                 self.viewer.svgOverlay('resize');
             });
 
@@ -354,7 +356,8 @@
             this.updateHighlight();
             this.updateHover(-1);
 
-            setTimeout(function() {
+            clearTimeout(this.scrollTimeout);
+            this.scrollTimeout = setTimeout(function() {
                 self.ignoreScroll = false;
             }, this.viewer.animationTime * 1000);
         },
