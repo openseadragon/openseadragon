@@ -23,6 +23,7 @@ OPENSEADRAGON CHANGELOG
 * Removed 'position' property from MouseTracker keyDownHandler/keyUpHandler/keyHandler functions (#573)
 * Fixed pointer event model detection for IE 10 and IE 11 (#571)
 * Added setMouseNavEnabled() support to Navigator (#572)
+* Removed Viewer focusHandler/onCanvasFocus (#577)
 
 1.2.0:
 
