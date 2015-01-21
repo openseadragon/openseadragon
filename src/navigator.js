@@ -210,7 +210,7 @@ $.Navigator = function( options ){
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll )
-    }).setTracking( true );
+    });
 
 };
 

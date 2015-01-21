@@ -54,6 +54,9 @@
      * @param {Element|String} options.element
      *      A reference to an element or an element id for which the pointer/key
      *      events will be monitored.
+     * @param {Boolean} [options.startDisabled=false]
+     *      If true, event tracking on the element will not start until
+     *      {@link OpenSeadragon.MouseTracker.setTracking|setTracking} is called.
      * @param {Number} options.clickTimeThreshold
      *      The number of milliseconds within which a pointer down-up event combination
      *      will be treated as a click gesture.
@@ -257,6 +260,9 @@
             currentPinchCenter:    null
         };
 
+        if ( !options.startDisabled ) {
+            this.setTracking( true );
+        }
     };
 
     $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{

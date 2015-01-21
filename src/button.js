@@ -355,7 +355,7 @@ $.Button = function( options ) {
             return true;
         }
 
-    }).setTracking( true );
+    });
 
     outTo( this, $.ButtonState.REST );
 };

@@ -297,6 +297,7 @@ $.Viewer = function( options ) {
 
     this.innerTracker = new $.MouseTracker({
         element:                  this.canvas,
+        startDisabled:            this.mouseNavEnabled ? false : true,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
@@ -316,17 +317,18 @@ $.Viewer = function( options ) {
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
         scrollHandler:            $.delegate( this, onCanvasScroll ),
         pinchHandler:             $.delegate( this, onCanvasPinch )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // default state
+    });
 
     this.outerTracker = new $.MouseTracker({
         element:               this.container,
+        startDisabled:         this.mouseNavEnabled ? false : true,
         clickTimeThreshold:    this.clickTimeThreshold,
         clickDistThreshold:    this.clickDistThreshold,
         dblClickTimeThreshold: this.dblClickTimeThreshold,
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
         exitHandler:           $.delegate( this, onContainerExit )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
+    });
 
     if( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
