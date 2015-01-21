@@ -105,7 +105,7 @@ $.ButtonGroup = function( options ) {
                 }
             }
         },
-    }).setTracking( true );
+    });
 };
 
 $.ButtonGroup.prototype = /** @lends OpenSeadragon.ButtonGroup.prototype */{

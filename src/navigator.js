@@ -174,16 +174,17 @@ $.Navigator = function( options ){
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll )
-    }).setTracking( true );
+    });
 
     /*this.displayRegion.outerTracker = new $.MouseTracker({
         element:            this.container,
+        startDisabled:      this.mouseNavEnabled ? false : true,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
         enterHandler:       $.delegate( this, onContainerEnter ),
         exitHandler:        $.delegate( this, onContainerExit ),
         releaseHandler:     $.delegate( this, onContainerRelease )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking*/
+    });*/
 
 
     viewer.addControl(
