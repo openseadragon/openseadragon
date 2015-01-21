@@ -977,7 +977,8 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    if ( window.PointerEvent ) {
+    // Note: window.navigator.pointerEnable is deprecated on IE 11 and not part of W3C spec.
+    if ( window.PointerEvent && ( window.navigator.pointerEnabled || $.Browser.vendor !== $.BROWSERS.IE ) ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
         $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
@@ -988,7 +989,7 @@
             $.MouseTracker.maxTouchPoints = 0;
         }
         $.MouseTracker.haveMouseEnter = false;
-    } else if ( window.MSPointerEvent ) {
+    } else if ( window.MSPointerEvent && window.navigator.msPointerEnabled ) {
         // IE10
         $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
