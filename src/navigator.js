@@ -98,6 +98,7 @@ $.Navigator = function( options ){
         sizeRatio:     $.DEFAULT_SETTINGS.navigatorSizeRatio
     }, options, {
         element:                this.element,
+        tabIndex:               -1, // No keyboard navigation, omit from tab order
         //These need to be overridden to prevent recursion since
         //the navigator is a viewer and a viewer has a navigator
         showNavigator:          false,

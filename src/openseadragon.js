@@ -126,6 +126,10 @@
   *     The element to append the viewer's container element to. If not provided, the 'id' property must be provided.
   *     If both the element and id properties are specified, the viewer is appended to the element provided in the element property.
   *
+  * @property {Number} [tabIndex=0]
+  *     Tabbing order index to assign to the viewer element. Positive values are selected in increasing order. When tabIndex is 0 
+  *     source order is used. A negative value omits the viewer from the tabbing order.
+  *
   * @property {Array|String|Function|Object[]|Array[]|String[]|Function[]} [tileSources=null]
   *     As an Array, the tileSource can hold either Objects or mixed
   *     types of Arrays of Objects, Strings, or Functions. When a value is a String,
