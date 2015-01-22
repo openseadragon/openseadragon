@@ -232,7 +232,7 @@ $.Viewer = function( options ) {
         style.left     = "0px";
     }(this.canvas.style));
     $.setElementTouchActionNone( this.canvas );
-    this.canvas.tabIndex = 0;
+    this.canvas.tabIndex = options.tabIndex || 0;
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
@@ -259,11 +259,11 @@ $.Viewer = function( options ) {
 
     this.innerTracker = new $.MouseTracker({
         element:                  this.canvas,
+        startDisabled:            this.mouseNavEnabled ? false : true,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
-        focusHandler:             $.delegate( this, onCanvasFocus ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
@@ -278,17 +278,18 @@ $.Viewer = function( options ) {
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
         scrollHandler:            $.delegate( this, onCanvasScroll ),
         pinchHandler:             $.delegate( this, onCanvasPinch )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // default state
+    });
 
     this.outerTracker = new $.MouseTracker({
         element:               this.container,
+        startDisabled:         this.mouseNavEnabled ? false : true,
         clickTimeThreshold:    this.clickTimeThreshold,
         clickDistThreshold:    this.clickDistThreshold,
         dblClickTimeThreshold: this.dblClickTimeThreshold,
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
         exitHandler:           $.delegate( this, onContainerExit )
-    }).setTracking( this.mouseNavEnabled ? true : false ); // always tracking
+    });
 
     if( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
@@ -2183,13 +2184,6 @@ function onFocus(){
 function onBlur(){
     beginControlsAutoHide( this );
 
-}
-
-function onCanvasFocus( event ) {
-    if ( !event.preventDefaultAction ) {
-        var point    = $.getElementPosition( this.element );
-        window.scrollTo( 0, point.y );
-    }
 }
 
 function onCanvasKeyDown( event ) {

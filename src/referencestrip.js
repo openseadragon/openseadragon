@@ -127,7 +127,7 @@ $.ReferenceStrip = function ( options ) {
         exitHandler:    $.delegate( this, onStripExit ),
         keyDownHandler: $.delegate( this, onKeyDown ),
         keyHandler:     $.delegate( this, onKeyPress )
-    } ).setTracking( true );
+    } );
 
     //Controls the position and orientation of the reference strip and sets the
     //appropriate width and height
@@ -215,7 +215,7 @@ $.ReferenceStrip = function ( options ) {
                     viewer.goToPage( page );
                 }
             }
-        } ).setTracking( true );
+        } );
 
         this.element.appendChild( element );
 
@@ -454,8 +454,10 @@ function loadPanels( strip, viewerSize, scroll ) {
             style.width         = ( strip.panelWidth - 4 ) + 'px';
             style.height        = ( strip.panelHeight - 4 ) + 'px';
 
+            // TODO: What is this for? Future keyboard navigation support?
             miniViewer.displayRegion.innerTracker = new $.MouseTracker( {
-                element: miniViewer.displayRegion
+                element: miniViewer.displayRegion,
+                startDisabled: true
             } );
 
             element.getElementsByTagName( 'div' )[0].appendChild(
