@@ -130,6 +130,10 @@
   *     Tile source(s) to open initially. This is a complex parameter; see
   *     {@link OpenSeadragon.Viewer#open} for details.
   *
+  * @property {Number} [tabIndex=0]
+  *     Tabbing order index to assign to the viewer element. Positive values are selected in increasing order. When tabIndex is 0
+  *     source order is used. A negative value omits the viewer from the tabbing order.
+  *
   * @property {Array} overlays Array of objects defining permanent overlays of
   *     the viewer. The overlays added via this option and later removed with
   *     {@link OpenSeadragon.Viewer#removeOverlay} will be added back when a new

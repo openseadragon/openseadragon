@@ -790,7 +790,7 @@
                 releaseHandler: onMouseTrackerRelease,
                 clickHandler: onMouseTrackerClick,
                 exitHandler: onMouseTrackerExit
-            } ).setTracking( true );
+            } );
 
             var event = {
                 clientX:1,
