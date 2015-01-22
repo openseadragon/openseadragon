@@ -57,10 +57,10 @@
             });
 
             this.viewer.addHandler('canvas-drag', function() {
-                if (this.mode === 'scroll') {
-                    var result = this.hitTest(this.viewer.viewport.getCenter());
+                if (self.mode === 'scroll') {
+                    var result = self.hitTest(self.viewer.viewport.getCenter());
                     if (result) {
-                        this.page = result.index;
+                        self.page = result.index;
                     }
                 }
             });
@@ -267,7 +267,8 @@
                 }
 
                 if (x !== center.x || y !== center.y) {
-                    this.viewer.viewport.panTo(new OpenSeadragon.Point(x, y), true);
+                    this.viewer.viewport.centerSpringX.current.value = x;
+                    this.viewer.viewport.centerSpringY.current.value = y;
                 }
             }
         },
