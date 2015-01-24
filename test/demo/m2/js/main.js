@@ -7,7 +7,7 @@
         init: function() {
             var self = this;
 
-            var count = 70;
+            var count = 500;
 
             this.mode = 'none';
             this.pageBuffer = 0.05;
@@ -46,13 +46,16 @@
                 showHomeControl: false,
                 // animationTime: 10,
                 // springStiffness: 2,
-                tileSources: this.tileSources.slice(0, count)
+                tileSources: $.map(this.tileSources.slice(0, count), function(v, i) {
+                    return new OpenSeadragon.IIIFTileSource(v);
+                })
             });
 
             this.viewer.addHandler('open', function() {
                 self.$el = $(self.viewer.element);
                 self.setMode({
-                    mode: 'thumbs'
+                    mode: 'thumbs',
+                    immediately: true
                 });
             });
 
@@ -474,10 +477,11 @@
                 }
             };
 
+            clearTimeout(this.panBoundsTimeout);
             if (config.immediately) {
                 setPanBounds();
             } else {
-                setTimeout(setPanBounds, this.viewer.animationTime * 1000);
+                this.panBoundsTimeout = setTimeout(setPanBounds, this.viewer.animationTime * 1000);
             }
 
             this.viewer.viewport.minZoomLevel = this.viewer.viewport.getZoom();
