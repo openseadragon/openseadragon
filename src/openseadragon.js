@@ -817,10 +817,9 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
     }());
 
     /**
-     * @private
-     * @inner
-     * @function
-     * @returns {Number} The device's pixel density ratio, or null if canvas isn't supported by the browser.
+     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
+     * @member {Number} pixelDensityRatio
+     * @memberof OpenSeadragon
      */
     $.pixelDensityRatio = (function () {
         if ( $.supportsCanvas ) {
@@ -832,12 +831,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                                     context.oBackingStorePixelRatio ||
                                     context.backingStorePixelRatio || 1;
             return devicePixelRatio / backingStoreRatio;
-            // var viewportSize = this.viewport.getContainerSize();
-            // return {
-            //     x: viewportSize.x * canvasDensityRatio,
-            //     y: viewportSize.y * canvasDensityRatio,
-            //     ratio: canvasDensityRatio
-            // };
         } else {
             return 1;
         }
