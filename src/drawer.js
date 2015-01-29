@@ -108,6 +108,13 @@ $.Drawer = function( options ) {
     // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
     this.container.dir = 'ltr';
 
+    // check canvas available width and height, set canvas width and height such that the canvas backing store is set to the proper pixel density
+    if (this.useCanvas) {
+        var viewportSize = this._calculateCanvasSize();
+        this.canvas.width = viewportSize.x;
+        this.canvas.height = viewportSize.y;
+    }
+
     this.canvas.style.width     = "100%";
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
@@ -215,7 +222,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     clear: function() {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
-            var viewportSize = this.viewport.getContainerSize();
+            var viewportSize = this._calculateCanvasSize();
             if( this.canvas.width != viewportSize.x ||
                 this.canvas.height != viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
@@ -256,7 +263,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         if ( this.useCanvas ) {
             this.context.save();
             this.context.lineWidth = 2;
-            this.context.font = 'small-caps bold 13px ariel';
+            this.context.font = 'small-caps bold 13px arial';
             this.context.strokeStyle = this.debugGridColor;
             this.context.fillStyle = this.debugGridColor;
 
@@ -369,6 +376,16 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         tile.position.y = py;
 
         this.context.restore();
+    },
+
+    // private
+    _calculateCanvasSize: function() {
+        var pixelDensityRatio = $.pixelDensityRatio;
+        var viewportSize = this.viewport.getContainerSize();
+        return {
+            x: viewportSize.x * pixelDensityRatio,
+            y: viewportSize.y * pixelDensityRatio
+        };
     }
 };
 

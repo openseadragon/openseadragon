@@ -897,6 +897,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     deltaPixelsFromPoints: function( deltaPoints, current ) {
         return deltaPoints.times(
             this._containerInnerSize.x * this.getZoom( current )
+        ).times(
+            $.pixelDensityRatio
         );
     },
 
@@ -908,6 +910,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     deltaPointsFromPixels: function( deltaPixels, current ) {
         return deltaPixels.divide(
             this._containerInnerSize.x * this.getZoom( current )
+        ).divide(
+            $.pixelDensityRatio
         );
     },
 
@@ -928,6 +932,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this._containerInnerSize.x / bounds.width
         ).plus(
             new $.Point(this._margins.left, this._margins.top)
+        ).times(
+            $.pixelDensityRatio
         );
     },
 
@@ -938,7 +944,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      */
     pointFromPixel: function( pixel, current ) {
         var bounds = this.getBounds( current );
-        return pixel.minus(
+        return pixel.divide(
+            $.pixelDensityRatio
+        ).minus(
             new $.Point(this._margins.left, this._margins.top)
         ).divide(
             this._containerInnerSize.x / bounds.width

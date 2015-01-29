@@ -262,7 +262,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _viewportToImageDelta: function( viewerX, viewerY, current ) {
-        var scale = current ? this._scaleSpring.current.value : this._scaleSpring.target.value;
+        var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value) / $.pixelDensityRatio;
         return new $.Point(viewerX * (this.source.dimensions.x / scale),
             viewerY * ((this.source.dimensions.y * this.contentAspectX) / scale));
     },
@@ -294,7 +294,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _imageToViewportDelta: function( imageX, imageY, current ) {
-        var scale = current ? this._scaleSpring.current.value : this._scaleSpring.target.value;
+        var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value) / $.pixelDensityRatio;
         return new $.Point((imageX / this.source.dimensions.x) * scale,
             (imageY / this.source.dimensions.y / this.contentAspectX) * scale);
     },

@@ -816,6 +816,32 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     canvasElement.getContext( '2d' ) );
     }());
 
+    /**
+     * @private
+     * @inner
+     * @function
+     * @returns {Number} The device's pixel density ratio, or null if canvas isn't supported by the browser.
+     */
+    $.pixelDensityRatio = (function () {
+        if ( $.supportsCanvas ) {
+            var context = document.createElement('canvas').getContext('2d');
+            var devicePixelRatio = window.devicePixelRatio || 1;
+            var backingStoreRatio = context.webkitBackingStorePixelRatio ||
+                                    context.mozBackingStorePixelRatio ||
+                                    context.msBackingStorePixelRatio ||
+                                    context.oBackingStorePixelRatio ||
+                                    context.backingStorePixelRatio || 1;
+            return devicePixelRatio / backingStoreRatio;
+            // var viewportSize = this.viewport.getContainerSize();
+            // return {
+            //     x: viewportSize.x * canvasDensityRatio,
+            //     y: viewportSize.y * canvasDensityRatio,
+            //     ratio: canvasDensityRatio
+            // };
+        } else {
+            return 1;
+        }
+    }());
 
 }( OpenSeadragon ));
 
