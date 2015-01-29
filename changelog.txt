@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.2.1: (in progress)
+1.2.1:
 
 * Added preserveOverlays option (#561)
 * Fixed: DZI tilesource was broken on IE8/IE9 (#563)
