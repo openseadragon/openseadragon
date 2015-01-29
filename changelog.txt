@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.2.2: (in progress)
+
 1.2.1:
 
 * Added preserveOverlays option (#561)
