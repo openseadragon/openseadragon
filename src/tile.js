@@ -268,18 +268,18 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                position.x+1,
-                position.y+1,
-                size.x-2,
-                size.y-2
+                (position.x * $.pixelDensityRatio)+1,
+                (position.y * $.pixelDensityRatio)+1,
+                (size.x * $.pixelDensityRatio)-2,
+                (size.y * $.pixelDensityRatio)-2
             );
 
         }
 
         if(!rendered){
             canvas = document.createElement( 'canvas' );
-            canvas.width = this.image.width;
-            canvas.height = this.image.height;
+            canvas.width = this.image.width * $.pixelDensityRatio;
+            canvas.height = this.image.height * $.pixelDensityRatio;
             rendered = canvas.getContext('2d');
             rendered.drawImage( this.image, 0, 0 );
             this.cacheImageRecord.setRenderedContext(rendered);
@@ -297,10 +297,10 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             0,
             rendered.canvas.width,
             rendered.canvas.height,
-            position.x,
-            position.y,
-            size.x,
-            size.y
+            position.x * $.pixelDensityRatio,
+            position.y * $.pixelDensityRatio,
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio
         );
     },
 
