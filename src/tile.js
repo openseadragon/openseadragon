@@ -278,8 +278,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         if(!rendered){
             canvas = document.createElement( 'canvas' );
-            canvas.width = this.image.width * $.pixelDensityRatio;
-            canvas.height = this.image.height * $.pixelDensityRatio;
+            canvas.width = this.image.width;
+            canvas.height = this.image.height;
             rendered = canvas.getContext('2d');
             rendered.drawImage( this.image, 0, 0 );
             this.cacheImageRecord.setRenderedContext(rendered);
