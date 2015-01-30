@@ -562,7 +562,6 @@ function updateViewport( tiledImage ) {
     var viewportBR = viewportBounds.getBottomRight();
 
     //Don't draw if completely outside of the viewport
-    $.console.log(viewportTL.x);
     if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidthCurrent ) ) {
         return;
     }
