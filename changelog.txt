@@ -1,7 +1,35 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.2.0: (in progress)
+1.2.2: (in progress)
+
+1.2.1:
+
+* Added preserveOverlays option (#561)
+* Fixed: DZI tilesource was broken on IE8/IE9 (#563)
+* Exposed secondary pointer button (middle, right, etc.) events from MouseTracker and through viewer (#479)
+* MouseTracker - Improved IE 8 compatibility (#562)
+* MouseTracker - Improved IE 9+ compatibility (#564)
+* MouseTracker - Simulated touchenter/touchleave events now bubble to parent element MouseTrackers (#566)
+* MouseTracker - Improved multitouch support in enter/exit event handlers (#566)
+* MouseTracker - orphaned tracked touch pointers removed (fix for #539)
+* MouseTracker - removed touchenter/touchleave event support since the events don't exist on any known platform and have been removed from the W3C specification (#566)
+* Removed Viewer onContainerPress/onContainerRelease handlers (and the associated 'container-release' event ) that were never fired due to the canvas (child) element capturing the DOM events (#566)
+* Added 'canvas-enter', 'canvas-exit', and 'canvas-press' events to Viewer (#566)
+* ButtonGroup - removed obsolete MouseTracker event handlers (#566)
+* MouseTracker - added keydown and keyup handlers (#568)
+* Modifier keys ignored in keyboard navigation handlers (#503)
+* Requesting keyboard focus when viewer is clicked (#537)
+* Arrow key navigation fixed across platforms (#565)
+* Removed textarea element from viewer DOM. Viewer.canvas now handles keyboard navigation (#569)
+* Removed 'position' property from MouseTracker keyDownHandler/keyUpHandler/keyHandler functions (#573)
+* Fixed pointer event model detection for IE 10 and IE 11 (#571)
+* Added setMouseNavEnabled() support to Navigator (#572)
+* MouseTracker now defaults to tracking on (#558)
+* Removed Viewer focusHandler/onCanvasFocus (#577)
+* Added tabIndex option to viewer (#577)
+
+1.2.0:
 
 * New combined IIIF TileSource for 1.0 through 2.0 (#441)
     * BREAKING CHANGE: Removed IIIF1_1TileSource (now that IIIFTileSource supports all versions)
@@ -18,8 +46,9 @@ OPENSEADRAGON CHANGELOG
 * Viewport.setRotation now allows all rotation angles (#466)
 * Pinch rotate is now available (defaults to off) (#468)
 * Added option for home button to fill viewer (#474)
-* Now handling iframe/frame mouseouts properly (#481)
 * Better handling of mid-update image loaded callbacks (#409)
+* Tracked pointers are now cleaned up when Viewer.setMouseNavEnabled(false) is called (#518)
+* Added explicit pointer capture for touch event model touchstart events (#552)
 
 1.1.1:
 

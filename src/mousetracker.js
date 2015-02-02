@@ -34,7 +34,10 @@
 
 (function ( $ ) {
 
-        // dictionary from hash to private properties
+    // All MouseTracker instances
+    var MOUSETRACKERS  = [];
+
+    // dictionary from hash to private properties
     var THIS           = {};
 
 
@@ -51,6 +54,9 @@
      * @param {Element|String} options.element
      *      A reference to an element or an element id for which the pointer/key
      *      events will be monitored.
+     * @param {Boolean} [options.startDisabled=false]
+     *      If true, event tracking on the element will not start until
+     *      {@link OpenSeadragon.MouseTracker.setTracking|setTracking} is called.
      * @param {Number} options.clickTimeThreshold
      *      The number of milliseconds within which a pointer down-up event combination
      *      will be treated as a click gesture.
@@ -72,8 +78,12 @@
      *      An optional handler for pointer exit.
      * @param {OpenSeadragon.EventHandler} [options.pressHandler=null]
      *      An optional handler for pointer press.
+     * @param {OpenSeadragon.EventHandler} [options.nonPrimaryPressHandler=null]
+     *      An optional handler for pointer non-primary button press.
      * @param {OpenSeadragon.EventHandler} [options.releaseHandler=null]
      *      An optional handler for pointer release.
+     * @param {OpenSeadragon.EventHandler} [options.nonPrimaryReleaseHandler=null]
+     *      An optional handler for pointer non-primary button release.
      * @param {OpenSeadragon.EventHandler} [options.moveHandler=null]
      *      An optional handler for pointer move.
      * @param {OpenSeadragon.EventHandler} [options.scrollHandler=null]
@@ -88,6 +98,10 @@
      *      An optional handler for after a drag gesture.
      * @param {OpenSeadragon.EventHandler} [options.pinchHandler=null]
      *      An optional handler for the pinch gesture.
+     * @param {OpenSeadragon.EventHandler} [options.keyDownHandler=null]
+     *      An optional handler for keydown.
+     * @param {OpenSeadragon.EventHandler} [options.keyUpHandler=null]
+     *      An optional handler for keyup.
      * @param {OpenSeadragon.EventHandler} [options.keyHandler=null]
      *      An optional handler for keypress.
      * @param {OpenSeadragon.EventHandler} [options.focusHandler=null]
@@ -98,6 +112,8 @@
      *      Arbitrary object to be passed unchanged to any attached handler methods.
      */
     $.MouseTracker = function ( options ) {
+
+        MOUSETRACKERS.push( this );
 
         var args = arguments;
 
@@ -144,24 +160,28 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
-        this.userData           = options.userData        || null;
-        this.stopDelay          = options.stopDelay       || 50;
+        this.userData              = options.userData          || null;
+        this.stopDelay             = options.stopDelay         || 50;
 
-        this.enterHandler       = options.enterHandler    || null;
-        this.exitHandler        = options.exitHandler     || null;
-        this.pressHandler       = options.pressHandler    || null;
-        this.releaseHandler     = options.releaseHandler  || null;
-        this.moveHandler        = options.moveHandler     || null;
-        this.scrollHandler      = options.scrollHandler   || null;
-        this.clickHandler       = options.clickHandler    || null;
-        this.dblClickHandler    = options.dblClickHandler || null;
-        this.dragHandler        = options.dragHandler     || null;
-        this.dragEndHandler     = options.dragEndHandler  || null;
-        this.pinchHandler       = options.pinchHandler    || null;
-        this.stopHandler        = options.stopHandler     || null;
-        this.keyHandler         = options.keyHandler      || null;
-        this.focusHandler       = options.focusHandler    || null;
-        this.blurHandler        = options.blurHandler     || null;
+        this.enterHandler             = options.enterHandler             || null;
+        this.exitHandler              = options.exitHandler              || null;
+        this.pressHandler             = options.pressHandler             || null;
+        this.nonPrimaryPressHandler   = options.nonPrimaryPressHandler   || null;
+        this.releaseHandler           = options.releaseHandler           || null;
+        this.nonPrimaryReleaseHandler = options.nonPrimaryReleaseHandler || null;
+        this.moveHandler              = options.moveHandler              || null;
+        this.scrollHandler            = options.scrollHandler            || null;
+        this.clickHandler             = options.clickHandler             || null;
+        this.dblClickHandler          = options.dblClickHandler          || null;
+        this.dragHandler              = options.dragHandler              || null;
+        this.dragEndHandler           = options.dragEndHandler           || null;
+        this.pinchHandler             = options.pinchHandler             || null;
+        this.stopHandler              = options.stopHandler              || null;
+        this.keyDownHandler           = options.keyDownHandler           || null;
+        this.keyUpHandler             = options.keyUpHandler             || null;
+        this.keyHandler               = options.keyHandler               || null;
+        this.focusHandler             = options.focusHandler             || null;
+        this.blurHandler              = options.blurHandler              || null;
 
         //Store private properties in a scope sealed hash map
         var _this = this;
@@ -170,12 +190,12 @@
          * @private
          * @property {Boolean} tracking
          *      Are we currently tracking pointer events for this element.
-         * @property {Boolean} capturing
-         *      Are we curruently capturing mouse events (legacy mouse events only).
          */
         THIS[ this.hash ] = {
             click:                 function ( event ) { onClick( _this, event ); },
             dblclick:              function ( event ) { onDblClick( _this, event ); },
+            keydown:               function ( event ) { onKeyDown( _this, event ); },
+            keyup:                 function ( event ) { onKeyUp( _this, event ); },
             keypress:              function ( event ) { onKeyPress( _this, event ); },
             focus:                 function ( event ) { onFocus( _this, event ); },
             blur:                  function ( event ) { onBlur( _this, event ); },
@@ -185,6 +205,8 @@
             DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
             MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
 
+            mouseenter:            function ( event ) { onMouseEnter( _this, event ); }, // Used on IE8 only
+            mouseleave:            function ( event ) { onMouseLeave( _this, event ); }, // Used on IE8 only
             mouseover:             function ( event ) { onMouseOver( _this, event ); },
             mouseout:              function ( event ) { onMouseOut( _this, event ); },
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
@@ -193,13 +215,11 @@
             mousemove:             function ( event ) { onMouseMove( _this, event ); },
             mousemovecaptured:     function ( event ) { onMouseMoveCaptured( _this, event ); },
 
-            mouseoutdocument:      function ( event ) { onMouseOutDocument( _this, event ); },
-
-            touchenter:            function ( event ) { onTouchEnter( _this, event ); },
-            touchleave:            function ( event ) { onTouchLeave( _this, event ); },
             touchstart:            function ( event ) { onTouchStart( _this, event ); },
             touchend:              function ( event ) { onTouchEnd( _this, event ); },
+            touchendcaptured:      function ( event ) { onTouchEndCaptured( _this, event ); },
             touchmove:             function ( event ) { onTouchMove( _this, event ); },
+            touchmovecaptured:     function ( event ) { onTouchMoveCaptured( _this, event ); },
             touchcancel:           function ( event ) { onTouchCancel( _this, event ); },
 
             gesturestart:          function ( event ) { onGestureStart( _this, event ); },
@@ -209,10 +229,6 @@
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
-
-            pointeroutdocument:    function ( event ) { onPointerOutDocument( _this, event ); },
-            MSPointerOutdocument:  function ( event ) { onPointerOutDocument( _this, event ); },
-
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -232,12 +248,6 @@
             //     of the element (for hover-capable devices) and/or have contact or a button press initiated in the element.
             activePointersLists:   [],
 
-            // Legacy mouse capture tracking
-            capturing:             false,
-
-            // Pointer event model capture tracking
-            pointerCaptureCount:   0,
-
             // Tracking for double-click gesture
             lastClickPos:          null,
             dblClickTimeOut:       null,
@@ -250,6 +260,9 @@
             currentPinchCenter:    null
         };
 
+        if ( !options.startDisabled ) {
+            this.setTracking( true );
+        }
     };
 
     $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{
@@ -259,8 +272,17 @@
          * @function
          */
         destroy: function () {
+            var i;
+
             stopTracking( this );
             this.element = null;
+
+            for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+                if ( MOUSETRACKERS[ i ] === this ) {
+                    MOUSETRACKERS.splice( i, 1 );
+                    break;
+                }
+            }
 
             THIS[ this.hash ] = null;
             delete THIS[ this.hash ];
@@ -317,6 +339,24 @@
         },
 
         /**
+         * Returns the total number of pointers currently active on the tracked element.
+         * @function
+         * @returns {Number}
+         */
+        getActivePointerCount: function () {
+            var delegate = THIS[ this.hash ],
+                i,
+                len = delegate.activePointersLists.length,
+                count = 0;
+
+            for ( i = 0; i < len; i++ ) {
+                count += delegate.activePointersLists[ i ].getLength();
+            }
+
+            return count;
+        },
+
+        /**
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
@@ -330,6 +370,8 @@
          * @param {Number} event.buttons
          *      Current buttons pressed.
          *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
          * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
@@ -360,6 +402,8 @@
          * @param {Number} event.buttons
          *      Current buttons pressed.
          *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
          * @param {Boolean} event.insideElementPressed
          *      True if the left mouse button is currently being pressed and was
          *      initiated inside the tracked element, otherwise false.
@@ -412,6 +456,34 @@
          *     "mouse", "touch", "pen", etc.
          * @param {OpenSeadragon.Point} event.position
          *      The position of the event relative to the tracked element.
+         * @param {Number} event.button
+         *      Button which caused the event.
+         *      -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
+         * @param {Number} event.buttons
+         *      Current buttons pressed.
+         *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        nonPrimaryPressHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
          * @param {Number} event.buttons
          *      Current buttons pressed.
          *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
@@ -430,6 +502,34 @@
          *      Arbitrary user-defined object.
          */
         releaseHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} event.button
+         *      Button which caused the event.
+         *      -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
+         * @param {Number} event.buttons
+         *      Current buttons pressed.
+         *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        nonPrimaryReleaseHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -657,8 +757,66 @@
          *      A reference to the tracker instance.
          * @param {Number} event.keyCode
          *      The key code that was pressed.
+         * @param {Boolean} event.ctrl
+         *      True if the ctrl key was pressed during this event.
          * @param {Boolean} event.shift
          *      True if the shift key was pressed during this event.
+         * @param {Boolean} event.alt
+         *      True if the alt key was pressed during this event.
+         * @param {Boolean} event.meta
+         *      True if the meta key was pressed during this event.
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        keyDownHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {Number} event.keyCode
+         *      The key code that was pressed.
+         * @param {Boolean} event.ctrl
+         *      True if the ctrl key was pressed during this event.
+         * @param {Boolean} event.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} event.alt
+         *      True if the alt key was pressed during this event.
+         * @param {Boolean} event.meta
+         *      True if the meta key was pressed during this event.
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        keyUpHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {Number} event.keyCode
+         *      The key code that was pressed.
+         * @param {Boolean} event.ctrl
+         *      True if the ctrl key was pressed during this event.
+         * @param {Boolean} event.shift
+         *      True if the shift key was pressed during this event.
+         * @param {Boolean} event.alt
+         *      True if the alt key was pressed during this event.
+         * @param {Boolean} event.meta
+         *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
          * @param {Boolean} event.preventDefaultAction
@@ -797,6 +955,8 @@
 // Pointer event model and feature detection
 ///////////////////////////////////////////////////////////////////////////////
 
+    $.MouseTracker.captureElement = document;
+
     /**
      * Detect available mouse wheel event name.
      */
@@ -816,15 +976,17 @@
     /**
      * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
      */
-    $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
+    $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keydown", "keyup", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
     if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
         // Older Firefox
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    if ( window.PointerEvent ) {
+    // Note: window.navigator.pointerEnable is deprecated on IE 11 and not part of W3C spec.
+    if ( window.PointerEvent && ( window.navigator.pointerEnabled || $.Browser.vendor !== $.BROWSERS.IE ) ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
+        $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         $.MouseTracker.unprefixedPointerEvents = true;
         if( navigator.maxTouchPoints ) {
@@ -832,10 +994,10 @@
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = false;
         $.MouseTracker.haveMouseEnter = false;
-    } else if ( window.MSPointerEvent ) {
+    } else if ( window.MSPointerEvent && window.navigator.msPointerEnabled ) {
         // IE10
+        $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
         $.MouseTracker.unprefixedPointerEvents = false;
         if( navigator.msMaxTouchPoints ) {
@@ -843,26 +1005,27 @@
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveTouchEnter = false;
         $.MouseTracker.haveMouseEnter = false;
     } else {
         // Legacy W3C mouse events
-        $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
-        $.MouseTracker.haveMouseEnter = false;
-        if ( 'ontouchstart' in window ) {
-            // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
-            $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
-            if ( 'ontouchenter' in window ) {
-                $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave" );
-                $.MouseTracker.haveTouchEnter = true;
-            } else {
-                $.MouseTracker.haveTouchEnter = false;
-            }
+        $.MouseTracker.havePointerEvents = false;
+        if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+            $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+            $.MouseTracker.haveMouseEnter = true;
         } else {
-            $.MouseTracker.haveTouchEnter = false;
+            $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
+            $.MouseTracker.haveMouseEnter = false;
+        }
+        $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+        if ( 'ontouchstart' in window ) {
+            // iOS, Android, and other W3c Touch Event implementations
+            //    (see http://www.w3.org/TR/touch-events/)
+            //    (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
+            //    (see https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
+            $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
         }
         if ( 'ongesturestart' in window ) {
-            // iOS (see https://developer.apple.com/library/safari/documentation/UserExperience/Reference/GestureEventClassReference/GestureEvent/GestureEvent.html)
+            // iOS (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
             //   Subscribe to these to prevent default gesture handling
             $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
         }
@@ -947,6 +1110,12 @@
          * @memberof OpenSeadragon.MouseTracker.GesturePointList#
          */
         this.clicks = 0;
+        /**
+         * Current number of captured pointers for the device.
+         * @member {Number} captureCount
+         * @memberof OpenSeadragon.MouseTracker.GesturePointList#
+         */
+        this.captureCount = 0;
     };
     $.MouseTracker.GesturePointList.prototype = /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */{
         /**
@@ -1036,6 +1205,64 @@
 ///////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Removes all tracked pointers.
+     * @private
+     * @inner
+     */
+    function clearTrackedPointers( tracker ) {
+        var delegate = THIS[ tracker.hash ],
+            i,
+            pointerListCount = delegate.activePointersLists.length;
+
+        for ( i = 0; i < pointerListCount; i++ ) {
+            if ( delegate.activePointersLists[ i ].captureCount > 0 ) {
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    'mousemove',
+                    delegate.mousemovecaptured,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    'mouseup',
+                    delegate.mouseupcaptured,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
+                    delegate.pointermovecaptured,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
+                    delegate.pointerupcaptured,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    'touchmove',
+                    delegate.touchmovecaptured,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    'touchend',
+                    delegate.touchendcaptured,
+                    true
+                );
+
+                delegate.activePointersLists[ i ].captureCount = 0;
+            }
+        }
+
+        for ( i = 0; i < pointerListCount; i++ ) {
+            delegate.activePointersLists.pop();
+        }
+    }
+
+    /**
      * Starts tracking pointer events on the tracked element.
      * @private
      * @inner
@@ -1056,14 +1283,7 @@
                 );
             }
             
-            // handle pointer/mouse out of document body
-            if ( window.PointerEvent ) {
-              $.addEvent(document.body, "pointerout",  delegate.pointeroutdocument);
-            } else if ( window.MSPointerEvent ) {
-              $.addEvent(document.body, "pointerout",  delegate.MSPointerOutdocument);
-            } else {
-              $.addEvent(document.body, "mouseout",  delegate.mouseoutdocument);
-            }
+            clearTrackedPointers( tracker );
 
             delegate.tracking = true;
         }
@@ -1090,16 +1310,42 @@
                 );
             }
 
-            // handle pointer/mouse out of document body
-            if ( window.PointerEvent ) {
-              $.removeEvent(document.body, "pointerout",  delegate.pointeroutdocument);
-            } else if ( window.MSPointerEvent ) {
-              $.removeEvent(document.body, "MSPointerOut",  delegate.MSPointerOutdocument);
-            } else {
-              $.removeEvent(document.body, "mouseout",  delegate.mouseoutdocument);
-            }
+            clearTrackedPointers( tracker );
 
             delegate.tracking = false;
+        }
+    }
+
+    /**
+     * @private
+     * @inner
+     */
+    function getCaptureEventParams( tracker, pointerType ) {
+        var delegate = THIS[ tracker.hash ];
+
+        if ( pointerType === 'pointerevent' ) {
+            return {
+                upName: $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
+                upHandler: delegate.pointerupcaptured,
+                moveName: $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
+                moveHandler: delegate.pointermovecaptured
+            };
+        } else if ( pointerType === 'mouse' ) {
+            return {
+                upName: 'mouseup',
+                upHandler: delegate.mouseupcaptured,
+                moveName: 'mousemove',
+                moveHandler: delegate.mousemovecaptured
+            };
+        } else if ( pointerType === 'touch' ) {
+            return {
+                upName: 'touchend',
+                upHandler: delegate.touchendcaptured,
+                moveName: 'touchmove',
+                moveHandler: delegate.touchmovecaptured
+            };
+        } else {
+            throw new Error( "MouseTracker.getCaptureEventParams: Unknown pointer type." );
         }
     }
 
@@ -1108,27 +1354,32 @@
      * @private
      * @inner
      */
-    function capturePointer( tracker, isLegacyMouse ) {
-        var delegate = THIS[ tracker.hash ];
+    function capturePointer( tracker, pointerType ) {
+        var pointsList = tracker.getActivePointersListByType( pointerType ),
+            eventParams;
 
-        delegate.pointerCaptureCount++;
-        //$.console.log('pointerCaptureCount++ ', delegate.pointerCaptureCount);
+        pointsList.captureCount++;
 
-        if ( delegate.pointerCaptureCount === 1 ) {
-            // We emulate mouse capture by hanging listeners on the window object.
-            //    (Note we listen on the capture phase so the captured handlers will get called first)
-            $.addEvent(
-                window,
-                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
-                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
-                true
-            );
-            $.addEvent(
-                window,
-                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
-                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
-                true
-            );
+        if ( pointsList.captureCount === 1 ) {
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+                tracker.element.setCapture( true );
+            } else {
+                eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
+                // We emulate mouse capture by hanging listeners on the document object.
+                //    (Note we listen on the capture phase so the captured handlers will get called first)
+                $.addEvent(
+                    $.MouseTracker.captureElement,
+                    eventParams.upName,
+                    eventParams.upHandler,
+                    true
+                );
+                $.addEvent(
+                    $.MouseTracker.captureElement,
+                    eventParams.moveName,
+                    eventParams.moveHandler,
+                    true
+                );
+            }
         }
     }
 
@@ -1138,27 +1389,32 @@
      * @private
      * @inner
      */
-    function releasePointer( tracker, isLegacyMouse ) {
-        var delegate = THIS[ tracker.hash ];
+    function releasePointer( tracker, pointerType ) {
+        var pointsList = tracker.getActivePointersListByType( pointerType ),
+            eventParams;
 
-        delegate.pointerCaptureCount--;
-        //$.console.log('pointerCaptureCount-- ', delegate.pointerCaptureCount);
+        pointsList.captureCount--;
 
-        if ( delegate.pointerCaptureCount === 0 ) {
-            // We emulate mouse capture by hanging listeners on the window object.
-            //    (Note we listen on the capture phase so the captured handlers will get called first)
-            $.removeEvent(
-                window,
-                isLegacyMouse ? 'mousemove' : ($.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove'),
-                isLegacyMouse ? delegate.mousemovecaptured : delegate.pointermovecaptured,
-                true
-            );
-            $.removeEvent(
-                window,
-                isLegacyMouse ? 'mouseup' : ($.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp'),
-                isLegacyMouse ? delegate.mouseupcaptured : delegate.pointerupcaptured,
-                true
-            );
+        if ( pointsList.captureCount === 0 ) {
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+                tracker.element.releaseCapture();
+            } else {
+                eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
+                // We emulate mouse capture by hanging listeners on the document object.
+                //    (Note we listen on the capture phase so the captured handlers will get called first)
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    eventParams.moveName,
+                    eventParams.moveHandler,
+                    true
+                );
+                $.removeEvent(
+                    $.MouseTracker.captureElement,
+                    eventParams.upName,
+                    eventParams.upHandler,
+                    true
+                );
+            }
         }
     }
 
@@ -1261,17 +1517,77 @@
      * @private
      * @inner
      */
+    function onKeyDown( tracker, event ) {
+        //$.console.log( "keydown %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
+        var propagate;
+        if ( tracker.keyDownHandler ) {
+            event = $.getEvent( event );
+            propagate = tracker.keyDownHandler(
+                {
+                    eventSource:          tracker,
+                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                    ctrl:                 event.ctrlKey,
+                    shift:                event.shiftKey,
+                    alt:                  event.altKey,
+                    meta:                 event.metaKey,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
+                }
+            );
+            if ( !propagate ) {
+                $.cancelEvent( event );
+            }
+        }
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onKeyUp( tracker, event ) {
+        //$.console.log( "keyup %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
+        var propagate;
+        if ( tracker.keyUpHandler ) {
+            event = $.getEvent( event );
+            propagate = tracker.keyUpHandler(
+                {
+                    eventSource:          tracker,
+                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                    ctrl:                 event.ctrlKey,
+                    shift:                event.shiftKey,
+                    alt:                  event.altKey,
+                    meta:                 event.metaKey,
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
+                }
+            );
+            if ( !propagate ) {
+                $.cancelEvent( event );
+            }
+        }
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
     function onKeyPress( tracker, event ) {
-        //console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
+        //$.console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
         var propagate;
         if ( tracker.keyHandler ) {
             event = $.getEvent( event );
             propagate = tracker.keyHandler(
                 {
                     eventSource:          tracker,
-                    position:             getMouseRelative( event, tracker.element ),
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                    ctrl:                 event.ctrlKey,
                     shift:                event.shiftKey,
+                    alt:                  event.altKey,
+                    meta:                 event.metaKey,
                     originalEvent:        event,
                     preventDefaultAction: false,
                     userData:             tracker.userData
@@ -1433,19 +1749,39 @@
 
 
     /**
+     * Only used on IE 8
+     *
+     * @private
+     * @inner
+     */
+    function onMouseEnter( tracker, event ) {
+        event = $.getEvent( event );
+
+        handleMouseEnter( tracker, event );
+    }
+
+
+    /**
      * @private
      * @inner
      */
     function onMouseOver( tracker, event ) {
-        var gPoint;
-
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
-        gPoint = {
+        handleMouseEnter( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleMouseEnter( tracker, event ) {
+        var gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
             isPrimary: true,
@@ -1458,19 +1794,39 @@
 
 
     /**
+     * Only used on IE 8
+     *
+     * @private
+     * @inner
+     */
+    function onMouseLeave( tracker, event ) {
+        event = $.getEvent( event );
+
+        handleMouseExit( tracker, event );
+    }
+
+
+    /**
      * @private
      * @inner
      */
     function onMouseOut( tracker, event ) {
-        var gPoint;
-
         event = $.getEvent( event );
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
-        gPoint = {
+        handleMouseExit( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleMouseExit( tracker, event ) {
+        var gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
             isPrimary: true,
@@ -1481,35 +1837,31 @@
         updatePointersExit( tracker, event, [ gPoint ] );
     }
 
+
     /**
-     * This handler is used to handle the case where the mouse is dragged out of the window, it should cause the drag to be properly released.
-     *
+     * Returns a W3C DOM level 3 standard button value given an event.button property:
+     *   -1 == none, 0 == primary/left, 1 == middle, 2 == secondary/right, 3 == X1/back, 4 == X2/forward, 5 == eraser (pen)
      * @private
      * @inner
      */
-    function onMouseOutDocument( tracker, event ) {
-        event = $.getEvent( event );
-
-        var html = document.getElementsByTagName("html")[0];
-        var target = event.target || event.srcElement;
-        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
-            return; // not a mouseout of the iframe
-        }
-
-        var gPoint = {
-            id: $.MouseTracker.mousePointerId,
-            type: 'mouse',
-            isPrimary: true,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        event.buttons = undefined;
-
-        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
-            releasePointer( tracker, true );
+    function getStandardizedButton( button ) {
+        if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+            // On IE 8, 0 == none, 1 == left, 2 == right, 3 == left and right, 4 == middle, 5 == left and middle, 6 == right and middle, 7 == all three
+            // TODO: Support chorded (multiple) button presses on IE 8?
+            if ( button === 1 ) {
+                return 0;
+            } else if ( button === 2 ) {
+                return 2;
+            } else if ( button === 4 ) {
+                return 1;
+            } else {
+                return -1;
+            }
+        } else {
+            return button;
         }
     }
+
 
     /**
      * @private
@@ -1528,9 +1880,9 @@
             currentTime: $.now()
         };
 
-        if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
+        if ( updatePointersDown( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ) ) {
             $.stopEvent( event );
-            capturePointer( tracker, true );
+            capturePointer( tracker, 'mouse' );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler ) {
@@ -1577,10 +1929,11 @@
             currentTime: $.now()
         };
 
-        if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releasePointer( tracker, true );
+        if ( updatePointersUp( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ) ) {
+            releasePointer( tracker, 'mouse' );
         }
     }
+
 
     /**
      * @private
@@ -1629,45 +1982,24 @@
      * @private
      * @inner
      */
-    function onTouchEnter( tracker, event ) {
+    function abortTouchContacts( tracker, event, pointsList ) {
         var i,
-            touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPointCount = pointsList.getLength(),
+            abortGPoints = [];
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
-                currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
-                currentTime: $.now()
-            } );
+        for ( i = 0; i < gPointCount; i++ ) {
+            abortGPoints.push( pointsList.getByIndex( i ) );
         }
 
-        updatePointersEnter( tracker, event, gPoints );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onTouchLeave( tracker, event ) {
-        var i,
-            touchCount = event.changedTouches.length,
-            gPoints = [];
-
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
-                currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
-                currentTime: $.now()
-            } );
+        if ( abortGPoints.length > 0 ) {
+            // simulate touchend
+            updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
+            // release pointer capture
+            pointsList.captureCount = 1;
+            releasePointer( tracker, 'touch' );
+            // simulate touchleave
+            updatePointersExit( tracker, event, abortGPoints );
         }
-
-        updatePointersExit( tracker, event, gPoints );
     }
 
 
@@ -1678,10 +2010,18 @@
     function onTouchStart( tracker, event ) {
         var time,
             i,
+            j,
             touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPoints = [],
+            parentGPoints,
+            pointsList = tracker.getActivePointersListByType( 'touch' );
 
         time = $.now();
+
+        if ( pointsList.getLength() > event.touches.length - touchCount ) {
+            $.console.warn('Tracked touch contact count doesn\'t match event.touches.length. Removing all tracked touch pointers.');
+            abortTouchContacts( tracker, event, pointsList );
+        }
 
         for ( i = 0; i < touchCount; i++ ) {
             gPoints.push( {
@@ -1693,13 +2033,29 @@
             } );
         }
 
-        // simulate touchenter if not natively available
-        if ( !$.MouseTracker.haveTouchEnter ) {
-            updatePointersEnter( tracker, event, gPoints );
+        // simulate touchenter on our tracked element
+        updatePointersEnter( tracker, event, gPoints );
+
+        // simulate touchenter on our tracked element's tracked ancestor elements
+        for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+            if ( MOUSETRACKERS[ i ] !== tracker && MOUSETRACKERS[ i ].isTracking() && isParentChild( MOUSETRACKERS[ i ].element, tracker.element ) ) {
+                parentGPoints = [];
+                for ( j = 0; j < touchCount; j++ ) {
+                    parentGPoints.push( {
+                        id: event.changedTouches[ j ].identifier,
+                        type: 'touch',
+                        // isPrimary not set - let the updatePointers functions determine it
+                        currentPos: getMouseAbsolute( event.changedTouches[ j ] ),
+                        currentTime: time
+                    } );
+                }
+                updatePointersEnter( MOUSETRACKERS[ i ], event, parentGPoints );
+            }
         }
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
-            // Touch event model start, end, and move events are always captured so we don't need to capture explicitly
+            $.stopEvent( event );
+            capturePointer( tracker, 'touch' );
         }
 
         $.cancelEvent( event );
@@ -1711,10 +2067,34 @@
      * @inner
      */
     function onTouchEnd( tracker, event ) {
+        handleTouchEnd( tracker, event );
+    }
+
+
+    /**
+     * This handler is attached to the window object (on the capture phase) to emulate pointer capture.
+     * onTouchEnd is still attached to the tracked element, so stop propagation to avoid processing twice.
+     *
+     * @private
+     * @inner
+     */
+    function onTouchEndCaptured( tracker, event ) {
+        handleTouchEnd( tracker, event );
+        $.stopEvent( event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleTouchEnd( tracker, event ) {
         var time,
             i,
+            j,
             touchCount = event.changedTouches.length,
-            gPoints = [];
+            gPoints = [],
+            parentGPoints;
 
         time = $.now();
 
@@ -1728,13 +2108,28 @@
             } );
         }
 
-        // Touch event model start, end, and move events are always captured so we don't need to release capture.
-        // We'll ignore the should-release-capture return value here
-        updatePointersUp( tracker, event, gPoints, 0 ); // 0 means primary button press/release or touch contact
+        if ( updatePointersUp( tracker, event, gPoints, 0 ) ) {
+            releasePointer( tracker, 'touch' );
+        }
 
-        // simulate touchleave if not natively available
-        if ( !$.MouseTracker.haveTouchEnter && touchCount > 0 ) {
-            updatePointersExit( tracker, event, gPoints );
+        // simulate touchleave on our tracked element
+        updatePointersExit( tracker, event, gPoints );
+
+        // simulate touchleave on our tracked element's tracked ancestor elements
+        for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+            if ( MOUSETRACKERS[ i ] !== tracker && MOUSETRACKERS[ i ].isTracking() && isParentChild( MOUSETRACKERS[ i ].element, tracker.element ) ) {
+                parentGPoints = [];
+                for ( j = 0; j < touchCount; j++ ) {
+                    parentGPoints.push( {
+                        id: event.changedTouches[ j ].identifier,
+                        type: 'touch',
+                        // isPrimary not set - let the updatePointers functions determine it
+                        currentPos: getMouseAbsolute( event.changedTouches[ j ] ),
+                        currentTime: time
+                    } );
+                }
+                updatePointersExit( MOUSETRACKERS[ i ], event, parentGPoints );
+            }
         }
 
         $.cancelEvent( event );
@@ -1746,6 +2141,28 @@
      * @inner
      */
     function onTouchMove( tracker, event ) {
+        handleTouchMove( tracker, event );
+    }
+
+
+    /**
+     * This handler is attached to the window object (on the capture phase) to emulate pointer capture.
+     * onTouchMove is still attached to the tracked element, so stop propagation to avoid processing twice.
+     *
+     * @private
+     * @inner
+     */
+    function onTouchMoveCaptured( tracker, event ) {
+        handleTouchMove( tracker, event );
+        $.stopEvent( event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleTouchMove( tracker, event ) {
         var i,
             touchCount = event.changedTouches.length,
             gPoints = [];
@@ -1815,7 +2232,7 @@
     function onPointerOver( tracker, event ) {
         var gPoint;
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1838,7 +2255,7 @@
     function onPointerOut( tracker, event ) {
         var gPoint;
 
-        if ( this === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
             return;
         }
 
@@ -1853,32 +2270,6 @@
         updatePointersExit( tracker, event, [ gPoint ] );
     }
 
-    /**
-     * This handler is used to handle the case where the pointer is dragged out of the window, it should cause the drag to be properly released.
-     *
-     * @private
-     * @inner
-     */
-    function onPointerOutDocument( tracker, event ) {
-        event = $.getEvent( event );
-
-        var html = document.getElementsByTagName("html")[0];
-        if ((event.relatedTarget!==html && event.relatedTarget!==null) || event.currentTarget !== document.body) {
-            return; // not a mouseout of the iframe
-        }
-        
-        var gPoint = {
-            id: event.pointerId,
-            type: getPointerType( event ),
-            isPrimary: event.isPrimary,
-            currentPos: getMouseAbsolute( event ),
-            currentTime: $.now()
-        };
-
-        if ( updatePointersUp( tracker, event, [ gPoint ], 0 ) ) {
-            releasePointer( tracker, false );
-        }
-    }
 
     /**
      * @private
@@ -1896,8 +2287,8 @@
         };
 
         if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
-            capturePointer( tracker, false );
             $.stopEvent( event );
+            capturePointer( tracker, gPoint.type );
         }
 
         if ( tracker.clickHandler || tracker.dblClickHandler || tracker.pressHandler || tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
@@ -1947,8 +2338,7 @@
         };
 
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
-            releasePointer( tracker, false );
-            //$.stopEvent( event );
+            releasePointer( tracker, gPoint.type );
         }
     }
 
@@ -2133,6 +2523,7 @@
                         pointerType:          curGPoint.type,
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
+                        pointers:             tracker.getActivePointerCount(),
                         insideElementPressed: curGPoint.insideElementPressed,
                         buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
@@ -2196,6 +2587,7 @@
                         pointerType:          curGPoint.type,
                         position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
+                        pointers:             tracker.getActivePointerCount(),
                         insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
                         buttonDownAny:        pointsList.buttons !== 0,
                         isTouchEvent:         curGPoint.type === 'touch',
@@ -2224,7 +2616,7 @@
      * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
      *      Gesture points associated with the event.
      * @param {Number} buttonChanged
-     *      The button involved in the event: -1: none, 0: primary, 1: aux, 2: secondary, 3: X1, 4: X2, 5: pen eraser.
+     *      The button involved in the event: -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
      *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model, 
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      *
@@ -2242,30 +2634,71 @@
         if ( typeof event.buttons !== 'undefined' ) {
             pointsList.buttons = event.buttons;
         } else {
-            if ( buttonChanged === 0 ) {
-                // Primary
-                pointsList.buttons |= 1;
-            } else if ( buttonChanged === 1 ) {
-                // Aux
-                pointsList.buttons |= 4;
-            } else if ( buttonChanged === 2 ) {
-                // Secondary
-                pointsList.buttons |= 2;
-            } else if ( buttonChanged === 3 ) {
-                // X1 (Back)
-                pointsList.buttons |= 8;
-            } else if ( buttonChanged === 4 ) {
-                // X2 (Forward)
-                pointsList.buttons |= 16;
-            } else if ( buttonChanged === 5 ) {
-                // Pen Eraser
-                pointsList.buttons |= 32;
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+                if ( buttonChanged === 0 ) {
+                    // Primary
+                    pointsList.buttons += 1;
+                } else if ( buttonChanged === 1 ) {
+                    // Aux
+                    pointsList.buttons += 4;
+                } else if ( buttonChanged === 2 ) {
+                    // Secondary
+                    pointsList.buttons += 2;
+                } else if ( buttonChanged === 3 ) {
+                    // X1 (Back)
+                    pointsList.buttons += 8;
+                } else if ( buttonChanged === 4 ) {
+                    // X2 (Forward)
+                    pointsList.buttons += 16;
+                } else if ( buttonChanged === 5 ) {
+                    // Pen Eraser
+                    pointsList.buttons += 32;
+                }
+            } else {
+                if ( buttonChanged === 0 ) {
+                    // Primary
+                    pointsList.buttons |= 1;
+                } else if ( buttonChanged === 1 ) {
+                    // Aux
+                    pointsList.buttons |= 4;
+                } else if ( buttonChanged === 2 ) {
+                    // Secondary
+                    pointsList.buttons |= 2;
+                } else if ( buttonChanged === 3 ) {
+                    // X1 (Back)
+                    pointsList.buttons |= 8;
+                } else if ( buttonChanged === 4 ) {
+                    // X2 (Forward)
+                    pointsList.buttons |= 16;
+                } else if ( buttonChanged === 5 ) {
+                    // Pen Eraser
+                    pointsList.buttons |= 32;
+                }
             }
         }
 
         // Only capture and track primary button, pen, and touch contacts
-        //if ( buttonChanged !== 0 ) {
-        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the commented line above
+        if ( buttonChanged !== 0 ) {
+            // Aux Press
+            if ( tracker.nonPrimaryPressHandler ) {
+                propagate = tracker.nonPrimaryPressHandler(
+                    {
+                        eventSource:          tracker,
+                        pointerType:          gPoints[ 0 ].type,
+                        position:             getPointRelativeToAbsolute( gPoints[ 0 ].currentPos, tracker.element ),
+                        button:               buttonChanged,
+                        buttons:              pointsList.buttons,
+                        isTouchEvent:         gPoints[ 0 ].type === 'touch',
+                        originalEvent:        event,
+                        preventDefaultAction: false,
+                        userData:             tracker.userData
+                    }
+                );
+                if ( propagate === false ) {
+                    $.cancelEvent( event );
+                }
+            }
+
             return false;
         }
 
@@ -2345,7 +2778,7 @@
      * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
      *      Gesture points associated with the event.
      * @param {Number} buttonChanged
-     *      The button involved in the event: -1: none, 0: primary, 1: aux, 2: secondary, 3: X1, 4: X2, 5: pen eraser.
+     *      The button involved in the event: -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
      *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model, 
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      *
@@ -2369,30 +2802,71 @@
         if ( typeof event.buttons !== 'undefined' ) {
             pointsList.buttons = event.buttons;
         } else {
-            if ( buttonChanged === 0 ) {
-                // Primary
-                pointsList.buttons ^= ~1;
-            } else if ( buttonChanged === 1 ) {
-                // Aux
-                pointsList.buttons ^= ~4;
-            } else if ( buttonChanged === 2 ) {
-                // Secondary
-                pointsList.buttons ^= ~2;
-            } else if ( buttonChanged === 3 ) {
-                // X1 (Back)
-                pointsList.buttons ^= ~8;
-            } else if ( buttonChanged === 4 ) {
-                // X2 (Forward)
-                pointsList.buttons ^= ~16;
-            } else if ( buttonChanged === 5 ) {
-                // Pen Eraser
-                pointsList.buttons ^= ~32;
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+                if ( buttonChanged === 0 ) {
+                    // Primary
+                    pointsList.buttons -= 1;
+                } else if ( buttonChanged === 1 ) {
+                    // Aux
+                    pointsList.buttons -= 4;
+                } else if ( buttonChanged === 2 ) {
+                    // Secondary
+                    pointsList.buttons -= 2;
+                } else if ( buttonChanged === 3 ) {
+                    // X1 (Back)
+                    pointsList.buttons -= 8;
+                } else if ( buttonChanged === 4 ) {
+                    // X2 (Forward)
+                    pointsList.buttons -= 16;
+                } else if ( buttonChanged === 5 ) {
+                    // Pen Eraser
+                    pointsList.buttons -= 32;
+                }
+            } else {
+                if ( buttonChanged === 0 ) {
+                    // Primary
+                    pointsList.buttons ^= ~1;
+                } else if ( buttonChanged === 1 ) {
+                    // Aux
+                    pointsList.buttons ^= ~4;
+                } else if ( buttonChanged === 2 ) {
+                    // Secondary
+                    pointsList.buttons ^= ~2;
+                } else if ( buttonChanged === 3 ) {
+                    // X1 (Back)
+                    pointsList.buttons ^= ~8;
+                } else if ( buttonChanged === 4 ) {
+                    // X2 (Forward)
+                    pointsList.buttons ^= ~16;
+                } else if ( buttonChanged === 5 ) {
+                    // Pen Eraser
+                    pointsList.buttons ^= ~32;
+                }
             }
         }
 
         // Only capture and track primary button, pen, and touch contacts
-        //if ( buttonChanged !== 0 ) {
-        if ( buttonChanged !== 0 && buttonChanged !== 1 ) { //TODO Remove this IE8 compatibility and use the commented line above
+        if ( buttonChanged !== 0 ) {
+            // Aux Release
+            if ( tracker.nonPrimaryReleaseHandler ) {
+                propagate = tracker.nonPrimaryReleaseHandler(
+                    {
+                        eventSource:           tracker,
+                        pointerType:           gPoints[ 0 ].type,
+                        position:              getPointRelativeToAbsolute(  gPoints[ 0 ].currentPos, tracker.element ),
+                        button:                buttonChanged,
+                        buttons:               pointsList.buttons,
+                        isTouchEvent:          gPoints[ 0 ].type === 'touch',
+                        originalEvent:         event,
+                        preventDefaultAction:  false,
+                        userData:              tracker.userData
+                    }
+                );
+                if ( propagate === false ) {
+                    $.cancelEvent( event );
+                }
+            }
+
             return false;
         }
 

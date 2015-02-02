@@ -11,26 +11,29 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
-    $.MouseTracker.haveMouseEnter = false;
-    if ( 'ontouchstart' in window ) {
-        // iOS, Android, and other W3c Touch Event implementations (see http://www.w3.org/TR/2011/WD-touch-events-20110505)
-        $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
-        if ( 'ontouchenter' in window ) {
-            $.MouseTracker.subscribeEvents.push( "touchenter", "touchleave" );
-            $.MouseTracker.haveTouchEnter = true;
-        } else {
-            $.MouseTracker.haveTouchEnter = false;
-        }
+    $.MouseTracker.havePointerEvents = false;
+    if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+        $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+        $.MouseTracker.haveMouseEnter = true;
     } else {
-        $.MouseTracker.haveTouchEnter = false;
+        $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
+        $.MouseTracker.haveMouseEnter = false;
+    }
+    $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+    if ( 'ontouchstart' in window ) {
+        // iOS, Android, and other W3c Touch Event implementations
+        //    (see http://www.w3.org/TR/touch-events/)
+        //    (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
+        //    (see https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
+        $.MouseTracker.subscribeEvents.push( "touchstart", "touchend", "touchmove", "touchcancel" );
     }
     if ( 'ongesturestart' in window ) {
-        // iOS (see https://developer.apple.com/library/safari/documentation/UserExperience/Reference/GestureEventClassReference/GestureEvent/GestureEvent.html)
+        // iOS (see https://developer.apple.com/library/ios/documentation/AppleApplications/Reference/SafariWebContent/HandlingEvents/HandlingEvents.html)
         //   Subscribe to these to prevent default gesture handling
         $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
     }
     $.MouseTracker.mousePointerId = "legacy-mouse";
     $.MouseTracker.maxTouchPoints = 10;
+
 
 }(OpenSeadragon));
