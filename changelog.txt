@@ -47,8 +47,11 @@ OPENSEADRAGON CHANGELOG
 * Added viewport-change event for after the viewport changes but before it's drawn
 * A spring's current value is now updated immediately on reset (#524)
 * Fixed an error in fitBounds that occurred sometimes with immediately = true
+* Added support for HDPI (retina) displays (#583)
 
-1.2.1: (in progress)
+1.2.2: (in progress)
+
+1.2.1:
 
 * Added preserveOverlays option (#561)
 * Fixed: DZI tilesource was broken on IE8/IE9 (#563)
