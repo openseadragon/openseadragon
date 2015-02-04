@@ -820,6 +820,25 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     canvasElement.getContext( '2d' ) );
     }());
 
+    /**
+     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
+     * @member {Number} pixelDensityRatio
+     * @memberof OpenSeadragon
+     */
+    $.pixelDensityRatio = (function () {
+        if ( $.supportsCanvas ) {
+            var context = document.createElement('canvas').getContext('2d');
+            var devicePixelRatio = window.devicePixelRatio || 1;
+            var backingStoreRatio = context.webkitBackingStorePixelRatio ||
+                                    context.mozBackingStorePixelRatio ||
+                                    context.msBackingStorePixelRatio ||
+                                    context.oBackingStorePixelRatio ||
+                                    context.backingStorePixelRatio || 1;
+            return devicePixelRatio / backingStoreRatio;
+        } else {
+            return 1;
+        }
+    }());
 
 }( OpenSeadragon ));
 
