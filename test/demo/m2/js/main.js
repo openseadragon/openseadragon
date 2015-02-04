@@ -7,8 +7,7 @@
         init: function() {
             var self = this;
 
-            var count = 500;
-
+            this.maxImages = 500;
             this.mode = 'none';
             this.pageBuffer = 0.05;
             this.bigBuffer = 0.2;
@@ -20,35 +19,12 @@
                 'page'
             ];
 
-            var highsmith = {
-                Image: {
-                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
-                    Format: "jpg",
-                    Overlap: "2",
-                    TileSize: "256",
-                    Size: {
-                        Height: "9221",
-                        Width:  "7026"
-                    }
-                }
-            };
-
-            // this.tileSources = [];
-            // for (var i = 0; i < count; i++) {
-            //     this.tileSources.push(highsmith);
-            // }
-
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
                 autoResize: false,
                 showHomeControl: false,
-                // animationTime: 10,
-                // springStiffness: 2,
-                tileSources: $.map(this.tileSources.slice(0, count), function(v, i) {
-                    return new OpenSeadragon.IIIFTileSource(v);
-                })
+                tileSources: this.getTileSources()
             });
 
             this.viewer.addHandler('open', function() {
@@ -604,6 +580,86 @@
                     immediately: config.immediately
                 });
             }
+        },
+
+        // ----------
+        getTileSources: function() {
+            if (this.tileSources) {
+                return $.map(this.tileSources.slice(0, this.maxImages), function(v, i) {
+                    return new OpenSeadragon.IIIFTileSource(v);
+                });
+            }
+
+            var inputs = [
+                {
+                    Image: {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                        Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                        Format: "jpg",
+                        Overlap: "2",
+                        TileSize: "256",
+                        Size: {
+                            Width:  "7026",
+                            Height: "9221"
+                        }
+                    }
+                }, {
+                    Image: {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                        Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
+                        Format: "jpg",
+                        Overlap: "2",
+                        TileSize: "256",
+                        Size: {
+                            Width:  "13920",
+                            Height: "10200"
+                        }
+                    }
+                }, {
+                //     Image: {
+                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                //         Url: "../../data/tall_files/",
+                //         Format: "jpg",
+                //         Overlap: "1",
+                //         TileSize: "254",
+                //         Size: {
+                //             Width:  "500",
+                //             Height: "2000"
+                //         }
+                //     }
+                // }, {
+                //     Image: {
+                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                //         Url: "../../data/wide_files/",
+                //         Format: "jpg",
+                //         Overlap: "1",
+                //         TileSize: "254",
+                //         Size: {
+                //             Width:  "2000",
+                //             Height: "500"
+                //         }
+                //     }
+                // }, {
+                    Image: {
+                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                        Url: "../../data/testpattern_files/",
+                        Format: "jpg",
+                        Overlap: "1",
+                        TileSize: "254",
+                        Size: {
+                            Width:  "1000",
+                            Height: "1000"
+                        }
+                    }
+                }
+            ];
+
+            var outputs = [];
+            for (var i = 0; i < this.maxImages; i++) {
+                outputs.push(inputs[Math.floor(Math.random() * inputs.length)]);
+            }
+
+            return outputs;
         }
     };
 
