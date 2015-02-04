@@ -39,7 +39,14 @@ OPENSEADRAGON CHANGELOG
 * Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
 * imageLoaderLimit now works (#544)
+* Turning off scrollToZoom in gestureSettings now allows scroll events to propagate
+* You can now set a minZoomLevel that's greater than the home zoom level
+* Added union() to OpenSeadragon.Rect
+* Fixed an error in fitBounds if the new and old bounds were extremely close in size
 * Added ajaxWithCredentials option (#543)
+* Added viewport-change event for after the viewport changes but before it's drawn
+* A spring's current value is now updated immediately on reset (#524)
+* Fixed an error in fitBounds that occurred sometimes with immediately = true
 * Added support for HDPI (retina) displays (#583)
 
 1.2.2: (in progress)

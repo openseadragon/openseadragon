@@ -132,6 +132,10 @@ $.Viewport = function( options ) {
         animationTime:   this.animationTime
     });
 
+    this._oldCenterX = this.centerSpringX.current.value;
+    this._oldCenterY = this.centerSpringY.current.value;
+    this._oldZoom    = this.zoomSpring.current.value;
+
     if (this.contentSize) {
         this.resetContentSize( this.contentSize );
     } else {
@@ -275,7 +279,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.minZoomLevel :
                 this.minZoomImageRatio * homeZoom;
 
-        return Math.min( zoom, homeZoom );
+        return zoom;
     },
 
     /**
@@ -584,10 +588,17 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             }
 
             newBounds = this._applyBoundaryConstraints( newBounds, immediately );
+            center = newBounds.getCenter();
         }
 
-        if ( newZoom == oldZoom || newBounds.width == oldBounds.width ) {
-            return this.panTo( constraints ? newBounds.getCenter() : center, immediately );
+        if (immediately) {
+            this.panTo( center, true );
+            return this.zoomTo(newZoom, null, true);
+        }
+
+        if (Math.abs(newZoom - oldZoom) < 0.00000000001 ||
+                Math.abs(newBounds.width - oldBounds.width) < 0.00000000001) {
+            return this.panTo( center, immediately );
         }
 
         referencePoint = oldBounds.getTopLeft().times(
@@ -855,10 +866,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      */
     update: function() {
-        var oldCenterX = this.centerSpringX.current.value,
-            oldCenterY = this.centerSpringY.current.value,
-            oldZoom    = this.zoomSpring.current.value,
-            oldZoomPixel,
+        var oldZoomPixel,
             newZoomPixel,
             deltaZoomPixels,
             deltaZoomPoints;
@@ -869,7 +877,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
         this.zoomSpring.update();
 
-        if (this.zoomPoint && this.zoomSpring.current.value != oldZoom) {
+        if (this.zoomPoint && this.zoomSpring.current.value != this._oldZoom) {
             newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
             deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
             deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
@@ -883,9 +891,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.centerSpringX.update();
         this.centerSpringY.update();
 
-        return this.centerSpringX.current.value != oldCenterX ||
-            this.centerSpringY.current.value != oldCenterY ||
-            this.zoomSpring.current.value != oldZoom;
+        var changed = this.centerSpringX.current.value != this._oldCenterX ||
+            this.centerSpringY.current.value != this._oldCenterY ||
+            this.zoomSpring.current.value != this._oldZoom;
+
+        this._oldCenterX = this.centerSpringX.current.value;
+        this._oldCenterY = this.centerSpringY.current.value;
+        this._oldZoom    = this.zoomSpring.current.value;
+
+        return changed;
     },
 
 

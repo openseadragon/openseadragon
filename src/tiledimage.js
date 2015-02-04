@@ -409,8 +409,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._xSpring.resetTo(position.x);
             this._ySpring.resetTo(position.y);
-            this._xSpring.update();
-            this._ySpring.update();
         } else {
             if (sameTarget) {
                 return;
@@ -454,7 +452,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
 
             this._scaleSpring.resetTo(scale);
-            this._scaleSpring.update();
             this._updateForScale();
         } else {
             if (sameTarget) {

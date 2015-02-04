@@ -117,10 +117,8 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
      * @param {Number} target
      */
     resetTo: function( target ) {
-        this.target.value = target;
-        this.target.time  = this.current.time;
-        this.start.value  = this.target.value;
-        this.start.time   = this.target.time;
+        this.start.value = this.target.value = this.current.value = target;
+        this.start.time = this.target.time = this.current.time = $.now();
     },
 
     /**
