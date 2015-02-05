@@ -216,6 +216,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             levelHeight = Math.ceil( this.height * scale ),
 
             //## iiif region
+            tileSize,
             iiifTileSizeWidth,
             iiifTileSizeHeight,
             iiifRegion,
@@ -227,7 +228,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality,
             uri;
 
-        iiifTileSizeWidth = Math.ceil( this.getTileSize(level) / scale );
+        tileSize = this.getTileSize(level);
+        iiifTileSizeWidth = Math.ceil( tileSize / scale );
         iiifTileSizeHeight = iiifTileSizeWidth;
 
         if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
@@ -238,7 +240,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default.jpg";
         }
 
-        if ( levelWidth < this.tile_width && levelHeight < this.tile_height ){
+        if ( levelWidth < tileSize && levelHeight < tileSize ){
             iiifSize = levelWidth + ",";
             iiifRegion = 'full';
         } else {
@@ -255,6 +257,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     }
 
   });
+
 
     function configureFromXml10(xmlDoc) {
         //parse the xml
