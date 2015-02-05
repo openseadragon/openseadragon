@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 1.2.2: (in progress)
 
+* Corrected IIIF tile source to use canonical syntax (#586)
+
 1.2.1:
 
 * Added preserveOverlays option (#561)
