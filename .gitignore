@@ -4,3 +4,4 @@ build/
 sftp-config.json
 coverage/
 temp/
+.idea
