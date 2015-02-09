@@ -362,20 +362,19 @@
         viewer.open(DZI_PATH);
     });
 
-    var testRectsOutsideImage = [
-        new OpenSeadragon.Rect(0, 0, 2000, 100),
-        new OpenSeadragon.Rect(0, 0, 2000, 100),
-        new OpenSeadragon.Rect(800, 800, 300, 300),
-        new OpenSeadragon.Rect(-40, -40, 500, 500)
+    var testRectsFitBounds = [
+        new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
+        new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
     ];
 
-    // Why is it always this!?
-    var expectedRectFitBounds = new OpenSeadragon.Rect(
-        -0.05555555555555558,
-        -0.05555555555555558,
-        1.1111111111111112,
-        1.1111111111111112
-    );
+    var expectedRectsFitBounds = [
+        new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
+    ];
 
     asyncTest('fitBoundsWithConstraints', function(){
         var openHandler = function(event) {
@@ -383,14 +382,14 @@
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
             viewport.update();
-            for(var i = 0; i < testRectsOutsideImage.length; i++){
-                var rect = testRectsOutsideImage[i];
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
 
                 viewport.fitBoundsWithConstraints(rect, true);
                 viewport.update();
                 propEqual(
                     viewport.getBounds(),
-                    expectedRectFitBounds,
+                    expectedRectsFitBounds[i],
                     "Fit bounds correctly."
                 );
             }
