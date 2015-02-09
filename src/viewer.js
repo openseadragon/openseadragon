@@ -826,14 +826,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
-    hideControls: function() {
-        beginControlsAutoHide(this);
-    },
-
-    showControls: function() {
-        abortControlsAutoHide(this);
-    },
-
     /**
      * @function
      * @return {Boolean}
