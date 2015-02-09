@@ -491,6 +491,7 @@
                 );
 
                 // now use a ref point
+                // TODO: check the ending position due to ref point
                 viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
                 viewport.update();
                 propEqual(
@@ -521,6 +522,7 @@
                 );
 
                 // now use a ref point
+                // TODO: check the ending position due to ref point
                 viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
                 viewport.update(); // need to call this even with immediately=true
                 propEqual(
