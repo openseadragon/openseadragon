@@ -287,11 +287,11 @@
 
             for(var i = 0; i < testRects.length; i++){
                 var rect = testRects[i].times(viewport.getContainerSize());
-                viewport.resetContentSize(rect);
+                viewport.resetContentSize(rect.getSize());
                 viewport.update();
                 propEqual(
                     viewport.contentSize,
-                    rect,
+                    rect.getSize(),
                     "Reset content size correctly."
                 );
             }
@@ -409,7 +409,7 @@
             viewport.update();
             propEqual(
                 viewport.getBounds(),
-                new OpenSeadragon.Rect(-1.5,0,4,4),
+                new OpenSeadragon.Rect(0, 1.5, 1, 1),
                 "Viewport fit a tall image horizontally."
             );
             start();
@@ -426,7 +426,7 @@
             viewport.update();
             propEqual(
                 viewport.getBounds(),
-                new OpenSeadragon.Rect(0,0,0.25,0.25),
+                new OpenSeadragon.Rect(0.375, 0, 0.25, 0.25),
                 "Viewport fit a wide image vertically."
             );
             start();
