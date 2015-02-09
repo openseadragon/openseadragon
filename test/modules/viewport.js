@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, propEqual, console */
 
 (function () {
     var viewer;
@@ -33,6 +33,7 @@
     var VIEWER_PADDING = new OpenSeadragon.Point(0.25, 0.25);
     var DZI_PATH = '/test/data/testpattern.dzi';
     var TALL_PATH = '/test/data/tall.dzi';
+    var WIDE_PATH = '/test/data/wide.dzi';
 
     var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
 
@@ -118,6 +119,7 @@
     };
 
 // Tests start here.
+
     asyncTest('getContainerSize', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
@@ -276,6 +278,300 @@
         viewer.homeFillsViewer = true;
         viewer.defaultZoomLevel = expected;
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
+    });
+
+    asyncTest('resetContentSize', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRects.length; i++){
+                var rect = testRects[i].times(viewport.getContainerSize());
+                viewport.resetContentSize(rect);
+                viewport.update();
+                propEqual(
+                    viewport.contentSize,
+                    rect,
+                    "Reset content size correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('goHome', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            // zoom/pan somewhere
+            viewport.zoomTo(ZOOM_FACTOR, true);
+            viewport.update();
+
+            viewport.goHome(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                viewport.getHomeBounds(),
+                 "Went home."
+            );
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('ensureVisible', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            // zoom/pan so that the image is out of view
+            viewport.zoomTo(ZOOM_FACTOR * -50, true);
+            viewport.panBy(new OpenSeadragon.Point(5000, 5000), null, true);
+            viewport.update();
+
+            viewport.ensureVisible(true);
+            viewport.update();
+            var bounds = viewport.getBounds();
+            ok(bounds.getSize().x > 1 && bounds.getSize().y > 1, "Moved viewport so that image is visible.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRects.length; i++){
+                var rect = testRects[i].times(viewport.getContainerSize());
+                viewport.fitBounds(rect, true);
+                viewport.update();
+                propEqual(
+                    viewport.getBounds(),
+                    rect,
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    var testRectsFitBounds = [
+        new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
+        new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
+    ];
+
+    var expectedRectsFitBounds = [
+        new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
+    ];
+
+    asyncTest('fitBoundsWithConstraints', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+            viewport.update();
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+
+                viewport.fitBoundsWithConstraints(rect, true);
+                viewport.update();
+                propEqual(
+                    viewport.getBounds(),
+                    expectedRectsFitBounds[i],
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitHorizontally', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.fitHorizontally(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                new OpenSeadragon.Rect(-1.5,0,4,4),
+                "Viewport fit a tall image horizontally."
+            );
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(TALL_PATH);
+    });
+
+    asyncTest('fitVertically', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.fitVertically(true);
+            viewport.update();
+            propEqual(
+                viewport.getBounds(),
+                new OpenSeadragon.Rect(0,0,0.25,0.25),
+                "Viewport fit a wide image vertically."
+            );
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(WIDE_PATH);
+    });
+
+    asyncTest('panBy', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testPoints.length; i++){
+                var expected = viewport.getCenter().plus(testPoints[i]);
+                viewport.panBy(testPoints[i], true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getCenter(),
+                    expected,
+                    "Panned by the correct amount."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('panTo', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testPoints.length; i++){
+                viewport.panTo(testPoints[i], true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getCenter(),
+                    testPoints[i],
+                    "Panned to the correct location."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('zoomBy', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testZoomLevels.length; i++){
+                viewport.zoomBy(testZoomLevels[i], null, true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed by the correct amount."
+                );
+
+                // now use a ref point
+                // TODO: check the ending position due to ref point
+                viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
+                viewport.update();
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed by the correct amount."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('zoomTo', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testZoomLevels.length; i++){
+                viewport.zoomTo(testZoomLevels[i], null, true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed to the correct level."
+                );
+
+                // now use a ref point
+                // TODO: check the ending position due to ref point
+                viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
+                viewport.update(); // need to call this even with immediately=true
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed to the correct level."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('rotation', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            propEqual(viewport.getRotation, 0, "Original rotation should be 0 degrees");
+            viewport.setRotation(90);
+            propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
+            viewport.setRotation(-75);
+            propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+            start();
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('resize', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testPoints.length; i++){
+                var new_size = testPoints[i].times(viewer.source.dimensions.x);
+                viewport.resize(new_size);
+                viewport.update();
+                propEqual(viewport.getContainerSize(), new_size, "Viewport resized successfully.");
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
     });
 
     asyncTest('deltaPixelsFromPoints', function() {
