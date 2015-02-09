@@ -48,9 +48,6 @@ OPENSEADRAGON CHANGELOG
 * A spring's current value is now updated immediately on reset (#524)
 * Fixed an error in fitBounds that occurred sometimes with immediately = true
 * Added support for HDPI (retina) displays (#583)
-
-1.2.2: (in progress)
-
 * Corrected IIIF tile source to use canonical syntax (#586)
 
 1.2.1:
