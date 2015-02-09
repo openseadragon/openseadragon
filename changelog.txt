@@ -1,6 +1,54 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+1.3.0: (in progress)
+
+* True multi-image mode (#450)
+    * BREAKING CHANGE: Passing an array for the tileSources option is no longer enough to trigger sequence mode; you have to set the sequenceMode option to true as well
+    * BREAKING CHANGE: Navigator no longer sends an open event when its viewer opens
+    * BREAKING CHANGE: Viewer.drawers and Viewer.drawersContainer no longer exist
+    * BREAKING CHANGE: A Viewer's Drawer and Viewport are now made once per Viewer and reused for every image that Viewer opens (rather than being recreated for every open); this means if you change Viewer options between opens, the behavior is different now.
+    * DEPRECATION: use Viewer.addTiledImage instead of Viewer.addLayer
+        * addTiledImage supports positioning config properties
+    * DEPRECATION: use World.getItemAt instead of Viewer.getLayerAtLevel
+    * DEPRECATION: use World.getIndexOfItem instead of Viewer.getLevelOfLayer
+    * DEPRECATION: use World.getItemCount instead of Viewer.getLayersCount
+    * DEPRECATION: use World.setItemIndex instead of Viewer.setLayerLevel
+    * DEPRECATION: use World.removeItem instead of Viewer.removeLayer
+    * DEPRECATION: use World.needsDraw instead of Drawer.needsUpdate
+    * DEPRECATION: use TileCache.numTilesLoaded instead of Drawer.numTilesLoaded
+    * DEPRECATION: use World.resetItems instead of Drawer.reset
+    * DEPRECATION: use Drawer.clear and World.draw instead of Drawer.update
+    * DEPRECATION: the layersAspectRatioEpsilon option is no longer necessary
+    * DEPRECATION: Viewer's add-layer event is now World's add-item event
+    * DEPRECATION: Viewer's layer-level-changed event is now World's item-index-change event
+    * DEPRECATION: Viewer's remove-layer event is now World's remove-item event
+    * DEPRECATION: Viewer's add-layer-failed event is now add-item-failed
+    * DEPRECATION: TileSourceCollection has been retired in favor of World
+    * DEPRECATION: collectionMode no longer draws outlines or reflections for items
+    * Drawer has been split into three classes:
+        * TiledImage, tile management and positioning for a single tiled image
+        * TileCache, tile caching for all images
+        * Drawer, tile drawing for all images
+    * New class: World, keeps track of multiple images in the scene
+    * Viewer now has world and tileCache properties
+    * Rect and Point now have clone functions
+    * New Viewport method for managing homeBounds as well as constraints: setHomeBounds
+    * Viewport.open supports positioning config properties
+* Margins option to push the home region in from the edges of the Viewer (#505)
+* Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
+* Overlays appear in the DOM immediately on open or addOverlay (#507)
+* imageLoaderLimit now works (#544)
+* Turning off scrollToZoom in gestureSettings now allows scroll events to propagate
+* You can now set a minZoomLevel that's greater than the home zoom level
+* Added union() to OpenSeadragon.Rect
+* Fixed an error in fitBounds if the new and old bounds were extremely close in size
+* Added ajaxWithCredentials option (#543)
+* Added viewport-change event for after the viewport changes but before it's drawn
+* A spring's current value is now updated immediately on reset (#524)
+* Fixed an error in fitBounds that occurred sometimes with immediately = true
+* Added support for HDPI (retina) displays (#583)
+
 1.2.2: (in progress)
 
 * Corrected IIIF tile source to use canonical syntax (#586)

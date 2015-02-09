@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon Collections Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <style type="text/css">
+
+            html,
+            body,
+            .openseadragon1 {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+            .controls {
+                position: absolute;
+                right: 10px;
+                top: 10px;
+            }
+
+        </style>
+        <script>
+
+            // ----------
+            App = {
+                itemCount: 5,
+                positionRange: 100,
+                sizeRange: 30,
+                delay: 100,
+
+                // ----------
+                init: function() {
+                    var self = this;
+
+                    this.index = 0;
+                    this.paused = false;
+
+                    var tileSource = {
+                        Image: {
+                            xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                            Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                            Format: "jpg",
+                            Overlap: "2",
+                            TileSize: "256",
+                            Size: {
+                                Height: "9221",
+                                Width:  "7026"
+                            }
+                        }
+                    };
+
+                    var tileSources = [];
+                    for (var i = 0; i < this.itemCount; i++) {
+                        tileSources.push(tileSource);
+                    }
+
+                    this.viewer = OpenSeadragon({
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: tileSources
+                    });
+
+                    this.viewer.addHandler('open', function() {
+                        self.updateCount();
+
+                        self.viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0,
+                            self.positionRange + self.sizeRange,
+                            self.positionRange + self.sizeRange));
+
+                        self.animate();
+                    });
+
+                    var $pause = $('.toggle-pause').click(function() {
+                        self.paused = !self.paused;
+                        $pause.text(self.paused ? 'Play' : 'Pause');
+                    });
+
+                    $('.add').click(function() {
+                        for (var i = 0; i < self.itemCount; i++) {
+                            self.viewer.addTiledImage({
+                                tileSource: tileSource,
+                                x: Math.random() * self.positionRange,
+                                y: Math.random() * self.positionRange,
+                                width: Math.random() * self.sizeRange,
+                                success: function() {
+                                    self.updateCount();
+                                }
+                            });
+                        }
+                    });
+                },
+
+                // ----------
+                animate: function() {
+                    var self = this;
+
+                    if (!this.paused) {
+                        var item = this.viewer.world.getItemAt(this.index);
+                        item.setPosition(new OpenSeadragon.Point(Math.random() * this.positionRange,
+                            Math.random() * this.positionRange));
+
+                        item.setWidth(Math.random() * this.sizeRange);
+
+                        this.index = (this.index + 1) % this.viewer.world.getItemCount();
+                    }
+
+                    setTimeout(function() {
+                        self.animate();
+                    }, this.delay);
+                },
+
+                // ----------
+                updateCount: function() {
+                    $('.count').text(this.viewer.world.getItemCount());
+                }
+            };
+
+            // ----------
+            $(document).ready(function() {
+                App.init();
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="contentDiv" class="openseadragon1"></div>
+        <div class="controls">
+            <button class="toggle-pause">Pause</button>
+            <button class="add">Add More</button>
+            Image Count: <span class="count"></span>
+        </div>
+    </body>
+</html>

@@ -63,6 +63,12 @@ and open `http://localhost:8000/test/test.html` in your browser.
 
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
+You can also get a report of the tests' code coverage:
+
+    grunt coverage
+
+The report shows up at `coverage/html/index.html` viewable in a browser.
+
 ### Contributing
 
 OpenSeadragon is truly a community project; we welcome your involvement!

@@ -1,3 +1,5 @@
+/* global module */
+
 module.exports = function(grunt) {
 
     // ----------
@@ -5,7 +7,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-jshint");
     grunt.loadNpmTasks("grunt-contrib-uglify");
-    grunt.loadNpmTasks("grunt-contrib-qunit");
+    grunt.loadNpmTasks("grunt-qunit-istanbul");
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
@@ -44,11 +46,14 @@ module.exports = function(grunt) {
             "src/referencestrip.js",
             "src/displayrectangle.js",
             "src/spring.js",
-            "src/imageLoader.js",
+            "src/imageloader.js",
             "src/tile.js",
             "src/overlay.js",
             "src/drawer.js",
-            "src/viewport.js"
+            "src/viewport.js",
+            "src/tiledimage.js",
+            "src/tilecache.js",
+            "src/world.js"
         ];
 
     // ----------
@@ -69,6 +74,7 @@ module.exports = function(grunt) {
         clean: {
             build: ["build"],
             package: [packageDir],
+            coverage: ["coverage"],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -134,10 +140,26 @@ module.exports = function(grunt) {
             }
         },
         qunit: {
+            normal: {
+                options: {
+                    urls: [ "http://localhost:8000/test/test.html" ]
+                }
+            },
+            coverage: {
+                options: {
+                    urls: [ "http://localhost:8000/test/coverage.html" ],
+                    coverage: {
+                        src: ['src/*.js'],
+                        htmlReport: 'coverage/html/',
+                        instrumentedFiles: 'temp/',
+                        baseUrl: '.',
+                        disposeCollector: true
+                    }
+                }
+            },
             all: {
                 options: {
-                    timeout: 10000,
-                    urls: [ "http://localhost:8000/test/test.html" ]
+                    timeout: 10000
                 }
             }
         },
@@ -151,7 +173,7 @@ module.exports = function(grunt) {
         },
         watch: {
             files: [ "Gruntfile.js", "src/*.js", "images/*" ],
-            tasks: "build"
+            tasks: "watchTask"
         },
         jshint: {
             options: {
@@ -206,11 +228,25 @@ module.exports = function(grunt) {
     });
 
     // ----------
+    // Bower task.
+    // Generates the Bower file for site-build.
     grunt.registerTask("bower", function() {
         var path = "../site-build/bower.json";
         var data = grunt.file.readJSON(path);
         data.version = packageJson.version;
         grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
+    });
+
+    // ----------
+    // Watch task.
+    // Called from the watch feature; does a full build or a minbuild, depending on
+    // whether you used --min on the command line.
+    grunt.registerTask("watchTask", function() {
+        if (grunt.option('min')) {
+            grunt.task.run("minbuild");
+        } else {
+            grunt.task.run("build");
+        }
     });
 
     // ----------
@@ -222,9 +258,21 @@ module.exports = function(grunt) {
     ]);
 
     // ----------
+    // Minimal build task.
+    // For use during development as desired. Creates only the unminified version.
+    grunt.registerTask("minbuild", [
+        "git-describe", "concat", "copy:build"
+    ]);
+
+    // ----------
     // Test task.
     // Builds and runs unit tests.
-    grunt.registerTask("test", ["build", "connect", "qunit"]);
+    grunt.registerTask("test", ["build", "connect", "qunit:normal"]);
+
+    // ----------
+    // Coverage task.
+    // Outputs unit test code coverage report.
+    grunt.registerTask("coverage", ["clean:coverage", "connect", "qunit:coverage"]);
 
     // ----------
     // Package task.

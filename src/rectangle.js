@@ -75,6 +75,13 @@ $.Rect = function( x, y, width, height ) {
 };
 
 $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
+    /**
+     * @function
+     * @returns {OpenSeadragon.Rect} a duplicate of this Rect
+     */
+    clone: function() {
+        return new $.Rect(this.x, this.y, this.width, this.height);
+    },
 
     /**
      * The aspect ratio is simply the ratio of width to height.
@@ -195,6 +202,21 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     },
 
     /**
+     * Returns the smallest rectangle that will contain this and the given rectangle.
+     * @param {OpenSeadragon.Rect} rect
+     * @return {OpenSeadragon.Rect} The new rectangle.
+     */
+    // ----------
+    union: function(rect) {
+        var left = Math.min(this.x, rect.x);
+        var top = Math.min(this.y, rect.y);
+        var right = Math.max(this.x + this.width, rect.x + rect.width);
+        var bottom = Math.max(this.y + this.height, rect.y + rect.height);
+
+        return new OpenSeadragon.Rect(left, top, right - left, bottom - top);
+    },
+
+    /**
      * Rotates a rectangle around a point. Currently only 90, 180, and 270
      * degrees are supported.
      * @function
@@ -257,10 +279,10 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      */
     toString: function() {
         return "[" +
-            Math.round(this.x*100) + "," +
-            Math.round(this.y*100) + "," +
-            Math.round(this.width*100) + "x" +
-            Math.round(this.height*100) +
+            (Math.round(this.x*100) / 100) + "," +
+            (Math.round(this.y*100) / 100) + "," +
+            (Math.round(this.width*100) / 100) + "x" +
+            (Math.round(this.height*100) / 100) +
         "]";
     }
 };

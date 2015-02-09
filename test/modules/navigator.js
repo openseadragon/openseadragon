@@ -1,6 +1,4 @@
-/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
-
-QUnit.config.autostart = false;
+/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal, propEqual */
 
 (function () {
     var debug = false,
@@ -29,10 +27,6 @@ QUnit.config.autostart = false;
 
             resetTestVariables();
         }
-    });
-
-    $(document).ready(function () {
-        start();
     });
 
     var resetTestVariables = function () {
@@ -146,7 +140,7 @@ QUnit.config.autostart = false;
                 currentDisplayRegionLeft = displayRegion.position().left;
                 currentDisplayWidth = displayRegion.width();
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
-                    !viewer.drawer.needsUpdate() &&
+                    !viewer.world.needsDraw() &&
                     currentDisplayWidth > 0 &&
                     Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
                     Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, 0.0001) &&
@@ -166,7 +160,7 @@ QUnit.config.autostart = false;
             else {
                 if (count === 40) {
                     console.log("waitForViewer:" +
-                        viewer.drawer + ":" + viewer.drawer.needsUpdate() + ":" +
+                        viewer.drawer + ":" + viewer.world.needsDraw() + ":" +
                         viewerAndNavigatorDisplayReady + ":" +
                         lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" +
                         lastDisplayWidth + ":" + currentDisplayWidth + ":" +
@@ -765,11 +759,11 @@ QUnit.config.autostart = false;
         var openHandler1 = function(event) {
             viewer.removeHandler('open', openHandler1);
             ok(viewer.navigator, 'navigator exists');
-            viewer.navigator.addHandler('open', navOpenHandler1);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler1);
         };
 
         var navOpenHandler1 = function(event) {
-            viewer.navigator.removeHandler('open', navOpenHandler1);
+            viewer.navigator.world.removeHandler('add-item', navOpenHandler1);
             equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             ok(viewer.navigator._updateRequestId, 'navigator timer is on');
             viewer.addHandler('close', closeHandler1);
@@ -785,11 +779,11 @@ QUnit.config.autostart = false;
 
         var openHandler2 = function(event) {
             viewer.removeHandler('open', openHandler2);
-            viewer.navigator.addHandler('open', navOpenHandler2);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler2);
         };
 
         var navOpenHandler2 = function(event) {
-            viewer.navigator.removeHandler('open', navOpenHandler2);
+            viewer.navigator.world.removeHandler('add-item', navOpenHandler2);
             equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             viewer.addHandler('close', closeHandler2);
             viewer.close();
@@ -797,13 +791,56 @@ QUnit.config.autostart = false;
 
         var closeHandler2 = function(event) {
             viewer.removeHandler('close', closeHandler2);
-            ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
             setTimeout(function() {
-                ok(!viewer.navigator._updateRequestId, 'navigator timer is still off');
+                ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
                 timeWatcher.done();
             }, 100);
         };
 
         viewer.addHandler('open', openHandler1);
     });
+
+    asyncTest('Item positions including collection mode', function() {
+        var navAddCount = 0;
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   ['/test/data/testpattern.dzi', '/test/data/testpattern.dzi'],
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            collectionMode: true
+        });
+
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler);
+        };
+
+        var navOpenHandler = function(event) {
+            navAddCount++;
+            if (navAddCount === 2) {
+                viewer.navigator.world.removeHandler('add-item', navOpenHandler);
+
+                setTimeout(function() {
+                    // Test initial formation
+                    equal(viewer.navigator.world.getItemCount(), 2, 'navigator has both items');
+                    for (var i = 0; i < 2; i++) {
+                        propEqual(viewer.navigator.world.getItemAt(i).getBounds(),
+                            viewer.world.getItemAt(i).getBounds(), 'bounds are the same');
+                    }
+
+                    // Try moving one
+                    viewer.world.getItemAt(0).setPosition(new OpenSeadragon.Point(-200, -200));
+                    propEqual(viewer.navigator.world.getItemAt(0).getBounds(),
+                        viewer.world.getItemAt(0).getBounds(), 'bounds are the same after move');
+
+                    start();
+                }, 1);
+            }
+        };
+
+        viewer.addHandler('open', openHandler);
+    });
+
 })();

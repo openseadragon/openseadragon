@@ -95,7 +95,8 @@
             var panHandler = function() {
                 viewer.removeHandler('animation-finish', panHandler);
                 center = viewport.getCenter();
-                ok(center.x === 0.1 && center.y === 0.1, 'Panned correctly');
+                Util.assessNumericValue(center.x, 0.1, 0.00001, 'panned horizontally');
+                Util.assessNumericValue(center.y, 0.1, 0.00001, 'panned vertically');
                 start();
             };
 
@@ -133,7 +134,7 @@
             };
 
             viewer.addHandler('animation-finish', homeHandler);
-            viewport.goHome(true);
+            viewer.viewport.goHome(true);
         }
 
         viewer.addHandler("open", opener);
@@ -260,9 +261,8 @@
                 viewer.removeHandler('close', closeHandler);
                 ok(!viewer.source, 'no source');
                 ok(true, 'Close event was sent');
-                ok(!viewer._updateRequestId, 'timer is off');
                 setTimeout(function() {
-                    ok(!viewer._updateRequestId, 'timer is still off');
+                    ok(!viewer._updateRequestId, 'timer is off');
                     start();
                 }, 100);
             };

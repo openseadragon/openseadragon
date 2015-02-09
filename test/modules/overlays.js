@@ -1,4 +1,4 @@
-/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal */
+/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal, testLog */
 
 ( function() {
     var viewer;
@@ -29,7 +29,7 @@
         }
         var ready = viewer.isOpen() &&
             viewer.drawer !== null &&
-            !viewer.drawer.needsUpdate() &&
+            !viewer.world.needsDraw() &&
             Util.equalsWithVariance( viewer.viewport.getBounds( true ).x,
                 viewer.viewport.getBounds().x, 0.000 ) &&
             Util.equalsWithVariance( viewer.viewport.getBounds( true ).y,
@@ -46,7 +46,7 @@
             }, 100 );
         } else {
             console.log( "waitForViewer:" + viewer.isOpen( ) + ":" + viewer.drawer +
-                ":" + viewer.drawer.needsUpdate() );
+                ":" + viewer.world.needsDraw() );
             handler();
         }
     }
@@ -531,5 +531,36 @@
         } );
 
     } );
+
+    // ----------
+    asyncTest('overlays appear immediately', function() {
+        equal($('#immediate-overlay0').length, 0, 'overlay 0 does not exist');
+        equal($('#immediate-overlay1').length, 0, 'overlay 1 does not exist');
+
+        viewer = OpenSeadragon( {
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            overlays: [ {
+                    x: 0,
+                    y: 0,
+                    id: "immediate-overlay0"
+                } ]
+        } );
+
+        viewer.addHandler('open', function() {
+            equal($('#immediate-overlay0').length, 1, 'overlay 0 exists');
+
+            viewer.addOverlay( {
+                x: 0,
+                y: 0,
+                id: "immediate-overlay1"
+            } );
+
+            equal($('#immediate-overlay1').length, 1, 'overlay 1 exists');
+            start();
+        });
+    });
 
 } )( );

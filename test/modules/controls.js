@@ -5,7 +5,12 @@
 
     module('Controls', {
         setup: function () {
-            var example = $('<div id="controlsTests"></div>').appendTo("#qunit-fixture");
+            var example = $('<div id="controlsTests"></div>')
+                .css({
+                    width: 1000,
+                    height: 1000
+                })
+                .appendTo("#qunit-fixture");
 
             testLog.reset();
 
@@ -324,6 +329,7 @@
             ],
             springStiffness: 100, // Faster animation = faster tests
             showSequenceControl: true,
+            sequenceMode: true,
             navPrevNextWrap: false
         });
         viewer.addHandler('open', openHandler);
@@ -375,6 +381,7 @@
             ],
             springStiffness: 100, // Faster animation = faster tests
             showSequenceControl: true,
+            sequenceMode: true,
             navPrevNextWrap: true
         });
         viewer.addHandler('open', openHandler);

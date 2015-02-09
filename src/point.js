@@ -60,6 +60,13 @@ $.Point = function( x, y ) {
 };
 
 $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
+    /**
+     * @function
+     * @returns {OpenSeadragon.Point} a duplicate of this Point
+     */
+    clone: function() {
+        return new $.Point(this.x, this.y);
+    },
 
     /**
      * Add another Point to this point and return a new Point.
@@ -189,7 +196,7 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
      * @returns {String} A string representation of this point.
      */
     toString: function() {
-        return "(" + Math.round(this.x) + "," + Math.round(this.y) + ")";
+        return "(" + (Math.round(this.x * 100) / 100) + "," + (Math.round(this.y * 100) / 100) + ")";
     }
 };
 

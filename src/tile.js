@@ -33,7 +33,7 @@
  */
 
 (function( $ ){
-    var TILE_CACHE       = {};
+
 /**
  * @class Tile
  * @memberof OpenSeadragon
@@ -231,7 +231,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * Renders the tile in a canvas-based context.
      * @function
      * @param {Canvas} context
-     * @param {Function} method for firing the drawing event. drawingHandler({context, tile, rendered})
+     * @param {Function} drawingHandler - Method for firing the drawing event.
+     * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      */
     drawCanvas: function( context, drawingHandler ) {
@@ -241,16 +242,23 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             rendered,
             canvas;
 
-        if ( !this.loaded || !( this.image || TILE_CACHE[ this.url ] ) ){
+        if (!this.cacheImageRecord) {
+            $.console.warn('[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached', this.toString());
+            return;
+        }
+
+        rendered = this.cacheImageRecord.getRenderedContext();
+
+        if ( !this.loaded || !( this.image || rendered) ){
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
             );
+
             return;
         }
-        context.globalAlpha = this.opacity;
 
-        //context.save();
+        context.globalAlpha = this.opacity;
 
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
@@ -260,46 +268,40 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                position.x+1,
-                position.y+1,
-                size.x-2,
-                size.y-2
+                (position.x * $.pixelDensityRatio)+1,
+                (position.y * $.pixelDensityRatio)+1,
+                (size.x * $.pixelDensityRatio)-2,
+                (size.y * $.pixelDensityRatio)-2
             );
 
         }
 
-        if( !TILE_CACHE[ this.url ] ){
+        if(!rendered){
             canvas = document.createElement( 'canvas' );
             canvas.width = this.image.width;
             canvas.height = this.image.height;
             rendered = canvas.getContext('2d');
             rendered.drawImage( this.image, 0, 0 );
-            TILE_CACHE[ this.url ] = rendered;
+            this.cacheImageRecord.setRenderedContext(rendered);
             //since we are caching the prerendered image on a canvas
             //allow the image to not be held in memory
             this.image = null;
         }
 
-        rendered = TILE_CACHE[ this.url ];
-
         // This gives the application a chance to make image manipulation changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
-        //rendered.save();
         context.drawImage(
             rendered.canvas,
             0,
             0,
             rendered.canvas.width,
             rendered.canvas.height,
-            position.x,
-            position.y,
-            size.x,
-            size.y
+            position.x * $.pixelDensityRatio,
+            position.y * $.pixelDensityRatio,
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio
         );
-        //rendered.restore();
-
-        //context.restore();
     },
 
     /**
@@ -312,9 +314,6 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         }
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
-        }
-        if ( TILE_CACHE[ this.url ]){
-            delete TILE_CACHE[ this.url ];
         }
 
         this.element    = null;
