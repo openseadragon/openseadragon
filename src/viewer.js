@@ -474,6 +474,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.drawer.destroy();
         }
 
+        this.overlays   = [];
         this.source     = null;
         this.drawer     = null;
         this.drawers    = [];
@@ -1892,7 +1893,9 @@ function openTileSource( viewer, source ) {
     }
 
     if( _this.preserveOverlays ){
-        _this.overlays = _this.currentOverlays;
+        if( _this.currentOverlays.length > 0 ){
+            _this.overlays = _this.currentOverlays;
+        }
     }
 
     _this.source.overlays = _this.source.overlays || [];

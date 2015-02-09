@@ -523,13 +523,11 @@
   *     position.  If preserveViewport is set to true, then the viewport position
   *     is preserved when navigating between images in the sequence.
   *
-  * @property {Boolean} [preserveOverlays=false]
+  * @property {Boolean} [preserveOverlays=true]
   *     If the viewer has been configured with a sequence of tile sources, then
   *     normally navigating through each image resets the overlays.
   *     If preserveOverlays is set to true, then the overlays
   *     are preserved when navigating between images in the sequence.
-  *     Note: setting preserveOverlays overrides any overlays specified in the
-  *     "overlays" property.
   *
   * @property {Boolean} [showReferenceStrip=false]
   *     If the viewer has been configured with a sequence of tile sources, then
@@ -957,7 +955,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             showSequenceControl:     true,  //SEQUENCE
             sequenceControlAnchor:   null,  //SEQUENCE
             preserveViewport:        false, //SEQUENCE
-            preserveOverlays:        false, //SEQUENCE
+            preserveOverlays:        true, //SEQUENCE
             navPrevNextWrap:         false, //SEQUENCE
             showNavigationControl:   true,  //ZOOM/HOME/FULL/ROTATION
             navigationControlAnchor: null,  //ZOOM/HOME/FULL/ROTATION
