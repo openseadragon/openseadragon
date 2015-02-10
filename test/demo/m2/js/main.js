@@ -93,11 +93,13 @@
                 })
                 .mousemove(function(event) {
                     var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    pixel.y -= self.$scrollCover.position().top;
                     var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     self.updateHover(result ? result.index : -1);
                 })
                 .click(function(event) {
                     var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    pixel.y -= self.$scrollCover.position().top;
                     var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     if (result) {
                         self.setMode({
