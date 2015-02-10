@@ -415,7 +415,7 @@
                     item = this.viewer.world.getItemAt(this.page - 1);
                     if (item) {
                         box = item.getBounds();
-                        x -= width;
+                        x -= box.width;
                         width += box.width;
                     }
                 }
