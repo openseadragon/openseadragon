@@ -1984,9 +1984,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    var successStatus =
-                        protocol === "http:" || protocol === "https:" ? 200 : 0;
-                    if ( request.status === successStatus ) {
+                    // With protocols other than http/https, the status is 200
+                    // on Firefox and 0 on other browsers
+                    if ( request.status === 200 ||
+                        ( request.status === 0 &&
+                          protocol !== "http:" &&
+                          protocol !== "https:" )) {
                         onSuccess( request );
                     } else {
                         $.console.log( "AJAX request returned %d: %s", request.status, url );
