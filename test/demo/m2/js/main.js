@@ -19,16 +19,27 @@
                 'page'
             ];
 
+            this.pages = this.createPages();
+
+            var tileSources = $.map(this.pages, function(v, i) {
+                return v.tileSource;
+            });
+
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
                 autoResize: false,
                 showHomeControl: false,
-                tileSources: this.getTileSources()
+                tileSources: tileSources
             });
 
             this.viewer.addHandler('open', function() {
                 self.$el = $(self.viewer.element);
+
+                $.each(self.pages, function(i, v) {
+                    v.tiledImage = self.viewer.world.getItemAt(i);
+                });
+
                 self.setMode({
                     mode: 'thumbs',
                     immediately: true
@@ -40,6 +51,7 @@
                     var result = self.hitTest(self.viewer.viewport.getCenter());
                     if (result) {
                         self.page = result.index;
+                        self.update();
                     }
                 }
             });
@@ -216,6 +228,37 @@
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).toggleClass('active', v === self.mode);
             });
+
+            // alternates menu
+            if (this.$alternates) {
+                this.$alternates.remove();
+                this.$alternates = null;
+            }
+
+            var page = this.pages[this.page];
+            if (page && page.alternates && page.alternates.length) {
+                this.$alternates = $('<select>')
+                    .change(function() {
+                        page.selectAlternate(parseInt(self.$alternates.val(), 10));
+                    })
+                    .appendTo('.nav');
+
+                $('<option>')
+                    .attr('value', -1)
+                    .text(page.label || 'Default')
+                    .appendTo(self.$alternates);
+
+                $.each(page.alternates, function(i, v) {
+                    if (v.label) {
+                        $('<option>')
+                            .attr('value', i)
+                            .text(v.label)
+                            .appendTo(self.$alternates);
+                    }
+                });
+
+                this.$alternates.val(page.alternateIndex);
+            }
         },
 
         // ----------
@@ -585,10 +628,14 @@
         },
 
         // ----------
-        getTileSources: function() {
+        createPages: function() {
+            var self = this;
+
             if (this.tileSources) {
                 return $.map(this.tileSources.slice(0, this.maxImages), function(v, i) {
-                    return new OpenSeadragon.IIIFTileSource(v);
+                    return new self.Page($.extend({
+                        pageIndex: i
+                    }, v));
                 });
             }
 
@@ -656,12 +703,15 @@
                 }
             ];
 
-            var outputs = [];
+            var pages = [];
             for (var i = 0; i < this.maxImages; i++) {
-                outputs.push(inputs[Math.floor(Math.random() * inputs.length)]);
+                pages.push(new this.Page({
+                    pageIndex: i,
+                    tileSource: inputs[Math.floor(Math.random() * inputs.length)]
+                }));
             }
 
-            return outputs;
+            return pages;
         }
     };
 
