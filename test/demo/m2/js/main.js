@@ -11,7 +11,7 @@
             this.mode = 'none';
             this.pageBuffer = 0.05;
             this.bigBuffer = 0.2;
-            this.page = 0;
+            this.pageIndex = 0;
             this.modeNames = [
                 'thumbs',
                 'scroll',
@@ -50,7 +50,7 @@
                 if (self.mode === 'scroll') {
                     var result = self.hitTest(self.viewer.viewport.getCenter());
                     if (result) {
-                        self.page = result.index;
+                        self.pageIndex = result.index;
                         self.update();
                     }
                 }
@@ -116,7 +116,7 @@
                     if (result) {
                         self.setMode({
                             mode: 'page',
-                            page: result.index
+                            pageIndex: result.index
                         });
                     }
                 });
@@ -155,35 +155,35 @@
 
         // ----------
         next: function() {
-            var page = this.page + (this.mode === 'book' ? 2 : 1);
-            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
-                page --;
+            var pageIndex = this.pageIndex + (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
+                pageIndex --;
             }
 
             this.goToPage({
-                page: page
+                pageIndex: pageIndex
             });
         },
 
         // ----------
         previous: function() {
-            var page = this.page - (this.mode === 'book' ? 2 : 1);
-            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
-                page --;
+            var pageIndex = this.pageIndex - (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
+                pageIndex --;
             }
 
             this.goToPage({
-                page: page
+                pageIndex: pageIndex
             });
         },
 
         // ----------
         hitTest: function(pos) {
-            var count = this.viewer.world.getItemCount();
+            var count = this.pages.length;
             var item, box;
 
             for (var i = 0; i < count; i++) {
-                item = this.viewer.world.getItemAt(i);
+                item = this.pages[i].tiledImage;
                 box = item.getBounds();
                 if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
                         pos.y < box.y + box.height) {
@@ -222,8 +222,8 @@
             var self = this;
 
             $('.nav').toggle(this.mode === 'scroll' || this.mode === 'book' || this.mode === 'page');
-            $('.previous').toggleClass('hidden', this.page <= 0);
-            $('.next').toggleClass('hidden', this.page >= this.viewer.world.getItemCount() - 1);
+            $('.previous').toggleClass('hidden', this.pageIndex <= 0);
+            $('.next').toggleClass('hidden', this.pageIndex >= this.pages.length - 1);
 
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).toggleClass('active', v === self.mode);
@@ -235,7 +235,7 @@
                 this.$alternates = null;
             }
 
-            var page = this.pages[this.page];
+            var page = this.pages[this.pageIndex];
             if (page && page.alternates && page.alternates.length) {
                 this.$alternates = $('<select>')
                     .change(function() {
@@ -303,8 +303,8 @@
 
             this.mode = config.mode;
 
-            if (config.page !== undefined) {
-                this.page = config.page; // Need to do this before layout
+            if (config.pageIndex !== undefined) {
+                this.pageIndex = config.pageIndex; // Need to do this before layout
             }
 
             this.ignoreScroll = true;
@@ -354,7 +354,7 @@
                 viewportBounds.y += info.viewportMax * info.scrollFactor;
                 viewportBounds.height = info.viewportHeight;
 
-                var itemBounds = this.viewer.world.getItemAt(this.page).getBounds();
+                var itemBounds = this.pages[this.pageIndex].tiledImage.getBounds();
                 var top = itemBounds.y - this.bigBuffer;
                 var bottom = top + itemBounds.height + (this.bigBuffer * 2);
 
@@ -394,7 +394,7 @@
                 return;
             }
 
-            var item = this.viewer.world.getItemAt(this.page);
+            var item = this.pages[this.pageIndex].tiledImage;
             var box = item.getBounds();
 
             this.highlight
@@ -406,8 +406,8 @@
         },
 
         // ----------
-        updateHover: function(page) {
-            if (page === -1 || this.mode !== 'thumbs') {
+        updateHover: function(pageIndex) {
+            if (pageIndex === -1 || this.mode !== 'thumbs') {
                 this.hover.style('opacity', 0);
                 this.$scrollCover.css({
                     'cursor': 'default'
@@ -420,7 +420,7 @@
                 'cursor': 'pointer'
             });
 
-            var item = this.viewer.world.getItemAt(page);
+            var item = this.pages[pageIndex].tiledImage;
             var box = item.getBounds();
 
             this.hover
@@ -435,12 +435,12 @@
         goToPage: function(config) {
             var self = this;
 
-            var itemCount = this.viewer.world.getItemCount();
-            this.page = Math.max(0, Math.min(itemCount - 1, config.page));
+            var itemCount = this.pages.length;
+            this.pageIndex = Math.max(0, Math.min(itemCount - 1, config.pageIndex));
 
             var viewerWidth = this.$el.width();
             var viewerHeight = this.$el.height();
-            var bounds = this.viewer.world.getItemAt(this.page).getBounds();
+            var bounds = this.pages[this.pageIndex].tiledImage.getBounds();
             var x = bounds.x;
             var y = bounds.y;
             var width = bounds.width;
@@ -449,14 +449,14 @@
 
             if (this.mode === 'book') {
                 var item;
-                if (this.page % 2) { // First in a pair
-                    item = this.viewer.world.getItemAt(this.page + 1);
-                    if (item) {
+                if (this.pageIndex % 2) { // First in a pair
+                    if (this.pageIndex < this.pages.length - 1) {
+                        item = this.pages[this.pageIndex + 1].tiledImage;
                         width += item.getBounds().width;
                     }
                 } else {
-                    item = this.viewer.world.getItemAt(this.page - 1);
-                    if (item) {
+                    if (this.pageIndex > 0) {
+                        item = this.pages[this.pageIndex - 1].tiledImage;
                         box = item.getBounds();
                         x -= box.width;
                         width += box.width;
@@ -470,10 +470,10 @@
             height += (this.pageBuffer * 2);
 
             if (this.mode === 'scroll') {
-                if (this.page === 0) {
+                if (this.pageIndex === 0) {
                     x = bounds.x - this.pageBuffer;
                     width = height * (viewerWidth / viewerHeight);
-                } else if (this.page === this.viewer.world.getItemCount() - 1) {
+                } else if (this.pageIndex === this.pages.length - 1) {
                     width = height * (viewerWidth / viewerHeight);
                     x = (bounds.x + bounds.width + this.pageBuffer) - width;
                 }
@@ -488,8 +488,8 @@
                 if (self.mode === 'page' || self.mode === 'book') {
                     self.panBounds = box;
                 } else if (self.mode === 'scroll') {
-                    self.panBounds = self.viewer.world.getItemAt(0).getBounds()
-                        .union(self.viewer.world.getItemAt(itemCount - 1).getBounds());
+                    self.panBounds = self.pages[0].tiledImage.getBounds()
+                        .union(self.pages[itemCount - 1].tiledImage.getBounds());
 
                     self.panBounds.x -= self.pageBuffer;
                     self.panBounds.y -= self.pageBuffer;
@@ -535,17 +535,17 @@
                 specs: []
             };
 
-            var count = this.viewer.world.getItemCount();
+            var count = this.pages.length;
             var x = 0;
             var y = 0;
             var offset = new OpenSeadragon.Point();
             var rowHeight = 0;
             var item, box;
             for (var i = 0; i < count; i++) {
-                item = this.viewer.world.getItemAt(i);
+                item = this.pages[i].tiledImage;
                 box = item.getBounds();
 
-                if (i === this.page) {
+                if (i === this.pageIndex) {
                     offset = box.getTopLeft().minus(new OpenSeadragon.Point(x, y));
                 }
 
@@ -621,7 +621,7 @@
                 this.viewer.viewport.fitBounds(box, config.immediately);
             } else {
                 this.goToPage({
-                    page: this.page,
+                    pageIndex: this.pageIndex,
                     immediately: config.immediately
                 });
             }
