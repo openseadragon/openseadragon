@@ -38,6 +38,7 @@
 
                 $.each(self.pages, function(i, v) {
                     v.tiledImage = self.viewer.world.getItemAt(i);
+                    v.addDetails();
                 });
 
                 self.setMode({
@@ -540,9 +541,10 @@
             var y = 0;
             var offset = new OpenSeadragon.Point();
             var rowHeight = 0;
-            var item, box;
+            var item, box, page;
             for (var i = 0; i < count; i++) {
-                item = this.pages[i].tiledImage;
+                page = this.pages[i];
+                item = page.tiledImage;
                 box = item.getBounds();
 
                 if (i === this.pageIndex) {
@@ -562,6 +564,7 @@
                 rowHeight = Math.max(rowHeight, box.height);
 
                 layout.specs.push({
+                    page: page,
                     item: item,
                     bounds: box
                 });
@@ -602,8 +605,7 @@
 
             for (var i = 0; i < config.layout.specs.length; i++) {
                 spec = config.layout.specs[i];
-                spec.item.setPosition(spec.bounds.getTopLeft(), config.immediately);
-                spec.item.setWidth(spec.bounds.width, config.immediately);
+                spec.page.place(spec.bounds.getTopLeft(), spec.bounds.width, config.immediately);
             }
         },
 
