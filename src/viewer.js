@@ -666,8 +666,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        if( ! this.preserveOverlays)
-        {
+        if( ! this.preserveOverlays) {
             this.clearOverlays();
             this.overlaysContainer.innerHTML = "";
         }
@@ -711,6 +710,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         this.close();
+
+        this.clearOverlays();
+        this.overlaysContainer.innerHTML = "";
 
         //TODO: implement this...
         //this.unbindSequenceControls()
