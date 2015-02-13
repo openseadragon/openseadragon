@@ -517,17 +517,19 @@
   *     If sequenceMode is true, display this page initially.
   *
   * @property {Boolean} [preserveViewport=false]
-  *     If sequenceMode is true, then normally navigating to through each image resets the
+  *     If sequenceMode is true, then normally navigating through each image resets the
   *     viewport to 'home' position.  If preserveViewport is set to true, then the viewport
   *     position is preserved when navigating between images in the sequence.
   *
   * @property {Boolean} [preserveOverlays=false]
-  *     If sequenceMode is true, then normally navigating to through each image
+  *     If sequenceMode is true, then normally navigating through each image
   *     resets the overlays.
-  *     If preserveOverlays is set to true, then the overlays
+  *     If preserveOverlays is set to true, then the overlays added with {@link OpenSeadragon.Viewer#addOverlay}
   *     are preserved when navigating between images in the sequence.
-  *     Note: setting preserveOverlays overrides any overlays specified in the
-  *     "overlays" property.
+  *     Note: setting preserveOverlays overrides any overlays specified in the global
+  *     "overlays" option for the Viewer. It's also not compatible with specifying
+  *     per-tileSource overlays via the options, as those overlays will persist
+  *     even after the tileSource is closed.
   *
   * @property {Boolean} [showReferenceStrip=false]
   *     If sequenceMode is true, then display a scrolling strip of image thumbnails for
