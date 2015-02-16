@@ -22,7 +22,7 @@
             this.pages = this.createPages();
 
             var tileSources = $.map(this.pages, function(v, i) {
-                return v.tileSource;
+                return v.starter.tileSource;
             });
 
             this.viewer = OpenSeadragon({
@@ -37,7 +37,7 @@
                 self.$el = $(self.viewer.element);
 
                 $.each(self.pages, function(i, v) {
-                    v.tiledImage = self.viewer.world.getItemAt(i);
+                    v.setTiledImage(self.viewer.world.getItemAt(i));
                     v.addDetails();
                 });
 
@@ -181,15 +181,14 @@
         // ----------
         hitTest: function(pos) {
             var count = this.pages.length;
-            var item, box;
+            var page, box;
 
             for (var i = 0; i < count; i++) {
-                item = this.pages[i].tiledImage;
-                box = item.getBounds();
+                page = this.pages[i];
+                box = page.getBounds();
                 if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
                         pos.y < box.y + box.height) {
                     return {
-                        item: item,
                         index: i
                     };
                 }
@@ -355,9 +354,9 @@
                 viewportBounds.y += info.viewportMax * info.scrollFactor;
                 viewportBounds.height = info.viewportHeight;
 
-                var itemBounds = this.pages[this.pageIndex].tiledImage.getBounds();
-                var top = itemBounds.y - this.bigBuffer;
-                var bottom = top + itemBounds.height + (this.bigBuffer * 2);
+                var pageBounds = this.pages[this.pageIndex].getBounds();
+                var top = pageBounds.y - this.bigBuffer;
+                var bottom = top + pageBounds.height + (this.bigBuffer * 2);
 
                 var normalY;
                 if (top < viewportBounds.y) {
@@ -395,8 +394,8 @@
                 return;
             }
 
-            var item = this.pages[this.pageIndex].tiledImage;
-            var box = item.getBounds();
+            var page = this.pages[this.pageIndex];
+            var box = page.getBounds();
 
             this.highlight
                 .style('opacity', 1)
@@ -421,8 +420,8 @@
                 'cursor': 'pointer'
             });
 
-            var item = this.pages[pageIndex].tiledImage;
-            var box = item.getBounds();
+            var page = this.pages[pageIndex];
+            var box = page.getBounds();
 
             this.hover
                 .style('opacity', 0.3)
@@ -436,12 +435,12 @@
         goToPage: function(config) {
             var self = this;
 
-            var itemCount = this.pages.length;
-            this.pageIndex = Math.max(0, Math.min(itemCount - 1, config.pageIndex));
+            var pageCount = this.pages.length;
+            this.pageIndex = Math.max(0, Math.min(pageCount - 1, config.pageIndex));
 
             var viewerWidth = this.$el.width();
             var viewerHeight = this.$el.height();
-            var bounds = this.pages[this.pageIndex].tiledImage.getBounds();
+            var bounds = this.pages[this.pageIndex].getBounds();
             var x = bounds.x;
             var y = bounds.y;
             var width = bounds.width;
@@ -449,16 +448,16 @@
             var box;
 
             if (this.mode === 'book') {
-                var item;
+                var page;
                 if (this.pageIndex % 2) { // First in a pair
                     if (this.pageIndex < this.pages.length - 1) {
-                        item = this.pages[this.pageIndex + 1].tiledImage;
-                        width += item.getBounds().width;
+                        page = this.pages[this.pageIndex + 1];
+                        width += page.getBounds().width;
                     }
                 } else {
                     if (this.pageIndex > 0) {
-                        item = this.pages[this.pageIndex - 1].tiledImage;
-                        box = item.getBounds();
+                        page = this.pages[this.pageIndex - 1];
+                        box = page.getBounds();
                         x -= box.width;
                         width += box.width;
                     }
@@ -489,8 +488,8 @@
                 if (self.mode === 'page' || self.mode === 'book') {
                     self.panBounds = box;
                 } else if (self.mode === 'scroll') {
-                    self.panBounds = self.pages[0].tiledImage.getBounds()
-                        .union(self.pages[itemCount - 1].tiledImage.getBounds());
+                    self.panBounds = self.pages[0].getBounds()
+                        .union(self.pages[pageCount - 1].getBounds());
 
                     self.panBounds.x -= self.pageBuffer;
                     self.panBounds.y -= self.pageBuffer;
@@ -541,11 +540,10 @@
             var y = 0;
             var offset = new OpenSeadragon.Point();
             var rowHeight = 0;
-            var item, box, page;
+            var box, page;
             for (var i = 0; i < count; i++) {
                 page = this.pages[i];
-                item = page.tiledImage;
-                box = item.getBounds();
+                box = page.getBounds();
 
                 if (i === this.pageIndex) {
                     offset = box.getTopLeft().minus(new OpenSeadragon.Point(x, y));
@@ -565,7 +563,6 @@
 
                 layout.specs.push({
                     page: page,
-                    item: item,
                     bounds: box
                 });
 
@@ -605,7 +602,7 @@
 
             for (var i = 0; i < config.layout.specs.length; i++) {
                 spec = config.layout.specs[i];
-                spec.page.place(spec.bounds.getTopLeft(), spec.bounds.width, config.immediately);
+                spec.page.place(spec.bounds, config.immediately);
             }
         },
 

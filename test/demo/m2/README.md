@@ -10,12 +10,10 @@ http://showcase.iiif.io/viewer/mirador/
 
 ## To Do
 
-* Detail images overlaid on the page
 * Cropped images
 
 ### Maybe
 
-* Alternates: align with default image
 * Alternates: wait until tiles have loaded before switching
 * Show/hide pages?
 * Lazyloading tilesources?
