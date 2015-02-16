@@ -638,71 +638,128 @@
                 });
             }
 
-            var inputs = [
-                {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
-                        Format: "jpg",
-                        Overlap: "2",
-                        TileSize: "256",
-                        Size: {
-                            Width:  "7026",
-                            Height: "9221"
-                        }
-                    }
-                }, {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
-                        Format: "jpg",
-                        Overlap: "2",
-                        TileSize: "256",
-                        Size: {
-                            Width:  "13920",
-                            Height: "10200"
-                        }
-                    }
-                }, {
-                //     Image: {
-                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                //         Url: "../../data/tall_files/",
-                //         Format: "jpg",
-                //         Overlap: "1",
-                //         TileSize: "254",
-                //         Size: {
-                //             Width:  "500",
-                //             Height: "2000"
-                //         }
-                //     }
-                // }, {
-                //     Image: {
-                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                //         Url: "../../data/wide_files/",
-                //         Format: "jpg",
-                //         Overlap: "1",
-                //         TileSize: "254",
-                //         Size: {
-                //             Width:  "2000",
-                //             Height: "500"
-                //         }
-                //     }
-                // }, {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "../../data/testpattern_files/",
-                        Format: "jpg",
-                        Overlap: "1",
-                        TileSize: "254",
-                        Size: {
-                            Width:  "1000",
-                            Height: "1000"
-                        }
+            var highsmith = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Width:  "7026",
+                        Height: "9221"
                     }
                 }
-            ];
+            };
+
+            var duomo = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Width:  "13920",
+                        Height: "10200"
+                    }
+                }
+            };
+
+            var tall = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/tall_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "500",
+                        Height: "2000"
+                    }
+                }
+            };
+
+            var wide = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/wide_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "2000",
+                        Height: "500"
+                    }
+                }
+            };
+
+            var testpattern = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/testpattern_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "1000",
+                        Height: "1000"
+                    }
+                }
+            };
 
             var pages = [];
+
+            pages.push(new this.Page({
+                masterWidth: 7026,
+                masterHeight: 9221,
+                x: 0,
+                y: 0,
+                width: 1,
+                label: 'highsmith',
+                tileSource: highsmith,
+                alternates: [
+                    {
+                        x: 0,
+                        y: 0.55,
+                        width: 1,
+                        label: 'duomo',
+                        tileSource: duomo
+                    },
+                    {
+                        x: 0.7,
+                        y: 0,
+                        width: 0.3,
+                        label: 'tall',
+                        tileSource: tall
+                    }
+                ]
+            }));
+
+            pages.push(new this.Page({
+                tileSource: highsmith,
+                details: [
+                    {
+                        x: 0.25,
+                        y: 0.15,
+                        width: 0.5,
+                        tileSource: testpattern
+                    },
+                    {
+                        x: 0.25,
+                        y: 0.8,
+                        width: 0.5,
+                        tileSource: wide
+                    }
+                ]
+            }));
+
+            var inputs = [
+                highsmith,
+                duomo,
+                testpattern
+            ];
+
             for (var i = 0; i < this.maxImages; i++) {
                 pages.push(new this.Page({
                     pageIndex: i,
