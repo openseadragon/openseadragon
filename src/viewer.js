@@ -1448,7 +1448,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             });
 
             this.previousRowButton = new $.Button({
-                element:    this.previousButton ? $.getElement( this.previousButton ) : null,
+                element:    this.previousRowButton ? $.getElement( this.previousRowButton ) : null,
                 clickTimeThreshold: this.clickTimeThreshold,
                 clickDistThreshold: this.clickDistThreshold,
                 tooltip:    $.getString( "Tooltips.PreviousPage" ),
@@ -1456,13 +1456,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 srcGroup:   resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
                 srcHover:   resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
                 srcDown:    resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
-                onRelease:  onPreviousHandler,
+                onRelease:  onPreviousRowHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             });
 
             this.nextRowButton = new $.Button({
-                element:    this.nextButton ? $.getElement( this.nextButton ) : null,
+                element:    this.nextRowButton ? $.getElement( this.nextRowButton ) : null,
                 clickTimeThreshold: this.clickTimeThreshold,
                 clickDistThreshold: this.clickDistThreshold,
                 tooltip:    $.getString( "Tooltips.NextPage" ),
@@ -1470,7 +1470,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 srcGroup:   resolveUrl( this.prefixUrl, navImages.next.GROUP ),
                 srcHover:   resolveUrl( this.prefixUrl, navImages.next.HOVER ),
                 srcDown:    resolveUrl( this.prefixUrl, navImages.next.DOWN ),
-                onRelease:  onNextHandler,
+                onRelease:  onNextRowHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
             });
@@ -1489,7 +1489,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.paging = new $.ButtonGroup({
                     buttons: [
                         this.previousButton,
-                        this.nextButton
+                        this.nextButton,
+                        this.previousRowButton,
+                        this.nextRowButton,
                     ],
                     clickTimeThreshold: this.clickTimeThreshold,
                     clickDistThreshold: this.clickDistThreshold
@@ -3133,7 +3135,10 @@ function onNext(){
 }
 
 function onPreviousRow(){
-    var previous = this._sequenceIndex - 10;
+    var previous = this._sequenceIndex - this.imagesPerRow;
+    if (this.inverseVertical) {
+        previous = this._sequenceIndex + this.imagesPerRow;
+    }
     if(this.navPrevNextWrap && previous < 0){
         previous += this.tileSources.length;
     }
@@ -3142,7 +3147,10 @@ function onPreviousRow(){
 
 
 function onNextRow(){
-    var next = this._sequenceIndex + 10;
+    var next = this._sequenceIndex + this.imagesPerRow;
+    if (this.inverseVertical) {
+        next = this._sequenceIndex - this.imagesPerRow;
+    }
     if(this.navPrevNextWrap && next >= this.tileSources.length){
         next = 0;
     }

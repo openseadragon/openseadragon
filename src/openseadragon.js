@@ -992,6 +992,8 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             preserveViewport:        false, //SEQUENCE
             preserveOverlays:        false, //SEQUENCE
             navPrevNextWrap:         false, //SEQUENCE
+            imagesPerRow:            0,     //SEQUENCE
+            inverseVertical:         false, //SEQUENCE
             showNavigationControl:   true,  //ZOOM/HOME/FULL/ROTATION
             navigationControlAnchor: null,  //ZOOM/HOME/FULL/ROTATION
             showZoomControl:         true,  //ZOOM
