@@ -1406,6 +1406,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onBlurHandler           = $.delegate( this, onBlur ),
             onNextHandler           = $.delegate( this, onNext ),
             onPreviousHandler       = $.delegate( this, onPrevious ),
+            onNextRowHandler        = $.delegate( this, onNextRow ),
+            onPreviousRowHandler    = $.delegate( this, onPreviousRow ),
             navImages               = this.navImages,
             useGroup                = true ;
 
@@ -1445,12 +1447,42 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 onBlur:     onBlurHandler
             });
 
+            this.previousRowButton = new $.Button({
+                element:    this.previousButton ? $.getElement( this.previousButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.PreviousPage" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.previous.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
+                onRelease:  onPreviousHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            });
+
+            this.nextRowButton = new $.Button({
+                element:    this.nextButton ? $.getElement( this.nextButton ) : null,
+                clickTimeThreshold: this.clickTimeThreshold,
+                clickDistThreshold: this.clickDistThreshold,
+                tooltip:    $.getString( "Tooltips.NextPage" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.next.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.next.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.next.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.next.DOWN ),
+                onRelease:  onNextHandler,
+                onFocus:    onFocusHandler,
+                onBlur:     onBlurHandler
+            });
+
             if( !this.navPrevNextWrap ){
                 this.previousButton.disable();
+                this.previousRowButton.disable();
             }
 
             if (!this.tileSources || !this.tileSources.length) {
                 this.nextButton.disable();
+                this.nextRowButton.disable();
             }
 
             if( useGroup ){
@@ -1869,18 +1901,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     //Disable next button
                     if ( !this.navPrevNextWrap ) {
                         this.nextButton.disable();
+                        this.nextRowButton.disable();
                     }
                 } else {
                     this.nextButton.enable();
+                    this.nextRowButton.enable();
                 }
             }
             if ( this.previousButton ) {
                 if ( page > 0 ) {
                     //Enable previous button
                     this.previousButton.enable();
+                    this.previousRowButton.enable();
                 } else {
                     if ( !this.navPrevNextWrap ) {
                         this.previousButton.disable();
+                        this.previousRowButton.disable();
                     }
                 }
             }
@@ -3096,5 +3132,21 @@ function onNext(){
     this.goToPage( next );
 }
 
+function onPreviousRow(){
+    var previous = this._sequenceIndex - 10;
+    if(this.navPrevNextWrap && previous < 0){
+        previous += this.tileSources.length;
+    }
+    this.goToPage( previous );
+}
+
+
+function onNextRow(){
+    var next = this._sequenceIndex + 10;
+    if(this.navPrevNextWrap && next >= this.tileSources.length){
+        next = 0;
+    }
+    this.goToPage( next );
+}
 
 }( OpenSeadragon ));
