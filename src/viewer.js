@@ -1451,11 +1451,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 element:    this.previousRowButton ? $.getElement( this.previousRowButton ) : null,
                 clickTimeThreshold: this.clickTimeThreshold,
                 clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.PreviousPage" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.previous.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
+                tooltip:    $.getString( "Tooltips.PreviousRow" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.previousRow.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.previousRow.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.previousRow.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.previousRow.DOWN ),
                 onRelease:  onPreviousRowHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
@@ -1465,11 +1465,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 element:    this.nextRowButton ? $.getElement( this.nextRowButton ) : null,
                 clickTimeThreshold: this.clickTimeThreshold,
                 clickDistThreshold: this.clickDistThreshold,
-                tooltip:    $.getString( "Tooltips.NextPage" ),
-                srcRest:    resolveUrl( this.prefixUrl, navImages.next.REST ),
-                srcGroup:   resolveUrl( this.prefixUrl, navImages.next.GROUP ),
-                srcHover:   resolveUrl( this.prefixUrl, navImages.next.HOVER ),
-                srcDown:    resolveUrl( this.prefixUrl, navImages.next.DOWN ),
+                tooltip:    $.getString( "Tooltips.NextRow" ),
+                srcRest:    resolveUrl( this.prefixUrl, navImages.nextRow.REST ),
+                srcGroup:   resolveUrl( this.prefixUrl, navImages.nextRow.GROUP ),
+                srcHover:   resolveUrl( this.prefixUrl, navImages.nextRow.HOVER ),
+                srcDown:    resolveUrl( this.prefixUrl, navImages.nextRow.DOWN ),
                 onRelease:  onNextRowHandler,
                 onFocus:    onFocusHandler,
                 onBlur:     onBlurHandler
@@ -1477,12 +1477,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if( !this.navPrevNextWrap ){
                 this.previousButton.disable();
-                this.previousRowButton.disable();
             }
 
             if (!this.tileSources || !this.tileSources.length) {
                 this.nextButton.disable();
-                this.nextRowButton.disable();
             }
 
             if( useGroup ){
@@ -1491,7 +1489,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         this.previousButton,
                         this.nextButton,
                         this.previousRowButton,
-                        this.nextRowButton,
+                        this.nextRowButton
                     ],
                     clickTimeThreshold: this.clickTimeThreshold,
                     clickDistThreshold: this.clickDistThreshold

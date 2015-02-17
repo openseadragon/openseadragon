@@ -1097,16 +1097,16 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                     DOWN:   'next_pressed.png'
                 },
                 previousRow: {
-                    REST:   'previous_rest.png',
-                    GROUP:  'previous_grouphover.png',
-                    HOVER:  'previous_hover.png',
-                    DOWN:   'previous_pressed.png'
+                    REST:   'previous_row_rest.png',
+                    GROUP:  'previous_row_grouphover.png',
+                    HOVER:  'previous_row_hover.png',
+                    DOWN:   'previous_row_pressed.png'
                 },
                 nextRow: {
-                    REST:   'next_rest.png',
-                    GROUP:  'next_grouphover.png',
-                    HOVER:  'next_hover.png',
-                    DOWN:   'next_pressed.png'
+                    REST:   'next_row_rest.png',
+                    GROUP:  'next_row_grouphover.png',
+                    HOVER:  'next_row_hover.png',
+                    DOWN:   'next_row_pressed.png'
                 }
             },
 
