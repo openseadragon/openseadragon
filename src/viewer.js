@@ -1901,22 +1901,60 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     //Disable next button
                     if ( !this.navPrevNextWrap ) {
                         this.nextButton.disable();
-                        this.nextRowButton.disable();
                     }
                 } else {
                     this.nextButton.enable();
-                    this.nextRowButton.enable();
                 }
             }
             if ( this.previousButton ) {
                 if ( page > 0 ) {
                     //Enable previous button
                     this.previousButton.enable();
-                    this.previousRowButton.enable();
                 } else {
                     if ( !this.navPrevNextWrap ) {
                         this.previousButton.disable();
-                        this.previousRowButton.disable();
+                    }
+                }
+            }
+            if ( this.nextRowButton ) {
+                if (!this.inverseVertical) {
+                    if(!this.tileSources || this.tileSources.length - 1 - this.imagesPerRow === page) {
+                        //Disable next row button
+                        if ( !this.navPrevNextWrap ) {
+                            this.nextRowButton.disable();
+                        }
+                    } else {
+                        this.nextRowButton.enable();
+                    }
+                } else {
+                    if(page < this.imagesPerRow) {
+                        //Disable next row button
+                        if ( !this.navPrevNextWrap ) {
+                            this.nextRowButton.disable();
+                        }
+                    } else {
+                        this.nextRowButton.enable();
+                    }
+                }
+            }
+            if ( this.previousRowButton ) {
+                if (!this.inverseVertical) {
+                    if ( page > this.imagesPerRow - 1  ) {
+                        //Enable previous row button
+                        this.previousRowButton.enable();
+                    } else {
+                        if ( !this.navPrevNextWrap ) {
+                            this.previousRowButton.disable();
+                        }
+                    }
+                } else {
+                    if ( !this.tileSources || page < this.tileSources.length - 1 - this.imagesPerRow ) {
+                        //Enable previous row button
+                        this.previousRowButton.enable();
+                    } else {
+                        if ( !this.navPrevNextWrap ) {
+                            this.previousRowButton.disable();
+                        }
                     }
                 }
             }
