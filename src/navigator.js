@@ -282,7 +282,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             bottomright;
 
         viewerSize = $.getElementSize( this.viewer.element );
-        if ( this._resizeWithViewer && !viewerSize.equals( this.oldViewerSize ) ) {
+        if ( this._resizeWithViewer && viewerSize.x && viewerSize.y && !viewerSize.equals( this.oldViewerSize ) ) {
             this.oldViewerSize = viewerSize;
 
             if ( this.maintainSizeRatio || !this.elementArea) {
