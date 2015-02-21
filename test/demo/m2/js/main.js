@@ -11,7 +11,7 @@
             this.mode = 'none';
             this.pageBuffer = 0.05;
             this.bigBuffer = 0.2;
-            this.page = 0;
+            this.pageIndex = 0;
             this.modeNames = [
                 'thumbs',
                 'scroll',
@@ -19,16 +19,28 @@
                 'page'
             ];
 
+            this.pages = this.createPages();
+
+            var tileSources = $.map(this.pages, function(v, i) {
+                return v.starter.tileSource;
+            });
+
             this.viewer = OpenSeadragon({
                 id: "contentDiv",
                 prefixUrl: "../../../build/openseadragon/images/",
                 autoResize: false,
                 showHomeControl: false,
-                tileSources: this.getTileSources()
+                tileSources: tileSources
             });
 
             this.viewer.addHandler('open', function() {
                 self.$el = $(self.viewer.element);
+
+                $.each(self.pages, function(i, v) {
+                    v.setTiledImage(self.viewer.world.getItemAt(i));
+                    v.addDetails();
+                });
+
                 self.setMode({
                     mode: 'thumbs',
                     immediately: true
@@ -39,7 +51,8 @@
                 if (self.mode === 'scroll') {
                     var result = self.hitTest(self.viewer.viewport.getCenter());
                     if (result) {
-                        self.page = result.index;
+                        self.pageIndex = result.index;
+                        self.update();
                     }
                 }
             });
@@ -93,16 +106,18 @@
                 })
                 .mousemove(function(event) {
                     var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    pixel.y -= self.$scrollCover.position().top;
                     var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     self.updateHover(result ? result.index : -1);
                 })
                 .click(function(event) {
                     var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    pixel.y -= self.$scrollCover.position().top;
                     var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     if (result) {
                         self.setMode({
                             mode: 'page',
-                            page: result.index
+                            pageIndex: result.index
                         });
                     }
                 });
@@ -141,40 +156,39 @@
 
         // ----------
         next: function() {
-            var page = this.page + (this.mode === 'book' ? 2 : 1);
-            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
-                page --;
+            var pageIndex = this.pageIndex + (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
+                pageIndex --;
             }
 
             this.goToPage({
-                page: page
+                pageIndex: pageIndex
             });
         },
 
         // ----------
         previous: function() {
-            var page = this.page - (this.mode === 'book' ? 2 : 1);
-            if (this.mode === 'book' && page % 2 === 0 && page !== 0) {
-                page --;
+            var pageIndex = this.pageIndex - (this.mode === 'book' ? 2 : 1);
+            if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
+                pageIndex --;
             }
 
             this.goToPage({
-                page: page
+                pageIndex: pageIndex
             });
         },
 
         // ----------
         hitTest: function(pos) {
-            var count = this.viewer.world.getItemCount();
-            var item, box;
+            var count = this.pages.length;
+            var page, box;
 
             for (var i = 0; i < count; i++) {
-                item = this.viewer.world.getItemAt(i);
-                box = item.getBounds();
+                page = this.pages[i];
+                box = page.getBounds();
                 if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
                         pos.y < box.y + box.height) {
                     return {
-                        item: item,
                         index: i
                     };
                 }
@@ -208,12 +222,43 @@
             var self = this;
 
             $('.nav').toggle(this.mode === 'scroll' || this.mode === 'book' || this.mode === 'page');
-            $('.previous').toggleClass('hidden', this.page <= 0);
-            $('.next').toggleClass('hidden', this.page >= this.viewer.world.getItemCount() - 1);
+            $('.previous').toggleClass('hidden', this.pageIndex <= 0);
+            $('.next').toggleClass('hidden', this.pageIndex >= this.pages.length - 1);
 
             $.each(this.modeNames, function(i, v) {
                 $('.' + v).toggleClass('active', v === self.mode);
             });
+
+            // alternates menu
+            if (this.$alternates) {
+                this.$alternates.remove();
+                this.$alternates = null;
+            }
+
+            var page = this.pages[this.pageIndex];
+            if (page && page.alternates && page.alternates.length) {
+                this.$alternates = $('<select>')
+                    .change(function() {
+                        page.selectAlternate(parseInt(self.$alternates.val(), 10));
+                    })
+                    .appendTo('.nav');
+
+                $('<option>')
+                    .attr('value', -1)
+                    .text(page.label || 'Default')
+                    .appendTo(self.$alternates);
+
+                $.each(page.alternates, function(i, v) {
+                    if (v.label) {
+                        $('<option>')
+                            .attr('value', i)
+                            .text(v.label)
+                            .appendTo(self.$alternates);
+                    }
+                });
+
+                this.$alternates.val(page.alternateIndex);
+            }
         },
 
         // ----------
@@ -258,8 +303,8 @@
 
             this.mode = config.mode;
 
-            if (config.page !== undefined) {
-                this.page = config.page; // Need to do this before layout
+            if (config.pageIndex !== undefined) {
+                this.pageIndex = config.pageIndex; // Need to do this before layout
             }
 
             this.ignoreScroll = true;
@@ -309,9 +354,9 @@
                 viewportBounds.y += info.viewportMax * info.scrollFactor;
                 viewportBounds.height = info.viewportHeight;
 
-                var itemBounds = this.viewer.world.getItemAt(this.page).getBounds();
-                var top = itemBounds.y - this.bigBuffer;
-                var bottom = top + itemBounds.height + (this.bigBuffer * 2);
+                var pageBounds = this.pages[this.pageIndex].getBounds();
+                var top = pageBounds.y - this.bigBuffer;
+                var bottom = top + pageBounds.height + (this.bigBuffer * 2);
 
                 var normalY;
                 if (top < viewportBounds.y) {
@@ -349,8 +394,8 @@
                 return;
             }
 
-            var item = this.viewer.world.getItemAt(this.page);
-            var box = item.getBounds();
+            var page = this.pages[this.pageIndex];
+            var box = page.getBounds();
 
             this.highlight
                 .style('opacity', 1)
@@ -361,8 +406,8 @@
         },
 
         // ----------
-        updateHover: function(page) {
-            if (page === -1 || this.mode !== 'thumbs') {
+        updateHover: function(pageIndex) {
+            if (pageIndex === -1 || this.mode !== 'thumbs') {
                 this.hover.style('opacity', 0);
                 this.$scrollCover.css({
                     'cursor': 'default'
@@ -375,8 +420,8 @@
                 'cursor': 'pointer'
             });
 
-            var item = this.viewer.world.getItemAt(page);
-            var box = item.getBounds();
+            var page = this.pages[pageIndex];
+            var box = page.getBounds();
 
             this.hover
                 .style('opacity', 0.3)
@@ -390,12 +435,12 @@
         goToPage: function(config) {
             var self = this;
 
-            var itemCount = this.viewer.world.getItemCount();
-            this.page = Math.max(0, Math.min(itemCount - 1, config.page));
+            var pageCount = this.pages.length;
+            this.pageIndex = Math.max(0, Math.min(pageCount - 1, config.pageIndex));
 
             var viewerWidth = this.$el.width();
             var viewerHeight = this.$el.height();
-            var bounds = this.viewer.world.getItemAt(this.page).getBounds();
+            var bounds = this.pages[this.pageIndex].getBounds();
             var x = bounds.x;
             var y = bounds.y;
             var width = bounds.width;
@@ -403,17 +448,17 @@
             var box;
 
             if (this.mode === 'book') {
-                var item;
-                if (this.page % 2) { // First in a pair
-                    item = this.viewer.world.getItemAt(this.page + 1);
-                    if (item) {
-                        width += item.getBounds().width;
+                var page;
+                if (this.pageIndex % 2) { // First in a pair
+                    if (this.pageIndex < this.pages.length - 1) {
+                        page = this.pages[this.pageIndex + 1];
+                        width += page.getBounds().width;
                     }
                 } else {
-                    item = this.viewer.world.getItemAt(this.page - 1);
-                    if (item) {
-                        box = item.getBounds();
-                        x -= width;
+                    if (this.pageIndex > 0) {
+                        page = this.pages[this.pageIndex - 1];
+                        box = page.getBounds();
+                        x -= box.width;
                         width += box.width;
                     }
                 }
@@ -425,10 +470,10 @@
             height += (this.pageBuffer * 2);
 
             if (this.mode === 'scroll') {
-                if (this.page === 0) {
+                if (this.pageIndex === 0) {
                     x = bounds.x - this.pageBuffer;
                     width = height * (viewerWidth / viewerHeight);
-                } else if (this.page === this.viewer.world.getItemCount() - 1) {
+                } else if (this.pageIndex === this.pages.length - 1) {
                     width = height * (viewerWidth / viewerHeight);
                     x = (bounds.x + bounds.width + this.pageBuffer) - width;
                 }
@@ -443,8 +488,8 @@
                 if (self.mode === 'page' || self.mode === 'book') {
                     self.panBounds = box;
                 } else if (self.mode === 'scroll') {
-                    self.panBounds = self.viewer.world.getItemAt(0).getBounds()
-                        .union(self.viewer.world.getItemAt(itemCount - 1).getBounds());
+                    self.panBounds = self.pages[0].getBounds()
+                        .union(self.pages[pageCount - 1].getBounds());
 
                     self.panBounds.x -= self.pageBuffer;
                     self.panBounds.y -= self.pageBuffer;
@@ -490,17 +535,17 @@
                 specs: []
             };
 
-            var count = this.viewer.world.getItemCount();
+            var count = this.pages.length;
             var x = 0;
             var y = 0;
             var offset = new OpenSeadragon.Point();
             var rowHeight = 0;
-            var item, box;
+            var box, page;
             for (var i = 0; i < count; i++) {
-                item = this.viewer.world.getItemAt(i);
-                box = item.getBounds();
+                page = this.pages[i];
+                box = page.getBounds();
 
-                if (i === this.page) {
+                if (i === this.pageIndex) {
                     offset = box.getTopLeft().minus(new OpenSeadragon.Point(x, y));
                 }
 
@@ -517,7 +562,7 @@
                 rowHeight = Math.max(rowHeight, box.height);
 
                 layout.specs.push({
-                    item: item,
+                    page: page,
                     bounds: box
                 });
 
@@ -557,8 +602,7 @@
 
             for (var i = 0; i < config.layout.specs.length; i++) {
                 spec = config.layout.specs[i];
-                spec.item.setPosition(spec.bounds.getTopLeft(), config.immediately);
-                spec.item.setWidth(spec.bounds.width, config.immediately);
+                spec.page.place(spec.bounds, config.immediately);
             }
         },
 
@@ -576,90 +620,154 @@
                 this.viewer.viewport.fitBounds(box, config.immediately);
             } else {
                 this.goToPage({
-                    page: this.page,
+                    pageIndex: this.pageIndex,
                     immediately: config.immediately
                 });
             }
         },
 
         // ----------
-        getTileSources: function() {
+        createPages: function() {
+            var self = this;
+
             if (this.tileSources) {
                 return $.map(this.tileSources.slice(0, this.maxImages), function(v, i) {
-                    return new OpenSeadragon.IIIFTileSource(v);
+                    return new self.Page($.extend({
+                        pageIndex: i
+                    }, v));
                 });
             }
 
-            var inputs = [
-                {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
-                        Format: "jpg",
-                        Overlap: "2",
-                        TileSize: "256",
-                        Size: {
-                            Width:  "7026",
-                            Height: "9221"
-                        }
-                    }
-                }, {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
-                        Format: "jpg",
-                        Overlap: "2",
-                        TileSize: "256",
-                        Size: {
-                            Width:  "13920",
-                            Height: "10200"
-                        }
-                    }
-                }, {
-                //     Image: {
-                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                //         Url: "../../data/tall_files/",
-                //         Format: "jpg",
-                //         Overlap: "1",
-                //         TileSize: "254",
-                //         Size: {
-                //             Width:  "500",
-                //             Height: "2000"
-                //         }
-                //     }
-                // }, {
-                //     Image: {
-                //         xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                //         Url: "../../data/wide_files/",
-                //         Format: "jpg",
-                //         Overlap: "1",
-                //         TileSize: "254",
-                //         Size: {
-                //             Width:  "2000",
-                //             Height: "500"
-                //         }
-                //     }
-                // }, {
-                    Image: {
-                        xmlns: "http://schemas.microsoft.com/deepzoom/2008",
-                        Url: "../../data/testpattern_files/",
-                        Format: "jpg",
-                        Overlap: "1",
-                        TileSize: "254",
-                        Size: {
-                            Width:  "1000",
-                            Height: "1000"
-                        }
+            var highsmith = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Width:  "7026",
+                        Height: "9221"
                     }
                 }
+            };
+
+            var duomo = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
+                    Format: "jpg",
+                    Overlap: "2",
+                    TileSize: "256",
+                    Size: {
+                        Width:  "13920",
+                        Height: "10200"
+                    }
+                }
+            };
+
+            var tall = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/tall_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "500",
+                        Height: "2000"
+                    }
+                }
+            };
+
+            var wide = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/wide_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "2000",
+                        Height: "500"
+                    }
+                }
+            };
+
+            var testpattern = {
+                Image: {
+                    xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                    Url: "../../data/testpattern_files/",
+                    Format: "jpg",
+                    Overlap: "1",
+                    TileSize: "254",
+                    Size: {
+                        Width:  "1000",
+                        Height: "1000"
+                    }
+                }
+            };
+
+            var pages = [];
+
+            pages.push(new this.Page({
+                masterWidth: 7026,
+                masterHeight: 9221,
+                x: 0,
+                y: 0,
+                width: 1,
+                label: 'highsmith',
+                tileSource: highsmith,
+                alternates: [
+                    {
+                        x: 0,
+                        y: 0.55,
+                        width: 1,
+                        label: 'duomo',
+                        tileSource: duomo
+                    },
+                    {
+                        x: 0.7,
+                        y: 0,
+                        width: 0.3,
+                        label: 'tall',
+                        tileSource: tall
+                    }
+                ]
+            }));
+
+            pages.push(new this.Page({
+                tileSource: highsmith,
+                details: [
+                    {
+                        x: 0.25,
+                        y: 0.15,
+                        width: 0.5,
+                        tileSource: testpattern
+                    },
+                    {
+                        x: 0.25,
+                        y: 0.8,
+                        width: 0.5,
+                        tileSource: wide
+                    }
+                ]
+            }));
+
+            var inputs = [
+                highsmith,
+                duomo,
+                testpattern
             ];
 
-            var outputs = [];
             for (var i = 0; i < this.maxImages; i++) {
-                outputs.push(inputs[Math.floor(Math.random() * inputs.length)]);
+                pages.push(new this.Page({
+                    pageIndex: i,
+                    tileSource: inputs[Math.floor(Math.random() * inputs.length)]
+                }));
             }
 
-            return outputs;
+            return pages;
         }
     };
 

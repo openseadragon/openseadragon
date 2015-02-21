@@ -524,6 +524,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
+        this._opening = true;
+
         var expected = tileSources.length;
         var successes = 0;
         var failures = 0;
@@ -552,6 +554,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
 
                     _this._drawOverlays();
+                    _this._opening = false;
 
                     /**
                      * Raised when the viewer has opened and loaded one or more TileSources.
@@ -566,6 +569,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     // TODO: what if there are multiple sources?
                     _this.raiseEvent( 'open', { source: source } );
                 } else {
+                    _this._opening = false;
+
                     /**
                      * Raised when an error occurs loading a TileSource.
                      *
@@ -655,12 +660,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
+        this._opening = false;
+
         if ( this.navigator ) {
             this.navigator.close();
         }
 
-        if( ! this.preserveOverlays)
-        {
+        if( ! this.preserveOverlays) {
             this.clearOverlays();
             this.overlaysContainer.innerHTML = "";
         }
@@ -704,6 +710,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         this.close();
+
+        this.clearOverlays();
+        this.overlaysContainer.innerHTML = "";
 
         //TODO: implement this...
         //this.unbindSequenceControls()
@@ -2792,6 +2801,10 @@ function updateMulti( viewer ) {
 function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
+
+    if (viewer._opening) {
+        return;
+    }
 
     if ( viewer.autoResize ) {
         var containerSize = _getSafeElemSize( viewer.container );
