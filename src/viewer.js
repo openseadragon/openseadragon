@@ -673,7 +673,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
-
+        this.imageLoader.clear();
+        
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
          *
