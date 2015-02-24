@@ -836,7 +836,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this;
     },
 
-
     /**
      * @function
      * @return {Boolean}
