@@ -52,6 +52,7 @@ OPENSEADRAGON CHANGELOG
 * Corrected IIIF tile source to use canonical syntax (#586)
 * Fixed x/y typo that caused horizontal reference strip to be rendered only relative to height (#595)
 * Fixed Firefox 35 not able to open local files (#588)
+* Fixed an issue with zero size viewers in IE8 (#609)
 
 1.2.1:
 
