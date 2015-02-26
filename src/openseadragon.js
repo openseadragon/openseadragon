@@ -175,9 +175,6 @@
   *     these paths, prefer setting the option.prefixUrl rather than overriding
   *     every image path directly through this setting.
   *
-  * @property {Object} [tileHost=null]
-  *     TODO: Implement this. Currently not used.
-  *
   * @property {Boolean} [debugMode=false]
   *     TODO: provide an in-screen panel providing event detail feedback.
   *

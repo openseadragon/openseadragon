@@ -843,4 +843,29 @@
         viewer.addHandler('open', openHandler);
     });
 
+    asyncTest('Viewer options transmitted to navigator', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   ['/test/data/testpattern.dzi', '/test/data/testpattern.dzi'],
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            collectionMode: true,
+            crossOriginPolicy: 'Anonymous'
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.prefixUrl, viewer.prefixUrl,
+                "Prefix URL should be transmitted to the navigator.");
+            equal(navigator.crossOriginPolicy, viewer.crossOriginPolicy,
+                "Cross origin policy should be transmitted to the navigator.");
+            start();
+        });
+
+    });
+
 })();

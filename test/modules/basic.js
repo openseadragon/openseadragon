@@ -301,4 +301,54 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    function isCanvasTainted(context) {
+        var isTainted = false;
+        try {
+            // We test if the canvas is tainted by retrieving data from it.
+            // An exception will be raised if the canvas is tainted.
+            var url = context.getImageData(0, 0, 1, 1);
+        } catch (e) {
+            isTainted = true;
+        }
+        return isTainted;
+    }
+
+    asyncTest( 'CrossOriginPolicyMissing', function () {
+
+        viewer.crossOriginPolicy = false;
+        viewer.open( {
+            type: 'legacy-image-pyramid',
+            levels: [ {
+                    // The Wikipedia logo has CORS enabled
+                    url: 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png',
+                    width: 135,
+                    height: 155
+                } ]
+        } );
+        viewer.addHandler('tile-drawn', function() {
+            ok(isCanvasTainted(viewer.drawer.context), "Canvas should be tainted.");
+            start();
+        });
+
+    } );
+
+    asyncTest( 'CrossOriginPolicyAnonymous', function () {
+
+        viewer.crossOriginPolicy = 'Anonymous';
+        viewer.open( {
+            type: 'legacy-image-pyramid',
+            levels: [ {
+                    // The Wikipedia logo has CORS enabled
+                    url: 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png',
+                    width: 135,
+                    height: 155
+                } ]
+        } );
+        viewer.addHandler('tile-drawn', function() {
+            ok(!isCanvasTainted(viewer.drawer.context), "Canvas should not be tainted.");
+            start();
+        });
+
+    } );
+
 })();
