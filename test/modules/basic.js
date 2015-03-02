@@ -301,4 +301,77 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+
+    // The Wikipedia logo has CORS enabled
+    var corsImg = 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
+
+    // PhantomJS always taint the canvas, so we only run some tests on browsers
+    // supporting CORS images.
+    function browserSupportsImgCrossOrigin(callback) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            var canvas = document.createElement("canvas");
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            callback(!isCanvasTainted(ctx));
+        };
+        img.src = corsImg;
+    }
+
+    function isCanvasTainted(context) {
+        var isTainted = false;
+        try {
+            // We test if the canvas is tainted by retrieving data from it.
+            // An exception will be raised if the canvas is tainted.
+            var url = context.getImageData(0, 0, 1, 1);
+        } catch (e) {
+            isTainted = true;
+        }
+        return isTainted;
+    }
+
+    asyncTest( 'CrossOriginPolicyMissing', function () {
+
+        viewer.crossOriginPolicy = false;
+        viewer.open( {
+            type: 'legacy-image-pyramid',
+            levels: [ {
+                    url: corsImg,
+                    width: 135,
+                    height: 155
+                } ]
+        } );
+        viewer.addHandler('tile-drawn', function() {
+            ok(isCanvasTainted(viewer.drawer.context), "Canvas should be tainted.");
+            start();
+        });
+
+    } );
+
+    asyncTest( 'CrossOriginPolicyAnonymous', function () {
+
+        browserSupportsImgCrossOrigin(function(supported) {
+            if (!supported) {
+                expect(0);
+                start();
+            } else {
+                viewer.crossOriginPolicy = 'Anonymous';
+                viewer.open( {
+                    type: 'legacy-image-pyramid',
+                    levels: [ {
+                            url: corsImg,
+                            width: 135,
+                            height: 155
+                        } ]
+                } );
+                viewer.addHandler('tile-drawn', function() {
+                    ok(!isCanvasTainted(viewer.drawer.context), "Canvas should not be tainted.");
+                    start();
+                });
+            }
+        });
+
+    } );
+
 })();

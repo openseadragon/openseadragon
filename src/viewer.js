@@ -409,10 +409,10 @@ $.Viewer = function( options ) {
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
             autoResize:        this.navigatorAutoResize,
-            tileHost:          this.tileHost,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
-            navigatorRotate:   this.navigatorRotate
+            navigatorRotate:   this.navigatorRotate,
+            crossOriginPolicy: this.crossOriginPolicy
         });
     }
 
@@ -505,7 +505,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         height:      this.referenceStripHeight,
                         width:       this.referenceStripWidth,
                         tileSources: this.tileSources,
-                        tileHost:    this.tileHost,
                         prefixUrl:   this.prefixUrl,
                         viewer:      this
                     });
@@ -1290,6 +1289,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     blendTime: _this.blendTime,
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
+                    crossOriginPolicy: _this.crossOriginPolicy,
                     debugMode: _this.debugMode
                 });
 
