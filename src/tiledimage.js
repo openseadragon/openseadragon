@@ -883,6 +883,9 @@ function loadTile( tiledImage, tile, time ) {
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         callback: function( image ){
             onTileLoad( tiledImage, tile, time, image );
+        },
+        abort: function() {
+            tile.loading = false;
         }
     });
 }
