@@ -144,7 +144,7 @@ $.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
      */
     clear: function() {
         for( var i = 0; i < this.jobQueue.length; i++ ) {
-            job = this.jobQueue[i];
+            var job = this.jobQueue[i];
             if ( typeof job.abort === "function" ) {
                 job.abort();
             }
