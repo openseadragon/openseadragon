@@ -673,7 +673,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
         this.imageLoader.clear();
-        
+
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
          *
@@ -2926,6 +2926,7 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 }
 
 function drawWorld( viewer ) {
+    viewer.imageLoader.clear();
     viewer.drawer.clear();
     viewer.world.draw();
 

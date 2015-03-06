@@ -124,7 +124,8 @@ $.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
             jobOptions = {
                 src: options.src,
                 crossOriginPolicy: options.crossOriginPolicy,
-                callback: complete
+                callback: complete,
+                abort: options.abort
             },
             newJob = new ImageJob( jobOptions );
 
@@ -142,6 +143,13 @@ $.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
      * @method
      */
     clear: function() {
+        for( var i = 0; i < this.jobQueue.length; i++ ) {
+            var job = this.jobQueue[i];
+            if ( typeof job.abort === "function" ) {
+                job.abort();
+            }
+        }
+
         this.jobQueue = [];
     }
 };
