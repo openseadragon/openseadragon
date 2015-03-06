@@ -54,6 +54,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed Firefox 35 not able to open local files (#588)
 * Fixed an issue with zero size viewers in IE8 (#609)
 * Fixed: Cross Origin policy not working (#613)
+* Optimized tile loading by clearing the queue on a re-draw when imageLoaderLimit is set (#616)
 
 1.2.1:
 
