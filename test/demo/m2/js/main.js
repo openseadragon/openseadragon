@@ -77,6 +77,16 @@
                 self.previous();
             });
 
+            this.$details = $('.details')
+                .prop('checked', true)
+                .change(function() {
+                    if (self.$details.prop('checked')) {
+                        self.showDetails();
+                    } else {
+                        self.hideDetails();
+                    }
+                });
+
             $(window).keyup(function(event) {
                 if (self.mode === 'thumbs') {
                     return;
@@ -175,6 +185,20 @@
 
             this.goToPage({
                 pageIndex: pageIndex
+            });
+        },
+
+        // ----------
+        hideDetails: function() {
+            $.each(this.pages, function(i, v) {
+                v.removeDetails();
+            });
+        },
+
+        // ----------
+        showDetails: function() {
+            $.each(this.pages, function(i, v) {
+                v.addDetails();
             });
         },
 

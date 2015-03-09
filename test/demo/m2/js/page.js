@@ -75,6 +75,10 @@
             }
 
             $.each(this.details, function(i, v) {
+                if (v.tiledImage) {
+                    return;
+                }
+
                 App.viewer.addTiledImage({
                     tileSource: v.tileSource,
                     success: function(event) {
@@ -82,6 +86,22 @@
                         self.placeDetail(v, true);
                     }
                 });
+            });
+        },
+
+        // ----------
+        removeDetails: function() {
+            var self = this;
+
+            if (!this.details) {
+                return;
+            }
+
+            $.each(this.details, function(i, v) {
+                if (v.tiledImage) {
+                    App.viewer.world.removeItem(v.tiledImage);
+                    delete v.tiledImage;
+                }
             });
         },
 
