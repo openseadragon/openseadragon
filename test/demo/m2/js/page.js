@@ -106,6 +106,31 @@
         },
 
         // ----------
+        hitTest: function(pos) {
+            if (!this.details) {
+                return this.main.tiledImage;
+            }
+
+            var count = this.details.length;
+            var detail, box;
+
+            for (var i = 0; i < count; i++) {
+                detail = this.details[i];
+                if (!detail.tiledImage) {
+                    continue;
+                }
+
+                box = detail.tiledImage.getBounds();
+                if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
+                        pos.y < box.y + box.height) {
+                    return detail.tiledImage;
+                }
+            }
+
+            return this.main.tiledImage;
+        },
+
+        // ----------
         getBounds: function() {
             return this.bounds.clone();
         },

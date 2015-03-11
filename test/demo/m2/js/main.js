@@ -57,7 +57,11 @@
                 }
             });
 
-            this.viewer.addHandler('viewport-change', function(event) {
+            this.viewer.addHandler('zoom', function(event) {
+                self.applyConstraints();
+            });
+
+            this.viewer.addHandler('pan', function(event) {
                 self.applyConstraints();
             });
 
@@ -291,33 +295,69 @@
                 return;
             }
 
-            if (this.panBounds) {
-                var center = this.viewer.viewport.getCenter(true);
-                var viewBounds = this.viewer.viewport.getBounds(true);
-                var bounds = this.panBounds.clone();
-                var left = bounds.x + (viewBounds.width / 2);
-                var top = bounds.y + (viewBounds.height / 2);
-                var right = (bounds.x + bounds.width) - (viewBounds.width / 2);
-                var bottom = (bounds.y + bounds.height) - (viewBounds.height / 2);
+            if (this.panBounds && !this.inZoomConstraints) {
+                var changed = false;
+                var viewBounds = this.viewer.viewport.getBounds();
+                var panBounds = this.panBounds.clone();
 
-                var x;
-                if (left <= right) {
-                    x = Math.max(left, Math.min(right, center.x));
-                } else {
-                    x = bounds.x + (bounds.width / 2);
+                if (viewBounds.x < panBounds.x - 0.00001) {
+                    viewBounds.x = panBounds.x;
+                    changed = true;
                 }
 
-                var y;
-                if (top <= bottom) {
-                    y = Math.max(top, Math.min(bottom, center.y));
-                } else {
-                    y = bounds.y + (bounds.height / 2);
+                if (viewBounds.y < panBounds.y - 0.00001) {
+                    viewBounds.y = panBounds.y;
+                    changed = true;
                 }
 
-                if (x !== center.x || y !== center.y) {
-                    this.viewer.viewport.centerSpringX.current.value = x;
-                    this.viewer.viewport.centerSpringY.current.value = y;
+                if (viewBounds.width > panBounds.width + 0.00001) {
+                    viewBounds.width = panBounds.width;
+                    changed = true;
                 }
+
+                if (viewBounds.height > panBounds.height + 0.00001) {
+                    viewBounds.height = panBounds.height;
+                    changed = true;
+                }
+
+                if (viewBounds.x + viewBounds.width > panBounds.x + panBounds.width + 0.00001) {
+                    viewBounds.x = (panBounds.x + panBounds.width) - viewBounds.width;
+                    changed = true;
+                }
+
+                if (viewBounds.y + viewBounds.height > panBounds.y + panBounds.height + 0.00001) {
+                    viewBounds.y = (panBounds.y + panBounds.height) - viewBounds.height;
+                    changed = true;
+                }
+
+                if (changed) {
+                    this.inZoomConstraints = true;
+                    this.viewer.viewport.fitBounds(viewBounds);
+                    this.inZoomConstraints = false;
+                }
+            }
+
+            var zoom = this.viewer.viewport.getZoom();
+            var maxZoom = 2;
+
+            var zoomPoint = this.viewer.viewport.zoomPoint || this.viewer.viewport.getCenter();
+            var info = this.hitTest(zoomPoint);
+            if (info) {
+                var page = this.pages[info.index];
+                var tiledImage = page.hitTest(zoomPoint);
+                if (tiledImage) {
+                    maxZoom = this.viewer.maxZoomLevel;
+                    if (!maxZoom) {
+                        var imageWidth = tiledImage.getContentSize().x;
+                        var viewerWidth = this.$el.width();
+                        maxZoom = imageWidth * this.viewer.maxZoomPixelRatio / viewerWidth;
+                        maxZoom /= tiledImage.getBounds().width;
+                    }
+                }
+            }
+
+            if (zoom > maxZoom) {
+                this.viewer.viewport.zoomSpring.target.value = maxZoom;
             }
         },
 
