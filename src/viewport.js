@@ -596,8 +596,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             return this.zoomTo(newZoom, null, true);
         }
 
-        if (Math.abs(newZoom - oldZoom) < 0.00000000001 ||
-                Math.abs(newBounds.width - oldBounds.width) < 0.00000000001) {
+        if (Math.abs(newZoom - oldZoom) < 0.00000001 ||
+                Math.abs(newBounds.width - oldBounds.width) < 0.00000001) {
             return this.panTo( center, immediately );
         }
 
