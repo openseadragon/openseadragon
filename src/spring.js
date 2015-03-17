@@ -72,6 +72,11 @@ $.Spring = function( options ) {
         };
     }
 
+    if (options.log) {
+        this._log = true;
+        delete options.log;
+    }
+
     $.extend( true, this, options);
 
     /**
@@ -108,6 +113,12 @@ $.Spring = function( options ) {
         value: this.current.value,
         time:  this.current.time
     };
+
+    if (this._log) {
+        this.start._logValue = Math.log(this.start.value);
+        this.target._logValue = Math.log(this.target.value);
+        this.current._logValue = Math.log(this.current.value);
+    }
 };
 
 $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
@@ -119,6 +130,12 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
     resetTo: function( target ) {
         this.start.value = this.target.value = this.current.value = target;
         this.start.time = this.target.time = this.current.time = $.now();
+
+        if (this._log) {
+            this.start._logValue = Math.log(this.start.value);
+            this.target._logValue = Math.log(this.target.value);
+            this.current._logValue = Math.log(this.current.value);
+        }
     },
 
     /**
@@ -130,6 +147,11 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
         this.start.time   = this.current.time;
         this.target.value = target;
         this.target.time  = this.start.time + 1000 * this.animationTime;
+
+        if (this._log) {
+            this.start._logValue = Math.log(this.start.value);
+            this.target._logValue = Math.log(this.target.value);
+        }
     },
 
     /**
@@ -139,6 +161,21 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
     shiftBy: function( delta ) {
         this.start.value  += delta;
         this.target.value += delta;
+
+        if (this._log) {
+            this.start._logValue = Math.log(this.start.value);
+            this.target._logValue = Math.log(this.target.value);
+        }
+    },
+
+    setLog: function(value) {
+        this._log = value;
+
+        if (this._log) {
+            this.start._logValue = Math.log(this.start.value);
+            this.target._logValue = Math.log(this.target.value);
+            this.current._logValue = Math.log(this.current.value);
+        }
     },
 
     /**
@@ -146,15 +183,31 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
      */
     update: function() {
         this.current.time  = $.now();
-        this.current.value = (this.current.time >= this.target.time) ?
-            this.target.value :
-            this.start.value +
-                ( this.target.value - this.start.value ) *
+
+        var startValue, targetValue;
+        if (this._log) {
+            startValue = this.start._logValue;
+            targetValue = this.target._logValue;
+        } else {
+            startValue = this.start.value;
+            targetValue = this.target.value;
+        }
+
+        var currentValue = (this.current.time >= this.target.time) ?
+            targetValue :
+            startValue +
+                ( targetValue - startValue ) *
                 transform(
                     this.springStiffness,
                     ( this.current.time - this.start.time ) /
                     ( this.target.time  - this.start.time )
                 );
+
+        if (this._log) {
+            this.current.value = Math.exp(currentValue);
+        } else {
+            this.current.value = currentValue;
+        }
     }
 };
 

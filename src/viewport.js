@@ -127,6 +127,7 @@ $.Viewport = function( options ) {
         animationTime:   this.animationTime
     });
     this.zoomSpring    = new $.Spring({
+        log: true,
         initial: 1,
         springStiffness: this.springStiffness,
         animationTime:   this.animationTime
