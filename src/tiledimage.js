@@ -72,6 +72,8 @@ $.TiledImage = function( options ) {
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
     $.console.assert( options.source, "[TiledImage] options.source is required" );
+    $.console.assert(!options.clip || options.clip instanceof $.Rect,
+        "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
 
@@ -83,6 +85,9 @@ $.TiledImage = function( options ) {
 
     this._imageLoader = options.imageLoader;
     delete options.imageLoader;
+
+    this._clip = options.clip;
+    delete options.clip;
 
     var x = options.x || 0;
     delete options.x;
@@ -1116,6 +1121,20 @@ function drawTiles( tiledImage, lastDrawn ){
         position,
         tileSource;
 
+    var usedClip = false;
+    if (tiledImage._clip) {
+        tiledImage._drawer.saveContext();
+        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
+        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
+        box = new OpenSeadragon.Rect(Math.round(topLeft.x * $.pixelDensityRatio),
+            Math.round(topLeft.y * $.pixelDensityRatio),
+            Math.round(size.x * $.pixelDensityRatio),
+            Math.round(size.y * $.pixelDensityRatio));
+        tiledImage._drawer.setClip(box);
+        usedClip = true;
+    }
+
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
@@ -1146,6 +1165,10 @@ function drawTiles( tiledImage, lastDrawn ){
                 tile: tile
             });
         }
+    }
+
+    if (usedClip) {
+        tiledImage._drawer.restoreContext();
     }
 }
 

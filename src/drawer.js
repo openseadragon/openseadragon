@@ -259,6 +259,34 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     // private
+    saveContext: function() {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        this.context.save();
+    },
+
+    // private
+    restoreContext: function() {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        this.context.restore();
+    },
+
+    // private
+    setClip: function(rect) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        this.context.rect(rect.x, rect.y, rect.width, rect.height);
+        this.context.clip();
+    },
+
+    // private
     drawDebugInfo: function( tile, count, i ){
         if ( this.useCanvas ) {
             this.context.save();
