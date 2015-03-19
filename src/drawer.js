@@ -282,6 +282,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             return;
         }
 
+        this.context.beginPath();
         this.context.rect(rect.x, rect.y, rect.width, rect.height);
         this.context.clip();
     },

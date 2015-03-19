@@ -52,6 +52,9 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
+ * (portions of the image outside of this area will not be visible). Only works on
+ * browsers that support the HTML5 canvas.
  * @param {Number} [options.springStiffness] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.animationTime] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
@@ -86,7 +89,10 @@ $.TiledImage = function( options ) {
     this._imageLoader = options.imageLoader;
     delete options.imageLoader;
 
-    this._clip = options.clip;
+    if (options.clip instanceof $.Rect) {
+        this._clip = options.clip.clone();
+    }
+
     delete options.clip;
 
     var x = options.x || 0;
@@ -446,6 +452,36 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setHeight: function(height, immediately) {
         this._setScale(height / this.normHeight, immediately);
+    },
+
+    /**
+     * @returns {OpenSeadragon.Rect|null} The TiledImage's current clip rectangle,
+     * in image pixels, or null if none.
+     */
+    getClip: function() {
+        if (this._clip) {
+            return this._clip.clone();
+        }
+
+        return null;
+    },
+
+    /**
+     * @param {OpenSeadragon.Rect|null} newClip - An area, in image pixels, to clip to
+     * (portions of the image outside of this area will not be visible). Only works on
+     * browsers that support the HTML5 canvas.
+     */
+    setClip: function(newClip) {
+        $.console.assert(!newClip || newClip instanceof $.Rect,
+            "[TiledImage.setClip] newClip must be an OpenSeadragon.Rect or null");
+
+        if (newClip instanceof $.Rect) {
+            this._clip = newClip.clone();
+        } else {
+            this._clip = null;
+        }
+
+        this._needsDraw = true;
     },
 
     // private
