@@ -19,6 +19,11 @@
             tileSource: config.tileSource
         };
 
+        if (config.clip) {
+            this.starter.clip = new OpenSeadragon.Rect(config.clip.x, config.clip.y,
+                config.clip.width, config.clip.height);
+        }
+
         this.main = {};
 
         this.alternateIndex = -1;
@@ -56,6 +61,7 @@
             App.viewer.world.removeItem(this.main.tiledImage);
             App.viewer.addTiledImage({
                 tileSource: itemInfo.tileSource,
+                clip: itemInfo.clip,
                 index: this.pageIndex,
                 success: function(event) {
                     self.setDetail(self.main, itemInfo, event.item);
@@ -81,6 +87,7 @@
 
                 App.viewer.addTiledImage({
                     tileSource: v.tileSource,
+                    clip: v.clip,
                     success: function(event) {
                         v.tiledImage = event.item;
                         self.placeDetail(v, true);

@@ -22,7 +22,10 @@
             this.pages = this.createPages();
 
             var tileSources = $.map(this.pages, function(v, i) {
-                return v.starter.tileSource;
+                return {
+                    tileSource: v.starter.tileSource,
+                    clip: v.starter.clip
+                };
             });
 
             this.viewer = OpenSeadragon({
@@ -543,10 +546,10 @@
                 }
             }
 
+            this.panBounds = null;
+
             box = new OpenSeadragon.Rect(x, y, width, height);
             this.viewer.viewport.fitBounds(box, config.immediately);
-
-            this.panBounds = null;
 
             var setPanBounds = function() {
                 if (self.mode === 'page' || self.mode === 'book') {
@@ -816,6 +819,16 @@
                         tileSource: wide
                     }
                 ]
+            }));
+
+            pages.push(new this.Page({
+                tileSource: highsmith,
+                clip: {
+                    x: 1000,
+                    y: 1000,
+                    width: 5026,
+                    height: 7221
+                }
             }));
 
             var inputs = [
