@@ -821,6 +821,16 @@
                 ]
             }));
 
+            pages.push(new this.Page({
+                tileSource: highsmith,
+                clip: {
+                    x: 1000,
+                    y: 1000,
+                    width: 5026,
+                    height: 7221
+                }
+            }));
+
             var inputs = [
                 highsmith,
                 duomo,
