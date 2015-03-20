@@ -1163,10 +1163,10 @@ function drawTiles( tiledImage, lastDrawn ){
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
         var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
-        box = new OpenSeadragon.Rect(Math.round(topLeft.x * $.pixelDensityRatio),
-            Math.round(topLeft.y * $.pixelDensityRatio),
-            Math.round(size.x * $.pixelDensityRatio),
-            Math.round(size.y * $.pixelDensityRatio));
+        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
+            topLeft.y * $.pixelDensityRatio,
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio);
         tiledImage._drawer.setClip(box);
         usedClip = true;
     }
