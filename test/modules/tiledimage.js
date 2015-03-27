@@ -191,4 +191,33 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    // ----------
+    asyncTest('clip', function() {
+        var clip = new OpenSeadragon.Rect(100, 100, 800, 800);
+
+        viewer.addHandler('open', function() {
+            var image = viewer.world.getItemAt(0);
+            propEqual(image.getClip(), clip, 'image has correct clip');
+
+            image.setClip(null);
+            equal(image.getClip(), null, 'clip is cleared');
+
+            image.setClip(clip);
+            propEqual(image.getClip(), clip, 'clip is set correctly');
+
+            Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
+                ok(true, 'drawer.setClip is called');
+                var pixelRatio = viewer.viewport.getContainerSize().x / image.getContentSize().x;
+                var canvasClip = clip.times(pixelRatio * OpenSeadragon.pixelDensityRatio);
+                propEqual(rect, canvasClip, 'clipping to correct rect');
+                start();
+            });
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi',
+            clip: clip
+        });
+    });
+
 })();

@@ -52,6 +52,9 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
+ * (portions of the image outside of this area will not be visible). Only works on
+ * browsers that support the HTML5 canvas.
  * @param {Number} [options.springStiffness] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.animationTime] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minZoomImageRatio] - See {@link OpenSeadragon.Options}.
@@ -72,6 +75,8 @@ $.TiledImage = function( options ) {
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
     $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
     $.console.assert( options.source, "[TiledImage] options.source is required" );
+    $.console.assert(!options.clip || options.clip instanceof $.Rect,
+        "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
 
@@ -83,6 +88,12 @@ $.TiledImage = function( options ) {
 
     this._imageLoader = options.imageLoader;
     delete options.imageLoader;
+
+    if (options.clip instanceof $.Rect) {
+        this._clip = options.clip.clone();
+    }
+
+    delete options.clip;
 
     var x = options.x || 0;
     delete options.x;
@@ -441,6 +452,36 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setHeight: function(height, immediately) {
         this._setScale(height / this.normHeight, immediately);
+    },
+
+    /**
+     * @returns {OpenSeadragon.Rect|null} The TiledImage's current clip rectangle,
+     * in image pixels, or null if none.
+     */
+    getClip: function() {
+        if (this._clip) {
+            return this._clip.clone();
+        }
+
+        return null;
+    },
+
+    /**
+     * @param {OpenSeadragon.Rect|null} newClip - An area, in image pixels, to clip to
+     * (portions of the image outside of this area will not be visible). Only works on
+     * browsers that support the HTML5 canvas.
+     */
+    setClip: function(newClip) {
+        $.console.assert(!newClip || newClip instanceof $.Rect,
+            "[TiledImage.setClip] newClip must be an OpenSeadragon.Rect or null");
+
+        if (newClip instanceof $.Rect) {
+            this._clip = newClip.clone();
+        } else {
+            this._clip = null;
+        }
+
+        this._needsDraw = true;
     },
 
     // private
@@ -1116,6 +1157,20 @@ function drawTiles( tiledImage, lastDrawn ){
         position,
         tileSource;
 
+    var usedClip = false;
+    if (tiledImage._clip) {
+        tiledImage._drawer.saveContext();
+        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
+        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
+        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
+            topLeft.y * $.pixelDensityRatio,
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio);
+        tiledImage._drawer.setClip(box);
+        usedClip = true;
+    }
+
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
@@ -1146,6 +1201,10 @@ function drawTiles( tiledImage, lastDrawn ){
                 tile: tile
             });
         }
+    }
+
+    if (usedClip) {
+        tiledImage._drawer.restoreContext();
     }
 }
 
