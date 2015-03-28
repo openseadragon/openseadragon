@@ -67,7 +67,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.y       = y;
     /**
      * Where this tile fits, in normalized coordinates
-     * @member {OpenSeadragon.Point} bounds
+     * @member {OpenSeadragon.Rect} bounds
      * @memberof OpenSeadragon.Tile#
      */
     this.bounds  = bounds;
@@ -235,10 +235,9 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      */
-    drawCanvas: function( context, drawingHandler ) {
+    drawCanvas: function( context, position, drawingHandler ) {
 
-        var position = this.position,
-            size     = this.size,
+        var size     = this.size,
             rendered,
             canvas;
 

@@ -106,6 +106,12 @@ $.TiledImage = function( options ) {
         scale = options.height / this.normHeight;
         delete options.height;
     }
+    
+    this.opacity = 1;
+    if ( options.opacity ) {
+        this.opacity = options.opacity;
+        delete options.opacity;
+    }
 
     $.extend( true, this, {
 
@@ -1104,27 +1110,53 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
+// Taken from drawer.js
+function drawTile( tile, context, position, drawingHandler ) {
+    $.console.assert(tile, '[Drawer.drawTile] tile is required');
+    $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
+
+//    if ( useCanvas ) {
+        // TODO do this in a more performant way
+        // specifically, don't save,rotate,restore every time we draw a tile
+//        if( this.viewport.degrees !== 0 ) {
+//            this._offsetForRotation( tile, this.viewport.degrees );
+//            tile.drawCanvas( context, drawingHandler );
+//            this._restoreRotationChanges( tile );
+//        } else {
+
+    tile.drawCanvas( context, position, drawingHandler );
+            
+//        }
+//    } else {
+//        tile.drawHTML( this.canvas );
+//    }
+}
+
 function drawTiles( tiledImage, lastDrawn ){
     var i,
-        tile,
-        tileKey,
-        viewer,
-        viewport,
-        position,
-        tileSource;
+        tile;
+    
+    var bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+        tiledImage.getBounds(true));
 
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(bounds.width);
+    canvas.height = Math.ceil(bounds.height);
+    var context = canvas.getContext("2d");
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
+        
+        var position = tile.position.minus(bounds.getTopLeft());
+        drawTile( tile, context, position, tiledImage._drawingHandler );
         tile.beingDrawn = true;
 
-        if( tiledImage.debugMode ){
-            try{
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
-            }catch(e){
-                $.console.error(e);
-            }
-        }
+//        if( tiledImage.debugMode ){
+//            try{
+//                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+//            }catch(e){
+//                $.console.error(e);
+//            }
+//        }
 
         if( tiledImage.viewer ){
             /**
@@ -1144,6 +1176,21 @@ function drawTiles( tiledImage, lastDrawn ){
             });
         }
     }
+    
+    var drawerContext = tiledImage._drawer.context;
+    drawerContext.save();
+    drawerContext.globalAlpha = tiledImage.opacity;
+    drawerContext.drawImage(
+        canvas,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+        bounds.x,
+        bounds.y,
+        bounds.width,
+        bounds.height);
+    drawerContext.restore();
 }
 
 }( OpenSeadragon ));

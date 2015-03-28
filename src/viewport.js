@@ -1171,6 +1171,16 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     viewportToViewerElementCoordinates: function( point ) {
         return this.pixelFromPoint( point, true );
     },
+    
+    viewportToViewerElementRectangle: function( rectangle ) {
+        var topLeft = this.pixelFromPoint( rectangle.getTopLeft(), true );
+        var bottomRight = this.pixelFromPoint( rectangle.getBottomRight(), true );
+        return new $.Rect(
+            topLeft.x,
+            topLeft.y,
+            bottomRight.x - topLeft.x,
+            bottomRight.y - topLeft.y);
+    },
 
     /**
      * Convert pixel coordinates relative to the window to viewport coordinates.
