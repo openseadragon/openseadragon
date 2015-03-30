@@ -56,6 +56,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue with zero size viewers in IE8 (#609)
 * Fixed: Cross Origin policy not working (#613)
 * Optimized tile loading by clearing the queue on a re-draw when imageLoaderLimit is set (#616)
+* Now animating zoom spring exponentially (#631)
 
 1.2.1:
 
