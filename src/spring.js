@@ -38,10 +38,14 @@
  * @class Spring
  * @memberof OpenSeadragon
  * @param {Object} options - Spring configuration settings.
- * @param {Number} options.initial - Initial value of spring, default to 0 so
- *  spring is not in motion initally by default.
- * @param {Number} options.springStiffness - Spring stiffness.
- * @param {Number} options.animationTime - Animation duration per spring.
+ * @param {Number} options.springStiffness - Spring stiffness. Must be greater than zero.
+ * The closer to zero, the closer to linear animation.
+ * @param {Number} options.animationTime - Animation duration per spring, in seconds.
+ * Must be greater than zero.
+ * @param {Number} [options.initial=0] - Initial value of spring.
+ * @param {Boolean} [options.exponential=false] - Whether this spring represents
+ * an exponential scale (such as zoom) and should be animated accordingly. Note that
+ * exponential springs must have non-zero values.
  */
 $.Spring = function( options ) {
     var args = arguments;
@@ -52,7 +56,7 @@ $.Spring = function( options ) {
         options = {
             initial: args.length && typeof ( args[ 0 ] ) == "number" ?
                 args[ 0 ] :
-                0,
+                undefined,
             /**
              * Spring stiffness.
              * @member {Number} springStiffness
@@ -72,9 +76,15 @@ $.Spring = function( options ) {
         };
     }
 
-    if (options.log) {
-        this._log = true;
-        delete options.log;
+    $.console.assert(typeof options.springStiffness === "number" && options.springStiffness !== 0,
+        "[OpenSeadragon.Spring] options.springStiffness must be a non-zero number");
+
+    $.console.assert(typeof options.animationTime === "number" && options.springStiffness !== 0,
+        "[OpenSeadragon.Spring] options.animationTime must be a non-zero number");
+
+    if (options.exponential) {
+        this._exponential = true;
+        delete options.exponential;
     }
 
     $.extend( true, this, options);
@@ -88,9 +98,12 @@ $.Spring = function( options ) {
     this.current = {
         value: typeof ( this.initial ) == "number" ?
             this.initial :
-            0,
+            (this._exponential ? 0 : 1),
         time:  $.now() // always work in milliseconds
     };
+
+    $.console.assert(!this._exponential || this.current.value !== 0,
+        "[OpenSeadragon.Spring] value must be non-zero for exponential springs");
 
     /**
      * @member {Object} start
@@ -114,7 +127,7 @@ $.Spring = function( options ) {
         time:  this.current.time
     };
 
-    if (this._log) {
+    if (this._exponential) {
         this.start._logValue = Math.log(this.start.value);
         this.target._logValue = Math.log(this.target.value);
         this.current._logValue = Math.log(this.current.value);
@@ -128,10 +141,13 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
      * @param {Number} target
      */
     resetTo: function( target ) {
+        $.console.assert(!this._exponential || target !== 0,
+            "[OpenSeadragon.Spring.resetTo] target must be non-zero for exponential springs");
+
         this.start.value = this.target.value = this.current.value = target;
         this.start.time = this.target.time = this.current.time = $.now();
 
-        if (this._log) {
+        if (this._exponential) {
             this.start._logValue = Math.log(this.start.value);
             this.target._logValue = Math.log(this.target.value);
             this.current._logValue = Math.log(this.current.value);
@@ -143,12 +159,15 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
      * @param {Number} target
      */
     springTo: function( target ) {
+        $.console.assert(!this._exponential || target !== 0,
+            "[OpenSeadragon.Spring.springTo] target must be non-zero for exponential springs");
+
         this.start.value  = this.current.value;
         this.start.time   = this.current.time;
         this.target.value = target;
         this.target.time  = this.start.time + 1000 * this.animationTime;
 
-        if (this._log) {
+        if (this._exponential) {
             this.start._logValue = Math.log(this.start.value);
             this.target._logValue = Math.log(this.target.value);
         }
@@ -162,16 +181,22 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
         this.start.value  += delta;
         this.target.value += delta;
 
-        if (this._log) {
+        if (this._exponential) {
+            $.console.assert(this.target.value !== 0 && this.start.value !== 0,
+                "[OpenSeadragon.Spring.shiftBy] spring value must be non-zero for exponential springs");
+
             this.start._logValue = Math.log(this.start.value);
             this.target._logValue = Math.log(this.target.value);
         }
     },
 
-    setLog: function(value) {
-        this._log = value;
+    setExponential: function(value) {
+        this._exponential = value;
 
-        if (this._log) {
+        if (this._exponential) {
+            $.console.assert(this.current.value !== 0 && this.target.value !== 0 && this.start.value !== 0,
+                "[OpenSeadragon.Spring.setExponential] spring value must be non-zero for exponential springs");
+
             this.start._logValue = Math.log(this.start.value);
             this.target._logValue = Math.log(this.target.value);
             this.current._logValue = Math.log(this.current.value);
@@ -185,7 +210,7 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
         this.current.time  = $.now();
 
         var startValue, targetValue;
-        if (this._log) {
+        if (this._exponential) {
             startValue = this.start._logValue;
             targetValue = this.target._logValue;
         } else {
@@ -203,7 +228,7 @@ $.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
                     ( this.target.time  - this.start.time )
                 );
 
-        if (this._log) {
+        if (this._exponential) {
             this.current.value = Math.exp(currentValue);
         } else {
             this.current.value = currentValue;
