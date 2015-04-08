@@ -1155,20 +1155,37 @@ function drawTiles( tiledImage, lastDrawn ){
         viewer,
         viewport,
         position,
-        tileSource;
+        tileSource,
+        needsRestore = false;
 
-    var usedClip = false;
-    if (tiledImage._clip) {
-        tiledImage._drawer.saveContext();
-        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+    // TODO: Move this function
+    var boxToDrawerRectangle = function( box ) {
         var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
         var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
-        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
+
+        return new $.Rect(
+            topLeft.x * $.pixelDensityRatio,
             topLeft.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio);
-        tiledImage._drawer.setClip(box);
-        usedClip = true;
+            size.x    * $.pixelDensityRatio,
+            size.y    * $.pixelDensityRatio
+        );
+    };
+
+    if ( tiledImage._clip ) {
+        tiledImage._drawer.saveContext();
+        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+        var clipRect = boxToDrawerRectangle(box);
+
+        tiledImage._drawer.setClip(clipRect);
+        needsRestore = true;
+    }
+
+    if ( lastDrawn.length === 0 ) {
+        tiledImage._drawer.saveContext();
+        var placeholderRect = boxToDrawerRectangle( tiledImage.getBounds(true) );
+
+        tiledImage._drawer.drawPlaceholder(placeholderRect);
+        needsRestore = true;
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
@@ -1176,10 +1193,10 @@ function drawTiles( tiledImage, lastDrawn ){
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
         tile.beingDrawn = true;
 
-        if( tiledImage.debugMode ){
-            try{
+        if( tiledImage.debugMode ) {
+            try {
                 tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
-            }catch(e){
+            } catch(e) {
                 $.console.error(e);
             }
         }
@@ -1203,7 +1220,7 @@ function drawTiles( tiledImage, lastDrawn ){
         }
     }
 
-    if (usedClip) {
+    if ( needsRestore ) {
         tiledImage._drawer.restoreContext();
     }
 }
