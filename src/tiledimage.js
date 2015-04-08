@@ -1157,7 +1157,7 @@ function drawTiles( tiledImage, lastDrawn ){
         position,
         tileSource;
 
-    var usedClip = false;
+    var needsRestore = false;
     if (tiledImage._clip) {
         tiledImage._drawer.saveContext();
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
@@ -1168,7 +1168,20 @@ function drawTiles( tiledImage, lastDrawn ){
             size.x * $.pixelDensityRatio,
             size.y * $.pixelDensityRatio);
         tiledImage._drawer.setClip(box);
-        usedClip = true;
+        needsRestore = true;
+    }
+
+    if ( lastDrawn.length === 0 ) {
+        tiledImage._drawer.saveContext();
+        var box = tiledImage.getBounds(true);
+        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
+        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
+        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
+            topLeft.y * $.pixelDensityRatio,
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio);
+        tiledImage._drawer.drawPlaceholder(box);
+        needsRestore = true;
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
@@ -1203,7 +1216,7 @@ function drawTiles( tiledImage, lastDrawn ){
         }
     }
 
-    if (usedClip) {
+    if ( needsRestore ) {
         tiledImage._drawer.restoreContext();
     }
 }
