@@ -288,6 +288,16 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     // private
+    drawPlaceholder: function(rect) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        this.context.fillRect(rect.x, rect.y, rect.width, rect.height);
+        this.context.fillStyle = "#000000";
+    },
+
+    // private
     drawDebugInfo: function( tile, count, i ){
         if ( this.useCanvas ) {
             this.context.save();
