@@ -1158,36 +1158,25 @@ function drawTiles( tiledImage, lastDrawn ) {
         viewport,
         position,
         tileSource,
-        needsRestore = false;
-
-    // TODO: Move this function
-    var boxToDrawerRectangle = function( box ) {
-        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
-        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
-
-        return new $.Rect(
-            topLeft.x * $.pixelDensityRatio,
-            topLeft.y * $.pixelDensityRatio,
-            size.x    * $.pixelDensityRatio,
-            size.y    * $.pixelDensityRatio
-        );
-    };
+        contextSaved = false;
 
     if ( tiledImage._clip ) {
         tiledImage._drawer.saveContext();
-        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        var clipRect = boxToDrawerRectangle(box);
+        contextSaved = true;
 
+        var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+        var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
         tiledImage._drawer.setClip(clipRect);
-        needsRestore = true;
     }
 
     if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
-        tiledImage._drawer.saveContext();
-        var placeholderRect = boxToDrawerRectangle( tiledImage.getBounds(true) );
+        if ( !contextSaved ) {
+            tiledImage._drawer.saveContext();
+            contextSaved = true;
+        }
 
+        var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
         tiledImage._drawer.drawPlaceholder(placeholderRect, tiledImage.placeholderFillStyle);
-        needsRestore = true;
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
@@ -1222,7 +1211,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
     }
 
-    if ( needsRestore ) {
+    if ( contextSaved ) {
         tiledImage._drawer.restoreContext();
     }
 }
