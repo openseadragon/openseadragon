@@ -67,14 +67,6 @@
                         Height: 3448
                     }
                 }
-            },
-            placeholderFillStyle: "#FF0000",
-            placeholderFillStyle: function(context) {
-                var gradient = context.createLinearGradient(0,0,1000,0);
-                gradient.addColorStop(0,"black");
-                gradient.addColorStop(1,"red");
-
-                return gradient;
             }
         });
         _viewer.addHandler("open", function() {
