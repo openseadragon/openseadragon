@@ -65,6 +65,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|Object} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
@@ -126,21 +127,22 @@ $.TiledImage = function( options ) {
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        _midDraw:      false, // Is the tiledImage currently updating the viewport?
-        _needsDraw:    true,  // Does the tiledImage need to update the viewport again?
+        _midDraw:       false, // Is the tiledImage currently updating the viewport?
+        _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
 
         //configurable settings
-        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:      $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:          $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
+        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:        $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:            $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
+        debugMode:            $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle
 
     }, options );
 
@@ -1148,7 +1150,7 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
-function drawTiles( tiledImage, lastDrawn ){
+function drawTiles( tiledImage, lastDrawn ) {
     var i,
         tile,
         tileKey,
@@ -1180,11 +1182,11 @@ function drawTiles( tiledImage, lastDrawn ){
         needsRestore = true;
     }
 
-    if ( lastDrawn.length === 0 ) {
+    if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
         tiledImage._drawer.saveContext();
         var placeholderRect = boxToDrawerRectangle( tiledImage.getBounds(true) );
 
-        tiledImage._drawer.drawPlaceholder(placeholderRect);
+        tiledImage._drawer.drawPlaceholder(placeholderRect, tiledImage.placeholderFillStyle);
         needsRestore = true;
     }
 

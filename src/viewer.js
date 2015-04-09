@@ -1294,7 +1294,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
                     crossOriginPolicy: _this.crossOriginPolicy,
-                    debugMode: _this.debugMode
+                    debugMode: _this.debugMode,
+                    placeholderFillStyle: _this.placeholderFillStyle
                 });
 
                 _this.world.addItem( tiledImage, {

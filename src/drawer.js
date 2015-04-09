@@ -288,13 +288,13 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     // private
-    drawPlaceholder: function(rect) {
+    drawPlaceholder: function(rect, fillStyle) {
         if (!this.useCanvas) {
             return;
         }
 
+        this.context.fillStyle = fillStyle || "#FFFFFF";
         this.context.fillRect(rect.x, rect.y, rect.width, rect.height);
-        this.context.fillStyle = "#000000";
     },
 
     // private
