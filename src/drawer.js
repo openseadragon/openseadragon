@@ -235,6 +235,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     /**
      * Translates from OpenSeadragon viewer rectangle to drawer rectangle.
      * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
+     * @return {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle: function(rectangle) {
         var topLeft = this.viewport.pixelFromPoint(rectangle.getTopLeft(), true);
