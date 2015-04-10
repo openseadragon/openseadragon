@@ -1206,6 +1206,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * and "source" properties.
      * @param {Boolean} [options.collectionImmediately=false] If collectionMode is on,
      * specifies whether to snap to the new arrangement immediately or to animate to it.
+     * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1216,6 +1217,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var _this = this;
 
         this._hideMessage();
+
+        $.extend ( true, options, {
+            placeholderFillStyle: _this.placeholderFillStyle
+        });
 
         var myQueueItem = {
             options: options
@@ -1284,6 +1289,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width: queueItem.options.width,
                     height: queueItem.options.height,
                     clip: queueItem.options.clip,
+                    placeholderFillStyle: queueItem.options.placeholderFillStyle,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
@@ -1294,8 +1300,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
                     crossOriginPolicy: _this.crossOriginPolicy,
-                    debugMode: _this.debugMode,
-                    placeholderFillStyle: _this.placeholderFillStyle
+                    debugMode: _this.debugMode
                 });
 
                 _this.world.addItem( tiledImage, {
