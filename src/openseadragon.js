@@ -208,6 +208,8 @@
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
+  *     You can pass a CSS color value like "#FF8800".
+  *     When passing a function the canvas context is available as argument which is useful when you draw a gradient or pattern.
   *
   * @property {Number} [degrees=0]
   *     Initial rotation.
@@ -1016,10 +1018,10 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorRotate:            true,
 
             // INITIAL ROTATION
-            degrees:                0,
+            degrees:                    0,
 
             // APPEARANCE
-            opacity:                1,
+            opacity:                    1,
             placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS
