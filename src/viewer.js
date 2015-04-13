@@ -1218,9 +1218,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._hideMessage();
 
-        $.extend ( true, options, {
-            placeholderFillStyle: _this.placeholderFillStyle
-        });
+        if (options.placeholderFillStyle === undefined) {
+            options.placeholderFillStyle = this.placeholderFillStyle;
+        }
 
         var myQueueItem = {
             options: options
