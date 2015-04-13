@@ -1172,12 +1172,8 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
-        tiledImage._drawer.saveContext();
-
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
         tiledImage._drawer.drawPlaceholder(placeholderRect, tiledImage.placeholderFillStyle);
-
-        tiledImage._drawer.restoreContext();
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {

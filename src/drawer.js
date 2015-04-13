@@ -310,14 +310,16 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             return;
         }
 
+
+        this.saveContext();
         if ( typeof fillStyle === "function" ) {
             this.context.fillStyle = fillStyle(this.context);
         }
         else {
             this.context.fillStyle = fillStyle;
         }
-
         this.context.fillRect(rect.x, rect.y, rect.width, rect.height);
+        this.restoreContext();
     },
 
     // private
