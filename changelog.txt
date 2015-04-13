@@ -57,6 +57,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Cross Origin policy not working (#613)
 * Optimized tile loading by clearing the queue on a re-draw when imageLoaderLimit is set (#616)
 * Now animating zoom spring exponentially (#631)
+* Added http://editorconfig.org/ config file (#637)
 
 1.2.1:
 
