@@ -233,6 +233,23 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     /**
+     * Translates from OpenSeadragon viewer rectangle to drawer rectangle.
+     * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
+     * @return {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
+     */
+    viewportToDrawerRectangle: function(rectangle) {
+        var topLeft = this.viewport.pixelFromPoint(rectangle.getTopLeft(), true);
+        var size = this.viewport.deltaPixelsFromPoints(rectangle.getSize(), true);
+
+        return new $.Rect(
+            topLeft.x * $.pixelDensityRatio,
+            topLeft.y * $.pixelDensityRatio,
+            size.x    * $.pixelDensityRatio,
+            size.y    * $.pixelDensityRatio
+        );
+    },
+
+    /**
      * Draws the given tile.
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
      * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
@@ -285,6 +302,24 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         this.context.beginPath();
         this.context.rect(rect.x, rect.y, rect.width, rect.height);
         this.context.clip();
+    },
+
+    // private
+    drawPlaceholder: function(rect, fillStyle) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+
+        this.saveContext();
+        if ( typeof fillStyle === "function" ) {
+            this.context.fillStyle = fillStyle(this.context);
+        }
+        else {
+            this.context.fillStyle = fillStyle;
+        }
+        this.context.fillRect(rect.x, rect.y, rect.width, rect.height);
+        this.restoreContext();
     },
 
     // private

@@ -65,6 +65,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
@@ -126,21 +127,22 @@ $.TiledImage = function( options ) {
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        _midDraw:      false, // Is the tiledImage currently updating the viewport?
-        _needsDraw:    true,  // Does the tiledImage need to update the viewport again?
+        _midDraw:       false, // Is the tiledImage currently updating the viewport?
+        _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
 
         //configurable settings
-        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:      $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:          $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
+        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:        $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:            $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
+        debugMode:            $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle
 
     }, options );
 
@@ -1148,27 +1150,30 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
-function drawTiles( tiledImage, lastDrawn ){
+function drawTiles( tiledImage, lastDrawn ) {
     var i,
         tile,
         tileKey,
         viewer,
         viewport,
         position,
-        tileSource;
+        tileSource,
+        contextSaved = false;
 
     var usedClip = false;
-    if (tiledImage._clip) {
+    if ( tiledImage._clip ) {
         tiledImage._drawer.saveContext();
+
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
-        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
-        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
-            topLeft.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio);
-        tiledImage._drawer.setClip(box);
+        var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
+        tiledImage._drawer.setClip(clipRect);
+
         usedClip = true;
+    }
+
+    if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
+        var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
+        tiledImage._drawer.drawPlaceholder(placeholderRect, tiledImage.placeholderFillStyle);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
@@ -1176,10 +1181,10 @@ function drawTiles( tiledImage, lastDrawn ){
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
         tile.beingDrawn = true;
 
-        if( tiledImage.debugMode ){
-            try{
+        if( tiledImage.debugMode ) {
+            try {
                 tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
-            }catch(e){
+            } catch(e) {
                 $.console.error(e);
             }
         }
@@ -1203,7 +1208,7 @@ function drawTiles( tiledImage, lastDrawn ){
         }
     }
 
-    if (usedClip) {
+    if ( usedClip ) {
         tiledImage._drawer.restoreContext();
     }
 }
