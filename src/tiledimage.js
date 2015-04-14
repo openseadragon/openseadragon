@@ -1157,8 +1157,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         viewer,
         viewport,
         position,
-        tileSource,
-        contextSaved = false;
+        tileSource;
 
     var usedClip = false;
     if ( tiledImage._clip ) {
