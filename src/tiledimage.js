@@ -1181,7 +1181,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             fillStyle = tiledImage.placeholderFillStyle;
         }
 
-        tiledImage._drawer.drawPlaceholder(placeholderRect, fillStyle);
+        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {

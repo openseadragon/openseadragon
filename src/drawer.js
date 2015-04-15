@@ -305,7 +305,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     // private
-    drawPlaceholder: function(rect, fillStyle) {
+    drawRectangle: function(rect, fillStyle) {
         if (!this.useCanvas) {
             return;
         }
