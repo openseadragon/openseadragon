@@ -209,7 +209,7 @@
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
   *     You can pass a CSS color value like "#FF8800".
-  *     When passing a function the canvas context is available as argument which is useful when you draw a gradient or pattern.
+  *     When passing a function the tiledImage and canvas context are available as argument which is useful when you draw a gradient or pattern.
   *
   * @property {Number} [degrees=0]
   *     Initial rotation.

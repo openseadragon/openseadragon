@@ -1172,7 +1172,16 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
-        tiledImage._drawer.drawPlaceholder(placeholderRect, tiledImage.placeholderFillStyle);
+
+        var fillStyle = null;
+        if ( typeof tiledImage.placeholderFillStyle === "function" ) {
+            fillStyle = tiledImage.placeholderFillStyle(tiledImage, tiledImage._drawer.context);
+        }
+        else {
+            fillStyle = tiledImage.placeholderFillStyle;
+        }
+
+        tiledImage._drawer.drawPlaceholder(placeholderRect, fillStyle);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
