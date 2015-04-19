@@ -97,6 +97,13 @@ $.Drawer = function( options ) {
     this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
 
     /**
+     * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
+     * to the main canvas due to opacity.
+     */
+    this.sketchCanvas = this.useCanvas ? document.createElement( "canvas" ) : null;
+    this.sketchContext = this.useCanvas ? this.sketchCanvas.getContext( "2d" ) : null;
+
+    /**
      * @member {Element} element
      * @memberof OpenSeadragon.Drawer#
      * @deprecated Alias for {@link OpenSeadragon.Drawer#container}.
@@ -111,8 +118,8 @@ $.Drawer = function( options ) {
     // check canvas available width and height, set canvas width and height such that the canvas backing store is set to the proper pixel density
     if (this.useCanvas) {
         var viewportSize = this._calculateCanvasSize();
-        this.canvas.width = viewportSize.x;
-        this.canvas.height = viewportSize.y;
+        this.canvas.width = this.sketchCanvas.width = viewportSize.x;
+        this.canvas.height = this.sketchCanvas.height = viewportSize.y;
     }
 
     this.canvas.style.width     = "100%";
@@ -254,21 +261,23 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
      * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
      * drawingHandler({context, tile, rendered})
+     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      * where <code>rendered</code> is the context with the pre-drawn image.
      */
-    drawTile: function( tile, drawingHandler ) {
+    drawTile: function( tile, drawingHandler, useSketch ) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if ( this.useCanvas ) {
+            var context = useSketch ? this.sketchContext : this.context;
             // TODO do this in a more performant way
             // specifically, don't save,rotate,restore every time we draw a tile
             if( this.viewport.degrees !== 0 ) {
-                this._offsetForRotation( tile, this.viewport.degrees );
-                tile.drawCanvas( this.context, drawingHandler );
-                this._restoreRotationChanges( tile );
+                this._offsetForRotation( tile, this.viewport.degrees, useSketch );
+                tile.drawCanvas( context, drawingHandler );
+                this._restoreRotationChanges( tile, useSketch );
             } else {
-                tile.drawCanvas( this.context, drawingHandler );
+                tile.drawCanvas( context, drawingHandler );
             }
         } else {
             tile.drawHTML( this.canvas );
@@ -276,63 +285,87 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     },
 
     // private
-    saveContext: function() {
+    saveContext: function(useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        var context = useSketch ? this.sketchContext : this.context;
+        context.save();
+    },
+
+    // private
+    restoreContext: function(useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        var context = useSketch ? this.sketchContext : this.context;
+        context.restore();
+    },
+
+    // private
+    setClip: function(rect, useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        var context = useSketch ? this.sketchContext : this.context;
+        context.beginPath();
+        context.rect(rect.x, rect.y, rect.width, rect.height);
+        context.clip();
+    },
+
+    // private
+    drawRectangle: function(rect, fillStyle, useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        var context = useSketch ? this.sketchContext : this.context;
+        context.save();
+        context.fillStyle = fillStyle;
+        context.fillRect(rect.x, rect.y, rect.width, rect.height);
+        context.restore();
+    },
+
+    /**
+     * Blends the sketch canvas in the main canvas.
+     * The sketch canvas is then cleared.
+     * @param {Float} opacity The opacity of the blending.
+     * @returns {undefined}
+     */
+    blendSketch: function(opacity) {
         if (!this.useCanvas) {
             return;
         }
 
         this.context.save();
-    },
-
-    // private
-    restoreContext: function() {
-        if (!this.useCanvas) {
-            return;
-        }
-
+        this.context.globalAlpha = opacity;
+        this.context.drawImage(this.sketchCanvas, 0, 0);
         this.context.restore();
+        this.sketchContext.clearRect(0, 0,
+            this.sketchCanvas.width, this.sketchCanvas.height);
     },
 
     // private
-    setClip: function(rect) {
-        if (!this.useCanvas) {
-            return;
-        }
-
-        this.context.beginPath();
-        this.context.rect(rect.x, rect.y, rect.width, rect.height);
-        this.context.clip();
-    },
-
-    // private
-    drawRectangle: function(rect, fillStyle) {
-        if (!this.useCanvas) {
-            return;
-        }
-
-        this.context.save();
-        this.context.fillStyle = fillStyle;
-        this.context.fillRect(rect.x, rect.y, rect.width, rect.height);
-        this.context.restore();
-    },
-
-    // private
-    drawDebugInfo: function( tile, count, i ){
+    drawDebugInfo: function( tile, count, i, useSketch ){
         if ( !this.useCanvas ) {
             return;
         }
 
-        this.context.save();
-        this.context.lineWidth = 2 * $.pixelDensityRatio;
-        this.context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-        this.context.strokeStyle = this.debugGridColor;
-        this.context.fillStyle = this.debugGridColor;
+        var context = useSketch ? this.sketchContext : this.context;
+        context.save();
+        context.lineWidth = 2 * $.pixelDensityRatio;
+        context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
+        context.strokeStyle = this.debugGridColor;
+        context.fillStyle = this.debugGridColor;
 
         if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation( tile, this.canvas, this.context, this.viewport.degrees );
+            this._offsetForRotation( tile, this.viewport.degrees, useSketch );
         }
 
-        this.context.strokeRect(
+        context.strokeRect(
             tile.position.x * $.pixelDensityRatio,
             tile.position.y * $.pixelDensityRatio,
             tile.size.x * $.pixelDensityRatio,
@@ -343,95 +376,97 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         var tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
 
         // Rotate the text the right way around.
-        this.context.translate( tileCenterX, tileCenterY );
-        this.context.rotate( Math.PI / 180 * -this.viewport.degrees );
-        this.context.translate( -tileCenterX, -tileCenterY );
+        context.translate( tileCenterX, tileCenterY );
+        context.rotate( Math.PI / 180 * -this.viewport.degrees );
+        context.translate( -tileCenterX, -tileCenterY );
 
         if( tile.x === 0 && tile.y === 0 ){
-            this.context.fillText(
+            context.fillText(
                 "Zoom: " + this.viewport.getZoom(),
                 tile.position.x * $.pixelDensityRatio,
                 (tile.position.y - 30) * $.pixelDensityRatio
             );
-            this.context.fillText(
+            context.fillText(
                 "Pan: " + this.viewport.getBounds().toString(),
                 tile.position.x * $.pixelDensityRatio,
                 (tile.position.y - 20) * $.pixelDensityRatio
             );
         }
-        this.context.fillText(
+        context.fillText(
             "Level: " + tile.level,
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 20) * $.pixelDensityRatio
         );
-        this.context.fillText(
+        context.fillText(
             "Column: " + tile.x,
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 30) * $.pixelDensityRatio
         );
-        this.context.fillText(
+        context.fillText(
             "Row: " + tile.y,
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 40) * $.pixelDensityRatio
         );
-        this.context.fillText(
+        context.fillText(
             "Order: " + i + " of " + count,
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 50) * $.pixelDensityRatio
         );
-        this.context.fillText(
+        context.fillText(
             "Size: " + tile.size.toString(),
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 60) * $.pixelDensityRatio
         );
-        this.context.fillText(
+        context.fillText(
             "Position: " + tile.position.toString(),
             (tile.position.x + 10) * $.pixelDensityRatio,
             (tile.position.y + 70) * $.pixelDensityRatio
         );
 
         if ( this.viewport.degrees !== 0 ) {
-            this._restoreRotationChanges( tile, this.canvas, this.context );
+            this._restoreRotationChanges( tile, useSketch );
         }
-        this.context.restore();
+        context.restore();
     },
 
     // private
-    debugRect: function(rect) {
+    debugRect: function(rect, useSketch) {
         if ( this.useCanvas ) {
-            this.context.save();
-            this.context.lineWidth = 2 * $.pixelDensityRatio;
-            this.context.strokeStyle = this.debugGridColor;
-            this.context.fillStyle = this.debugGridColor;
+            var context = useSketch ? this.sketchContext : this.context;
+            context.save();
+            context.lineWidth = 2 * $.pixelDensityRatio;
+            context.strokeStyle = this.debugGridColor;
+            context.fillStyle = this.debugGridColor;
 
-            this.context.strokeRect(
+            context.strokeRect(
                 rect.x * $.pixelDensityRatio,
                 rect.y * $.pixelDensityRatio,
                 rect.width * $.pixelDensityRatio,
                 rect.height * $.pixelDensityRatio
             );
 
-            this.context.restore();
+            context.restore();
         }
     },
 
     // private
-    _offsetForRotation: function( tile, degrees ){
+    _offsetForRotation: function( tile, degrees, useSketch ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,
             px = tile.position.x - cx,
             py = tile.position.y - cy;
 
-        this.context.save();
+        var context = useSketch ? this.sketchContext : this.context;
+        context.save();
 
-        this.context.translate(cx, cy);
-        this.context.rotate( Math.PI / 180 * degrees);
+        context.translate(cx, cy);
+        context.rotate( Math.PI / 180 * degrees);
         tile.position.x = px;
         tile.position.y = py;
     },
 
     // private
-    _restoreRotationChanges: function( tile ){
+    _restoreRotationChanges: function( tile, useSketch ){
         var cx = this.canvas.width / 2,
             cy = this.canvas.height / 2,
             px = tile.position.x + cx,
@@ -440,7 +475,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         tile.position.x = px;
         tile.position.y = py;
 
-        this.context.restore();
+        var context = useSketch ? this.sketchContext : this.context;
+        context.restore();
     },
 
     // private

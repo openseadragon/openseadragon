@@ -119,6 +119,12 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
+    this.opacity = 1;
+    if ( options.opacity ) {
+        this.opacity = options.opacity;
+        delete options.opacity;
+    }
+
     $.extend( true, this, {
 
         //internal state properties
@@ -1152,20 +1158,20 @@ function compareTiles( previousBest, tile ) {
 
 function drawTiles( tiledImage, lastDrawn ) {
     var i,
-        tile,
-        tileKey,
-        viewer,
-        viewport,
-        position,
-        tileSource;
+        tile;
+
+    if ( tiledImage.opacity <= 0 ) {
+        return;
+    }
+    var useSketch = tiledImage.opacity < 1;
 
     var usedClip = false;
     if ( tiledImage._clip ) {
-        tiledImage._drawer.saveContext();
+        tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
-        tiledImage._drawer.setClip(clipRect);
+        tiledImage._drawer.setClip(clipRect, useSketch);
 
         usedClip = true;
     }
@@ -1181,17 +1187,17 @@ function drawTiles( tiledImage, lastDrawn ) {
             fillStyle = tiledImage.placeholderFillStyle;
         }
 
-        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle);
+        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
         tile.beingDrawn = true;
 
         if( tiledImage.debugMode ) {
             try {
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i, useSketch );
             } catch(e) {
                 $.console.error(e);
             }
@@ -1217,7 +1223,11 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( usedClip ) {
-        tiledImage._drawer.restoreContext();
+        tiledImage._drawer.restoreContext( useSketch );
+    }
+
+    if ( useSketch ) {
+        tiledImage._drawer.blendSketch( tiledImage.opacity );
     }
 }
 
