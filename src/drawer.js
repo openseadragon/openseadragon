@@ -42,11 +42,9 @@
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
  * @param {Element} options.element - Parent element.
- * @param {Number} [options.opacity=1] - See opacity in {@link OpenSeadragon.Options} for details.
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 $.Drawer = function( options ) {
-    var _this = this;
 
     $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
@@ -72,7 +70,9 @@ $.Drawer = function( options ) {
     this.viewer = options.viewer;
     this.viewport = options.viewport;
     this.debugGridColor = options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-    this.opacity = options.opacity === undefined ? $.DEFAULT_SETTINGS.opacity : options.opacity;
+    if (options.opacity) {
+        $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
+    }
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
     /**
@@ -98,10 +98,10 @@ $.Drawer = function( options ) {
 
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
-     * to the main canvas due to opacity.
+     * to the main canvas due to opacity. Lazily initialized.
      */
-    this.sketchCanvas = this.useCanvas ? document.createElement( "canvas" ) : null;
-    this.sketchContext = this.useCanvas ? this.sketchCanvas.getContext( "2d" ) : null;
+    this.sketchCanvas = null;
+    this.sketchContext = null;
 
     /**
      * @member {Element} element
@@ -118,8 +118,8 @@ $.Drawer = function( options ) {
     // check canvas available width and height, set canvas width and height such that the canvas backing store is set to the proper pixel density
     if (this.useCanvas) {
         var viewportSize = this._calculateCanvasSize();
-        this.canvas.width = this.sketchCanvas.width = viewportSize.x;
-        this.canvas.height = this.sketchCanvas.height = viewportSize.y;
+        this.canvas.width = viewportSize.x;
+        this.canvas.height = viewportSize.y;
     }
 
     this.canvas.style.width     = "100%";
@@ -167,8 +167,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @return {OpenSeadragon.Drawer} Chainable.
      */
     setOpacity: function( opacity ) {
-        this.opacity = opacity;
-        $.setElementOpacity( this.canvas, this.opacity, true );
+        $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
+        var world = this.viewer.world;
+        for (var i = 0; i < world.getItemCount(); i++) {
+            world.getItemAt( i ).setOpacity( opacity );
+        }
         return this;
     },
 
@@ -177,7 +180,16 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @returns {Number}
      */
     getOpacity: function() {
-        return this.opacity;
+        $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
+        var world = this.viewer.world;
+        var maxOpacity = 0;
+        for (var i = 0; i < world.getItemCount(); i++) {
+            var opacity = world.getItemAt( i ).getOpacity();
+            if ( opacity > maxOpacity ) {
+                maxOpacity = opacity;
+            }
+        }
+        return maxOpacity;
     },
 
     // deprecated
@@ -221,12 +233,14 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.width  = 1;
         this.canvas.height = 1;
+        this.sketchCanvas = null;
+        this.sketchContext = null;
     },
 
     /**
      * Clears the Drawer so it's ready to draw another frame.
      */
-    clear: function() {
+    clear: function( useSketch ) {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
             var viewportSize = this._calculateCanvasSize();
@@ -234,8 +248,13 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
                 this.canvas.height != viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
+                if ( this.sketchCanvas !== null ) {
+                    this.sketchCanvas.width = this.canvas.width;
+                    this.sketchCanvas.height = this.canvas.height;
+                }
             }
-            this.context.clearRect( 0, 0, viewportSize.x, viewportSize.y );
+            this._getContext( useSketch ).clearRect(
+                0, 0, viewportSize.x, viewportSize.y );
         }
     },
 
@@ -269,7 +288,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if ( this.useCanvas ) {
-            var context = useSketch ? this.sketchContext : this.context;
+            var context = this._getContext( useSketch );
             // TODO do this in a more performant way
             // specifically, don't save,rotate,restore every time we draw a tile
             if( this.viewport.degrees !== 0 ) {
@@ -284,24 +303,36 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         }
     },
 
-    // private
-    saveContext: function(useSketch) {
-        if (!this.useCanvas) {
-            return;
+    _getContext: function( useSketch ) {
+        var context = this.context;
+        if ( useSketch ) {
+            if (this.sketchCanvas === null) {
+                this.sketchCanvas = document.createElement( "canvas" );
+                this.sketchCanvas.width = this.canvas.width;
+                this.sketchCanvas.height = this.canvas.height;
+                this.sketchContext = this.sketchCanvas.getContext( "2d" );
+            }
+            context = this.sketchContext;
         }
-
-        var context = useSketch ? this.sketchContext : this.context;
-        context.save();
+        return context;
     },
 
     // private
-    restoreContext: function(useSketch) {
+    saveContext: function( useSketch ) {
         if (!this.useCanvas) {
             return;
         }
 
-        var context = useSketch ? this.sketchContext : this.context;
-        context.restore();
+        this._getContext( useSketch ).save();
+    },
+
+    // private
+    restoreContext: function( useSketch ) {
+        if (!this.useCanvas) {
+            return;
+        }
+
+        this._getContext( useSketch ).restore();
     },
 
     // private
@@ -310,7 +341,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             return;
         }
 
-        var context = useSketch ? this.sketchContext : this.context;
+        var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();
@@ -322,7 +353,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             return;
         }
 
-        var context = useSketch ? this.sketchContext : this.context;
+        var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
         context.fillRect(rect.x, rect.y, rect.width, rect.height);
@@ -331,12 +362,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
     /**
      * Blends the sketch canvas in the main canvas.
-     * The sketch canvas is then cleared.
      * @param {Float} opacity The opacity of the blending.
      * @returns {undefined}
      */
     blendSketch: function(opacity) {
-        if (!this.useCanvas) {
+        if (!this.useCanvas || !this.sketchCanvas) {
             return;
         }
 
@@ -344,17 +374,15 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         this.context.globalAlpha = opacity;
         this.context.drawImage(this.sketchCanvas, 0, 0);
         this.context.restore();
-        this.sketchContext.clearRect(0, 0,
-            this.sketchCanvas.width, this.sketchCanvas.height);
     },
 
     // private
-    drawDebugInfo: function( tile, count, i, useSketch ){
+    drawDebugInfo: function( tile, count, i ){
         if ( !this.useCanvas ) {
             return;
         }
 
-        var context = useSketch ? this.sketchContext : this.context;
+        var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
@@ -362,7 +390,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         context.fillStyle = this.debugGridColor;
 
         if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation( tile, this.viewport.degrees, useSketch );
+            this._offsetForRotation( tile, this.viewport.degrees );
         }
 
         context.strokeRect(
@@ -424,15 +452,15 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         );
 
         if ( this.viewport.degrees !== 0 ) {
-            this._restoreRotationChanges( tile, useSketch );
+            this._restoreRotationChanges( tile );
         }
         context.restore();
     },
 
     // private
-    debugRect: function(rect, useSketch) {
+    debugRect: function(rect) {
         if ( this.useCanvas ) {
-            var context = useSketch ? this.sketchContext : this.context;
+            var context = this.context;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
             context.strokeStyle = this.debugGridColor;
@@ -456,7 +484,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             px = tile.position.x - cx,
             py = tile.position.y - cy;
 
-        var context = useSketch ? this.sketchContext : this.context;
+        var context = this._getContext( useSketch );
         context.save();
 
         context.translate(cx, cy);
@@ -475,7 +503,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
         tile.position.x = px;
         tile.position.y = py;
 
-        var context = useSketch ? this.sketchContext : this.context;
+        var context = this._getContext( useSketch );
         context.restore();
     },
 

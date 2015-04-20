@@ -64,6 +64,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -119,12 +120,6 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
-    this.opacity = 1;
-    if ( options.opacity ) {
-        this.opacity = options.opacity;
-        delete options.opacity;
-    }
-
     $.extend( true, this, {
 
         //internal state properties
@@ -148,7 +143,8 @@ $.TiledImage = function( options ) {
         minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:            $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle
+        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:              $.DEFAULT_SETTINGS.opacity
 
     }, options );
 
@@ -490,6 +486,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         this._needsDraw = true;
+    },
+
+    /**
+     * @returns {Number} The TiledImage's current opacity.
+     */
+    getOpacity: function() {
+        return this.opacity;
+    },
+
+    /**
+     * @param {Number} opacity Opacity the tiled image should be drawn at.
+     * @returns {OpenSeadragon.TiledImage} Chainable
+     */
+    setOpacity: function(opacity) {
+        this.opacity = opacity;
+        this._needsDraw = true;
+        return this;
     },
 
     // private
@@ -1161,6 +1174,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tile;
 
     if ( tiledImage.opacity <= 0 ) {
+        drawDebugInfo( tiledImage, lastDrawn );
         return;
     }
     var useSketch = tiledImage.opacity < 1;
@@ -1195,14 +1209,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
         tile.beingDrawn = true;
 
-        if( tiledImage.debugMode ) {
-            try {
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i, useSketch );
-            } catch(e) {
-                $.console.error(e);
-            }
-        }
-
         if( tiledImage.viewer ){
             /**
              * <em>- Needs documentation -</em>
@@ -1228,6 +1234,21 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( useSketch ) {
         tiledImage._drawer.blendSketch( tiledImage.opacity );
+        tiledImage._drawer.clear( true );
+    }
+    drawDebugInfo( tiledImage, lastDrawn );
+}
+
+function drawDebugInfo( tiledImage, lastDrawn ) {
+    if( tiledImage.debugMode ) {
+        for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
+            var tile = lastDrawn[ i ];
+            try {
+                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+            } catch(e) {
+                $.console.error(e);
+            }
+        }
     }
 }
 
