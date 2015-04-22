@@ -497,12 +497,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @param {Number} opacity Opacity the tiled image should be drawn at.
-     * @returns {OpenSeadragon.TiledImage} Chainable
      */
     setOpacity: function(opacity) {
         this.opacity = opacity;
         this._needsDraw = true;
-        return this;
     },
 
     // private
@@ -1178,6 +1176,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         return;
     }
     var useSketch = tiledImage.opacity < 1;
+    if ( useSketch ) {
+        tiledImage._drawer._clear( true );
+    }
 
     var usedClip = false;
     if ( tiledImage._clip ) {
@@ -1234,7 +1235,6 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( useSketch ) {
         tiledImage._drawer.blendSketch( tiledImage.opacity );
-        tiledImage._drawer.clear( true );
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

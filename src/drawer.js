@@ -240,7 +240,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     /**
      * Clears the Drawer so it's ready to draw another frame.
      */
-    clear: function( useSketch ) {
+    clear: function() {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
             var viewportSize = this._calculateCanvasSize();
@@ -253,9 +253,17 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
                     this.sketchCanvas.height = this.canvas.height;
                 }
             }
-            this._getContext( useSketch ).clearRect(
-                0, 0, viewportSize.x, viewportSize.y );
+            this._clear();
         }
+    },
+
+    _clear: function ( useSketch ) {
+        if ( !this.useCanvas ) {
+            return;
+        }
+        var context = this._getContext( useSketch );
+        var canvas = context.canvas;
+        context.clearRect( 0, 0, canvas.width, canvas.height );
     },
 
     /**
