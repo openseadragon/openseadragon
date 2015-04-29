@@ -64,6 +64,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -142,7 +143,8 @@ $.TiledImage = function( options ) {
         minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
         debugMode:            $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle
+        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:              $.DEFAULT_SETTINGS.opacity
 
     }, options );
 
@@ -483,6 +485,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._clip = null;
         }
 
+        this._needsDraw = true;
+    },
+
+    /**
+     * @returns {Number} The TiledImage's current opacity.
+     */
+    getOpacity: function() {
+        return this.opacity;
+    },
+
+    /**
+     * @param {Number} opacity Opacity the tiled image should be drawn at.
+     */
+    setOpacity: function(opacity) {
+        this.opacity = opacity;
         this._needsDraw = true;
     },
 
@@ -1152,20 +1169,24 @@ function compareTiles( previousBest, tile ) {
 
 function drawTiles( tiledImage, lastDrawn ) {
     var i,
-        tile,
-        tileKey,
-        viewer,
-        viewport,
-        position,
-        tileSource;
+        tile;
+
+    if ( tiledImage.opacity <= 0 ) {
+        drawDebugInfo( tiledImage, lastDrawn );
+        return;
+    }
+    var useSketch = tiledImage.opacity < 1;
+    if ( useSketch ) {
+        tiledImage._drawer._clear( true );
+    }
 
     var usedClip = false;
     if ( tiledImage._clip ) {
-        tiledImage._drawer.saveContext();
+        tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
-        tiledImage._drawer.setClip(clipRect);
+        tiledImage._drawer.setClip(clipRect, useSketch);
 
         usedClip = true;
     }
@@ -1181,21 +1202,13 @@ function drawTiles( tiledImage, lastDrawn ) {
             fillStyle = tiledImage.placeholderFillStyle;
         }
 
-        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle);
+        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
         tile.beingDrawn = true;
-
-        if( tiledImage.debugMode ) {
-            try {
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
-            } catch(e) {
-                $.console.error(e);
-            }
-        }
 
         if( tiledImage.viewer ){
             /**
@@ -1217,7 +1230,25 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( usedClip ) {
-        tiledImage._drawer.restoreContext();
+        tiledImage._drawer.restoreContext( useSketch );
+    }
+
+    if ( useSketch ) {
+        tiledImage._drawer.blendSketch( tiledImage.opacity );
+    }
+    drawDebugInfo( tiledImage, lastDrawn );
+}
+
+function drawDebugInfo( tiledImage, lastDrawn ) {
+    if( tiledImage.debugMode ) {
+        for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
+            var tile = lastDrawn[ i ];
+            try {
+                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+            } catch(e) {
+                $.console.error(e);
+            }
+        }
     }
 }
 

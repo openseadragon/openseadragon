@@ -220,4 +220,41 @@
         });
     });
 
+    // ----------
+    asyncTest('opacity', function() {
+
+        function testDefaultOpacity() {
+            viewer.removeHandler('open', testDefaultOpacity);
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getOpacity(), 0.5, 'image has default opacity');
+
+            image.setOpacity(1);
+            strictEqual(image.getOpacity(), 1, 'opacity is set correctly');
+
+            viewer.addHandler('open', testTileSourceOpacity);
+            viewer.open({
+                tileSource: '/test/data/testpattern.dzi',
+                opacity: 0.25
+            });
+        }
+
+        function testTileSourceOpacity() {
+            viewer.removeHandler('open', testTileSourceOpacity);
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getOpacity(), 0.25, 'image has correct opacity');
+
+            image.setOpacity(0);
+            strictEqual(image.getOpacity(), 0, 'opacity is set correctly');
+
+            start();
+        }
+
+        viewer.addHandler('open', testDefaultOpacity);
+
+        viewer.opacity = 0.5;
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi',
+        });
+    });
+
 })();

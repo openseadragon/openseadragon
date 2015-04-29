@@ -33,9 +33,6 @@
         createViewer();
         ok(viewer.drawer, 'Drawer exists');
         equal(viewer.drawer.canRotate(), OpenSeadragon.supportsCanvas, 'we can rotate if we have canvas');
-        equal(viewer.drawer.getOpacity(), 1, 'starts with full opacity');
-        viewer.drawer.setOpacity(0.4);
-        equal(viewer.drawer.getOpacity(), 0.4, 'setting opacity works');
         start();
     });
 
@@ -68,17 +65,63 @@
     });
 
     // ----------
+    asyncTest('sketchCanvas', function() {
+        createViewer({
+            tileSources: '/test/data/testpattern.dzi'
+        });
+        var drawer = viewer.drawer;
+
+        viewer.addHandler('tile-drawn', function noOpacityHandler() {
+            viewer.removeHandler('tile-drawn', noOpacityHandler);
+            equal(drawer.sketchCanvas, null,
+                'The sketch canvas should be null if no decimal opacity is used.');
+            equal(drawer.sketchContext, null,
+                'The sketch context should be null if no decimal opacity is used.');
+            testOpacityDecimal();
+        });
+
+        function testOpacityDecimal() {
+            var tiledImage;
+            viewer.addTiledImage({
+                tileSource: '/test/data/testpattern.dzi',
+                opacity: 0.5,
+                success: function(event) {
+                    tiledImage = event.item;
+                }
+            });
+
+            viewer.addHandler('tile-drawn', function opacityDecimalHandler(event) {
+                if (tiledImage !== event.tiledImage) {
+                    return;
+                }
+                viewer.removeHandler('tile-drawn', opacityDecimalHandler);
+                notEqual(drawer.sketchCanvas, null,
+                    'The sketch canvas should not be null once a decimal opacity has been used.');
+                notEqual(drawer.sketchContext, null,
+                    'The sketch context should not be null once a decimal opacity has been used.');
+                start();
+            });
+        }
+    });
+
+    // ----------
     asyncTest('deprecations', function() {
-        createViewer();
-        Util.testDeprecation(viewer.drawer, 'addOverlay', viewer, 'addOverlay');
-        Util.testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
-        Util.testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
-        Util.testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
-        Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
-        Util.testDeprecation(viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
-        Util.testDeprecation(viewer.drawer, 'reset', viewer.world, 'resetItems');
-        Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'draw');
-        start();
+        createViewer({
+            tileSources: '/test/data/testpattern.dzi'
+        });
+        viewer.world.addHandler('add-item', function() {
+            Util.testDeprecation(viewer.drawer, 'addOverlay', viewer, 'addOverlay');
+            Util.testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
+            Util.testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
+            Util.testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
+            Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
+            Util.testDeprecation(viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
+            Util.testDeprecation(viewer.drawer, 'reset', viewer.world, 'resetItems');
+            Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'draw');
+            Util.testDeprecation(viewer.drawer, 'setOpacity', viewer.world.getItemAt(0), 'setOpacity');
+            Util.testDeprecation(viewer.drawer, 'getOpacity', viewer.world.getItemAt(0), 'getOpacity');
+            start();
+        });
     });
 
 })();
