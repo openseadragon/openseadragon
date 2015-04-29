@@ -38,6 +38,7 @@ OPENSEADRAGON CHANGELOG
     * For multi-image open, drawing isn't started until all tileSources have been opened
     * You can specify a clip area for each image (only works on browsers that support the HTML5 canvas) (#594)
     * Added placeholderFillStyle so image rectangles can be drawn even before their tiles load (#635)
+    * Ability to set opacity on individual TiledImages (#644)
 * Margins option to push the home region in from the edges of the Viewer (#505)
 * Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
