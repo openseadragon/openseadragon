@@ -50,9 +50,9 @@
             return point.x.toPrecision(4) + "," + point.y.toPrecision(4);
         }
 
-        var onMouseTrackerMove = function(eventSender, eventData) {
-            var viewerX = eventData.position.x;
-            var viewerY = eventData.position.y;
+        var onMouseTrackerMove = function(event) {
+            var viewerX = event.position.x;
+            var viewerY = event.position.y;
             var windowPoint = new OpenSeadragon.Point(viewerX, viewerY);
             $("#windowPosition").text( pointToString(windowPoint));
 
