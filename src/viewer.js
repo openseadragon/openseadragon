@@ -1072,6 +1072,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         };
         /**
          * Raised when the viewer is about to change to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
+         * Note: the pre-full-screen event is not raised when the user is exiting
+         * full-screen mode by pressing the Esc key. In that case, consider using
+         * the full-screen, pre-full-page or full-page events.
          *
          * @event pre-full-screen
          * @memberof OpenSeadragon.Viewer
