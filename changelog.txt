@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.0.1: (in progress)
+
 2.0.0:
 
 * True multi-image mode (#450)
