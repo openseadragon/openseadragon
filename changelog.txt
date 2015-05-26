@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.3.0: (in progress)
+2.0.0:
 
 * True multi-image mode (#450)
     * BREAKING CHANGE: Passing an array for the tileSources option is no longer enough to trigger sequence mode; you have to set the sequenceMode option to true as well
