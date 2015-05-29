@@ -715,8 +715,6 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if ( best ) {
         loadTile( tiledImage, best, currentTime );
-        // because we haven't finished drawing, so
-        tiledImage._needsDraw = true;
     }
 
 }
@@ -863,12 +861,8 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
         if (imageRecord) {
             tile.loaded = true;
-            tile.image = imageRecord.getImage();
-
-            tiledImage._tileCache.cacheTile({
-                tile: tile,
-                tiledImage: tiledImage
-            });
+            var image = imageRecord.getImage();
+            setTileLoaded(tiledImage, tile, image);
         }
     }
 
@@ -965,17 +959,9 @@ function onTileLoad( tiledImage, tile, time, image ) {
     }
 
     var finish = function() {
-        tile.loading = false;
-        tile.loaded = true;
-
         var cutoff = Math.ceil( Math.log(
             tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
-        tiledImage._tileCache.cacheTile({
-            image: image,
-            tile: tile,
-            cutoff: cutoff,
-            tiledImage: tiledImage
-        });
+        setTileLoaded(tiledImage, tile, image, cutoff);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -990,6 +976,21 @@ function onTileLoad( tiledImage, tile, time, image ) {
     tiledImage._needsDraw = true;
 }
 
+function setTileLoaded(tiledImage, tile, image, cutoff) {
+    tiledImage.viewer.raiseEvent("tile-loaded", {
+        tile: tile,
+        tiledImage: tiledImage,
+        image: image
+    });
+    tile.loading = false;
+    tile.loaded = true;
+    tiledImage._tileCache.cacheTile({
+        image: image,
+        tile: tile,
+        cutoff: cutoff,
+        tiledImage: tiledImage
+    });
+}
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
