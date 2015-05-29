@@ -967,10 +967,11 @@ function onTileLoad( tiledImage, tile, time, image ) {
     var finish = function() {
         tile.loading = false;
         tile.loaded = true;
-        tile.image  = image;
 
-        var cutoff = Math.ceil( Math.log( tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
+        var cutoff = Math.ceil( Math.log(
+            tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
         tiledImage._tileCache.cacheTile({
+            image: image,
             tile: tile,
             cutoff: cutoff,
             tiledImage: tiledImage

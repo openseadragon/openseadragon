@@ -63,11 +63,17 @@ ImageRecord.prototype = {
     },
 
     getRenderedContext: function() {
+        if (!this._renderedContext) {
+            var canvas = document.createElement( 'canvas' );
+            canvas.width = this._image.width;
+            canvas.height = this._image.height;
+            this._renderedContext = canvas.getContext('2d');
+            this._renderedContext.drawImage( this._image, 0, 0 );
+            //since we are caching the prerendered image on a canvas
+            //allow the image to not be held in memory
+            this._image = null;
+        }
         return this._renderedContext;
-    },
-
-    setRenderedContext: function(renderedContext) {
-        this._renderedContext = renderedContext;
     },
 
     addTile: function(tile) {
@@ -135,7 +141,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         $.console.assert( options, "[TileCache.cacheTile] options is required" );
         $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
         $.console.assert( options.tile.url, "[TileCache.cacheTile] options.tile.url is required" );
-        $.console.assert( options.tile.image, "[TileCache.cacheTile] options.tile.image is required" );
+        $.console.assert( options.image, "[TileCache.cacheTile] options.image is required" );
         $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
         var cutoff = options.cutoff || 0;
@@ -144,7 +150,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         var imageRecord = this._imagesLoaded[options.tile.url];
         if (!imageRecord) {
             imageRecord = this._imagesLoaded[options.tile.url] = new ImageRecord({
-                image: options.tile.image
+                image: options.image
             });
 
             this._imagesLoadedCount++;
