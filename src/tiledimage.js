@@ -976,19 +976,51 @@ function onTileLoad( tiledImage, tile, time, image ) {
 }
 
 function setTileLoaded(tiledImage, tile, image, cutoff) {
+    var increment = 0;
+
+    function getCompletionCallback() {
+        increment++;
+        return completionCallback;
+    }
+
+    function completionCallback() {
+        increment--;
+        if (increment === 0) {
+            tile.loading = false;
+            tile.loaded = true;
+            tiledImage._tileCache.cacheTile({
+                image: image,
+                tile: tile,
+                cutoff: cutoff,
+                tiledImage: tiledImage
+            });
+        }
+    }
+
+    /**
+     * Triggered when a tile has just been loaded in memory. That means that the
+     * image has been downloaded and can be modified asynchronously before being
+     * drawn to the canvas.
+     *
+     * @event tile-loaded
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {Image} image - The image of the tile.
+     * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
+     * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {function} getCompletionCallback - A function giving a callback to call
+     * when the asynchronous processing of the image is done. The image will be
+     * marked as entirely loaded once the callback has been called as many times as
+     * getCompletionCallback
+     */
     tiledImage.viewer.raiseEvent("tile-loaded", {
         tile: tile,
         tiledImage: tiledImage,
-        image: image
-    });
-    tile.loading = false;
-    tile.loaded = true;
-    tiledImage._tileCache.cacheTile({
         image: image,
-        tile: tile,
-        cutoff: cutoff,
-        tiledImage: tiledImage
+        getCompletionCallback: getCompletionCallback
     });
+    // In case the completion callback is never called, we at least force it once.
+    getCompletionCallback()();
 }
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
