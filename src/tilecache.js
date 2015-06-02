@@ -76,6 +76,13 @@ ImageRecord.prototype = {
         return this._renderedContext;
     },
 
+    setRenderedContext: function(renderedContext) {
+        $.console.error("ImageRecord.setRenderedContext is deprecated. " +
+                "The rendered context should be created by the ImageRecord " +
+                "itself when calling ImageRecord.getRenderedContext.");
+        this._renderedContext = renderedContext;
+    },
+
     addTile: function(tile) {
         $.console.assert(tile, '[ImageRecord.addTile] tile is required');
         this._tiles.push(tile);
@@ -132,6 +139,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
      * may temporarily surpass that number, but should eventually come back down to the max specified.
      * @param {Object} options - Tile info.
      * @param {OpenSeadragon.Tile} options.tile - The tile to cache.
+     * @param {Image} options.image - The image of the tile to cache.
      * @param {OpenSeadragon.TiledImage} options.tiledImage - The TiledImage that owns that tile.
      * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this
      * function will release an old tile. The cutoff option specifies a tile level at or below which
