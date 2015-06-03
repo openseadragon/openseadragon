@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.0.1: (in progress)
     * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
     * DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext.
+* Fix flickering tiles with useCanvas=false when no cache is used. (#661)
 
 2.0.0:
 

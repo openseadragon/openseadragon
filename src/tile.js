@@ -210,8 +210,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         if ( !this.element ) {
             this.element                              = $.makeNeutralElement( "div" );
-            this.imgElement                           = $.makeNeutralElement( "img" );
-            this.imgElement.src                       = this.url;
+            this.imgElement                           = this.cacheImageRecord.getImage().cloneNode();
             this.imgElement.style.msInterpolationMode = "nearest-neighbor";
             this.imgElement.style.width               = "100%";
             this.imgElement.style.height              = "100%";
