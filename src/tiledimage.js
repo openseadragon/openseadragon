@@ -971,8 +971,6 @@ function onTileLoad( tiledImage, tile, time, image ) {
         // Wait until after the update, in case caching unloads any tiles
         window.setTimeout( finish, 1);
     }
-
-    tiledImage._needsDraw = true;
 }
 
 function setTileLoaded(tiledImage, tile, image, cutoff) {
@@ -994,13 +992,13 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
                 cutoff: cutoff,
                 tiledImage: tiledImage
             });
+            tiledImage._needsDraw = true;
         }
     }
 
     /**
      * Triggered when a tile has just been loaded in memory. That means that the
-     * image has been downloaded and can be modified asynchronously before being
-     * drawn to the canvas.
+     * image has been downloaded and can be modified before being drawn to the canvas.
      *
      * @event tile-loaded
      * @memberof OpenSeadragon.Viewer
@@ -1010,8 +1008,8 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
-     * marked as entirely loaded once the callback has been called as many times as
-     * getCompletionCallback
+     * marked as .entirely loaded when the callback has been called once for each
+     * call to getCompletionCallback.
      */
     tiledImage.viewer.raiseEvent("tile-loaded", {
         tile: tile,
