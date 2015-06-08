@@ -94,7 +94,7 @@ $.IIIFTileSource = function( options ){
             // If we're smaller than 256, just use the short side.
             options.tileSize = shortDim;
         }
-        this.tile_width = options.tileSize;  // So that 'full' gets used for 
+        this.tile_width = options.tileSize;  // So that 'full' gets used for
         this.tile_height = options.tileSize; // the region below
     }
 
