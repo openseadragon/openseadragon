@@ -172,6 +172,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         if ( this._imagesLoadedCount > this._maxImageCacheCount ) {
             var worstTile       = null;
             var worstTileIndex  = -1;
+            var worstTileRecord = null;
             var prevTile, worstTime, worstLevel, prevTime, prevLevel, prevTileRecord;
 
             for ( var i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
@@ -183,6 +184,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
                 } else if ( !worstTile ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
+                    worstTileRecord = prevTileRecord;
                     continue;
                 }
 
@@ -195,11 +197,12 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
                    ( prevTime == worstTime && prevLevel > worstLevel ) ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
+                    worstTileRecord = prevTileRecord;
                 }
             }
 
             if ( worstTile && worstTileIndex >= 0 ) {
-                this._unloadTile(worstTile);
+                this._unloadTile(worstTileRecord);
                 insertionIndex = worstTileIndex;
             }
         }
@@ -234,8 +237,11 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
     },
 
     // private
-    _unloadTile: function(tile) {
-        $.console.assert(tile, '[TileCache._unloadTile] tile is required');
+    _unloadTile: function(tileRecord) {
+        $.console.assert(tileRecord, '[TileCache._unloadTile] tileRecord is required');
+        var tile = tileRecord.tile;
+        var tiledImage = tileRecord.tiledImage;
+
         tile.unload();
         tile.cacheImageRecord = null;
 
@@ -246,6 +252,20 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
             delete this._imagesLoaded[tile.url];
             this._imagesLoadedCount--;
         }
+
+        /**
+         * Triggered when a tile has just been unloaded from memory.
+         *
+         * @event tile-unloaded
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the unloaded tile.
+         * @property {OpenSeadragon.Tile} tile - The tile which has been unloaded.
+         */
+        tiledImage.viewer.raiseEvent("tile-unloaded", {
+            tile: tile,
+            tiledImage: tiledImage
+        });
     }
 };
 
