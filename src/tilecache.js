@@ -223,7 +223,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         for ( var i = 0; i < this._tilesLoaded.length; ++i ) {
             tileRecord = this._tilesLoaded[ i ];
             if ( tileRecord.tiledImage === tiledImage ) {
-                this._unloadTile(tileRecord.tile);
+                this._unloadTile(tileRecord);
                 this._tilesLoaded.splice( i, 1 );
                 i--;
             }

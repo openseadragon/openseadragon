@@ -1040,4 +1040,31 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
+    asyncTest( 'Viewer: tile-unloaded event.', function() {
+        var tiledImage;
+        var tile;
+
+        function tileLoaded( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
+            tiledImage = event.tiledImage;
+            tile = event.tile;
+            setTimeout(function() {
+                tiledImage.reset();
+            }, 0);
+        }
+
+        function tileUnloaded( event ) {
+            viewer.removeHandler( 'tile-unloaded', tileUnloaded );
+            equal( tile, event.tile,
+                "The unloaded tile should be the same than the loaded one." );
+            equal( tiledImage, event.tiledImage,
+                "The tiledImage of the unloaded tile should be the same than the one of the loaded one." );
+            start();
+        }
+
+        viewer.addHandler( 'tile-loaded', tileLoaded );
+        viewer.addHandler( 'tile-unloaded', tileUnloaded );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
 } )();
