@@ -1008,7 +1008,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
-     * marked as .entirely loaded when the callback has been called once for each
+     * marked as entirely loaded when the callback has been called once for each
      * call to getCompletionCallback.
      */
     tiledImage.viewer.raiseEvent("tile-loaded", {

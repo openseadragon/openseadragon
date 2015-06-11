@@ -978,7 +978,7 @@
             notOk( tile.loaded, "The tile should not be marked as loaded.");
             setTimeout(function() {
                 notOk( tile.loading, "The tile should not be marked as loading.");
-                ok( tile.loaded, "The tile should not be marked as loaded.");
+                ok( tile.loaded, "The tile should be marked as loaded.");
                 start();
             }, 0);
         }
@@ -1001,7 +1001,7 @@
                 notOk( tile.loaded, "The tile should not be marked as loaded.");
                 callback();
                 notOk( tile.loading, "The tile should not be marked as loading.");
-                ok( tile.loaded, "The tile should not be marked as loaded.");
+                ok( tile.loaded, "The tile should be marked as loaded.");
                 start();
             }, 0);
         }
@@ -1030,7 +1030,7 @@
                     notOk( tile.loaded, "The tile should not be marked as loaded.");
                     callback2();
                     notOk( tile.loading, "The tile should not be marked as loading.");
-                    ok( tile.loaded, "The tile should not be marked as loaded.");
+                    ok( tile.loaded, "The tile should be marked as loaded.");
                     start();
                 }, 0);
             }, 0);
