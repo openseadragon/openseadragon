@@ -107,7 +107,7 @@
                 var actualImageZoom = viewport.viewportToImageZoom(
                     expectedViewportZoom);
                 equal(actualImageZoom, expectedImageZoom);
-                
+
                 var actualViewportZoom = viewport.imageToViewportZoom(actualImageZoom);
                 equal(actualViewportZoom, expectedViewportZoom);
             }
