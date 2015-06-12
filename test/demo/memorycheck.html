@@ -23,19 +23,19 @@
     <script type="text/javascript">
 
         var _viewer;
-        
+
         var generateUniqueHash = (function() {
             var counter = 0;
             return function() {
                 return "openseadragon_" + (counter++);
             };
         })();
-        
+
         function createViewer() {
             if ( _viewer ) {
                 destroyViewer();
             }
-            
+
             _viewer = OpenSeadragon({
                 element: document.getElementById("contentDiv"),
                 showNavigationControl: false,
@@ -44,7 +44,7 @@
                 tileSources: "../data/testpattern.dzi"
             });
         }
-        
+
         function destroyViewer() {
             if ( _viewer ) {
                 _viewer.destroy();

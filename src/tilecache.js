@@ -63,10 +63,23 @@ ImageRecord.prototype = {
     },
 
     getRenderedContext: function() {
+        if (!this._renderedContext) {
+            var canvas = document.createElement( 'canvas' );
+            canvas.width = this._image.width;
+            canvas.height = this._image.height;
+            this._renderedContext = canvas.getContext('2d');
+            this._renderedContext.drawImage( this._image, 0, 0 );
+            //since we are caching the prerendered image on a canvas
+            //allow the image to not be held in memory
+            this._image = null;
+        }
         return this._renderedContext;
     },
 
     setRenderedContext: function(renderedContext) {
+        $.console.error("ImageRecord.setRenderedContext is deprecated. " +
+                "The rendered context should be created by the ImageRecord " +
+                "itself when calling ImageRecord.getRenderedContext.");
         this._renderedContext = renderedContext;
     },
 
@@ -126,6 +139,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
      * may temporarily surpass that number, but should eventually come back down to the max specified.
      * @param {Object} options - Tile info.
      * @param {OpenSeadragon.Tile} options.tile - The tile to cache.
+     * @param {Image} options.image - The image of the tile to cache.
      * @param {OpenSeadragon.TiledImage} options.tiledImage - The TiledImage that owns that tile.
      * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this
      * function will release an old tile. The cutoff option specifies a tile level at or below which
@@ -135,7 +149,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         $.console.assert( options, "[TileCache.cacheTile] options is required" );
         $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
         $.console.assert( options.tile.url, "[TileCache.cacheTile] options.tile.url is required" );
-        $.console.assert( options.tile.image, "[TileCache.cacheTile] options.tile.image is required" );
+        $.console.assert( options.image, "[TileCache.cacheTile] options.image is required" );
         $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
         var cutoff = options.cutoff || 0;
@@ -144,7 +158,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         var imageRecord = this._imagesLoaded[options.tile.url];
         if (!imageRecord) {
             imageRecord = this._imagesLoaded[options.tile.url] = new ImageRecord({
-                image: options.tile.image
+                image: options.image
             });
 
             this._imagesLoadedCount++;
@@ -158,6 +172,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         if ( this._imagesLoadedCount > this._maxImageCacheCount ) {
             var worstTile       = null;
             var worstTileIndex  = -1;
+            var worstTileRecord = null;
             var prevTile, worstTime, worstLevel, prevTime, prevLevel, prevTileRecord;
 
             for ( var i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
@@ -169,6 +184,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
                 } else if ( !worstTile ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
+                    worstTileRecord = prevTileRecord;
                     continue;
                 }
 
@@ -181,11 +197,12 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
                    ( prevTime == worstTime && prevLevel > worstLevel ) ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
+                    worstTileRecord = prevTileRecord;
                 }
             }
 
             if ( worstTile && worstTileIndex >= 0 ) {
-                this._unloadTile(worstTile);
+                this._unloadTile(worstTileRecord);
                 insertionIndex = worstTileIndex;
             }
         }
@@ -206,7 +223,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         for ( var i = 0; i < this._tilesLoaded.length; ++i ) {
             tileRecord = this._tilesLoaded[ i ];
             if ( tileRecord.tiledImage === tiledImage ) {
-                this._unloadTile(tileRecord.tile);
+                this._unloadTile(tileRecord);
                 this._tilesLoaded.splice( i, 1 );
                 i--;
             }
@@ -220,8 +237,11 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
     },
 
     // private
-    _unloadTile: function(tile) {
-        $.console.assert(tile, '[TileCache._unloadTile] tile is required');
+    _unloadTile: function(tileRecord) {
+        $.console.assert(tileRecord, '[TileCache._unloadTile] tileRecord is required');
+        var tile = tileRecord.tile;
+        var tiledImage = tileRecord.tiledImage;
+
         tile.unload();
         tile.cacheImageRecord = null;
 
@@ -232,6 +252,20 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
             delete this._imagesLoaded[tile.url];
             this._imagesLoadedCount--;
         }
+
+        /**
+         * Triggered when a tile has just been unloaded from memory.
+         *
+         * @event tile-unloaded
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the unloaded tile.
+         * @property {OpenSeadragon.Tile} tile - The tile which has been unloaded.
+         */
+        tiledImage.viewer.raiseEvent("tile-unloaded", {
+            tile: tile,
+            tiledImage: tiledImage
+        });
     }
 };
 

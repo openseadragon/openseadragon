@@ -108,6 +108,6 @@
     // ----------
     asyncTest('IIIF 2.0 JSON', function() {
         testOpen('iiif_2_0_tiled/info.json');
-    });    
+    });
 
 })();

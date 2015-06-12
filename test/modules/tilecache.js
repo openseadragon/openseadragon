@@ -13,8 +13,15 @@
 
     // ----------
     asyncTest('basics', function() {
-        var fakeTiledImage0 = {};
-        var fakeTiledImage1 = {};
+        var fakeViewer = {
+            raiseEvent: function() {}
+        };
+        var fakeTiledImage0 = {
+            viewer: fakeViewer
+        };
+        var fakeTiledImage1 = {
+            viewer: fakeViewer
+        };
 
         var fakeTile0 = {
             url: 'foo.jpg',
@@ -58,7 +65,12 @@
 
     // ----------
     asyncTest('maxImageCacheCount', function() {
-        var fakeTiledImage0 = {};
+        var fakeViewer = {
+            raiseEvent: function() {}
+        };
+        var fakeTiledImage0 = {
+            viewer: fakeViewer
+        };
 
         var fakeTile0 = {
             url: 'different.jpg',

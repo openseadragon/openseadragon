@@ -715,8 +715,6 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if ( best ) {
         loadTile( tiledImage, best, currentTime );
-        // because we haven't finished drawing, so
-        tiledImage._needsDraw = true;
     }
 
 }
@@ -862,13 +860,8 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     if (!tile.loaded) {
         var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
         if (imageRecord) {
-            tile.loaded = true;
-            tile.image = imageRecord.getImage();
-
-            tiledImage._tileCache.cacheTile({
-                tile: tile,
-                tiledImage: tiledImage
-            });
+            var image = imageRecord.getImage();
+            setTileLoaded(tiledImage, tile, image);
         }
     }
 
@@ -965,16 +958,9 @@ function onTileLoad( tiledImage, tile, time, image ) {
     }
 
     var finish = function() {
-        tile.loading = false;
-        tile.loaded = true;
-        tile.image  = image;
-
-        var cutoff = Math.ceil( Math.log( tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
-        tiledImage._tileCache.cacheTile({
-            tile: tile,
-            cutoff: cutoff,
-            tiledImage: tiledImage
-        });
+        var cutoff = Math.ceil( Math.log(
+            tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
+        setTileLoaded(tiledImage, tile, image, cutoff);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -985,10 +971,55 @@ function onTileLoad( tiledImage, tile, time, image ) {
         // Wait until after the update, in case caching unloads any tiles
         window.setTimeout( finish, 1);
     }
-
-    tiledImage._needsDraw = true;
 }
 
+function setTileLoaded(tiledImage, tile, image, cutoff) {
+    var increment = 0;
+
+    function getCompletionCallback() {
+        increment++;
+        return completionCallback;
+    }
+
+    function completionCallback() {
+        increment--;
+        if (increment === 0) {
+            tile.loading = false;
+            tile.loaded = true;
+            tiledImage._tileCache.cacheTile({
+                image: image,
+                tile: tile,
+                cutoff: cutoff,
+                tiledImage: tiledImage
+            });
+            tiledImage._needsDraw = true;
+        }
+    }
+
+    /**
+     * Triggered when a tile has just been loaded in memory. That means that the
+     * image has been downloaded and can be modified before being drawn to the canvas.
+     *
+     * @event tile-loaded
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {Image} image - The image of the tile.
+     * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
+     * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {function} getCompletionCallback - A function giving a callback to call
+     * when the asynchronous processing of the image is done. The image will be
+     * marked as entirely loaded when the callback has been called once for each
+     * call to getCompletionCallback.
+     */
+    tiledImage.viewer.raiseEvent("tile-loaded", {
+        tile: tile,
+        tiledImage: tiledImage,
+        image: image,
+        getCompletionCallback: getCompletionCallback
+    });
+    // In case the completion callback is never called, we at least force it once.
+    getCompletionCallback()();
+}
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
