@@ -149,7 +149,6 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
         $.console.assert( options, "[TileCache.cacheTile] options is required" );
         $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
         $.console.assert( options.tile.url, "[TileCache.cacheTile] options.tile.url is required" );
-        $.console.assert( options.image, "[TileCache.cacheTile] options.image is required" );
         $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
         var cutoff = options.cutoff || 0;
@@ -157,6 +156,7 @@ $.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
 
         var imageRecord = this._imagesLoaded[options.tile.url];
         if (!imageRecord) {
+            $.console.assert( options.image, "[TileCache.cacheTile] options.image is required to create an ImageRecord" );
             imageRecord = this._imagesLoaded[options.tile.url] = new ImageRecord({
                 image: options.image
             });
