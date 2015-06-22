@@ -2824,8 +2824,9 @@ function updateOnce( viewer ) {
         return;
     }
 
+    var containerSize;
     if ( viewer.autoResize ) {
-        var containerSize = _getSafeElemSize( viewer.container );
+        containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             // maintain image position
             var oldBounds = viewer.viewport.getBounds();
@@ -2836,7 +2837,7 @@ function updateOnce( viewer ) {
         }
     }
     else {
-        var containerSize = _getSafeElemSize( viewer.container );
+        containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
             var bounds = viewer.viewport.getBounds(true);
