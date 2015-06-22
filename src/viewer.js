@@ -2835,6 +2835,28 @@ function updateOnce( viewer ) {
             THIS[ viewer.hash ].forceRedraw = true;
         }
     }
+    else {
+        var containerSize = _getSafeElemSize( viewer.container );
+        if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
+            var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
+            var bounds = viewer.viewport.getBounds(true);
+            var deltaX = (containerSize.x - prevContainerSize.x);
+            var deltaY = (containerSize.y - prevContainerSize.y);
+            var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
+            viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
+
+            // Keep the center of the image in the center and just adjust the amount of image shown
+            bounds.width += viewportDiff.x;
+            bounds.height += viewportDiff.y;
+            bounds.x -= (viewportDiff.x / 2);
+            bounds.y -= (viewportDiff.y / 2);
+            viewer.viewport.fitBounds(bounds, true);
+            viewer.forceRedraw();
+
+            THIS[ viewer.hash ].prevContainerSize = containerSize;
+            THIS[ viewer.hash ].forceRedraw = true;
+        }
+    }
 
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;
