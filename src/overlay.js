@@ -283,9 +283,9 @@
                 style.top      = position.y + "px";
                 style.position = "absolute";
 
-		if (style.display != 'none') {
+                if (style.display != 'none') {
                     style.display  = 'block';
-		}
+                }
 
                 if ( scales ) {
                     style.width  = size.x + "px";
