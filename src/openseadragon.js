@@ -252,6 +252,9 @@
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
+  * @property {Boolean} [preserveImageSizeOnResize=false]
+  *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=false.
+  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -987,6 +990,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             pixelsPerWheelLine:     40,
             autoResize:             true,
+            preserveImageSizeOnResize: false, // requires autoResize=false
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE

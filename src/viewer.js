@@ -408,6 +408,7 @@ $.Viewer = function( options ) {
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
             autoResize:        this.navigatorAutoResize,
+            preserveImageSizeOnResize: this.preserveImageSizeOnResize,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,
@@ -2836,7 +2837,7 @@ function updateOnce( viewer ) {
             THIS[ viewer.hash ].forceRedraw = true;
         }
     }
-    else {
+    else if ( viewer.preserveImageSizeOnResize ) {
         containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
@@ -2851,7 +2852,7 @@ function updateOnce( viewer ) {
             bounds.height += viewportDiff.y;
             bounds.x -= (viewportDiff.x / 2);
             bounds.y -= (viewportDiff.y / 2);
-            viewer.viewport.fitBounds(bounds, true);
+            viewer.viewport.fitBoundsWithConstraints(bounds, true);
             viewer.forceRedraw();
 
             THIS[ viewer.hash ].prevContainerSize = containerSize;
