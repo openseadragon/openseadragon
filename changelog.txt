@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
 * Fixed flickering tiles with useCanvas=false when no cache is used (#661)
 * Added additional coordinates conversion methods to TiledImage (#662)
+* 'display: none' no longer gets reset on overlays during draw (#668)
 
 2.0.0:
 
