@@ -408,7 +408,6 @@ $.Viewer = function( options ) {
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
             autoResize:        this.navigatorAutoResize,
-            preserveImageSizeOnResize: this.preserveImageSizeOnResize,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,
@@ -2829,32 +2828,27 @@ function updateOnce( viewer ) {
     if ( viewer.autoResize ) {
         containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-            // maintain image position
-            var oldBounds = viewer.viewport.getBounds();
-            var oldCenter = viewer.viewport.getCenter();
-            resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
-            THIS[ viewer.hash ].prevContainerSize = containerSize;
-            THIS[ viewer.hash ].forceRedraw = true;
-        }
-    }
-    else if ( viewer.preserveImageSizeOnResize ) {
-        containerSize = _getSafeElemSize( viewer.container );
-        if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-            var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
-            var bounds = viewer.viewport.getBounds(true);
-            var deltaX = (containerSize.x - prevContainerSize.x);
-            var deltaY = (containerSize.y - prevContainerSize.y);
-            var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
-            viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
+            if ( viewer.preserveImageSizeOnResize ) {
+                var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
+                var bounds = viewer.viewport.getBounds(true);
+                var deltaX = (containerSize.x - prevContainerSize.x);
+                var deltaY = (containerSize.y - prevContainerSize.y);
+                var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
+                viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
 
-            // Keep the center of the image in the center and just adjust the amount of image shown
-            bounds.width += viewportDiff.x;
-            bounds.height += viewportDiff.y;
-            bounds.x -= (viewportDiff.x / 2);
-            bounds.y -= (viewportDiff.y / 2);
-            viewer.viewport.fitBoundsWithConstraints(bounds, true);
-            viewer.forceRedraw();
-
+                // Keep the center of the image in the center and just adjust the amount of image shown
+                bounds.width += viewportDiff.x;
+                bounds.height += viewportDiff.y;
+                bounds.x -= (viewportDiff.x / 2);
+                bounds.y -= (viewportDiff.y / 2);
+                viewer.viewport.fitBoundsWithConstraints(bounds, true);
+            }
+            else {
+                // maintain image position
+                var oldBounds = viewer.viewport.getBounds();
+                var oldCenter = viewer.viewport.getCenter();
+                resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            }
             THIS[ viewer.hash ].prevContainerSize = containerSize;
             THIS[ viewer.hash ].forceRedraw = true;
         }

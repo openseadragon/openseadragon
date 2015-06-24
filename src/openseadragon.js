@@ -253,7 +253,7 @@
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
   * @property {Boolean} [preserveImageSizeOnResize=false]
-  *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=false.
+  *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
