@@ -990,7 +990,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             pixelsPerWheelLine:     40,
             autoResize:             true,
-            preserveImageSizeOnResize: false, // requires autoResize=false
+            preserveImageSizeOnResize: false, // requires autoResize=true
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
