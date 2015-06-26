@@ -73,6 +73,11 @@
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
  *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
+ *      Use options.tileWidth and options.tileHeight to support non-square tiles.
+ * @param {Number} [options.tileWidth]
+ *      The width of the tiles to assumed to make up each pyramid layer in pixels.
+ * @param {Number} [options.tileHeight]
+ *      The height of the tiles to assumed to make up each pyramid layer in pixels.
  * @param {Number} [options.tileOverlap]
  *      The number of pixels each tile is expected to overlap touching tiles.
  * @param {Number} [options.minLevel]
@@ -191,7 +196,10 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.aspectRatio = ( options.width && options.height ) ?
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
-        this.tileSize    = options.tileSize ? options.tileSize : 0;
+        this.tileSize = new $.Point(
+            ( options.tileSize ? options.tileSize : options.tileWidth ),
+            ( options.tileSize ? options.tileSize : options.tileHeight )
+        );
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
         this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
@@ -219,6 +227,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      *   from .tileSize directly.  tileSize may be deprecated in a future release.
      * @function
      * @param {Number} level
+     * @returns {OpenSeadragon.Point} The dimensions of tiles in level
      */
     getTileSize: function( level ) {
         return this.tileSize;
@@ -250,8 +259,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getNumTiles: function( level ) {
         var scale = this.getLevelScale( level ),
-            x = Math.ceil( scale * this.dimensions.x / this.getTileSize(level) ),
-            y = Math.ceil( scale * this.dimensions.y / this.getTileSize(level) );
+            x = Math.ceil( scale * this.dimensions.x / this.getTileSize(level).x ),
+            y = Math.ceil( scale * this.dimensions.y / this.getTileSize(level).y );
 
         return new $.Point( x, y );
     },
@@ -276,11 +285,19 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
     getClosestLevel: function( rect ) {
         var i,
             tilesPerSide,
-            tiles;
+            tiles,
+            tileSize;
+
         for( i = this.minLevel; i < this.maxLevel; i++ ){
             tiles = this.getNumTiles( i );
-            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.getTileSize(i) );
-            if( Math.max( tiles.x, tiles.y ) + 1 >= tilesPerSide ){
+            tileSize = this.getTileSize(i);
+
+            tilesPerSide = new $.Point(
+              Math.floor( rect.x / tileSize.x ),
+              Math.floor( rect.y / tileSize.y )
+            );
+            
+            if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
                 break;
             }
         }
@@ -293,9 +310,9 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function( level, point ) {
-        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level ) ),
-            tx = Math.floor( pixel.x / this.getTileSize(level) ),
-            ty = Math.floor( pixel.y / this.getTileSize(level) );
+        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level) ),
+            tx = Math.floor( pixel.x / this.getTileSize(level).x ),
+            ty = Math.floor( pixel.y / this.getTileSize(level).y );
 
         return new $.Point( tx, ty );
     },
@@ -309,10 +326,10 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
     getTileBounds: function( level, x, y ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
             tileSize = this.getTileSize(level),
-            px = ( x === 0 ) ? 0 : tileSize * x - this.tileOverlap,
-            py = ( y === 0 ) ? 0 : tileSize * y - this.tileOverlap,
-            sx = tileSize + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
-            sy = tileSize + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
+            px = ( x === 0 ) ? 0 : tileSize.x * x - this.tileOverlap,
+            py = ( y === 0 ) ? 0 : tileSize.y * y - this.tileOverlap,
+            sx = tileSize.x + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
+            sy = tileSize.y + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
             scale = 1.0 / dimensionsScaled.x;
 
         sx = Math.min( sx, dimensionsScaled.x - px );

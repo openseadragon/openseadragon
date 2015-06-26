@@ -192,7 +192,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
             this.tileSize = this.tileSizePerScaleFactor[scaleFactor];
         }
-        return this.tileSize;
+        return new $.Point(this.tileSize, this.tileSize);
     },
 
     /**
@@ -229,8 +229,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             uri;
 
         tileSize = this.getTileSize(level);
-        iiifTileSizeWidth = Math.ceil( tileSize / scale );
-        iiifTileSizeHeight = iiifTileSizeWidth;
+
+        iiifTileSizeWidth = Math.ceil( tileSize.x / scale );
+        iiifTileSizeHeight = Math.ceil( tileSize.y / scale );
 
         if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
              this['@context'].indexOf('/1.1/context.json') > -1 ||
@@ -240,7 +241,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default.jpg";
         }
 
-        if ( levelWidth < tileSize && levelHeight < tileSize ){
+        if ( levelWidth < tileSize.x && levelHeight < tileSize.y ){
             iiifSize = levelWidth + ",";
             iiifRegion = 'full';
         } else {
