@@ -190,9 +190,12 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var scaleFactor = Math.pow(2, this.maxLevel - level);
         // cache it in case any external code is going to read it directly
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
-            this.tileSize = this.tileSizePerScaleFactor[scaleFactor];
+            this.tileSize = new $.Point(
+                this.tileSizePerScaleFactor[scaleFactor],
+                this.tileSizePerScaleFactor[scaleFactor]
+            );
         }
-        return new $.Point(this.tileSize, this.tileSize);
+        return this.tileSize;
     },
 
     /**

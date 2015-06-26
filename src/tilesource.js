@@ -146,7 +146,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * The size of the image tiles used to compose the image.
      * Please note that tileSize may be deprecated in a future release.
      * Instead the getTileSize(level) function should be used.
-     * @member {Number} tileSize
+     * @member {OpenSeadragon.Point} tileSize
      * @memberof OpenSeadragon.TileSource#
      */
     /**
@@ -179,7 +179,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
         this.dimensions  = new $.Point( 10, 10 );
-        this.tileSize    = 0;
+        this.tileSize    = new $.Point( 0, 0 );
         this.tileOverlap = 0;
         this.minLevel    = 0;
         this.maxLevel    = 0;
@@ -196,10 +196,16 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.aspectRatio = ( options.width && options.height ) ?
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
-        this.tileSize = new $.Point(
-            ( options.tileSize ? options.tileSize : options.tileWidth ),
-            ( options.tileSize ? options.tileSize : options.tileHeight )
-        );
+        
+        if( options.tileSize ){
+            this.tileSize = new $.Point(options.tileSize, options.tileSize);
+        } else {
+            this.tileSize = new $.Point(
+                (options.tileWidth ? options.tileWidth : 0),
+                (options.tileHeight ? options.tileHeight : 0)
+            );
+        }
+
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
         this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
