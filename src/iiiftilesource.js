@@ -117,6 +117,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object|Array} data
      * @param {String} optional - url
      */
+     
     supports: function( data, url ) {
         // Version 2.0 and forwards
         if (data.protocol && data.protocol == 'http://iiif.io/api/image') {
@@ -228,9 +229,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             uri;
 
         tileSize = this.getTileSize(level);
-
         iiifTileSizeWidth = Math.ceil( tileSize / scale );
-        iiifTileSizeHeight = Math.ceil( tileSize / scale );
+        iiifTileSizeHeight = iiifTileSizeWidth;
 
         if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
              this['@context'].indexOf('/1.1/context.json') > -1 ||
