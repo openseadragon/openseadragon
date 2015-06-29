@@ -185,15 +185,11 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @function
      * @param {Number} level
     */
-
     getTileSize: function( level ){
         var scaleFactor = Math.pow(2, this.maxLevel - level);
         // cache it in case any external code is going to read it directly
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
-            this.tileSize = new $.Point(
-                this.tileSizePerScaleFactor[scaleFactor],
-                this.tileSizePerScaleFactor[scaleFactor]
-            );
+            this.tileSize = this.tileSizePerScaleFactor[scaleFactor];
         }
         return this.tileSize;
     },
@@ -233,8 +229,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
         tileSize = this.getTileSize(level);
 
-        iiifTileSizeWidth = Math.ceil( tileSize.x / scale );
-        iiifTileSizeHeight = Math.ceil( tileSize.y / scale );
+        iiifTileSizeWidth = Math.ceil( tileSize / scale );
+        iiifTileSizeHeight = Math.ceil( tileSize / scale );
 
         if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
              this['@context'].indexOf('/1.1/context.json') > -1 ||
@@ -244,7 +240,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default.jpg";
         }
 
-        if ( levelWidth < tileSize.x && levelHeight < tileSize.y ){
+        if ( levelWidth < tileSize && levelHeight < tileSize ){
             iiifSize = levelWidth + ",";
             iiifRegion = 'full';
         } else {
