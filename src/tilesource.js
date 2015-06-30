@@ -143,13 +143,6 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
     /**
-     * The size of the image tiles used to compose the image.
-     * Please note that tileSize may be deprecated in a future release.
-     * Instead the getTileSize(level) function should be used.
-     * @member {Number} tileSize
-     * @memberof OpenSeadragon.TileSource#
-     */
-    /**
      * The overlap in pixels each tile shares with its adjacent neighbors.
      * @member {Number} tileOverlap
      * @memberof OpenSeadragon.TileSource#
@@ -179,7 +172,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
         this.dimensions  = new $.Point( 10, 10 );
-        this.tileSize    = 0;
+        this._tileWidth  = 0;
+        this._tileHeight = 0;
         this.tileOverlap = 0;
         this.minLevel    = 0;
         this.maxLevel    = 0;
@@ -197,9 +191,12 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
         
-        this.tileSize = options.tileSize ? options.tileSize : 0;
-        this.tileWidth = options.tileWidth;
-        this.tileHeight = options.tileHeight;
+        if ( options.tileSize ){
+            this._tileWidth = this._tileHeight = options.tileSize;
+        } else {
+            this._tileWidth = options.tileWidth ? options.tileWidth : 0;
+            this._tileHeight = options.tileHeight ? options.tileHeight: 0;
+        }
         
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
@@ -221,21 +218,12 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
 $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
 
-    /**
-     * Return the tileSize for a given level.
-     * Subclasses should override this if tileSizes can be different at different levels
-     *   such as in IIIFTileSource.  Code should use this function rather than reading
-     *   from .tileSize directly.  tileSize may be deprecated in a future release.
-     * @deprecated
-     * @function
-     * @param {Number} level
-     */
     getTileSize: function( level ) {
         $.console.error(
             "[TileSource.getTileSize] is deprecated." +
             "Use TileSource.getTileWidth() and TileSource.getTileHeight() instead"
         );
-        return this.tileSize;
+        return this._tileWidth;
     },
     
     /**
@@ -247,11 +235,10 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * @param {Number} level
      */
     getTileWidth: function( level ) {
-        // If tileWidth was not set, fallback by setting it to tileSize
-        if( this.tileWidth === undefined){
-            this.tileWidth = this.tileSize;
+        if (!this._tileWidth) {
+            return this.getTileSize(level);
         }
-        return this.tileWidth;
+        return this._tileWidth;
     },
 
     /**
@@ -263,11 +250,10 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * @param {Number} level
      */
     getTileHeight: function( level ) {
-        // If tileHeight was not set, fallback by setting it to tileSize
-        if( this.tileHeight === undefined ){
-            this.tileHeight = this.tileSize;
+        if (!this._tileHeight) {
+            return this.getTileSize(level);
         }
-        return this.tileHeight;
+        return this._tileHeight;
     },
 
     /**

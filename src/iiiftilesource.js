@@ -182,18 +182,33 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     },
 
     /**
-     * Return the tileSize for the given level.
+     * Return the tileWidth for the given level.
      * @function
      * @param {Number} level
-    */
-    getTileSize: function( level ){
+     */
+    getTileWidth: function( level ) {
         var scaleFactor = Math.pow(2, this.maxLevel - level);
-        // cache it in case any external code is going to read it directly
+
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
-            this.tileSize = this.tileSizePerScaleFactor[scaleFactor];
+            return this.tileSizePerScaleFactor[scaleFactor];
         }
-        return this.tileSize;
+        return this._tileWidth;
     },
+
+    /**
+     * Return the tileHeight for the given level.
+     * @function
+     * @param {Number} level
+     */
+    getTileHeight: function( level ) {
+        var scaleFactor = Math.pow(2, this.maxLevel - level);
+
+        if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
+            return this.tileSizePerScaleFactor[scaleFactor];
+        }
+        return this._tileHeight;
+    },
+
 
     /**
      * Responsible for retreiving the url which will return an image for the
@@ -216,7 +231,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             levelHeight = Math.ceil( this.height * scale ),
 
             //## iiif region
-            tileSize,
+            tileWidth,
+            tileHeight,
             iiifTileSizeWidth,
             iiifTileSizeHeight,
             iiifRegion,
@@ -228,9 +244,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality,
             uri;
 
-        tileSize = this.getTileSize(level);
-        iiifTileSizeWidth = Math.ceil( tileSize / scale );
-        iiifTileSizeHeight = iiifTileSizeWidth;
+        tileWidth = this.getTileSize(level);
+        tileHeight = this.getTileHeight(level);
+        iiifTileSizeWidth = Math.ceil( tileWidth / scale );
+        iiifTileSizeHeight = Math.ceil( tileHeight / scale );
 
         if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
              this['@context'].indexOf('/1.1/context.json') > -1 ||
@@ -240,7 +257,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default.jpg";
         }
 
-        if ( levelWidth < tileSize && levelHeight < tileSize ){
+        if ( levelWidth < tileWidth && levelHeight < tileHeight ){
             iiifSize = levelWidth + ",";
             iiifRegion = 'full';
         } else {
