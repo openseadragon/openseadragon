@@ -1318,6 +1318,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     _this.world.arrange({
                         immediately: queueItem.options.collectionImmediately,
                         rows: _this.collectionRows,
+                        columns: _this.collectionColumns,
                         layout: _this.collectionLayout,
                         tileSize: _this.collectionTileSize,
                         tileMargin: _this.collectionTileMargin
