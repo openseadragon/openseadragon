@@ -244,7 +244,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality,
             uri;
 
-        tileWidth = this.getTileSize(level);
+        tileWidth = this.getTileWidth(level);
         tileHeight = this.getTileHeight(level);
         iiifTileSizeWidth = Math.ceil( tileWidth / scale );
         iiifTileSizeHeight = Math.ceil( tileHeight / scale );
