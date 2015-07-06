@@ -51,6 +51,7 @@ function ImageJob ( options ) {
 }
 
 ImageJob.prototype = {
+    errorMsg: null,
     start: function(){
         var _this = this;
 
@@ -64,10 +65,12 @@ ImageJob.prototype = {
             _this.finish( true );
         };
         this.image.onabort = this.image.onerror = function(){
+            _this.errorMsg = "Image load aborted";
             _this.finish( false );
         };
 
         this.jobId = window.setTimeout( function(){
+            _this.errorMsg = "Image load exceeded timeout";
             _this.finish( false );
         }, this.timeout);
 
@@ -173,7 +176,7 @@ function completeJob( loader, job, callback ) {
         loader.jobsInProgress++;
     }
 
-    callback( job.image );
+    callback( job.image, job.errorMsg );
 }
 
 }( OpenSeadragon ));
