@@ -1022,7 +1022,7 @@ function loadTile( tiledImage, tile, time ) {
 
 function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s - error:", tile, tile.url, errorMsg );
+        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         if( !tiledImage.debugMode ){
             tile.loading = false;
             tile.exists = false;
