@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Added additional coordinates conversion methods to TiledImage (#662)
 * 'display: none' no longer gets reset on overlays during draw (#668)
 * Added `preserveImageSizeOnResize` option (#666)
+* Better error reporting for tile load failures (#679)
 
 2.0.0:
 
