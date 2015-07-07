@@ -1011,8 +1011,8 @@ function loadTile( tiledImage, tile, time ) {
     tiledImage._imageLoader.addJob({
         src: tile.url,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
-        callback: function( image ){
-            onTileLoad( tiledImage, tile, time, image );
+        callback: function( image, errorMsg ){
+            onTileLoad( tiledImage, tile, time, image, errorMsg );
         },
         abort: function() {
             tile.loading = false;
@@ -1020,9 +1020,9 @@ function loadTile( tiledImage, tile, time ) {
     });
 }
 
-function onTileLoad( tiledImage, tile, time, image ) {
+function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s", tile, tile.url );
+        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         if( !tiledImage.debugMode ){
             tile.loading = false;
             tile.exists = false;
