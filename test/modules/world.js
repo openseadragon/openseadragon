@@ -213,6 +213,26 @@
 
             checkBounds(new OpenSeadragon.Rect(0, 0, 1, 4), 'one vertical column');
 
+            viewer.world.arrange({
+                layout: 'horizontal',
+                rows: false,
+                columns: 3,
+                tileSize: 1,
+                tileMargin: 0.5
+            });
+
+            checkBounds(new OpenSeadragon.Rect(0, 0, 4, 1), 'three horizontal columns (one horizontal row)');
+
+            viewer.world.arrange({
+                layout: 'vertical',
+                rows: false,
+                columns: 3,
+                tileSize: 1,
+                tileMargin: 0.5
+            });
+
+            checkBounds(new OpenSeadragon.Rect(0, 0, 1, 4), 'three vertical rows (one vertical column)');
+
             start();
         });
 
