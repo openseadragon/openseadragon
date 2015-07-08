@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * 'display: none' no longer gets reset on overlays during draw (#668)
 * Added `preserveImageSizeOnResize` option (#666)
 * Better error reporting for tile load failures (#679)
+* Added collectionColumns as a configuration parameter (#680)
 
 2.0.0:
 
