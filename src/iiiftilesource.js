@@ -55,14 +55,19 @@ $.IIIFTileSource = function( options ){
     options.tileSizePerScaleFactor = {};
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
-    if ( this.tile_width ) {
+    if ( this.tile_width && this.tile_height ) {
+        options.tileWidth = this.tile_width;
+        options.tileHeight = this.tile_height;
+    } else if ( this.tile_width ) {
         options.tileSize = this.tile_width;
     } else if ( this.tile_height ) {
         options.tileSize = this.tile_height;
     } else if ( this.tiles ) {
         // Version 2.0 forwards
         if ( this.tiles.length == 1 ) {
-            options.tileSize = this.tiles[0].width;
+            options.tileWidth  = this.tiles[0].width;
+            // Use height if provided, otherwise assume square tiles and use width.
+            options.tileHeight = this.tiles[0].height || this.tiles[0].width;
             this.scale_factors = this.tiles[0].scaleFactors;
         } else {
             // Multiple tile sizes at different levels
@@ -71,13 +76,15 @@ $.IIIFTileSource = function( options ){
                 for (var sf = 0; sf < this.tiles[t].scaleFactors.length; sf++) {
                     var scaleFactor = this.tiles[t].scaleFactors[sf];
                     this.scale_factors.push(scaleFactor);
-                    options.tileSizePerScaleFactor[scaleFactor] = this.tiles[t].width;
+                    options.tileSizePerScaleFactor[scaleFactor] = {
+                        width: this.tiles[t].width,
+                        height: this.tiles[t].height || this.tiles[t].width
+                    };
                 }
             }
         }
     } else {
         // use the largest of tileOptions that is smaller than the short dimension
-
         var shortDim = Math.min( this.height, this.width ),
             tileOptions = [256,512,1024],
             smallerTiles = [];
@@ -94,8 +101,6 @@ $.IIIFTileSource = function( options ){
             // If we're smaller than 256, just use the short side.
             options.tileSize = shortDim;
         }
-        this.tile_width = options.tileSize;  // So that 'full' gets used for
-        this.tile_height = options.tileSize; // the region below
     }
 
     if ( !options.maxLevel ) {
@@ -190,7 +195,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var scaleFactor = Math.pow(2, this.maxLevel - level);
 
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
-            return this.tileSizePerScaleFactor[scaleFactor];
+            return this.tileSizePerScaleFactor[scaleFactor].width;
         }
         return this._tileWidth;
     },
@@ -204,7 +209,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var scaleFactor = Math.pow(2, this.maxLevel - level);
 
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
-            return this.tileSizePerScaleFactor[scaleFactor];
+            return this.tileSizePerScaleFactor[scaleFactor].height;
         }
         return this._tileHeight;
     },
