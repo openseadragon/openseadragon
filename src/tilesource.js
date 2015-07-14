@@ -191,11 +191,26 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
         
-        if ( options.tileSize ){
-            this._tileWidth = this._tileHeight = options.tileSize;
+        if ( this.tileSize ){
+            this._tileWidth = this._tileHeight = this.tileSize;
+            delete this.tileSize;
         } else {
-            this._tileWidth = options.tileWidth ? options.tileWidth : 0;
-            this._tileHeight = options.tileHeight ? options.tileHeight: 0;
+            if( this.tileWidth ){
+                // We were passed tileWidth in options, but we want to rename it
+                // with a leading underscore to make clear that it is not safe to directly modify it
+                this._tileWidth = this.tileWidth;
+                delete this.tileWidth;
+            } else {
+                this._tileWidth = 0;
+            }
+
+            if( this.tileHeight ){
+                // See note above about renaming this.tileWidth
+                this._tileHeight = this.tileHeight;
+                delete this.tileHeight;
+            } else {
+                this._tileHeight = 0;
+            }
         }
         
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
@@ -230,7 +245,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * Return the tileWidth for a given level.
      * Subclasses should override this if tileWidth can be different at different levels
      *   such as in IIIFTileSource.  Code should use this function rather than reading
-     *   from .tileWidth directly.
+     *   from ._tileWidth directly.
      * @function
      * @param {Number} level
      */
@@ -245,7 +260,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * Return the tileHeight for a given level.
      * Subclasses should override this if tileHeight can be different at different levels
      *   such as in IIIFTileSource.  Code should use this function rather than reading
-     *   from .tileHeight directly.
+     *   from ._tileHeight directly.
      * @function
      * @param {Number} level
      */
