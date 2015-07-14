@@ -1318,6 +1318,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     _this.world.arrange({
                         immediately: queueItem.options.collectionImmediately,
                         rows: _this.collectionRows,
+                        columns: _this.collectionColumns,
                         layout: _this.collectionLayout,
                         tileSize: _this.collectionTileSize,
                         tileMargin: _this.collectionTileMargin
@@ -1710,7 +1711,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
+     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
@@ -1770,6 +1771,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Updates the overlay represented by the reference to the element or
      * element id moving it to the new location, relative to the new placement.
      * @method
+     * @param {Element|String} element - A reference to an element or an id for
+     *      the element which is overlayed.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
@@ -2824,13 +2827,31 @@ function updateOnce( viewer ) {
         return;
     }
 
+    var containerSize;
     if ( viewer.autoResize ) {
-        var containerSize = _getSafeElemSize( viewer.container );
+        containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-            // maintain image position
-            var oldBounds = viewer.viewport.getBounds();
-            var oldCenter = viewer.viewport.getCenter();
-            resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            if ( viewer.preserveImageSizeOnResize ) {
+                var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
+                var bounds = viewer.viewport.getBounds(true);
+                var deltaX = (containerSize.x - prevContainerSize.x);
+                var deltaY = (containerSize.y - prevContainerSize.y);
+                var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
+                viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
+
+                // Keep the center of the image in the center and just adjust the amount of image shown
+                bounds.width += viewportDiff.x;
+                bounds.height += viewportDiff.y;
+                bounds.x -= (viewportDiff.x / 2);
+                bounds.y -= (viewportDiff.y / 2);
+                viewer.viewport.fitBoundsWithConstraints(bounds, true);
+            }
+            else {
+                // maintain image position
+                var oldBounds = viewer.viewport.getBounds();
+                var oldCenter = viewer.viewport.getCenter();
+                resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            }
             THIS[ viewer.hash ].prevContainerSize = containerSize;
             THIS[ viewer.hash ].forceRedraw = true;
         }

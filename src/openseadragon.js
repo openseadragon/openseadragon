@@ -252,6 +252,9 @@
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
+  * @property {Boolean} [preserveImageSizeOnResize=false]
+  *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
+  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -555,6 +558,10 @@
   * @property {Number} [collectionRows=3]
   *     If collectionMode is true, specifies how many rows the grid should have. Use 1 to make a line.
   *     If collectionLayout is 'vertical', specifies how many columns instead.
+  *
+  * @property {Number} [collectionColumns=0]
+  *     If collectionMode is true, specifies how many columns the grid should have. Use 1 to make a line.
+  *     If collectionLayout is 'vertical', specifies how many rows instead. Ignored if collectionRows is not set to a falsy value.
   *
   * @property {String} [collectionLayout='horizontal']
   *     If collectionMode is true, specifies whether to arrange vertically or horizontally.
@@ -987,6 +994,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             pixelsPerWheelLine:     40,
             autoResize:             true,
+            preserveImageSizeOnResize: false, // requires autoResize=true
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -1035,6 +1043,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows:         3, //or columns depending on layout
+            collectionColumns:      0, //columns in horizontal layout, rows in vertical layout
             collectionLayout:       'horizontal', //vertical
             collectionMode:         false,
             collectionTileSize:     800,
