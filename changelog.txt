@@ -12,6 +12,10 @@ OPENSEADRAGON CHANGELOG
 * Added `preserveImageSizeOnResize` option (#666)
 * Better error reporting for tile load failures (#679)
 * Added collectionColumns as a configuration parameter (#680)
+* Added support for non-square tiles (#673)
+    * TileSource.Options objects can now optionally provide tileWidth/tileHeight instead of tileSize for non-square tile support.
+    * IIIFTileSources will now respect non-square tiles if available.
+    * DEPRECATION: TileSource.getTileSize is deprecated use TileSource.getTileWidth and TileSource.getTileHeight instead.
 
 2.0.0:
 

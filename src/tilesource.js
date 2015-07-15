@@ -73,6 +73,11 @@
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
  *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
+ *      Use options.tileWidth and options.tileHeight to support non-square tiles.
+ * @param {Number} [options.tileWidth]
+ *      The width of the tiles to assumed to make up each pyramid layer in pixels.
+ * @param {Number} [options.tileHeight]
+ *      The height of the tiles to assumed to make up each pyramid layer in pixels.
  * @param {Number} [options.tileOverlap]
  *      The number of pixels each tile is expected to overlap touching tiles.
  * @param {Number} [options.minLevel]
@@ -138,13 +143,6 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
     /**
-     * The size of the image tiles used to compose the image.
-     * Please note that tileSize may be deprecated in a future release.
-     * Instead the getTileSize(level) function should be used.
-     * @member {Number} tileSize
-     * @memberof OpenSeadragon.TileSource#
-     */
-    /**
      * The overlap in pixels each tile shares with its adjacent neighbors.
      * @member {Number} tileOverlap
      * @memberof OpenSeadragon.TileSource#
@@ -174,7 +172,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
         this.dimensions  = new $.Point( 10, 10 );
-        this.tileSize    = 0;
+        this._tileWidth  = 0;
+        this._tileHeight = 0;
         this.tileOverlap = 0;
         this.minLevel    = 0;
         this.maxLevel    = 0;
@@ -191,7 +190,29 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.aspectRatio = ( options.width && options.height ) ?
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
-        this.tileSize    = options.tileSize ? options.tileSize : 0;
+        
+        if ( this.tileSize ){
+            this._tileWidth = this._tileHeight = this.tileSize;
+            delete this.tileSize;
+        } else {
+            if( this.tileWidth ){
+                // We were passed tileWidth in options, but we want to rename it
+                // with a leading underscore to make clear that it is not safe to directly modify it
+                this._tileWidth = this.tileWidth;
+                delete this.tileWidth;
+            } else {
+                this._tileWidth = 0;
+            }
+
+            if( this.tileHeight ){
+                // See note above about renaming this.tileWidth
+                this._tileHeight = this.tileHeight;
+                delete this.tileHeight;
+            } else {
+                this._tileHeight = 0;
+            }
+        }
+        
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
         this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
@@ -212,16 +233,42 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
 $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
 
+    getTileSize: function( level ) {
+        $.console.error(
+            "[TileSource.getTileSize] is deprecated." +
+            "Use TileSource.getTileWidth() and TileSource.getTileHeight() instead"
+        );
+        return this._tileWidth;
+    },
+    
     /**
-     * Return the tileSize for a given level.
-     * Subclasses should override this if tileSizes can be different at different levels
+     * Return the tileWidth for a given level.
+     * Subclasses should override this if tileWidth can be different at different levels
      *   such as in IIIFTileSource.  Code should use this function rather than reading
-     *   from .tileSize directly.  tileSize may be deprecated in a future release.
+     *   from ._tileWidth directly.
      * @function
      * @param {Number} level
      */
-    getTileSize: function( level ) {
-        return this.tileSize;
+    getTileWidth: function( level ) {
+        if (!this._tileWidth) {
+            return this.getTileSize(level);
+        }
+        return this._tileWidth;
+    },
+
+    /**
+     * Return the tileHeight for a given level.
+     * Subclasses should override this if tileHeight can be different at different levels
+     *   such as in IIIFTileSource.  Code should use this function rather than reading
+     *   from ._tileHeight directly.
+     * @function
+     * @param {Number} level
+     */
+    getTileHeight: function( level ) {
+        if (!this._tileHeight) {
+            return this.getTileSize(level);
+        }
+        return this._tileHeight;
     },
 
     /**
@@ -250,8 +297,8 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getNumTiles: function( level ) {
         var scale = this.getLevelScale( level ),
-            x = Math.ceil( scale * this.dimensions.x / this.getTileSize(level) ),
-            y = Math.ceil( scale * this.dimensions.y / this.getTileSize(level) );
+            x = Math.ceil( scale * this.dimensions.x / this.getTileWidth(level) ),
+            y = Math.ceil( scale * this.dimensions.y / this.getTileHeight(level) );
 
         return new $.Point( x, y );
     },
@@ -277,10 +324,15 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
         var i,
             tilesPerSide,
             tiles;
+
         for( i = this.minLevel; i < this.maxLevel; i++ ){
             tiles = this.getNumTiles( i );
-            tilesPerSide = Math.floor( Math.max( rect.x, rect.y ) / this.getTileSize(i) );
-            if( Math.max( tiles.x, tiles.y ) + 1 >= tilesPerSide ){
+            tilesPerSide = new $.Point(
+              Math.floor( rect.x / this.getTileWidth(i) ),
+              Math.floor( rect.y / this.getTileHeight(i) )
+            );
+            
+            if( tiles.x + 1 >= tilesPerSide.x || tiles.y + 1 >= tilesPerSide.y ){
                 break;
             }
         }
@@ -293,9 +345,9 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function( level, point ) {
-        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level ) ),
-            tx = Math.floor( pixel.x / this.getTileSize(level) ),
-            ty = Math.floor( pixel.y / this.getTileSize(level) );
+        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level) ),
+            tx = Math.floor( pixel.x / this.getTileWidth(level) ),
+            ty = Math.floor( pixel.y / this.getTileHeight(level) );
 
         return new $.Point( tx, ty );
     },
@@ -308,11 +360,12 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
      */
     getTileBounds: function( level, x, y ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            tileSize = this.getTileSize(level),
-            px = ( x === 0 ) ? 0 : tileSize * x - this.tileOverlap,
-            py = ( y === 0 ) ? 0 : tileSize * y - this.tileOverlap,
-            sx = tileSize + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
-            sy = tileSize + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
+            tileWidth = this.getTileWidth(level),
+            tileHeight = this.getTileHeight(level),
+            px = ( x === 0 ) ? 0 : tileWidth * x - this.tileOverlap,
+            py = ( y === 0 ) ? 0 : tileHeight * y - this.tileOverlap,
+            sx = tileWidth + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
+            sy = tileHeight + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
             scale = 1.0 / dimensionsScaled.x;
 
         sx = Math.min( sx, dimensionsScaled.x - px );
