@@ -2056,7 +2056,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                                     statusText: 'OK'
                                 });
                             }
-                        }
+                        };
                         xdr.onerror = function (e) {
                             if ( $.isFunction ( onError ) ) {
                                 onError({ // Faking an xhr object
@@ -2065,7 +2065,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                                     statusText: 'An error happened. Due to an XDomainRequest deficiency we can not extract any information about this error. Upgrade your browser.'
                                 });
                             }
-                        }
+                        };
                         try {
                             xdr.open('GET', url);
                             xdr.send();
