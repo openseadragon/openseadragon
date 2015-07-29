@@ -2069,7 +2069,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
                         try {
                             xdr.open('GET', url);
                             xdr.send();
-                        } catch (e) {
+                        } catch (e2) {
                             if ( $.isFunction( onError ) ) {
                                 onError( request, e );
                             }
