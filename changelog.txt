@@ -16,6 +16,7 @@ OPENSEADRAGON CHANGELOG
 * Added support for non-square tiles (#673)
     * TileSource.Options objects can now optionally provide tileWidth/tileHeight instead of tileSize for non-square tile support.
     * IIIFTileSources will now respect non-square tiles if available.
+* Added XDomainRequest as fallback method for ajax requests if XMLHttpRequest fails (for IE < 10) (#693)
 
 2.0.0:
 
