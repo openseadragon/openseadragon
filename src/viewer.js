@@ -1996,8 +1996,7 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
         if ( tileSource.match( /\s*<.*/ ) ) {
             tileSource = $.parseXml( tileSource );
         } else if ( tileSource.match( /\s*[\{\[].*/ ) ) {
-            /*jshint evil:true*/
-            tileSource = eval( '(' + tileSource + ')' );
+            tileSource = $.parseJSON(tileSource);
         }
     }
 

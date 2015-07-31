@@ -2208,6 +2208,24 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             return $.parseXml( string );
         },
 
+        /**
+         * Parses a JSON string into a Javascript object.
+         * @function
+         * @param {String} string
+         * @returns {Object}
+         */
+        parseJSON: function(string) {
+            if (window.JSON && window.JSON.parse) {
+                $.parseJSON = window.JSON.parse;
+            } else {
+                // Should only be used by IE8 in non standards mode
+                $.parseJSON = function(string) {
+                    /*jshint evil:true*/
+                    return eval('(' + string + ')');
+                };
+            }
+            return $.parseJSON(string);
+        },
 
         /**
          * Reports whether the image format is supported for tiling in this

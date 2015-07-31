@@ -613,8 +613,7 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
-        /*jshint evil:true*/
-        data = eval( '('+responseText+')' );
+        data = $.parseJSON(responseText);
     }else{
         data = responseText;
     }
