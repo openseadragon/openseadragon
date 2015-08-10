@@ -536,6 +536,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Resets tiledImage's aspect ratio and height or width, while maintaining the size of the largest of the original dimensions
+     * @param {OpenSeadragon.Size} dimensions - The new dimensions from which to calculate the aspect ratio
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    resetAspect: function(dimensions) {
+        var scale = this._scaleSpring.current.value;
+
+        this.normHeight = dimensions.y / dimensions.x;
+        this.contentAspectX = dimensions.x / dimensions.y;
+        if (this.normHeight > 1) {
+            scale /= this.normHeight;
+        }
+        this._setScale(scale, true, true);
+    },
+
+    /**
      * @returns {OpenSeadragon.Rect|null} The TiledImage's current clip rectangle,
      * in image pixels, or null if none.
      */
@@ -581,17 +597,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     // private
-    _setScale: function(scale, immediately) {
+    _setScale: function(scale, immediately, force) {
         var sameTarget = (this._scaleSpring.target.value === scale);
         if (immediately) {
-            if (sameTarget && this._scaleSpring.current.value === scale) {
+            if (sameTarget && this._scaleSpring.current.value === scale && !force) {
                 return;
             }
 
             this._scaleSpring.resetTo(scale);
             this._updateForScale();
         } else {
-            if (sameTarget) {
+            if (sameTarget && !force) {
                 return;
             }
 
