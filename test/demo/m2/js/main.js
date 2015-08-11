@@ -464,18 +464,22 @@
             var page = this.pages[this.pageIndex];
             var box = page.getBounds();
 
-            this.highlight
-                .style('opacity', 1)
-                .attr("x", box.x)
-                .attr("width", box.width)
-                .attr("y", box.y)
-                .attr("height", box.height);
+            if (this.highlight) {
+                this.highlight
+                    .style('opacity', 1)
+                    .attr("x", box.x)
+                    .attr("width", box.width)
+                    .attr("y", box.y)
+                    .attr("height", box.height);
+            }
         },
 
         // ----------
         updateHover: function(pageIndex) {
             if (pageIndex === -1 || this.mode !== 'thumbs') {
-                this.hover.style('opacity', 0);
+                if (this.hover) {
+                    this.hover.style('opacity', 0);
+                }
                 this.$scrollCover.css({
                     'cursor': 'default'
                 });
@@ -490,12 +494,14 @@
             var page = this.pages[pageIndex];
             var box = page.getBounds();
 
-            this.hover
-                .style('opacity', 0.3)
-                .attr("x", box.x)
-                .attr("width", box.width)
-                .attr("y", box.y)
-                .attr("height", box.height);
+            if (this.hover) {
+                this.hover
+                    .style('opacity', 0.3)
+                    .attr("x", box.x)
+                    .attr("width", box.width)
+                    .attr("y", box.y)
+                    .attr("height", box.height);
+            }
         },
 
         // ----------
