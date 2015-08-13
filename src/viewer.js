@@ -1350,6 +1350,33 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } );
     },
 
+    /**
+     * Loads and draws the TiledImage from a new tileSource.
+     * @param {$.Tile} {String|Object|Function} options.tileSource - The TileSource specifier. See Viewer.addTiledImage() documentation
+     * @param {Function} [options.success] A function that gets called when the tileSource is successfully replaced. It's passed the
+     * event object which contains a single property: "item", the resulting TiledImage.
+     * @param {Function} [options.error] A function that gets called if the tileSource replacement fails. It's passed the error event
+     * object, which contains "message" and "source" properties.
+     */
+    replaceTiledImageSource: function(item, options) {
+        $.console.assert(options, "[Viewer.replaceTiledImageSource] options is required");
+        $.console.assert(options.tileSource, "[Viewer.replaceTiledImageSource] options.tileSource is required");
+
+        var _this = this;
+        getTileSourceImplementation(_this, options.tileSource, function(tileSource) {
+            item.source = tileSource;
+            item.resetAspect(tileSource.dimensions);
+            item.reset();
+            if (options.success) {
+                options.success({item: item});
+            }
+        }, function(event) {
+            if (options.error) {
+                options.error(event);
+            }
+        });
+    },
+
     // deprecated
     addLayer: function( options ) {
         var _this = this;
