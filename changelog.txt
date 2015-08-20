@@ -18,6 +18,7 @@ OPENSEADRAGON CHANGELOG
     * IIIFTileSources will now respect non-square tiles if available.
 * Added XDomainRequest as fallback method for ajax requests if XMLHttpRequest fails (for IE < 10) (#693)
 * Now avoiding using eval when JSON.parse is available (#696)
+* Rotation now works properly on retina display (#708)
 
 2.0.0:
 
