@@ -488,29 +488,18 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     // private
     _offsetForRotation: function( tile, degrees, useSketch ){
         var cx = this.canvas.width / 2,
-            cy = this.canvas.height / 2,
-            px = tile.position.x - cx,
-            py = tile.position.y - cy;
+            cy = this.canvas.height / 2;
 
         var context = this._getContext( useSketch );
         context.save();
 
         context.translate(cx, cy);
         context.rotate( Math.PI / 180 * degrees);
-        tile.position.x = px;
-        tile.position.y = py;
+        context.translate(-cx, -cy);
     },
 
     // private
     _restoreRotationChanges: function( tile, useSketch ){
-        var cx = this.canvas.width / 2,
-            cy = this.canvas.height / 2,
-            px = tile.position.x + cx,
-            py = tile.position.y + cy;
-
-        tile.position.x = px;
-        tile.position.y = py;
-
         var context = this._getContext( useSketch );
         context.restore();
     },
