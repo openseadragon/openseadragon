@@ -52,8 +52,11 @@ $.World = function( options ) {
     this.viewer = options.viewer;
     this._items = [];
     this._needsDraw = false;
+    this._autoRefigureSizes = true;
     this._delegatedFigureSizes = function(event) {
-        _this._figureSizes();
+        if (this._autoRefigureSizes) {
+            _this._figureSizes();
+        }
     };
 
     this._figureSizes();
@@ -276,6 +279,17 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
+     * As a performance optimization, setting this flag to false allows the bounds-change event handler
+     * on tiledImages to skip calls to _figureSizes. If a lot of images are going to be positioned in
+     * rapid succession, this is a good idea. _figuresSizes only needs to be called once when the
+     * positioning is done.
+     * @param {Boolean} [value] The value to which to set autoRefigureSizes.
+     */
+    setAutoRefigureSizes: function(value) {
+        this._autoRefigureSizes = value;
+    },
+
+    /**
      * Arranges all of the TiledImages with the specified settings.
      * @param {Object} options - Specifies how to arrange.
      * @param {Boolean} [options.immediately=false] - Whether to animate to the new arrangement.
@@ -304,6 +318,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var x = 0;
         var y = 0;
         var item, box, width, height, position;
+
+        this.setAutoRefigureSizes(false);
         for (var i = 0; i < this._items.length; i++) {
             if (i && (i % wrap) === 0) {
                 if (layout === 'horizontal') {
@@ -336,6 +352,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 y += increment;
             }
         }
+        this.setAutoRefigureSizes(true);
+        this._figureSizes();
     },
 
     // private
