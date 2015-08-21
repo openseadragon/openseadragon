@@ -1225,6 +1225,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         var _this = this;
 
+        if (options.replace) {
+            options.replaceItem = _this.world.getItemAt(options.index);
+        }
+
         this._hideMessage();
 
         if (options.placeholderFillStyle === undefined) {
@@ -1290,7 +1294,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 _this._loadQueue.splice(0, 1);
 
                 if (queueItem.options.replace) {
-                    _this.world.removeItem(_this.world.getItemAt(queueItem.options.index));
+                    var newIndex = _this.world.getIndexOfItem(options.replaceItem);
+                    if (newIndex != -1) {
+                        options.index = newIndex;
+                    }
+                    _this.world.removeItem(options.replaceItem);
                 }
 
                 tiledImage = new $.TiledImage({
