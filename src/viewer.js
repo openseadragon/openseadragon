@@ -1193,6 +1193,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @param {Number} [options.index] The index of the item. Added on top of
      * all other items if not specified.
+     * @param {Boolean} [options.replace=false] If true, the item at options.index will be
+     * removed and the new item is added in its place. options.tileSource will be
+     * interpreted and fetched if necessary before the old item is removed to avoid leaving
+     * a gap in the world.
      * @param {Number} [options.x=0] The X position for the image in viewport coordinates.
      * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
      * @param {Number} [options.width=1] The width for the image in viewport coordinates.
@@ -1216,8 +1220,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     addTiledImage: function( options ) {
         $.console.assert(options, "[Viewer.addTiledImage] options is required");
         $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
+        $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
+            "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
 
         var _this = this;
+
+        if (options.replace) {
+            options.replaceItem = _this.world.getItemAt(options.index);
+        }
 
         this._hideMessage();
 
@@ -1282,6 +1292,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
 
                 _this._loadQueue.splice(0, 1);
+
+                if (queueItem.options.replace) {
+                    var newIndex = _this.world.getIndexOfItem(options.replaceItem);
+                    if (newIndex != -1) {
+                        options.index = newIndex;
+                    }
+                    _this.world.removeItem(options.replaceItem);
+                }
 
                 tiledImage = new $.TiledImage({
                     viewer: _this,
