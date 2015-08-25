@@ -5,11 +5,20 @@
     <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
     <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
     <style type="text/css">
-
-      .openseadragon1 {
-          width: 800px;
-          height: 600px;
-      }
+    
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .openseadragon1 {
+        width: 80%;
+        height: 80%;
+        background-color: white;
+        border: 10px solid black;
+    }
 
     </style>
 </head>
@@ -21,11 +30,12 @@
     <script type="text/javascript">
 
         var viewer = OpenSeadragon({
-            // debugMode: true,
+            debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
-            showNavigator:true
+            minZoomImageRatio: 0.8,
+            allowZoomToConstraintsOnResize: true
         });
 
     </script>

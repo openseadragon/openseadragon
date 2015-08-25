@@ -2947,11 +2947,18 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 
     viewport.resize( containerSize, true );
 
-    // We try to remove blanks as much as possible
-    var worldBounds = viewer.world.getHomeBounds();
-    var newWidth = oldBounds.width <= worldBounds.width ? oldBounds.width : worldBounds.width;
-    var newHeight = oldBounds.height <= worldBounds.height ?
-        oldBounds.height : worldBounds.height;
+    var newWidth = oldBounds.width;
+    var newHeight = oldBounds.height;
+
+    if (!viewer.allowZoomToConstraintsOnResize) {
+        var worldBounds = viewer.world.getHomeBounds();
+        if (oldBounds.width > worldBounds.width) {
+            newWidth = worldBounds.width;
+        }
+        if (oldBounds.height > worldBounds.height) {
+            newHeight = worldBounds.height;
+        }
+    }
 
     var newBounds = new $.Rect(
         oldCenter.x - ( newWidth / 2.0 ),
@@ -2959,7 +2966,12 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
         newWidth,
         newHeight
         );
-    viewport.fitBounds( newBounds, true );
+
+    if (viewer.allowZoomToConstraintsOnResize) {
+        viewport.fitBoundsWithConstraints( newBounds, true );
+    } else {
+        viewport.fitBounds( newBounds, true );
+    }
 }
 
 function drawWorld( viewer ) {
