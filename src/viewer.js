@@ -2947,31 +2947,15 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 
     viewport.resize( containerSize, true );
 
-    var newWidth = oldBounds.width;
-    var newHeight = oldBounds.height;
-
-    if (!viewer.allowZoomToConstraintsOnResize) {
-        var worldBounds = viewer.world.getHomeBounds();
-        if (oldBounds.width > worldBounds.width) {
-            newWidth = worldBounds.width;
-        }
-        if (oldBounds.height > worldBounds.height) {
-            newHeight = worldBounds.height;
-        }
-    }
-
     var newBounds = new $.Rect(
-        oldCenter.x - ( newWidth / 2.0 ),
-        oldCenter.y - ( newHeight / 2.0 ),
-        newWidth,
-        newHeight
-        );
+        oldCenter.x - ( oldBounds.width / 2.0 ),
+        oldCenter.y - ( oldBounds.height / 2.0 ),
+        oldBounds.width,
+        oldBounds.height
+    );
 
-    if (viewer.allowZoomToConstraintsOnResize) {
-        viewport.fitBoundsWithConstraints( newBounds, true );
-    } else {
-        viewport.fitBounds( newBounds, true );
-    }
+    // let the viewport decide if the bounds are too big or too small
+    viewport.fitBoundsWithConstraints( newBounds, true );
 }
 
 function drawWorld( viewer ) {

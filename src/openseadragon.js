@@ -255,11 +255,6 @@
   * @property {Boolean} [preserveImageSizeOnResize=false]
   *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
-  * @property {Boolean} [allowZoomToConstraintsOnResize=false]
-  *     Set to true to allow the image to remain zoomed out past the home zoom level during resize.
-  *     If false the image will be zoomed in if necessary such that it touches the edge of the viewer.
-  *     This requires autoResize=true (default).
-  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -1000,7 +995,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
-            allowZoomToConstraintsOnResize: false, // requires autoResize=true
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
