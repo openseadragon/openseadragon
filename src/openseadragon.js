@@ -682,7 +682,9 @@
   * @returns {OpenSeadragon.Viewer}
   */
 window.OpenSeadragon = window.OpenSeadragon || function( options ){
+
     return new OpenSeadragon.Viewer( options );
+
 };
 
 if (typeof define === 'function' && define.amd) {

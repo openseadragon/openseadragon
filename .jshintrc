@@ -9,6 +9,7 @@
   "unused": false,
 
   "globals": {
-    "OpenSeadragon": true
+    "OpenSeadragon": true,
+    "define": false
   }
 }
