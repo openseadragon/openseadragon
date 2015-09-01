@@ -54,7 +54,7 @@ $.World = function( options ) {
     this._needsDraw = false;
     this._autoRefigureSizes = true;
     this._delegatedFigureSizes = function(event) {
-        if (this._autoRefigureSizes) {
+        if (_this._autoRefigureSizes) {
             _this._figureSizes();
         }
     };
@@ -282,7 +282,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * As a performance optimization, setting this flag to false allows the bounds-change event handler
      * on tiledImages to skip calls to _figureSizes. If a lot of images are going to be positioned in
      * rapid succession, this is a good idea. _figuresSizes only needs to be called once when the
-     * positioning is done.
+     * positioning is done. _autoRefigureSizes should be set back to true when finished, or the system
+     * may behave oddly,
      * @param {Boolean} [value] The value to which to set autoRefigureSizes.
      */
     setAutoRefigureSizes: function(value) {
