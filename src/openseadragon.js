@@ -241,7 +241,7 @@
   * @property {Number} [minZoomImageRatio=0.9]
   *     The minimum percentage ( expressed as a number between 0 and 1 ) of
   *     the viewport height or width at which the zoom out will be constrained.
-  *     Setting it to 0, for example will allow you to zoom out infinitely.
+  *     Setting it to 0, for example will allow you to zoom out infinitly.
   *
   * @property {Number} [maxZoomPixelRatio=1.1]
   *     The maximum ratio to allow a zoom-in to affect the highest level pixel
@@ -356,7 +356,7 @@
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
-  * @property {String} [navigatorId=navigator-GENERATED DATE]
+  * @property {Boolean} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
   *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
   *     If an ID is not specified, a div element will be generated and placed on top of the main image.
@@ -393,12 +393,6 @@
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
   *
-  * @property {Number} [navigatorMinZoomImageRatio=1.0]
-  *     The minimum percentage ( expressed as a number between 0 and 1 ) of
-  *     the navigator's image height or width at which the zoom out will be
-  *     constrained during resize. Setting it to 0, for example will allow you
-  *     to zoom out infinitely. Only applies when navigatorId is specified.
-  * 
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -1030,7 +1024,6 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorWidth:             null,
             navigatorAutoResize:        true,
             navigatorRotate:            true,
-            navigatorMinZoomImageRatio: 1.0,
 
             // INITIAL ROTATION
             degrees:                    0,

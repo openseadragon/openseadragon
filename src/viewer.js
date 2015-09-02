@@ -411,8 +411,7 @@ $.Viewer = function( options ) {
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,
-            crossOriginPolicy: this.crossOriginPolicy,
-            minZoomImageRatio: this.navigatorMinZoomImageRatio
+            crossOriginPolicy: this.crossOriginPolicy
         });
     }
 

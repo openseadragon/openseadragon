@@ -108,7 +108,9 @@ $.Navigator = function( options ){
         immediateRender:        true,
         blendTime:              0,
         animationTime:          0,
-        autoResize:             options.autoResize
+        autoResize:             options.autoResize,
+        // prevent resizing the navigator from adding unwanted space around the image
+        minZoomImageRatio:      1.0
     });
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
