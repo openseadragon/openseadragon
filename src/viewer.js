@@ -2965,19 +2965,15 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 
     viewport.resize( containerSize, true );
 
-    // We try to remove blanks as much as possible
-    var worldBounds = viewer.world.getHomeBounds();
-    var newWidth = oldBounds.width <= worldBounds.width ? oldBounds.width : worldBounds.width;
-    var newHeight = oldBounds.height <= worldBounds.height ?
-        oldBounds.height : worldBounds.height;
-
     var newBounds = new $.Rect(
-        oldCenter.x - ( newWidth / 2.0 ),
-        oldCenter.y - ( newHeight / 2.0 ),
-        newWidth,
-        newHeight
-        );
-    viewport.fitBounds( newBounds, true );
+        oldCenter.x - ( oldBounds.width / 2.0 ),
+        oldCenter.y - ( oldBounds.height / 2.0 ),
+        oldBounds.width,
+        oldBounds.height
+    );
+
+    // let the viewport decide if the bounds are too big or too small
+    viewport.fitBoundsWithConstraints( newBounds, true );
 }
 
 function drawWorld( viewer ) {
