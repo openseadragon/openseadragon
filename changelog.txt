@@ -20,6 +20,7 @@ OPENSEADRAGON CHANGELOG
 * Now avoiding using eval when JSON.parse is available (#696)
 * Rotation now works properly on retina display (#708)
 * Added option in addTiledImage to replace tiledImage at index (#706)
+* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
 
 2.0.0:
 
