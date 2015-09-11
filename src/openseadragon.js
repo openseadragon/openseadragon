@@ -241,7 +241,7 @@
   * @property {Number} [minZoomImageRatio=0.9]
   *     The minimum percentage ( expressed as a number between 0 and 1 ) of
   *     the viewport height or width at which the zoom out will be constrained.
-  *     Setting it to 0, for example will allow you to zoom out infinitly.
+  *     Setting it to 0, for example will allow you to zoom out infinity.
   *
   * @property {Number} [maxZoomPixelRatio=1.1]
   *     The maximum ratio to allow a zoom-in to affect the highest level pixel
@@ -356,7 +356,7 @@
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
-  * @property {Boolean} [navigatorId=navigator-GENERATED DATE]
+  * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
   *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
   *     If an ID is not specified, a div element will be generated and placed on top of the main image.
