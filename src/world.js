@@ -283,10 +283,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * As a performance optimization, setting this flag to false allows the bounds-change event handler
-     * on tiledImages to skip calls to _figureSizes. If a lot of images are going to be positioned in
-     * rapid succession, this is a good idea. _autoRefigureSizes should be set back to true when finished,
-     * or the system may behave oddly,
-     * @param {Boolean} [value] The value to which to set autoRefigureSizes.
+     * on tiledImages to skip calculations on the world bounds. If a lot of images are going to be positioned in
+     * rapid succession, this is a good idea. When finished, setAutoRefigureSizes should be called with true
+     * or the system may behave oddly.
+     * @param {Boolean} [value] The value to which to set the flag.
      */
     setAutoRefigureSizes: function(value) {
         this._autoRefigureSizes = value;
