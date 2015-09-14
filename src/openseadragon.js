@@ -687,6 +687,12 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
 };
 
+if (typeof define === 'function' && define.amd) {
+   define(function () {
+       return (window.OpenSeadragon);
+   });
+}
+
 
 (function( $ ){
 
