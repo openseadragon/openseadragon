@@ -27,7 +27,7 @@
 
     // ----------
     asyncTest( 'Multi-image operations', function() {
-        expect( 21 );
+        expect( 24 );
         viewer.addHandler( "open", function( ) {
             equal( 1, viewer.world.getItemCount( ),
                 "One item should be present after opening." );
@@ -95,22 +95,36 @@
                         equal( viewer.world.getIndexOfItem( item2 ), 1,
                             "Item 2 should stay at index 1." );
 
-                        viewer.world.addHandler( "remove-item", function removeItemHandler( event ) {
-                            viewer.world.removeHandler( "remove-item", removeItemHandler );
+                        options.index = 2;
+                        options.replace = true;
+                        viewer.addTiledImage( options );
+                        viewer.world.addHandler( "add-item", function replaceAddItemHandler( event ) {
+                            viewer.world.removeHandler( "add-item", replaceAddItemHandler );
+                            var item4 = event.item;
+                            equal( viewer.world.getItemCount( ), 4,
+                                "4 items should still be present after replacing the second item." );
+                            equal( viewer.world.getIndexOfItem( item4 ), 2,
+                                "Item 4 should be added with index 2." );
+                            equal( viewer.world.getIndexOfItem( item3 ), -1,
+                                "Item 3 should be at index -1." );
 
-                            equal( item2, event.item, "Removed item should be item2." );
+                            viewer.world.addHandler( "remove-item", function removeItemHandler( event ) {
+                                viewer.world.removeHandler( "remove-item", removeItemHandler );
 
-                            equal( viewer.world.getIndexOfItem( item1 ), 2,
-                                "Item 1 should be at index 2." );
-                            equal( viewer.world.getIndexOfItem( item2 ), -1,
-                                "Item 2 should be at index -1." );
-                            equal( viewer.world.getIndexOfItem( item3 ), 1,
-                                "Item 3 should be at index 1." );
+                                equal( item2, event.item, "Removed item should be item2." );
 
-                            start();
+                                equal( viewer.world.getIndexOfItem( item1 ), 2,
+                                    "Item 1 should be at index 2." );
+                                equal( viewer.world.getIndexOfItem( item2 ), -1,
+                                    "Item 2 should be at index -1." );
+                                equal( viewer.world.getIndexOfItem( item4 ), 1,
+                                    "Item 4 should be at index 1." );
+
+                                start();
+                            });
+
+                            viewer.world.removeItem( item2 );
                         });
-
-                        viewer.world.removeItem( item2 );
                     });
                 });
             });

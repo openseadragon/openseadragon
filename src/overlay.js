@@ -282,7 +282,10 @@
                 style.left     = position.x + "px";
                 style.top      = position.y + "px";
                 style.position = "absolute";
-                style.display  = 'block';
+
+                if (style.display != 'none') {
+                    style.display  = 'block';
+                }
 
                 if ( scales ) {
                     style.width  = size.x + "px";

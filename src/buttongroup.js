@@ -68,7 +68,7 @@ $.ButtonGroup = function( options ) {
      */
     this.element = options.element || $.makeNeutralElement( "div" );
 
-    // TODO What if there IS an options.group specified? 
+    // TODO What if there IS an options.group specified?
     if( !options.group ){
         this.label   = $.makeNeutralElement( "label" );
         //TODO: support labels for ButtonGroups

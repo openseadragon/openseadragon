@@ -204,7 +204,12 @@
   *     If 0, adjusts to fit viewer.
   *
   * @property {Number} [opacity=1]
-  *     Opacity of the drawer (1=opaque, 0=transparent)
+  *     Default opacity of the tiled images (1=opaque, 0=transparent)
+  *
+  * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
+  *     Draws a colored rectangle behind the tile if it is not loaded yet.
+  *     You can pass a CSS color value like "#FF8800".
+  *     When passing a function the tiledImage and canvas context are available as argument which is useful when you draw a gradient or pattern.
   *
   * @property {Number} [degrees=0]
   *     Initial rotation.
@@ -236,7 +241,7 @@
   * @property {Number} [minZoomImageRatio=0.9]
   *     The minimum percentage ( expressed as a number between 0 and 1 ) of
   *     the viewport height or width at which the zoom out will be constrained.
-  *     Setting it to 0, for example will allow you to zoom out infinitly.
+  *     Setting it to 0, for example will allow you to zoom out infinity.
   *
   * @property {Number} [maxZoomPixelRatio=1.1]
   *     The maximum ratio to allow a zoom-in to affect the highest level pixel
@@ -246,6 +251,9 @@
   *
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
+  *
+  * @property {Boolean} [preserveImageSizeOnResize=false]
+  *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
@@ -262,7 +270,7 @@
   *     Possible subproperties (Numbers, in screen coordinates): left, top, right, bottom.
   *
   * @property {Number} [imageLoaderLimit=0]
-  *     The maximum number of image requests to make concurrently.  By default
+  *     The maximum number of image requests to make concurrently. By default
   *     it is set to 0 allowing the browser to make the maximum number of
   *     image requests in parallel as allowed by the browsers policy.
   *
@@ -348,7 +356,7 @@
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
-  * @property {Boolean} [navigatorId=navigator-GENERATED DATE]
+  * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
   *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
   *     If an ID is not specified, a div element will be generated and placed on top of the main image.
@@ -550,6 +558,10 @@
   * @property {Number} [collectionRows=3]
   *     If collectionMode is true, specifies how many rows the grid should have. Use 1 to make a line.
   *     If collectionLayout is 'vertical', specifies how many columns instead.
+  *
+  * @property {Number} [collectionColumns=0]
+  *     If collectionMode is true, specifies how many columns the grid should have. Use 1 to make a line.
+  *     If collectionLayout is 'vertical', specifies how many rows instead. Ignored if collectionRows is not set to a falsy value.
   *
   * @property {String} [collectionLayout='horizontal']
   *     If collectionMode is true, specifies whether to arrange vertically or horizontally.
@@ -982,6 +994,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             pixelsPerWheelLine:     40,
             autoResize:             true,
+            preserveImageSizeOnResize: false, // requires autoResize=true
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -1013,10 +1026,11 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             navigatorRotate:            true,
 
             // INITIAL ROTATION
-            degrees:                0,
+            degrees:                    0,
 
             // APPEARANCE
-            opacity:                1,
+            opacity:                    1,
+            placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
@@ -1029,6 +1043,7 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows:         3, //or columns depending on layout
+            collectionColumns:      0, //columns in horizontal layout, rows in vertical layout
             collectionLayout:       'horizontal', //vertical
             collectionMode:         false,
             collectionTileSize:     800,
@@ -2030,8 +2045,40 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
 
                 request.onreadystatechange = function(){};
 
-                if ( $.isFunction( onError ) ) {
-                    onError( request, e );
+                if (window.XDomainRequest) { // IE9 or IE8 might as well try to use XDomainRequest
+                    var xdr = new XDomainRequest();
+                    if (xdr) {
+                        xdr.onload = function (e) {
+                            if ( $.isFunction( onSuccess ) ) {
+                                onSuccess({ // Faking an xhr object
+                                    responseText: xdr.responseText,
+                                    status: 200, // XDomainRequest doesn't support status codes, so we just fake one! :/
+                                    statusText: 'OK'
+                                });
+                            }
+                        };
+                        xdr.onerror = function (e) {
+                            if ( $.isFunction ( onError ) ) {
+                                onError({ // Faking an xhr object
+                                    responseText: xdr.responseText,
+                                    status: 444, // 444 No Response
+                                    statusText: 'An error happened. Due to an XDomainRequest deficiency we can not extract any information about this error. Upgrade your browser.'
+                                });
+                            }
+                        };
+                        try {
+                            xdr.open('GET', url);
+                            xdr.send();
+                        } catch (e2) {
+                            if ( $.isFunction( onError ) ) {
+                                onError( request, e );
+                            }
+                        }
+                    }
+                } else {
+                    if ( $.isFunction( onError ) ) {
+                        onError( request, e );
+                    }
                 }
             }
         },
@@ -2161,6 +2208,24 @@ window.OpenSeadragon = window.OpenSeadragon || function( options ){
             return $.parseXml( string );
         },
 
+        /**
+         * Parses a JSON string into a Javascript object.
+         * @function
+         * @param {String} string
+         * @returns {Object}
+         */
+        parseJSON: function(string) {
+            if (window.JSON && window.JSON.parse) {
+                $.parseJSON = window.JSON.parse;
+            } else {
+                // Should only be used by IE8 in non standards mode
+                $.parseJSON = function(string) {
+                    /*jshint evil:true*/
+                    return eval('(' + string + ')');
+                };
+            }
+            return $.parseJSON(string);
+        },
 
         /**
          * Reports whether the image format is supported for tiling in this

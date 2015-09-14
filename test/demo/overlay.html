@@ -1,0 +1,41 @@
+<html>
+  <title>OpenSeadragon Overlay Demo</title>
+  <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+  <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+  <style type="text/css">
+    
+    .openseadragon1 {
+    width: 800px;
+    height: 600px;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="contentDiv" class="openseadragon1"></div>
+  <div id="annotation-div">
+    <input type="button" value="Hide Overlay" id="hideOverlay">
+    
+    <script type="text/javascript">
+      
+      var viewer = OpenSeadragon({
+      id: "contentDiv",
+      prefixUrl: "../../build/openseadragon/images/",
+      tileSources: "../data/testpattern.dzi",
+      });
+      
+      viewer.addHandler("open", function(event) {
+      var elt = document.createElement("div");
+      elt.style.background = "green";
+      elt.id = "runtime-overlay";
+      elt.style.border = "1px solid red";
+      viewer.addOverlay( elt, new OpenSeadragon.Rect(0.2, 0.2, 0.75, 0.75)  );
+      });
+      
+      $("#hideOverlay").click(function(){
+      $("#runtime-overlay").toggle();
+      });
+      
+    </script>
+</body>
+</html>

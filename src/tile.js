@@ -67,7 +67,7 @@ $.Tile = function(level, x, y, bounds, exists, url) {
     this.y       = y;
     /**
      * Where this tile fits, in normalized coordinates
-     * @member {OpenSeadragon.Point} bounds
+     * @member {OpenSeadragon.Rect} bounds
      * @memberof OpenSeadragon.Tile#
      */
     this.bounds  = bounds;
@@ -190,7 +190,14 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * @param {Element} container
      */
     drawHTML: function( container ) {
-        if ( !this.loaded || !this.image ) {
+        if (!this.cacheImageRecord) {
+            $.console.warn(
+                '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
+                this.toString());
+            return;
+        }
+
+        if ( !this.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -203,8 +210,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         if ( !this.element ) {
             this.element                              = $.makeNeutralElement( "div" );
-            this.imgElement                           = $.makeNeutralElement( "img" );
-            this.imgElement.src                       = this.url;
+            this.imgElement                           = this.cacheImageRecord.getImage().cloneNode();
             this.imgElement.style.msInterpolationMode = "nearest-neighbor";
             this.imgElement.style.width               = "100%";
             this.imgElement.style.height              = "100%";
@@ -239,17 +245,18 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         var position = this.position,
             size     = this.size,
-            rendered,
-            canvas;
+            rendered;
 
         if (!this.cacheImageRecord) {
-            $.console.warn('[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached', this.toString());
+            $.console.warn(
+                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
+                this.toString());
             return;
         }
 
         rendered = this.cacheImageRecord.getRenderedContext();
 
-        if ( !this.loaded || !( this.image || rendered) ){
+        if ( !this.loaded || !rendered ){
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 this.toString()
@@ -276,19 +283,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         }
 
-        if(!rendered){
-            canvas = document.createElement( 'canvas' );
-            canvas.width = this.image.width;
-            canvas.height = this.image.height;
-            rendered = canvas.getContext('2d');
-            rendered.drawImage( this.image, 0, 0 );
-            this.cacheImageRecord.setRenderedContext(rendered);
-            //since we are caching the prerendered image on a canvas
-            //allow the image to not be held in memory
-            this.image = null;
-        }
-
-        // This gives the application a chance to make image manipulation changes as we are rendering the image
+        // This gives the application a chance to make image manipulation
+        // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
         context.drawImage(
@@ -318,7 +314,6 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
 
         this.element    = null;
         this.imgElement = null;
-        this.image      = null;
         this.loaded     = false;
         this.loading    = false;
     }

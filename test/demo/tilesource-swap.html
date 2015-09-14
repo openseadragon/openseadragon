@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TileSource Swapping</title>
+        <script type="text/javascript" src="../../build/openseadragon/openseadragon.js"></script>
+        <script type="text/javascript" src="../lib/jquery-1.9.1.min.js"></script>
+        <style type="text/css">
+
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+            .viewer-position {
+                position: absolute;
+                left: 0;
+                top: 30px;
+                right: 0;
+                bottom: 0;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div>This is a demo of using a single image stand-in and then swapping to a full TileSource on zooming. Click the image to see it in action.</div>
+        <div id="openseadragon1" class="viewer-position"></div>
+        <script>
+
+            var duomoStandin = {
+                type: 'legacy-image-pyramid',
+                levels: [
+                    {
+                        url: 'http://openseadragon.github.io/example-images/duomo/duomo_files/8/0_0.jpg',
+                        width: 218,
+                        height: 160
+                    }
+                ]
+            };
+
+            var duomo = {
+                Image: {
+                    xmlns: 'http://schemas.microsoft.com/deepzoom/2008',
+                    Url: 'http://openseadragon.github.io/example-images/duomo/duomo_files/',
+                    Format: 'jpg',
+                    Overlap: '2',
+                    TileSize: '256',
+                    Size: {
+                        Width:  '13920',
+                        Height: '10200'
+                    }
+                }
+            };
+
+            var viewer = OpenSeadragon({
+                id: 'openseadragon1',
+                prefixUrl: '../../build/openseadragon/images/',
+                tileSources: duomoStandin,
+                minZoomImageRatio: 0.1,
+                defaultZoomLevel: 0.1,
+                zoomPerClick: 1
+            });
+
+            viewer.addHandler('canvas-click', function(event) {
+                if (event.quick) {
+                    var standin = viewer.world.getItemAt(0);
+                    var standinBounds = standin.getBounds();
+                    viewer.viewport.fitBounds(standinBounds);
+
+                    viewer.addTiledImage({
+                        x: standinBounds.x,
+                        y: standinBounds.y,
+                        width: standinBounds.width,
+                        tileSource: duomo,
+                        index: 0, // Add the new image below the stand-in.
+                        success: function(event) {
+                            var fullImage = event.item;
+
+                            // The changeover will look better if we wait for the first tile to be drawn.
+                            var tileDrawnHandler = function(event) {
+                                if (event.tiledImage === fullImage) {
+                                    viewer.removeHandler('tile-drawn', tileDrawnHandler);
+                                    viewer.world.removeItem(standin);
+                                }
+                            };
+
+                            viewer.addHandler('tile-drawn', tileDrawnHandler);
+                        }
+                    });
+                }
+            });
+
+        </script>
+    </body>
+</html>

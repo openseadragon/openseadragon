@@ -133,7 +133,7 @@
          */
         this.element            = $.getElement( options.element );
         /**
-         * The number of milliseconds within which a pointer down-up event combination 
+         * The number of milliseconds within which a pointer down-up event combination
          * will be treated as a click gesture.
          * @member {Number} clickTimeThreshold
          * @memberof OpenSeadragon.MouseTracker#
@@ -244,7 +244,7 @@
 
             // Active pointers lists. Array of GesturePointList objects, one for each pointer device type.
             // GesturePointList objects are added each time a pointer is tracked by a new pointer device type (see getActivePointersListByType()).
-            // Active pointers are any pointer being tracked for this element which are in the hit-test area 
+            // Active pointers are any pointer being tracked for this element which are in the hit-test area
             //     of the element (for hover-capable devices) and/or have contact or a button press initiated in the element.
             activePointersLists:   [],
 
@@ -1032,7 +1032,7 @@
         $.MouseTracker.mousePointerId = "legacy-mouse";
         $.MouseTracker.maxTouchPoints = 10;
     }
-    
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Classes and typedefs
@@ -1078,7 +1078,7 @@
     /**
      * @class GesturePointList
      * @classdesc Provides an abstraction for a set of active {@link OpenSeadragon.MouseTracker.GesturePoint|GesturePoint} objects for a given pointer device type.
-     *            Active pointers are any pointer being tracked for this element which are in the hit-test area 
+     *            Active pointers are any pointer being tracked for this element which are in the hit-test area
      *            of the element (for hover-capable devices) and/or have contact or a button press initiated in the element.
      * @memberof OpenSeadragon.MouseTracker
      * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
@@ -1198,7 +1198,7 @@
             return null;
         }
     };
-    
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility functions
@@ -1282,7 +1282,7 @@
                     false
                 );
             }
-            
+
             clearTrackedPointers( tracker );
 
             delegate.tracking = true;
@@ -1694,7 +1694,7 @@
 
 
     /**
-     * Handles 'wheel' events. 
+     * Handles 'wheel' events.
      * The event may be simulated by the legacy mouse wheel event handler (onMouseWheel()).
      *
      * @private
@@ -1943,7 +1943,7 @@
         handleMouseMove( tracker, event );
    }
 
-    
+
     /**
      * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
      * onMouseMove is still attached to the tracked element, so stop propagation to avoid processing twice.
@@ -2191,7 +2191,7 @@
         var i,
             touchCount = event.changedTouches.length,
             gPoints = [];
-        
+
         for ( i = 0; i < touchCount; i++ ) {
             gPoints.push( {
                 id: event.changedTouches[ i ].identifier,
@@ -2420,7 +2420,7 @@
      */
     function startTrackingPointer( pointsList, gPoint ) {
 
-        // If isPrimary is not known for the pointer then set it according to our rules: 
+        // If isPrimary is not known for the pointer then set it according to our rules:
         //    true if the first pointer in the gesture, otherwise false
         if ( !gPoint.hasOwnProperty( 'isPrimary' ) ) {
             if ( pointsList.getLength() === 0 ) {
@@ -2617,7 +2617,7 @@
      *      Gesture points associated with the event.
      * @param {Number} buttonChanged
      *      The button involved in the event: -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
-     *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model, 
+     *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model,
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      *
      * @returns {Boolean} True if pointers should be captured to the tracked element, otherwise false.
@@ -2779,7 +2779,7 @@
      *      Gesture points associated with the event.
      * @param {Number} buttonChanged
      *      The button involved in the event: -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser.
-     *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model, 
+     *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model,
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      *
      * @returns {Boolean} True if pointer capture should be released from the tracked element, otherwise false.

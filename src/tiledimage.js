@@ -64,7 +64,9 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
@@ -126,21 +128,23 @@ $.TiledImage = function( options ) {
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        _midDraw:      false, // Is the tiledImage currently updating the viewport?
-        _needsDraw:    true,  // Does the tiledImage need to update the viewport again?
+        _midDraw:       false, // Is the tiledImage currently updating the viewport?
+        _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
 
         //configurable settings
-        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:      $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:    $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:          $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:        $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:      $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:          $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:  $.DEFAULT_SETTINGS.crossOriginPolicy
+        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:        $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:            $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
+        debugMode:            $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:              $.DEFAULT_SETTINGS.opacity
 
     }, options );
 
@@ -403,6 +407,83 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Convert pixel coordinates relative to the viewer element to image
+     * coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    viewerElementToImageCoordinates: function( pixel ) {
+        var point = this.viewport.pointFromPixel( pixel, true );
+        return this.viewportToImageCoordinates( point );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the image to
+     * viewer element coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    imageToViewerElementCoordinates: function( pixel ) {
+        var point = this.imageToViewportCoordinates( pixel );
+        return this.viewport.pixelFromPoint( point, true );
+    },
+
+    /**
+     * Convert pixel coordinates relative to the window to image coordinates.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    windowToImageCoordinates: function( pixel ) {
+        var viewerCoordinates = pixel.minus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+        return this.viewerElementToImageCoordinates( viewerCoordinates );
+    },
+
+    /**
+     * Convert image coordinates to pixel coordinates relative to the window.
+     * @param {OpenSeadragon.Point} pixel
+     * @returns {OpenSeadragon.Point}
+     */
+    imageToWindowCoordinates: function( pixel ) {
+        var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
+        return viewerCoordinates.plus(
+                OpenSeadragon.getElementPosition( this.viewer.element ));
+    },
+
+    /**
+     * Convert a viewport zoom to an image zoom.
+     * Image zoom: ratio of the original image size to displayed image size.
+     * 1 means original image size, 0.5 half size...
+     * Viewport zoom: ratio of the displayed image's width to viewport's width.
+     * 1 means identical width, 2 means image's width is twice the viewport's width...
+     * @function
+     * @param {Number} viewportZoom The viewport zoom
+     * @returns {Number} imageZoom The image zoom
+     */
+    viewportToImageZoom: function( viewportZoom ) {
+        var ratio = this._scaleSpring.current.value *
+                this.viewport._containerInnerSize.x / this.source.dimensions.x;
+        return ratio * viewportZoom ;
+    },
+
+    /**
+     * Convert an image zoom to a viewport zoom.
+     * Image zoom: ratio of the original image size to displayed image size.
+     * 1 means original image size, 0.5 half size...
+     * Viewport zoom: ratio of the displayed image's width to viewport's width.
+     * 1 means identical width, 2 means image's width is twice the viewport's width...
+     * Note: not accurate with multi-image.
+     * @function
+     * @param {Number} imageZoom The image zoom
+     * @returns {Number} viewportZoom The viewport zoom
+     */
+    imageToViewportZoom: function( imageZoom ) {
+        var ratio = this._scaleSpring.current.value *
+                this.viewport._containerInnerSize.x / this.source.dimensions.x;
+        return imageZoom / ratio;
+    },
+
+    /**
      * Sets the TiledImage's position in the world.
      * @param {OpenSeadragon.Point} position - The new position, in viewport coordinates.
      * @param {Boolean} [immediately=false] - Whether to animate to the new position or snap immediately.
@@ -481,6 +562,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._clip = null;
         }
 
+        this._needsDraw = true;
+    },
+
+    /**
+     * @returns {Number} The TiledImage's current opacity.
+     */
+    getOpacity: function() {
+        return this.opacity;
+    },
+
+    /**
+     * @param {Number} opacity Opacity the tiled image should be drawn at.
+     */
+    setOpacity: function(opacity) {
+        this.opacity = opacity;
         this._needsDraw = true;
     },
 
@@ -696,8 +792,6 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if ( best ) {
         loadTile( tiledImage, best, currentTime );
-        // because we haven't finished drawing, so
-        tiledImage._needsDraw = true;
     }
 
 }
@@ -843,13 +937,8 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     if (!tile.loaded) {
         var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
         if (imageRecord) {
-            tile.loaded = true;
-            tile.image = imageRecord.getImage();
-
-            tiledImage._tileCache.cacheTile({
-                tile: tile,
-                tiledImage: tiledImage
-            });
+            var image = imageRecord.getImage();
+            setTileLoaded(tiledImage, tile, image);
         }
     }
 
@@ -922,8 +1011,8 @@ function loadTile( tiledImage, tile, time ) {
     tiledImage._imageLoader.addJob({
         src: tile.url,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
-        callback: function( image ){
-            onTileLoad( tiledImage, tile, time, image );
+        callback: function( image, errorMsg ){
+            onTileLoad( tiledImage, tile, time, image, errorMsg );
         },
         abort: function() {
             tile.loading = false;
@@ -931,9 +1020,9 @@ function loadTile( tiledImage, tile, time ) {
     });
 }
 
-function onTileLoad( tiledImage, tile, time, image ) {
+function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s", tile, tile.url );
+        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         if( !tiledImage.debugMode ){
             tile.loading = false;
             tile.exists = false;
@@ -946,16 +1035,9 @@ function onTileLoad( tiledImage, tile, time, image ) {
     }
 
     var finish = function() {
-        tile.loading = false;
-        tile.loaded = true;
-        tile.image  = image;
-
-        var cutoff = Math.ceil( Math.log( tiledImage.source.getTileSize(tile.level) ) / Math.log( 2 ) );
-        tiledImage._tileCache.cacheTile({
-            tile: tile,
-            cutoff: cutoff,
-            tiledImage: tiledImage
-        });
+        var cutoff = Math.ceil( Math.log(
+            tiledImage.source.getTileWidth(tile.level) ) / Math.log( 2 ) );
+        setTileLoaded(tiledImage, tile, image, cutoff);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -966,10 +1048,55 @@ function onTileLoad( tiledImage, tile, time, image ) {
         // Wait until after the update, in case caching unloads any tiles
         window.setTimeout( finish, 1);
     }
-
-    tiledImage._needsDraw = true;
 }
 
+function setTileLoaded(tiledImage, tile, image, cutoff) {
+    var increment = 0;
+
+    function getCompletionCallback() {
+        increment++;
+        return completionCallback;
+    }
+
+    function completionCallback() {
+        increment--;
+        if (increment === 0) {
+            tile.loading = false;
+            tile.loaded = true;
+            tiledImage._tileCache.cacheTile({
+                image: image,
+                tile: tile,
+                cutoff: cutoff,
+                tiledImage: tiledImage
+            });
+            tiledImage._needsDraw = true;
+        }
+    }
+
+    /**
+     * Triggered when a tile has just been loaded in memory. That means that the
+     * image has been downloaded and can be modified before being drawn to the canvas.
+     *
+     * @event tile-loaded
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {Image} image - The image of the tile.
+     * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
+     * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {function} getCompletionCallback - A function giving a callback to call
+     * when the asynchronous processing of the image is done. The image will be
+     * marked as entirely loaded when the callback has been called once for each
+     * call to getCompletionCallback.
+     */
+    tiledImage.viewer.raiseEvent("tile-loaded", {
+        tile: tile,
+        tiledImage: tiledImage,
+        image: image,
+        getCompletionCallback: getCompletionCallback
+    });
+    // In case the completion callback is never called, we at least force it once.
+    getCompletionCallback()();
+}
 
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
@@ -1148,41 +1275,48 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
-function drawTiles( tiledImage, lastDrawn ){
+function drawTiles( tiledImage, lastDrawn ) {
     var i,
-        tile,
-        tileKey,
-        viewer,
-        viewport,
-        position,
-        tileSource;
+        tile;
+
+    if ( tiledImage.opacity <= 0 ) {
+        drawDebugInfo( tiledImage, lastDrawn );
+        return;
+    }
+    var useSketch = tiledImage.opacity < 1;
+    if ( useSketch ) {
+        tiledImage._drawer._clear( true );
+    }
 
     var usedClip = false;
-    if (tiledImage._clip) {
-        tiledImage._drawer.saveContext();
+    if ( tiledImage._clip ) {
+        tiledImage._drawer.saveContext(useSketch);
+
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        var topLeft = tiledImage.viewport.pixelFromPoint(box.getTopLeft(), true);
-        var size = tiledImage.viewport.deltaPixelsFromPoints(box.getSize(), true);
-        box = new OpenSeadragon.Rect(topLeft.x * $.pixelDensityRatio,
-            topLeft.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio);
-        tiledImage._drawer.setClip(box);
+        var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
+        tiledImage._drawer.setClip(clipRect, useSketch);
+
         usedClip = true;
+    }
+
+    if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
+        var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
+
+        var fillStyle = null;
+        if ( typeof tiledImage.placeholderFillStyle === "function" ) {
+            fillStyle = tiledImage.placeholderFillStyle(tiledImage, tiledImage._drawer.context);
+        }
+        else {
+            fillStyle = tiledImage.placeholderFillStyle;
+        }
+
+        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
         tile.beingDrawn = true;
-
-        if( tiledImage.debugMode ){
-            try{
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
-            }catch(e){
-                $.console.error(e);
-            }
-        }
 
         if( tiledImage.viewer ){
             /**
@@ -1203,8 +1337,26 @@ function drawTiles( tiledImage, lastDrawn ){
         }
     }
 
-    if (usedClip) {
-        tiledImage._drawer.restoreContext();
+    if ( usedClip ) {
+        tiledImage._drawer.restoreContext( useSketch );
+    }
+
+    if ( useSketch ) {
+        tiledImage._drawer.blendSketch( tiledImage.opacity );
+    }
+    drawDebugInfo( tiledImage, lastDrawn );
+}
+
+function drawDebugInfo( tiledImage, lastDrawn ) {
+    if( tiledImage.debugMode ) {
+        for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
+            var tile = lastDrawn[ i ];
+            try {
+                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+            } catch(e) {
+                $.console.error(e);
+            }
+        }
     }
 }
 

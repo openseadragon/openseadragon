@@ -1,7 +1,28 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-1.3.0: (in progress)
+2.1.0: (in progress)
+* BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
+* DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext
+* DEPRECATION: TileSource.getTileSize is deprecated. Use TileSource.getTileWidth and TileSource.getTileHeight instead.
+* Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
+* Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
+* Fixed flickering tiles with useCanvas=false when no cache is used (#661)
+* Added additional coordinates conversion methods to TiledImage (#662)
+* 'display: none' no longer gets reset on overlays during draw (#668)
+* Added `preserveImageSizeOnResize` option (#666)
+* Better error reporting for tile load failures (#679)
+* Added collectionColumns as a configuration parameter (#680)
+* Added support for non-square tiles (#673)
+    * TileSource.Options objects can now optionally provide tileWidth/tileHeight instead of tileSize for non-square tile support.
+    * IIIFTileSources will now respect non-square tiles if available.
+* Added XDomainRequest as fallback method for ajax requests if XMLHttpRequest fails (for IE < 10) (#693)
+* Now avoiding using eval when JSON.parse is available (#696)
+* Rotation now works properly on retina display (#708)
+* Added option in addTiledImage to replace tiledImage at index (#706)
+* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
+
+2.0.0:
 
 * True multi-image mode (#450)
     * BREAKING CHANGE: Passing an array for the tileSources option is no longer enough to trigger sequence mode; you have to set the sequenceMode option to true as well
@@ -37,6 +58,8 @@ OPENSEADRAGON CHANGELOG
     * Viewport.open supports positioning config properties
     * For multi-image open, drawing isn't started until all tileSources have been opened
     * You can specify a clip area for each image (only works on browsers that support the HTML5 canvas) (#594)
+    * Added placeholderFillStyle so image rectangles can be drawn even before their tiles load (#635)
+    * Ability to set opacity on individual TiledImages (#644)
 * Margins option to push the home region in from the edges of the Viewer (#505)
 * Rect and Point toString() functions are now consistent: rounding values to nearest hundredth
 * Overlays appear in the DOM immediately on open or addOverlay (#507)
@@ -57,6 +80,8 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Cross Origin policy not working (#613)
 * Optimized tile loading by clearing the queue on a re-draw when imageLoaderLimit is set (#616)
 * Now animating zoom spring exponentially (#631)
+* Added http://editorconfig.org/ config file (#637)
+* Keyboard pan speed is now the same regardless of zoom level (#645)
 
 1.2.1:
 

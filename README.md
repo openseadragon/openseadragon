@@ -73,7 +73,7 @@ The report shows up at `coverage/html/index.html` viewable in a browser.
 
 OpenSeadragon is truly a community project; we welcome your involvement!
 
-When contributing, please attempt to match the code style already in the codebase. Note that we use four spaces per indentation stop. For more thoughts on code style, see https://github.com/rwldrn/idiomatic.js/.
+When contributing, please attempt to match the code style already in the codebase. Note that we use four spaces per indentation stop. For easier setup you can also install [EditorConfig](http://editorconfig.org/) if your IDE is supported. For more thoughts on code style, see [idiomatic.js](https://github.com/rwldrn/idiomatic.js/).
 
 When fixing bugs and adding features, when appropriate please also:
 
@@ -86,6 +86,6 @@ If you're new to open source in general, check out [GitHub's open source intro g
 
 ## License
 
-OpenSeadragon is released under the New BSD license.  For details, see the file LICENSE.txt.
+OpenSeadragon is released under the New BSD license. For details, see the file LICENSE.txt.
 
 [![Build Status](https://secure.travis-ci.org/openseadragon/openseadragon.png?branch=master)](http://travis-ci.org/openseadragon/openseadragon)

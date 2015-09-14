@@ -374,7 +374,6 @@ $.Viewer = function( options ) {
         viewer:             this,
         viewport:           this.viewport,
         element:            this.canvas,
-        opacity:            this.opacity,
         debugGridColor:     this.debugGridColor
     });
 
@@ -1073,6 +1072,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         };
         /**
          * Raised when the viewer is about to change to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
+         * Note: the pre-full-screen event is not raised when the user is exiting
+         * full-screen mode by pressing the Esc key. In that case, consider using
+         * the full-screen, pre-full-page or full-page events.
          *
          * @event pre-full-screen
          * @memberof OpenSeadragon.Viewer
@@ -1191,6 +1193,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      named 'getTileUrl', it is treated as a custom TileSource.
      * @param {Number} [options.index] The index of the item. Added on top of
      * all other items if not specified.
+     * @param {Boolean} [options.replace=false] If true, the item at options.index will be
+     * removed and the new item is added in its place. options.tileSource will be
+     * interpreted and fetched if necessary before the old item is removed to avoid leaving
+     * a gap in the world.
      * @param {Number} [options.x=0] The X position for the image in viewport coordinates.
      * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
      * @param {Number} [options.width=1] The width for the image in viewport coordinates.
@@ -1198,6 +1204,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
+     * @param {Number} [options.opacity] Opacity the tiled image should be drawn at by default.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", the resulting TiledImage.
@@ -1206,16 +1213,30 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * and "source" properties.
      * @param {Boolean} [options.collectionImmediately=false] If collectionMode is on,
      * specifies whether to snap to the new arrangement immediately or to animate to it.
+     * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
     addTiledImage: function( options ) {
         $.console.assert(options, "[Viewer.addTiledImage] options is required");
         $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
+        $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
+            "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
 
         var _this = this;
 
+        if (options.replace) {
+            options.replaceItem = _this.world.getItemAt(options.index);
+        }
+
         this._hideMessage();
+
+        if (options.placeholderFillStyle === undefined) {
+            options.placeholderFillStyle = this.placeholderFillStyle;
+        }
+        if (options.opacity === undefined) {
+            options.opacity = this.opacity;
+        }
 
         var myQueueItem = {
             options: options
@@ -1272,6 +1293,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 _this._loadQueue.splice(0, 1);
 
+                if (queueItem.options.replace) {
+                    var newIndex = _this.world.getIndexOfItem(options.replaceItem);
+                    if (newIndex != -1) {
+                        options.index = newIndex;
+                    }
+                    _this.world.removeItem(options.replaceItem);
+                }
+
                 tiledImage = new $.TiledImage({
                     viewer: _this,
                     source: queueItem.tileSource,
@@ -1284,6 +1313,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width: queueItem.options.width,
                     height: queueItem.options.height,
                     clip: queueItem.options.clip,
+                    placeholderFillStyle: queueItem.options.placeholderFillStyle,
+                    opacity: queueItem.options.opacity,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
@@ -1305,6 +1336,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     _this.world.arrange({
                         immediately: queueItem.options.collectionImmediately,
                         rows: _this.collectionRows,
+                        columns: _this.collectionColumns,
                         layout: _this.collectionLayout,
                         tileSize: _this.collectionTileSize,
                         tileMargin: _this.collectionTileMargin
@@ -1697,7 +1729,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will overlayed. Or an Object specifying the configuration for the overlay
+     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
@@ -1757,6 +1789,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Updates the overlay represented by the reference to the element or
      * element id moving it to the new location, relative to the new placement.
      * @method
+     * @param {Element|String} element - A reference to an element or an id for
+     *      the element which is overlayed.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed.
      * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
@@ -1980,8 +2014,7 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
         if ( tileSource.match( /\s*<.*/ ) ) {
             tileSource = $.parseXml( tileSource );
         } else if ( tileSource.match( /\s*[\{\[].*/ ) ) {
-            /*jshint evil:true*/
-            tileSource = eval( '(' + tileSource + ')' );
+            tileSource = $.parseJSON(tileSource);
         }
     }
 
@@ -2206,7 +2239,7 @@ function onCanvasKeyDown( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
                 } else {
-                    this.viewport.panBy(new $.Point(0, -0.05));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
                 }
                 this.viewport.applyConstraints();
                 return false;
@@ -2214,16 +2247,16 @@ function onCanvasKeyDown( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
                 } else {
-                    this.viewport.panBy(new $.Point(0, 0.05));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
                 }
                 this.viewport.applyConstraints();
                 return false;
             case 37://left arrow
-                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                 this.viewport.applyConstraints();
                 return false;
             case 39://right arrow
-                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                 this.viewport.applyConstraints();
                 return false;
             default:
@@ -2255,7 +2288,7 @@ function onCanvasKeyPress( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
                 } else {
-                    this.viewport.panBy(new $.Point(0, -0.05));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
                 }
                 this.viewport.applyConstraints();
                 return false;
@@ -2264,16 +2297,16 @@ function onCanvasKeyPress( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
                 } else {
-                    this.viewport.panBy(new $.Point(0, 0.05));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
                 }
                 this.viewport.applyConstraints();
                 return false;
             case 97://a
-                this.viewport.panBy(new $.Point(-0.05, 0));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                 this.viewport.applyConstraints();
                 return false;
             case 100://d
-                this.viewport.panBy(new $.Point(0.05, 0));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                 this.viewport.applyConstraints();
                 return false;
             default:
@@ -2811,13 +2844,31 @@ function updateOnce( viewer ) {
         return;
     }
 
+    var containerSize;
     if ( viewer.autoResize ) {
-        var containerSize = _getSafeElemSize( viewer.container );
+        containerSize = _getSafeElemSize( viewer.container );
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-            // maintain image position
-            var oldBounds = viewer.viewport.getBounds();
-            var oldCenter = viewer.viewport.getCenter();
-            resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            if ( viewer.preserveImageSizeOnResize ) {
+                var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
+                var bounds = viewer.viewport.getBounds(true);
+                var deltaX = (containerSize.x - prevContainerSize.x);
+                var deltaY = (containerSize.y - prevContainerSize.y);
+                var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
+                viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
+
+                // Keep the center of the image in the center and just adjust the amount of image shown
+                bounds.width += viewportDiff.x;
+                bounds.height += viewportDiff.y;
+                bounds.x -= (viewportDiff.x / 2);
+                bounds.y -= (viewportDiff.y / 2);
+                viewer.viewport.fitBoundsWithConstraints(bounds, true);
+            }
+            else {
+                // maintain image position
+                var oldBounds = viewer.viewport.getBounds();
+                var oldCenter = viewer.viewport.getCenter();
+                resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+            }
             THIS[ viewer.hash ].prevContainerSize = containerSize;
             THIS[ viewer.hash ].forceRedraw = true;
         }
@@ -2914,19 +2965,15 @@ function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter 
 
     viewport.resize( containerSize, true );
 
-    // We try to remove blanks as much as possible
-    var worldBounds = viewer.world.getHomeBounds();
-    var newWidth = oldBounds.width <= worldBounds.width ? oldBounds.width : worldBounds.width;
-    var newHeight = oldBounds.height <= worldBounds.height ?
-        oldBounds.height : worldBounds.height;
-
     var newBounds = new $.Rect(
-        oldCenter.x - ( newWidth / 2.0 ),
-        oldCenter.y - ( newHeight / 2.0 ),
-        newWidth,
-        newHeight
-        );
-    viewport.fitBounds( newBounds, true );
+        oldCenter.x - ( oldBounds.width / 2.0 ),
+        oldCenter.y - ( oldBounds.height / 2.0 ),
+        oldBounds.width,
+        oldBounds.height
+    );
+
+    // let the viewport decide if the bounds are too big or too small
+    viewport.fitBoundsWithConstraints( newBounds, true );
 }
 
 function drawWorld( viewer ) {

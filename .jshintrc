@@ -1,14 +1,14 @@
 {
-    "browser": true,
-    "curly": true,
-    "eqeqeq": false,
-    "loopfunc": false,
-    "noarg": true,
-    "trailing": true,
-    "undef": true,
-    "unused": false,
+  "browser": true,
+  "curly": true,
+  "eqeqeq": false,
+  "loopfunc": false,
+  "noarg": true,
+  "trailing": true,
+  "undef": true,
+  "unused": false,
 
-    "globals": {
-        "OpenSeadragon": true
-    }
+  "globals": {
+    "OpenSeadragon": true
+  }
 }

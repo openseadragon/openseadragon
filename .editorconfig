@@ -1,0 +1,15 @@
+# editorconfig.org
+root = true
+
+# We need to specify each folder specifically to avoid including test/lib and test/data
+[{Gruntfile.js,src/**,test/*,test/demo/**,test/helpers/**,test/modules/**}]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[{package.json,.travis.yml,.jshintrc}]
+indent_style = space
+indent_size = 2

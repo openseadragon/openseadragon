@@ -968,4 +968,103 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
+    // tile-loaded event tests
+    asyncTest( 'Viewer: tile-loaded event without callback.', function () {
+
+        function tileLoaded ( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
+            var tile = event.tile;
+            ok( tile.loading, "The tile should be marked as loading.");
+            notOk( tile.loaded, "The tile should not be marked as loaded.");
+            setTimeout(function() {
+                notOk( tile.loading, "The tile should not be marked as loading.");
+                ok( tile.loaded, "The tile should be marked as loaded.");
+                start();
+            }, 0);
+        }
+
+        viewer.addHandler( 'tile-loaded', tileLoaded);
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    asyncTest( 'Viewer: tile-loaded event with 1 callback.', function () {
+
+        function tileLoaded ( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
+            var tile = event.tile;
+            var callback = event.getCompletionCallback();
+            ok( tile.loading, "The tile should be marked as loading.");
+            notOk( tile.loaded, "The tile should not be marked as loaded.");
+            ok( callback, "The event should have a callback.");
+            setTimeout(function() {
+                ok( tile.loading, "The tile should be marked as loading.");
+                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                callback();
+                notOk( tile.loading, "The tile should not be marked as loading.");
+                ok( tile.loaded, "The tile should be marked as loaded.");
+                start();
+            }, 0);
+        }
+
+        viewer.addHandler( 'tile-loaded', tileLoaded);
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    asyncTest( 'Viewer: tile-loaded event with 2 callbacks.', function () {
+
+        function tileLoaded ( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
+            var tile = event.tile;
+            var callback1 = event.getCompletionCallback();
+            var callback2 = event.getCompletionCallback();
+            ok( tile.loading, "The tile should be marked as loading.");
+            notOk( tile.loaded, "The tile should not be marked as loaded.");
+            setTimeout(function() {
+                ok( tile.loading, "The tile should be marked as loading.");
+                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                callback1();
+                ok( tile.loading, "The tile should be marked as loading.");
+                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                setTimeout(function() {
+                    ok( tile.loading, "The tile should be marked as loading.");
+                    notOk( tile.loaded, "The tile should not be marked as loaded.");
+                    callback2();
+                    notOk( tile.loading, "The tile should not be marked as loading.");
+                    ok( tile.loaded, "The tile should be marked as loaded.");
+                    start();
+                }, 0);
+            }, 0);
+        }
+
+        viewer.addHandler( 'tile-loaded', tileLoaded);
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    asyncTest( 'Viewer: tile-unloaded event.', function() {
+        var tiledImage;
+        var tile;
+
+        function tileLoaded( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
+            tiledImage = event.tiledImage;
+            tile = event.tile;
+            setTimeout(function() {
+                tiledImage.reset();
+            }, 0);
+        }
+
+        function tileUnloaded( event ) {
+            viewer.removeHandler( 'tile-unloaded', tileUnloaded );
+            equal( tile, event.tile,
+                "The unloaded tile should be the same than the loaded one." );
+            equal( tiledImage, event.tiledImage,
+                "The tiledImage of the unloaded tile should be the same than the one of the loaded one." );
+            start();
+        }
+
+        viewer.addHandler( 'tile-loaded', tileLoaded );
+        viewer.addHandler( 'tile-unloaded', tileUnloaded );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
 } )();
