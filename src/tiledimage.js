@@ -130,6 +130,7 @@ $.TiledImage = function( options ) {
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
+        _hasOpaqueTile: false,  // Do we have even one fully opaque tile? 
 
         //configurable settings
         springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
@@ -675,15 +676,9 @@ function updateViewport( tiledImage ) {
     viewportBounds.y -= tiledImage._ySpring.current.value;
 
     // Reset tile's internal drawn state
-    var _hasOpaqueTile; 
-
     while ( tiledImage.lastDrawn.length > 0 ) {
         tile = tiledImage.lastDrawn.pop();
         tile.beingDrawn = false;
-
-        if (tile.beingDrawn === false) {
-            _hasOpaqueTile = false;
-        }
     }
 
     //Change bounds for rotation
