@@ -1023,6 +1023,18 @@ function loadTile( tiledImage, tile, time ) {
 function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     if ( !image ) {
         $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
+        /**
+         * Triggered when a tile fails to load.
+         *
+         * @event tile-open-failed
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the unloaded tile.
+         * @property {OpenSeadragon.Tile} tile - The tile that failed to load.
+         * @property {number} time - The time in milliseconds when the tile load began.
+         * @property {string} message - The error message.
+         */
+        tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
         if( !tiledImage.debugMode ){
             tile.loading = false;
             tile.exists = false;
