@@ -1026,11 +1026,11 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
         /**
          * Triggered when a tile fails to load.
          *
-         * @event tile-open-failed
+         * @event tile-load-failed
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the unloaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile that failed to load.
+         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
          * @property {number} time - The time in milliseconds when the tile load began.
          * @property {string} message - The error message.
          */

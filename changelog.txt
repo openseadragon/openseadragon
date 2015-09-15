@@ -22,6 +22,8 @@ OPENSEADRAGON CHANGELOG
 * Added option in addTiledImage to replace tiledImage at index (#706)
 * Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
 * Registers as an AMD module where possible (#719)
+* Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
+* Added 'tile-load-failed' event (#725)
 
 2.0.0:
 
