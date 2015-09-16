@@ -332,7 +332,7 @@ $.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
               Math.floor( rect.y / this.getTileHeight(i) )
             );
             
-            if( tiles.x + 1 >= tilesPerSide.x || tiles.y + 1 >= tilesPerSide.y ){
+            if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
                 break;
             }
         }
