@@ -24,6 +24,7 @@ OPENSEADRAGON CHANGELOG
 * Registers as an AMD module where possible (#719)
 * Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
 * Added 'tile-load-failed' event (#725)
+* Fixed issue with tiledImages loading tiles at every level instead of just the best level (#728)
 
 2.0.0:
 
