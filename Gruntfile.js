@@ -285,6 +285,11 @@ module.exports = function(grunt) {
     grunt.registerTask("publish", ["package", "clean:release", "copy:release", "bower"]);
 
     // ----------
+    // Dev task.
+    // Builds, fires up a server and watches for changes.
+    grunt.registerTask("dev", ["build", "connect", "watch"]);
+
+    // ----------
     // Default task.
     // Does a normal build.
     grunt.registerTask("default", ["build"]);

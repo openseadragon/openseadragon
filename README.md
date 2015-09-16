@@ -35,6 +35,10 @@ If you want Grunt to watch your source files and rebuild every time you change o
 
     grunt watch
 
+To have it watch your source files and also run a server for you to test in:
+
+    grunt dev
+
 The built files appear in the `build` folder.
 
 If you want to build tar and zip files for distribution (they will also appear in the `build` folder), use:
