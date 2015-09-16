@@ -1152,7 +1152,7 @@ function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
 
     if ( opacity == 1 ) {
         setCoverage( tiledImage.coverage, level, x, y, true );
-        this._hasOpaqueTile = true;
+        tiledImage._hasOpaqueTile = true;
     } else if ( deltaTime < blendTimeMillis ) {
         return true;
     }
@@ -1301,7 +1301,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         usedClip = true;
     }
 
-    if ( tiledImage.placeholderFillStyle && this._hasOpaqueTile === false ) {
+    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
 
         var fillStyle = null;

@@ -265,6 +265,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             return;
         }
 
+        context.save();
+
         context.globalAlpha = this.opacity;
 
         //if we are supposed to be rendering fully opaque rectangle,
@@ -298,6 +300,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             size.x * $.pixelDensityRatio,
             size.y * $.pixelDensityRatio
         );
+
+        context.restore();
     },
 
     /**
