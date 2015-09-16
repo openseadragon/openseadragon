@@ -130,6 +130,7 @@ $.TiledImage = function( options ) {
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
+        _hasOpaqueTile: false,  // Do we have even one fully opaque tile? 
 
         //configurable settings
         springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
@@ -1163,6 +1164,7 @@ function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
 
     if ( opacity == 1 ) {
         setCoverage( tiledImage.coverage, level, x, y, true );
+        tiledImage._hasOpaqueTile = true;
     } else if ( deltaTime < blendTimeMillis ) {
         return true;
     }
@@ -1311,7 +1313,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         usedClip = true;
     }
 
-    if ( tiledImage.placeholderFillStyle && lastDrawn.length === 0 ) {
+    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
 
         var fillStyle = null;
