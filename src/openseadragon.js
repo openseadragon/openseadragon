@@ -805,10 +805,12 @@ if (typeof define === 'function' && define.amd) {
         // Own properties are enumerated firstly, so to speed up,
         // if last one is own, then all properties are own.
 
-        var key;
-        for ( key in obj ) {}
+        var lastKey;
+        for (var key in obj ) {
+            lastKey = key;
+        }
 
-        return key === undefined || hasOwn.call( obj, key );
+        return lastKey === undefined || hasOwn.call( obj, lastKey );
     };
 
 
