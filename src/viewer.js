@@ -1243,7 +1243,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         };
 
         function raiseAddItemFailed( event ) {
-            for (var i = 0; i < _this._loadQueue; i++) {
+            for (var i = 0; i < _this._loadQueue.length; i++) {
                 if (_this._loadQueue[i] === myQueueItem) {
                     _this._loadQueue.splice(i, 1);
                     break;
@@ -1982,6 +1982,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         for ( i = 0; i < length; i++ ) {
             this.currentOverlays[ i ].drawHTML( this.overlaysContainer, this.viewport );
         }
+    },
+
+    /**
+     * Cancel the "in flight" images.
+     */
+    _cancelPendingImages: function() {
+        this._loadQueue = [];
     }
 });
 
