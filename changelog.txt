@@ -27,6 +27,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with tiledImages loading tiles at every level instead of just the best level (#728)
 * Fixed placeholderFillStyle flicker (#727)
 * Fix for Chrome (v45) issue that key is sometimes undefined outside of the for-in loop (#730)
+* World.removeAll now cancels any in-flight image loads; same for Viewer.open and Viewer.close (#734)
 
 2.0.0:
 
