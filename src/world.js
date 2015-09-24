@@ -202,6 +202,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @fires OpenSeadragon.World.event:metrics-change
      */
     removeAll: function() {
+        // We need to make sure any pending images are canceled so the world items don't get messed up
+        this.viewer._cancelPendingImages();
         var item;
         for (var i = 0; i < this._items.length; i++) {
             item = this._items[i];
