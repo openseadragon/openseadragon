@@ -1250,6 +1250,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
 
+            if (_this._loadQueue.length === 0) {
+                refreshWorld(myQueueItem);
+            }
+
              /**
              * Raised when an error occurs while adding a item.
              * @event add-item-failed
@@ -1265,6 +1269,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (options.error) {
                 options.error(event);
+            }
+        }
+
+        function refreshWorld(theItem) {
+            if (_this.collectionMode) {
+                _this.world.arrange({
+                    immediately: theItem.options.collectionImmediately,
+                    rows: _this.collectionRows,
+                    columns: _this.collectionColumns,
+                    layout: _this.collectionLayout,
+                    tileSize: _this.collectionTileSize,
+                    tileMargin: _this.collectionTileMargin
+                });
             }
         }
 
@@ -1328,19 +1345,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     debugMode: _this.debugMode
                 });
 
+                if (_this.collectionMode) {
+                    _this.world.setAutoRefigureSizes(false);
+                }
                 _this.world.addItem( tiledImage, {
                     index: queueItem.options.index
                 });
 
-                if (_this.collectionMode) {
-                    _this.world.arrange({
-                        immediately: queueItem.options.collectionImmediately,
-                        rows: _this.collectionRows,
-                        columns: _this.collectionColumns,
-                        layout: _this.collectionLayout,
-                        tileSize: _this.collectionTileSize,
-                        tileMargin: _this.collectionTileMargin
-                    });
+                if (_this._loadQueue.length === 0) {
+                    //this restores the autoRefigureSizes flag to true.
+                    refreshWorld(queueItem);
                 }
 
                 if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
