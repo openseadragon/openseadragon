@@ -1282,6 +1282,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     tileSize: _this.collectionTileSize,
                     tileMargin: _this.collectionTileMargin
                 });
+                _this.world.setAutoRefigureSizes(true);
             }
         }
 
