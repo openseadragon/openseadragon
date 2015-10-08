@@ -85,7 +85,12 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             this._items.push( item );
         }
 
-        this._figureSizes();
+        if (this._autoRefigureSizes) {
+            this._figureSizes();
+        } else {
+            this._needsSizesFigured = true;
+        }
+
         this._needsDraw = true;
 
         item.addHandler('bounds-change', this._delegatedFigureSizes);
