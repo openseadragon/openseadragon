@@ -250,8 +250,8 @@
 
             this.adjust( position, size );
 
-            position = position.apply( Math.floor );
-            size     = size.apply( Math.ceil );
+            position = position.apply( Math.round );
+            size     = size.apply( Math.round );
 
             // rotate the position of the overlay
             // TODO only rotate overlays if in canvas mode

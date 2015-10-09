@@ -29,6 +29,7 @@ OPENSEADRAGON CHANGELOG
 * Fix for Chrome (v45) issue that key is sometimes undefined outside of the for-in loop (#730)
 * World.removeAll now cancels any in-flight image loads; same for Viewer.open and Viewer.close (#734)
 * Optimized adding large numbers of items to the world with collectionMode (#735)
+* Fix overlays position (use rounding instead of flooring and ceiling)
 
 2.0.0:
 
