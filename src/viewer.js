@@ -1312,11 +1312,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 _this._loadQueue.splice(0, 1);
 
                 if (queueItem.options.replace) {
-                    var newIndex = _this.world.getIndexOfItem(options.replaceItem);
+                    var newIndex = _this.world.getIndexOfItem(queueItem.options.replaceItem);
                     if (newIndex != -1) {
-                        options.index = newIndex;
+                        queueItem.options.index = newIndex;
                     }
-                    _this.world.removeItem(options.replaceItem);
+                    _this.world.removeItem(queueItem.options.replaceItem);
                 }
 
                 tiledImage = new $.TiledImage({
