@@ -3,8 +3,9 @@ OPENSEADRAGON CHANGELOG
 
 2.1.0: (in progress)
 * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
+* BREAKING CHANGE: TileSource.tileSize no longer exists; use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
 * DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext
-* DEPRECATION: TileSource.getTileSize is deprecated. Use TileSource.getTileWidth and TileSource.getTileHeight instead.
+* DEPRECATION: TileSource.getTileSize() is deprecated. Use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
 * Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
 * Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
 * Fixed flickering tiles with useCanvas=false when no cache is used (#661)
