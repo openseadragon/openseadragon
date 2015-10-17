@@ -604,6 +604,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             var originalSuccess = options.success;
             options.success = function(event) {
                 successes++;
+                
+                // TODO: now that options has other things besides tileSource, the overlays
+                // should probably be at the options level, not the tileSource level.
+                if (options.tileSource.overlays) {
+                    for (var i = 0; i < options.tileSource.overlays.length; i++) {
+                        _this.addOverlay(options.tileSource.overlays[i]);
+                    }
+                }
 
                 if (originalSuccess) {
                     originalSuccess(event);
@@ -628,14 +636,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             };
 
             _this.addTiledImage(options);
-
-            // TODO: now that options has other things besides tileSource, the overlays
-            // should probably be at the options level, not the tileSource level.
-            if (options.tileSource.overlays) {
-                for (var i = 0; i < options.tileSource.overlays.length; i++) {
-                    _this.addOverlay(options.tileSource.overlays[i]);
-                }
-            }
         };
 
         // TileSources
