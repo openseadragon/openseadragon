@@ -31,6 +31,7 @@ OPENSEADRAGON CHANGELOG
 * World.removeAll now cancels any in-flight image loads; same for Viewer.open and Viewer.close (#734)
 * Optimized adding large numbers of items to the world with collectionMode (#735)
 * Fixed overlays position (use rounding instead of flooring and ceiling) (#741)
+* Fixed issue with including overlays in your tileSources array when creating/opening in the viewer (#745)
 
 2.0.0:
 
