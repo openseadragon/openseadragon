@@ -32,6 +32,7 @@ OPENSEADRAGON CHANGELOG
 * Optimized adding large numbers of items to the world with collectionMode (#735)
 * Fixed overlays position (use rounding instead of flooring and ceiling) (#741)
 * Fixed issue with including overlays in your tileSources array when creating/opening in the viewer (#745)
+* Fixed issue in iOS devices that would cause all touch events to fail after a Multitasking Gesture was triggered (#744)
 
 2.0.0:
 
