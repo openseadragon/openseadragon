@@ -2747,7 +2747,7 @@ function onCanvasScroll( event ) {
      * this one and wait for the next event. */
     thisScroll = new Date().getTime();
     deltaScroll = thisScroll - lastScroll;
-    if (deltaScroll > this.minScrollDelta) {
+    if (deltaScroll > this.minScrollDeltaMS) {
         lastScroll = thisScroll;
 
         if ( !event.preventDefaultAction && this.viewport ) {
