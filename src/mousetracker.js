@@ -2190,16 +2190,10 @@
     function onTouchCancel( tracker, event ) {
         var i,
             touchCount = event.changedTouches.length,
-            gPoints = [];
-
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch'
-            } );
-        }
-
-        updatePointersCancel( tracker, event, gPoints );
+            gPoints = [],
+            pointsList = tracker.getActivePointersListByType( 'touch' );
+        
+        abortTouchContacts( tracker, event, pointsList );
     }
 
 
