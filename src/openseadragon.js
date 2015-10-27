@@ -255,6 +255,11 @@
   * @property {Boolean} [preserveImageSizeOnResize=false]
   *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
+  * @property {Number} [minScrollDelta=3]
+  *     Number of milliseconds between canvas-scroll events. This value helps normalize the rate of canvas-scroll
+  *     events between different devices, causing the faster devices to slow down enough to make the zoom control
+  *     more manageable.
+  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -1003,6 +1008,7 @@ if (typeof define === 'function' && define.amd) {
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
+            minScrollDelta:         3,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
