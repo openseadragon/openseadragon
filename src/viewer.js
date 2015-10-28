@@ -203,6 +203,8 @@ $.Viewer = function( options ) {
     this._loadQueue = [];
     this.currentOverlays = [];
 
+    this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
+
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
@@ -2735,20 +2737,19 @@ function onCanvasPinch( event ) {
     return false;
 }
 
-var lastScroll = new Date().getTime();
 function onCanvasScroll( event ) {
     var gestureSettings,
         factor,
-        thisScroll,
-        deltaScroll;
+        thisScrollTime,
+        deltaScrollTime;
 
     /* Certain scroll devices fire the scroll event way too fast so we are injecting a simple adjustment to keep things
      * partially normalized. If we have already fired an event within the last 'minScrollDelta' milliseconds we skip
      * this one and wait for the next event. */
-    thisScroll = new Date().getTime();
-    deltaScroll = thisScroll - lastScroll;
-    if (deltaScroll > this.minScrollDeltaMS) {
-        lastScroll = thisScroll;
+    thisScrollTime = $.now();
+    deltaScrollTime = thisScrollTime - this._lastScrollTime;
+    if (deltaScrollTime > this.minScrollDeltaTime) {
+        this._lastScrollTime = thisScrollTime;
 
         if ( !event.preventDefaultAction && this.viewport ) {
             gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
