@@ -98,7 +98,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < config.testArray.length; i++){
@@ -125,7 +124,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size");
             start();
@@ -139,7 +137,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             equal(viewport.getAspectRatio(), 1, "Test aspect ratio");
             start();
@@ -243,7 +240,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             // Special cases for oddball levels
             if (level === -1) {
@@ -288,7 +284,6 @@
             for(var i = 0; i < testRects.length; i++){
                 var rect = testRects[i].times(viewport.getContainerSize());
                 viewport.resetContentSize(rect.getSize());
-                viewport.update();
                 propEqual(
                     viewport.contentSize,
                     rect.getSize(),
@@ -308,10 +303,8 @@
 
             // zoom/pan somewhere
             viewport.zoomTo(ZOOM_FACTOR, true);
-            viewport.update();
 
             viewport.goHome(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 viewport.getHomeBounds(),
@@ -331,10 +324,8 @@
             // zoom/pan so that the image is out of view
             viewport.zoomTo(ZOOM_FACTOR * -50, true);
             viewport.panBy(new OpenSeadragon.Point(5000, 5000), null, true);
-            viewport.update();
 
             viewport.ensureVisible(true);
-            viewport.update();
             var bounds = viewport.getBounds();
             ok(bounds.getSize().x > 1 && bounds.getSize().y > 1, "Moved viewport so that image is visible.");
             start();
@@ -351,7 +342,6 @@
             for(var i = 0; i < testRects.length; i++){
                 var rect = testRects[i].times(viewport.getContainerSize());
                 viewport.fitBounds(rect, true);
-                viewport.update();
                 propEqual(
                     viewport.getBounds(),
                     rect,
@@ -383,12 +373,10 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update();
             for(var i = 0; i < testRectsFitBounds.length; i++){
                 var rect = testRectsFitBounds[i];
 
                 viewport.fitBoundsWithConstraints(rect, true);
-                viewport.update();
                 propEqual(
                     viewport.getBounds(),
                     expectedRectsFitBounds[i],
@@ -406,7 +394,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.fitHorizontally(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 new OpenSeadragon.Rect(0, 1.5, 1, 1),
@@ -423,7 +410,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.fitVertically(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 new OpenSeadragon.Rect(0.375, 0, 0.25, 0.25),
@@ -443,7 +429,6 @@
             for (var i = 0; i < testPoints.length; i++){
                 var expected = viewport.getCenter().plus(testPoints[i]);
                 viewport.panBy(testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getCenter(),
                     expected,
@@ -464,7 +449,6 @@
 
             for (var i = 0; i < testPoints.length; i++){
                 viewport.panTo(testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getCenter(),
                     testPoints[i],
@@ -485,7 +469,6 @@
 
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomBy(testZoomLevels[i], null, true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -495,7 +478,6 @@
                 // now use a ref point
                 // TODO: check the ending position due to ref point
                 viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
-                viewport.update();
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -516,7 +498,6 @@
 
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomTo(testZoomLevels[i], null, true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -526,7 +507,6 @@
                 // now use a ref point
                 // TODO: check the ending position due to ref point
                 viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -565,7 +545,6 @@
             for(var i = 0; i < testPoints.length; i++){
                 var new_size = testPoints[i].times(viewer.source.dimensions.x);
                 viewport.resize(new_size);
-                viewport.update();
                 propEqual(viewport.getContainerSize(), new_size, "Viewport resized successfully.");
             }
             start();
