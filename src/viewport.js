@@ -111,10 +111,7 @@ $.Viewport = function( options ) {
 
     }, options );
 
-    this._containerInnerSize = new $.Point(
-        Math.max(1, this.containerSize.x - (this._margins.left + this._margins.right)),
-        Math.max(1, this.containerSize.y - (this._margins.top + this._margins.bottom))
-    );
+    this._updateContainerInnerSize();
 
     this.centerSpringX = new $.Spring({
         initial: 0,
@@ -312,6 +309,34 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.containerSize.x,
             this.containerSize.y
         );
+    },
+
+    /**
+     * @function
+     * The margins push the "home" region in from the sides by the specified amounts.
+     * @returns {Object} Properties (Numbers, in screen coordinates): left, top, right, bottom.
+     */
+    getMargins: function() {
+        return $.extend({}, this._margins); // Make a copy so we are not returning our original
+    },
+
+    /**
+     * @function
+     * The margins push the "home" region in from the sides by the specified amounts.
+     * @param {Object} margins - Properties (Numbers, in screen coordinates): left, top, right, bottom.
+     */
+    setMargins: function(margins) {
+        $.console.assert($.type(margins) === 'object', '[Viewport.setMargins] margins must be an object');
+
+        this._margins = $.extend({
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0
+        }, margins);
+
+        this._updateContainerInnerSize();
+        this.viewer.forceRedraw();
     },
 
     /**
@@ -830,10 +855,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         this.containerSize.x = newContainerSize.x;
         this.containerSize.y = newContainerSize.y;
 
-        this._containerInnerSize = new $.Point(
-            Math.max(1, newContainerSize.x - (this._margins.left + this._margins.right)),
-            Math.max(1, newContainerSize.y - (this._margins.top + this._margins.bottom))
-        );
+        this._updateContainerInnerSize();
 
         if ( maintain ) {
             // TODO: widthDeltaFactor will always be 1; probably not what's intended
@@ -861,6 +883,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         }
 
         return this.fitBounds( newBounds, true );
+    },
+
+    // private
+    _updateContainerInnerSize: function() {
+        this._containerInnerSize = new $.Point(
+            Math.max(1, this.containerSize.x - (this._margins.left + this._margins.right)),
+            Math.max(1, this.containerSize.y - (this._margins.top + this._margins.bottom))
+        );
     },
 
     /**
