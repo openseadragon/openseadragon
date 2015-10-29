@@ -130,7 +130,7 @@ $.TiledImage = function( options ) {
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
-        _hasOpaqueTile: false,  // Do we have even one fully opaque tile? 
+        _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
 
         //configurable settings
         springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
@@ -502,6 +502,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._xSpring.resetTo(position.x);
             this._ySpring.resetTo(position.y);
+            this._needsDraw = true;
         } else {
             if (sameTarget) {
                 return;
@@ -509,6 +510,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._xSpring.springTo(position.x);
             this._ySpring.springTo(position.y);
+            this._needsDraw = true;
         }
 
         if (!sameTarget) {
@@ -591,6 +593,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._scaleSpring.resetTo(scale);
             this._updateForScale();
+            this._needsDraw = true;
         } else {
             if (sameTarget) {
                 return;
@@ -598,6 +601,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._scaleSpring.springTo(scale);
             this._updateForScale();
+            this._needsDraw = true;
         }
 
         if (!sameTarget) {
