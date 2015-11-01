@@ -46,6 +46,7 @@
      */
     $.ImageTileSource = function (options) {
 
+        this.options = options;
         $.TileSource.apply(this, [options]);
 
     };
@@ -64,13 +65,13 @@
         /**
          *
          * @function
-         * @param {Image} image - the actual image
+         * @param {Object} options - the options
          * @param {String} dataUrl - the url the image was retreived from, if any.
          * @return {Object} options - A dictionary of keyword arguments sufficient
          *      to configure this tile sources constructor.
          */
-        configure: function (image, dataUrl) {
-            return image;
+        configure: function (options, dataUrl) {
+            return options;
         },
         /**
          * Responsible for retrieving, and caching the
@@ -82,6 +83,13 @@
         getImageInfo: function (url) {
             var image = new Image();
             var _this = this;
+
+            if (this.options.crossOriginPolicy) {
+                image.crossOriginPolicy = this.options.crossOriginPolicy;
+            }
+            if (this.options.ajaxWithCredentials) {
+                image.useCredentials = this.options.ajaxWithCredentials;
+            }
 
             image.addEventListener('load', function () {
                 _this.width = image.naturalWidth;
