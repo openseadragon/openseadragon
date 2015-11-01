@@ -2075,14 +2075,26 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                     return;
                 }
                 var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
-                var readySource = new $TileSource( options );
-                successCallback( readySource );
+                var readySource = new $TileSource(options);
+                if (readySource.ready) {
+                    successCallback(readySource);
+                } else {
+                    readySource.addHandler('ready', function () {
+                        successCallback(readySource);
+                    });
+                    readySource.addHandler('open-failed', function (event) {
+                        failCallback({
+                            message: event.message,
+                            source: tileSource
+                        });
+                    });
+                }
             }
         } else {
             //can assume it's already a tile source implementation
             successCallback( tileSource );
         }
-    }, 1 );
+    });
 }
 
 function getOverlayObject( viewer, overlay ) {
