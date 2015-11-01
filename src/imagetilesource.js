@@ -43,6 +43,14 @@
      * @extends OpenSeadragon.TileSource
      * @param {Object} options Options object.
      * @property {String} options.url URL of the image
+     * @property {Boolean} options.buildPyramid If set to true, a pyramid will
+     * be built internally to provide a better downsampling.
+     * @property {String|Boolean} options.crossOriginPolicy Valid values are
+     * 'Anonymous', 'use-credentials', and false. If false, image requests will
+     * not use CORS preventing internal pyramid building for images from other
+     * domains.
+     * @property {String|Boolean} options.ajaxWithCredentials Whether to set the
+     * withCredentials XHR flag for AJAX requests (when loading tile sources)
      */
     $.ImageTileSource = function (options) {
 
@@ -85,7 +93,7 @@
             var _this = this;
 
             if (this.options.crossOriginPolicy) {
-                image.crossOriginPolicy = this.options.crossOriginPolicy;
+                image.crossOrigin = this.options.crossOriginPolicy;
             }
             if (this.options.ajaxWithCredentials) {
                 image.useCredentials = this.options.ajaxWithCredentials;
@@ -100,7 +108,12 @@
                 _this._tileHeight = _this.height;
                 _this.tileOverlap = 0;
                 _this.minLevel = 0;
-                _this.maxLevel = 0;
+
+                var pyramidMinWidth = _this.buildPyramid ? 1 : _this.width;
+                var pyramidMinHeight = _this.buildPyramid ? 1 : _this.height;
+
+                _this.levels = buildLevels(image, pyramidMinWidth, pyramidMinHeight);
+                _this.maxLevel = _this.levels.length - 1;
 
                 _this.ready = true;
                 /**
@@ -141,7 +154,13 @@
          * @param {Number} level
          */
         getLevelScale: function (level) {
-            return level === 0 ? 1 : NaN;
+            var levelScale = NaN;
+            if (level >= this.minLevel && level <= this.maxLevel) {
+                levelScale =
+                        this.levels[level].width /
+                        this.levels[this.maxLevel].width;
+            }
+            return levelScale;
         },
         /**
          * @function
@@ -175,8 +194,81 @@
          * @throws {Error}
          */
         getTileUrl: function (level, x, y) {
-            return this.url;
+            var url = null;
+            if (level >= this.minLevel && level <= this.maxLevel) {
+                url = this.levels[level].url;
+            }
+            return url;
         }
     });
+
+    function buildLevels(image, minWidth, minHeight) {
+        var levels = [{
+                url: image.src,
+                width: image.naturalWidth,
+                height: image.naturalHeight
+            }];
+
+        var currentWidth = Math.floor(image.naturalWidth / 2);
+        var currentHeight = Math.floor(image.naturalHeight / 2);
+
+        if (currentWidth < minWidth || currentHeight < minHeight) {
+            return levels;
+        }
+
+        var bigCanvas = document.createElement("canvas");
+        var bigContext = bigCanvas.getContext("2d");
+
+        bigCanvas.width = currentWidth;
+        bigCanvas.height = currentHeight;
+        bigContext.drawImage(image, 0, 0, currentWidth, currentHeight);
+
+        if (isCanvasTainted(bigContext)) {
+            // If the canvas is tainted, we can't compute the pyramid.
+            return levels;
+        }
+        levels.splice(0, 0, {
+            url: bigCanvas.toDataURL(),
+            width: currentWidth,
+            height: currentHeight
+        });
+
+        var smallCanvas = document.createElement("canvas");
+        var smallContext = smallCanvas.getContext("2d");
+        while (currentWidth >= minWidth * 2 && currentHeight >= minHeight * 2) {
+            currentWidth = Math.floor(currentWidth / 2);
+            currentHeight = Math.floor(currentHeight / 2);
+            smallCanvas.width = currentWidth;
+            smallCanvas.height = currentHeight;
+            smallContext.drawImage(bigCanvas, 0, 0, currentWidth, currentHeight);
+
+            levels.splice(0, 0, {
+                url: smallCanvas.toDataURL(),
+                width: currentWidth,
+                height: currentHeight
+            });
+
+            var tempCanvas = bigCanvas;
+            bigCanvas = smallCanvas;
+            smallCanvas = tempCanvas;
+
+            var tempContext = bigContext;
+            bigContext = smallContext;
+            smallContext = tempContext;
+        }
+        return levels;
+    }
+
+    function isCanvasTainted(context) {
+        var isTainted = false;
+        try {
+            // We test if the canvas is tainted by retrieving data from it.
+            // An exception will be raised if the canvas is tainted.
+            var data = context.getImageData(0, 0, 1, 1);
+        } catch (e) {
+            isTainted = true;
+        }
+        return isTainted;
+    }
 
 }(OpenSeadragon));
