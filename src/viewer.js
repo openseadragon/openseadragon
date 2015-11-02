@@ -2047,6 +2047,7 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                 url: tileSource,
                 crossOriginPolicy: viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
+                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -2061,6 +2062,9 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
+            }
+            if (tileSource.useCanvas === undefined) {
+                tileSource.useCanvas = viewer.useCanvas;
             }
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {
