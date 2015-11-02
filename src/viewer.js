@@ -2783,11 +2783,13 @@ function onCanvasScroll( event ) {
             shift: event.shift,
             originalEvent: event.originalEvent
         });
+        if (gestureSettings && gestureSettings.scrollToZoom) {
+            //cancels event
+            return false;
+        }
     }
-
-    if (gestureSettings && gestureSettings.scrollToZoom) {
-        //cancels event
-        return false;
+    else {
+        return false;   // We are swallowing this event
     }
 }
 
