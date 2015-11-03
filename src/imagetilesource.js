@@ -234,12 +234,8 @@
                 return levels;
             }
 
-            var currentWidth = Math.floor(image.naturalWidth / 2);
-            var currentHeight = Math.floor(image.naturalHeight / 2);
-
-            if (currentWidth < minWidth || currentHeight < minHeight) {
-                return levels;
-            }
+            var currentWidth = image.naturalWidth;
+            var currentHeight = image.naturalHeight;
 
             var bigCanvas = document.createElement("canvas");
             var bigContext = bigCanvas.getContext("2d");
@@ -247,16 +243,12 @@
             bigCanvas.width = currentWidth;
             bigCanvas.height = currentHeight;
             bigContext.drawImage(image, 0, 0, currentWidth, currentHeight);
+            levels[0].context2D = bigContext;
 
             if ($.isCanvasTainted(bigContext.canvas)) {
                 // If the canvas is tainted, we can't compute the pyramid.
                 return levels;
             }
-            levels.splice(0, 0, {
-                context2D: bigContext,
-                width: currentWidth,
-                height: currentHeight
-            });
 
             while (currentWidth >= minWidth * 2 && currentHeight >= minHeight * 2) {
                 currentWidth = Math.floor(currentWidth / 2);
