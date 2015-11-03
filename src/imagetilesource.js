@@ -206,6 +206,20 @@
             return url;
         },
         /**
+         * Retrieves a tile context 2D
+         * @function
+         * @param {Number} level Level of the tile
+         * @param {Number} x x coordinate of the tile
+         * @param {Number} y y coordinate of the tile
+         */
+        getContext2D: function (level, x, y) {
+            var context = null;
+            if (level >= this.minLevel && level <= this.maxLevel) {
+                context = this.levels[level].context2D;
+            }
+            return context;
+        },
+        /**
          * @private Build the differents levels of the pyramid if possible
          * (canvas API enabled and no canvas tainting issue)
          */
@@ -239,33 +253,28 @@
                 return levels;
             }
             levels.splice(0, 0, {
-                url: bigCanvas.toDataURL(),
+                context2D: bigContext,
                 width: currentWidth,
                 height: currentHeight
             });
 
-            var smallCanvas = document.createElement("canvas");
-            var smallContext = smallCanvas.getContext("2d");
             while (currentWidth >= minWidth * 2 && currentHeight >= minHeight * 2) {
                 currentWidth = Math.floor(currentWidth / 2);
                 currentHeight = Math.floor(currentHeight / 2);
+                var smallCanvas = document.createElement("canvas");
+                var smallContext = smallCanvas.getContext("2d");
                 smallCanvas.width = currentWidth;
                 smallCanvas.height = currentHeight;
                 smallContext.drawImage(bigCanvas, 0, 0, currentWidth, currentHeight);
 
                 levels.splice(0, 0, {
-                    url: smallCanvas.toDataURL(),
+                    context2D: smallContext,
                     width: currentWidth,
                     height: currentHeight
                 });
 
-                var tempCanvas = bigCanvas;
                 bigCanvas = smallCanvas;
-                smallCanvas = tempCanvas;
-
-                var tempContext = bigContext;
                 bigContext = smallContext;
-                smallContext = tempContext;
             }
             return levels;
         }
