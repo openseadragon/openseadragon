@@ -36,6 +36,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue with TiledImage setPosition/setWidth/setHeight not reliably triggering a redraw (#720)
 * You can now change viewport margins after the viewer is created (#721)
 * Fixed zooming in with plus key on a Swedish keyboard (#763)
+* Added a patch to help slow down the scroll devices that fire too fast (#754)
 
 2.0.0:
 
