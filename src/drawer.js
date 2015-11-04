@@ -290,8 +290,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * drawingHandler({context, tile, rendered})
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      * where <code>rendered</code> is the context with the pre-drawn image.
+     * @param {Float} scale - Apply a scale to tile position and size
      */
-    drawTile: function( tile, drawingHandler, useSketch ) {
+    drawTile: function( tile, drawingHandler, useSketch, scale ) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
@@ -301,10 +302,10 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             // specifically, don't save,rotate,restore every time we draw a tile
             if( this.viewport.degrees !== 0 ) {
                 this._offsetForRotation( tile, this.viewport.degrees, useSketch );
-                tile.drawCanvas( context, drawingHandler );
+                tile.drawCanvas( context, drawingHandler, scale );
                 this._restoreRotationChanges( tile, useSketch );
             } else {
-                tile.drawCanvas( context, drawingHandler );
+                tile.drawCanvas( context, drawingHandler, scale );
             }
         } else {
             tile.drawHTML( this.canvas );
@@ -371,16 +372,29 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     /**
      * Blends the sketch canvas in the main canvas.
      * @param {Float} opacity The opacity of the blending.
+     * @param {Float} sketchScale The scale at which tiles were drawn on the sketch. Default is 1.
+     *   Use sketchScale to draw at a lower scale and then enlarge onto the main canvas.
      * @returns {undefined}
      */
-    blendSketch: function(opacity) {
+    blendSketch: function(opacity, sketchScale) {
         if (!this.useCanvas || !this.sketchCanvas) {
             return;
         }
+        sketchScale = sketchScale || 1;
 
         this.context.save();
         this.context.globalAlpha = opacity;
-        this.context.drawImage(this.sketchCanvas, 0, 0);
+        this.context.drawImage(
+            this.sketchCanvas,
+            0,
+            0,
+            this.sketchCanvas.width * sketchScale,
+            this.sketchCanvas.height * sketchScale,
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height
+        );
         this.context.restore();
     },
 

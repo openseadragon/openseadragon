@@ -133,19 +133,20 @@ $.TiledImage = function( options ) {
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
 
         //configurable settings
-        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:        $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:            $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:            $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:              $.DEFAULT_SETTINGS.opacity
+        springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:          $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:      $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:         $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:           $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:        $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:              $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
+        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        debugMode:              $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:                $.DEFAULT_SETTINGS.opacity
 
     }, options );
 
@@ -1302,6 +1303,19 @@ function drawTiles( tiledImage, lastDrawn ) {
         return;
     }
     var useSketch = tiledImage.opacity < 1;
+    var sketchScale = 1;
+
+    var zoom = tiledImage.viewport.getZoom();
+    var imageZoom = tiledImage.viewportToImageZoom(zoom);
+    if ( imageZoom > tiledImage.smoothTileEdgesMinZoom ) {
+        // When zoomed in a lot (>100%) the tile edges are visible.
+        // So we have to composite them at ~100% and scale them up together.
+        useSketch = true;
+        // Compositing at 100% is not precise and causes weird twithing.
+        // So we composite at 101% zoom
+        sketchScale = 1.01 / imageZoom;
+    }
+
     if ( useSketch ) {
         tiledImage._drawer._clear( true );
     }
@@ -1333,7 +1347,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
@@ -1360,7 +1374,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity );
+        tiledImage._drawer.blendSketch( tiledImage.opacity, sketchScale );
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

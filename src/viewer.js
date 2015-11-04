@@ -604,7 +604,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             var originalSuccess = options.success;
             options.success = function(event) {
                 successes++;
-                
+
                 // TODO: now that options has other things besides tileSource, the overlays
                 // should probably be at the options level, not the tileSource level.
                 if (options.tileSource.overlays) {
@@ -1342,6 +1342,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     blendTime: _this.blendTime,
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
+                    smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     crossOriginPolicy: _this.crossOriginPolicy,
                     debugMode: _this.debugMode
                 });

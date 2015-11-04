@@ -240,11 +240,12 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * @param {Function} drawingHandler - Method for firing the drawing event.
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
+     * @param {Number} scale - Apply a scale to position and size
      */
-    drawCanvas: function( context, drawingHandler ) {
+    drawCanvas: function( context, drawingHandler, scale ) {
 
-        var position = this.position,
-            size     = this.size,
+        var position = this.position.times($.pixelDensityRatio),
+            size     = this.size.times($.pixelDensityRatio),
             rendered;
 
         if (!this.cacheImageRecord) {
@@ -277,10 +278,10 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                (position.x * $.pixelDensityRatio)+1,
-                (position.y * $.pixelDensityRatio)+1,
-                (size.x * $.pixelDensityRatio)-2,
-                (size.y * $.pixelDensityRatio)-2
+                position.x + 1,
+                position.y + 1,
+                size.x - 2,
+                size.y - 2
             );
 
         }
@@ -289,16 +290,52 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
+        if (typeof scale === 'number' && scale !== 1) {
+            // draw tile at a different scale
+            position = position.times(scale);
+            size = size.times(scale);
+
+            if (scale < 1 && $.Browser.vendor == $.BROWSERS.FIREFOX) {
+                // In firefox edges are very visible because there seems to be
+                // empty space between tiles caused by float coordinates.
+                // Adding partial overlap fixes this.
+                // These will be covered by the top and left tiles.
+                context.drawImage( // duplicate first column to the left
+                    rendered.canvas,
+                    0,
+                    0,
+                    1,
+                    rendered.canvas.height,
+                    Math.floor(position.x),
+                    position.y,
+                    1,
+                    size.y
+                );
+                context.drawImage( // duplicate first row up
+                    rendered.canvas,
+                    0,
+                    0,
+                    rendered.canvas.width,
+                    1,
+                    position.x,
+                    Math.floor(position.y),
+                    size.x,
+                    1
+                );
+            }
+        }
+
+        // context.globalCompositeOperation = 'source-out';
         context.drawImage(
             rendered.canvas,
             0,
             0,
             rendered.canvas.width,
             rendered.canvas.height,
-            position.x * $.pixelDensityRatio,
-            position.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio
+            position.x,
+            position.y,
+            size.x,
+            size.y
         );
 
         context.restore();
