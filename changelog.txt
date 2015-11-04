@@ -35,6 +35,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue in iOS devices that would cause all touch events to fail after a Multitasking Gesture was triggered (#744)
 * Fixed an issue with TiledImage setPosition/setWidth/setHeight not reliably triggering a redraw (#720)
 * You can now change viewport margins after the viewer is created (#721)
+* Fixed zooming in with plus key on a Swedish keyboard (#763)
 
 2.0.0:
 
