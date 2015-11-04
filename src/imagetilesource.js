@@ -36,31 +36,30 @@
 
     /**
      * @class ImageTileSource
-     * @classdesc The ImageTileSource allows simple image to be loaded
+     * @classdesc The ImageTileSource allows a simple image to be loaded
      * into an OpenSeadragon Viewer.
      *
      * @memberof OpenSeadragon
      * @extends OpenSeadragon.TileSource
      * @param {Object} options Options object.
-     * @property {String} options.url URL of the image
-     * @property {Boolean} options.buildPyramid If set to true (default), a
+     * @param {String} options.url URL of the image
+     * @param {Boolean} [options.buildPyramid=true] If set to true (default), a
      * pyramid will be built internally to provide a better downsampling.
-     * @property {String|Boolean} options.crossOriginPolicy Valid values are
+     * @param {String|Boolean} options.crossOriginPolicy Valid values are
      * 'Anonymous', 'use-credentials', and false. If false, image requests will
      * not use CORS preventing internal pyramid building for images from other
-     * domains.
-     * @property {String|Boolean} options.ajaxWithCredentials Whether to set the
-     * withCredentials XHR flag for AJAX requests (when loading tile sources)
-     * @property {Boolean} options.useCanvas Set to false to prevent any use of
-     * the canvas API.
+     * domains. Inherited from the viewer if not set.
+     * @param {String|Boolean} options.ajaxWithCredentials Whether to set the
+     * withCredentials XHR flag for AJAX requests (when loading tile sources).
+     * Inherited from the viewer if not set.
+     * @param {Boolean} options.useCanvas Set to false to prevent any use of
+     * the canvas API. Inherited from the viewer if not set.
      */
     $.ImageTileSource = function (options) {
 
-        $.extend(options, {
-            buildPyramid: true,
-            useCanvas: true
-        });
-        this.options = options;
+        options = $.extend({
+            buildPyramid: true
+        }, options);
         $.TileSource.apply(this, [options]);
 
     };
@@ -98,11 +97,11 @@
             var image = new Image();
             var _this = this;
 
-            if (this.options.crossOriginPolicy) {
-                image.crossOrigin = this.options.crossOriginPolicy;
+            if (this.crossOriginPolicy) {
+                image.crossOrigin = this.crossOriginPolicy;
             }
-            if (this.options.ajaxWithCredentials) {
-                image.useCredentials = this.options.ajaxWithCredentials;
+            if (this.ajaxWithCredentials) {
+                image.useCredentials = this.ajaxWithCredentials;
             }
 
             $.addEvent(image, 'load', function () {
@@ -114,12 +113,7 @@
                 _this._tileHeight = _this.height;
                 _this.tileOverlap = 0;
                 _this.minLevel = 0;
-
-                var pyramidMinWidth = _this.buildPyramid ? 1 : _this.width;
-                var pyramidMinHeight = _this.buildPyramid ? 1 : _this.height;
-
-                _this.levels = _this._buildLevels(
-                        image, pyramidMinWidth, pyramidMinHeight);
+                _this.levels = _this._buildLevels(image);
                 _this.maxLevel = _this.levels.length - 1;
 
                 _this.ready = true;
@@ -223,14 +217,14 @@
          * @private Build the differents levels of the pyramid if possible
          * (canvas API enabled and no canvas tainting issue)
          */
-        _buildLevels: function (image, minWidth, minHeight) {
+        _buildLevels: function (image) {
             var levels = [{
                     url: image.src,
                     width: image.naturalWidth,
                     height: image.naturalHeight
                 }];
 
-            if (!$.supportsCanvas || !this.useCanvas) {
+            if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
                 return levels;
             }
 
@@ -243,14 +237,19 @@
             bigCanvas.width = currentWidth;
             bigCanvas.height = currentHeight;
             bigContext.drawImage(image, 0, 0, currentWidth, currentHeight);
+            // We cache the context of the highest level because the browser
+            // is a lot faster at downsampling something it already has
+            // downsampled before.
             levels[0].context2D = bigContext;
 
-            if ($.isCanvasTainted(bigContext.canvas)) {
+            if ($.isCanvasTainted(bigCanvas)) {
                 // If the canvas is tainted, we can't compute the pyramid.
                 return levels;
             }
 
-            while (currentWidth >= minWidth * 2 && currentHeight >= minHeight * 2) {
+            // We build smaller levels until either width or height becomes
+            // 1 pixel wide.
+            while (currentWidth >= 2 && currentHeight >= 2) {
                 currentWidth = Math.floor(currentWidth / 2);
                 currentHeight = Math.floor(currentHeight / 2);
                 var smallCanvas = document.createElement("canvas");
