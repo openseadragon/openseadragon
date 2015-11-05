@@ -202,6 +202,21 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     },
 
     /**
+    * Translate/move this Rect by a vector and return new Rect.
+    * @function
+    * @param {OpenSeadragon.Point} delta The translation vector.
+    * @returns {OpenSeadragon.Rect} A new rect with altered position
+    */
+    translate: function( delta ) {
+        return new OpenSeadragon.Rect(
+            this.x + delta.x,
+            this.y + delta.y,
+            this.width,
+            this.height
+        );
+    },
+
+    /**
      * Returns the smallest rectangle that will contain this and the given rectangle.
      * @param {OpenSeadragon.Rect} rect
      * @return {OpenSeadragon.Rect} The new rectangle.

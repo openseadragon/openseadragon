@@ -1327,6 +1327,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
+        if (sketchScale) {
+            clipRect = clipRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            clipRect = clipRect.translate(sketchTranslate);
+        }
         tiledImage._drawer.setClip(clipRect, useSketch);
 
         usedClip = true;
@@ -1334,6 +1340,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
+        if (sketchScale) {
+            placeholderRect = placeholderRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            placeholderRect = placeholderRect.translate(sketchTranslate);
+        }
 
         var fillStyle = null;
         if ( typeof tiledImage.placeholderFillStyle === "function" ) {
