@@ -64,6 +64,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
@@ -1296,24 +1297,24 @@ function compareTiles( previousBest, tile ) {
 
 function drawTiles( tiledImage, lastDrawn ) {
     var i,
-        tile;
+        tile = lastDrawn[0];
 
     if ( tiledImage.opacity <= 0 ) {
         drawDebugInfo( tiledImage, lastDrawn );
         return;
     }
     var useSketch = tiledImage.opacity < 1;
-    var sketchScale = 1;
+    var sketchScale;
+    var sketchTranslate;
 
-    var zoom = tiledImage.viewport.getZoom();
+    var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    if ( imageZoom > tiledImage.smoothTileEdgesMinZoom ) {
+    if ( imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         useSketch = true;
-        // Compositing at 100% is not precise and causes weird twithing.
-        // So we composite at 101% zoom
-        sketchScale = 1.01 / imageZoom;
+        sketchScale = tile.getScaleForEdgeSmoothing();
+        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale);
     }
 
     if ( useSketch ) {
@@ -1347,7 +1348,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
@@ -1374,7 +1375,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity, sketchScale );
+        tiledImage._drawer.blendSketch( tiledImage.opacity, sketchScale, sketchTranslate );
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

@@ -250,9 +250,9 @@
   *     availble on the viewing device.
   *
   * @property {Number} [smoothTileEdgesMinZoom=1.1]
-  *     A zoom percentage ( expressed as a number between 0 and 1 ) of the highest
-  *     resolution level. When zoomed in beyond this value alternative compositing will
-  *     be used to smooth out the edges between tiles. This WILL have a performance impact.
+  *     A zoom percentage ( where 1 is 100% ) of the highest resolution level.
+  *     When zoomed in beyond this value alternative compositing will be used to
+  *     smooth out the edges between tiles. This will have a performance impact.
   *
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.

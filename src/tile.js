@@ -241,8 +241,9 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Number} scale - Apply a scale to position and size
+     * @param {OpenSeadragon.Point} translate - A translation vector
      */
-    drawCanvas: function( context, drawingHandler, scale ) {
+    drawCanvas: function( context, drawingHandler, scale, translate ) {
 
         var position = this.position.times($.pixelDensityRatio),
             size     = this.size.times($.pixelDensityRatio),
@@ -294,38 +295,13 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             // draw tile at a different scale
             position = position.times(scale);
             size = size.times(scale);
-
-            if (scale < 1 && $.Browser.vendor == $.BROWSERS.FIREFOX) {
-                // In firefox edges are very visible because there seems to be
-                // empty space between tiles caused by float coordinates.
-                // Adding partial overlap fixes this.
-                // These will be covered by the top and left tiles.
-                context.drawImage( // duplicate first column to the left
-                    rendered.canvas,
-                    0,
-                    0,
-                    1,
-                    rendered.canvas.height,
-                    Math.floor(position.x),
-                    position.y,
-                    1,
-                    size.y
-                );
-                context.drawImage( // duplicate first row up
-                    rendered.canvas,
-                    0,
-                    0,
-                    rendered.canvas.width,
-                    1,
-                    position.x,
-                    Math.floor(position.y),
-                    size.x,
-                    1
-                );
-            }
         }
 
-        // context.globalCompositeOperation = 'source-out';
+        if (translate instanceof $.Point) {
+            // shift tile position slightly
+            position = position.plus(translate);
+        }
+
         context.drawImage(
             rendered.canvas,
             0,
@@ -339,6 +315,43 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         );
 
         context.restore();
+    },
+
+    /**
+     * Get the ratio between current and original size.
+     * @function
+     * @return {Float}
+     */
+    getScaleForEdgeSmoothing: function() {
+        if (!this.cacheImageRecord) {
+            $.console.warn(
+                '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
+                this.toString());
+            return 1;
+        }
+
+        var rendered = this.cacheImageRecord.getRenderedContext();
+        return rendered.canvas.width / this.size.times($.pixelDensityRatio).x;
+    },
+
+    /**
+     * Get a translation vector that when applied to the tile position produces integer coordinates.
+     * Needed to avoid swimming and twitching.
+     * @function
+     * @param {Number} scale - Scale to be applied to position. Defaults to 1.
+     * @return {OpenSeadragon.Point}
+     */
+    getTranslationForEdgeSmoothing: function(scale) {
+        // The translation vector must have positive values, otherwise the image goes a bit off
+        // the sketch canvas to the top and left and we must use negative coordinates to repaint it
+        // to the main canvas. And FF does not like it. It crashes the viewer.
+        return new $.Point(1, 1).minus(
+            this.position
+                .times(scale || 1)
+                .apply(function(x) {
+                    return x % 1;
+                })
+        );
     },
 
     /**
