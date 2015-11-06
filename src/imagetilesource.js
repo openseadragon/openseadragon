@@ -103,7 +103,7 @@
          * @throws {Error}
          */
         getImageInfo: function (url) {
-            var image = new Image();
+            var image = this.image = new Image();
             var _this = this;
 
             if (this.crossOriginPolicy) {
@@ -122,7 +122,7 @@
                 _this._tileHeight = _this.height;
                 _this.tileOverlap = 0;
                 _this.minLevel = 0;
-                _this.levels = _this._buildLevels(image);
+                _this.levels = _this._buildLevels();
                 _this.maxLevel = _this.levels.length - 1;
 
                 _this.ready = true;
@@ -226,30 +226,34 @@
          * @private Build the differents levels of the pyramid if possible
          * (canvas API enabled and no canvas tainting issue)
          */
-        _buildLevels: function (image) {
+        _buildLevels: function () {
             var levels = [{
-                    url: image.src,
-                    width: image.naturalWidth,
-                    height: image.naturalHeight
+                    url: this.image.src,
+                    width: this.image.naturalWidth,
+                    height: this.image.naturalHeight
                 }];
 
             if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
+                // We don't need the image anymore. Allows it to be GC.
+                delete this.image;
                 return levels;
             }
 
-            var currentWidth = image.naturalWidth;
-            var currentHeight = image.naturalHeight;
+            var currentWidth = this.image.naturalWidth;
+            var currentHeight = this.image.naturalHeight;
 
             var bigCanvas = document.createElement("canvas");
             var bigContext = bigCanvas.getContext("2d");
 
             bigCanvas.width = currentWidth;
             bigCanvas.height = currentHeight;
-            bigContext.drawImage(image, 0, 0, currentWidth, currentHeight);
+            bigContext.drawImage(this.image, 0, 0, currentWidth, currentHeight);
             // We cache the context of the highest level because the browser
             // is a lot faster at downsampling something it already has
             // downsampled before.
             levels[0].context2D = bigContext;
+            // We don't need the image anymore. Allows it to be GC.
+            delete this.image;
 
             if ($.isCanvasTainted(bigCanvas)) {
                 // If the canvas is tainted, we can't compute the pyramid.
