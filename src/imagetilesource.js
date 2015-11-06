@@ -38,6 +38,13 @@
      * @class ImageTileSource
      * @classdesc The ImageTileSource allows a simple image to be loaded
      * into an OpenSeadragon Viewer.
+     * There are 2 ways to open an ImageTileSource:
+     * 1. viewer.open({type: 'image', url: fooUrl});
+     * 2. viewer.open(new OpenSeadragon.ImageTileSource({url: fooUrl}));
+     *
+     * With the first syntax, the crossOriginPolicy, ajaxWithCredentials and
+     * useCanvas options are inherited from the viewer if they are not
+     * specified directly in the options object.
      *
      * @memberof OpenSeadragon
      * @extends OpenSeadragon.TileSource
@@ -45,20 +52,22 @@
      * @param {String} options.url URL of the image
      * @param {Boolean} [options.buildPyramid=true] If set to true (default), a
      * pyramid will be built internally to provide a better downsampling.
-     * @param {String|Boolean} options.crossOriginPolicy Valid values are
+     * @param {String|Boolean} [options.crossOriginPolicy=false] Valid values are
      * 'Anonymous', 'use-credentials', and false. If false, image requests will
      * not use CORS preventing internal pyramid building for images from other
-     * domains. Inherited from the viewer if not set.
-     * @param {String|Boolean} options.ajaxWithCredentials Whether to set the
-     * withCredentials XHR flag for AJAX requests (when loading tile sources).
-     * Inherited from the viewer if not set.
-     * @param {Boolean} options.useCanvas Set to false to prevent any use of
-     * the canvas API. Inherited from the viewer if not set.
+     * domains.
+     * @param {String|Boolean} [options.ajaxWithCredentials=false] Whether to set
+     * the withCredentials XHR flag for AJAX requests (when loading tile sources).
+     * @param {Boolean} [options.useCanvas=true] Set to false to prevent any use
+     * of the canvas API.
      */
     $.ImageTileSource = function (options) {
 
         options = $.extend({
-            buildPyramid: true
+            buildPyramid: true,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            useCanvas: true
         }, options);
         $.TileSource.apply(this, [options]);
 

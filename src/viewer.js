@@ -2040,6 +2040,22 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
         }
     }
 
+    function waitUntilReady(tileSource, originalTileSource) {
+        if (tileSource.ready) {
+            successCallback(tileSource);
+        } else {
+            tileSource.addHandler('ready', function () {
+                successCallback(tileSource);
+            });
+            tileSource.addHandler('open-failed', function (event) {
+                failCallback({
+                    message: event.message,
+                    source: originalTileSource
+                });
+            });
+        }
+    }
+
     setTimeout( function() {
         if ( $.type( tileSource ) == 'string' ) {
             //If its still a string it means it must be a url at this point
@@ -2083,24 +2099,11 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                     return;
                 }
                 var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
-                var readySource = new $TileSource(options);
-                if (readySource.ready) {
-                    successCallback(readySource);
-                } else {
-                    readySource.addHandler('ready', function () {
-                        successCallback(readySource);
-                    });
-                    readySource.addHandler('open-failed', function (event) {
-                        failCallback({
-                            message: event.message,
-                            source: tileSource
-                        });
-                    });
-                }
+                waitUntilReady(new $TileSource(options), tileSource);
             }
         } else {
             //can assume it's already a tile source implementation
-            successCallback( tileSource );
+            waitUntilReady(tileSource, tileSource);
         }
     });
 }
