@@ -240,8 +240,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * @param {Function} drawingHandler - Method for firing the drawing event.
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Number} scale - Apply a scale to position and size
-     * @param {OpenSeadragon.Point} translate - A translation vector
+     * @param {Number} [scale=1] - Apply a scale to position and size
+     * @param {OpenSeadragon.Point} [translate] - A translation vector
      */
     drawCanvas: function( context, drawingHandler, scale, translate ) {
 
@@ -338,7 +338,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * Get a translation vector that when applied to the tile position produces integer coordinates.
      * Needed to avoid swimming and twitching.
      * @function
-     * @param {Number} scale - Scale to be applied to position. Defaults to 1.
+     * @param {Number} [scale=1] - Scale to be applied to position.
      * @return {OpenSeadragon.Point}
      */
     getTranslationForEdgeSmoothing: function(scale) {

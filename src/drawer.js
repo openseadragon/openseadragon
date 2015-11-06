@@ -290,8 +290,8 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * drawingHandler({context, tile, rendered})
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Float} scale - Apply a scale to tile position and size. Defaults to 1.
-     * @param {OpenSeadragon.Point} translate Optional. A translation vector to offset tile position
+     * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
+     * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
      */
     drawTile: function( tile, drawingHandler, useSketch, scale, translate ) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
@@ -374,9 +374,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     /**
      * Blends the sketch canvas in the main canvas.
      * @param {Float} opacity The opacity of the blending.
-     * @param {Float} scale The scale at which tiles were drawn on the sketch. Default is 1.
+     * @param {Float} [scale=1] The scale at which tiles were drawn on the sketch. Default is 1.
      *   Use scale to draw at a lower scale and then enlarge onto the main canvas.
-     * @param {OpenSeadragon.Point} translate A translation vector that was used to draw the tiles
+     * @param OpenSeadragon.Point} [translate] A translation vector that was used to draw the tiles
      * @returns {undefined}
      */
     blendSketch: function(opacity, scale, translate) {
