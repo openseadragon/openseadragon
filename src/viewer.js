@@ -2101,6 +2101,8 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                 var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
                 waitUntilReady(new $TileSource(options), tileSource);
             }
+        } else if ($.isArray(tileSource)) {
+            successCallback(tileSource);
         } else {
             //can assume it's already a tile source implementation
             waitUntilReady(tileSource, tileSource);
