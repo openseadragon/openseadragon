@@ -1286,18 +1286,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
 
+        if ($.isArray(options.tileSource)) {
+            setTimeout(function() {
+                raiseAddItemFailed({
+                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
+                    source: options.tileSource,
+                    options: options
+                });
+            });
+            return;
+        }
+
         this._loadQueue.push(myQueueItem);
 
         getTileSourceImplementation( this, options.tileSource, function( tileSource ) {
-
-            if ( tileSource instanceof Array ) {
-                raiseAddItemFailed({
-                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
-                    source: tileSource,
-                    options: options
-                });
-                return;
-            }
 
             myQueueItem.tileSource = tileSource;
 
@@ -2101,8 +2103,6 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                 var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
                 waitUntilReady(new $TileSource(options), tileSource);
             }
-        } else if ($.isArray(tileSource)) {
-            successCallback(tileSource);
         } else {
             //can assume it's already a tile source implementation
             waitUntilReady(tileSource, tileSource);
