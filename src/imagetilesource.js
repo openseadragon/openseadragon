@@ -103,7 +103,7 @@
          * @throws {Error}
          */
         getImageInfo: function (url) {
-            var image = this.image = new Image();
+            var image = this._image = new Image();
             var _this = this;
 
             if (this.crossOriginPolicy) {
@@ -228,32 +228,32 @@
          */
         _buildLevels: function () {
             var levels = [{
-                    url: this.image.src,
-                    width: this.image.naturalWidth,
-                    height: this.image.naturalHeight
+                    url: this._image.src,
+                    width: this._image.naturalWidth,
+                    height: this._image.naturalHeight
                 }];
 
             if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
                 // We don't need the image anymore. Allows it to be GC.
-                delete this.image;
+                delete this._image;
                 return levels;
             }
 
-            var currentWidth = this.image.naturalWidth;
-            var currentHeight = this.image.naturalHeight;
+            var currentWidth = this._image.naturalWidth;
+            var currentHeight = this._image.naturalHeight;
 
             var bigCanvas = document.createElement("canvas");
             var bigContext = bigCanvas.getContext("2d");
 
             bigCanvas.width = currentWidth;
             bigCanvas.height = currentHeight;
-            bigContext.drawImage(this.image, 0, 0, currentWidth, currentHeight);
+            bigContext.drawImage(this._image, 0, 0, currentWidth, currentHeight);
             // We cache the context of the highest level because the browser
             // is a lot faster at downsampling something it already has
             // downsampled before.
             levels[0].context2D = bigContext;
             // We don't need the image anymore. Allows it to be GC.
-            delete this.image;
+            delete this._image;
 
             if ($.isCanvasTainted(bigCanvas)) {
                 // If the canvas is tainted, we can't compute the pyramid.
