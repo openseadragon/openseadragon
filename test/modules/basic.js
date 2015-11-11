@@ -314,21 +314,9 @@
             var canvas = document.createElement("canvas");
             var ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0);
-            callback(!isCanvasTainted(ctx));
+            callback(!OpenSeadragon.isCanvasTainted(canvas));
         };
         img.src = corsImg;
-    }
-
-    function isCanvasTainted(context) {
-        var isTainted = false;
-        try {
-            // We test if the canvas is tainted by retrieving data from it.
-            // An exception will be raised if the canvas is tainted.
-            var url = context.getImageData(0, 0, 1, 1);
-        } catch (e) {
-            isTainted = true;
-        }
-        return isTainted;
     }
 
     asyncTest( 'CrossOriginPolicyMissing', function () {
@@ -343,7 +331,8 @@
                 } ]
         } );
         viewer.addHandler('tile-drawn', function() {
-            ok(isCanvasTainted(viewer.drawer.context), "Canvas should be tainted.");
+            ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                "Canvas should be tainted.");
             start();
         });
 
@@ -366,7 +355,8 @@
                         } ]
                 } );
                 viewer.addHandler('tile-drawn', function() {
-                    ok(!isCanvasTainted(viewer.drawer.context), "Canvas should not be tainted.");
+                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should not be tainted.");
                     start();
                 });
             }

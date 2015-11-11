@@ -795,7 +795,7 @@ function updateViewport( tiledImage ) {
     drawTiles( tiledImage, tiledImage.lastDrawn );
 
     // Load the new 'best' tile
-    if ( best ) {
+    if (best && !best.context2D) {
         loadTile( tiledImage, best, currentTime );
     }
 
@@ -940,10 +940,14 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     );
 
     if (!tile.loaded) {
-        var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
-        if (imageRecord) {
-            var image = imageRecord.getImage();
-            setTileLoaded(tiledImage, tile, image);
+        if (tile.context2D) {
+            setTileLoaded(tiledImage, tile);
+        } else {
+            var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+            if (imageRecord) {
+                var image = imageRecord.getImage();
+                setTileLoaded(tiledImage, tile, image);
+            }
         }
     }
 
@@ -976,6 +980,7 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds,
         exists,
         url,
+        context2D,
         tile;
 
     if ( !tilesMatrix[ level ] ) {
@@ -991,6 +996,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+        context2D = tileSource.getContext2D ?
+            tileSource.getContext2D(level, xMod, yMod) : undefined;
 
         bounds.x += ( x - xMod ) / numTiles.x;
         bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
@@ -1001,7 +1008,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
             y,
             bounds,
             exists,
-            url
+            url,
+            context2D
         );
     }
 
@@ -1080,12 +1088,14 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
         if (increment === 0) {
             tile.loading = false;
             tile.loaded = true;
-            tiledImage._tileCache.cacheTile({
-                image: image,
-                tile: tile,
-                cutoff: cutoff,
-                tiledImage: tiledImage
-            });
+            if (!tile.context2D) {
+                tiledImage._tileCache.cacheTile({
+                    image: image,
+                    tile: tile,
+                    cutoff: cutoff,
+                    tiledImage: tiledImage
+                });
+            }
             tiledImage._needsDraw = true;
         }
     }
