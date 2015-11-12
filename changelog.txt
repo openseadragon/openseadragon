@@ -1,7 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.1.0: (in progress)
+2.1.0:
+
 * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
 * BREAKING CHANGE: TileSource.tileSize no longer exists; use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
 * DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext
