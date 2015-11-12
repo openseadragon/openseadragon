@@ -222,10 +222,11 @@
             }
             return context;
         },
-        /**
-         * @private Build the differents levels of the pyramid if possible
-         * (canvas API enabled and no canvas tainting issue)
-         */
+
+        // private
+        //
+        // Builds the differents levels of the pyramid if possible
+        // (i.e. if canvas API enabled and no canvas tainting issue).
         _buildLevels: function () {
             var levels = [{
                     url: this._image.src,
