@@ -801,7 +801,6 @@
     });
 
     asyncTest('Item positions including collection mode', function() {
-        var navAddCount = 0;
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -815,16 +814,16 @@
         var openHandler = function() {
             viewer.removeHandler('open', openHandler);
             viewer.navigator.world.addHandler('add-item', navOpenHandler);
+            // The navigator may already have added the items.
+            navOpenHandler();
         };
 
         var navOpenHandler = function(event) {
-            navAddCount++;
-            if (navAddCount === 2) {
+            if (viewer.navigator.world.getItemCount() === 2) {
                 viewer.navigator.world.removeHandler('add-item', navOpenHandler);
 
                 setTimeout(function() {
                     // Test initial formation
-                    equal(viewer.navigator.world.getItemCount(), 2, 'navigator has both items');
                     for (var i = 0; i < 2; i++) {
                         propEqual(viewer.navigator.world.getItemAt(i).getBounds(),
                             viewer.world.getItemAt(i).getBounds(), 'bounds are the same');

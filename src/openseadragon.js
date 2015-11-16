@@ -260,6 +260,11 @@
   * @property {Boolean} [preserveImageSizeOnResize=false]
   *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
+  * @property {Number} [minScrollDeltaTime=50]
+  *     Number of milliseconds between canvas-scroll events. This value helps normalize the rate of canvas-scroll
+  *     events between different devices, causing the faster devices to slow down enough to make the zoom control
+  *     more manageable.
+  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -845,6 +850,23 @@ if (typeof define === 'function' && define.amd) {
     }());
 
     /**
+     * Test whether the submitted canvas is tainted or not.
+     * @argument {Canvas} canvas The canvas to test.
+     * @returns {Boolean} True if the canvas is tainted.
+     */
+    $.isCanvasTainted = function(canvas) {
+        var isTainted = false;
+        try {
+            // We test if the canvas is tainted by retrieving data from it.
+            // An exception will be raised if the canvas is tainted.
+            var data = canvas.getContext('2d').getImageData(0, 0, 1, 1);
+        } catch (e) {
+            isTainted = true;
+        }
+        return isTainted;
+    };
+
+    /**
      * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
      * @member {Number} pixelDensityRatio
      * @memberof OpenSeadragon
@@ -1009,6 +1031,7 @@ if (typeof define === 'function' && define.amd) {
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
+            minScrollDeltaTime:     50,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE

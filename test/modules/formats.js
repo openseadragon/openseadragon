@@ -142,4 +142,12 @@
             '}');
     });
 
+    // ----------
+    asyncTest('ImageTileSource', function () {
+        testOpen({
+            type: "image",
+            url: "/test/data/A.png"
+        });
+    });
+
 })();

@@ -203,6 +203,8 @@ $.Viewer = function( options ) {
     this._loadQueue = [];
     this.currentOverlays = [];
 
+    this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
+
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
@@ -1286,18 +1288,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
 
+        if ($.isArray(options.tileSource)) {
+            setTimeout(function() {
+                raiseAddItemFailed({
+                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
+                    source: options.tileSource,
+                    options: options
+                });
+            });
+            return;
+        }
+
         this._loadQueue.push(myQueueItem);
 
         getTileSourceImplementation( this, options.tileSource, function( tileSource ) {
-
-            if ( tileSource instanceof Array ) {
-                raiseAddItemFailed({
-                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
-                    source: tileSource,
-                    options: options
-                });
-                return;
-            }
 
             myQueueItem.tileSource = tileSource;
 
@@ -2041,12 +2045,30 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
         }
     }
 
+    function waitUntilReady(tileSource, originalTileSource) {
+        if (tileSource.ready) {
+            successCallback(tileSource);
+        } else {
+            tileSource.addHandler('ready', function () {
+                successCallback(tileSource);
+            });
+            tileSource.addHandler('open-failed', function (event) {
+                failCallback({
+                    message: event.message,
+                    source: originalTileSource
+                });
+            });
+        }
+    }
+
     setTimeout( function() {
         if ( $.type( tileSource ) == 'string' ) {
             //If its still a string it means it must be a url at this point
             tileSource = new $.TileSource({
                 url: tileSource,
+                crossOriginPolicy: viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
+                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -2055,9 +2077,15 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                 failCallback( event );
             } );
 
-        } else if ( $.isPlainObject( tileSource ) || tileSource.nodeType ) {
+        } else if ($.isPlainObject(tileSource) || tileSource.nodeType) {
+            if (!tileSource.crossOriginPolicy && viewer.crossOriginPolicy) {
+                tileSource.crossOriginPolicy = viewer.crossOriginPolicy;
+            }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
+            }
+            if (tileSource.useCanvas === undefined) {
+                tileSource.useCanvas = viewer.useCanvas;
             }
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {
@@ -2076,14 +2104,13 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
                     return;
                 }
                 var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
-                var readySource = new $TileSource( options );
-                successCallback( readySource );
+                waitUntilReady(new $TileSource(options), tileSource);
             }
         } else {
             //can assume it's already a tile source implementation
-            successCallback( tileSource );
+            waitUntilReady(tileSource, tileSource);
         }
-    }, 1 );
+    });
 }
 
 function getOverlayObject( viewer, overlay ) {
@@ -2294,6 +2321,7 @@ function onCanvasKeyDown( event ) {
 function onCanvasKeyPress( event ) {
     if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
+            case 43://=|+
             case 61://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
@@ -2738,44 +2766,57 @@ function onCanvasPinch( event ) {
 
 function onCanvasScroll( event ) {
     var gestureSettings,
-        factor;
+        factor,
+        thisScrollTime,
+        deltaScrollTime;
 
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.scrollToZoom ) {
-            factor = Math.pow( this.zoomPerScroll, event.scroll );
-            this.viewport.zoomBy(
-                factor,
-                this.viewport.pointFromPixel( event.position, true )
-            );
-            this.viewport.applyConstraints();
+    /* Certain scroll devices fire the scroll event way too fast so we are injecting a simple adjustment to keep things
+     * partially normalized. If we have already fired an event within the last 'minScrollDelta' milliseconds we skip
+     * this one and wait for the next event. */
+    thisScrollTime = $.now();
+    deltaScrollTime = thisScrollTime - this._lastScrollTime;
+    if (deltaScrollTime > this.minScrollDeltaTime) {
+        this._lastScrollTime = thisScrollTime;
+
+        if ( !event.preventDefaultAction && this.viewport ) {
+            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+            if ( gestureSettings.scrollToZoom ) {
+                factor = Math.pow( this.zoomPerScroll, event.scroll );
+                this.viewport.zoomBy(
+                    factor,
+                    this.viewport.pointFromPixel( event.position, true )
+                );
+                this.viewport.applyConstraints();
+            }
+        }
+        /**
+         * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
+         *
+         * @event canvas-scroll
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+         * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+         * @property {Number} scroll - The scroll delta for the event.
+         * @property {Boolean} shift - True if the shift key was pressed during this event.
+         * @property {Object} originalEvent - The original DOM event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'canvas-scroll', {
+            tracker: event.eventSource,
+            position: event.position,
+            scroll: event.scroll,
+            shift: event.shift,
+            originalEvent: event.originalEvent
+        });
+        if (gestureSettings && gestureSettings.scrollToZoom) {
+            //cancels event
+            return false;
         }
     }
-    /**
-     * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
-     *
-     * @event canvas-scroll
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Number} scroll - The scroll delta for the event.
-     * @property {Boolean} shift - True if the shift key was pressed during this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent( 'canvas-scroll', {
-        tracker: event.eventSource,
-        position: event.position,
-        scroll: event.scroll,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-
-    if (gestureSettings && gestureSettings.scrollToZoom) {
-        //cancels event
-        return false;
+    else {
+        return false;   // We are swallowing this event
     }
 }
 

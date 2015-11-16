@@ -1,40 +1,46 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.1.0: (in progress)
+2.1.1: (in progress)
+
+2.1.0:
+
 * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
 * BREAKING CHANGE: TileSource.tileSize no longer exists; use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
 * DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext
 * DEPRECATION: TileSource.getTileSize() is deprecated. Use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
-* Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
-* Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
-* Fixed flickering tiles with useCanvas=false when no cache is used (#661)
-* Added additional coordinates conversion methods to TiledImage (#662)
-* 'display: none' no longer gets reset on overlays during draw (#668)
-* Added `preserveImageSizeOnResize` option (#666)
-* Better error reporting for tile load failures (#679)
-* Added collectionColumns as a configuration parameter (#680)
+* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
 * Added support for non-square tiles (#673)
     * TileSource.Options objects can now optionally provide tileWidth/tileHeight instead of tileSize for non-square tile support.
     * IIIFTileSources will now respect non-square tiles if available.
+* Added new tile source for simple images: ImageTileSource (#760)
+* Optimized adding large numbers of items to the world with collectionMode (#735)
+* Registers as an AMD module where possible (#719)
+* Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
+* Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
+* Added 'tile-load-failed' event (#725)
+* Added additional coordinates conversion methods to TiledImage (#662)
+* Added `preserveImageSizeOnResize` option (#666)
+* Added collectionColumns as a configuration parameter (#680)
+* Added option in addTiledImage to replace tiledImage at index (#706)
+* Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
+* You can now change viewport margins after the viewer is created (#721)
+* Added a patch to help slow down the scroll devices that fire too fast (#754)
+* Fixed flickering tiles with useCanvas=false when no cache is used (#661)
+* 'display: none' no longer gets reset on overlays during draw (#668)
+* Better error reporting for tile load failures (#679)
 * Added XDomainRequest as fallback method for ajax requests if XMLHttpRequest fails (for IE < 10) (#693)
 * Now avoiding using eval when JSON.parse is available (#696)
 * Rotation now works properly on retina display (#708)
-* Added option in addTiledImage to replace tiledImage at index (#706)
-* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
-* Registers as an AMD module where possible (#719)
-* Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
-* Added 'tile-load-failed' event (#725)
 * Fixed issue with tiledImages loading tiles at every level instead of just the best level (#728)
 * Fixed placeholderFillStyle flicker (#727)
 * Fix for Chrome (v45) issue that key is sometimes undefined outside of the for-in loop (#730)
 * World.removeAll now cancels any in-flight image loads; same for Viewer.open and Viewer.close (#734)
-* Optimized adding large numbers of items to the world with collectionMode (#735)
 * Fixed overlays position (use rounding instead of flooring and ceiling) (#741)
 * Fixed issue with including overlays in your tileSources array when creating/opening in the viewer (#745)
 * Fixed issue in iOS devices that would cause all touch events to fail after a Multitasking Gesture was triggered (#744)
 * Fixed an issue with TiledImage setPosition/setWidth/setHeight not reliably triggering a redraw (#720)
-* You can now change viewport margins after the viewer is created (#721)
+* Fixed zooming in with plus key on a Swedish keyboard (#763)
 
 2.0.0:
 

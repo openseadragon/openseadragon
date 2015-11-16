@@ -5,3 +5,5 @@ sftp-config.json
 coverage/
 temp/
 .idea
+/nbproject/private/
+.directory

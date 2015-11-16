@@ -45,8 +45,10 @@
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
+ * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
+ * is provided directly by the tile source.
  */
-$.Tile = function(level, x, y, bounds, exists, url) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -83,6 +85,12 @@ $.Tile = function(level, x, y, bounds, exists, url) {
      * @memberof OpenSeadragon.Tile#
      */
     this.url     = url;
+    /**
+     * The context2D of this tile if it is provided directly by the tile source.
+     * @member {CanvasRenderingContext2D} context2D
+     * @memberOf OpenSeadragon.Tile#
+     */
+    this.context2D = context2D;
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded
@@ -249,14 +257,14 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             size     = this.size.times($.pixelDensityRatio),
             rendered;
 
-        if (!this.cacheImageRecord) {
+        if (!this.context2D && !this.cacheImageRecord) {
             $.console.warn(
                 '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
                 this.toString());
             return;
         }
 
-        rendered = this.cacheImageRecord.getRenderedContext();
+        rendered = this.context2D || this.cacheImageRecord.getRenderedContext();
 
         if ( !this.loaded || !rendered ){
             $.console.warn(
@@ -275,7 +283,8 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if( context.globalAlpha == 1 && this.url.match('.png') ){
+        if (context.globalAlpha === 1 &&
+                (this.context2D || this.url.match('.png'))) {
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
