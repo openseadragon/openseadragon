@@ -356,6 +356,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         // to the main canvas. And FF does not like it. It crashes the viewer.
         return new $.Point(1, 1).minus(
             this.position
+                .times($.pixelDensityRatio)
                 .times(scale || 1)
                 .apply(function(x) {
                     return x % 1;
