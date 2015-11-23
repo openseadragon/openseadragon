@@ -249,6 +249,11 @@
   *     image though it is less effective visually if the HTML5 Canvas is not
   *     availble on the viewing device.
   *
+  * @property {Number} [smoothTileEdgesMinZoom=1.1]
+  *     A zoom percentage ( where 1 is 100% ) of the highest resolution level.
+  *     When zoomed in beyond this value alternative compositing will be used to
+  *     smooth out the edges between tiles. This will have a performance impact.
+  *
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
@@ -1022,6 +1027,7 @@ if (typeof define === 'function' && define.amd) {
             immediateRender:        false,
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
+            smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true

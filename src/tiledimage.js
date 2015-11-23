@@ -64,6 +64,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
@@ -133,19 +134,20 @@ $.TiledImage = function( options ) {
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
 
         //configurable settings
-        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:        $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:            $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:            $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:              $.DEFAULT_SETTINGS.opacity
+        springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:          $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:      $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:         $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:           $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:        $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:              $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
+        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        debugMode:              $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:                $.DEFAULT_SETTINGS.opacity
 
     }, options );
 
@@ -1305,13 +1307,26 @@ function compareTiles( previousBest, tile ) {
 
 function drawTiles( tiledImage, lastDrawn ) {
     var i,
-        tile;
+        tile = lastDrawn[0];
 
     if ( tiledImage.opacity <= 0 ) {
         drawDebugInfo( tiledImage, lastDrawn );
         return;
     }
     var useSketch = tiledImage.opacity < 1;
+    var sketchScale;
+    var sketchTranslate;
+
+    var zoom = tiledImage.viewport.getZoom(true);
+    var imageZoom = tiledImage.viewportToImageZoom(zoom);
+    if ( imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
+        // When zoomed in a lot (>100%) the tile edges are visible.
+        // So we have to composite them at ~100% and scale them up together.
+        useSketch = true;
+        sketchScale = tile.getScaleForEdgeSmoothing();
+        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale);
+    }
+
     if ( useSketch ) {
         tiledImage._drawer._clear( true );
     }
@@ -1322,6 +1337,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
+        if (sketchScale) {
+            clipRect = clipRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            clipRect = clipRect.translate(sketchTranslate);
+        }
         tiledImage._drawer.setClip(clipRect, useSketch);
 
         usedClip = true;
@@ -1329,6 +1350,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
+        if (sketchScale) {
+            placeholderRect = placeholderRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            placeholderRect = placeholderRect.translate(sketchTranslate);
+        }
 
         var fillStyle = null;
         if ( typeof tiledImage.placeholderFillStyle === "function" ) {
@@ -1343,7 +1370,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
@@ -1370,7 +1397,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity );
+        tiledImage._drawer.blendSketch( tiledImage.opacity, sketchScale, sketchTranslate );
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

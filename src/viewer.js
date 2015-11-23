@@ -1346,6 +1346,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     blendTime: _this.blendTime,
                     alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
+                    smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     crossOriginPolicy: _this.crossOriginPolicy,
                     debugMode: _this.debugMode
                 });
