@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.1.1: (in progress)
 
 * Tile edge smoothing at high zoom (#764)
+* Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
 
 2.1.0:
 
