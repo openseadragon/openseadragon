@@ -248,11 +248,13 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
      * @param {Function} drawingHandler - Method for firing the drawing event.
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
+     * @param {Number} [scale=1] - Apply a scale to position and size
+     * @param {OpenSeadragon.Point} [translate] - A translation vector
      */
-    drawCanvas: function( context, drawingHandler ) {
+    drawCanvas: function( context, drawingHandler, scale, translate ) {
 
-        var position = this.position,
-            size     = this.size,
+        var position = this.position.times($.pixelDensityRatio),
+            size     = this.size.times($.pixelDensityRatio),
             rendered;
 
         if (!this.context2D && !this.cacheImageRecord) {
@@ -286,10 +288,10 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                (position.x * $.pixelDensityRatio)+1,
-                (position.y * $.pixelDensityRatio)+1,
-                (size.x * $.pixelDensityRatio)-2,
-                (size.y * $.pixelDensityRatio)-2
+                position.x + 1,
+                position.y + 1,
+                size.x - 2,
+                size.y - 2
             );
 
         }
@@ -298,19 +300,68 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
+        if (typeof scale === 'number' && scale !== 1) {
+            // draw tile at a different scale
+            position = position.times(scale);
+            size = size.times(scale);
+        }
+
+        if (translate instanceof $.Point) {
+            // shift tile position slightly
+            position = position.plus(translate);
+        }
+
         context.drawImage(
             rendered.canvas,
             0,
             0,
             rendered.canvas.width,
             rendered.canvas.height,
-            position.x * $.pixelDensityRatio,
-            position.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio
+            position.x,
+            position.y,
+            size.x,
+            size.y
         );
 
         context.restore();
+    },
+
+    /**
+     * Get the ratio between current and original size.
+     * @function
+     * @return {Float}
+     */
+    getScaleForEdgeSmoothing: function() {
+        if (!this.cacheImageRecord) {
+            $.console.warn(
+                '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
+                this.toString());
+            return 1;
+        }
+
+        var rendered = this.cacheImageRecord.getRenderedContext();
+        return rendered.canvas.width / this.size.times($.pixelDensityRatio).x;
+    },
+
+    /**
+     * Get a translation vector that when applied to the tile position produces integer coordinates.
+     * Needed to avoid swimming and twitching.
+     * @function
+     * @param {Number} [scale=1] - Scale to be applied to position.
+     * @return {OpenSeadragon.Point}
+     */
+    getTranslationForEdgeSmoothing: function(scale) {
+        // The translation vector must have positive values, otherwise the image goes a bit off
+        // the sketch canvas to the top and left and we must use negative coordinates to repaint it
+        // to the main canvas. And FF does not like it. It crashes the viewer.
+        return new $.Point(1, 1).minus(
+            this.position
+                .times($.pixelDensityRatio)
+                .times(scale || 1)
+                .apply(function(x) {
+                    return x % 1;
+                })
+        );
     },
 
     /**

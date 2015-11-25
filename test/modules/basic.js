@@ -322,6 +322,7 @@
     asyncTest( 'CrossOriginPolicyMissing', function () {
 
         viewer.crossOriginPolicy = false;
+        viewer.smoothTileEdgesMinZoom = Infinity;
         viewer.open( {
             type: 'legacy-image-pyramid',
             levels: [ {

@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 2.1.1: (in progress)
 
+* Tile edge smoothing at high zoom (#764)
+
 2.1.0:
 
 * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
