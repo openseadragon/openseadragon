@@ -36,42 +36,63 @@
 
 /**
  * @class Rect
- * @classdesc A Rectangle really represents a 2x2 matrix where each row represents a
- * 2 dimensional vector component, the first is (x,y) and the second is
- * (width, height).  The latter component implies the equation of a simple
- * plane.
+ * @classdesc A Rectangle is described by it top left coordinates (x, y), width,
+ * height and degrees of rotation around (x, y).
+ * Note that the coordinate system used is the one commonly used with images:
+ * x increases when going to the right
+ * y increases when going to the bottom
+ * degrees increases clockwise with 0 being the horizontal
  *
  * @memberof OpenSeadragon
- * @param {Number} x The vector component 'x'.
- * @param {Number} y The vector component 'y'.
- * @param {Number} width The vector component 'height'.
- * @param {Number} height The vector component 'width'.
+ * @param {Object} options
+ * @param {Number} options.x X coordinate of the top left corner of the rectangle.
+ * @param {Number} options.y Y coordinate of the top left corner of the rectangle.
+ * @param {Number} options.width Width of the rectangle.
+ * @param {Number} options.height Height of the rectangle.
+ * @param {Number} options.degrees Rotation of the rectangle around (x,y) in degrees.
+ * @param {Number} [x] Deprecated: The vector component 'x'.
+ * @param {Number} [y] Deprecated: The vector component 'y'.
+ * @param {Number} [width] Deprecated: The vector component 'width'.
+ * @param {Number} [height] Deprecated: The vector component 'height'.
  */
-$.Rect = function( x, y, width, height ) {
+$.Rect = function(x, y, width, height) {
+
+    var options = x;
+    if (!$.isPlainObject(options)) {
+        options = {
+            x: x,
+            y: y,
+            width: width,
+            height: height
+        };
+    }
+
     /**
      * The vector component 'x'.
      * @member {Number} x
      * @memberof OpenSeadragon.Rect#
      */
-    this.x = typeof ( x ) == "number" ? x : 0;
+    this.x = typeof(options.x) === "number" ? options.x : 0;
     /**
      * The vector component 'y'.
      * @member {Number} y
      * @memberof OpenSeadragon.Rect#
      */
-    this.y = typeof ( y ) == "number" ? y : 0;
+    this.y = typeof(options.y) === "number" ? options.y : 0;
     /**
      * The vector component 'width'.
      * @member {Number} width
      * @memberof OpenSeadragon.Rect#
      */
-    this.width  = typeof ( width )  == "number" ? width : 0;
+    this.width  = typeof(options.width) === "number" ? options.width : 0;
     /**
      * The vector component 'height'.
      * @member {Number} height
      * @memberof OpenSeadragon.Rect#
      */
-    this.height = typeof ( height ) == "number" ? height : 0;
+    this.height = typeof(options.height) === "number" ? options.height : 0;
+
+    this.degrees = typeof(options.degrees) === "number" ? options.degrees : 0;
 };
 
 $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
@@ -80,7 +101,13 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      * @returns {OpenSeadragon.Rect} a duplicate of this Rect
      */
     clone: function() {
-        return new $.Rect(this.x, this.y, this.width, this.height);
+        return new $.Rect({
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height,
+            degrees: this.degrees
+        });
     },
 
     /**
@@ -114,10 +141,8 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      *  the rectangle.
      */
     getBottomRight: function() {
-        return new $.Point(
-            this.x + this.width,
-            this.y + this.height
-        );
+        return new $.Point(this.x + this.width, this.y + this.height)
+            .rotate(this.degrees, this.getTopLeft());
     },
 
     /**
@@ -128,10 +153,8 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      *  the rectangle.
      */
     getTopRight: function() {
-        return new $.Point(
-            this.x + this.width,
-            this.y
-        );
+        return new $.Point(this.x + this.width, this.y)
+            .rotate(this.degrees, this.getTopLeft());
     },
 
     /**
@@ -142,10 +165,8 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      *  the rectangle.
      */
     getBottomLeft: function() {
-        return new $.Point(
-            this.x,
-            this.y + this.height
-        );
+        return new $.Point(this.x, this.y + this.height)
+            .rotate(this.degrees, this.getTopLeft());
     },
 
     /**
@@ -158,7 +179,7 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
         return new $.Point(
             this.x + this.width / 2.0,
             this.y + this.height / 2.0
-        );
+        ).rotate(this.degrees, this.getTopLeft());
     },
 
     /**
@@ -177,28 +198,31 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      * @param {OpenSeadragon.Rect} rectangle The Rectangle to compare to.
      * @return {Boolean} 'true' if all components are equal, otherwise 'false'.
      */
-    equals: function( other ) {
-        return ( other instanceof $.Rect ) &&
-            ( this.x === other.x ) &&
-            ( this.y === other.y ) &&
-            ( this.width === other.width ) &&
-            ( this.height === other.height );
+    equals: function(other) {
+        return (other instanceof $.Rect) &&
+            this.x === other.x &&
+            this.y === other.y &&
+            this.width === other.width &&
+            this.height === other.height &&
+            this.degrees === other.degrees;
     },
 
     /**
-    * Multiply all dimensions in this Rect by a factor and return a new Rect.
+    * Multiply all dimensions (except degrees) in this Rect by a factor and
+    * return a new Rect.
     * @function
     * @param {Number} factor The factor to multiply vector components.
     * @returns {OpenSeadragon.Rect} A new rect representing the multiplication
     *  of the vector components by the factor
     */
-    times: function( factor ) {
-        return new OpenSeadragon.Rect(
-            this.x * factor,
-            this.y * factor,
-            this.width * factor,
-            this.height * factor
-        );
+    times: function(factor) {
+        return new $.Rect({
+            x: this.x * factor,
+            y: this.y * factor,
+            width: this.width * factor,
+            height: this.height * factor,
+            degrees: this.degrees
+        });
     },
 
     /**
@@ -207,13 +231,14 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     * @param {OpenSeadragon.Point} delta The translation vector.
     * @returns {OpenSeadragon.Rect} A new rect with altered position
     */
-    translate: function( delta ) {
-        return new OpenSeadragon.Rect(
-            this.x + delta.x,
-            this.y + delta.y,
-            this.width,
-            this.height
-        );
+    translate: function(delta) {
+        return new $.Rect({
+            x: this.x + delta.x,
+            y: this.y + delta.y,
+            width: this.width,
+            height: this.height,
+            degrees: this.degrees
+        });
     },
 
     /**
@@ -223,67 +248,79 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      */
     // ----------
     union: function(rect) {
+        if (this.degrees !== 0 || rect.degrees !== 0) {
+            throw new Error('Only union of non rotated rectangles are supported.');
+        }
         var left = Math.min(this.x, rect.x);
         var top = Math.min(this.y, rect.y);
         var right = Math.max(this.x + this.width, rect.x + rect.width);
         var bottom = Math.max(this.y + this.height, rect.y + rect.height);
 
-        return new OpenSeadragon.Rect(left, top, right - left, bottom - top);
+        return new $.Rect({
+            left: left,
+            top: top,
+            width: right - left,
+            height: bottom - top
+        });
     },
 
     /**
-     * Rotates a rectangle around a point. Currently only 90, 180, and 270
-     * degrees are supported.
+     * Rotates a rectangle around a point.
      * @function
      * @param {Number} degrees The angle in degrees to rotate.
      * @param {OpenSeadragon.Point} pivot The point about which to rotate.
      * Defaults to the center of the rectangle.
      * @return {OpenSeadragon.Rect}
      */
-    rotate: function( degrees, pivot ) {
-        // TODO support arbitrary rotation
-        var width = this.width,
-            height = this.height,
-            newTopLeft;
-
-        degrees = ( degrees + 360 ) % 360;
-        if (degrees % 90 !== 0) {
-            throw new Error('Currently only 0, 90, 180, and 270 degrees are supported.');
-        }
-
-        if( degrees === 0 ){
-            return new $.Rect(
-                this.x,
-                this.y,
-                this.width,
-                this.height
-            );
+    rotate: function(degrees, pivot) {
+        degrees = (degrees + 360) % 360;
+        if (degrees === 0) {
+            return this.clone();
         }
 
         pivot = pivot || this.getCenter();
+        var newTopLeft = this.getTopLeft().rotate(degrees, pivot);
+        var newTopRight = this.getTopRight().rotate(degrees, pivot);
 
-        switch ( degrees ) {
-            case 90:
-                newTopLeft = this.getBottomLeft();
-                width = this.height;
-                height = this.width;
-                break;
-            case 180:
-                newTopLeft = this.getBottomRight();
-                break;
-            case 270:
-                newTopLeft = this.getTopRight();
-                width = this.height;
-                height = this.width;
-                break;
-            default:
-                newTopLeft = this.getTopLeft();
-                break;
+        var diff = newTopRight.minus(newTopLeft);
+        var radians = Math.atan(diff.y / diff.x);
+        if (diff.x < 0) {
+            radians += Math.PI;
+        } else if (diff.y < 0) {
+            radians += 2 * Math.PI;
         }
+        return new $.Rect({
+            x: newTopLeft.x,
+            y: newTopLeft.y,
+            width: this.width,
+            height: this.height,
+            degrees: radians / Math.PI * 180
+        });
+    },
 
-        newTopLeft = newTopLeft.rotate(degrees, pivot);
-
-        return new $.Rect(newTopLeft.x, newTopLeft.y, width, height);
+    /**
+     * Retrieves the smallest horizontal (degrees=0) rectangle which contains
+     * this rectangle.
+     * @returns {OpenSeadrayon.Rect}
+     */
+    getBoundingBox: function() {
+        if (this.degrees === 0) {
+            return this.clone();
+        }
+        var topLeft = this.getTopLeft();
+        var topRight = this.getTopRight();
+        var bottomLeft = this.getBottomLeft();
+        var bottomRight = this.getBottomRight();
+        var minX = Math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
+        var maxX = Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
+        var minY = Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
+        var maxY = Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
+        return new $.Rect({
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        });
     },
 
     /**
@@ -294,11 +331,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      */
     toString: function() {
         return "[" +
-            (Math.round(this.x*100) / 100) + "," +
-            (Math.round(this.y*100) / 100) + "," +
-            (Math.round(this.width*100) / 100) + "x" +
-            (Math.round(this.height*100) / 100) +
-        "]";
+            (Math.round(this.x * 100) / 100) + "," +
+            (Math.round(this.y * 100) / 100) + "," +
+            (Math.round(this.width * 100) / 100) + "x" +
+            (Math.round(this.height * 100) / 100) + "," +
+            (Math.round(this.degrees * 100) / 100) + "°" +
+            "]";
     }
 };
 
