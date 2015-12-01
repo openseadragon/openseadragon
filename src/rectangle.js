@@ -172,7 +172,7 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      *  the width and height of the rectangle.
      */
     getSize: function() {
-        return new $.Point( this.width, this.height );
+        return new $.Point(this.width, this.height);
     },
 
     /**
@@ -223,19 +223,23 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     },
 
     /**
-     * Returns the smallest rectangle that will contain this and the given rectangle.
+     * Returns the smallest rectangle that will contain this and the given
+     * rectangle bounding boxes.
      * @param {OpenSeadragon.Rect} rect
      * @return {OpenSeadragon.Rect} The new rectangle.
      */
-    // ----------
     union: function(rect) {
-        if (this.degrees !== 0 || rect.degrees !== 0) {
-            throw new Error('Only union of non rotated rectangles are supported.');
-        }
-        var left = Math.min(this.x, rect.x);
-        var top = Math.min(this.y, rect.y);
-        var right = Math.max(this.x + this.width, rect.x + rect.width);
-        var bottom = Math.max(this.y + this.height, rect.y + rect.height);
+        var thisBoundingBox = this.getBoundingBox();
+        var otherBoundingBox = rect.getBoundingBox();
+
+        var left = Math.min(thisBoundingBox.x, otherBoundingBox.x);
+        var top = Math.min(thisBoundingBox.y, otherBoundingBox.y);
+        var right = Math.max(
+            thisBoundingBox.x + thisBoundingBox.width,
+            otherBoundingBox.x + otherBoundingBox.width);
+        var bottom = Math.max(
+            thisBoundingBox.y + thisBoundingBox.height,
+            otherBoundingBox.y + otherBoundingBox.height);
 
         return new $.Rect(
             left,

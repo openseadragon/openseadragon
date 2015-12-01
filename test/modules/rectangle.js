@@ -108,6 +108,26 @@
                 "Incorrect bottom right point with 135 rotation.");
     });
 
+    test('union', function() {
+        var rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
+        var rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        var expected = new OpenSeadragon.Rect(0, 1, 4, 4);
+        var actual = rect1.union(rect2);
+        assertRectangleEquals(expected, actual,
+                "Incorrect union with horizontal rectangles.");
+
+        rect1 = new OpenSeadragon.Rect(0, -Math.sqrt(2), 2, 2, 45);
+        rect2 = new OpenSeadragon.Rect(1, 0, 2, 2, 0);
+        expected = new OpenSeadragon.Rect(
+            -Math.sqrt(2),
+            -Math.sqrt(2),
+            3 + Math.sqrt(2),
+            2 + Math.sqrt(2));
+        actual = rect1.union(rect2);
+        assertRectangleEquals(expected, actual,
+                "Incorrect union with non horizontal rectangles.");
+    });
+
     test('rotate', function() {
         var rect = new OpenSeadragon.Rect(0, 0, 2, 1);
 
