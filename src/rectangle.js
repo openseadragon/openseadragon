@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function($) {
 
 /**
  * @class Rect
@@ -44,55 +44,39 @@
  * degrees increases clockwise with 0 being the horizontal
  *
  * @memberof OpenSeadragon
- * @param {Object} options
- * @param {Number} options.x X coordinate of the top left corner of the rectangle.
- * @param {Number} options.y Y coordinate of the top left corner of the rectangle.
- * @param {Number} options.width Width of the rectangle.
- * @param {Number} options.height Height of the rectangle.
- * @param {Number} options.degrees Rotation of the rectangle around (x,y) in degrees.
- * @param {Number} [x] Deprecated: The vector component 'x'.
- * @param {Number} [y] Deprecated: The vector component 'y'.
- * @param {Number} [width] Deprecated: The vector component 'width'.
- * @param {Number} [height] Deprecated: The vector component 'height'.
+ * @param {Number} [x=0] The vector component 'x'.
+ * @param {Number} [y=0] The vector component 'y'.
+ * @param {Number} [width=0] The vector component 'width'.
+ * @param {Number} [height=0] The vector component 'height'.
+ * @param {Number} [degrees=0] Rotation of the rectangle around (x,y) in degrees.
  */
-$.Rect = function(x, y, width, height) {
-
-    var options = x;
-    if (!$.isPlainObject(options)) {
-        options = {
-            x: x,
-            y: y,
-            width: width,
-            height: height
-        };
-    }
-
+$.Rect = function(x, y, width, height, degrees) {
     /**
      * The vector component 'x'.
      * @member {Number} x
      * @memberof OpenSeadragon.Rect#
      */
-    this.x = typeof(options.x) === "number" ? options.x : 0;
+    this.x = typeof(x) === "number" ? x : 0;
     /**
      * The vector component 'y'.
      * @member {Number} y
      * @memberof OpenSeadragon.Rect#
      */
-    this.y = typeof(options.y) === "number" ? options.y : 0;
+    this.y = typeof(y) === "number" ? y : 0;
     /**
      * The vector component 'width'.
      * @member {Number} width
      * @memberof OpenSeadragon.Rect#
      */
-    this.width  = typeof(options.width) === "number" ? options.width : 0;
+    this.width  = typeof(width) === "number" ? width : 0;
     /**
      * The vector component 'height'.
      * @member {Number} height
      * @memberof OpenSeadragon.Rect#
      */
-    this.height = typeof(options.height) === "number" ? options.height : 0;
+    this.height = typeof(height) === "number" ? height : 0;
 
-    this.degrees = typeof(options.degrees) === "number" ? options.degrees : 0;
+    this.degrees = typeof(degrees) === "number" ? degrees : 0;
 };
 
 $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
@@ -101,13 +85,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      * @returns {OpenSeadragon.Rect} a duplicate of this Rect
      */
     clone: function() {
-        return new $.Rect({
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-            degrees: this.degrees
-        });
+        return new $.Rect(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            this.degrees);
     },
 
     /**
@@ -216,13 +199,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     *  of the vector components by the factor
     */
     times: function(factor) {
-        return new $.Rect({
-            x: this.x * factor,
-            y: this.y * factor,
-            width: this.width * factor,
-            height: this.height * factor,
-            degrees: this.degrees
-        });
+        return new $.Rect(
+            this.x * factor,
+            this.y * factor,
+            this.width * factor,
+            this.height * factor,
+            this.degrees);
     },
 
     /**
@@ -232,13 +214,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     * @returns {OpenSeadragon.Rect} A new rect with altered position
     */
     translate: function(delta) {
-        return new $.Rect({
-            x: this.x + delta.x,
-            y: this.y + delta.y,
-            width: this.width,
-            height: this.height,
-            degrees: this.degrees
-        });
+        return new $.Rect(
+            this.x + delta.x,
+            this.y + delta.y,
+            this.width,
+            this.height,
+            this.degrees);
     },
 
     /**
@@ -256,12 +237,11 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
         var right = Math.max(this.x + this.width, rect.x + rect.width);
         var bottom = Math.max(this.y + this.height, rect.y + rect.height);
 
-        return new $.Rect({
-            left: left,
-            top: top,
-            width: right - left,
-            height: bottom - top
-        });
+        return new $.Rect(
+            left,
+            top,
+            right - left,
+            bottom - top);
     },
 
     /**
@@ -289,13 +269,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
         } else if (diff.y < 0) {
             radians += 2 * Math.PI;
         }
-        return new $.Rect({
-            x: newTopLeft.x,
-            y: newTopLeft.y,
-            width: this.width,
-            height: this.height,
-            degrees: radians / Math.PI * 180
-        });
+        return new $.Rect(
+            newTopLeft.x,
+            newTopLeft.y,
+            this.width,
+            this.height,
+            radians / Math.PI * 180);
     },
 
     /**
@@ -315,12 +294,11 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
         var maxX = Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
         var minY = Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
         var maxY = Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-        return new $.Rect({
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY
-        });
+        return new $.Rect(
+            minX,
+            minY,
+            maxX - minX,
+            maxY - minY);
     },
 
     /**
@@ -341,4 +319,4 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
 };
 
 
-}( OpenSeadragon ));
+}(OpenSeadragon));
