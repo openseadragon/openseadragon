@@ -111,7 +111,6 @@
     test('rotate', function() {
         var rect = new OpenSeadragon.Rect(0, 0, 2, 1);
 
-        // Rotate 45deg around center.
         var expected = new OpenSeadragon.Rect(
             1 - 1 / (2 * Math.sqrt(2)),
             0.5 - 3 / (2 * Math.sqrt(2)),
