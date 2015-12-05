@@ -43,6 +43,8 @@
  * y increases when going to the bottom
  * degrees increases clockwise with 0 being the horizontal
  *
+ * The constructor normalizes the rectangle to always have 0 <= degrees < 90
+ *
  * @memberof OpenSeadragon
  * @param {Number} [x=0] The vector component 'x'.
  * @param {Number} [y=0] The vector component 'y'.
@@ -77,6 +79,35 @@ $.Rect = function(x, y, width, height, degrees) {
     this.height = typeof(height) === "number" ? height : 0;
 
     this.degrees = typeof(degrees) === "number" ? degrees : 0;
+
+    // Normalizes the rectangle.
+    this.degrees = this.degrees % 360;
+    if (this.degrees < 0) {
+        this.degrees += 360;
+    }
+    var newTopLeft, newWidth;
+    if (this.degrees >= 270) {
+        newTopLeft = this.getTopRight();
+        this.x = newTopLeft.x;
+        this.y = newTopLeft.y;
+        newWidth = this.height;
+        this.height = this.width;
+        this.width = newWidth;
+        this.degrees -= 270;
+    } else if (this.degrees >= 180) {
+        newTopLeft = this.getBottomRight();
+        this.x = newTopLeft.x;
+        this.y = newTopLeft.y;
+        this.degrees -= 180;
+    } else if (this.degrees >= 90) {
+        newTopLeft = this.getBottomLeft();
+        this.x = newTopLeft.x;
+        this.y = newTopLeft.y;
+        newWidth = this.height;
+        this.height = this.width;
+        this.width = newWidth;
+        this.degrees -= 90;
+    }
 };
 
 $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
@@ -257,9 +288,12 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
      * @return {OpenSeadragon.Rect}
      */
     rotate: function(degrees, pivot) {
-        degrees = (degrees + 360) % 360;
+        degrees = degrees % 360;
         if (degrees === 0) {
             return this.clone();
+        }
+        if (degrees < 0) {
+            degrees += 360;
         }
 
         pivot = pivot || this.getCenter();
