@@ -1367,6 +1367,14 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                if (isInIframe() && canAccessEvents(window.top)) {
+                    $.addEvent(
+                        window.top,
+                        eventParams.upName,
+                        eventParams.upHandler,
+                        true
+                    );
+                }
                 $.addEvent(
                     $.MouseTracker.captureElement,
                     eventParams.upName,
@@ -1402,6 +1410,14 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                if (isInIframe() && canAccessEvents(window.top)) {
+                    $.removeEvent(
+                        window.top,
+                        eventParams.upName,
+                        eventParams.upHandler,
+                        true
+                    );
+                }
                 $.removeEvent(
                     $.MouseTracker.captureElement,
                     eventParams.moveName,
@@ -3246,6 +3262,34 @@
                 preventDefaultAction: false,
                 userData:             tracker.userData
             } );
+        }
+    }
+    
+    /**
+     * @function
+     * @private
+     * @inner
+     * @returns {Boolean} True if inside an iframe, otherwise false.
+     */
+    function isInIframe () {
+        try {
+            return window.self !== window.top;
+        } catch (e) {
+            return true;
+        }
+    }
+    
+    /**
+     * @function
+     * @private
+     * @inner
+     * @returns {Boolean} True if the target has access rights to events, otherwise false.
+     */
+    function canAccessEvents (target) {
+        try {
+            return target.addEventListener && target.removeEventListener;
+        } catch (e) {
+            return false;
         }
     }
 
