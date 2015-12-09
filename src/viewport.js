@@ -175,12 +175,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         $.console.assert(bounds.width > 0, "[Viewport.setHomeBounds] bounds.width must be greater than 0");
         $.console.assert(bounds.height > 0, "[Viewport.setHomeBounds] bounds.height must be greater than 0");
 
-        this.homeBounds = bounds.clone();
+        this.homeBounds = bounds.clone().rotate(this.degrees).getBoundingBox();
         this.contentSize = this.homeBounds.getSize().times(contentFactor);
         this.contentAspectX = this.contentSize.x / this.contentSize.y;
         this.contentAspectY = this.contentSize.y / this.contentSize.x;
 
-        if( this.viewer ){
+        if (this.viewer) {
             /**
              * Raised when the viewer's content size or home bounds are reset
              * (see {@link OpenSeadragon.Viewport#resetContentSize},
@@ -195,7 +195,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
              * @property {Number} contentFactor
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            this.viewer.raiseEvent( 'reset-size', {
+            this.viewer.raiseEvent('reset-size', {
                 contentSize: this.contentSize.clone(),
                 contentFactor: contentFactor,
                 homeBounds: this.homeBounds.clone()
@@ -807,13 +807,19 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function( degrees ) {
-        if( !( this.viewer && this.viewer.drawer.canRotate() ) ) {
+    setRotation: function(degrees) {
+        if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
 
-        degrees = ( degrees + 360 ) % 360;
+        degrees = degrees % 360;
+        if (degrees < 0) {
+            degrees += 360;
+        }
         this.degrees = degrees;
+        this.setHomeBounds(
+            this.viewer.world.getHomeBounds(),
+            this.viewer.world.getContentFactor());
         this.viewer.forceRedraw();
 
         /**
@@ -826,10 +832,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
          * @property {Number} degrees - The number of degrees the rotation was set to.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        if (this.viewer !== null)
-        {
-            this.viewer.raiseEvent('rotate', {"degrees": degrees});
-        }
+        this.viewer.raiseEvent('rotate', {"degrees": degrees});
         return this;
     },
 

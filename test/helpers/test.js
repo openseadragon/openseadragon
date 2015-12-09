@@ -69,6 +69,24 @@
         },
 
         // ----------
+        assertPointsEquals: function (pointA, pointB, precision, message) {
+            Util.assessNumericValue(pointA.x, pointB.x, precision, message + " x: ");
+            Util.assessNumericValue(pointA.y, pointB.y, precision, message + " y: ");
+        },
+
+        // ----------
+        assertRectangleEquals: function (rectA, rectB, precision, message) {
+            Util.assessNumericValue(rectA.x, rectB.x, precision, message + " x: ");
+            Util.assessNumericValue(rectA.y, rectB.y, precision, message + " y: ");
+            Util.assessNumericValue(rectA.width, rectB.width, precision,
+                message + " width: ");
+            Util.assessNumericValue(rectA.height, rectB.height, precision,
+                message + " height: ");
+            Util.assessNumericValue(rectA.degrees, rectB.degrees, precision,
+                message + " degrees: ");
+        },
+
+        // ----------
         timeWatcher: function ( time ) {
             time = time || 2000;
             var finished = false;
