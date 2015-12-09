@@ -1367,7 +1367,7 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
-                if (isInIframe() && canAccessEvents(window.top)) {
+                if (isInIframe && canAccessEvents(window.top)) {
                     $.addEvent(
                         window.top,
                         eventParams.upName,
@@ -1410,7 +1410,7 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
-                if (isInIframe() && canAccessEvents(window.top)) {
+                if (isInIframe && canAccessEvents(window.top)) {
                     $.removeEvent(
                         window.top,
                         eventParams.upName,
@@ -3266,19 +3266,19 @@
     }
     
     /**
-     * @function
+     * True if inside an iframe, otherwise false.
+     * @member {Boolean} isInIframe
      * @private
      * @inner
-     * @returns {Boolean} True if inside an iframe, otherwise false.
      */
-    function isInIframe () {
+    var isInIframe = (function() {
         try {
             return window.self !== window.top;
         } catch (e) {
             return true;
         }
-    }
-    
+    })();
+ 
     /**
      * @function
      * @private
