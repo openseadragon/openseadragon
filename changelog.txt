@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * Tile edge smoothing at high zoom (#764)
 * Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
+* Now supporting rotation in the Rect class (#782)
 
 2.1.0:
 
