@@ -3265,12 +3265,10 @@
         }
     }
     
-    /**
-     * True if inside an iframe, otherwise false.
-     * @member {Boolean} isInIframe
-     * @private
-     * @inner
-     */
+    // True if inside an iframe, otherwise false.
+    // @member {Boolean} isInIframe
+    // @private
+    // @inner
     var isInIframe = (function() {
         try {
             return window.self !== window.top;
@@ -3279,12 +3277,10 @@
         }
     })();
  
-    /**
-     * @function
-     * @private
-     * @inner
-     * @returns {Boolean} True if the target has access rights to events, otherwise false.
-     */
+    // @function
+    // @private
+    // @inner
+    // @returns {Boolean} True if the target has access rights to events, otherwise false.
     function canAccessEvents (target) {
         try {
             return target.addEventListener && target.removeEventListener;
