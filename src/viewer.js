@@ -2720,7 +2720,7 @@ function onCanvasPinch( event ) {
             if( !this.panVertical ) {
                 panByPt.y = 0;
             }
-            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, false );
             this.viewport.panBy( panByPt, true );
             this.viewport.applyConstraints();
         }
