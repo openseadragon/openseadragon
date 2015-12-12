@@ -704,7 +704,6 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this.centerSpringX.target.value,
             this.centerSpringY.target.value
         );
-        delta = delta.rotate( -this.degrees, new $.Point( 0, 0 ) );
         return this.panTo( center.plus( delta ), immediately );
     },
 
@@ -750,14 +749,9 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:zoom
      */
-    zoomBy: function( factor, refPoint, immediately ) {
-        if( refPoint instanceof $.Point && !isNaN( refPoint.x ) && !isNaN( refPoint.y ) ) {
-            refPoint = refPoint.rotate(
-                -this.degrees,
-                new $.Point( this.centerSpringX.target.value, this.centerSpringY.target.value )
-            );
-        }
-        return this.zoomTo( this.zoomSpring.target.value * factor, refPoint, immediately );
+    zoomBy: function(factor, refPoint, immediately) {
+        return this.zoomTo(
+            this.zoomSpring.target.value * factor, refPoint, immediately);
     },
 
     /**
@@ -936,40 +930,79 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         return changed;
     },
 
+    /**
+     * Scale a delta (translation vector) from pixels coordinates to viewport
+     * coordinates. This method does not take rotation into account.
+     * Consider using deltaPixelsFromPoints if you need to account for rotation.
+     * @param {OpenSeadragon.Point} deltaPoints - The translation vector to convert.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
+    scaleDeltaPixelsFromPoints: function(deltaPoints, current) {
+        return deltaPoints.times(
+            this._containerInnerSize.x * this.getZoom(current)
+        );
+    },
 
     /**
-     * Convert a delta (translation vector) from pixels coordinates to viewport coordinates
-     * @function
-     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     * Convert a delta (translation vector) from pixels coordinates to viewport
+     * coordinates.
+     * @param {OpenSeadragon.Point} deltaPoints - The translation vector to convert.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
      */
-    deltaPixelsFromPoints: function( deltaPoints, current ) {
-        return deltaPoints.times(
-            this._containerInnerSize.x * this.getZoom( current )
+    deltaPixelsFromPoints: function(deltaPoints, current) {
+        return this.scaleDeltaPixelsFromPoints(
+            deltaPoints.rotate(this.getRotation()),
+            current);
+    },
+
+    /**
+     * Scale a delta (translation vector) from viewport coordinates to pixels
+     * coordinates. This method does not take rotation into account.
+     * Consider using deltaPointsFromPixels if you need to account for rotation.
+     * @param {OpenSeadragon.Point} deltaPixels - The translation vector to convert.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
+    scaleDeltaPointsFromPixels: function(deltaPixels, current) {
+        return deltaPixels.divide(
+            this._containerInnerSize.x * this.getZoom(current)
         );
     },
 
     /**
      * Convert a delta (translation vector) from viewport coordinates to pixels coordinates.
-     * @function
-     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     * @param {OpenSeadragon.Point} deltaPixels - The translation vector to convert.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
      */
-    deltaPointsFromPixels: function( deltaPixels, current ) {
-        return deltaPixels.divide(
-            this._containerInnerSize.x * this.getZoom( current )
-        );
+    deltaPointsFromPixels: function(deltaPixels, current) {
+        return this.scaleDeltaPointsFromPixels(deltaPixels, current)
+            .rotate(-this.getRotation());
+    },
+
+    scalePixelFromPoint: function(point, current) {
+        return this._scalePixelFromPoint(point, this.getBounds(current));
     },
 
     /**
      * Convert image pixel coordinates to viewport coordinates.
      * @function
-     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @param {Boolean} [ignoreRotation=false] - Pass true to ignore the rotation
      */
-    pixelFromPoint: function( point, current ) {
-        return this._pixelFromPoint(point, this.getBounds( current ));
+    pixelFromPoint: function(point, current) {
+        return this._pixelFromPoint(point, this.getBounds(current));
     },
 
     // private
-    _pixelFromPoint: function( point, bounds ) {
+    _scalePixelFromPoint: function(point, bounds) {
         return point.minus(
             bounds.getTopLeft()
         ).times(
@@ -979,12 +1012,14 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
         );
     },
 
-    /**
-     * Convert viewport coordinates to image pixel coordinates.
-     * @function
-     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     */
-    pointFromPixel: function( pixel, current ) {
+    // private
+    _pixelFromPoint: function(point, bounds) {
+        return this._scalePixelFromPoint(
+            point.rotate(this.getRotation(), this.getCenter(true)),
+            bounds);
+    },
+
+    scalePointFromPixel: function(pixel, current) {
         var bounds = this.getBounds( current );
         return pixel.minus(
             new $.Point(this._margins.left, this._margins.top)
@@ -992,6 +1027,18 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             this._containerInnerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
+        );
+    },
+
+    /**
+     * Convert viewport coordinates to image pixel coordinates.
+     * @function
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     */
+    pointFromPixel: function(pixel, current) {
+        return this.scalePointFromPixel(pixel, current).rotate(
+            -this.getRotation(),
+            this.getCenter(true)
         );
     },
 
@@ -1075,29 +1122,21 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {Number} pixelWidth the width in pixel of the rectangle.
      * @param {Number} pixelHeight the height in pixel of the rectangle.
      */
-    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight ) {
-        var coordA,
-            coordB,
-            rect;
-        if( arguments.length == 1 ) {
-            //they passed a rectangle instead of individual components
-            rect = imageX;
-            return this.imageToViewportRectangle(
-                rect.x, rect.y, rect.width, rect.height
-            );
+    imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
+        var rect = imageX;
+        if (!(rect instanceof $.Rect)) {
+            //they passed individual components instead of a rectangle
+            rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
 
-        coordA = this.imageToViewportCoordinates(
-            imageX, imageY
-        );
-        coordB = this._imageToViewportDelta(
-            pixelWidth, pixelHeight
-        );
+        var coordA = this.imageToViewportCoordinates(rect.x, rect.y);
+        var coordB = this._imageToViewportDelta(rect.width, rect.height);
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 
@@ -1116,25 +1155,21 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @param {Number} pointWidth the width of the rectangle in viewport coordinate system.
      * @param {Number} pointHeight the height of the rectangle in viewport coordinate system.
      */
-    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight ) {
-        var coordA,
-            coordB,
-            rect;
-        if ( arguments.length == 1 ) {
-            //they passed a rectangle instead of individual components
-            rect = viewerX;
-            return this.viewportToImageRectangle(
-                rect.x, rect.y, rect.width, rect.height
-            );
+    viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
+        var rect = viewerX;
+        if (!(rect instanceof $.Rect)) {
+            //they passed individual components instead of a rectangle
+            rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
 
-        coordA = this.viewportToImageCoordinates( viewerX, viewerY );
-        coordB = this._viewportToImageDelta(pointWidth, pointHeight);
+        var coordA = this.viewportToImageCoordinates(rect.x, rect.y);
+        var coordB = this._viewportToImageDelta(rect.width, rect.height);
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 

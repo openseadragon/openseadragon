@@ -357,23 +357,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
     imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight, current ) {
-        if (imageX instanceof $.Rect) {
+        var rect = imageX;
+        if (rect instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = imageY;
-            pixelWidth = imageX.width;
-            pixelHeight = imageX.height;
-            imageY = imageX.y;
-            imageX = imageX.x;
+        } else {
+            rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
 
-        var coordA = this.imageToViewportCoordinates(imageX, imageY, current);
-        var coordB = this._imageToViewportDelta(pixelWidth, pixelHeight, current);
+        var coordA = this.imageToViewportCoordinates(rect.getTopLeft(), current);
+        var coordB = this._imageToViewportDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 
@@ -389,23 +389,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the image.
      */
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
+        var rect = viewerX;
         if (viewerX instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = viewerY;
-            pointWidth = viewerX.width;
-            pointHeight = viewerX.height;
-            viewerY = viewerX.y;
-            viewerX = viewerX.x;
+        } else {
+            rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
 
-        var coordA = this.viewportToImageCoordinates(viewerX, viewerY, current);
-        var coordB = this._viewportToImageDelta(pointWidth, pointHeight, current);
+        var coordA = this.viewportToImageCoordinates(rect.getTopLeft(), current);
+        var coordB = this._viewportToImageDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 
@@ -652,7 +652,7 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
+        zeroRatioC      = tiledImage.viewport.scaleDeltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( 0 ),
             true
         ).x * tiledImage._scaleSpring.current.value,
@@ -733,7 +733,7 @@ function updateViewport( tiledImage ) {
         drawLevel = false;
 
         //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPoints(
+        renderPixelRatioC = tiledImage.viewport.scaleDeltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( level ),
             true
         ).x * tiledImage._scaleSpring.current.value;
@@ -747,12 +747,12 @@ function updateViewport( tiledImage ) {
         }
 
         //Perform calculations for draw if we haven't drawn this
-        renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPoints(
+        renderPixelRatioT = tiledImage.viewport.scaleDeltaPixelsFromPoints(
             tiledImage.source.getPixelRatio( level ),
             false
         ).x * tiledImage._scaleSpring.current.value;
 
-        zeroRatioT      = tiledImage.viewport.deltaPixelsFromPoints(
+        zeroRatioT      = tiledImage.viewport.scaleDeltaPixelsFromPoints(
             tiledImage.source.getPixelRatio(
                 Math.max(
                     tiledImage.source.getClosestLevel( tiledImage.viewport.containerSize ) - 1,
@@ -1140,10 +1140,10 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     boundsSize.x *= tiledImage._scaleSpring.current.value;
     boundsSize.y *= tiledImage._scaleSpring.current.value;
 
-    var positionC    = viewport.pixelFromPoint( boundsTL, true ),
-        positionT    = viewport.pixelFromPoint( boundsTL, false ),
-        sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),
-        sizeT        = viewport.deltaPixelsFromPoints( boundsSize, false ),
+    var positionC    = viewport.scalePixelFromPoint(boundsTL, true),
+        positionT    = viewport.scalePixelFromPoint(boundsTL, false),
+        sizeC        = viewport.scaleDeltaPixelsFromPoints(boundsSize, true),
+        sizeT        = viewport.scaleDeltaPixelsFromPoints(boundsSize, false),
         tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
         tileDistance = viewportCenter.distanceTo( tileCenter );
 
@@ -1331,6 +1331,10 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer._clear( true );
     }
 
+    if (tiledImage.viewport.degrees !== 0) {
+        tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, useSketch);
+    }
+
     var usedClip = false;
     if ( tiledImage._clip ) {
         tiledImage._drawer.saveContext(useSketch);
@@ -1394,6 +1398,10 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );
+    }
+
+    if (tiledImage.viewport.degrees !== 0) {
+        tiledImage._drawer._restoreRotationChanges(useSketch);
     }
 
     if ( useSketch ) {

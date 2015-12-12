@@ -351,7 +351,7 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
             (Math.round(this.y * 100) / 100) + "," +
             (Math.round(this.width * 100) / 100) + "x" +
             (Math.round(this.height * 100) / 100) + "," +
-            (Math.round(this.degrees * 100) / 100) + "°" +
+            (Math.round(this.degrees * 100) / 100) + "deg" +
             "]";
     }
 };

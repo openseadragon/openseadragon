@@ -179,14 +179,18 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
      * From http://stackoverflow.com/questions/4465931/rotate-rectangle-around-a-point
      * @function
      * @param {Number} degress to rotate around the pivot.
-     * @param {OpenSeadragon.Point} pivot Point about which to rotate.
+     * @param {OpenSeadragon.Point} [pivot=(0,0)] Point around which to rotate.
+     * Defaults to the origin.
      * @returns {OpenSeadragon.Point}. A new point representing the point rotated around the specified pivot
      */
-    rotate: function ( degrees, pivot ) {
-        var angle = degrees * Math.PI / 180.0,
-            x = Math.cos( angle ) * ( this.x - pivot.x ) - Math.sin( angle ) * ( this.y - pivot.y ) + pivot.x,
-            y = Math.sin( angle ) * ( this.x - pivot.x ) + Math.cos( angle ) * ( this.y - pivot.y ) + pivot.y;
-        return new $.Point( x, y );
+    rotate: function (degrees, pivot) {
+        pivot = pivot || new $.Point(0, 0);
+        var angle = degrees * Math.PI / 180.0;
+        var cos = Math.cos(angle);
+        var sin = Math.sin(angle);
+        var x = cos * (this.x - pivot.x) - sin * (this.y - pivot.y) + pivot.x;
+        var y = sin * (this.x - pivot.x) + cos * (this.y - pivot.y) + pivot.y;
+        return new $.Point(x, y);
     },
 
     /**
