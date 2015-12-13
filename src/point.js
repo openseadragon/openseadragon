@@ -185,9 +185,37 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
      */
     rotate: function (degrees, pivot) {
         pivot = pivot || new $.Point(0, 0);
-        var angle = degrees * Math.PI / 180.0;
-        var cos = Math.cos(angle);
-        var sin = Math.sin(angle);
+        var cos;
+        var sin;
+        // Avoid float computations when possible
+        if (degrees % 90 === 0) {
+            var d = degrees % 360;
+            if (d < 0) {
+                d += 360;
+            }
+            switch (d) {
+                case 0:
+                    cos = 1;
+                    sin = 0;
+                    break;
+                case 90:
+                    cos = 0;
+                    sin = 1;
+                    break;
+                case 180:
+                    cos = -1;
+                    sin = 0;
+                    break;
+                case 270:
+                    cos = 0;
+                    sin = -1;
+                    break;
+            }
+        } else {
+            var angle = degrees * Math.PI / 180.0;
+            cos = Math.cos(angle);
+            sin = Math.sin(angle);
+        }
         var x = cos * (this.x - pivot.x) - sin * (this.y - pivot.y) + pivot.x;
         var y = sin * (this.x - pivot.x) + cos * (this.y - pivot.y) + pivot.y;
         return new $.Point(x, y);
