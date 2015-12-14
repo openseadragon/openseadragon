@@ -223,12 +223,6 @@ $.Navigator = function( options ){
         }
     });
 
-    this.addHandler("reset-size", function() {
-        if (_this.viewport) {
-            _this.viewport.goHome(true);
-        }
-    });
-
     viewer.world.addHandler("item-index-change", function(event) {
         var item = _this.world.getItemAt(event.previousIndex);
         _this.world.setItemIndex(item, event.newIndex);
