@@ -931,7 +931,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Scale a delta (translation vector) from pixels coordinates to viewport
+     * Scale a delta (translation vector) from viewport coordinates to pixels
      * coordinates. This method does not take rotation into account.
      * Consider using deltaPixelsFromPoints if you need to account for rotation.
      * @param {OpenSeadragon.Point} deltaPoints - The translation vector to convert.
@@ -946,7 +946,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Convert a delta (translation vector) from pixels coordinates to viewport
+     * Convert a delta (translation vector) from viewport coordinates to pixels
      * coordinates.
      * @param {OpenSeadragon.Point} deltaPoints - The translation vector to convert.
      * @param {Boolean} [current=false] - Pass true for the current location;
@@ -960,7 +960,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Scale a delta (translation vector) from viewport coordinates to pixels
+     * Scale a delta (translation vector) from pixels coordinates to viewport
      * coordinates. This method does not take rotation into account.
      * Consider using deltaPointsFromPixels if you need to account for rotation.
      * @param {OpenSeadragon.Point} deltaPixels - The translation vector to convert.
@@ -975,7 +975,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Convert a delta (translation vector) from viewport coordinates to pixels coordinates.
+     * Convert a delta (translation vector) from pixels coordinates to viewport
+     * coordinates.
      * @param {OpenSeadragon.Point} deltaPixels - The translation vector to convert.
      * @param {Boolean} [current=false] - Pass true for the current location;
      * defaults to false (target location).
@@ -986,16 +987,25 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             .rotate(-this.getRotation());
     },
 
+    /**
+     * Scale viewport coordinates to pixels coordinates.
+     * This method does not take rotation into account.
+     * Consider using pixelFromPoint if you need to account for rotation.
+     * @param {OpenSeadragon.Point} point the viewport coordinates
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
     scalePixelFromPoint: function(point, current) {
         return this._scalePixelFromPoint(point, this.getBounds(current));
     },
 
     /**
-     * Convert image pixel coordinates to viewport coordinates.
-     * @function
+     * Convert viewport coordinates to pixel coordinates.
+     * @param {OpenSeadragon.Point} point the viewport coordinates
      * @param {Boolean} [current=false] - Pass true for the current location;
      * defaults to false (target location).
-     * @param {Boolean} [ignoreRotation=false] - Pass true to ignore the rotation
+     * @returns {OpenSeadragon.Point}
      */
     pixelFromPoint: function(point, current) {
         return this._pixelFromPoint(point, this.getBounds(current));
@@ -1019,6 +1029,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
             bounds);
     },
 
+    /**
+     * Scale pixel coordinates to viewport coordinates.
+     * This method does not take rotation into account.
+     * Consider using pointFromPixel if you need to account for rotation.
+     * @param {OpenSeadragon.Point} pixel Pixel coordinates
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
     scalePointFromPixel: function(pixel, current) {
         var bounds = this.getBounds( current );
         return pixel.minus(
@@ -1031,9 +1050,11 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Convert viewport coordinates to image pixel coordinates.
-     * @function
-     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     * Convert pixel coordinates to viewport coordinates.
+     * @param {OpenSeadragon.Point} pixel Pixel coordinates
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
      */
     pointFromPixel: function(pixel, current) {
         return this.scalePointFromPixel(pixel, current).rotate(
