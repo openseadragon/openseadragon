@@ -79,7 +79,7 @@ $.Spring = function( options ) {
     $.console.assert(typeof options.springStiffness === "number" && options.springStiffness !== 0,
         "[OpenSeadragon.Spring] options.springStiffness must be a non-zero number");
 
-    $.console.assert(typeof options.animationTime === "number" && options.springStiffness !== 0,
+    $.console.assert(typeof options.animationTime === "number" && options.animationTime !== 0,
         "[OpenSeadragon.Spring] options.animationTime must be a non-zero number");
 
     if (options.exponential) {
