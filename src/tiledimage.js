@@ -1050,12 +1050,12 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
          * @property {string} message - The error message.
          */
         tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
-        if( !tiledImage.debugMode ){
-            tile.loading = false;
-            tile.exists = false;
-            return;
-        }
-    } else if ( time < tiledImage.lastResetTime ) {
+        tile.loading = false;
+        tile.exists = false;
+        return;
+    }
+
+    if ( time < tiledImage.lastResetTime ) {
         $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         tile.loading = false;
         return;
