@@ -931,7 +931,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     /**
-     * Scale a delta (translation vector) from viewport coordinates to pixels
+     * Convert a delta (translation vector) from viewport coordinates to pixels
      * coordinates. This method does not take rotation into account.
      * Consider using deltaPixelsFromPoints if you need to account for rotation.
      * @param {OpenSeadragon.Point} deltaPoints - The translation vector to convert.
@@ -939,7 +939,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * defaults to false (target location).
      * @returns {OpenSeadragon.Point}
      */
-    scaleDeltaPixelsFromPoints: function(deltaPoints, current) {
+    deltaPixelsFromPointsNoRotate: function(deltaPoints, current) {
         return deltaPoints.times(
             this._containerInnerSize.x * this.getZoom(current)
         );
@@ -954,13 +954,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @returns {OpenSeadragon.Point}
      */
     deltaPixelsFromPoints: function(deltaPoints, current) {
-        return this.scaleDeltaPixelsFromPoints(
+        return this.deltaPixelsFromPointsNoRotate(
             deltaPoints.rotate(this.getRotation()),
             current);
     },
 
     /**
-     * Scale a delta (translation vector) from pixels coordinates to viewport
+     * Convert a delta (translation vector) from pixels coordinates to viewport
      * coordinates. This method does not take rotation into account.
      * Consider using deltaPointsFromPixels if you need to account for rotation.
      * @param {OpenSeadragon.Point} deltaPixels - The translation vector to convert.
@@ -968,7 +968,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * defaults to false (target location).
      * @returns {OpenSeadragon.Point}
      */
-    scaleDeltaPointsFromPixels: function(deltaPixels, current) {
+    deltaPointsFromPixelsNoRotate: function(deltaPixels, current) {
         return deltaPixels.divide(
             this._containerInnerSize.x * this.getZoom(current)
         );
@@ -983,12 +983,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @returns {OpenSeadragon.Point}
      */
     deltaPointsFromPixels: function(deltaPixels, current) {
-        return this.scaleDeltaPointsFromPixels(deltaPixels, current)
+        return this.deltaPointsFromPixelsNoRotate(deltaPixels, current)
             .rotate(-this.getRotation());
     },
 
     /**
-     * Scale viewport coordinates to pixels coordinates.
+     * Convert viewport coordinates to pixels coordinates.
      * This method does not take rotation into account.
      * Consider using pixelFromPoint if you need to account for rotation.
      * @param {OpenSeadragon.Point} point the viewport coordinates
@@ -996,8 +996,8 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * defaults to false (target location).
      * @returns {OpenSeadragon.Point}
      */
-    scalePixelFromPoint: function(point, current) {
-        return this._scalePixelFromPoint(point, this.getBounds(current));
+    pixelFromPointNoRotate: function(point, current) {
+        return this._pixelFromPointNoRotate(point, this.getBounds(current));
     },
 
     /**
@@ -1012,7 +1012,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
     },
 
     // private
-    _scalePixelFromPoint: function(point, bounds) {
+    _pixelFromPointNoRotate: function(point, bounds) {
         return point.minus(
             bounds.getTopLeft()
         ).times(
@@ -1024,13 +1024,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
 
     // private
     _pixelFromPoint: function(point, bounds) {
-        return this._scalePixelFromPoint(
+        return this._pixelFromPointNoRotate(
             point.rotate(this.getRotation(), this.getCenter(true)),
             bounds);
     },
 
     /**
-     * Scale pixel coordinates to viewport coordinates.
+     * Convert pixel coordinates to viewport coordinates.
      * This method does not take rotation into account.
      * Consider using pointFromPixel if you need to account for rotation.
      * @param {OpenSeadragon.Point} pixel Pixel coordinates
@@ -1038,7 +1038,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * defaults to false (target location).
      * @returns {OpenSeadragon.Point}
      */
-    scalePointFromPixel: function(pixel, current) {
+    pointFromPixelNoRotate: function(pixel, current) {
         var bounds = this.getBounds( current );
         return pixel.minus(
             new $.Point(this._margins.left, this._margins.top)
@@ -1057,7 +1057,7 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * @returns {OpenSeadragon.Point}
      */
     pointFromPixel: function(pixel, current) {
-        return this.scalePointFromPixel(pixel, current).rotate(
+        return this.pointFromPixelNoRotate(pixel, current).rotate(
             -this.getRotation(),
             this.getCenter(true)
         );

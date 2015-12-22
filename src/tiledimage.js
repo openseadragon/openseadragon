@@ -652,7 +652,7 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        zeroRatioC      = tiledImage.viewport.scaleDeltaPixelsFromPoints(
+        zeroRatioC      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( 0 ),
             true
         ).x * tiledImage._scaleSpring.current.value,
@@ -733,7 +733,7 @@ function updateViewport( tiledImage ) {
         drawLevel = false;
 
         //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = tiledImage.viewport.scaleDeltaPixelsFromPoints(
+        renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( level ),
             true
         ).x * tiledImage._scaleSpring.current.value;
@@ -747,12 +747,12 @@ function updateViewport( tiledImage ) {
         }
 
         //Perform calculations for draw if we haven't drawn this
-        renderPixelRatioT = tiledImage.viewport.scaleDeltaPixelsFromPoints(
+        renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( level ),
             false
         ).x * tiledImage._scaleSpring.current.value;
 
-        zeroRatioT      = tiledImage.viewport.scaleDeltaPixelsFromPoints(
+        zeroRatioT      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio(
                 Math.max(
                     tiledImage.source.getClosestLevel( tiledImage.viewport.containerSize ) - 1,
@@ -1140,10 +1140,10 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     boundsSize.x *= tiledImage._scaleSpring.current.value;
     boundsSize.y *= tiledImage._scaleSpring.current.value;
 
-    var positionC    = viewport.scalePixelFromPoint(boundsTL, true),
-        positionT    = viewport.scalePixelFromPoint(boundsTL, false),
-        sizeC        = viewport.scaleDeltaPixelsFromPoints(boundsSize, true),
-        sizeT        = viewport.scaleDeltaPixelsFromPoints(boundsSize, false),
+    var positionC    = viewport.pixelFromPointNoRotate(boundsTL, true),
+        positionT    = viewport.pixelFromPointNoRotate(boundsTL, false),
+        sizeC        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
+        sizeT        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
         tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
         tileDistance = viewportCenter.distanceTo( tileCenter );
 
