@@ -2,6 +2,7 @@
 
 (function () {
     var viewer;
+    var precision = 0.00000001;
 
     module('Units', {
         setup: function () {
@@ -26,8 +27,8 @@
 
 
     function pointEqual(a, b, message) {
-        Util.assessNumericValue(a.x, b.x, 0.00000001, message);
-        Util.assessNumericValue(a.y, b.y, 0.00000001, message);
+        Util.assessNumericValue(a.x, b.x, precision, message);
+        Util.assessNumericValue(a.y, b.y, precision, message);
     }
 
     // Check that f^-1 ( f(x) ) = x
@@ -151,8 +152,6 @@
                 start();
             });
             viewer.viewport.zoomTo(0.8).panTo(new OpenSeadragon.Point(0.1, 0.2));
-
-            start();
         });
 
         viewer.open([{
@@ -166,6 +165,68 @@
         ]);
     });
 
+
+    // ---------
+    asyncTest('Multiple images coordinates conversion with viewport rotation', function () {
+
+        viewer.addHandler("open", function () {
+            var viewport = viewer.viewport;
+            var tiledImage1 = viewer.world.getItemAt(0);
+            var tiledImage2 = viewer.world.getItemAt(1);
+            var imageWidth = viewer.source.dimensions.x;
+            var imageHeight = viewer.source.dimensions.y;
+
+            var viewerWidth = $(viewer.element).width();
+            var viewerHeight = $(viewer.element).height();
+            var viewerMiddleTop = new OpenSeadragon.Point(viewerWidth / 2, 0);
+            var viewerMiddleBottom = new OpenSeadragon.Point(viewerWidth / 2, viewerHeight);
+
+            var point0_0 = new OpenSeadragon.Point(0, 0);
+            var point = viewport.viewerElementToViewportCoordinates(viewerMiddleTop);
+            pointEqual(point, point0_0, 'When opening, viewer middle top is also viewport 0,0');
+            var image1Pixel = tiledImage1.viewerElementToImageCoordinates(viewerMiddleTop);
+            pointEqual(image1Pixel, point0_0, 'When opening, viewer middle top is also image 1 pixel 0,0');
+            var image2Pixel = tiledImage2.viewerElementToImageCoordinates(viewerMiddleTop);
+            pointEqual(image2Pixel,
+                    new OpenSeadragon.Point(-2 * imageWidth, -2 * imageHeight),
+                    'When opening, viewer middle top is also image 2 pixel -2*imageWidth, -2*imageHeight');
+
+            point = viewport.viewerElementToViewportCoordinates(viewerMiddleBottom);
+            pointEqual(point, new OpenSeadragon.Point(1.5, 1.5),
+                    'Viewer middle bottom has viewport coordinates 1.5,1.5.');
+            image1Pixel = tiledImage1.viewerElementToImageCoordinates(viewerMiddleBottom);
+            pointEqual(image1Pixel,
+                    new OpenSeadragon.Point(imageWidth * 1.5, imageHeight * 1.5),
+                    'Viewer middle bottom has image 1 pixel coordinates imageWidth * 1.5, imageHeight * 1.5');
+            image2Pixel = tiledImage2.viewerElementToImageCoordinates(viewerMiddleBottom);
+            pointEqual(image2Pixel,
+                    new OpenSeadragon.Point(imageWidth, imageHeight),
+                    'Viewer middle bottom has image 2 pixel coordinates imageWidth,imageHeight.');
+
+
+            checkPoint(' after opening');
+            viewer.addHandler('animation-finish', function animationHandler() {
+                viewer.removeHandler('animation-finish', animationHandler);
+                checkPoint(' after zoom and pan');
+
+                //Restore rotation
+                viewer.viewport.setRotation(0);
+                start();
+            });
+            viewer.viewport.zoomTo(0.8).panTo(new OpenSeadragon.Point(0.1, 0.2));
+        });
+
+        viewer.viewport.setRotation(45);
+        viewer.open([{
+                tileSource: "/test/data/testpattern.dzi"
+            }, {
+                tileSource: "/test/data/testpattern.dzi",
+                x: 1,
+                y: 1,
+                width: 0.5
+            }
+        ]);
+    });
 
     // ----------
     asyncTest('ZoomRatio 1 image', function () {
@@ -188,10 +249,10 @@
                 var expectedViewportZoom = viewport.getZoom(true);
                 var actualImageZoom = viewport.viewportToImageZoom(
                         expectedViewportZoom);
-                equal(actualImageZoom, expectedImageZoom);
+                Util.assessNumericValue(actualImageZoom, expectedImageZoom, precision);
 
                 var actualViewportZoom = viewport.imageToViewportZoom(actualImageZoom);
-                equal(actualViewportZoom, expectedViewportZoom);
+                Util.assessNumericValue(actualViewportZoom, expectedViewportZoom, precision);
             }
 
             checkZoom();
@@ -234,11 +295,11 @@
                 var actualImageZoom = image.viewportToImageZoom(
                         expectedViewportZoom);
                 Util.assessNumericValue(actualImageZoom, expectedImageZoom,
-                        0.00000001);
+                        precision);
 
                 var actualViewportImage1Zoom = image.imageToViewportZoom(actualImageZoom);
                 Util.assessNumericValue(
-                        actualViewportImage1Zoom, expectedViewportZoom, 0.00000001);
+                        actualViewportImage1Zoom, expectedViewportZoom, precision);
             }
 
             checkZoom(image1);

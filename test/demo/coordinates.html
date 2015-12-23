@@ -24,38 +24,55 @@
                 <th></th>
                 <th>Window (pixel)</th>
                 <th>Container (pixel)</th>
-                <th>Image 1 - top left (pixel)</th>
-                <th>Image 2 - bottom right (pixel)</th>
                 <th>Viewport (point)</th>
+                <th>Big Image (pixel)</th>
+                <th>Small Image (pixel)</th>
             </tr>
             <tr>
                 <th>Cursor position</th>
-                <td id="windowPosition"></td>
-                <td id="containerPosition"></td>
-                <td id="image1Position"></td>
-                <td id="image2Position"></td>
-                <td id="viewportPosition"></td>
+                <td id="cursorWindowPosition"></td>
+                <td id="cursorContainerPosition"></td>
+                <td id="cursorViewportPosition"></td>
+                <td id="cursorImage1Position"></td>
+                <td id="cursorImage2Position"></td>
+            </tr>
+            <tr>
+                <th>Big Image top left position</th>
+                <td id="image1WindowPosition"></td>
+                <td id="image1ContainerPosition"></td>
+                <td id="image1ViewportPosition"></td>
+                <td id="image1Image1Position"></td>
+                <td id="image1Image2Position"></td>
+            </tr>
+            <tr>
+                <th>Small Image top left position</th>
+                <td id="image2WindowPosition"></td>
+                <td id="image2ContainerPosition"></td>
+                <td id="image2ViewportPosition"></td>
+                <td id="image2Image1Position"></td>
+                <td id="image2Image2Position"></td>
             </tr>
             <tr>
                 <th>Zoom</th>
                 <td>-</td>
                 <td>-</td>
+                <td id="viewportZoom"></td>
                 <td id="image1Zoom"></td>
                 <td id="image2Zoom"></td>
-                <td id="viewportZoom"></td>
             </tr>
         </table>
     </div>
+    <button onclick="rotate();">Rotate</button>
     <script type="text/javascript">
 
         var viewer = OpenSeadragon({
-            // debugMode: true,
+            debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: [{
-                    tileSource: "../data/testpattern.dzi"
-                },
-                {
+                    tileSource: "../data/testpattern.dzi",
+                    clip: new OpenSeadragon.Rect(0, 0, 500, 1000)
+                }, {
                     tileSource: "../data/testpattern.dzi",
                     x: 1,
                     y: 1,
@@ -64,28 +81,29 @@
             ],
             showNavigator: true
         });
+        viewer.addHandler("open", onAnimation);
 
         function pointToString(point) {
             return point.x.toPrecision(4) + "," + point.y.toPrecision(4);
         }
 
-        var onMouseTrackerMove = function (event) {
+        function onMouseTrackerMove(event) {
             var viewerX = event.position.x;
             var viewerY = event.position.y;
             var windowPoint = new OpenSeadragon.Point(viewerX, viewerY);
-            $("#windowPosition").text(pointToString(windowPoint));
+            $("#cursorWindowPosition").text(pointToString(windowPoint));
             var containerPoint = windowPoint.minus(
                     OpenSeadragon.getElementPosition(viewer.element));
-            $("#containerPosition").text(pointToString(containerPoint));
+            $("#cursorContainerPosition").text(pointToString(containerPoint));
             var image1 = viewer.world.getItemAt(0);
             var imagePoint = image1.windowToImageCoordinates(windowPoint);
-            $("#image1Position").text(pointToString(imagePoint));
+            $("#cursorImage1Position").text(pointToString(imagePoint));
             var image2 = viewer.world.getItemAt(1);
             var imagePoint = image2.windowToImageCoordinates(windowPoint);
-            $("#image2Position").text(pointToString(imagePoint));
+            $("#cursorImage2Position").text(pointToString(imagePoint));
             var viewportPoint = viewer.viewport.windowToViewportCoordinates(windowPoint);
-            $("#viewportPosition").text(pointToString(viewportPoint));
-        };
+            $("#cursorViewportPosition").text(pointToString(viewportPoint));
+        }
         mouseTracker = new OpenSeadragon.MouseTracker({
             element: document,
             moveHandler: onMouseTrackerMove
@@ -100,9 +118,40 @@
             var image2 = viewer.world.getItemAt(1);
             var image2Zoom = image2.viewportToImageZoom(viewportZoom);
             $("#image2Zoom").text(image2Zoom.toFixed(3));
+
+            var origin = new OpenSeadragon.Point(0, 0);
+            var image1WindowPoint = image1.imageToWindowCoordinates(origin);
+            $("#image1WindowPosition").text(pointToString(image1WindowPoint));
+            var image1ContainerPoint = image1.imageToViewerElementCoordinates(origin);
+            $("#image1ContainerPosition").text(pointToString(image1ContainerPoint));
+            var image1Image1Position = image1.viewportToImageCoordinates(
+                image1.getBounds(true).getTopLeft());
+            $("#image1Image1Position").text(pointToString(image1Image1Position));
+            var image1Image2Position = image1.viewportToImageCoordinates(
+                image2.getBounds(true).getTopLeft());
+            $("#image1Image2Position").text(pointToString(image1Image2Position));
+            var image1ViewportPoint = image1.imageToViewportCoordinates(origin);
+            $("#image1ViewportPosition").text(pointToString(image1ViewportPoint));
+
+            var image2WindowPoint = image2.imageToWindowCoordinates(origin);
+            $("#image2WindowPosition").text(pointToString(image2WindowPoint));
+            var image2ContainerPoint = image2.imageToViewerElementCoordinates(origin);
+            $("#image2ContainerPosition").text(pointToString(image2ContainerPoint));
+            var image2Image1Position = image2.viewportToImageCoordinates(
+                image1.getBounds(true).getTopLeft());
+            $("#image2Image1Position").text(pointToString(image2Image1Position));
+            var image2Image2Position = image2.viewportToImageCoordinates(
+                image2.getBounds(true).getTopLeft());
+            $("#image2Image2Position").text(pointToString(image2Image2Position));
+            var image2ViewportPoint = image2.imageToViewportCoordinates(origin);
+            $("#image2ViewportPosition").text(pointToString(image2ViewportPoint));
         }
         viewer.addHandler("animation", onAnimation);
 
+        function rotate() {
+            viewer.viewport.setRotation(viewer.viewport.getRotation() + 45);
+            onAnimation();
+        }
     </script>
 </body>
 </html>

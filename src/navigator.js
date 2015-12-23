@@ -301,8 +301,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
         if( viewport && this.viewport ) {
             bounds      = viewport.getBounds( true );
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft(), false );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false )
+            topleft     = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
+            bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
 
             //update style for navigator-box

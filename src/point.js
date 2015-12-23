@@ -179,14 +179,46 @@ $.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
      * From http://stackoverflow.com/questions/4465931/rotate-rectangle-around-a-point
      * @function
      * @param {Number} degress to rotate around the pivot.
-     * @param {OpenSeadragon.Point} pivot Point about which to rotate.
+     * @param {OpenSeadragon.Point} [pivot=(0,0)] Point around which to rotate.
+     * Defaults to the origin.
      * @returns {OpenSeadragon.Point}. A new point representing the point rotated around the specified pivot
      */
-    rotate: function ( degrees, pivot ) {
-        var angle = degrees * Math.PI / 180.0,
-            x = Math.cos( angle ) * ( this.x - pivot.x ) - Math.sin( angle ) * ( this.y - pivot.y ) + pivot.x,
-            y = Math.sin( angle ) * ( this.x - pivot.x ) + Math.cos( angle ) * ( this.y - pivot.y ) + pivot.y;
-        return new $.Point( x, y );
+    rotate: function (degrees, pivot) {
+        pivot = pivot || new $.Point(0, 0);
+        var cos;
+        var sin;
+        // Avoid float computations when possible
+        if (degrees % 90 === 0) {
+            var d = degrees % 360;
+            if (d < 0) {
+                d += 360;
+            }
+            switch (d) {
+                case 0:
+                    cos = 1;
+                    sin = 0;
+                    break;
+                case 90:
+                    cos = 0;
+                    sin = 1;
+                    break;
+                case 180:
+                    cos = -1;
+                    sin = 0;
+                    break;
+                case 270:
+                    cos = 0;
+                    sin = -1;
+                    break;
+            }
+        } else {
+            var angle = degrees * Math.PI / 180.0;
+            cos = Math.cos(angle);
+            sin = Math.sin(angle);
+        }
+        var x = cos * (this.x - pivot.x) - sin * (this.y - pivot.y) + pivot.x;
+        var y = sin * (this.x - pivot.x) + cos * (this.y - pivot.y) + pivot.y;
+        return new $.Point(x, y);
     },
 
     /**
