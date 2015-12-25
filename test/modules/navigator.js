@@ -200,28 +200,28 @@
 
     var assessViewerInCorner = function (theContentCorner) {
         return function () {
-            var expectedXCoordinate, expecteYCoordinate;
+            var expectedXCoordinate, expectedYCoordinate;
             if (theContentCorner === "TOPLEFT") {
                 expectedXCoordinate = 0;
-                expecteYCoordinate = 0;
+                expectedYCoordinate = 0;
             }
             else if (theContentCorner === "TOPRIGHT") {
                 expectedXCoordinate = 1 - viewer.viewport.getBounds().width;
-                expecteYCoordinate = 0;
+                expectedYCoordinate = 0;
             }
             else if (theContentCorner === "BOTTOMRIGHT") {
                 expectedXCoordinate = 1 - viewer.viewport.getBounds().width;
-                expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
+                expectedYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             else if (theContentCorner === "BOTTOMLEFT") {
                 expectedXCoordinate = 0;
-                expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
+                expectedYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             if (viewer.viewport.getBounds().width < 1) {
                 Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, 0.04, ' Viewer at ' + theContentCorner + ', x coord');
             }
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
-                Util.assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
+                Util.assessNumericValue(expectedYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
             }
         };
     };
