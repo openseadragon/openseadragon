@@ -372,7 +372,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ).rotate( -this.viewer.viewport.degrees, this.viewer.viewport.getHomeBounds().getCenter() ) );
+        this.viewer.viewport.panTo( this.viewport.pointFromPixelNoRotate( event.position ).rotate( -this.viewer.viewport.degrees, this.viewer.viewport.getHomeBounds().getCenter() ) );
         this.viewer.viewport.applyConstraints();
     }
 }
