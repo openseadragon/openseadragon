@@ -206,6 +206,11 @@
   * @property {Number} [opacity=1]
   *     Default opacity of the tiled images (1=opaque, 0=transparent)
   *
+  * @property {String} [compositeOperation='source-over']
+  *     Valid values are 'source-atop', 'source-in', 'source-out',
+  *     'destination-over', 'destination-atop', 'destination-in',
+  *     'destination-out', 'lighter', 'copy' or 'xor'.<br>
+  *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
   *     You can pass a CSS color value like "#FF8800".
@@ -1044,6 +1049,7 @@ if (typeof define === 'function' && define.amd) {
 
             // APPEARANCE
             opacity:                    1,
+            compositeOperation:         'source-over',
             placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS

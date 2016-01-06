@@ -65,6 +65,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
+ * @param {String} [options.compositeOperation='source-over'] - How a tiled source image are drawn onto an existing image.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -131,7 +132,6 @@ $.TiledImage = function( options ) {
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
-
         //configurable settings
         springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
         animationTime:        $.DEFAULT_SETTINGS.animationTime,
@@ -145,7 +145,8 @@ $.TiledImage = function( options ) {
         debugMode:            $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:              $.DEFAULT_SETTINGS.opacity
+        opacity:              $.DEFAULT_SETTINGS.opacity,
+        compositeOperation:   $.DEFAULT_SETTINGS.compositeOperation
 
     }, options );
 
@@ -580,6 +581,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setOpacity: function(opacity) {
         this.opacity = opacity;
+        this._needsDraw = true;
+    },
+
+    /**
+     * @returns {String} The TiledImage's current compositeOperation.
+     */
+    getCompositeOperation: function() {
+        return this.compositeOperation;
+    },
+
+    /**
+     * @param {String} compositeOperation the tiled image should be drawn with this globalCompositeOperation.
+     */
+    setCompositeOperation: function(compositeOperation) {
+        this.compositeOperation = compositeOperation;
         this._needsDraw = true;
     },
 
@@ -1301,7 +1317,8 @@ function drawTiles( tiledImage, lastDrawn ) {
         drawDebugInfo( tiledImage, lastDrawn );
         return;
     }
-    var useSketch = tiledImage.opacity < 1;
+    var useSketch = (tiledImage.compositeOperation == 'source-over') ? (tiledImage.opacity < 1):true;
+
     if ( useSketch ) {
         tiledImage._drawer._clear( true );
     }
@@ -1360,7 +1377,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity );
+        tiledImage._drawer.blendSketch( tiledImage.opacity, tiledImage.compositeOperation );
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

@@ -373,13 +373,14 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {Float} opacity The opacity of the blending.
      * @returns {undefined}
      */
-    blendSketch: function(opacity) {
+    blendSketch: function(opacity, compositeOperation) {
         if (!this.useCanvas || !this.sketchCanvas) {
             return;
         }
 
         this.context.save();
         this.context.globalAlpha = opacity;
+        this.context.globalCompositeOperation = compositeOperation;
         this.context.drawImage(this.sketchCanvas, 0, 0);
         this.context.restore();
     },

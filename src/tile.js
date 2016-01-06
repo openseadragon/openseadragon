@@ -268,6 +268,7 @@ $.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
         context.save();
 
         context.globalAlpha = this.opacity;
+        context.globalCompositeOperation = this.compositeOperation;
 
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
