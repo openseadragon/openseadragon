@@ -65,7 +65,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
- * @param {String} [options.compositeOperation='source-over'] - How a tiled source image are drawn onto an existing image.
+ * @param {String} [options.compositeOperation='source-over'] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -1317,7 +1317,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         drawDebugInfo( tiledImage, lastDrawn );
         return;
     }
-    var useSketch = (tiledImage.compositeOperation == 'source-over') ? (tiledImage.opacity < 1):true;
+    var useSketch = tiledImage.opacity < 1 || tiledImage.compositeOperation !== 'source-over';
 
     if ( useSketch ) {
         tiledImage._drawer._clear( true );

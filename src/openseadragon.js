@@ -209,7 +209,7 @@
   * @property {String} [compositeOperation='source-over']
   *     Valid values are 'source-atop', 'source-in', 'source-out',
   *     'destination-over', 'destination-atop', 'destination-in',
-  *     'destination-out', 'lighter', 'copy' or 'xor'.<br>
+  *     'destination-out', 'lighter', 'copy' or 'xor'
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
