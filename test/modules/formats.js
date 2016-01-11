@@ -115,6 +115,11 @@
     });
 
     // ----------
+    asyncTest('IIIF 2.0 JSON, sizes array only', function() {
+        testOpenUrl('iiif_2_0_sizes/info.json');
+    });
+
+    // ----------
     asyncTest('IIIF 2.0 JSON String', function() {
         testOpen(
             '{' +
@@ -147,6 +152,39 @@
         testOpen({
             type: "image",
             url: "/test/data/A.png"
+        });
+    });
+    
+    
+    // ----------
+    asyncTest('Legacy Image Pyramid', function() {
+        // Although it is using image paths that happen to be in IIIF format, this is not a IIIFTileSource.
+        // The url values are opaque, just image locations.
+        // When emulating a legacy pyramid, IIIFTileSource calls functions from LegacyTileSource, so this 
+        // adds a test for the legacy functionality too.
+        testOpen({
+            type: 'legacy-image-pyramid',
+            levels:[{
+                url: '/test/data/iiif_2_0_sizes/full/400,/0/default.jpg',
+                height: 291,
+                width:  400
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/800,/0/default.jpg',
+                height: 582,
+                width:  800
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/1600,/0/default.jpg',
+                height: 1164,
+                width:  1600
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/3200,/0/default.jpg',
+                height: 2328,
+                width:  3200
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/6976,/0/default.jpg',
+                height: 5074,
+                width:  6976
+            }]
         });
     });
 
