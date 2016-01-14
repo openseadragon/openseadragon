@@ -215,9 +215,9 @@ function filterFiles( files ){
         if( file.height &&
             file.width &&
             file.url && (
-                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)$/) || (
+                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/) || (
                     file.mimetype &&
-                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
+                    file.mimetype.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/)
                 )
             ) ){
             //This is sufficient to serve as a level
