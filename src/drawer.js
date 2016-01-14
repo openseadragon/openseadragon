@@ -395,7 +395,6 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
             this.canvas.width,
             this.canvas.height
         );
->>>>>>> a0a44dbeb5e3030e0acecf108efc19dbd53aaec2
         this.context.restore();
     },
 

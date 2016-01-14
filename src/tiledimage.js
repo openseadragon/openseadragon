@@ -147,7 +147,7 @@ $.TiledImage = function( options ) {
         debugMode:              $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:                $.DEFAULT_SETTINGS.opacity
+        opacity:                $.DEFAULT_SETTINGS.opacity,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
 
     }, options );
@@ -1342,7 +1342,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale);
     }
->>>>>>> a0a44dbeb5e3030e0acecf108efc19dbd53aaec2
 
     if ( useSketch ) {
         tiledImage._drawer._clear( true );
