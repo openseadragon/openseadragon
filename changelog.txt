@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Drag outside of iframe now works better, as long as both pages are on the same domain (#790)
 * Coordinate conversion now takes rotation into account (#796)
 * Support tile-less IIIF as per LegacyTileSource (#816)
+* You can now give an empty string to the tabIndex option (#805)
 
 2.1.0:
 
