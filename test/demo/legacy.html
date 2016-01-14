@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Demo - Legacy image pyramid</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+
+    </style>
+</head>
+<body>
+<div>
+    Use an array of full images at different sizes.
+</div>
+<div id="contentDiv" class="openseadragon1"></div>
+<script type="text/javascript">
+
+    var viewer = OpenSeadragon({
+        // debugMode: true,
+        id: "contentDiv",
+        prefixUrl: "../../build/openseadragon/images/",
+        tileSources: {
+            type: 'legacy-image-pyramid',
+            levels:[{
+                url: '/test/data/iiif_2_0_sizes/full/400,/0/default.jpg',
+                height: 291,
+                width:  400
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/800,/0/default.jpg',
+                height: 582,
+                width:  800
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/1600,/0/default.jpg',
+                height: 1164,
+                width:  1600
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/3200,/0/default.jpg',
+                height: 2328,
+                width:  3200
+            },{
+                url: '/test/data/iiif_2_0_sizes/full/6976,/0/default.jpg',
+                height: 5074,
+                width:  6976
+            }]
+        },
+        showNavigator:true
+    });
+
+</script>
+</body>
+</html>

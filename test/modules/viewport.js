@@ -218,6 +218,26 @@
         });
     });
 
+    asyncTest('getHomeBoundsWithRotation', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(-675);
+            Util.assertRectangleEquals(
+                viewport.getHomeBounds(),
+                new OpenSeadragon.Rect(
+                    (1 - Math.sqrt(2)) / 2,
+                    (1 - Math.sqrt(2)) / 2,
+                    Math.sqrt(2),
+                    Math.sqrt(2)),
+                0.00000001,
+                "Test getHomeBounds with degrees = -675");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('getHomeZoom', function() {
         reopenViewerHelper({
             property: 'defaultZoomLevel',
