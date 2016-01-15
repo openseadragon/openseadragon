@@ -217,7 +217,7 @@ function filterFiles( files ){
             file.url && (
                 file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/) || (
                     file.mimetype &&
-                    file.mimetype.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/)
+                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
                 )
             ) ){
             //This is sufficient to serve as a level
