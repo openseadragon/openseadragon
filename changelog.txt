@@ -10,6 +10,8 @@ OPENSEADRAGON CHANGELOG
 * Coordinate conversion now takes rotation into account (#796)
 * Support tile-less IIIF as per LegacyTileSource (#816)
 * You can now give an empty string to the tabIndex option (#805)
+* Fixed issue with rotation and clicking in the navigator (#807)
+* Broadened the check for mime type in LegacyTileSource URLs to allow query strings (#819)
 
 2.1.0:
 
