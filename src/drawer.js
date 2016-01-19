@@ -370,6 +370,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
      * @param {Float} [scale=1] The scale at which tiles were drawn on the sketch. Default is 1.
      *   Use scale to draw at a lower scale and then enlarge onto the main canvas.
      * @param OpenSeadragon.Point} [translate] A translation vector that was used to draw the tiles
+     * @param {String} [options.compositeOperation='source-over'] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
      * @returns {undefined}
      */
     blendSketch: function(opacity, scale, translate, compositeOperation) {
@@ -383,7 +384,9 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
         this.context.save();
         this.context.globalAlpha = opacity;
-        this.context.globalCompositeOperation = compositeOperation;
+        if (compositeOperation !== undefined) {
+            this.context.globalCompositeOperation = compositeOperation;
+        }
         this.context.drawImage(
             this.sketchCanvas,
             position.x,
