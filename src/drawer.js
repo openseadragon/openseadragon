@@ -384,7 +384,7 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
 
         this.context.save();
         this.context.globalAlpha = opacity;
-        if (compositeOperation !== undefined && compositeOperation !== null) {
+        if (compositeOperation) {
             this.context.globalCompositeOperation = compositeOperation;
         }
         this.context.drawImage(
