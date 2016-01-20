@@ -176,7 +176,7 @@ $.TiledImage = function( options ) {
       /**
        * This event is fired just before the tile is drawn giving the application a chance to alter the image.
        *
-       * NOTE: This event is only fired when the drawer is using a <canvas>.
+       * NOTE: This event is only fired when the drawer is using a &lt;canvas&gt;.
        *
        * @event tile-drawing
        * @memberof OpenSeadragon.Viewer
