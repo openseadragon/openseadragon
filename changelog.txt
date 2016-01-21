@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * You can now give an empty string to the tabIndex option (#805)
 * Fixed issue with rotation and clicking in the navigator (#807)
 * Broadened the check for mime type in LegacyTileSource URLs to allow query strings (#819)
+* Added globalCompositeOperation option for tiledImage, to allow for different transfer modes (#814)
 
 2.1.0:
 
