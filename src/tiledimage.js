@@ -1319,19 +1319,23 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    if ( imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
+    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
-        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale);
+        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
+            tiledImage._drawer.getCanvasSize(false),
+            tiledImage._drawer.getCanvasSize(true));
     }
 
     if ( useSketch ) {
         tiledImage._drawer._clear( true );
     }
 
-    if (tiledImage.viewport.degrees !== 0) {
+    // When scaling, we must rotate only when blending the sketch canvas to avoid
+    // interpolation
+    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
         tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, useSketch);
     }
 
@@ -1400,12 +1404,19 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
 
-    if (tiledImage.viewport.degrees !== 0) {
+    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
         tiledImage._drawer._restoreRotationChanges(useSketch);
     }
 
-    if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity, sketchScale, sketchTranslate );
+    if (useSketch) {
+        var offsetForRotation = tiledImage.viewport.degrees !== 0 && sketchScale;
+        if (offsetForRotation) {
+            tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, false);
+        }
+        tiledImage._drawer.blendSketch(tiledImage.opacity, sketchScale, sketchTranslate);
+        if (offsetForRotation) {
+            tiledImage._drawer._restoreRotationChanges(false);
+        }
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }
