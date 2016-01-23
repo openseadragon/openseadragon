@@ -41,7 +41,7 @@
  * @param {Number} options.springStiffness - Spring stiffness. Must be greater than zero.
  * The closer to zero, the closer to linear animation.
  * @param {Number} options.animationTime - Animation duration per spring, in seconds.
- * Must be greater than zero.
+ * Must be zero or greater.
  * @param {Number} [options.initial=0] - Initial value of spring.
  * @param {Boolean} [options.exponential=false] - Whether this spring represents
  * an exponential scale (such as zoom) and should be animated accordingly. Note that
@@ -79,8 +79,8 @@ $.Spring = function( options ) {
     $.console.assert(typeof options.springStiffness === "number" && options.springStiffness !== 0,
         "[OpenSeadragon.Spring] options.springStiffness must be a non-zero number");
 
-    $.console.assert(typeof options.animationTime === "number" && options.animationTime !== 0,
-        "[OpenSeadragon.Spring] options.animationTime must be a non-zero number");
+    $.console.assert(typeof options.animationTime === "number" && options.animationTime >= 0,
+        "[OpenSeadragon.Spring] options.animationTime must be a number greater than or equal to 0");
 
     if (options.exponential) {
         this._exponential = true;
