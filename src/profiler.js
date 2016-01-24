@@ -68,7 +68,8 @@ $.Profiler = function() {
     this.maxIdleTime = 0;
 };
 
-$.Profiler.prototype = /** @lends OpenSeadragon.Profiler.prototype */{
+/** @lends OpenSeadragon.Profiler.prototype */
+$.Profiler.prototype = {
 
     /**
      * @function

@@ -180,7 +180,8 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D) {
     this.lastTouchTime  = 0;
 };
 
-$.Tile.prototype = /** @lends OpenSeadragon.Tile.prototype */{
+/** @lends OpenSeadragon.Tile.prototype */
+$.Tile.prototype = {
 
     /**
      * Provides a string representation of this tiles level and (x,y)

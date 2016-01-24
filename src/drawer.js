@@ -132,7 +132,8 @@ $.Drawer = function( options ) {
     this.container.appendChild( this.canvas );
 };
 
-$.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
+/** @lends OpenSeadragon.Drawer.prototype */
+$.Drawer.prototype = {
     // deprecated
     addOverlay: function( element, location, placement, onDraw ) {
         $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");

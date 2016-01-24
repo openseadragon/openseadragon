@@ -134,7 +134,8 @@ $.Spring = function( options ) {
     }
 };
 
-$.Spring.prototype = /** @lends OpenSeadragon.Spring.prototype */{
+/** @lends OpenSeadragon.Spring.prototype */
+$.Spring.prototype = {
 
     /**
      * @function

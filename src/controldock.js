@@ -88,7 +88,8 @@
         this.container.appendChild( this.controls.bottomleft );
     };
 
-    $.ControlDock.prototype = /** @lends OpenSeadragon.ControlDock.prototype */{
+    /** @lends OpenSeadragon.ControlDock.prototype */
+    $.ControlDock.prototype = {
 
         /**
          * @function

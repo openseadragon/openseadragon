@@ -230,8 +230,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
 };
 
-
-$.TileSource.prototype = /** @lends OpenSeadragon.TileSource.prototype */{
+/** @lends OpenSeadragon.TileSource.prototype */
+$.TileSource.prototype = {
 
     getTileSize: function( level ) {
         $.console.error(

@@ -133,7 +133,8 @@
             true : options.checkResize;
     };
 
-    $.Overlay.prototype = /** @lends OpenSeadragon.Overlay.prototype */{
+    /** @lends OpenSeadragon.Overlay.prototype */
+    $.Overlay.prototype = {
 
         /**
          * @function

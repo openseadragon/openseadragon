@@ -144,7 +144,8 @@ $.Viewport = function( options ) {
     this.update();
 };
 
-$.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
+/** @lends OpenSeadragon.Viewport.prototype */
+$.Viewport.prototype = {
     /**
      * Updates the viewport's home bounds and constraints for the given content size.
      * @function
@@ -1076,15 +1077,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * OpenSeadragon.Point
      * Note: not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.
      * @function
-     * @param {OpenSeadragon.Point} viewerX the point in viewport coordinate system.
-     * @param {Number} viewerX X coordinate in viewport coordinate system.
-     * @param {Number} viewerY Y coordinate in viewport coordinate system.
+     * @param {(OpenSeadragon.Point|Number)} viewerX either a point or the X
+     * coordinate in viewport coordinate system.
+     * @param {Number} [viewerY] Y coordinate in viewport coordinate system.
      * @return {OpenSeadragon.Point} a point representing the coordinates in the image.
      */
-    viewportToImageCoordinates: function( viewerX, viewerY ) {
-        if ( arguments.length == 1 ) {
+    viewportToImageCoordinates: function(viewerX, viewerY) {
+        if (viewerX instanceof $.Point) {
             //they passed a point instead of individual components
-            return this.viewportToImageCoordinates( viewerX.x, viewerX.y );
+            return this.viewportToImageCoordinates(viewerX.x, viewerX.y);
         }
 
         if (this.viewer && this.viewer.world.getItemCount() > 1) {
@@ -1107,15 +1108,15 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * OpenSeadragon.Point
      * Note: not accurate with multi-image; use TiledImage.imageToViewportCoordinates instead.
      * @function
-     * @param {OpenSeadragon.Point} imageX the point in image coordinate system.
-     * @param {Number} imageX X coordinate in image coordinate system.
-     * @param {Number} imageY Y coordinate in image coordinate system.
+     * @param {(OpenSeadragon.Point | Number)} imageX the point or the
+     * X coordinate in image coordinate system.
+     * @param {Number} [imageY] Y coordinate in image coordinate system.
      * @return {OpenSeadragon.Point} a point representing the coordinates in the viewport.
      */
-    imageToViewportCoordinates: function( imageX, imageY ) {
-        if ( arguments.length == 1 ) {
+    imageToViewportCoordinates: function(imageX, imageY) {
+        if (imageX instanceof $.Point) {
             //they passed a point instead of individual components
-            return this.imageToViewportCoordinates( imageX.x, imageX.y );
+            return this.imageToViewportCoordinates(imageX.x, imageX.y);
         }
 
         if (this.viewer && this.viewer.world.getItemCount() > 1) {
@@ -1135,13 +1136,12 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * OpenSeadragon.Rect
      * Note: not accurate with multi-image; use TiledImage.imageToViewportRectangle instead.
      * @function
-     * @param {OpenSeadragon.Rect} imageX the rectangle in image coordinate system.
-     * @param {Number} imageX the X coordinate of the top left corner of the rectangle
+     * @param {(OpenSeadragon.Rect | Number)} imageX the rectangle or the X
+     * coordinate of the top left corner of the rectangle in image coordinate system.
+     * @param {Number} [imageY] the Y coordinate of the top left corner of the rectangle
      * in image coordinate system.
-     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
-     * in image coordinate system.
-     * @param {Number} pixelWidth the width in pixel of the rectangle.
-     * @param {Number} pixelHeight the height in pixel of the rectangle.
+     * @param {Number} [pixelWidth] the width in pixel of the rectangle.
+     * @param {Number} [pixelHeight] the height in pixel of the rectangle.
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
         var rect = imageX;
@@ -1168,13 +1168,13 @@ $.Viewport.prototype = /** @lends OpenSeadragon.Viewport.prototype */{
      * OpenSeadragon.Rect
      * Note: not accurate with multi-image; use TiledImage.viewportToImageRectangle instead.
      * @function
-     * @param {OpenSeadragon.Rect} viewerX the rectangle in viewport coordinate system.
-     * @param {Number} viewerX the X coordinate of the top left corner of the rectangle
+     * @param {(OpenSeadragon.Rect | Number)} viewerX either a rectangle or
+     * the X coordinate of the top left corner of the rectangle in viewport
+     * coordinate system.
+     * @param {Number} [viewerY] the Y coordinate of the top left corner of the rectangle
      * in viewport coordinate system.
-     * @param {Number} imageY the Y coordinate of the top left corner of the rectangle
-     * in viewport coordinate system.
-     * @param {Number} pointWidth the width of the rectangle in viewport coordinate system.
-     * @param {Number} pointHeight the height of the rectangle in viewport coordinate system.
+     * @param {Number} [pointWidth] the width of the rectangle in viewport coordinate system.
+     * @param {Number} [pointHeight] the height of the rectangle in viewport coordinate system.
      */
     viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
         var rect = viewerX;

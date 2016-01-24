@@ -110,7 +110,8 @@ $.ImageLoader = function( options ) {
 
 };
 
-$.ImageLoader.prototype = /** @lends OpenSeadragon.ImageLoader.prototype */{
+/** @lends OpenSeadragon.ImageLoader.prototype */
+$.ImageLoader.prototype = {
 
     /**
      * Add an unloaded image to the loader queue.

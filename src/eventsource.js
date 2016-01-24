@@ -53,7 +53,8 @@ $.EventSource = function() {
     this.events = {};
 };
 
-$.EventSource.prototype = /** @lends OpenSeadragon.EventSource.prototype */{
+/** @lends OpenSeadragon.EventSource.prototype */
+$.EventSource.prototype = {
 
     // TODO: Add a method 'one' which automatically unbinds a listener after the first triggered event that matches.
 

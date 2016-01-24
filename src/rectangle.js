@@ -110,7 +110,8 @@ $.Rect = function(x, y, width, height, degrees) {
     }
 };
 
-$.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
+/** @lends OpenSeadragon.Rect.prototype */
+$.Rect.prototype = {
     /**
      * @function
      * @returns {OpenSeadragon.Rect} a duplicate of this Rect
@@ -318,7 +319,7 @@ $.Rect.prototype = /** @lends OpenSeadragon.Rect.prototype */{
     /**
      * Retrieves the smallest horizontal (degrees=0) rectangle which contains
      * this rectangle.
-     * @returns {OpenSeadrayon.Rect}
+     * @returns {OpenSeadragon.Rect}
      */
     getBoundingBox: function() {
         if (this.degrees === 0) {

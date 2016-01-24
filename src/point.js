@@ -59,7 +59,8 @@ $.Point = function( x, y ) {
     this.y = typeof ( y ) == "number" ? y : 0;
 };
 
-$.Point.prototype = /** @lends OpenSeadragon.Point.prototype */{
+/** @lends OpenSeadragon.Point.prototype */
+$.Point.prototype = {
     /**
      * @function
      * @returns {OpenSeadragon.Point} a duplicate of this Point
