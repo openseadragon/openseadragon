@@ -3,7 +3,7 @@
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
-See it in action and get started using it at (http://openseadragon.github.io/).
+See it in action and get started using it at [http://openseadragon.github.io/](http://openseadragon.github.io/).
 
 ## Stable Builds
 
@@ -11,7 +11,7 @@ See the [GitHub releases page](https://github.com/openseadragon/openseadragon/re
 
 ## Development
 
-If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at (http://openseadragon.github.io/). If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide](https://github.com/openseadragon/openseadragon/blob/master/CONTRIBUTING.md) for instructions.
+If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [http://openseadragon.github.io/](http://openseadragon.github.io/). If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide](https://github.com/openseadragon/openseadragon/blob/master/CONTRIBUTING.md) for instructions.
 
 ## License
 
