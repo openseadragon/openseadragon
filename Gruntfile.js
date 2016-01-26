@@ -57,6 +57,12 @@ module.exports = function(grunt) {
             "src/world.js"
         ];
 
+    var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
+                 "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
+                 "//! Git commit: <%= gitInfo %>\n" +
+                 "//! http://openseadragon.github.io\n" +
+                 "//! License: http://openseadragon.github.io/license/\n\n";
+
     // ----------
     grunt.event.once('git-describe', function (rev) {
         grunt.config.set('gitInfo', rev);
@@ -85,12 +91,9 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                banner: "//! <%= pkg.name %> <%= pkg.version %>\n" +
-                    "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
-                    "//! Git commit: <%= gitInfo %>\n" +
-                    "//! http://openseadragon.github.io\n" +
-                    "//! License: http://openseadragon.github.io/license/\n\n",
-                process: true
+                banner: banner,
+                process: true,
+                sourceMap: true
             },
             dist: {
                 src:  [ "<banner>" ].concat(sources),
@@ -111,9 +114,11 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                preserveComments: "some",
+                preserveComments: false,
+                banner: banner,
                 sourceMap: true,
-                sourceMapName: 'build/openseadragon/openseadragon.min.js.map'
+                sourceMapName: 'build/openseadragon/openseadragon.min.js.map',
+                sourceMapIn: 'build/openseadragon/openseadragon.js.map'
             },
             openseadragon: {
                 src: [ distribution ],
