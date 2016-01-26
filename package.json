@@ -29,6 +29,7 @@
     "qunitjs": "^1.20.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "prepublish": "grunt build"
   }
 }
