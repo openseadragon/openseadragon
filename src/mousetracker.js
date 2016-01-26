@@ -265,7 +265,8 @@
         }
     };
 
-    $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{
+    /** @lends OpenSeadragon.MouseTracker.prototype */
+    $.MouseTracker.prototype = {
 
         /**
          * Clean up any events or objects created by the tracker.
@@ -1117,7 +1118,9 @@
          */
         this.captureCount = 0;
     };
-    $.MouseTracker.GesturePointList.prototype = /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */{
+
+    /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */
+    $.MouseTracker.GesturePointList.prototype = {
         /**
          * @function
          * @returns {Number} Number of gesture points in the list.
