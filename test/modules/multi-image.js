@@ -189,4 +189,22 @@
         ]);
     });
 
+    asyncTest('Viewer.addSimpleImage', function() {
+        viewer.addHandler("open", function openHandler() {
+            viewer.removeHandler("open", openHandler);
+
+            viewer.world.addHandler('add-item', function itemAdded(event) {
+                viewer.world.removeHandler('add-item', itemAdded);
+                equal(event.item.opacity, 0.5, 'Opacity option not set using addSimpleImage');
+                start();
+            });
+
+            viewer.addSimpleImage({
+                url: '/test/data/A.png',
+                opacity: 0.5
+            });
+        });
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
 })();
