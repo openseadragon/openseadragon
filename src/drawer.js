@@ -317,6 +317,19 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
+
+                // If the viewport is not currently rotated, the sketchCanvas
+                // will have the same size as the main canvas. However, if
+                // the viewport get rotated later on, we will need to resize it.
+                if (this.viewport.getRotation() === 0) {
+                    var _this = this;
+                    this.viewer.addHandler('rotate', function resizeSketchCanvas() {
+                        _this.viewer.removeHandler('rotate', resizeSketchCanvas);
+                        var sketchCanvasSize = _this._calculateSketchCanvasSize();
+                        _this.sketchCanvas.width = sketchCanvasSize.x;
+                        _this.sketchCanvas.height = sketchCanvasSize.y;
+                    });
+                }
             }
             context = this.sketchContext;
         }
@@ -555,6 +568,11 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
     // private
     _calculateSketchCanvasSize: function() {
         var canvasSize = this._calculateCanvasSize();
+        if (this.viewport.getRotation() === 0) {
+            return canvasSize;
+        }
+        // If the viewport is rotated, we need a larger sketch canvas in order
+        // to support edge smoothing.
         var sketchCanvasSize = Math.ceil(Math.sqrt(
             canvasSize.x * canvasSize.x +
             canvasSize.y * canvasSize.y));
