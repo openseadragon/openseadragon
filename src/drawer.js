@@ -322,12 +322,12 @@ $.Drawer.prototype = /** @lends OpenSeadragon.Drawer.prototype */{
                 // will have the same size as the main canvas. However, if
                 // the viewport get rotated later on, we will need to resize it.
                 if (this.viewport.getRotation() === 0) {
-                    var _this = this;
+                    var self = this;
                     this.viewer.addHandler('rotate', function resizeSketchCanvas() {
-                        _this.viewer.removeHandler('rotate', resizeSketchCanvas);
-                        var sketchCanvasSize = _this._calculateSketchCanvasSize();
-                        _this.sketchCanvas.width = sketchCanvasSize.x;
-                        _this.sketchCanvas.height = sketchCanvasSize.y;
+                        self.viewer.removeHandler('rotate', resizeSketchCanvas);
+                        var sketchCanvasSize = self._calculateSketchCanvasSize();
+                        self.sketchCanvas.width = sketchCanvasSize.x;
+                        self.sketchCanvas.height = sketchCanvasSize.y;
                     });
                 }
             }
