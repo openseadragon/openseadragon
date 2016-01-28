@@ -195,7 +195,8 @@
 
             viewer.world.addHandler('add-item', function itemAdded(event) {
                 viewer.world.removeHandler('add-item', itemAdded);
-                equal(event.item.opacity, 0.5, 'Opacity option not set using addSimpleImage');
+                equal(event.item.opacity, 0.5,
+                    'Opacity option should be set when using addSimpleImage');
                 start();
             });
 

@@ -1395,7 +1395,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Add a simple image to the viewer.
-     * The options are the same than {@link OpenSeadragon.Viewer#addTiledImage}
+     * The options are the same as the ones in {@link OpenSeadragon.Viewer#addTiledImage}
      * except for options.tileSource which is replaced by options.url.
      * @function
      * @param {Object} options - See {@link OpenSeadragon.Viewer#addTiledImage}
