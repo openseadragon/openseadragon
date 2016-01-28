@@ -3,7 +3,7 @@
 OpenSeadragon is truly a community project; we welcome your involvement!
 
 When contributing, please attempt to match the code style already in the codebase.
-However, we are in the process of changing our code style (see #456), so avoid spaces inside parentheses and square brackets. Note that we use four spaces per indentation stop. For easier setup you can also install [EditorConfig](http://editorconfig.org/) if your IDE is supported. For more thoughts on code style, see [idiomatic.js](https://github.com/rwldrn/idiomatic.js/).
+However, we are in the process of changing our code style (see issue [#456](https://github.com/openseadragon/openseadragon/issues/456)), so avoid spaces inside parentheses and square brackets. Note that we use four spaces per indentation stop. For easier setup you can also install [EditorConfig](http://editorconfig.org/) if your IDE is supported. For more thoughts on code style, see [idiomatic.js](https://github.com/rwldrn/idiomatic.js/).
 
 When fixing bugs and adding features, when appropriate please also:
 
