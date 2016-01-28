@@ -16,19 +16,20 @@
   },
   "devDependencies": {
     "grunt": "^0.4.5",
-    "grunt-contrib-clean": "^0.5.0",
-    "grunt-contrib-compress": "^0.9.1",
-    "grunt-contrib-concat": "^0.4.0",
-    "grunt-contrib-connect": "^0.7.1",
-    "grunt-contrib-jshint": "^0.10.0",
-    "grunt-contrib-uglify": "^0.4.0",
+    "grunt-contrib-clean": "^0.7.0",
+    "grunt-contrib-compress": "^0.13.0",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-connect": "^0.11.2",
+    "grunt-contrib-jshint": "^0.11.0",
+    "grunt-contrib-uglify": "^0.11.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-git-describe": "^2.3.2",
-    "grunt-qunit-istanbul": "^0.5.0",
-    "grunt-text-replace": "^0.3.11",
-    "qunitjs": "^1.18.0"
+    "grunt-qunit-istanbul": "^0.6.0",
+    "grunt-text-replace": "^0.4.0",
+    "qunitjs": "^1.20.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "prepublish": "grunt build"
   }
 }
