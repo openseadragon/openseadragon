@@ -14,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Broadened the check for mime type in LegacyTileSource URLs to allow query strings (#819)
 * Added globalCompositeOperation option for tiledImage, to allow for different transfer modes (#814)
 * Added Viewer.addSimpleImage method for easily adding non-tiled images (#827)
+* DziTileSource now works properly with DZI files that have no extension (#835)
 
 2.1.0:
 
