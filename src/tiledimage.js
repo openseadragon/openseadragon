@@ -815,8 +815,19 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if (best && !best.context2D) {
         loadTile( tiledImage, best, currentTime );
+    } else {
+        /**
+         * Fired every time the TiledImage is drawn when all the necessary tiles for the
+         * current view have been fully loaded.
+         *
+         * @event fully-loaded
+         * @memberof OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        tiledImage.raiseEvent('fully-loaded');
     }
-
 }
 
 
