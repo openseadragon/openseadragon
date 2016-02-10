@@ -199,11 +199,18 @@ $.Navigator = function( options ){
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
 
+    function rotate(degrees) {
+        _setTransformRotate(_this.displayRegionContainer, degrees);
+        _setTransformRotate(_this.displayRegion, -degrees);
+        _this.viewport.setRotation(degrees);
+    }
     if (options.navigatorRotate) {
+        var degrees = options.viewer.viewport ?
+            options.viewer.viewport.getRotation() :
+            options.viewer.degrees || 0;
+        rotate(degrees);
         options.viewer.addHandler("rotate", function (args) {
-            _setTransformRotate(_this.displayRegionContainer, args.degrees);
-            _setTransformRotate(_this.displayRegion, -args.degrees);
-            _this.viewport.setRotation(args.degrees);
+            rotate(args.degrees);
         });
     }
 
