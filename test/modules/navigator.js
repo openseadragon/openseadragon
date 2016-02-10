@@ -867,4 +867,57 @@
 
     });
 
+    asyncTest('Viewer rotation applied to navigator by default', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 45,
+                "Rotation set in constructor should be applied to navigator by default.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 90,
+                "Rotation set by setRotation should be applied to navigator by default.");
+
+            start();
+        });
+    });
+
+    asyncTest('Viewer rotation not applied to navigator when navigatorRotate=false', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45,
+            navigatorRotate: false
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set in constructor should not be applied to navigator when navigatorRotate is false.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set by setRotation should not be applied to navigator when navigatorRotate is false.");
+
+            start();
+        });
+    });
+
 })();
