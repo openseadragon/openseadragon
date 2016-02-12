@@ -330,7 +330,7 @@ $.Viewer = function( options ) {
 
     this.world.addHandler('metrics-change', function(event) {
         if (_this.viewport) {
-            _this.viewport.setHomeBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+            _this.viewport._setContentBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
     });
 
@@ -359,7 +359,7 @@ $.Viewer = function( options ) {
         margins:            this.viewportMargins
     });
 
-    this.viewport.setHomeBounds(this.world.getHomeBounds(), this.world.getContentFactor());
+    this.viewport._setContentBounds(this.world.getHomeBounds(), this.world.getContentFactor());
 
     // Create the image loader
     this.imageLoader = new $.ImageLoader({
