@@ -135,7 +135,7 @@ $.Viewport = function( options ) {
     this._oldZoom    = this.zoomSpring.current.value;
 
     if (this.contentSize) {
-        this.resetContentSize( this.contentSize );
+        this.resetContentSize(this.contentSize);
     } else {
         this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
     }
@@ -153,7 +153,7 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:reset-size
      */
-    resetContentSize: function( contentSize ){
+    resetContentSize: function(contentSize) {
         $.console.assert(contentSize, "[Viewport.resetContentSize] contentSize is required");
         $.console.assert(contentSize instanceof $.Point, "[Viewport.resetContentSize] contentSize must be an OpenSeadragon.Point");
         $.console.assert(contentSize.x > 0, "[Viewport.resetContentSize] contentSize.x must be greater than 0");
@@ -184,8 +184,7 @@ $.Viewport.prototype = {
 
         this._contentBounds = bounds.rotate(this.degrees).getBoundingBox();
         this.contentSize = this._contentBounds.getSize().times(contentFactor);
-        this.contentAspectX = this.contentSize.x / this.contentSize.y;
-        this.contentAspectY = this.contentSize.y / this.contentSize.x;
+        this._contentAspectRatio = this.contentSize.x / this.contentSize.y;
 
         if (this.viewer) {
             /**
@@ -222,7 +221,7 @@ $.Viewport.prototype = {
             return this.defaultZoomLevel;
         }
 
-        var aspectFactor = this.contentAspectX / this.getAspectRatio();
+        var aspectFactor = this._contentAspectRatio / this.getAspectRatio();
         var output;
         if (this.homeFillsViewer) { // fill the viewer and clip the image
             output = aspectFactor >= 1 ? aspectFactor : 1;
@@ -1074,8 +1073,9 @@ $.Viewport.prototype = {
     // private
     _viewportToImageDelta: function( viewerX, viewerY ) {
         var scale = this._contentBounds.width;
-        return new $.Point(viewerX * (this.contentSize.x / scale),
-            viewerY * ((this.contentSize.y * this.contentAspectX) / scale));
+        return new $.Point(
+            viewerX * this.contentSize.x / scale,
+            viewerY * this.contentSize.x / scale);
     },
 
     /**
@@ -1105,8 +1105,9 @@ $.Viewport.prototype = {
     // private
     _imageToViewportDelta: function( imageX, imageY ) {
         var scale = this._contentBounds.width;
-        return new $.Point((imageX / this.contentSize.x) * scale,
-            (imageY / this.contentSize.y / this.contentAspectX) * scale);
+        return new $.Point(
+            imageX / this.contentSize.x * scale,
+            imageY / this.contentSize.x * scale);
     },
 
     /**
