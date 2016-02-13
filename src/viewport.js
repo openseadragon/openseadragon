@@ -818,7 +818,7 @@ $.Viewport.prototype = {
             degrees += 360;
         }
         this.degrees = degrees;
-        this.setHomeBounds(
+        this._setContentBounds(
             this.viewer.world.getHomeBounds(),
             this.viewer.world.getContentFactor());
         this.viewer.forceRedraw();
