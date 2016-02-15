@@ -134,6 +134,7 @@ $.Viewport = function( options ) {
     this._oldCenterY = this.centerSpringY.current.value;
     this._oldZoom    = this.zoomSpring.current.value;
 
+    //TODO: is it useful?
     if (this.contentSize) {
         this.resetContentSize(this.contentSize);
     } else {
@@ -182,9 +183,13 @@ $.Viewport.prototype = {
         $.console.assert(bounds.width > 0, "[Viewport._setContentBounds] bounds.width must be greater than 0");
         $.console.assert(bounds.height > 0, "[Viewport._setContentBounds] bounds.height must be greater than 0");
 
+        this._worldContentBounds = bounds.clone();
+        this._worldContentSize = this._worldContentBounds.getSize().times(
+            contentFactor);
+
         this._contentBounds = bounds.rotate(this.degrees).getBoundingBox();
-        this.contentSize = this._contentBounds.getSize().times(contentFactor);
-        this._contentAspectRatio = this.contentSize.x / this.contentSize.y;
+        this._contentSize = this._contentBounds.getSize().times(contentFactor);
+        this._contentAspectRatio = this._contentSize.x / this._contentSize.y;
 
         if (this.viewer) {
             /**
@@ -203,9 +208,9 @@ $.Viewport.prototype = {
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent('reset-size', {
-                contentSize: this.contentSize.clone(),
+                contentSize: this._worldContentSize.clone(),
                 contentFactor: contentFactor,
-                homeBounds: this._contentBounds.clone(),
+                homeBounds: this._worldContentBounds.clone(),
                 contentBounds: this._contentBounds.clone()
             });
         }
@@ -292,7 +297,7 @@ $.Viewport.prototype = {
     getMaxZoom: function() {
         var zoom = this.maxZoomLevel;
         if (!zoom) {
-            zoom = this.contentSize.x * this.maxZoomPixelRatio / this._containerInnerSize.x;
+            zoom = this._contentSize.x * this.maxZoomPixelRatio / this._containerInnerSize.x;
             zoom /= this._contentBounds.width;
         }
 
@@ -446,65 +451,61 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Rect} constrained bounds.
      */
-    _applyBoundaryConstraints: function( bounds, immediately ) {
-        var dx = 0,
-            dy = 0,
-            newBounds = new $.Rect(
+    _applyBoundaryConstraints: function(bounds, immediately) {
+        var newBounds = new $.Rect(
                 bounds.x,
                 bounds.y,
                 bounds.width,
-                bounds.height
-            );
+                bounds.height);
 
         var horizontalThreshold = this.visibilityRatio * newBounds.width;
         var verticalThreshold   = this.visibilityRatio * newBounds.height;
 
-        if ( this.wrapHorizontal ) {
+        if (this.wrapHorizontal) {
             //do nothing
         } else {
+            var dx = 0;
             var thresholdLeft = newBounds.x + (newBounds.width - horizontalThreshold);
-            if (this._contentBounds.x > thresholdLeft) {
-                dx = this._contentBounds.x - thresholdLeft;
+            if (this._worldContentBounds.x > thresholdLeft) {
+                dx = this._worldContentBounds.x - thresholdLeft;
             }
 
-            var homeRight = this._contentBounds.x + this._contentBounds.width;
+            var contentRight = this._worldContentBounds.x + this._worldContentBounds.width;
             var thresholdRight = newBounds.x + horizontalThreshold;
-            if (homeRight < thresholdRight) {
-                var newDx = homeRight - thresholdRight;
+            if (contentRight < thresholdRight) {
+                var newDx = contentRight - thresholdRight;
                 if (dx) {
                     dx = (dx + newDx) / 2;
                 } else {
                     dx = newDx;
                 }
             }
+            newBounds.x += dx;
         }
 
-        if ( this.wrapVertical ) {
+        if (this.wrapVertical) {
             //do nothing
         } else {
+            var dy = 0;
             var thresholdTop = newBounds.y + (newBounds.height - verticalThreshold);
-            if (this._contentBounds.y > thresholdTop) {
-                dy = this._contentBounds.y - thresholdTop;
+            if (this._worldContentBounds.y > thresholdTop) {
+                dy = this._worldContentBounds.y - thresholdTop;
             }
 
-            var homeBottom = this._contentBounds.y + this._contentBounds.height;
+            var contentBottom = this._worldContentBounds.y + this._worldContentBounds.height;
             var thresholdBottom = newBounds.y + verticalThreshold;
-            if (homeBottom < thresholdBottom) {
-                var newDy = homeBottom - thresholdBottom;
+            if (contentBottom < thresholdBottom) {
+                var newDy = contentBottom - thresholdBottom;
                 if (dy) {
                     dy = (dy + newDy) / 2;
                 } else {
                     dy = newDy;
                 }
             }
-        }
-
-        if ( dx || dy ) {
-            newBounds.x += dx;
             newBounds.y += dy;
         }
 
-        if( this.viewer ){
+        if (this.viewer) {
             /**
              * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
              *
@@ -572,20 +573,14 @@ $.Viewport.prototype = {
         var immediately = options.immediately || false;
         var constraints = options.constraints || false;
 
-        var aspect = this.getAspectRatio(),
-            center = bounds.getCenter(),
-            newBounds = new $.Rect(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height
-            ),
-            oldBounds,
-            oldZoom,
-            newZoom,
-            referencePoint,
-            newBoundsAspectRatio,
-            newConstrainedZoom;
+        var aspect = this.getAspectRatio();
+        var center = bounds.getCenter();
+        var newBounds = new $.Rect(
+            bounds.x,
+            bounds.y,
+            bounds.width,
+            bounds.height
+        );
 
         if ( newBounds.getAspectRatio() >= aspect ) {
             newBounds.height = bounds.width / aspect;
@@ -595,19 +590,16 @@ $.Viewport.prototype = {
             newBounds.x     = center.x - newBounds.width / 2;
         }
 
-        if ( constraints ) {
-            newBoundsAspectRatio = newBounds.getAspectRatio();
-        }
-
         this.panTo( this.getCenter( true ), true );
         this.zoomTo( this.getZoom( true ), null, true );
 
-        oldBounds = this.getBounds();
-        oldZoom   = this.getZoom();
-        newZoom   = 1.0 / newBounds.width;
+        var oldBounds = this.getBounds();
+        var oldZoom   = this.getZoom();
+        var newZoom   = 1.0 / newBounds.width;
 
-        if ( constraints ) {
-            newConstrainedZoom = Math.max(
+        if (constraints) {
+            var newBoundsAspectRatio = newBounds.getAspectRatio();
+            var newConstrainedZoom = Math.max(
                 Math.min(newZoom, this.getMaxZoom() ),
                 this.getMinZoom()
             );
@@ -634,7 +626,7 @@ $.Viewport.prototype = {
             return this.panTo( center, immediately );
         }
 
-        referencePoint = oldBounds.getTopLeft().times(
+        var referencePoint = oldBounds.getTopLeft().times(
             this._containerInnerSize.x / oldBounds.width
         ).minus(
             newBounds.getTopLeft().times(
@@ -679,11 +671,13 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    fitVertically: function( immediately ) {
-        var box = new $.Rect(this._contentBounds.x + (this._contentBounds.width / 2), this._contentBounds.y,
-            0, this._contentBounds.height);
-
-        return this.fitBounds( box, immediately );
+    fitVertically: function(immediately) {
+        var box = new $.Rect(
+            this._contentBounds.x + (this._contentBounds.width / 2),
+            this._contentBounds.y,
+            0,
+            this._contentBounds.height);
+        return this.fitBounds(box, immediately);
     },
 
     /**
@@ -691,11 +685,13 @@ $.Viewport.prototype = {
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    fitHorizontally: function( immediately ) {
-        var box = new $.Rect(this._contentBounds.x, this._contentBounds.y + (this._contentBounds.height / 2),
-            this._contentBounds.width, 0);
-
-        return this.fitBounds( box, immediately );
+    fitHorizontally: function(immediately) {
+        var box = new $.Rect(
+            this._contentBounds.x,
+            this._contentBounds.y + (this._contentBounds.height / 2),
+            this._contentBounds.width,
+            0);
+        return this.fitBounds(box, immediately);
     },
 
 
@@ -1072,10 +1068,10 @@ $.Viewport.prototype = {
 
     // private
     _viewportToImageDelta: function( viewerX, viewerY ) {
-        var scale = this._contentBounds.width;
+        var scale = this._worldContentBounds.width;
         return new $.Point(
-            viewerX * this.contentSize.x / scale,
-            viewerY * this.contentSize.x / scale);
+            viewerX * this._worldContentSize.x / scale,
+            viewerY * this._worldContentSize.x / scale);
     },
 
     /**
@@ -1099,15 +1095,17 @@ $.Viewport.prototype = {
             $.console.error('[Viewport.viewportToImageCoordinates] is not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.');
         }
 
-        return this._viewportToImageDelta(viewerX - this._contentBounds.x, viewerY - this._contentBounds.y);
+        return this._viewportToImageDelta(
+            viewerX - this._worldContentBounds.x,
+            viewerY - this._worldContentBounds.y);
     },
 
     // private
     _imageToViewportDelta: function( imageX, imageY ) {
-        var scale = this._contentBounds.width;
+        var scale = this._worldContentBounds.width;
         return new $.Point(
-            imageX / this.contentSize.x * scale,
-            imageY / this.contentSize.x * scale);
+            imageX / this._worldContentSize.x * scale,
+            imageY / this._worldContentSize.x * scale);
     },
 
     /**
@@ -1132,8 +1130,8 @@ $.Viewport.prototype = {
         }
 
         var point = this._imageToViewportDelta(imageX, imageY);
-        point.x += this._contentBounds.x;
-        point.y += this._contentBounds.y;
+        point.x += this._worldContentBounds.x;
+        point.y += this._worldContentBounds.y;
         return point;
     },
 
@@ -1309,9 +1307,9 @@ $.Viewport.prototype = {
             $.console.error('[Viewport.viewportToImageZoom] is not accurate with multi-image.');
         }
 
-        var imageWidth = this.contentSize.x;
+        var imageWidth = this._worldContentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBounds.width;
+        var scale = this._worldContentBounds.width;
         var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
@@ -1333,9 +1331,9 @@ $.Viewport.prototype = {
             $.console.error('[Viewport.imageToViewportZoom] is not accurate with multi-image.');
         }
 
-        var imageWidth = this.contentSize.x;
+        var imageWidth = this._worldContentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBounds.width;
+        var scale = this._worldContentBounds.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     }
