@@ -16,6 +16,7 @@ OPENSEADRAGON CHANGELOG
 * Added Viewer.addSimpleImage method for easily adding non-tiled images (#827)
 * DziTileSource now works properly with DZI files that have no extension (#835)
 * Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
+* Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
 
 2.1.0:
 
