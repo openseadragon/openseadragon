@@ -312,6 +312,14 @@
             this.placement  = location instanceof $.Point ?
                 placement :
                 $.OverlayPlacement.TOP_LEFT;
+        },
+        /**
+         * @function
+         * @returns {OpenSeadragon.Rect} overlay bounds
+         */
+        getBounds: function() {
+
+            return this.bounds;
         }
 
     };
