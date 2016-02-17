@@ -134,14 +134,9 @@ $.Viewport = function( options ) {
     this._oldCenterY = this.centerSpringY.current.value;
     this._oldZoom    = this.zoomSpring.current.value;
 
-    //TODO: is it useful?
-    if (this.contentSize) {
-        this.resetContentSize(this.contentSize);
-    } else {
-        this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
-    }
+    this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
 
-    this.goHome( true );
+    this.goHome(true);
     this.update();
 };
 
@@ -164,27 +159,26 @@ $.Viewport.prototype = {
         return this;
     },
 
-    /**
-     * Updates the viewport's content bounds and constraints.
-     * This function is deprecated and shouldn't be called.
-     * @function
-     * @param {OpenSeadragon.Rect} bounds - the new bounds in viewport coordinates
-     * @param {Number} contentFactor - how many content units per viewport unit
-     * @fires OpenSeadragon.Viewer.event:reset-size
-     */
+    // deprecated
     setHomeBounds: function(bounds, contentFactor) {
         $.console.error("[Viewport.setHomeBounds] this function is deprecated; The content bounds should not be set manually.");
         this._setContentBounds(bounds, contentFactor);
     },
 
+    // Set the viewport's content bounds
+    // @param {OpenSeadragon.Rect} bounds - the new bounds in viewport coordinates
+    // without rotation
+    // @param {Number} contentFactor - how many content units per viewport unit
+    // @fires OpenSeadragon.Viewer.event:reset-size
+    // @private
     _setContentBounds: function(bounds, contentFactor) {
         $.console.assert(bounds, "[Viewport._setContentBounds] bounds is required");
         $.console.assert(bounds instanceof $.Rect, "[Viewport._setContentBounds] bounds must be an OpenSeadragon.Rect");
         $.console.assert(bounds.width > 0, "[Viewport._setContentBounds] bounds.width must be greater than 0");
         $.console.assert(bounds.height > 0, "[Viewport._setContentBounds] bounds.height must be greater than 0");
 
-        this._worldContentBounds = bounds.clone();
-        this._worldContentSize = this._worldContentBounds.getSize().times(
+        this._contentBoundsNoRotate = bounds.clone();
+        this._contentSizeNoRotate = this._contentBoundsNoRotate.getSize().times(
             contentFactor);
 
         this._contentBounds = bounds.rotate(this.degrees).getBoundingBox();
@@ -208,9 +202,9 @@ $.Viewport.prototype = {
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent('reset-size', {
-                contentSize: this._worldContentSize.clone(),
+                contentSize: this._contentSizeNoRotate.clone(),
                 contentFactor: contentFactor,
-                homeBounds: this._worldContentBounds.clone(),
+                homeBounds: this._contentBoundsNoRotate.clone(),
                 contentBounds: this._contentBounds.clone()
             });
         }
@@ -466,11 +460,11 @@ $.Viewport.prototype = {
         } else {
             var dx = 0;
             var thresholdLeft = newBounds.x + (newBounds.width - horizontalThreshold);
-            if (this._worldContentBounds.x > thresholdLeft) {
-                dx = this._worldContentBounds.x - thresholdLeft;
+            if (this._contentBoundsNoRotate.x > thresholdLeft) {
+                dx = this._contentBoundsNoRotate.x - thresholdLeft;
             }
 
-            var contentRight = this._worldContentBounds.x + this._worldContentBounds.width;
+            var contentRight = this._contentBoundsNoRotate.x + this._contentBoundsNoRotate.width;
             var thresholdRight = newBounds.x + horizontalThreshold;
             if (contentRight < thresholdRight) {
                 var newDx = contentRight - thresholdRight;
@@ -488,11 +482,11 @@ $.Viewport.prototype = {
         } else {
             var dy = 0;
             var thresholdTop = newBounds.y + (newBounds.height - verticalThreshold);
-            if (this._worldContentBounds.y > thresholdTop) {
-                dy = this._worldContentBounds.y - thresholdTop;
+            if (this._contentBoundsNoRotate.y > thresholdTop) {
+                dy = this._contentBoundsNoRotate.y - thresholdTop;
             }
 
-            var contentBottom = this._worldContentBounds.y + this._worldContentBounds.height;
+            var contentBottom = this._contentBoundsNoRotate.y + this._contentBoundsNoRotate.height;
             var thresholdBottom = newBounds.y + verticalThreshold;
             if (contentBottom < thresholdBottom) {
                 var newDy = contentBottom - thresholdBottom;
@@ -1068,10 +1062,10 @@ $.Viewport.prototype = {
 
     // private
     _viewportToImageDelta: function( viewerX, viewerY ) {
-        var scale = this._worldContentBounds.width;
+        var scale = this._contentBoundsNoRotate.width;
         return new $.Point(
-            viewerX * this._worldContentSize.x / scale,
-            viewerY * this._worldContentSize.x / scale);
+            viewerX * this._contentSizeNoRotate.x / scale,
+            viewerY * this._contentSizeNoRotate.x / scale);
     },
 
     /**
@@ -1096,16 +1090,16 @@ $.Viewport.prototype = {
         }
 
         return this._viewportToImageDelta(
-            viewerX - this._worldContentBounds.x,
-            viewerY - this._worldContentBounds.y);
+            viewerX - this._contentBoundsNoRotate.x,
+            viewerY - this._contentBoundsNoRotate.y);
     },
 
     // private
     _imageToViewportDelta: function( imageX, imageY ) {
-        var scale = this._worldContentBounds.width;
+        var scale = this._contentBoundsNoRotate.width;
         return new $.Point(
-            imageX / this._worldContentSize.x * scale,
-            imageY / this._worldContentSize.x * scale);
+            imageX / this._contentSizeNoRotate.x * scale,
+            imageY / this._contentSizeNoRotate.x * scale);
     },
 
     /**
@@ -1130,8 +1124,8 @@ $.Viewport.prototype = {
         }
 
         var point = this._imageToViewportDelta(imageX, imageY);
-        point.x += this._worldContentBounds.x;
-        point.y += this._worldContentBounds.y;
+        point.x += this._contentBoundsNoRotate.x;
+        point.y += this._contentBoundsNoRotate.y;
         return point;
     },
 
@@ -1307,9 +1301,9 @@ $.Viewport.prototype = {
             $.console.error('[Viewport.viewportToImageZoom] is not accurate with multi-image.');
         }
 
-        var imageWidth = this._worldContentSize.x;
+        var imageWidth = this._contentSizeNoRotate.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._worldContentBounds.width;
+        var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
@@ -1331,9 +1325,9 @@ $.Viewport.prototype = {
             $.console.error('[Viewport.imageToViewportZoom] is not accurate with multi-image.');
         }
 
-        var imageWidth = this._worldContentSize.x;
+        var imageWidth = this._contentSizeNoRotate.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._worldContentBounds.width;
+        var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     }
