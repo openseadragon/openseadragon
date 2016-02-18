@@ -765,7 +765,9 @@ $.Viewport.prototype = {
             null;
 
         if ( immediately ) {
-            this.zoomSpring.resetTo( zoom );
+            this._updateZoom({
+                resetTo: zoom
+            });
         } else {
             this.zoomSpring.springTo( zoom );
         }
@@ -891,27 +893,7 @@ $.Viewport.prototype = {
      * @function
      */
     update: function() {
-        var oldZoomPixel,
-            newZoomPixel,
-            deltaZoomPixels,
-            deltaZoomPoints;
-
-        if (this.zoomPoint) {
-            oldZoomPixel = this.pixelFromPoint( this.zoomPoint, true );
-        }
-
-        this.zoomSpring.update();
-
-        if (this.zoomPoint && this.zoomSpring.current.value != this._oldZoom) {
-            newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
-            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
-            deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
-
-            this.centerSpringX.shiftBy( deltaZoomPoints.x );
-            this.centerSpringY.shiftBy( deltaZoomPoints.y );
-        } else {
-            this.zoomPoint = null;
-        }
+        this._updateZoom();
 
         this.centerSpringX.update();
         this.centerSpringY.update();
@@ -925,6 +907,35 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
 
         return changed;
+    },
+
+    // private
+    _updateZoom: function(options) {
+        var oldZoomPixel,
+            newZoomPixel,
+            deltaZoomPixels,
+            deltaZoomPoints;
+
+        if (this.zoomPoint) {
+            oldZoomPixel = this.pixelFromPoint( this.zoomPoint, true );
+        }
+
+        if (options && options.resetTo) {
+            this.zoomSpring.resetTo(options.resetTo);
+        } else {
+            this.zoomSpring.update();
+        }
+
+        if (this.zoomPoint && this.zoomSpring.current.value != this._oldZoom) {
+            newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
+            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
+            deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
+
+            this.centerSpringX.shiftBy( deltaZoomPoints.x );
+            this.centerSpringY.shiftBy( deltaZoomPoints.y );
+        } else {
+            this.zoomPoint = null;
+        }
     },
 
     /**
