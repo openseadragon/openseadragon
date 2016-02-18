@@ -3,6 +3,10 @@ OPENSEADRAGON CHANGELOG
 
 2.1.1: (in progress)
 
+* BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
+Viewport.contentAspectY have been removed.
+* DEPRECATION: Viewport.setHomeBounds has been deprecated
+* DEPRECATION: the Viewport constructor is now ignoring the contentSize option
 * Tile edge smoothing at high zoom (#764)
 * Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
 * Now supporting rotation in the Rect class (#782)
@@ -15,6 +19,7 @@ OPENSEADRAGON CHANGELOG
 * Added globalCompositeOperation option for tiledImage, to allow for different transfer modes (#814)
 * Added Viewer.addSimpleImage method for easily adding non-tiled images (#827)
 * DziTileSource now works properly with DZI files that have no extension (#835)
+* Fixed content clipping with rotation (#463, #567 and #833)
 * Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
 * Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
 

@@ -305,7 +305,7 @@
                 var rect = testRects[i].times(viewport.getContainerSize());
                 viewport.resetContentSize(rect.getSize());
                 propEqual(
-                    viewport.contentSize,
+                    viewport._contentSize,
                     rect.getSize(),
                     "Reset content size correctly."
                 );
