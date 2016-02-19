@@ -319,7 +319,7 @@
          */
         getBounds: function() {
 
-            return this.bounds;
+            return this.bounds.clone();
         }
 
     };
