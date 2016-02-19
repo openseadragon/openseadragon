@@ -1947,11 +1947,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     
      /**
      * Finds an overlay identified by the reference element or element id
-     * and returns it as an object, return false if not found.
+     * and returns it as an object, return null if not found.
      * @method
      * @param {Element|String} element - A reference to the element or an
      *      element id which represent the ovelay content to be removed.
-     * @return {OpenSeadragon.Overlay} Chainable.
+     * @return {OpenSeadragon.Overlay} the matching overlay or null if none found.
      */
     getOverlayById: function( element ) {
         var i;
@@ -1962,7 +1962,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (i>=0) {
             return this.currentOverlays[i];
         } else {
-            return false;
+            return null;
         }
         
     },
