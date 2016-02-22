@@ -1950,7 +1950,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * and returns it as an object, return null if not found.
      * @method
      * @param {Element|String} element - A reference to the element or an
-     *      element id which represent the ovelay content to be removed.
+     *      element id which represent the overlay content.
      * @return {OpenSeadragon.Overlay} the matching overlay or null if none found.
      */
     getOverlayById: function( element ) {
