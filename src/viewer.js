@@ -2847,7 +2847,10 @@ function onCanvasScroll( event ) {
         }
     }
     else {
-        return false;   // We are swallowing this event
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if (gestureSettings && gestureSettings.scrollToZoom) {
+            return false;   // We are swallowing this event
+        }
     }
 }
 
