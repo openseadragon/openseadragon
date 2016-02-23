@@ -242,7 +242,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     draw: function() {
         if (this.opacity !== 0) {
             this._midDraw = true;
-            updateViewport( this );
+            updateViewport(this);
             this._midDraw = false;
         }
     },
