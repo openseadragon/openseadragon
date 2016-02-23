@@ -1944,7 +1944,28 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.raiseEvent( 'clear-overlay', {} );
         return this;
     },
+    
+     /**
+     * Finds an overlay identified by the reference element or element id
+     * and returns it as an object, return null if not found.
+     * @method
+     * @param {Element|String} element - A reference to the element or an
+     *      element id which represent the overlay content.
+     * @return {OpenSeadragon.Overlay} the matching overlay or null if none found.
+     */
+    getOverlayById: function( element ) {
+        var i;
 
+        element = $.getElement( element );
+        i = getOverlayIndex( this.currentOverlays, element );    
+        
+        if (i>=0) {
+            return this.currentOverlays[i];
+        } else {
+            return null;
+        }
+        
+    },
     /**
      * Updates the sequence buttons.
      * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
