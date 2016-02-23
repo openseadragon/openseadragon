@@ -280,6 +280,17 @@ $.Tile.prototype = {
 
         context.globalAlpha = this.opacity;
 
+        if (typeof scale === 'number' && scale !== 1) {
+            // draw tile at a different scale
+            position = position.times(scale);
+            size = size.times(scale);
+        }
+
+        if (translate instanceof $.Point) {
+            // shift tile position slightly
+            position = position.plus(translate);
+        }
+
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
@@ -300,17 +311,6 @@ $.Tile.prototype = {
         // This gives the application a chance to make image manipulation
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
-
-        if (typeof scale === 'number' && scale !== 1) {
-            // draw tile at a different scale
-            position = position.times(scale);
-            size = size.times(scale);
-        }
-
-        if (translate instanceof $.Point) {
-            // shift tile position slightly
-            position = position.plus(translate);
-        }
 
         context.drawImage(
             rendered.canvas,
