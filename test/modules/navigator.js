@@ -78,9 +78,11 @@
 
         if (navigator === null) {
             navigator = $(".navigator");
-            navigatorScaleFactor = Math.min(navigator.width() / viewer.viewport.contentSize.x, navigator.height() / viewer.viewport.contentSize.y);
-            displayRegionWidth = viewer.viewport.contentSize.x * navigatorScaleFactor;
-            displayRegionHeight = viewer.viewport.contentSize.y * navigatorScaleFactor;
+            navigatorScaleFactor = Math.min(
+                navigator.width() / viewer.viewport._contentSize.x,
+                navigator.height() / viewer.viewport._contentSize.y);
+            displayRegionWidth = viewer.viewport._contentSize.x * navigatorScaleFactor;
+            displayRegionHeight = viewer.viewport._contentSize.y * navigatorScaleFactor;
             contentStartFromLeft = (navigator.width() - displayRegionWidth) / 2;
             contentStartFromTop = (navigator.height() - displayRegionHeight) / 2;
         }
@@ -91,8 +93,8 @@
         regionBoundsInPoints = new OpenSeadragon.Rect(expectedDisplayRegionXLocation, expectedDisplayRegionYLocation, expectedDisplayRegionWidth, expectedDisplayRegionHeight);
 
         if (debug) {
-            console.log('Image width: ' + viewer.viewport.contentSize.x + '\n' +
-                        'Image height: ' + viewer.viewport.contentSize.y + '\n' +
+            console.log('Image width: ' + viewer.viewport._contentSize.x + '\n' +
+                        'Image height: ' + viewer.viewport._contentSize.y + '\n' +
                         'navigator.width(): ' + navigator.width() + '\n' +
                         'navigator.height(): ' + navigator.height() + '\n' +
                         'navigatorScaleFactor: ' + navigatorScaleFactor + '\n' +
