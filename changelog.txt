@@ -23,6 +23,7 @@ Viewport.contentAspectY have been removed.
 * Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
 * Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
 * Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
+* Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
 
 2.1.0:
 
