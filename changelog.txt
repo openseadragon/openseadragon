@@ -24,6 +24,7 @@ Viewport.contentAspectY have been removed.
 * Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
 * Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
 * Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
+* Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
 
 2.1.0:
 
