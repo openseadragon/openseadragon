@@ -22,6 +22,7 @@ Viewport.contentAspectY have been removed.
 * Fixed content clipping with rotation (#463, #567 and #833)
 * Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
 * Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
+* Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
 
 2.1.0:
 
