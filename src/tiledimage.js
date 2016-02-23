@@ -240,9 +240,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        this._midDraw = true;
-        updateViewport( this );
-        this._midDraw = false;
+        if (this.opacity !== 0) {
+            this._midDraw = true;
+            updateViewport(this);
+            this._midDraw = false;
+        }
     },
 
     /**
