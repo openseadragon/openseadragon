@@ -650,6 +650,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent('bounds-change');
+    },
+
+    // private
+    _isBottomItem: function() {
+        return this.viewer.world.getItemAt(0) === this;
     }
 });
 
@@ -1332,7 +1337,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         return;
     }
     var useSketch = tiledImage.opacity < 1 ||
-          (tiledImage.compositeOperation && tiledImage.compositeOperation !== 'source-over');
+        (tiledImage.compositeOperation &&
+            tiledImage.compositeOperation !== 'source-over') ||
+        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel);
 
     var sketchScale;
     var sketchTranslate;

@@ -5,12 +5,12 @@
 
     module( 'Multi-Image', {
         setup: function() {
-            $( '<div id="itemsexample"></div>' ).appendTo( "#qunit-fixture" );
+            $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
 
             viewer = OpenSeadragon( {
-                id: 'itemsexample',
+                id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             });
@@ -21,7 +21,7 @@
             }
 
             viewer = null;
-            $( "#itemsexample" ).remove();
+            $("#example").remove();
         }
     } );
 
@@ -206,6 +206,47 @@
             });
         });
         viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('Transparent image on top of others', function() {
+        viewer.open('/test/data/testpattern.dzi');
+
+        // TODO: replace with fully-loaded event listener when available.
+        setTimeout(function() {
+            var imageData = viewer.drawer.context.getImageData(0, 0, 500, 500);
+            var expectedVal = getPixelValue(imageData, 333, 250);
+
+            viewer.addSimpleImage({
+                url: '/test/data/A.png'
+            });
+
+            // TODO: replace with fully-loaded event listener when available.
+            setTimeout(function() {
+                var imageData = viewer.drawer.context.getImageData(0, 0, 500, 500);
+                var actualVal = getPixelValue(imageData, 333, 250);
+
+                equal(actualVal.r, expectedVal.r,
+                    'Red channel should not change when stacking a transparent image');
+                equal(actualVal.g, expectedVal.g,
+                    'Green channel should not change when stacking a transparent image');
+                equal(actualVal.b, expectedVal.b,
+                    'Blue channel should not change when stacking a transparent image');
+                equal(actualVal.a, expectedVal.a,
+                    'Alpha channel should not change when stacking a transparent image');
+
+                start();
+            }, 1000);
+        }, 1000);
+
+        function getPixelValue(imageData, x, y) {
+            var offset = x * imageData.width + y;
+            return {
+                r: imageData.data[offset],
+                g: imageData.data[offset + 1],
+                b: imageData.data[offset + 2],
+                a: imageData.data[offset + 3]
+            };
+        }
     });
 
 })();

@@ -193,6 +193,11 @@ $.Tile.prototype = {
         return this.level + "/" + this.x + "_" + this.y;
     },
 
+    // private
+    _hasTransparencyChannel: function() {
+        return this.context2D || this.url.match('.png');
+    },
+
     /**
      * Renders the tile in an html container.
      * @function
@@ -284,8 +289,7 @@ $.Tile.prototype = {
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 &&
-                (this.context2D || this.url.match('.png'))) {
+        if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
@@ -294,7 +298,6 @@ $.Tile.prototype = {
                 size.x - 2,
                 size.y - 2
             );
-
         }
 
         // This gives the application a chance to make image manipulation
