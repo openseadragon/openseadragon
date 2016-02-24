@@ -25,6 +25,7 @@ Viewport.contentAspectY have been removed.
 * Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
 * Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
 * Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
+* Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
 
 2.1.0:
 
