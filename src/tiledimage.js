@@ -1337,7 +1337,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     var useSketch = tiledImage.opacity < 1 ||
         (tiledImage.compositeOperation &&
             tiledImage.compositeOperation !== 'source-over') ||
-        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel);
+        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
 
     var sketchScale;
     var sketchTranslate;
