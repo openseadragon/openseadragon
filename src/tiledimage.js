@@ -1329,13 +1329,11 @@ function compareTiles( previousBest, tile ) {
 }
 
 function drawTiles( tiledImage, lastDrawn ) {
-    var i,
-        tile = lastDrawn[0];
-
-    if ( tiledImage.opacity <= 0 ) {
-        drawDebugInfo( tiledImage, lastDrawn );
+    if (lastDrawn.length === 0) {
         return;
     }
+    var tile = lastDrawn[0];
+
     var useSketch = tiledImage.opacity < 1 ||
         (tiledImage.compositeOperation &&
             tiledImage.compositeOperation !== 'source-over') ||
@@ -1346,7 +1344,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
+    if (imageZoom > tiledImage.smoothTileEdgesMinZoom) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         useSketch = true;
@@ -1403,7 +1401,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
-    for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
+    for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
