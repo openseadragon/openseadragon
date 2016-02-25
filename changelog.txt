@@ -1,12 +1,12 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.1.1: (in progress)
+2.2.0: (in progress)
 
 * BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
-Viewport.contentAspectY have been removed.
-* DEPRECATION: Viewport.setHomeBounds has been deprecated
-* DEPRECATION: the Viewport constructor is now ignoring the contentSize option
+    Viewport.contentAspectY have been removed. (#846)
+* DEPRECATION: Viewport.setHomeBounds has been deprecated (#846)
+* DEPRECATION: the Viewport constructor is now ignoring the contentSize option (#846)
 * Tile edge smoothing at high zoom (#764)
 * Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
 * Now supporting rotation in the Rect class (#782)
@@ -26,6 +26,7 @@ Viewport.contentAspectY have been removed.
 * Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
 * Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
 * Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
+* Fixed: Images with transparency were clearing images layered below them (#861)
 
 2.1.0:
 
