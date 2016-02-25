@@ -12,7 +12,6 @@
      * @param {String} tilesUrl
      */
     $.ZoomifyTileSource = function(options) {
-
         options.tileSize = 256;
 
         var currentImageSize = {
@@ -57,12 +56,16 @@
         //private
         _calculateAbsoluteTileNumber: function(level, x, y) {
             var num = 0;
+            var size = {};
+            
+            //Sum up all tiles below the level we want the number of tiles
             for (var z = 0; z < level; z++) {
-                var size = this.gridSize[z];
+                size = this.gridSize[z];
                 num += size.x * size.y;
             }
-            var size = this.gridSize[level];
-            num += size.x * y + x
+            //Add the tiles of the level
+            size = this.gridSize[level];
+            num += size.x * y + x;
             return num;
         },
 
