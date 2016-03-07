@@ -27,6 +27,7 @@ OPENSEADRAGON CHANGELOG
 * Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
 * Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
 * Fixed: Images with transparency were clearing images layered below them (#861)
+* Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
 
 2.1.0:
 
