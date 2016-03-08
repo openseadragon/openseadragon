@@ -234,7 +234,9 @@ $.Viewer = function( options ) {
         style.left     = "0px";
     }(this.canvas.style));
     $.setElementTouchActionNone( this.canvas );
-    this.canvas.tabIndex = (options.tabIndex === undefined ? 0 : options.tabIndex);
+    if (options.tabIndex !== "") {
+        this.canvas.tabIndex = (options.tabIndex === undefined ? 0 : options.tabIndex);
+    }
 
     //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
