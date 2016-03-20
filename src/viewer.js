@@ -2546,11 +2546,16 @@ function onCanvasDragEnd( event ) {
 
     if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.flickEnabled && event.speed >= gestureSettings.flickMinSpeed ) {
-            var amplitudeX = gestureSettings.flickMomentum * ( event.speed * Math.cos( event.direction - (Math.PI / 180 * this.viewport.degrees) ) ),
-                amplitudeY = gestureSettings.flickMomentum * ( event.speed * Math.sin( event.direction - (Math.PI / 180 * this.viewport.degrees) ) ),
-                center = this.viewport.pixelFromPoint( this.viewport.getCenter( true ) ),
-                target = this.viewport.pointFromPixel( new $.Point( center.x - amplitudeX, center.y - amplitudeY ) );
+        if (gestureSettings.flickEnabled &&
+            event.speed >= gestureSettings.flickMinSpeed) {
+            var amplitudeX = gestureSettings.flickMomentum * event.speed *
+                Math.cos(event.direction);
+            var amplitudeY = gestureSettings.flickMomentum * event.speed *
+                Math.sin(event.direction);
+            var center = this.viewport.pixelFromPoint(
+                this.viewport.getCenter(true));
+            var target = this.viewport.pointFromPixel(
+                new $.Point(center.x - amplitudeX, center.y - amplitudeY));
             if( !this.panHorizontal ) {
                 target.x = center.x;
             }
