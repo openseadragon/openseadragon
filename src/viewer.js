@@ -2542,27 +2542,25 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
-    var gestureSettings;
-
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    if (!event.preventDefaultAction && this.viewport) {
+        var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
         if (gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
-            var amplitudeX = gestureSettings.flickMomentum * event.speed *
-                Math.cos(event.direction);
-            var amplitudeY = gestureSettings.flickMomentum * event.speed *
-                Math.sin(event.direction);
+            var amplitudeX = 0;
+            if (this.panHorizontal) {
+                amplitudeX = gestureSettings.flickMomentum * event.speed *
+                    Math.cos(event.direction);
+            }
+            var amplitudeY = 0;
+            if (this.panVertical) {
+                amplitudeY = gestureSettings.flickMomentum * event.speed *
+                    Math.sin(event.direction);
+            }
             var center = this.viewport.pixelFromPoint(
                 this.viewport.getCenter(true));
             var target = this.viewport.pointFromPixel(
                 new $.Point(center.x - amplitudeX, center.y - amplitudeY));
-            if( !this.panHorizontal ) {
-                target.x = center.x;
-            }
-            if( !this.panVertical ) {
-                target.y = center.y;
-            }
-            this.viewport.panTo( target, false );
+            this.viewport.panTo(target, false);
         }
         this.viewport.applyConstraints();
     }
@@ -2581,7 +2579,7 @@ function onCanvasDragEnd( event ) {
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-drag-end', {
+    this.raiseEvent('canvas-drag-end', {
         tracker: event.eventSource,
         position: event.position,
         speed: event.speed,
