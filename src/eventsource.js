@@ -56,7 +56,22 @@ $.EventSource = function() {
 /** @lends OpenSeadragon.EventSource.prototype */
 $.EventSource.prototype = {
 
-    // TODO: Add a method 'one' which automatically unbinds a listener after the first triggered event that matches.
+    /**
+     * Add an event handler to be triggered only once for a given event.
+     * @function
+     * @param {String} eventName - Name of event to register.
+     * @param {OpenSeadragon.EventHandler} handler - Function to call when event
+     * is triggered.
+     * @param {Object} [userData=null] - Arbitrary object to be passed unchanged
+     * to the handler.
+     */
+    addOnceHandler: function(eventName, handler, userData) {
+        var self = this;
+        this.addHandler(eventName, function onceHandler(event) {
+            self.removeHandler(eventName, onceHandler);
+            handler(event);
+        }, userData);
+    },
 
     /**
      * Add an event handler for a given event.
