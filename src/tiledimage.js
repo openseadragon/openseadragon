@@ -544,6 +544,48 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Positions and scales the TiledImage to fit in the specified bounds.
+     * Note: this method fires OpenSeadragon.TiledImage.event:bounds-change
+     * twice
+     * @param {OpenSeadragon.Rect} bounds The bounds to fit the image into.
+     * @param {OpenSeadragon.Placement} [anchor=OpenSeadragon.Placement.CENTER]
+     * How to anchor the image in the bounds.
+     * @param {Boolean} [immediately=false] Whether to animate to the new size
+     * or snap immediately.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    fitInBounds: function(bounds, anchor, immediately) {
+        anchor = anchor || $.Placement.CENTER;
+        if (bounds.getAspectRatio() > this.contentAspectX) {
+            // We will have margins on the X axis
+            var targetWidth = bounds.height * this.contentAspectX;
+            var marginLeft = 0;
+            if (anchor.isHorizontallyCentered) {
+                marginLeft = (bounds.width - targetWidth) / 2;
+            } else if (anchor.isRight) {
+                marginLeft = bounds.width - targetWidth;
+            }
+            this.setPosition(
+                new $.Point(bounds.x + marginLeft, bounds.y),
+                immediately);
+            this.setHeight(bounds.height, immediately);
+        } else {
+            // We will have margins on the Y axis
+            var targetHeight = bounds.width / this.contentAspectX;
+            var marginTop = 0;
+            if (anchor.isVerticallyCentered) {
+                marginTop = (bounds.height - targetHeight) / 2;
+            } else if (anchor.isBottom) {
+                marginTop = bounds.height - targetHeight;
+            }
+            this.setPosition(
+                new $.Point(bounds.x, bounds.y + marginTop),
+                immediately);
+            this.setWidth(bounds.width, immediately);
+        }
+    },
+
+    /**
      * @returns {OpenSeadragon.Rect|null} The TiledImage's current clip rectangle,
      * in image pixels, or null if none.
      */

@@ -4,18 +4,18 @@
     var viewer;
 
     module('TiledImage', {
-        setup: function () {
+        setup: function() {
             var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
 
             viewer = OpenSeadragon({
-                id:            'example',
-                prefixUrl:     '/build/openseadragon/images/',
+                id: 'example',
+                prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             });
         },
-        teardown: function () {
+        teardown: function() {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -87,7 +87,7 @@
 
     // ----------
     asyncTest('animation', function() {
-        viewer.addHandler("open", function () {
+        viewer.addHandler("open", function() {
             var image = viewer.world.getItemAt(0);
             propEqual(image.getBounds(), new OpenSeadragon.Rect(0, 0, 1, 1), 'target bounds on open');
             propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds on open');
@@ -255,6 +255,52 @@
         viewer.open({
             tileSource: '/test/data/testpattern.dzi',
         });
+    });
+
+    asyncTest('fitInBounds', function() {
+
+        function assertRectEquals(actual, expected, message) {
+            ok(actual.equals(expected), message + ' should be ' +
+                expected.toString() + ', found ' + actual.toString());
+        }
+
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var squareImage = viewer.world.getItemAt(0);
+            squareImage.fitInBounds(
+                new OpenSeadragon.Rect(0, 0, 1, 2),
+                OpenSeadragon.Placement.CENTER,
+                true);
+            var actualBounds = squareImage.getBounds(true);
+            var expectedBounds = new OpenSeadragon.Rect(0, 0.5, 1, 1);
+            assertRectEquals(actualBounds, expectedBounds, 'Square image bounds');
+
+            var tallImage = viewer.world.getItemAt(1);
+            tallImage.fitInBounds(
+                new OpenSeadragon.Rect(0, 0, 1, 2),
+                OpenSeadragon.Placement.TOP_LEFT,
+                true);
+            actualBounds = tallImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(0, 0, 0.5, 2);
+            assertRectEquals(actualBounds, expectedBounds, 'Tall image bounds');
+
+            var wideImage = viewer.world.getItemAt(2);
+            wideImage.fitInBounds(
+                new OpenSeadragon.Rect(0, 0, 1, 2),
+                OpenSeadragon.Placement.BOTTOM_RIGHT,
+                true);
+            actualBounds = wideImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(0, 1.75, 1, 0.25);
+            assertRectEquals(actualBounds, expectedBounds, 'Wide image bounds');
+            start();
+        });
+
+        viewer.open([
+            '/test/data/testpattern.dzi',
+            '/test/data/tall.dzi',
+            '/test/data/wide.dzi'
+        ]);
     });
 
 })();
