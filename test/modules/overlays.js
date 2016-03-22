@@ -397,6 +397,7 @@
             checkFixedOverlayPosition( new OpenSeadragon.Point( 0, 0 ),
                 "with TOP_LEFT placement." );
 
+            // Check that legacy OpenSeadragon.OverlayPlacement is still working
             viewer.updateOverlay( "overlay", scalableOverlayLocation,
                 OpenSeadragon.OverlayPlacement.CENTER );
             viewer.updateOverlay( "fixed-overlay", fixedOverlayLocation,
@@ -407,10 +408,11 @@
                 checkFixedOverlayPosition( new OpenSeadragon.Point( -35, -30 ),
                     "with CENTER placement." );
 
+                // Check that new OpenSeadragon.Placement is working
                 viewer.updateOverlay( "overlay", scalableOverlayLocation,
-                    OpenSeadragon.OverlayPlacement.BOTTOM_RIGHT );
+                    OpenSeadragon.Placement.BOTTOM_RIGHT );
                 viewer.updateOverlay( "fixed-overlay", fixedOverlayLocation,
-                    OpenSeadragon.OverlayPlacement.BOTTOM_RIGHT );
+                    OpenSeadragon.Placement.BOTTOM_RIGHT );
                 setTimeout( function() {
                     checkScalableOverlayPosition( "with BOTTOM_RIGHT placement." );
                     checkFixedOverlayPosition( new OpenSeadragon.Point( -70, -60 ),

@@ -1785,7 +1785,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @param {function} onDraw - If supplied the callback is called when the overlay
@@ -1827,7 +1827,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
          * @property {Element} element - The overlay element.
          * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-         * @property {OpenSeadragon.OverlayPlacement} placement
+         * @property {OpenSeadragon.Placement} placement
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'add-overlay', {
@@ -1846,7 +1846,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      the element which is overlayed.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -1872,7 +1872,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * Viewer which raised the event.
              * @property {Element} element
              * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-             * @property {OpenSeadragon.OverlayPlacement} placement
+             * @property {OpenSeadragon.Placement} placement
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.raiseEvent( 'update-overlay', {
@@ -2222,8 +2222,8 @@ function getOverlayObject( viewer, overlay ) {
     }
 
     var placement = overlay.placement;
-    if ( placement && ( $.type( placement ) === "string" ) ) {
-        placement = $.OverlayPlacement[ overlay.placement.toUpperCase() ];
+    if (placement && $.type(placement) === "string") {
+        placement = $.Placement[overlay.placement.toUpperCase()];
     }
 
     return new $.Overlay({

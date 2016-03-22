@@ -556,13 +556,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     fitInBounds: function(bounds, anchor, immediately) {
         anchor = anchor || $.Placement.CENTER;
+        var anchorProperties = $.Placement.properties[anchor];
         if (bounds.getAspectRatio() > this.contentAspectX) {
             // We will have margins on the X axis
             var targetWidth = bounds.height * this.contentAspectX;
             var marginLeft = 0;
-            if (anchor.isHorizontallyCentered) {
+            if (anchorProperties.isHorizontallyCentered) {
                 marginLeft = (bounds.width - targetWidth) / 2;
-            } else if (anchor.isRight) {
+            } else if (anchorProperties.isRight) {
                 marginLeft = bounds.width - targetWidth;
             }
             this.setPosition(
@@ -573,9 +574,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // We will have margins on the Y axis
             var targetHeight = bounds.width / this.contentAspectX;
             var marginTop = 0;
-            if (anchor.isVerticallyCentered) {
+            if (anchorProperties.isVerticallyCentered) {
                 marginTop = (bounds.height - targetHeight) / 2;
-            } else if (anchor.isBottom) {
+            } else if (anchorProperties.isBottom) {
                 marginTop = bounds.height - targetHeight;
             }
             this.setPosition(

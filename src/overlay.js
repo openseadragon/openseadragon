@@ -37,6 +37,8 @@
     /**
      * An enumeration of positions that an overlay may be assigned relative to
      * the viewport.
+     * It is identical to OpenSeadragon.Placement but is kept for backward
+     * compatibility.
      * @member OverlayPlacement
      * @memberof OpenSeadragon
      * @static
@@ -51,17 +53,7 @@
      * @property {Number} BOTTOM_LEFT
      * @property {Number} LEFT
      */
-    $.OverlayPlacement = {
-        CENTER:       0,
-        TOP_LEFT:     1,
-        TOP:          2,
-        TOP_RIGHT:    3,
-        RIGHT:        4,
-        BOTTOM_RIGHT: 5,
-        BOTTOM:       6,
-        BOTTOM_LEFT:  7,
-        LEFT:         8
-    };
+    $.OverlayPlacement = $.Placement;
 
     /**
      * @class Overlay
@@ -75,7 +67,7 @@
      * is specified, the overlay will keep a constant size independently of the
      * zoom. If a {@link OpenSeadragon.Rect} is specified, the overlay size will
      * be adjusted when the zoom changes.
-     * @param {OpenSeadragon.OverlayPlacement} [options.placement=OpenSeadragon.OverlayPlacement.TOP_LEFT]
+     * @param {OpenSeadragon.Placement} [options.placement=OpenSeadragon.Placement.TOP_LEFT]
      * Relative position to the viewport.
      * Only used if location is a {@link OpenSeadragon.Point}.
      * @param {OpenSeadragon.Overlay.OnDrawCallback} [options.onDraw]
@@ -126,8 +118,7 @@
         this.style      = options.element.style;
         // rects are always top-left
         this.placement  = options.location instanceof $.Point ?
-            options.placement :
-            $.OverlayPlacement.TOP_LEFT;
+            options.placement : $.Placement.TOP_LEFT;
         this.onDraw = options.onDraw;
         this.checkResize = options.checkResize === undefined ?
             true : options.checkResize;
@@ -138,42 +129,23 @@
 
         /**
          * @function
-         * @param {OpenSeadragon.OverlayPlacement} position
+         * @param {OpenSeadragon.Point} position
          * @param {OpenSeadragon.Point} size
          */
-        adjust: function( position, size ) {
-            switch ( this.placement ) {
-                case $.OverlayPlacement.TOP_LEFT:
-                    break;
-                case $.OverlayPlacement.TOP:
-                    position.x -= size.x / 2;
-                    break;
-                case $.OverlayPlacement.TOP_RIGHT:
-                    position.x -= size.x;
-                    break;
-                case $.OverlayPlacement.RIGHT:
-                    position.x -= size.x;
-                    position.y -= size.y / 2;
-                    break;
-                case $.OverlayPlacement.BOTTOM_RIGHT:
-                    position.x -= size.x;
-                    position.y -= size.y;
-                    break;
-                case $.OverlayPlacement.BOTTOM:
-                    position.x -= size.x / 2;
-                    position.y -= size.y;
-                    break;
-                case $.OverlayPlacement.BOTTOM_LEFT:
-                    position.y -= size.y;
-                    break;
-                case $.OverlayPlacement.LEFT:
-                    position.y -= size.y / 2;
-                    break;
-                default:
-                case $.OverlayPlacement.CENTER:
-                    position.x -= size.x / 2;
-                    position.y -= size.y / 2;
-                    break;
+        adjust: function(position, size) {
+            var properties = $.Placement.properties[this.placement];
+            if (!properties) {
+                return;
+            }
+            if (properties.isHorizontallyCentered) {
+                position.x -= size.x / 2;
+            } else if (properties.isRight) {
+                position.x -= size.x;
+            }
+            if (properties.isVerticallyCentered) {
+                position.y -= size.y / 2;
+            } else if (properties.isBottom) {
+                position.y -= size.y;
             }
         },
 
@@ -298,7 +270,7 @@
         /**
          * @function
          * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location
-         * @param {OpenSeadragon.OverlayPlacement} position
+         * @param {OpenSeadragon.Placement} position
          */
         update: function( location, placement ) {
             this.scales     = location instanceof $.Rect;
@@ -310,8 +282,7 @@
             );
             // rects are always top-left
             this.placement  = location instanceof $.Point ?
-                placement :
-                $.OverlayPlacement.TOP_LEFT;
+                placement : $.Placement.TOP_LEFT;
         },
 
         /**
