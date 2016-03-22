@@ -52,6 +52,10 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
+ * to fit the image into. If specified, x, y, width and height get ignored.
+ * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
+ * How to anchor the image in the bounds if options.fitBounds is set.
  * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
  * (portions of the image outside of this area will not be visible). Only works on
  * browsers that support the HTML5 canvas.
@@ -122,6 +126,11 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
+    var fitBounds = options.fitBounds;
+    delete options.fitBounds;
+    var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
+    delete options.fitBoundsPlacement;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -171,6 +180,10 @@ $.TiledImage = function( options ) {
     });
 
     this._updateForScale();
+
+    if (fitBounds) {
+        this.fitBounds(fitBounds, fitBoundsPlacement, true);
+    }
 
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
@@ -554,7 +567,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * or snap immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    fitInBounds: function(bounds, anchor, immediately) {
+    fitBounds: function(bounds, anchor, immediately) {
         anchor = anchor || $.Placement.CENTER;
         var anchorProperties = $.Placement.properties[anchor];
         if (bounds.getAspectRatio() > this.contentAspectX) {
