@@ -67,10 +67,11 @@ $.EventSource.prototype = {
      */
     addOnceHandler: function(eventName, handler, userData) {
         var self = this;
-        this.addHandler(eventName, function onceHandler(event) {
+        var onceHandler = function(event) {
             self.removeHandler(eventName, onceHandler);
             handler(event);
-        }, userData);
+        };
+        this.addHandler(eventName, onceHandler, userData);
     },
 
     /**
