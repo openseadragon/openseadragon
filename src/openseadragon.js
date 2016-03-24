@@ -154,7 +154,7 @@
   *       created.
   *     * placement a string to define the relative position to the viewport.
   *       Only used if no width and height are specified. Default: 'TOP_LEFT'.
-  *       See {@link OpenSeadragon.OverlayPlacement} for possible values.
+  *       See {@link OpenSeadragon.Placement} for possible values.
   *
   * @property {String} [xmlPath=null]
   *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
@@ -842,6 +842,21 @@ if (typeof define === 'function' && define.amd) {
         return true;
     };
 
+    /**
+     * Shim around Object.freeze. Does nothing if Object.freeze is not supported.
+     * @param {Object} obj The object to freeze.
+     * @return {Object} obj The frozen object.
+     */
+    $.freezeObject = function(obj) {
+        if (Object.freeze) {
+            $.freezeObject = Object.freeze;
+        } else {
+            $.freezeObject = function(obj) {
+                return obj;
+            };
+        }
+        return $.freezeObject(obj);
+    };
 
     /**
      * True if the browser supports the HTML5 canvas element

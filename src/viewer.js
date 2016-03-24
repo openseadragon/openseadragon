@@ -1206,6 +1206,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
      * @param {Number} [options.width=1] The width for the image in viewport coordinates.
      * @param {Number} [options.height] The height for the image in viewport coordinates.
+     * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
+     * to fit the image into. If specified, x, y, width and height get ignored.
+     * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
+     * How to anchor the image in the bounds if options.fitBounds is set.
      * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
@@ -1341,6 +1345,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     y: queueItem.options.y,
                     width: queueItem.options.width,
                     height: queueItem.options.height,
+                    fitBounds: queueItem.options.fitBounds,
+                    fitBoundsPlacement: queueItem.options.fitBoundsPlacement,
                     clip: queueItem.options.clip,
                     placeholderFillStyle: queueItem.options.placeholderFillStyle,
                     opacity: queueItem.options.opacity,
@@ -1785,7 +1791,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @param {function} onDraw - If supplied the callback is called when the overlay
@@ -1827,7 +1833,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
          * @property {Element} element - The overlay element.
          * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-         * @property {OpenSeadragon.OverlayPlacement} placement
+         * @property {OpenSeadragon.Placement} placement
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'add-overlay', {
@@ -1846,7 +1852,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      the element which is overlayed.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
-     * @param {OpenSeadragon.OverlayPlacement} placement - The position of the
+     * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -1872,7 +1878,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * Viewer which raised the event.
              * @property {Element} element
              * @property {OpenSeadragon.Point|OpenSeadragon.Rect} location
-             * @property {OpenSeadragon.OverlayPlacement} placement
+             * @property {OpenSeadragon.Placement} placement
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.raiseEvent( 'update-overlay', {
@@ -2222,8 +2228,8 @@ function getOverlayObject( viewer, overlay ) {
     }
 
     var placement = overlay.placement;
-    if ( placement && ( $.type( placement ) === "string" ) ) {
-        placement = $.OverlayPlacement[ overlay.placement.toUpperCase() ];
+    if (placement && $.type(placement) === "string") {
+        placement = $.Placement[overlay.placement.toUpperCase()];
     }
 
     return new $.Overlay({
