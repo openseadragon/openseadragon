@@ -950,6 +950,59 @@
     } );
 
     // ----------
+    test('EventSource: addOnceHandler', function() {
+        var eventSource = new OpenSeadragon.EventSource();
+        var userData = 'data';
+        var eventData = {
+            foo: 1
+        };
+        var handlerCalledCount = 0;
+        eventSource.addOnceHandler('test-event', function(event) {
+            handlerCalledCount++;
+            strictEqual(event.foo, eventData.foo,
+                'Event data should be transmitted to the event.');
+            strictEqual(event.userData, userData,
+                'User data should be transmitted to the event.');
+        }, userData);
+        strictEqual(0, handlerCalledCount,
+            'Handler should not have been called yet.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should have been called once.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should still have been called once.');
+    });
+
+    // ----------
+    test('EventSource: addOnceHandler 2 times', function() {
+        var eventSource = new OpenSeadragon.EventSource();
+        var userData = 'data';
+        var eventData = {
+            foo: 1
+        };
+        var handlerCalledCount = 0;
+        eventSource.addOnceHandler('test-event', function(event) {
+            handlerCalledCount++;
+            strictEqual(event.foo, eventData.foo,
+                'Event data should be transmitted to the event.');
+            strictEqual(event.userData, userData,
+                'User data should be transmitted to the event.');
+        }, userData, 2);
+        strictEqual(0, handlerCalledCount,
+            'Handler should not have been called yet.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should have been called once.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(2, handlerCalledCount,
+            'Handler should have been called twice.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(2, handlerCalledCount,
+            'Handler should still have been called twice.');
+    });
+
+    // ----------
     asyncTest( 'Viewer: tile-drawing event', function () {
         var tileDrawing = function ( event ) {
             viewer.removeHandler( 'tile-drawing', tileDrawing );
