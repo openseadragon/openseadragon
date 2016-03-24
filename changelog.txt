@@ -28,6 +28,8 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
 * Fixed: Images with transparency were clearing images layered below them (#861)
 * Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
+* Added addOnceHandler method to EventSource (#887)
+* Added TiledImage.fitBounds method (#888)
 
 2.1.0:
 
