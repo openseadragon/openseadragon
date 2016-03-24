@@ -570,32 +570,50 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     fitBounds: function(bounds, anchor, immediately) {
         anchor = anchor || $.Placement.CENTER;
         var anchorProperties = $.Placement.properties[anchor];
-        if (bounds.getAspectRatio() > this.contentAspectX) {
+        var aspectRatio = this.contentAspectX;
+        var xOffset = 0;
+        var yOffset = 0;
+        var displayedWidthRatio = 1;
+        var displayedHeightRatio = 1;
+        if (this._clip) {
+            aspectRatio = this._clip.getAspectRatio();
+            displayedWidthRatio = this._clip.width / this.source.dimensions.x;
+            displayedHeightRatio = this._clip.height / this.source.dimensions.y;
+            if (bounds.getAspectRatio() > aspectRatio) {
+                xOffset = this._clip.x / this._clip.height * bounds.height;
+                yOffset = this._clip.y / this._clip.height * bounds.height;
+            } else {
+                xOffset = this._clip.x / this._clip.width * bounds.width;
+                yOffset = this._clip.y / this._clip.width * bounds.width;
+            }
+        }
+
+        if (bounds.getAspectRatio() > aspectRatio) {
             // We will have margins on the X axis
-            var targetWidth = bounds.height * this.contentAspectX;
+            var height = bounds.height / displayedHeightRatio;
             var marginLeft = 0;
             if (anchorProperties.isHorizontallyCentered) {
-                marginLeft = (bounds.width - targetWidth) / 2;
+                marginLeft = (bounds.width - bounds.height * aspectRatio) / 2;
             } else if (anchorProperties.isRight) {
-                marginLeft = bounds.width - targetWidth;
+                marginLeft = bounds.width - bounds.height * aspectRatio;
             }
             this.setPosition(
-                new $.Point(bounds.x + marginLeft, bounds.y),
+                new $.Point(bounds.x - xOffset + marginLeft, bounds.y - yOffset),
                 immediately);
-            this.setHeight(bounds.height, immediately);
+            this.setHeight(height, immediately);
         } else {
             // We will have margins on the Y axis
-            var targetHeight = bounds.width / this.contentAspectX;
+            var width = bounds.width / displayedWidthRatio;
             var marginTop = 0;
             if (anchorProperties.isVerticallyCentered) {
-                marginTop = (bounds.height - targetHeight) / 2;
+                marginTop = (bounds.height - bounds.width / aspectRatio) / 2;
             } else if (anchorProperties.isBottom) {
-                marginTop = bounds.height - targetHeight;
+                marginTop = bounds.height - bounds.width / aspectRatio;
             }
             this.setPosition(
-                new $.Point(bounds.x, bounds.y + marginTop),
+                new $.Point(bounds.x - xOffset, bounds.y - yOffset + marginTop),
                 immediately);
-            this.setWidth(bounds.width, immediately);
+            this.setWidth(width, immediately);
         }
     },
 

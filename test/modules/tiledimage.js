@@ -347,4 +347,48 @@
                 fitBoundsPlacement: OpenSeadragon.Placement.BOTTOM_RIGHT
             }]);
     });
+
+    asyncTest('fitBounds with clipping', function() {
+
+        function assertRectEquals(actual, expected, message) {
+            ok(actual.equals(expected), message + ' should be ' +
+                expected.toString() + ', found ' + actual.toString());
+        }
+
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var squareImage = viewer.world.getItemAt(0);
+            var actualBounds = squareImage.getBounds(true);
+            var expectedBounds = new OpenSeadragon.Rect(-1, -1, 2, 2);
+            assertRectEquals(actualBounds, expectedBounds, 'Square image bounds');
+
+            var tallImage = viewer.world.getItemAt(1);
+            actualBounds = tallImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(1, 1, 2, 8);
+            assertRectEquals(actualBounds, expectedBounds, 'Tall image bounds');
+
+            var wideImage = viewer.world.getItemAt(2);
+            actualBounds = wideImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(1, 1, 16, 4);
+            assertRectEquals(actualBounds, expectedBounds, 'Wide image bounds');
+            start();
+        });
+
+        viewer.open([{
+                tileSource: '/test/data/testpattern.dzi',
+                clip: new OpenSeadragon.Rect(500, 500, 500, 500),
+                fitBounds: new OpenSeadragon.Rect(0, 0, 1, 1)
+            }, {
+                tileSource: '/test/data/tall.dzi',
+                clip: new OpenSeadragon.Rect(0, 0, 250, 100),
+                fitBounds: new OpenSeadragon.Rect(1, 1, 1, 2),
+                fitBoundsPlacement: OpenSeadragon.Placement.TOP
+            }, {
+                tileSource: '/test/data/wide.dzi',
+                clip: new OpenSeadragon.Rect(0, 0, 100, 250),
+                fitBounds: new OpenSeadragon.Rect(1, 1, 1, 2),
+                fitBoundsPlacement: OpenSeadragon.Placement.TOP_LEFT
+            }]);
+    });
 })();
