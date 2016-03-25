@@ -1788,7 +1788,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
+     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay.
+     *      If using an object, see {@link OpenSeadragon.Overlay} for a list of
+     *      all available options.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
      * @param {OpenSeadragon.Placement} placement - The position of the
@@ -2237,7 +2239,9 @@ function getOverlayObject( viewer, overlay ) {
         location: location,
         placement: placement,
         onDraw: overlay.onDraw,
-        checkResize: overlay.checkResize
+        checkResize: overlay.checkResize,
+        scaleWidth: overlay.scaleWidth,
+        scaleHeight: overlay.scaleHeight
     });
 }
 

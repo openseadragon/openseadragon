@@ -30,6 +30,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
 * Added addOnceHandler method to EventSource (#887)
 * Added TiledImage.fitBounds method (#888)
+* Added scaledWidth and scaleHeight options to Rect overlays to allow to scale in only one dimension.
 
 2.1.0:
 

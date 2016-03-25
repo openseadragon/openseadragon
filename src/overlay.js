@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function($) {
 
     /**
      * An enumeration of positions that an overlay may be assigned relative to
@@ -75,8 +75,14 @@
      * check the size of the overlay everytime it is drawn when using a
      * {@link OpenSeadragon.Point} as options.location. It will improve
      * performances but will cause a misalignment if the overlay size changes.
+     * @param {Boolean} [options.scaleWidth=true] Whether the width of the
+     * overlay should be adjusted when the zoom changes when using a
+     * {@link OpenSeadragon.Rect} as options.location
+     * @param {Boolean} [options.scaleHeight=true] Whether the height of the
+     * overlay should be adjusted when the zoom changes when using a
+     * {@link OpenSeadragon.Rect} as options.location
      */
-    $.Overlay = function( element, location, placement ) {
+    $.Overlay = function(element, location, placement) {
 
         /**
          * onDraw callback signature used by {@link OpenSeadragon.Overlay}.
@@ -89,7 +95,7 @@
          */
 
         var options;
-        if ( $.isPlainObject( element ) ) {
+        if ($.isPlainObject(element)) {
             options = element;
         } else {
             options = {
@@ -105,29 +111,35 @@
             options.location.x,
             options.location.y,
             options.location.width,
-            options.location.height
-        );
-        this.position   = new $.Point(
-            options.location.x,
-            options.location.y
-        );
-        this.size       = new $.Point(
-            options.location.width,
-            options.location.height
-        );
-        this.style      = options.element.style;
-        // rects are always top-left
-        this.placement  = options.location instanceof $.Point ?
+            options.location.height);
+
+        // this.position is never read by this class but is kept for backward
+        // compatibility
+        this.position = this.bounds.getTopLeft();
+
+        // this.size is only used by PointOverlay with options.checkResize === false
+        this.size = this.bounds.getSize();
+
+        this.style = options.element.style;
+
+        // rects are always top-left (RectOverlays don't use placement)
+        this.placement = options.location instanceof $.Point ?
             options.placement : $.Placement.TOP_LEFT;
         this.onDraw = options.onDraw;
         this.checkResize = options.checkResize === undefined ?
             true : options.checkResize;
+        this.scaleWidth = options.scaleWidth === undefined ?
+            true : options.scaleWidth;
+        this.scaleHeight = options.scaleHeight === undefined ?
+            true : options.scaleHeight;
     };
 
     /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
 
         /**
+         * Internal function to adjust the position of a PointOverlay
+         * depending on it size and anchor.
          * @function
          * @param {OpenSeadragon.Point} position
          * @param {OpenSeadragon.Point} size
@@ -153,20 +165,20 @@
          * @function
          */
         destroy: function() {
-            var element = this.element,
-                style   = this.style;
+            var element = this.element;
+            var style = this.style;
 
-            if ( element.parentNode ) {
-                element.parentNode.removeChild( element );
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
                 //this should allow us to preserve overlays when required between
                 //pages
-                if ( element.prevElementParent ) {
+                if (element.prevElementParent) {
                     style.display = 'none';
                     //element.prevElementParent.insertBefore(
                     //    element,
                     //    element.prevNextSibling
                     //);
-                    document.body.appendChild( element );
+                    document.body.appendChild(element);
                 }
             }
 
@@ -177,9 +189,13 @@
             style.left = "";
             style.position = "";
 
-            if ( this.scales ) {
-                style.width = "";
-                style.height = "";
+            if (this.scales) {
+                if (this.scaleWidth) {
+                    style.width = "";
+                }
+                if (this.scaleHeight) {
+                    style.height = "";
+                }
             }
         },
 
@@ -187,101 +203,88 @@
          * @function
          * @param {Element} container
          */
-        drawHTML: function( container, viewport ) {
-            var element = this.element,
-                style   = this.style,
-                scales  = this.scales,
-                degrees  = viewport.degrees,
-                position = viewport.pixelFromPoint(
-                    this.bounds.getTopLeft(),
-                    true
-                ),
-                size,
-                overlayCenter;
-
-            if ( element.parentNode != container ) {
+        drawHTML: function(container, viewport) {
+            var element = this.element;
+            if (element.parentNode !== container) {
                 //save the source parent for later if we need it
-                element.prevElementParent  = element.parentNode;
-                element.prevNextSibling    = element.nextSibling;
-                container.appendChild( element );
-                this.size = $.getElementSize( element );
+                element.prevElementParent = element.parentNode;
+                element.prevNextSibling = element.nextSibling;
+                container.appendChild(element);
+                this.size = $.getElementSize(element);
             }
 
-            if ( scales ) {
-                size = viewport.deltaPixelsFromPoints(
-                    this.bounds.getSize(),
-                    true
-                );
-            } else if ( this.checkResize ) {
-                size = $.getElementSize( element );
-            } else {
-                size = this.size;
-            }
+            var positionAndSize = this.scales ?
+                this._getRectOverlayPositionAndSize(viewport) :
+                this._getPointOverlayPositionAndSize(viewport);
 
-            this.position = position;
-            this.size     = size;
+            var position = this.position = positionAndSize.position;
+            var size = this.size = positionAndSize.size;
 
-            this.adjust( position, size );
-
-            position = position.apply( Math.round );
-            size     = size.apply( Math.round );
-
-            // rotate the position of the overlay
-            // TODO only rotate overlays if in canvas mode
-            // TODO replace the size rotation with CSS3 transforms
-            // TODO add an option to overlays to not rotate with the image
-            // Currently only rotates position and size
-            if( degrees !== 0 && this.scales ) {
-                overlayCenter = new $.Point( size.x / 2, size.y / 2 );
-
-                var drawerCenter = new $.Point(
-                    viewport.viewer.drawer.canvas.width / 2,
-                    viewport.viewer.drawer.canvas.height / 2
-                );
-                position = position.plus( overlayCenter ).rotate(
-                    degrees,
-                    drawerCenter
-                ).minus( overlayCenter );
-
-                size = size.rotate( degrees, new $.Point( 0, 0 ) );
-                size = new $.Point( Math.abs( size.x ), Math.abs( size.y ) );
-            }
+            position = position.apply(Math.round);
+            size = size.apply(Math.round);
 
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
-            if ( this.onDraw ) {
-                this.onDraw( position, size, element );
+            if (this.onDraw) {
+                this.onDraw(position, size, this.element);
             } else {
-                style.left     = position.x + "px";
-                style.top      = position.y + "px";
+                var style = this.style;
+                style.left = position.x + "px";
+                style.top = position.y + "px";
+                if (this.scales) {
+                    if (this.scaleWidth) {
+                        style.width = size.x + "px";
+                    }
+                    if (this.scaleHeight) {
+                        style.height = size.y + "px";
+                    }
+                }
                 style.position = "absolute";
 
-                if (style.display != 'none') {
-                    style.display  = 'block';
-                }
-
-                if ( scales ) {
-                    style.width  = size.x + "px";
-                    style.height = size.y + "px";
+                if (style.display !== 'none') {
+                    style.display = 'block';
                 }
             }
         },
 
+        // private
+        _getRectOverlayPositionAndSize: function(viewport) {
+            return {
+                position: viewport.pixelFromPoint(
+                    this.bounds.getTopLeft(), true),
+                size: viewport.deltaPixelsFromPoints(
+                    this.bounds.getSize(), true)
+            };
+        },
+
+        // private
+        _getPointOverlayPositionAndSize: function(viewport) {
+            var element = this.element;
+            var position = viewport.pixelFromPoint(
+                this.bounds.getTopLeft(), true);
+            var size = this.checkResize ? $.getElementSize(element) : this.size;
+            this.adjust(position, size);
+            return {
+                position: position,
+                size: size
+            };
+        },
+
         /**
+         * Changes the location and placement of the overlay.
          * @function
          * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location
          * @param {OpenSeadragon.Placement} position
          */
-        update: function( location, placement ) {
-            this.scales     = location instanceof $.Rect;
-            this.bounds     = new $.Rect(
+        update: function(location, placement) {
+            this.scales = location instanceof $.Rect;
+            this.bounds = new $.Rect(
                 location.x,
                 location.y,
                 location.width,
-                location.height
-            );
+                location.height);
             // rects are always top-left
-            this.placement  = location instanceof $.Point ?
+            this.placement = location instanceof $.Point ?
                 placement : $.Placement.TOP_LEFT;
         },
 
@@ -294,4 +297,4 @@
         }
     };
 
-}( OpenSeadragon ));
+}(OpenSeadragon));

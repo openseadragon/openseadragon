@@ -14,7 +14,7 @@
 <body>
     <div id="contentDiv" class="openseadragon1"></div>
     <div id="annotation-div">
-        <input type="button" value="Hide Overlay" id="hideOverlay">
+        <input type="button" value="Hide Overlays" id="hideOverlays">
     </div>
 
     <script type="text/javascript">
@@ -22,19 +22,61 @@
         var viewer = OpenSeadragon({
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
-            tileSources: "../data/testpattern.dzi"
+            tileSources: "../data/testpattern.dzi",
+            minZoomImageRatio: 0,
+            maxZoomPixelRatio: 10
         });
 
         viewer.addHandler("open", function(event) {
             var elt = document.createElement("div");
+            elt.className = "runtime-overlay";
             elt.style.background = "green";
-            elt.id = "runtime-overlay";
             elt.style.border = "1px solid red";
-            viewer.addOverlay( elt, new OpenSeadragon.Rect(0.2, 0.2, 0.75, 0.75)  );
-        });
+            elt.textContent = "Scaled overlay";
+            viewer.addOverlay(elt, new OpenSeadragon.Rect(0.2, 0.2, 0.1, 0.1));
 
-        $("#hideOverlay").click(function(){
-            $("#runtime-overlay").toggle();
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
+            elt.style.border = "3px solid red";
+            elt.style.width = "100px";
+            elt.textContent = "Scaled vertically";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Rect(0.6, 0.6, 0.1, 0.1),
+                scaleWidth: false
+            });
+
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
+            elt.style.opacity = "0.5";
+            elt.style.border = "1px solid blue";
+            elt.style.height = "100px";
+            elt.textContent = "Scaled horizontally";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Rect(0.1, 0.5, 0.1, 0.1),
+                scaleHeight: false
+            });
+
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
+            elt.style.opacity = "0.5";
+            elt.style.border = "1px solid pink";
+            elt.style.width = "100px";
+            elt.style.height = "100px";
+            elt.textContent = "Not scaled, centered in the middle";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Point(0.5, 0.5),
+                placement: OpenSeadragon.Placement.CENTER
+            });
+
+        });
+        $("#hideOverlays").click(function(){
+            $(".runtime-overlay").toggle();
         });
 
     </script>
