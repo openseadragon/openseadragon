@@ -56,6 +56,23 @@
     $.OverlayPlacement = $.Placement;
 
     /**
+     * An enumeration of possible ways to handle overlays rotation
+     * @memberOf OpenSeadragon
+     * @static
+     * @property {Number} NO_ROTATION The overlay ignore the viewport rotation.
+     * @property {Number} EXACT The overlay use CSS 3 transforms to rotate with
+     * the viewport. If the overlay contains text, it will get rotated as well.
+     * @property {Number} BOUNDING_BOX The overlay adjusts for rotation by
+     * taking the size of the bounding box of the rotated bounds.
+     * Only valid for overlays with Rect location and scalable in both directions.
+     */
+    $.OverlayRotationMode = {
+        NO_ROTATION: 1,
+        EXACT: 2,
+        BOUNDING_BOX: 3
+    };
+
+    /**
      * @class Overlay
      * @classdesc Provides a way to float an HTML element on top of the viewer element.
      *
@@ -81,6 +98,8 @@
      * @param {Boolean} [options.scaleHeight=true] Whether the height of the
      * overlay should be adjusted when the zoom changes when using a
      * {@link OpenSeadragon.Rect} as options.location
+     * @param {Boolean} [options.rotationMode=OpenSeadragon.OverlayRotationMode.EXACT]
+     * How to handle the rotation of the viewport.
      */
     $.Overlay = function(element, location, placement) {
 
@@ -132,13 +151,14 @@
             true : options.scaleWidth;
         this.scaleHeight = options.scaleHeight === undefined ?
             true : options.scaleHeight;
+        this.rotationMode = options.rotationMode || $.OverlayRotationMode.EXACT;
     };
 
     /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
 
         /**
-         * Internal function to adjust the position of a PointOverlay
+         * Internal function to adjust the position of a point-based overlay
          * depending on it size and anchor.
          * @function
          * @param {OpenSeadragon.Point} position
@@ -219,6 +239,7 @@
 
             var position = this.position = positionAndSize.position;
             var size = this.size = positionAndSize.size;
+            var rotate = positionAndSize.rotate;
 
             position = position.apply(Math.round);
             size = size.apply(Math.round);
@@ -239,6 +260,13 @@
                         style.height = size.y + "px";
                     }
                 }
+                if (rotate) {
+                    style.transformOrigin = this._getTransformOrigin();
+                    style.transform = "rotate(" + rotate + "deg)";
+                } else {
+                    style.transformOrigin = "";
+                    style.transform = "";
+                }
                 style.position = "absolute";
 
                 if (style.display !== 'none') {
@@ -249,25 +277,69 @@
 
         // private
         _getRectOverlayPositionAndSize: function(viewport) {
+            var position = viewport.pixelFromPoint(
+                this.bounds.getTopLeft(), true);
+            var size = viewport.deltaPixelsFromPointsNoRotate(
+                this.bounds.getSize(), true);
+            var rotate = 0;
+            // BOUNDING_BOX is only valid if both directions get scaled.
+            // Get replaced by exact otherwise.
+            if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
+                this.scaleWidth && this.scaleHeight) {
+                var boundingBox = new $.Rect(
+                    position.x, position.y, size.x, size.y, viewport.degrees)
+                    .getBoundingBox();
+                position = boundingBox.getTopLeft();
+                size = boundingBox.getSize();
+            } else if (this.rotationMode !== $.OverlayRotationMode.NO_ROTATION) {
+                rotate = viewport.degrees;
+            }
             return {
-                position: viewport.pixelFromPoint(
-                    this.bounds.getTopLeft(), true),
-                size: viewport.deltaPixelsFromPoints(
-                    this.bounds.getSize(), true)
+                position: position,
+                size: size,
+                rotate: rotate
             };
         },
 
         // private
         _getPointOverlayPositionAndSize: function(viewport) {
-            var element = this.element;
             var position = viewport.pixelFromPoint(
                 this.bounds.getTopLeft(), true);
-            var size = this.checkResize ? $.getElementSize(element) : this.size;
+            var size = this.checkResize ?
+                $.getElementSize(this.element) : this.size;
             this.adjust(position, size);
+            // For point overlays, BOUNDING_BOX is invalid and get replaced by EXACT.
+            var rotate = this.rotationMode === $.OverlayRotationMode.NO_ROTATION ?
+                0 : viewport.degrees;
             return {
                 position: position,
-                size: size
+                size: size,
+                rotate: rotate
             };
+        },
+
+        // private
+        _getTransformOrigin: function() {
+            if (this.scales) {
+                return "top left";
+            }
+
+            var result = "";
+            var properties = $.Placement.properties[this.placement];
+            if (!properties) {
+                return result;
+            }
+            if (properties.isLeft) {
+                result = "left";
+            } else if (properties.isRight) {
+                result = "right";
+            }
+            if (properties.isTop) {
+                result += " top";
+            } else if (properties.isBottom) {
+                result += " bottom";
+            }
+            return result;
         },
 
         /**
