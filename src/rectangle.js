@@ -110,6 +110,33 @@ $.Rect = function(x, y, width, height, degrees) {
     }
 };
 
+/**
+ * Builds a rectangle having the 3 specified points as summits.
+ * @static
+ * @memberof OpenSeadragon.Rect
+ * @param {OpenSeadragon.Point} topLeft
+ * @param {OpenSeadragon.Point} topRight
+ * @param {OpenSeadragon.Point} bottomLeft
+ * @returns {OpenSeadragon.Rect}
+ */
+$.Rect.fromSummits = function(topLeft, topRight, bottomLeft) {
+    var width = topLeft.distanceTo(topRight);
+    var height = topLeft.distanceTo(bottomLeft);
+    var diff = topRight.minus(topLeft);
+    var radians = Math.atan(diff.y / diff.x);
+    if (diff.x < 0) {
+        radians += Math.PI;
+    } else if (diff.y < 0) {
+        radians += 2 * Math.PI;
+    }
+    return new $.Rect(
+        topLeft.x,
+        topLeft.y,
+        width,
+        height,
+        radians / Math.PI * 180);
+};
+
 /** @lends OpenSeadragon.Rect.prototype */
 $.Rect.prototype = {
     /**
@@ -284,7 +311,7 @@ $.Rect.prototype = {
      * Rotates a rectangle around a point.
      * @function
      * @param {Number} degrees The angle in degrees to rotate.
-     * @param {OpenSeadragon.Point} pivot The point about which to rotate.
+     * @param {OpenSeadragon.Point} [pivot] The point about which to rotate.
      * Defaults to the center of the rectangle.
      * @return {OpenSeadragon.Rect}
      */
