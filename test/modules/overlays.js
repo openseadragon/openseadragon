@@ -2,6 +2,8 @@
 
 ( function() {
     var viewer;
+    // jQuery.position can give results quite different than what set in style.left
+    var epsilon = 1;
 
     module( "Overlays", {
         setup: function() {
@@ -237,30 +239,38 @@
                 } ]
         } );
 
-        function checkOverlayPosition( contextMessage ) {
+        function checkOverlayPosition(contextMessage) {
             var viewport = viewer.viewport;
 
             var expPosition = viewport.imageToViewerElementCoordinates(
-                new OpenSeadragon.Point( 13, 120 ) ).apply( Math.round );
-            var actPosition = $( "#overlay" ).position();
-            equal( actPosition.left, expPosition.x, "X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(13, 120));
+            var actPosition = $("#overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Y position mismatch " + contextMessage);
 
-            var zoom = viewport.viewportToImageZoom( viewport.getZoom( true ) );
-            var expectedWidth = Math.round( 124 * zoom );
-            var expectedHeight = Math.round( 132 * zoom );
-            equal( $( "#overlay" ).width(), expectedWidth, "Width mismatch " + contextMessage );
-            equal( $( "#overlay" ).height( ), expectedHeight, "Height mismatch " + contextMessage );
+            var zoom = viewport.viewportToImageZoom(viewport.getZoom(true));
+            var expectedWidth = 124 * zoom;
+            var expectedHeight = 132 * zoom;
+            Util.assessNumericValue($("#overlay").width(), expectedWidth, epsilon,
+                "Width mismatch " + contextMessage);
+            Util.assessNumericValue($("#overlay").height(), expectedHeight, epsilon,
+                "Height mismatch " + contextMessage);
 
 
             expPosition = viewport.imageToViewerElementCoordinates(
-                new OpenSeadragon.Point( 400, 500 ) ).apply( Math.round );
-            actPosition = $( "#fixed-overlay" ).position();
-            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(400, 500));
+            actPosition = $("#fixed-overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "Fixed overlay X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Fixed overlay Y position mismatch " + contextMessage);
 
-            equal( $( "#fixed-overlay" ).width(), 70, "Fixed overlay width mismatch " + contextMessage );
-            equal( $( "#fixed-overlay" ).height( ), 60, "Fixed overlay height mismatch " + contextMessage );
+            Util.assessNumericValue($("#fixed-overlay").width(), 70, epsilon,
+                "Fixed overlay width mismatch " + contextMessage);
+            Util.assessNumericValue($("#fixed-overlay").height(), 60, epsilon,
+                "Fixed overlay height mismatch " + contextMessage);
         }
 
         waitForViewer( function() {
@@ -305,25 +315,33 @@
             var viewport = viewer.viewport;
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.2, 0.1 ) ).apply( Math.round );
+                new OpenSeadragon.Point(0.2, 0.1));
             var actPosition = $( "#overlay" ).position();
-            equal( actPosition.left, expPosition.x, "X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Y position mismatch " + contextMessage);
 
             var expectedSize = viewport.deltaPixelsFromPoints(
-                new OpenSeadragon.Point( 0.5, 0.1 ) );
-            equal( $( "#overlay" ).width(), expectedSize.x, "Width mismatch " + contextMessage );
-            equal( $( "#overlay" ).height(), expectedSize.y, "Height mismatch " + contextMessage );
+                new OpenSeadragon.Point(0.5, 0.1));
+            Util.assessNumericValue($("#overlay").width(), expectedSize.x, epsilon,
+                "Width mismatch " + contextMessage);
+            Util.assessNumericValue($("#overlay").height(), expectedSize.y, epsilon,
+                "Height mismatch " + contextMessage);
 
 
             expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.5, 0.6 ) ).apply( Math.round );
-            actPosition = $( "#fixed-overlay" ).position();
-            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(0.5, 0.6));
+            actPosition = $("#fixed-overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "Fixed overlay X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Fixed overlay Y position mismatch " + contextMessage);
 
-            equal( $( "#fixed-overlay" ).width(), 70, "Fixed overlay width mismatch " + contextMessage );
-            equal( $( "#fixed-overlay" ).height( ), 60, "Fixed overlay height mismatch " + contextMessage );
+            Util.assessNumericValue($("#fixed-overlay").width(), 70, epsilon,
+                "Fixed overlay width mismatch " + contextMessage);
+            Util.assessNumericValue($("#fixed-overlay").height(), 60, epsilon,
+                "Fixed overlay height mismatch " + contextMessage);
         }
 
         waitForViewer( function() {
@@ -373,22 +391,25 @@
             var viewport = viewer.viewport;
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.2, 0.1 ) ).apply( Math.round );
-            var actPosition = $( "#overlay" ).position();
-            equal( actPosition.left, expPosition.x, "X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(0.2, 0.1));
+            var actPosition = $("#overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Y position mismatch " + contextMessage);
         }
 
         function checkFixedOverlayPosition( expectedOffset, contextMessage ) {
             var viewport = viewer.viewport;
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.5, 0.6 ) )
-                .apply( Math.round )
-                .plus( expectedOffset );
-            var actPosition = $( "#fixed-overlay" ).position();
-            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(0.5, 0.6))
+                .plus(expectedOffset);
+            var actPosition = $("#fixed-overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "Fixed overlay X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Fixed overlay Y position mismatch " + contextMessage);
         }
 
         waitForViewer( function() {
@@ -448,12 +469,13 @@
             var viewport = viewer.viewport;
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.5, 0.6 ) )
-                .apply( Math.round )
-                .plus( expectedOffset );
-            var actPosition = $( "#fixed-overlay" ).position();
-            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+                new OpenSeadragon.Point(0.5, 0.6))
+                .plus(expectedOffset);
+            var actPosition = $("#fixed-overlay").position();
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "Fixed overlay X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Fixed overlay Y position mismatch " + contextMessage);
         }
 
         waitForViewer( function() {
@@ -502,12 +524,13 @@
             var viewport = viewer.viewport;
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
-                new OpenSeadragon.Point( 0.5, 0.6 ) )
-                .apply( Math.round )
-                .plus( expectedOffset );
+                new OpenSeadragon.Point(0.5, 0.6))
+                .plus(expectedOffset);
             var actPosition = $( "#fixed-overlay" ).position();
-            equal( actPosition.left, expPosition.x, "Fixed overlay X position mismatch " + contextMessage );
-            equal( actPosition.top, expPosition.y, "Fixed overlay Y position mismatch " + contextMessage );
+            Util.assessNumericValue(actPosition.left, expPosition.x, epsilon,
+                "Fixed overlay X position mismatch " + contextMessage);
+            Util.assessNumericValue(actPosition.top, expPosition.y, epsilon,
+                "Fixed overlay Y position mismatch " + contextMessage);
         }
 
         waitForViewer( function() {

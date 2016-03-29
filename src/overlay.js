@@ -241,9 +241,6 @@
             var size = this.size = positionAndSize.size;
             var rotate = positionAndSize.rotate;
 
-            position = position.apply(Math.round);
-            size = size.apply(Math.round);
-
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
