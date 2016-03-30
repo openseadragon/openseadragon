@@ -2240,8 +2240,8 @@ function getOverlayObject( viewer, overlay ) {
         placement: placement,
         onDraw: overlay.onDraw,
         checkResize: overlay.checkResize,
-        scaleWidth: overlay.scaleWidth,
-        scaleHeight: overlay.scaleHeight,
+        width: overlay.width,
+        height: overlay.height,
         rotationMode: overlay.rotationMode
     });
 }
