@@ -257,12 +257,18 @@
                         style.height = size.y + "px";
                     }
                 }
-                if (rotate) {
-                    style.transformOrigin = this._getTransformOrigin();
-                    style.transform = "rotate(" + rotate + "deg)";
-                } else {
-                    style.transformOrigin = "";
-                    style.transform = "";
+                var transformOriginProp = $.getCssPropertyWithVendorPrefix(
+                    'transformOrigin');
+                var transformProp = $.getCssPropertyWithVendorPrefix(
+                    'transform');
+                if (transformOriginProp && transformProp) {
+                    if (rotate) {
+                        style[transformOriginProp] = this._getTransformOrigin();
+                        style[transformProp] = "rotate(" + rotate + "deg)";
+                    } else {
+                        style[transformOriginProp] = "";
+                        style[transformProp] = "";
+                    }
                 }
                 style.position = "absolute";
 
