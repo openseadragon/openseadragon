@@ -287,7 +287,7 @@
         // private
         _getOverlayPositionAndSize: function(viewport) {
             var position = viewport.pixelFromPoint(this.location, true);
-            var size = this._getSizeinPixels(viewport);
+            var size = this._getSizeInPixels(viewport);
             this.adjust(position, size);
 
             var rotate = 0;
@@ -314,7 +314,7 @@
         },
 
         // private
-        _getSizeinPixels: function(viewport) {
+        _getSizeInPixels: function(viewport) {
             var width = this.size.x;
             var height = this.size.y;
             if (this.width !== null || this.height !== null) {
