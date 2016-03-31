@@ -287,6 +287,34 @@
         // private
         _getOverlayPositionAndSize: function(viewport) {
             var position = viewport.pixelFromPoint(this.location, true);
+            var size = this._getSizeinPixels(viewport);
+            this.adjust(position, size);
+
+            var rotate = 0;
+            if (viewport.degrees &&
+                this.rotationMode !== $.OverlayRotationMode.NO_ROTATION) {
+                // BOUNDING_BOX is only valid if both directions get scaled.
+                // Get replaced by EXACT otherwise.
+                if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
+                    this.width !== null && this.height !== null) {
+                    var rect = new $.Rect(position.x, position.y, size.x, size.y);
+                    var boundingBox = this._getBoundingBox(rect, viewport.degrees);
+                    position = boundingBox.getTopLeft();
+                    size = boundingBox.getSize();
+                } else {
+                    rotate = viewport.degrees;
+                }
+            }
+
+            return {
+                position: position,
+                size: size,
+                rotate: rotate
+            };
+        },
+
+        // private
+        _getSizeinPixels: function(viewport) {
             var width = this.size.x;
             var height = this.size.y;
             if (this.width !== null || this.height !== null) {
@@ -309,36 +337,30 @@
                     height = eltSize.y;
                 }
             }
-            var size = new $.Point(width, height);
-            this.adjust(position, size);
+            return new $.Point(width, height);
+        },
 
-            var rotate = 0;
-            // BOUNDING_BOX is only valid if both directions get scaled.
-            // Get replaced by EXACT otherwise.
-            if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
-                this.width !== null && this.height !== null) {
-                var boundingBox = new $.Rect(
-                    position.x, position.y, size.x, size.y, viewport.degrees)
-                    .getBoundingBox();
-                position = boundingBox.getTopLeft();
-                size = boundingBox.getSize();
-            } else if (this.rotationMode !== $.OverlayRotationMode.NO_ROTATION) {
-                rotate = viewport.degrees;
+        // private
+        _getBoundingBox: function(rect, degrees) {
+            var refPoint = new $.Point(rect.x, rect.y);
+            var properties = $.Placement.properties[this.placement];
+            if (properties) {
+                if (properties.isHorizontallyCentered) {
+                    refPoint.x += rect.width / 2;
+                } else if (properties.isRight) {
+                    refPoint.x += rect.width;
+                }
+                if (properties.isVerticallyCentered) {
+                    refPoint.y += rect.height / 2;
+                } else if (properties.isBottom) {
+                    refPoint.y += rect.height;
+                }
             }
-
-            return {
-                position: position,
-                size: size,
-                rotate: rotate
-            };
+            return rect.rotate(degrees, refPoint).getBoundingBox();
         },
 
         // private
         _getTransformOrigin: function() {
-            if (this.scales) {
-                return "top left";
-            }
-
             var result = "";
             var properties = $.Placement.properties[this.placement];
             if (!properties) {
