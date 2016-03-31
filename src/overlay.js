@@ -140,10 +140,16 @@
             this.onDraw = options.onDraw;
             this.checkResize = options.checkResize === undefined ?
                 true : options.checkResize;
+
+            // When this.width is not null, the overlay get scaled horizontally
             this.width = options.width === undefined ? null : options.width;
+
+            // When this.height is not null, the overlay get scaled vertically
             this.height = options.height === undefined ? null : options.height;
+
             this.rotationMode = options.rotationMode || $.OverlayRotationMode.EXACT;
 
+            // Having a rect as location is a syntactic sugar
             if (this.location instanceof $.Rect) {
                 this.width = this.location.width;
                 this.height = this.location.height;
@@ -231,6 +237,9 @@
                 element.prevElementParent = element.parentNode;
                 element.prevNextSibling = element.nextSibling;
                 container.appendChild(element);
+
+                // this.size is used by overlays which don't get scaled in at
+                // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
             }
 
