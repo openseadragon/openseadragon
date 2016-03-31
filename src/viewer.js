@@ -2201,32 +2201,23 @@ function getOverlayObject( viewer, overlay ) {
     }
 
     var location = overlay.location;
-    if ( !location ) {
-        if ( overlay.width && overlay.height ) {
-            location = overlay.px !== undefined ?
-                viewer.viewport.imageToViewportRectangle( new $.Rect(
-                    overlay.px,
-                    overlay.py,
-                    overlay.width,
-                    overlay.height
-                ) ) :
-                new $.Rect(
-                    overlay.x,
-                    overlay.y,
-                    overlay.width,
-                    overlay.height
-                );
-        } else {
-            location = overlay.px !== undefined ?
-                viewer.viewport.imageToViewportCoordinates( new $.Point(
-                    overlay.px,
-                    overlay.py
-                ) ) :
-                new $.Point(
-                    overlay.x,
-                    overlay.y
-                );
+    var width = overlay.width;
+    var height = overlay.height;
+    if (!location) {
+        var x = overlay.x;
+        var y = overlay.y;
+        if (overlay.px !== undefined) {
+            var rect = viewer.viewport.imageToViewportRectangle(new $.Rect(
+                overlay.px,
+                overlay.py,
+                width || 0,
+                height || 0));
+            x = rect.x;
+            y = rect.y;
+            width = width !== undefined ? rect.width : undefined;
+            height = height !== undefined ? rect.height : undefined;
         }
+        location = new $.Point(x, y);
     }
 
     var placement = overlay.placement;
@@ -2240,8 +2231,8 @@ function getOverlayObject( viewer, overlay ) {
         placement: placement,
         onDraw: overlay.onDraw,
         checkResize: overlay.checkResize,
-        width: overlay.width,
-        height: overlay.height,
+        width: width,
+        height: height,
         rotationMode: overlay.rotationMode
     });
 }

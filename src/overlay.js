@@ -383,9 +383,9 @@
             var width = this.width;
             var height = this.height;
             if (width === null || height === null) {
-                $.console.assert(viewport, 'The viewport must be specified to' +
+                $.console.assert(!viewport, 'The viewport must be specified to' +
                     ' get the bounds of a not entirely scaling overlay');
-                var size = viewport.deltaPointsFromPixels(this.size, true);
+                var size = viewport.deltaPointsFromPixelsNoRotate(this.size, true);
                 if (width === null) {
                     width = size.x;
                 }
@@ -393,8 +393,9 @@
                     height = size.y;
                 }
             }
-            return new $.Rect(
-                this.location.x, this.location.y, width, height);
+            var location = this.location.clone();
+            this.adjust(location, new $.Point(width, height));
+            return new $.Rect(location.x, location.y, width, height);
         }
     };
 
