@@ -658,6 +658,7 @@
         });
     });
 
+    // ----------
     asyncTest('Overlay.getBounds', function() {
         viewer = OpenSeadragon({
             id: 'example-overlays',
@@ -710,7 +711,7 @@
             viewer._drawOverlays();
 
             var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
-                .getBounds();
+                .getBounds(viewer.viewport);
             var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
             ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
@@ -745,4 +746,240 @@
         });
     });
 
+    // ----------
+    asyncTest('Fully scaled overlay rotation mode NO_ROTATION', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "fully-scaled-overlay",
+                    x: 1,
+                    y: 1,
+                    width: 1,
+                    height: 1,
+                    placement: OpenSeadragon.Placement.BOTTOM_RIGHT,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.NO_ROTATION
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var viewport = viewer.viewport;
+
+            var $overlay = $("#fully-scaled-overlay");
+            var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
+                new OpenSeadragon.Point(1, 1));
+            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point(1, 1))
+                .minus(expectedSize);
+            var actualPosition = $overlay.position();
+            Util.assessNumericValue(actualPosition.left, expectedPosition.x, epsilon,
+                "Scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(actualPosition.top, expectedPosition.y, epsilon,
+                "Scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, expectedSize.x, epsilon,
+                "Scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, expectedSize.y, epsilon,
+                "Scaled overlay height should not adjust to rotation.");
+
+            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1)
+                .rotate(-45, new OpenSeadragon.Point(1, 1));
+            ok(expectedBounds.equals(actualBounds),
+                "The fully scaled overlay should have bounds " +
+                expectedBounds.toString() + " but found " + actualBounds);
+
+            start();
+        });
+    });
+
+    // ----------
+    asyncTest('Horizontally scaled overlay rotation mode NO_ROTATION', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "horizontally-scaled-overlay",
+                    x: 0.5,
+                    y: 0.5,
+                    width: 1,
+                    placement: OpenSeadragon.Placement.CENTER,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.NO_ROTATION
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var $overlay = $("#horizontally-scaled-overlay");
+            var notScaledWidth = 100;
+            var notScaledHeight = 100;
+            $overlay.get(0).style.height = notScaledHeight + "px";
+
+            var viewport = viewer.viewport;
+            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+                new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
+
+            // Force refresh to takes new dimensions into account.
+            viewer._drawOverlays();
+
+            var expectedWidth = viewport.deltaPixelsFromPointsNoRotate(
+                new OpenSeadragon.Point(1, 1)).x;
+            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point(0.5, 0.5))
+                .minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
+            var actualPosition = $overlay.position();
+            Util.assessNumericValue(actualPosition.left, expectedPosition.x, epsilon,
+                "Horizontally scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(actualPosition.top, expectedPosition.y, epsilon,
+                "Horizontally scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, expectedWidth, epsilon,
+                "Horizontally scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, notScaledHeight, epsilon,
+                "Horizontally scaled overlay height should not adjust to rotation.");
+
+            var actualBounds = viewer.getOverlayById("horizontally-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(
+                0, 0.5 - notScaledSize.y / 2, 1, notScaledSize.y)
+                .rotate(-45, new OpenSeadragon.Point(0.5, 0.5));
+            ok(expectedBounds.equals(actualBounds),
+                "The horizontally scaled overlay should have bounds " +
+                expectedBounds.toString() + " but found " + actualBounds);
+
+            start();
+        });
+    });
+
+    // ----------
+    asyncTest('Vertically scaled overlay rotation mode NO_ROTATION', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "vertically-scaled-overlay",
+                    x: 0,
+                    y: 0.5,
+                    height: 1,
+                    placement: OpenSeadragon.Placement.LEFT,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.NO_ROTATION
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var $overlay = $("#vertically-scaled-overlay");
+            var notScaledWidth = 100;
+            var notScaledHeight = 100;
+            $overlay.get(0).style.width = notScaledWidth + "px";
+
+            var viewport = viewer.viewport;
+            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+                new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
+
+            // Force refresh to takes new dimensions into account.
+            viewer._drawOverlays();
+
+            var expectedHeight = viewport.deltaPixelsFromPointsNoRotate(
+                new OpenSeadragon.Point(1, 1)).y;
+            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point(0, 0.5))
+                .minus(new OpenSeadragon.Point(0, expectedHeight / 2));
+            var actualPosition = $overlay.position();
+            Util.assessNumericValue(actualPosition.left, expectedPosition.x, epsilon,
+                "Vertically scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(actualPosition.top, expectedPosition.y, epsilon,
+                "Vertically scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, notScaledWidth, epsilon,
+                "Vertically scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, expectedHeight, epsilon,
+                "Vertically scaled overlay height should not adjust to rotation.");
+
+            var actualBounds = viewer.getOverlayById("vertically-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(
+                0, 0, notScaledSize.x, 1)
+                .rotate(-45, new OpenSeadragon.Point(0, 0.5));
+            ok(expectedBounds.equals(actualBounds),
+                "The vertically scaled overlay should have bounds " +
+                expectedBounds.toString() + " but found " + actualBounds);
+
+            start();
+        });
+    });
+
+    // ----------
+    asyncTest('Not scaled overlay rotation mode NO_ROTATION', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "not-scaled-overlay",
+                    x: 1,
+                    y: 0,
+                    placement: OpenSeadragon.Placement.TOP_RIGHT,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.NO_ROTATION
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var $overlay = $("#not-scaled-overlay");
+            var notScaledWidth = 100;
+            var notScaledHeight = 100;
+            $overlay.get(0).style.width = notScaledWidth + "px";
+            $overlay.get(0).style.height = notScaledHeight + "px";
+
+            var viewport = viewer.viewport;
+            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+                new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
+
+            // Force refresh to takes new dimensions into account.
+            viewer._drawOverlays();
+
+            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+                new OpenSeadragon.Point(1, 0))
+                .minus(new OpenSeadragon.Point(notScaledWidth, 0));
+            var actualPosition = $overlay.position();
+            Util.assessNumericValue(actualPosition.left, expectedPosition.x, epsilon,
+                "Not scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(actualPosition.top, expectedPosition.y, epsilon,
+                "Not scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, notScaledWidth, epsilon,
+                "Not scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, notScaledHeight, epsilon,
+                "Not scaled overlay height should not adjust to rotation.");
+
+            var actualBounds = viewer.getOverlayById("not-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(
+                1 - notScaledSize.x, 0, notScaledSize.x, notScaledSize.y)
+                .rotate(-45, new OpenSeadragon.Point(1, 0));
+            ok(expectedBounds.equals(actualBounds),
+                "Not scaled overlay should have bounds " +
+                expectedBounds.toString() + " but found " + actualBounds);
+
+            start();
+        });
+    });
 })();

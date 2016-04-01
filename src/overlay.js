@@ -131,7 +131,6 @@
 
     /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
-
         // private
         _init: function(options) {
             this.location = options.location;
@@ -157,7 +156,6 @@
                 this.placement = $.Placement.TOP_LEFT;
             }
         },
-
         /**
          * Internal function to adjust the position of an overlay
          * depending on it size and placement.
@@ -181,7 +179,6 @@
                 position.y -= size.y;
             }
         },
-
         /**
          * @function
          */
@@ -225,7 +222,6 @@
                 style[transformProp] = "";
             }
         },
-
         /**
          * @function
          * @param {Element} container
@@ -283,7 +279,6 @@
                 }
             }
         },
-
         // private
         _getOverlayPositionAndSize: function(viewport) {
             var position = viewport.pixelFromPoint(this.location, true);
@@ -312,7 +307,6 @@
                 rotate: rotate
             };
         },
-
         // private
         _getSizeInPixels: function(viewport) {
             var width = this.size.x;
@@ -339,26 +333,29 @@
             }
             return new $.Point(width, height);
         },
-
         // private
         _getBoundingBox: function(rect, degrees) {
-            var refPoint = new $.Point(rect.x, rect.y);
+            var refPoint = this._getPlacementPoint(rect);
+            return rect.rotate(degrees, refPoint).getBoundingBox();
+        },
+        // private
+        _getPlacementPoint: function(rect) {
+            var result = new $.Point(rect.x, rect.y);
             var properties = $.Placement.properties[this.placement];
             if (properties) {
                 if (properties.isHorizontallyCentered) {
-                    refPoint.x += rect.width / 2;
+                    result.x += rect.width / 2;
                 } else if (properties.isRight) {
-                    refPoint.x += rect.width;
+                    result.x += rect.width;
                 }
                 if (properties.isVerticallyCentered) {
-                    refPoint.y += rect.height / 2;
+                    result.y += rect.height / 2;
                 } else if (properties.isBottom) {
-                    refPoint.y += rect.height;
+                    result.y += rect.height;
                 }
             }
-            return rect.rotate(degrees, refPoint).getBoundingBox();
+            return result;
         },
-
         // private
         _getTransformOrigin: function() {
             var result = "";
@@ -378,7 +375,6 @@
             }
             return result;
         },
-
         /**
          * Changes the overlay settings.
          * @function
@@ -403,7 +399,6 @@
                 rotationMode: options.rotationMode || this.rotationMode
             });
         },
-
         /**
          * Returns the current bounds of the overlay in viewport coordinates
          * @function
@@ -411,11 +406,11 @@
          * @returns {OpenSeadragon.Rect} overlay bounds
          */
         getBounds: function(viewport) {
+            $.console.assert(!viewport, 'Calling Overlay.getBounds withouth ' +
+                'specifying a viewport is deprecated.');
             var width = this.width;
             var height = this.height;
             if (width === null || height === null) {
-                $.console.assert(!viewport, 'The viewport must be specified to' +
-                    ' get the bounds of a not entirely scaling overlay');
                 var size = viewport.deltaPointsFromPixelsNoRotate(this.size, true);
                 if (width === null) {
                     width = size.x;
@@ -426,7 +421,23 @@
             }
             var location = this.location.clone();
             this.adjust(location, new $.Point(width, height));
-            return new $.Rect(location.x, location.y, width, height);
+            return this._adjustBoundsForRotation(
+                viewport, new $.Rect(location.x, location.y, width, height));
+        },
+
+        _adjustBoundsForRotation: function(viewport, bounds) {
+            if (!viewport ||
+                viewport.degrees === 0 ||
+                this.rotationMode === $.OverlayRotationMode.EXACT) {
+                return bounds;
+            }
+            // If overlay not fully scalable, BOUNDING_BOX falls back to EXACT
+            if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
+                (this.width === null || this.height === null)) {
+                return bounds;
+            }
+            return bounds.rotate(-viewport.degrees,
+                this._getPlacementPoint(bounds));
         }
     };
 
