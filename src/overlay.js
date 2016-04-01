@@ -131,6 +131,7 @@
 
     /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
+
         // private
         _init: function(options) {
             this.location = options.location;
@@ -156,6 +157,7 @@
                 this.placement = $.Placement.TOP_LEFT;
             }
         },
+
         /**
          * Internal function to adjust the position of an overlay
          * depending on it size and placement.
@@ -179,6 +181,7 @@
                 position.y -= size.y;
             }
         },
+
         /**
          * @function
          */
@@ -222,6 +225,7 @@
                 style[transformProp] = "";
             }
         },
+
         /**
          * @function
          * @param {Element} container
@@ -279,6 +283,7 @@
                 }
             }
         },
+
         // private
         _getOverlayPositionAndSize: function(viewport) {
             var position = viewport.pixelFromPoint(this.location, true);
@@ -307,6 +312,7 @@
                 rotate: rotate
             };
         },
+
         // private
         _getSizeInPixels: function(viewport) {
             var width = this.size.x;
@@ -333,11 +339,13 @@
             }
             return new $.Point(width, height);
         },
+
         // private
         _getBoundingBox: function(rect, degrees) {
             var refPoint = this._getPlacementPoint(rect);
             return rect.rotate(degrees, refPoint).getBoundingBox();
         },
+
         // private
         _getPlacementPoint: function(rect) {
             var result = new $.Point(rect.x, rect.y);
@@ -356,6 +364,7 @@
             }
             return result;
         },
+
         // private
         _getTransformOrigin: function() {
             var result = "";
@@ -375,6 +384,7 @@
             }
             return result;
         },
+
         /**
          * Changes the overlay settings.
          * @function
@@ -399,6 +409,7 @@
                 rotationMode: options.rotationMode || this.rotationMode
             });
         },
+
         /**
          * Returns the current bounds of the overlay in viewport coordinates
          * @function
