@@ -39,41 +39,41 @@
             viewer.addOverlay({
                 element: elt,
                 location: new OpenSeadragon.Rect(0.21, 0.21, 0.099, 0.099),
-                rotationMode: OpenSeadragon.OverlayRotationMode.EXACT
-            });
-
-            elt = document.createElement("div");
-            elt.className = "runtime-overlay";
-            elt.style.background = "white";
-            elt.style.border = "3px solid red";
-            elt.style.width = "100px";
-            elt.textContent = "Scaled vertically";
-            viewer.addOverlay({
-                element: elt,
-                location: new OpenSeadragon.Point(0.6, 0.6),
-                height: 0.1,
-                placement: OpenSeadragon.Placement.TOP_LEFT
-            });
-
-            elt = document.createElement("div");
-            elt.className = "runtime-overlay";
-            elt.style.background = "white";
-            elt.style.opacity = "0.5";
-            elt.style.border = "1px solid blue";
-            elt.style.height = "100px";
-            elt.textContent = "Scaled horizontally";
-            viewer.addOverlay({
-                element: elt,
-                location: new OpenSeadragon.Point(0.1, 0.5),
-                width: 0.1,
                 rotationMode: OpenSeadragon.OverlayRotationMode.BOUNDING_BOX
             });
 
             elt = document.createElement("div");
             elt.className = "runtime-overlay";
             elt.style.background = "white";
+            elt.style.outline = "3px solid red";
+            elt.style.width = "100px";
+            elt.textContent = "Scaled vertically";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Point(0.6, 0.6),
+                height: 0.1,
+                placement: OpenSeadragon.Placement.TOP_LEFT,
+                rotationMode: OpenSeadragon.OverlayRotationMode.NO_ROTATION
+            });
+
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
             elt.style.opacity = "0.5";
-            elt.style.border = "5px solid pink";
+            elt.style.outline = "1px solid blue";
+            elt.style.height = "100px";
+            elt.textContent = "Scaled horizontally";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Point(0.1, 0.5),
+                width: 0.1
+            });
+
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
+            elt.style.opacity = "0.5";
+            elt.style.outline = "5px solid pink";
             elt.style.width = "100px";
             elt.style.height = "100px";
             elt.textContent = "Not scaled, centered in the middle";
@@ -81,7 +81,8 @@
                 element: elt,
                 location: new OpenSeadragon.Point(0.5, 0.5),
                 placement: OpenSeadragon.Placement.CENTER,
-                checkResize: false
+                checkResize: false,
+                rotationMode: OpenSeadragon.OverlayRotationMode.EXACT
             });
 
         });
