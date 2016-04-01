@@ -417,7 +417,7 @@
          * @returns {OpenSeadragon.Rect} overlay bounds
          */
         getBounds: function(viewport) {
-            $.console.assert(!viewport, 'Calling Overlay.getBounds withouth ' +
+            $.console.assert(viewport, 'Calling Overlay.getBounds withouth ' +
                 'specifying a viewport is deprecated.');
             var width = this.width;
             var height = this.height;
@@ -442,11 +442,22 @@
                 this.rotationMode === $.OverlayRotationMode.EXACT) {
                 return bounds;
             }
-            // If overlay not fully scalable, BOUNDING_BOX falls back to EXACT
-            if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
-                (this.width === null || this.height === null)) {
-                return bounds;
+            if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX) {
+                // If overlay not fully scalable, BOUNDING_BOX falls back to EXACT
+                if (this.width === null || this.height === null) {
+                    return bounds;
+                }
+                // It is easier to just compute the position and size and
+                // convert to viewport coordinates.
+                var positionAndSize = this._getOverlayPositionAndSize(viewport);
+                return viewport.viewerElementToViewportRectangle(new $.Rect(
+                    positionAndSize.position.x,
+                    positionAndSize.position.y,
+                    positionAndSize.size.x,
+                    positionAndSize.size.y));
             }
+
+            // NO_ROTATION case
             return bounds.rotate(-viewport.degrees,
                 this._getPlacementPoint(bounds));
         }

@@ -982,4 +982,63 @@
             start();
         });
     });
+
+    // ----------
+    asyncTest('Fully scaled overlay rotation mode BOUNDING_BOX', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "fully-scaled-overlay",
+                    x: 1,
+                    y: 1,
+                    width: 1,
+                    height: 1,
+                    placement: OpenSeadragon.Placement.BOTTOM_RIGHT,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.BOUNDING_BOX
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var viewport = viewer.viewport;
+
+            var $overlay = $("#fully-scaled-overlay");
+            var expectedRect = viewport.viewportToViewerElementRectangle(
+                new OpenSeadragon.Rect(0, 0, 1, 1)).getBoundingBox();
+            var actualPosition = $overlay.position();
+            Util.assessNumericValue(actualPosition.left, expectedRect.x, epsilon,
+                "Scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(actualPosition.top, expectedRect.y, epsilon,
+                "Scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, expectedRect.width, epsilon,
+                "Scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, expectedRect.height, epsilon,
+                "Scaled overlay height should not adjust to rotation.");
+
+            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(
+                    0.5, -0.5, Math.sqrt(2), Math.sqrt(2), 45);
+            var boundsEpsilon = 0.000001;
+            Util.assessNumericValue(actualBounds.x, expectedBounds.x, boundsEpsilon,
+                "The fully scaled overlay should have adjusted bounds.x");
+            Util.assessNumericValue(actualBounds.y, expectedBounds.y, boundsEpsilon,
+                "The fully scaled overlay should have adjusted bounds.y");
+            Util.assessNumericValue(actualBounds.width, expectedBounds.width, boundsEpsilon,
+                "The fully scaled overlay should have adjusted bounds.width");
+            Util.assessNumericValue(actualBounds.height, expectedBounds.height, boundsEpsilon,
+                "The fully scaled overlay should have adjusted bounds.height");
+            Util.assessNumericValue(actualBounds.degrees, expectedBounds.degrees, boundsEpsilon,
+                "The fully scaled overlay should have adjusted bounds.degrees");
+
+            start();
+        });
+    });
+
 })();

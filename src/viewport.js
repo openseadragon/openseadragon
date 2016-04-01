@@ -1263,6 +1263,20 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Convert a rectangle in pixel coordinates relative to the viewer element
+     * to viewport coordinates.
+     * @param {OpenSeadragon.Rect} rectangle the rectangle to convert
+     * @returns {OpenSeadragon.Rect} the converted rectangle
+     */
+    viewerElementToViewportRectangle: function(rectangle) {
+        return $.Rect.fromSummits(
+            this.pointFromPixel(rectangle.getTopLeft(), true),
+            this.pointFromPixel(rectangle.getTopRight(), true),
+            this.pointFromPixel(rectangle.getBottomLeft(), true)
+        );
+    },
+
+    /**
      * Convert a rectangle in viewport coordinates to pixel coordinates relative
      * to the viewer element.
      * @param {OpenSeadragon.Rect} rectangle the rectangle to convert
