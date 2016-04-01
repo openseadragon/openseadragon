@@ -715,7 +715,7 @@
             var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
             ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
 
             actualBounds = viewer.getOverlayById("horizontally-scaled-overlay")
@@ -724,7 +724,7 @@
                 0, 0.5 - notScaledSize.y / 2, 1, notScaledSize.y);
             ok(expectedBounds.equals(actualBounds),
                 "The horizontally scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             actualBounds = viewer.getOverlayById("vertically-scaled-overlay")
                 .getBounds(viewer.viewport);
@@ -732,7 +732,7 @@
                 0, 0, notScaledSize.x, 1);
             ok(expectedBounds.equals(actualBounds),
                 "The vertically scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             actualBounds = viewer.getOverlayById("not-scaled-overlay")
                 .getBounds(viewer.viewport);
@@ -740,7 +740,7 @@
                 1 - notScaledSize.x, 0, notScaledSize.x, notScaledSize.y);
             ok(expectedBounds.equals(actualBounds),
                 "The not scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             start();
         });
@@ -793,7 +793,7 @@
                 .rotate(-45, new OpenSeadragon.Point(1, 1));
             ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             start();
         });
@@ -855,7 +855,7 @@
                 .rotate(-45, new OpenSeadragon.Point(0.5, 0.5));
             ok(expectedBounds.equals(actualBounds),
                 "The horizontally scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             start();
         });
@@ -917,7 +917,7 @@
                 .rotate(-45, new OpenSeadragon.Point(0, 0.5));
             ok(expectedBounds.equals(actualBounds),
                 "The vertically scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             start();
         });
@@ -977,7 +977,7 @@
                 .rotate(-45, new OpenSeadragon.Point(1, 0));
             ok(expectedBounds.equals(actualBounds),
                 "Not scaled overlay should have bounds " +
-                expectedBounds.toString() + " but found " + actualBounds);
+                expectedBounds + " but found " + actualBounds);
 
             start();
         });
@@ -1041,4 +1041,69 @@
         });
     });
 
+    // ----------
+    asyncTest('Fully scaled overlay rotation mode EXACT', function() {
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            degrees: 45,
+            overlays: [{
+                    id: "fully-scaled-overlay",
+                    x: 1,
+                    y: 1,
+                    width: 1,
+                    height: 1,
+                    placement: OpenSeadragon.Placement.BOTTOM_RIGHT,
+                    rotationMode: OpenSeadragon.OverlayRotationMode.EXACT
+                }]
+        });
+
+        viewer.addOnceHandler('open', function() {
+            var viewport = viewer.viewport;
+
+            var $overlay = $("#fully-scaled-overlay");
+            var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
+                new OpenSeadragon.Point(1, 1));
+            var expectedPosition = viewport.pixelFromPoint(
+                new OpenSeadragon.Point(1, 1))
+                .minus(expectedSize);
+            // We can't rely on jQuery.position with transforms.
+            var actualStyle = $overlay.get(0).style;
+            var left = Number(actualStyle.left.replace("px", ""));
+            var top = Number(actualStyle.top.replace("px", ""));
+            Util.assessNumericValue(left, expectedPosition.x, epsilon,
+                "Scaled overlay position.x should adjust to rotation.");
+            Util.assessNumericValue(top, expectedPosition.y, epsilon,
+                "Scaled overlay position.y should adjust to rotation.");
+
+            var actualWidth = $overlay.width();
+            var actualHeight = $overlay.height();
+            Util.assessNumericValue(actualWidth, expectedSize.x, epsilon,
+                "Scaled overlay width should not adjust to rotation.");
+            Util.assessNumericValue(actualHeight, expectedSize.y, epsilon,
+                "Scaled overlay height should not adjust to rotation.");
+
+            var transformOriginProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
+                'transformOrigin');
+            var transformProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
+                'transform');
+            var transformOrigin = actualStyle[transformOriginProp];
+            // Some browsers replace "right bottom" by "100% 100%"
+            ok(transformOrigin.match(/(100% 100%)|(right bottom)/),
+                "Transform origin should be right bottom. Got: " + transformOrigin);
+            equal(actualStyle[transformProp], "rotate(45deg)",
+                "Transform should be rotate(45deg).");
+
+            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+                .getBounds(viewport);
+            var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
+            ok(expectedBounds.equals(actualBounds),
+                "The fully scaled overlay should have bounds " +
+                expectedBounds + " but found " + actualBounds);
+
+            start();
+        });
+    });
 })();
