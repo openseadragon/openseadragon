@@ -301,7 +301,9 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName == "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName == "Error" ) {
-        return $._processDZIError( root );
+        var messageNode = root.getElementsByTagName("Message")[0];
+        var message = messageNode.firstChild.nodeValue;
+        throw new Error(message);
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );
