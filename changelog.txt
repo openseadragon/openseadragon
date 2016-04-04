@@ -6,6 +6,9 @@ OPENSEADRAGON CHANGELOG
 * BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
     Viewport.contentAspectY have been removed. (#846)
 * BREAKING CHANGE: Overlay.scales, Overlay.bounds and Overlay.position have been removed. (#896)
+    * Overlay.scales can be replaced by Overlay.width !== null && Overlay.height !== null
+    * The Overlay.getBounds method can be used to get the bounds of the overlay in viewport coordinates
+    * Overlay.location replaces Overlay.position
 * DEPRECATION: Viewport.setHomeBounds has been deprecated (#846)
 * DEPRECATION: the Viewport constructor is now ignoring the contentSize option (#846)
 * Tile edge smoothing at high zoom (#764)
@@ -31,7 +34,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
 * Added addOnceHandler method to EventSource (#887)
 * Added TiledImage.fitBounds method (#888)
-* Overlays can now be scaled in only one dimension by providing a point location and either width or height (#896)
+* Overlays can now be scaled in a single dimension by providing a point location and either width or height (#896)
 * Added full rotation support to overlays (#729, #193)
 
 2.1.0:
