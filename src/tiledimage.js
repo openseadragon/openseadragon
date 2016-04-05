@@ -288,6 +288,26 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Get the bounds of the displayed part of the tiled image.
+     * @param {Boolean} [current=false] Pass true for the current location,
+     * false for the target location.
+     * @returns {$.Rect} The clipped bounds in viewport coordinates.
+     */
+    getClippedBounds: function(current) {
+        var bounds = this.getBounds(current);
+        if (this._clip) {
+            var ratio = this._worldWidthCurrent / this.source.dimensions.x;
+            var clip = this._clip.times(ratio);
+            bounds = new $.Rect(
+                bounds.x + clip.x,
+                bounds.y + clip.y,
+                clip.width,
+                clip.height);
+        }
+        return bounds;
+    },
+
+    /**
      * @returns {OpenSeadragon.Point} This TiledImage's content size, in original pixels.
      */
     getContentSize: function() {

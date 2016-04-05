@@ -206,9 +206,8 @@
             propEqual(image.getClip(), clip, 'clip is set correctly');
 
             Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
-                ok(true, 'drawer.setClip is called');
-                var pixelRatio = viewer.viewport.getContainerSize().x / image.getContentSize().x;
-                var canvasClip = clip.times(pixelRatio * OpenSeadragon.pixelDensityRatio);
+                var homeBounds = viewer.viewport.getHomeBounds();
+                var canvasClip = viewer.viewport.viewportToViewerElementRectangle(homeBounds);
                 propEqual(rect, canvasClip, 'clipping to correct rect');
                 start();
             });

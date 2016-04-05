@@ -375,34 +375,40 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var oldContentSize = this._contentSize ? this._contentSize.clone() : null;
         var oldContentFactor = this._contentFactor || 0;
 
-        if ( !this._items.length ) {
+        if (!this._items.length) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
             this._contentSize = new $.Point(1, 1);
             this._contentFactor = 1;
         } else {
-            var bounds = this._items[0].getBounds();
-            this._contentFactor = this._items[0].getContentSize().x / bounds.width;
-            var left = bounds.x;
-            var top = bounds.y;
-            var right = bounds.x + bounds.width;
-            var bottom = bounds.y + bounds.height;
-            var box;
-            for ( var i = 1; i < this._items.length; i++ ) {
-                box = this._items[i].getBounds();
-                this._contentFactor = Math.max(this._contentFactor, this._items[i].getContentSize().x / box.width);
-                left = Math.min( left, box.x );
-                top = Math.min( top, box.y );
-                right = Math.max( right, box.x + box.width );
-                bottom = Math.max( bottom, box.y + box.height );
+            var item = this._items[0];
+            var bounds = item.getBounds();
+            this._contentFactor = item.getContentSize().x / bounds.width;
+            var clippedBounds = item.getClippedBounds();
+            var left = clippedBounds.x;
+            var top = clippedBounds.y;
+            var right = clippedBounds.x + clippedBounds.width;
+            var bottom = clippedBounds.y + clippedBounds.height;
+            for (var i = 1; i < this._items.length; i++) {
+                item = this._items[i];
+                bounds = item.getBounds();
+                this._contentFactor = Math.max(this._contentFactor,
+                    item.getContentSize().x / bounds.width);
+                clippedBounds = item.getClippedBounds();
+                left = Math.min(left, clippedBounds.x);
+                top = Math.min(top, clippedBounds.y);
+                right = Math.max(right, clippedBounds.x + clippedBounds.width);
+                bottom = Math.max(bottom, clippedBounds.y + clippedBounds.height);
             }
 
-            this._homeBounds = new $.Rect( left, top, right - left, bottom - top );
-            this._contentSize = new $.Point(this._homeBounds.width * this._contentFactor,
+            this._homeBounds = new $.Rect(left, top, right - left, bottom - top);
+            this._contentSize = new $.Point(
+                this._homeBounds.width * this._contentFactor,
                 this._homeBounds.height * this._contentFactor);
         }
 
-        if (this._contentFactor !== oldContentFactor || !this._homeBounds.equals(oldHomeBounds) ||
-                !this._contentSize.equals(oldContentSize)) {
+        if (this._contentFactor !== oldContentFactor ||
+            !this._homeBounds.equals(oldHomeBounds) ||
+            !this._contentSize.equals(oldContentSize)) {
             /**
              * Raised when the home bounds or content factor change.
              * @event metrics-change
