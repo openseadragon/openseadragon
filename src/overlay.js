@@ -156,6 +156,12 @@
                 this.location = this.location.getTopLeft();
                 this.placement = $.Placement.TOP_LEFT;
             }
+
+            // Deprecated properties kept for backward compatibility.
+            this.scales = this.width !== null && this.height !== null;
+            this.bounds = new $.Rect(
+                this.location.x, this.location.y, this.width, this.height);
+            this.position = this.location;
         },
 
         /**

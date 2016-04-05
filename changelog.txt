@@ -5,9 +5,11 @@ OPENSEADRAGON CHANGELOG
 
 * BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
     Viewport.contentAspectY have been removed. (#846)
-* BREAKING CHANGE: Overlay.scales, Overlay.bounds and Overlay.position have been removed. (#896)
-    * Overlay.scales can be replaced by Overlay.width !== null && Overlay.height !== null
-    * The Overlay.getBounds method can be used to get the bounds of the overlay in viewport coordinates
+* BREAKING CHANGE: The Overlay.getBounds method now takes the viewport as parameter. (#896)
+* DEPRECATION: Overlay.scales, Overlay.bounds and Overlay.position have been deprecated. (#896)
+    * Overlay.width !== null should be used to test whether the overlay scales horizontally
+    * Overlay.height !== null should be used to test whether the overlay scales vertically
+    * The Overlay.getBounds method should be used to get the bounds of the overlay in viewport coordinates
     * Overlay.location replaces Overlay.position
 * DEPRECATION: Viewport.setHomeBounds has been deprecated (#846)
 * DEPRECATION: the Viewport constructor is now ignoring the contentSize option (#846)
