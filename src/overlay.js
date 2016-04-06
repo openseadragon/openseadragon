@@ -419,7 +419,7 @@
         /**
          * Returns the current bounds of the overlay in viewport coordinates
          * @function
-         * @param {OpenSeadragon.Viewport} [viewport] the viewport
+         * @param {OpenSeadragon.Viewport} viewport the viewport
          * @returns {OpenSeadragon.Rect} overlay bounds
          */
         getBounds: function(viewport) {
