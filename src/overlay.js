@@ -423,8 +423,8 @@
          * @returns {OpenSeadragon.Rect} overlay bounds
          */
         getBounds: function(viewport) {
-            $.console.assert(viewport, 'Calling Overlay.getBounds withouth ' +
-                'specifying a viewport is deprecated.');
+            $.console.assert(viewport,
+                'A viewport must now be passed to Overlay.getBounds.');
             var width = this.width;
             var height = this.height;
             if (width === null || height === null) {
@@ -442,6 +442,7 @@
                 viewport, new $.Rect(location.x, location.y, width, height));
         },
 
+        // private
         _adjustBoundsForRotation: function(viewport, bounds) {
             if (!viewport ||
                 viewport.degrees === 0 ||
