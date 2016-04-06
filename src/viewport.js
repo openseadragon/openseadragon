@@ -317,8 +317,8 @@ $.Viewport.prototype = {
     },
 
     /**
-     * @function
      * The margins push the "home" region in from the sides by the specified amounts.
+     * @function
      * @returns {Object} Properties (Numbers, in screen coordinates): left, top, right, bottom.
      */
     getMargins: function() {
@@ -326,8 +326,8 @@ $.Viewport.prototype = {
     },
 
     /**
-     * @function
      * The margins push the "home" region in from the sides by the specified amounts.
+     * @function
      * @param {Object} margins - Properties (Numbers, in screen coordinates): left, top, right, bottom.
      */
     setMargins: function(margins) {

@@ -97,11 +97,6 @@
  */
 
 /**
- * @module OpenSeadragon
- *
- */
-
-/**
  * @namespace OpenSeadragon
  *
  * @classdesc The root namespace for OpenSeadragon.  All utility methods
@@ -691,8 +686,7 @@
   * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
   * combinations of out-of-the-box configurable features.
   *
-  * @function OpenSeadragon
-  * @memberof module:OpenSeadragon
+  * @function
   * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
