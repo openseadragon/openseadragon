@@ -1337,6 +1337,49 @@ if (typeof define === 'function' && define.amd) {
                 return window.getComputedStyle( element, "" );
             },
 
+        /**
+         * Returns the property with the correct vendor prefix appended.
+         * @param {String} property the property name
+         * @returns {String} the property with the correct prefix or null if not
+         * supported.
+         */
+        getCssPropertyWithVendorPrefix: function(property) {
+            var memo = {};
+
+            $.getCssPropertyWithVendorPrefix = function(property) {
+                if (memo[property] !== undefined) {
+                    return memo[property];
+                }
+                var style = document.createElement('div').style;
+                var result = null;
+                if (style[property] !== undefined) {
+                    result = property;
+                } else {
+                    var prefixes = ['Webkit', 'Moz', 'MS', 'O',
+                        'webkit', 'moz', 'ms', 'o'];
+                    var suffix = $.capitalizeFirstLetter(property);
+                    for (var i = 0; i < prefixes.length; i++) {
+                        var prop = prefixes[i] + suffix;
+                        if (style[prop] !== undefined) {
+                            result = prop;
+                            break;
+                        }
+                    }
+                }
+                memo[property] = result;
+                return result;
+            };
+            return $.getCssPropertyWithVendorPrefix(property);
+        },
+
+        /**
+         * Capitalizes the first letter of a string
+         * @param {String} string
+         * @returns {String} The string with the first letter capitalized
+         */
+        capitalizeFirstLetter: function(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        },
 
         /**
          * Determines if a point is within the bounding rectangle of the given element (hit-test).
