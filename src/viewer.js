@@ -40,14 +40,19 @@ var nextHash = 1;
 
 /**
  *
- * The main point of entry into creating a zoomable image on the page.
- *
+ * The main point of entry into creating a zoomable image on the page.<br>
+ * <br>
  * We have provided an idiomatic javascript constructor which takes
- * a single object, but still support the legacy positional arguments.
- *
+ * a single object, but still support the legacy positional arguments.<br>
+ * <br>
  * The options below are given in order that they appeared in the constructor
- * as arguments and we translate a positional call into an idiomatic call.
- *
+ * as arguments and we translate a positional call into an idiomatic call.<br>
+ * <br>
+ * To create a viewer, you can use either of this methods:<br>
+ * <ul>
+ * <li><code>var viewer = new OpenSeadragon.Viewer(options);</code></li>
+ * <li><code>var viewer = OpenSeadragon(options);</code></li>
+ * </ul>
  * @class Viewer
  * @classdesc The main OpenSeadragon viewer class.
  *

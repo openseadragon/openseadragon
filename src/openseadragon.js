@@ -83,22 +83,8 @@
 
 
 /**
- * @version  <%= pkg.name %> <%= pkg.version %>
- *
- * @file
- * <h2><strong>OpenSeadragon - Javascript Deep Zooming</strong></h2>
- * <p>
- * OpenSeadragon provides an html interface for creating
- * deep zoom user interfaces.  The simplest examples include deep
- * zoom for large resolution images, and complex examples include
- * zoomable map interfaces driven by SVG files.
- * </p>
- *
- */
-
-/**
  * @namespace OpenSeadragon
- *
+ * @version <%= pkg.name %> <%= pkg.version %>
  * @classdesc The root namespace for OpenSeadragon.  All utility methods
  * and classes are defined on or below this namespace.
  *
@@ -686,7 +672,6 @@
   * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
   * combinations of out-of-the-box configurable features.
   *
-  * @function
   * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
