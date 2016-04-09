@@ -228,6 +228,39 @@
         });
     });
 
+    asyncTest('getClipBounds', function() {
+        var clip = new OpenSeadragon.Rect(100, 200, 800, 500);
+
+        viewer.addHandler('open', function() {
+            var image = viewer.world.getItemAt(0);
+            var bounds = image.getClippedBounds();
+            var expectedBounds = new OpenSeadragon.Rect(1.2, 1.4, 1.6, 1);
+            propEqual(bounds, expectedBounds,
+                'getClipBounds should take clipping into account.');
+
+            image = viewer.world.getItemAt(1);
+            bounds = image.getClippedBounds();
+            expectedBounds = new OpenSeadragon.Rect(1, 2, 2, 2);
+            propEqual(bounds, expectedBounds,
+                'getClipBounds should work when no clipping set.');
+
+            start();
+        });
+
+        viewer.open([{
+            tileSource: '/test/data/testpattern.dzi',
+            clip: clip,
+            x: 1,
+            y: 1,
+            width: 2
+        }, {
+            tileSource: '/test/data/testpattern.dzi',
+            x: 1,
+            y: 2,
+            width: 2
+        }]);
+    });
+
     // ----------
     asyncTest('opacity', function() {
 
