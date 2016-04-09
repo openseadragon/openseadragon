@@ -207,8 +207,17 @@
 
             Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
                 var homeBounds = viewer.viewport.getHomeBounds();
-                var canvasClip = viewer.viewport.viewportToViewerElementRectangle(homeBounds);
-                propEqual(rect, canvasClip, 'clipping to correct rect');
+                var canvasClip = viewer.viewport
+                    .viewportToViewerElementRectangle(homeBounds);
+                var precision = 0.00000001;
+                Util.assessNumericValue(rect.x, canvasClip.x, precision,
+                    'clipping x should be ' + canvasClip.x);
+                Util.assessNumericValue(rect.y, canvasClip.y, precision,
+                    'clipping y should be ' + canvasClip.y);
+                Util.assessNumericValue(rect.width, canvasClip.width, precision,
+                    'clipping width should be ' + canvasClip.width);
+                Util.assessNumericValue(rect.height, canvasClip.height, precision,
+                    'clipping height should be ' + canvasClip.height);
                 start();
             });
         });
