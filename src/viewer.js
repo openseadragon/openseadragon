@@ -1793,7 +1793,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay
+     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay.
+     *      If using an object, see {@link OpenSeadragon.Overlay} for a list of
+     *      all available options.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlayed. This is a viewport relative location.
      * @param {OpenSeadragon.Placement} placement - The position of the
@@ -2204,32 +2206,23 @@ function getOverlayObject( viewer, overlay ) {
     }
 
     var location = overlay.location;
-    if ( !location ) {
-        if ( overlay.width && overlay.height ) {
-            location = overlay.px !== undefined ?
-                viewer.viewport.imageToViewportRectangle( new $.Rect(
-                    overlay.px,
-                    overlay.py,
-                    overlay.width,
-                    overlay.height
-                ) ) :
-                new $.Rect(
-                    overlay.x,
-                    overlay.y,
-                    overlay.width,
-                    overlay.height
-                );
-        } else {
-            location = overlay.px !== undefined ?
-                viewer.viewport.imageToViewportCoordinates( new $.Point(
-                    overlay.px,
-                    overlay.py
-                ) ) :
-                new $.Point(
-                    overlay.x,
-                    overlay.y
-                );
+    var width = overlay.width;
+    var height = overlay.height;
+    if (!location) {
+        var x = overlay.x;
+        var y = overlay.y;
+        if (overlay.px !== undefined) {
+            var rect = viewer.viewport.imageToViewportRectangle(new $.Rect(
+                overlay.px,
+                overlay.py,
+                width || 0,
+                height || 0));
+            x = rect.x;
+            y = rect.y;
+            width = width !== undefined ? rect.width : undefined;
+            height = height !== undefined ? rect.height : undefined;
         }
+        location = new $.Point(x, y);
     }
 
     var placement = overlay.placement;
@@ -2242,7 +2235,10 @@ function getOverlayObject( viewer, overlay ) {
         location: location,
         placement: placement,
         onDraw: overlay.onDraw,
-        checkResize: overlay.checkResize
+        checkResize: overlay.checkResize,
+        width: width,
+        height: height,
+        rotationMode: overlay.rotationMode
     });
 }
 
