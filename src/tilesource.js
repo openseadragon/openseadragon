@@ -544,7 +544,7 @@ $.TileSource.prototype = {
 
     /**
      * Responsible for retriving the url which will return an image for the
-     * region speified by the given x, y, and level components.
+     * region specified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image

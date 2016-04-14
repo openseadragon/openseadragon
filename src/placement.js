@@ -35,8 +35,10 @@
 
     /**
      * An enumeration of positions to anchor an element.
+     * @member Placement
      * @memberOf OpenSeadragon
      * @static
+     * @readonly
      * @property {OpenSeadragon.Placement} CENTER
      * @property {OpenSeadragon.Placement} TOP_LEFT
      * @property {OpenSeadragon.Placement} TOP

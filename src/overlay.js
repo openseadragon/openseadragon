@@ -42,6 +42,7 @@
      * @member OverlayPlacement
      * @memberof OpenSeadragon
      * @static
+     * @readonly
      * @type {Object}
      * @property {Number} CENTER
      * @property {Number} TOP_LEFT
@@ -57,8 +58,10 @@
 
     /**
      * An enumeration of possible ways to handle overlays rotation
+     * @member OverlayRotationMode
      * @memberOf OpenSeadragon
      * @static
+     * @readonly
      * @property {Number} NO_ROTATION The overlay ignore the viewport rotation.
      * @property {Number} EXACT The overlay use CSS 3 transforms to rotate with
      * the viewport. If the overlay contains text, it will get rotated as well.
@@ -66,11 +69,11 @@
      * taking the size of the bounding box of the rotated bounds.
      * Only valid for overlays with Rect location and scalable in both directions.
      */
-    $.OverlayRotationMode = {
+    $.OverlayRotationMode = $.freezeObject({
         NO_ROTATION: 1,
         EXACT: 2,
         BOUNDING_BOX: 3
-    };
+    });
 
     /**
      * @class Overlay
