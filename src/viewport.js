@@ -341,7 +341,9 @@ $.Viewport.prototype = {
         }, margins);
 
         this._updateContainerInnerSize();
-        this.viewer.forceRedraw();
+        if (this.viewer) {
+            this.viewer.forceRedraw();
+        }
     },
 
     /**
