@@ -560,14 +560,15 @@
   *     If collectionLayout is 'vertical', specifies how many rows instead. Ignored if collectionRows is not set to a falsy value.
   *
   * @property {String} [collectionLayout='horizontal']
-  *     If collectionMode is true, specifies whether to arrange vertically or horizontally.
+  *     If collectionMode is true, specifies the type of layout. Valid values are 'vertical', 'horizontal' and 'mosaic'.
   *
   * @property {Number} [collectionTileSize=800]
   *     If collectionMode is true, specifies the size, in viewport coordinates, for each TiledImage to fit into.
   *     The TiledImage will be centered within a square of the specified size.
   *
   * @property {Number} [collectionTileMargin=80]
-  *     If collectionMode is true, specifies the margin, in viewport coordinates, between each TiledImage.
+  *     If collectionMode is true and collectionLayout is not 'vertical' or 'horizontal', specifies the margin, in viewport coordinates, between each TiledImage.
+  *		If collectionMode is true and collectionLayout is 'mosaic', specifies the margin as a proportion of viewport width, between each TiledImage.
   *
   * @property {String|Boolean} [crossOriginPolicy=false]
   *     Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
@@ -1079,12 +1080,13 @@ if (typeof define === 'function' && define.amd) {
             referenceStripSizeRatio:     0.2,
 
             //COLLECTION VISUALIZATION SETTINGS
-            collectionRows:         3, //or columns depending on layout
-            collectionColumns:      0, //columns in horizontal layout, rows in vertical layout
-            collectionLayout:       'horizontal', //vertical
-            collectionMode:         false,
-            collectionTileSize:     800,
-            collectionTileMargin:   80,
+            collectionRows:         	3, //or columns depending on layout
+            collectionColumns:      	0, //columns in horizontal layout, rows in vertical layout
+            collectionLayout:       	'horizontal', //vertical or mosaic
+            collectionMode:         	false,
+            collectionTileSize:     	800,
+            collectionTileMargin:   	80,
+            collectionMaxMosaicRatio:	0.25,
 
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,

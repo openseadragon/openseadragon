@@ -332,40 +332,84 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         var x = 0;
         var y = 0;
         var item, box, width, height, position;
-
+        var i, j;
         this.setAutoRefigureSizes(false);
-        for (var i = 0; i < this._items.length; i++) {
-            if (i && (i % wrap) === 0) {
-                if (layout === 'horizontal') {
-                    y += increment;
-                    x = 0;
-                } else {
-                    x += increment;
-                    y = 0;
-                }
-            }
+        
+        if (layout === 'mosaic') {
+// The following code for mosaic assembly was adapted from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
+//			var vpb = this.viewer.world.getHomeBounds();
+			var vpb = this.viewer.viewport.getBounds(true);
+			if (tileMargin<0) {tileMargin=0;}
+			if (tileMargin>0.4) {tileMargin=0.4;}
+			tileMargin *= vpb.width;
+			var size = vpb.width;
+			var n = 0, h;
+			var images = this._items.slice(0);
+			var ratio = (options.maxMosaicRatio || $.DEFAULT_SETTINGS.collectionMaxMosaicRatio);
+			if (ratio < 0.01) {ratio = 0.01;}
+			var maxHeight = ratio * size;
+			var imgSlice;
+			if (images.length === 0) {return;}
 
-            item = this._items[i];
-            box = item.getBounds();
-            if (box.width > box.height) {
-                width = tileSize;
-            } else {
-                width = tileSize * (box.width / box.height);
-            }
+			w: while (images.length > 0) {
+				for (i = 1; i < images.length + 1; ++i) {
+					imgSlice=Array.prototype.slice.call(images, 0, i);
+					// get the height of this slice
+					width = size - (imgSlice.length - 1) * tileMargin;
+					h = 0;
+					for (j = 0; j < imgSlice.length; ++j) {
+						box = imgSlice[j].getBounds();
+						h += box.width / box.height;
+					}
+					h = width / h;
+					if (h < maxHeight) {
+						this._setSliceHeight(imgSlice, h, y, tileMargin, vpb);
+						y += h + tileMargin;
+						n++;
+						images=Array.prototype.slice.call(images,i);
+						continue w;
+					}
+				}
+				this._setSliceHeight(imgSlice, Math.min(maxHeight, h), y, tileMargin, vpb);
+			//    setheight(slice, h);
+				n++;
+				break;
+			}
+// END mosaic
+        } else {
+		    for (i = 0; i < this._items.length; i++) {
+		        if (i && (i % wrap) === 0) {
+		            if (layout === 'horizontal') {
+		                y += increment;
+		                x = 0;
+		            } else {
+		                x += increment;
+		                y = 0;
+		            }
+		        }
 
-            height = width * (box.height / box.width);
-            position = new $.Point(x + ((tileSize - width) / 2),
-                y + ((tileSize - height) / 2));
+		        item = this._items[i];
+		        box = item.getBounds();
+		        if (box.width > box.height) {
+		            width = tileSize;
+		        } else {
+		            width = tileSize * (box.width / box.height);
+		        }
 
-            item.setPosition(position, immediately);
-            item.setWidth(width, immediately);
+		        height = width * (box.height / box.width);
+		        position = new $.Point(x + ((tileSize - width) / 2),
+		            y + ((tileSize - height) / 2));
 
-            if (layout === 'horizontal') {
-                x += increment;
-            } else {
-                y += increment;
-            }
-        }
+		        item.setPosition(position, immediately);
+		        item.setWidth(width, immediately);
+
+		        if (layout === 'horizontal') {
+		            x += increment;
+		        } else {
+		            y += increment;
+		        }
+		    }
+	    }
         this.setAutoRefigureSizes(true);
     },
 
@@ -427,7 +471,24 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'remove-item', { item: item } );
-    }
+    },
+    
+    // private
+	_setSliceHeight: function (images, height, y, mar, vpb) {
+		var box, accum=0, wid, position;
+		for (var i = 0; i < images.length; ++i) {
+			box = images[i].getBounds();
+			wid = height * box.width / box.height;
+			position = new $.Point(accum + vpb.x, y + vpb.y);
+	//		images[i].setWidth(wid - mar, true);
+			images[i].setHeight(height, false);
+			images[i].setPosition(position, false);
+			accum += wid + mar;
+		}
+	}
+
 });
 
 }( OpenSeadragon ));
+
+
