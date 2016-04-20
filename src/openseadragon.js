@@ -567,7 +567,7 @@
   *     The TiledImage will be centered within a square of the specified size.
   *
   * @property {Number} [collectionTileMargin=80]
-  *     If collectionMode is true and collectionLayout is not 'vertical' or 'horizontal', specifies the margin, in viewport coordinates, between each TiledImage.
+  *     If collectionMode is true and collectionLayout is 'vertical' or 'horizontal', specifies the margin, in viewport coordinates, between each TiledImage.
   *		If collectionMode is true and collectionLayout is 'mosaic', specifies the margin as a proportion of viewport width, between each TiledImage.
   *
   * @property {Number} [collectionMaxMosaicRatio=0.25]
