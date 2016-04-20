@@ -570,6 +570,10 @@
   *     If collectionMode is true and collectionLayout is not 'vertical' or 'horizontal', specifies the margin, in viewport coordinates, between each TiledImage.
   *		If collectionMode is true and collectionLayout is 'mosaic', specifies the margin as a proportion of viewport width, between each TiledImage.
   *
+  * @property {Number} [collectionMaxMosaicRatio=0.25]
+  *     For mosaic layout only: specifies the maximum allowed ratio between the row height and the mosaic width.
+  *     Ignored if collectionLayout is not 'mosaic'.
+  *
   * @property {String|Boolean} [crossOriginPolicy=false]
   *     Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
   *     not use CORS, and the canvas will be tainted.

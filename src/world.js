@@ -312,6 +312,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {Number} [options.columns] - See collectionColumns in {@link OpenSeadragon.Options}.
      * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
      * @param {Number} [options.tileMargin] - See collectionTileMargin in {@link OpenSeadragon.Options}.
+     * @param {Number} [options.maxMosaicRatio] - See collectionMaxMosaicRatio in {@link OpenSeadragon.Options}.
      * @fires OpenSeadragon.World.event:metrics-change
      */
     arrange: function(options) {
@@ -337,7 +338,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         
         if (layout === 'mosaic') {
 // The following code for mosaic assembly was adapted from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
-//			var vpb = this.viewer.world.getHomeBounds();
+//			var vpb = this.viewer.world.getHomeBounds();	// this could be an option
+			// the images will be arranged such that the width fits in the current viewport
 			var vpb = this.viewer.viewport.getBounds(true);
 			if (tileMargin<0) {tileMargin=0;}
 			if (tileMargin>0.4) {tileMargin=0.4;}
@@ -345,11 +347,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 			var size = vpb.width;
 			var n = 0, h;
 			var images = this._items.slice(0);
+			if (images.length === 0) {return;}
 			var ratio = (options.maxMosaicRatio || $.DEFAULT_SETTINGS.collectionMaxMosaicRatio);
 			if (ratio < 0.01) {ratio = 0.01;}
 			var maxHeight = ratio * size;
 			var imgSlice;
-			if (images.length === 0) {return;}
 
 			w: while (images.length > 0) {
 				for (i = 1; i < images.length + 1; ++i) {
@@ -371,7 +373,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 					}
 				}
 				this._setSliceHeight(imgSlice, Math.min(maxHeight, h), y, tileMargin, vpb);
-			//    setheight(slice, h);
+				// this._setSliceHeight(imgSlice, h, y, tileMargin, vpb);	// if we want always a rectangular mosaic
 				n++;
 				break;
 			}
