@@ -336,15 +336,18 @@ $.Tile.prototype = {
      * @return {Float}
      */
     getScaleForEdgeSmoothing: function() {
-        if (!this.cacheImageRecord) {
+        var context;
+        if (this.cacheImageRecord) {
+            context = this.cacheImageRecord.getRenderedContext();
+        } else if (this.context2D) {
+            context = this.context2D;
+        } else {
             $.console.warn(
                 '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
                 this.toString());
             return 1;
         }
-
-        var rendered = this.cacheImageRecord.getRenderedContext();
-        return rendered.canvas.width / this.size.times($.pixelDensityRatio).x;
+        return context.canvas.width / (this.size.x * $.pixelDensityRatio);
     },
 
     /**
