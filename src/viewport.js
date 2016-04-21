@@ -888,37 +888,37 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Update the zoom and center (X and Y) springs.
      * @function
+     * @returns {Boolean} True if any change has been made, false otherwise.
      */
     update: function() {
-        var oldZoomPixel,
-            newZoomPixel,
-            deltaZoomPixels,
-            deltaZoomPoints;
 
         if (this.zoomPoint) {
-            oldZoomPixel = this.pixelFromPoint( this.zoomPoint, true );
-        }
+            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            this.zoomSpring.update();
+            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
 
-        this.zoomSpring.update();
+            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+            var deltaZoomPoints = this.deltaPointsFromPixels(
+                deltaZoomPixels, true);
 
-        if (this.zoomPoint && this.zoomSpring.current.value != this._oldZoom) {
-            newZoomPixel    = this.pixelFromPoint( this.zoomPoint, true );
-            deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
-            deltaZoomPoints = this.deltaPointsFromPixels( deltaZoomPixels, true );
+            this.centerSpringX.shiftBy(deltaZoomPoints.x);
+            this.centerSpringY.shiftBy(deltaZoomPoints.y);
 
-            this.centerSpringX.shiftBy( deltaZoomPoints.x );
-            this.centerSpringY.shiftBy( deltaZoomPoints.y );
+            if (this.zoomSpring.isAtTargetValue()) {
+                this.zoomPoint = null;
+            }
         } else {
-            this.zoomPoint = null;
+            this.zoomSpring.update();
         }
 
         this.centerSpringX.update();
         this.centerSpringY.update();
 
-        var changed = this.centerSpringX.current.value != this._oldCenterX ||
-            this.centerSpringY.current.value != this._oldCenterY ||
-            this.zoomSpring.current.value != this._oldZoom;
+        var changed = this.centerSpringX.current.value !== this._oldCenterX ||
+            this.centerSpringY.current.value !== this._oldCenterY ||
+            this.zoomSpring.current.value !== this._oldZoom;
 
         this._oldCenterX = this.centerSpringX.current.value;
         this._oldCenterY = this.centerSpringY.current.value;
