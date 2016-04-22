@@ -38,6 +38,8 @@ OPENSEADRAGON CHANGELOG
 * Added TiledImage.fitBounds method (#888)
 * Overlays can now be scaled in a single dimension by providing a point location and either width or height (#896)
 * Added full rotation support to overlays (#729, #193)
+* Viewport.goHome() now takes clipping into account (#910)
+* Improved zoom to point (#923)
 
 2.1.0:
 
