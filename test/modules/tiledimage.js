@@ -206,10 +206,12 @@
             propEqual(image.getClip(), clip, 'clip is set correctly');
 
             Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
-                ok(true, 'drawer.setClip is called');
-                var pixelRatio = viewer.viewport.getContainerSize().x / image.getContentSize().x;
-                var canvasClip = clip.times(pixelRatio * OpenSeadragon.pixelDensityRatio);
-                propEqual(rect, canvasClip, 'clipping to correct rect');
+                var homeBounds = viewer.viewport.getHomeBounds();
+                var canvasClip = viewer.viewport
+                    .viewportToViewerElementRectangle(homeBounds);
+                var precision = 0.00000001;
+                Util.assertRectangleEquals(rect, canvasClip, precision,
+                    'clipping should be ' + canvasClip);
                 start();
             });
         });
@@ -218,6 +220,39 @@
             tileSource: '/test/data/testpattern.dzi',
             clip: clip
         });
+    });
+
+    asyncTest('getClipBounds', function() {
+        var clip = new OpenSeadragon.Rect(100, 200, 800, 500);
+
+        viewer.addHandler('open', function() {
+            var image = viewer.world.getItemAt(0);
+            var bounds = image.getClippedBounds();
+            var expectedBounds = new OpenSeadragon.Rect(1.2, 1.4, 1.6, 1);
+            propEqual(bounds, expectedBounds,
+                'getClipBounds should take clipping into account.');
+
+            image = viewer.world.getItemAt(1);
+            bounds = image.getClippedBounds();
+            expectedBounds = new OpenSeadragon.Rect(1, 2, 2, 2);
+            propEqual(bounds, expectedBounds,
+                'getClipBounds should work when no clipping set.');
+
+            start();
+        });
+
+        viewer.open([{
+            tileSource: '/test/data/testpattern.dzi',
+            clip: clip,
+            x: 1,
+            y: 1,
+            width: 2
+        }, {
+            tileSource: '/test/data/testpattern.dzi',
+            x: 1,
+            y: 2,
+            width: 2
+        }]);
     });
 
     // ----------

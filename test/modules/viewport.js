@@ -238,6 +238,57 @@
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('getHomeBoundsWithMultiImages', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(0, 0, 4, 4),
+                viewport.getHomeBounds(),
+                0.00000001,
+                "Test getHomeBoundsWithMultiImages");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open([{
+                tileSource: DZI_PATH,
+                x: 0,
+                y: 0,
+                width: 2
+        }, {
+                tileSource: DZI_PATH,
+                x: 3,
+                y: 3,
+                width: 1
+        }]);
+    });
+
+    asyncTest('getHomeBoundsWithMultiImagesAndClipping', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(1, 1, 4, 4),
+                viewport.getHomeBounds(),
+                0.00000001,
+                "Test getHomeBoundsWithMultiImagesAndClipping");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open([{
+                tileSource: DZI_PATH,
+                x: 0,
+                y: 0,
+                width: 2,
+                clip: new OpenSeadragon.Rect(500, 500, 500, 500)
+        }, {
+                tileSource: DZI_PATH,
+                x: 4,
+                y: 4,
+                width: 1
+        }]);
+    });
+
     asyncTest('getHomeZoom', function() {
         reopenViewerHelper({
             property: 'defaultZoomLevel',

@@ -341,7 +341,9 @@ $.Viewport.prototype = {
         }, margins);
 
         this._updateContainerInnerSize();
-        this.viewer.forceRedraw();
+        if (this.viewer) {
+            this.viewer.forceRedraw();
+        }
     },
 
     /**
@@ -1085,8 +1087,18 @@ $.Viewport.prototype = {
             return this.viewportToImageCoordinates(viewerX.x, viewerX.y);
         }
 
-        if (this.viewer && this.viewer.world.getItemCount() > 1) {
-            $.console.error('[Viewport.viewportToImageCoordinates] is not accurate with multi-image; use TiledImage.viewportToImageCoordinates instead.');
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.viewportToImageCoordinates] is not accurate ' +
+                    'with multi-image; use TiledImage.viewportToImageCoordinates instead.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.viewportToImageCoordinates
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.viewportToImageCoordinates(viewerX, viewerY, true);
+            }
         }
 
         return this._viewportToImageDelta(
@@ -1119,8 +1131,18 @@ $.Viewport.prototype = {
             return this.imageToViewportCoordinates(imageX.x, imageX.y);
         }
 
-        if (this.viewer && this.viewer.world.getItemCount() > 1) {
-            $.console.error('[Viewport.imageToViewportCoordinates] is not accurate with multi-image; use TiledImage.imageToViewportCoordinates instead.');
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.imageToViewportCoordinates] is not accurate ' +
+                    'with multi-image; use TiledImage.imageToViewportCoordinates instead.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.viewportToImageCoordinates
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.imageToViewportCoordinates(imageX, imageY, true);
+            }
         }
 
         var point = this._imageToViewportDelta(imageX, imageY);
@@ -1148,6 +1170,21 @@ $.Viewport.prototype = {
         if (!(rect instanceof $.Rect)) {
             //they passed individual components instead of a rectangle
             rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
+        }
+
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.imageToViewportRectangle] is not accurate ' +
+                    'with multi-image; use TiledImage.imageToViewportRectangle instead.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.imageToViewportRectangle
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.imageToViewportRectangle(
+                    imageX, imageY, pixelWidth, pixelHeight, true);
+            }
         }
 
         var coordA = this.imageToViewportCoordinates(rect.x, rect.y);
@@ -1181,6 +1218,21 @@ $.Viewport.prototype = {
         if (!(rect instanceof $.Rect)) {
             //they passed individual components instead of a rectangle
             rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
+        }
+
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.viewportToImageRectangle] is not accurate ' +
+                    'with multi-image; use TiledImage.viewportToImageRectangle instead.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.viewportToImageCoordinates
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.viewportToImageRectangle(
+                    viewerX, viewerY, pointWidth, pointHeight, true);
+            }
         }
 
         var coordA = this.viewportToImageCoordinates(rect.x, rect.y);
@@ -1224,10 +1276,12 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
-    windowToImageCoordinates: function( pixel ) {
+    windowToImageCoordinates: function(pixel) {
+        $.console.assert(this.viewer,
+            "[Viewport.windowToImageCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = pixel.minus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
-        return this.viewerElementToImageCoordinates( viewerCoordinates );
+                $.getElementPosition(this.viewer.element));
+        return this.viewerElementToImageCoordinates(viewerCoordinates);
     },
 
     /**
@@ -1236,10 +1290,12 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
-    imageToWindowCoordinates: function( pixel ) {
-        var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
+    imageToWindowCoordinates: function(pixel) {
+        $.console.assert(this.viewer,
+            "[Viewport.imageToWindowCoordinates] the viewport must have a viewer.");
+        var viewerCoordinates = this.imageToViewerElementCoordinates(pixel);
         return viewerCoordinates.plus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
+                $.getElementPosition(this.viewer.element));
     },
 
     /**
@@ -1295,10 +1351,12 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} pixel
      * @returns {OpenSeadragon.Point}
      */
-    windowToViewportCoordinates: function( pixel ) {
+    windowToViewportCoordinates: function(pixel) {
+        $.console.assert(this.viewer,
+            "[Viewport.windowToViewportCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = pixel.minus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
-        return this.viewerElementToViewportCoordinates( viewerCoordinates );
+                $.getElementPosition(this.viewer.element));
+        return this.viewerElementToViewportCoordinates(viewerCoordinates);
     },
 
     /**
@@ -1306,10 +1364,12 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} point
      * @returns {OpenSeadragon.Point}
      */
-    viewportToWindowCoordinates: function( point ) {
-        var viewerCoordinates = this.viewportToViewerElementCoordinates( point );
+    viewportToWindowCoordinates: function(point) {
+        $.console.assert(this.viewer,
+            "[Viewport.viewportToWindowCoordinates] the viewport must have a viewer.");
+        var viewerCoordinates = this.viewportToViewerElementCoordinates(point);
         return viewerCoordinates.plus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
+                $.getElementPosition(this.viewer.element));
     },
 
     /**
@@ -1324,9 +1384,19 @@ $.Viewport.prototype = {
      * target zoom.
      * @returns {Number} imageZoom The image zoom
      */
-    viewportToImageZoom: function( viewportZoom ) {
-        if (this.viewer && this.viewer.world.getItemCount() > 1) {
-            $.console.error('[Viewport.viewportToImageZoom] is not accurate with multi-image.');
+    viewportToImageZoom: function(viewportZoom) {
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.viewportToImageZoom] is not ' +
+                    'accurate with multi-image.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.viewportToImageZoom
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.viewportToImageZoom(viewportZoom);
+            }
         }
 
         var imageWidth = this._contentSizeNoRotate.x;
@@ -1348,9 +1418,19 @@ $.Viewport.prototype = {
      * target zoom.
      * @returns {Number} viewportZoom The viewport zoom
      */
-    imageToViewportZoom: function( imageZoom ) {
-        if (this.viewer && this.viewer.world.getItemCount() > 1) {
-            $.console.error('[Viewport.imageToViewportZoom] is not accurate with multi-image.');
+    imageToViewportZoom: function(imageZoom) {
+        if (this.viewer) {
+            var count = this.viewer.world.getItemCount();
+            if (count > 1) {
+                $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
+                    'with multi-image.');
+            } else if (count === 1) {
+                // It is better to use TiledImage.imageToViewportZoom
+                // because this._contentBoundsNoRotate can not be relied on
+                // with clipping.
+                var item = this.viewer.world.getItemAt(0);
+                return item.imageToViewportZoom(imageZoom);
+            }
         }
 
         var imageWidth = this._contentSizeNoRotate.x;
