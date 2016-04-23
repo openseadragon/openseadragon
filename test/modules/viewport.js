@@ -405,26 +405,7 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('fitBounds', function(){
-        var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
-            var viewport = viewer.viewport;
-
-            for(var i = 0; i < testRects.length; i++){
-                var rect = testRects[i].times(viewport.getContainerSize());
-                viewport.fitBounds(rect, true);
-                propEqual(
-                    viewport.getBounds(),
-                    rect,
-                    "Fit bounds correctly."
-                );
-            }
-            start();
-        };
-        viewer.addHandler('open', openHandler);
-        viewer.open(DZI_PATH);
-    });
-
+    // Fit bounds tests
     var testRectsFitBounds = [
         new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
         new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
@@ -433,11 +414,38 @@
     ];
 
     var expectedRectsFitBounds = [
+        new OpenSeadragon.Rect(-0.25, -0.75, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
+    ];
+
+    var expectedRectsFitBoundsWithConstraints = [
         new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
         new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
         new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
     ];
+
+    asyncTest('fitBounds', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+                viewport.fitBounds(rect, true);
+                propEqual(
+                    viewport.getBounds(),
+                    expectedRectsFitBounds[i],
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
 
     asyncTest('fitBoundsWithConstraints', function(){
         var openHandler = function(event) {
@@ -450,7 +458,7 @@
                 viewport.fitBoundsWithConstraints(rect, true);
                 propEqual(
                     viewport.getBounds(),
-                    expectedRectsFitBounds[i],
+                    expectedRectsFitBoundsWithConstraints[i],
                     "Fit bounds correctly."
                 );
             }
@@ -491,6 +499,7 @@
         viewer.addHandler('open', openHandler);
         viewer.open(WIDE_PATH);
     });
+    // End fitBounds tests.
 
     asyncTest('panBy', function(){
         var openHandler = function(event) {
