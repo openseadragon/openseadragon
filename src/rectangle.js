@@ -368,6 +368,20 @@ $.Rect.prototype = {
     },
 
     /**
+     * Retrieves the smallest horizontal (degrees=0) rectangle which contains
+     * this rectangle and has integers x, y, width and height
+     * @returns {OpenSeadragon.Rect}
+     */
+    getIntegerBoundingBox: function() {
+        var boundingBox = this.getBoundingBox();
+        var x = Math.floor(boundingBox.x);
+        var y = Math.floor(boundingBox.y);
+        var width = Math.ceil(boundingBox.width + boundingBox.x - x);
+        var height = Math.ceil(boundingBox.height + boundingBox.y - y);
+        return new $.Rect(x, y, width, height);
+    },
+
+    /**
      * Provides a string representation of the rectangle which is useful for
      * debugging.
      * @function
