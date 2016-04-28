@@ -1454,7 +1454,9 @@ function drawTiles( tiledImage, lastDrawn ) {
             // Except when edge smoothing, we only clean the part of the
             // sketch canvas we are going to use for performance reasons.
             bounds = tiledImage.viewport.viewportToViewerElementRectangle(
-                tiledImage.getClippedBounds(true)).getIntegerBoundingBox();
+                tiledImage.getClippedBounds(true))
+                .getIntegerBoundingBox()
+                .times($.pixelDensityRatio);
         }
         tiledImage._drawer._clear(true, bounds);
     }
