@@ -1357,11 +1357,11 @@
      * @private
      * @inner
      */
-    function capturePointer( tracker, pointerType ) {
+    function capturePointer( tracker, pointerType, touchCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount++;
+        pointsList.captureCount += (pointerType === 'touch' ? touchCount : 1);
 
         if ( pointsList.captureCount === 1 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -1400,11 +1400,11 @@
      * @private
      * @inner
      */
-    function releasePointer( tracker, pointerType ) {
+    function releasePointer( tracker, pointerType, touchCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount--;
+        pointsList.captureCount -= (pointerType === 'touch' ? touchCount : 1);
 
         if ( pointsList.captureCount === 0 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -2074,7 +2074,7 @@
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
             $.stopEvent( event );
-            capturePointer( tracker, 'touch' );
+            capturePointer( tracker, 'touch', touchCount );
         }
 
         $.cancelEvent( event );
@@ -2128,7 +2128,7 @@
         }
 
         if ( updatePointersUp( tracker, event, gPoints, 0 ) ) {
-            releasePointer( tracker, 'touch' );
+            releasePointer( tracker, 'touch', touchCount );
         }
 
         // simulate touchleave on our tracked element
