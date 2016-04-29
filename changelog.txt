@@ -40,6 +40,7 @@ OPENSEADRAGON CHANGELOG
 * Added full rotation support to overlays (#729, #193)
 * Viewport.goHome() now takes clipping into account (#910)
 * Improved zoom to point (#923)
+* Optimized sketch canvas clearing and blending for images with opacity or transfer modes (#927)
 
 2.1.0:
 
