@@ -259,13 +259,17 @@ $.Drawer.prototype = {
         }
     },
 
-    _clear: function ( useSketch ) {
-        if ( !this.useCanvas ) {
+    _clear: function (useSketch, bounds) {
+        if (!this.useCanvas) {
             return;
         }
-        var context = this._getContext( useSketch );
-        var canvas = context.canvas;
-        context.clearRect( 0, 0, canvas.width, canvas.height );
+        var context = this._getContext(useSketch);
+        if (bounds) {
+            context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        } else {
+            var canvas = context.canvas;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
     },
 
     /**
@@ -382,47 +386,80 @@ $.Drawer.prototype = {
 
     /**
      * Blends the sketch canvas in the main canvas.
-     * @param {Float} opacity The opacity of the blending.
-     * @param {Float} [scale=1] The scale at which tiles were drawn on the sketch. Default is 1.
-     *   Use scale to draw at a lower scale and then enlarge onto the main canvas.
-     * @param {OpenSeadragon.Point} [translate] A translation vector that was used to draw the tiles
-     * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
-     * @returns {undefined}
+     * @param {Object} options The options
+     * @param {Float} options.opacity The opacity of the blending.
+     * @param {Float} [options.scale=1] The scale at which tiles were drawn on
+     * the sketch. Default is 1.
+     * Use scale to draw at a lower scale and then enlarge onto the main canvas.
+     * @param {OpenSeadragon.Point} [options.translate] A translation vector
+     * that was used to draw the tiles
+     * @param {String} [options.compositeOperation] - How the image is
+     * composited onto other images; see compositeOperation in
+     * {@link OpenSeadragon.Options} for possible values.
+     * @param {OpenSeadragon.Rect} [options.bounds] The part of the sketch
+     * canvas to blend in the main canvas. If specified, options.scale and
+     * options.translate get ignored.
      */
     blendSketch: function(opacity, scale, translate, compositeOperation) {
+        var options = opacity;
+        if (!$.isPlainObject(options)) {
+            options = {
+                opacity: opacity,
+                scale: scale,
+                translate: translate,
+                compositeOperation: compositeOperation
+            };
+        }
         if (!this.useCanvas || !this.sketchCanvas) {
             return;
         }
-        scale = scale || 1;
-        var position = translate instanceof $.Point ?
-            translate :
-            new $.Point(0, 0);
-
-        var widthExt = 0;
-        var heightExt = 0;
-        if (translate) {
-            var widthDiff = this.sketchCanvas.width - this.canvas.width;
-            var heightDiff = this.sketchCanvas.height - this.canvas.height;
-            widthExt = Math.round(widthDiff / 2);
-            heightExt = Math.round(heightDiff / 2);
-        }
+        opacity = options.opacity;
+        compositeOperation = options.compositeOperation;
+        var bounds = options.bounds;
 
         this.context.save();
         this.context.globalAlpha = opacity;
         if (compositeOperation) {
             this.context.globalCompositeOperation = compositeOperation;
         }
-        this.context.drawImage(
-            this.sketchCanvas,
-            position.x - widthExt * scale,
-            position.y - heightExt * scale,
-            (this.canvas.width + 2 * widthExt) * scale,
-            (this.canvas.height  + 2 * heightExt) * scale,
-            -widthExt,
-            -heightExt,
-            this.canvas.width + 2 * widthExt,
-            this.canvas.height + 2 * heightExt
-        );
+        if (bounds) {
+            this.context.drawImage(
+                this.sketchCanvas,
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height
+            );
+        } else {
+            scale = options.scale || 1;
+            translate = options.translate;
+            var position = translate instanceof $.Point ?
+                translate : new $.Point(0, 0);
+
+            var widthExt = 0;
+            var heightExt = 0;
+            if (translate) {
+                var widthDiff = this.sketchCanvas.width - this.canvas.width;
+                var heightDiff = this.sketchCanvas.height - this.canvas.height;
+                widthExt = Math.round(widthDiff / 2);
+                heightExt = Math.round(heightDiff / 2);
+            }
+            this.context.drawImage(
+                this.sketchCanvas,
+                position.x - widthExt * scale,
+                position.y - heightExt * scale,
+                (this.canvas.width + 2 * widthExt) * scale,
+                (this.canvas.height  + 2 * heightExt) * scale,
+                -widthExt,
+                -heightExt,
+                this.canvas.width + 2 * widthExt,
+                this.canvas.height + 2 * heightExt
+            );
+        }
         this.context.restore();
     },
 

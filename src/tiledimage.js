@@ -1448,8 +1448,17 @@ function drawTiles( tiledImage, lastDrawn ) {
             tiledImage._drawer.getCanvasSize(true));
     }
 
-    if ( useSketch ) {
-        tiledImage._drawer._clear( true );
+    var bounds;
+    if (useSketch) {
+        if (!sketchScale) {
+            // Except when edge smoothing, we only clean the part of the
+            // sketch canvas we are going to use for performance reasons.
+            bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+                tiledImage.getClippedBounds(true))
+                .getIntegerBoundingBox()
+                .times($.pixelDensityRatio);
+        }
+        tiledImage._drawer._clear(true, bounds);
     }
 
     // When scaling, we must rotate only when blending the sketch canvas to avoid
@@ -1532,7 +1541,13 @@ function drawTiles( tiledImage, lastDrawn ) {
         if (offsetForRotation) {
             tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, false);
         }
-        tiledImage._drawer.blendSketch(tiledImage.opacity, sketchScale, sketchTranslate, tiledImage.compositeOperation);
+        tiledImage._drawer.blendSketch({
+            opacity: tiledImage.opacity,
+            scale: sketchScale,
+            translate: sketchTranslate,
+            compositeOperation: tiledImage.compositeOperation,
+            bounds: bounds
+        });
         if (offsetForRotation) {
             tiledImage._drawer._restoreRotationChanges(false);
         }

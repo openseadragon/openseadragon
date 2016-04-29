@@ -195,7 +195,7 @@ $.Tile.prototype = {
 
     // private
     _hasTransparencyChannel: function() {
-        return this.context2D || this.url.match('.png');
+        return !!this.context2D || this.url.match('.png');
     },
 
     /**
