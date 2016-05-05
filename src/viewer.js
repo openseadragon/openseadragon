@@ -2981,11 +2981,13 @@ function updateOnce( viewer ) {
         if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
             if ( viewer.preserveImageSizeOnResize ) {
                 var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
-                var bounds = viewer.viewport.getBounds(true);
+                var bounds = viewer.viewport.getBoundsNoRotate(true);
                 var deltaX = (containerSize.x - prevContainerSize.x);
                 var deltaY = (containerSize.y - prevContainerSize.y);
-                var viewportDiff = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(deltaX, deltaY), true);
-                viewer.viewport.resize(new OpenSeadragon.Point(containerSize.x, containerSize.y), false);
+                var viewportDiff = viewer.viewport.deltaPointsFromPixels(
+                    new $.Point(deltaX, deltaY), true);
+                viewer.viewport.resize(
+                    new $.Point(containerSize.x, containerSize.y), false);
 
                 // Keep the center of the image in the center and just adjust the amount of image shown
                 bounds.width += viewportDiff.x;
@@ -2996,7 +2998,7 @@ function updateOnce( viewer ) {
             }
             else {
                 // maintain image position
-                var oldBounds = viewer.viewport.getBounds();
+                var oldBounds = viewer.viewport.getBoundsNoRotate();
                 var oldCenter = viewer.viewport.getCenter();
                 resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
             }

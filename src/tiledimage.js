@@ -795,6 +795,7 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
+    viewportBounds = viewportBounds.getBoundingBox();
     viewportBounds.x -= tiledImage._xSpring.current.value;
     viewportBounds.y -= tiledImage._ySpring.current.value;
 
@@ -802,18 +803,6 @@ function updateViewport( tiledImage ) {
     while ( tiledImage.lastDrawn.length > 0 ) {
         tile = tiledImage.lastDrawn.pop();
         tile.beingDrawn = false;
-    }
-
-    //Change bounds for rotation
-    if (degrees === 90 || degrees === 270) {
-        viewportBounds = viewportBounds.rotate( degrees );
-    } else if (degrees !== 0 && degrees !== 180) {
-        // This is just an approximation.
-        var orthBounds = viewportBounds.rotate(90);
-        viewportBounds.x -= orthBounds.width / 2;
-        viewportBounds.y -= orthBounds.height / 2;
-        viewportBounds.width += orthBounds.width;
-        viewportBounds.height += orthBounds.height;
     }
 
     var viewportTL = viewportBounds.getTopLeft();

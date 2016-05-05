@@ -5,6 +5,7 @@
     var VIEWER_ID = "example";
     var PREFIX_URL = "/build/openseadragon/images/";
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
+    var EPSILON = 0.0000000001;
 
      module("viewport", {
         setup: function () {
@@ -218,7 +219,27 @@
         });
     });
 
-    asyncTest('getHomeBoundsWithRotation', function() {
+    asyncTest('getHomeBoundsNoRotate with rotation', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(-675);
+            Util.assertRectangleEquals(
+                viewport.getHomeBoundsNoRotate(),
+                new OpenSeadragon.Rect(
+                    (1 - Math.sqrt(2)) / 2,
+                    (1 - Math.sqrt(2)) / 2,
+                    Math.sqrt(2),
+                    Math.sqrt(2)),
+                0.00000001,
+                "Test getHomeBoundsNoRotate with degrees = -675");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeBounds with rotation', function() {
         function openHandler() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -226,10 +247,11 @@
             Util.assertRectangleEquals(
                 viewport.getHomeBounds(),
                 new OpenSeadragon.Rect(
-                    (1 - Math.sqrt(2)) / 2,
-                    (1 - Math.sqrt(2)) / 2,
+                    0.5,
+                    -0.5,
                     Math.sqrt(2),
-                    Math.sqrt(2)),
+                    Math.sqrt(2),
+                    45),
                 0.00000001,
                 "Test getHomeBounds with degrees = -675");
             start();
@@ -420,6 +442,33 @@
         new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
     ];
 
+    var expectedRectsFitBoundsWithRotation = [
+        new OpenSeadragon.Rect(
+            0.25,
+            -1,
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            45),
+        new OpenSeadragon.Rect(
+            0.75,
+            -0.25,
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            45),
+        new OpenSeadragon.Rect(
+            1,
+            0.5,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            -0.05,
+            -0.55,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45)
+    ];
+
     var expectedRectsFitBoundsWithConstraints = [
         new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
         new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
@@ -438,6 +487,28 @@
                 propEqual(
                     viewport.getBounds(),
                     expectedRectsFitBounds[i],
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds with viewport rotation', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
+
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+                viewport.fitBounds(rect, true);
+                Util.assertRectangleEquals(
+                    viewport.getBounds(),
+                    expectedRectsFitBoundsWithRotation[i],
+                    EPSILON,
                     "Fit bounds correctly."
                 );
             }
