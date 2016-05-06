@@ -417,6 +417,7 @@ $.Viewer = function( options ) {
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
             autoResize:        this.navigatorAutoResize,
+            autoFade:          this.navigatorAutoFade,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,

@@ -354,16 +354,16 @@
   *
   * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
-  *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
+  *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, navigator[Top|Left|Height|Width] and navigatorAutoFade options will be ignored.
   *     If an ID is not specified, a div element will be generated and placed on top of the main image.
   *
   * @property {String} [navigatorPosition='TOP_RIGHT']
   *     Valid values are 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', or 'ABSOLUTE'.<br>
-  *     If 'ABSOLUTE' is specified, then navigatorTop|Left|Height|Width determines the size and position of the navigator minimap in the viewer, and navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.<br>
-  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the navigatorSizeRatio or navigatorHeight|Width values determine the size of the navigator minimap.
+  *     If 'ABSOLUTE' is specified, then navigator[Top|Left|Height|Width] determines the size and position of the navigator minimap in the viewer, and navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.<br>
+  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the navigatorSizeRatio or navigator[Height|Width] values determine the size of the navigator minimap.
   *
   * @property {Number} [navigatorSizeRatio=0.2]
-  *     Ratio of navigator size to viewer size. Ignored if navigatorHeight|Width are specified.
+  *     Ratio of navigator size to viewer size. Ignored if navigator[Height|Width] are specified.
   *
   * @property {Boolean} [navigatorMaintainSizeRatio=false]
   *     If true, the navigator minimap is resized (using navigatorSizeRatio) when the viewer size changes.
@@ -385,6 +385,10 @@
   * @property {Boolean} [navigatorAutoResize=true]
   *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
   *     Setting to false can also improve performance when the navigator is configured to a fixed size.
+  *
+  * @property {Boolean} [navigatorAutoFade=true]
+  *     If the user stops interacting with the viewport, fade the navigator minimap.
+  *     Setting to false will make the navigator minimap always visible.
   *
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
@@ -1059,6 +1063,7 @@ if (typeof define === 'function' && define.amd) {
             navigatorHeight:            null,
             navigatorWidth:             null,
             navigatorAutoResize:        true,
+            navigatorAutoFade:          true,
             navigatorRotate:            true,
 
             // INITIAL ROTATION
