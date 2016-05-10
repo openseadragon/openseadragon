@@ -678,45 +678,20 @@
     } );
 
     // ----------
-    asyncTest( 'Viewer: preventDefaultAction', function () {
-        var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
-            tracker = viewer.innerTracker,
-            origClickHandler,
-            origDragHandler,
-            dragCount = 10,
-            originalZoom = 0,
-            originalBounds = null;
+    asyncTest('Viewer: preventDefaultAction', function() {
+        var $canvas = $(viewer.element).find('.openseadragon-canvas')
+            .not('.navigator .openseadragon-canvas');
+        var tracker = viewer.innerTracker;
+        var epsilon = 0.0000001;
 
-        var onOpen = function ( event ) {
-            viewer.removeHandler( 'open', onOpen );
-
-            // Hook viewer events to set preventDefaultAction
-            origClickHandler = tracker.clickHandler;
-            tracker.clickHandler = function ( event ) {
-                event.preventDefaultAction = true;
-                return origClickHandler( event );
-            };
-            origDragHandler = tracker.dragHandler;
-            tracker.dragHandler = function ( event ) {
-                event.preventDefaultAction = true;
-                return origDragHandler( event );
-            };
-
-            originalZoom = viewer.viewport.getZoom();
-            originalBounds = viewer.viewport.getBounds();
-
-            var event = {
-                clientX:1,
-                clientY:1
-            };
-
+        function simulateClickAndDrag() {
             $canvas.simulate( 'focus', event );
             // Drag to pan
             Util.simulateViewerClickWithDrag( {
                 viewer: viewer,
                 widthFactor: 0.25,
                 heightFactor: 0.25,
-                dragCount: dragCount,
+                dragCount: 10,
                 dragDx: 1,
                 dragDy: 1
             } );
@@ -730,20 +705,57 @@
                 dragDy: 0
             } );
             $canvas.simulate( 'blur', event );
+        }
 
-            var zoom = viewer.viewport.getZoom(),
-                bounds = viewer.viewport.getBounds();
+        var onOpen = function() {
+            viewer.removeHandler('open', onOpen);
 
-            equal( zoom, originalZoom, "Zoom prevented" );
-            ok( bounds.x == originalBounds.x && bounds.y == originalBounds.y, 'Pan prevented' );
+            // Hook viewer events to set preventDefaultAction
+            var origClickHandler = tracker.clickHandler;
+            tracker.clickHandler = function(event) {
+                event.preventDefaultAction = true;
+                return origClickHandler(event);
+            };
+            var origDragHandler = tracker.dragHandler;
+            tracker.dragHandler = function(event) {
+                event.preventDefaultAction = true;
+                return origDragHandler(event);
+            };
+
+            var originalZoom = viewer.viewport.getZoom();
+            var originalBounds = viewer.viewport.getBounds();
+
+            simulateClickAndDrag();
+
+            var zoom = viewer.viewport.getZoom();
+            var bounds = viewer.viewport.getBounds();
+            Util.assessNumericValue(zoom, originalZoom, epsilon,
+                "Zoom should be prevented");
+            Util.assertRectangleEquals(bounds, originalBounds, epsilon,
+                'Pan should be prevented');
+
+            tracker.clickHandler = origClickHandler;
+            tracker.dragHandler = origDragHandler;
+
+            simulateClickAndDrag();
+
+            var zoom = viewer.viewport.getZoom();
+            var bounds = viewer.viewport.getBounds();
+            Util.assessNumericValue(zoom, 0.002, epsilon,
+                "Zoom should not be prevented");
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(-250, -0.25, 500, 0.5),
+                epsilon,
+                'Pan should not be prevented');
 
             viewer.close();
             start();
         };
 
-        viewer.addHandler( 'open', onOpen );
-        viewer.open( '/test/data/testpattern.dzi' );
-    } );
+        viewer.addHandler('open', onOpen);
+        viewer.open('/test/data/testpattern.dzi');
+    });
 
     // ----------
     asyncTest( 'EventSource/MouseTracker/Viewer: event.originalEvent event.userData canvas-drag canvas-drag-end canvas-release canvas-click', function () {

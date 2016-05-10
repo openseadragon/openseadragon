@@ -409,7 +409,7 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('ensureVisible', function(){
+    asyncTest('ensureVisible', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -421,6 +421,45 @@
             viewport.ensureVisible(true);
             var bounds = viewport.getBounds();
             ok(bounds.getSize().x > 1 && bounds.getSize().y > 1, "Moved viewport so that image is visible.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('applyConstraints', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.visibilityRatio = 0.3;
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(0.7, 0.7, 1, 1),
+                EPSILON,
+                "Viewport.applyConstraints should move viewport.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('applyConstraints with rotation', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(1, 0, Math.sqrt(2), Math.sqrt(2), 45),
+                EPSILON,
+                "Viewport.applyConstraints with rotation should move viewport.");
             start();
         };
         viewer.addHandler('open', openHandler);

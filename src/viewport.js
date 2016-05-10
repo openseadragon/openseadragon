@@ -555,40 +555,27 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Enforces the minZoom, maxZoom and visibilityRatio constraints by
+     * zooming and panning to the closest acceptable zoom and location.
      * @function
+     * @param {Boolean} [immediately=false]
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:constrain
      */
-    applyConstraints: function( immediately ) {
-        var actualZoom = this.getZoom(),
-            constrainedZoom = Math.max(
-                Math.min( actualZoom, this.getMaxZoom() ),
-                this.getMinZoom()
-            ),
-            bounds,
-            constrainedBounds;
-
-        if ( actualZoom != constrainedZoom ) {
-            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
-        }
-
-        bounds = this.getBoundsNoRotate();
-
-        constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
-
-        if ( bounds.x !== constrainedBounds.x || bounds.y !== constrainedBounds.y || immediately ){
-            this.fitBounds( constrainedBounds, immediately );
-        }
-
+    applyConstraints: function(immediately) {
+        this.fitBoundsWithConstraints(this.getBounds(), immediately);
         return this;
     },
 
     /**
+     * Equivalent to {@link OpenSeadragon.Viewport#applyConstraints}
      * @function
-     * @param {Boolean} immediately
+     * @param {Boolean} [immediately=false]
+     * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:constrain
      */
-    ensureVisible: function( immediately ) {
-        return this.applyConstraints( immediately );
+    ensureVisible: function(immediately) {
+        return this.applyConstraints(immediately);
     },
 
     /**
@@ -670,29 +657,41 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Makes the viewport zoom and pan so that the specified bounds take
+     * as much space as possible in the viewport.
+     * Note: this method ignores the constraints (minZoom, maxZoom and
+     * visibilityRatio).
+     * Use {@link OpenSeadragon.Viewport#fitBoundsWithConstraints} to enforce
+     * them.
      * @function
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Boolean} immediately
+     * @param {Boolean} [immediately=false]
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    fitBounds: function( bounds, immediately ) {
-        return this._fitBounds( bounds, {
+    fitBounds: function(bounds, immediately) {
+        return this._fitBounds(bounds, {
             immediately: immediately,
             constraints: false
-        } );
+        });
     },
 
     /**
+     * Makes the viewport zoom and pan so that the specified bounds take
+     * as much space as possible in the viewport while enforcing the constraints
+     * (minZoom, maxZoom and visibilityRatio).
+     * Note: because this method enforces the constraints, part of the
+     * provided bounds may end up outside of the viewport.
+     * Use {@link OpenSeadragon.Viewport#fitBounds} to ignore them.
      * @function
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Boolean} immediately
+     * @param {Boolean} [immediately=false]
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    fitBoundsWithConstraints: function( bounds, immediately ) {
-        return this._fitBounds( bounds, {
+    fitBoundsWithConstraints: function(bounds, immediately) {
+        return this._fitBounds(bounds, {
             immediately: immediately,
             constraints: true
-        } );
+        });
     },
 
     /**
