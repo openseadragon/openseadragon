@@ -471,14 +471,16 @@
         new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
         new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.5, 0.25, Math.sqrt(0.125), Math.sqrt(0.125), 45)
     ];
 
     var expectedRectsFitBounds = [
         new OpenSeadragon.Rect(-0.25, -0.75, 1, 1),
         new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
     ];
 
     var expectedRectsFitBoundsWithRotation = [
@@ -505,6 +507,12 @@
             -0.55,
             Math.sqrt(0.125) * 2,
             Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            0.5,
+            0.25,
+            Math.sqrt(0.125),
+            Math.sqrt(0.125),
             45)
     ];
 
@@ -512,7 +520,8 @@
         new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
         new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
+        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
     ];
 
     asyncTest('fitBounds', function(){
