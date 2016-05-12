@@ -584,7 +584,8 @@ $.Viewport.prototype = {
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
             immediately) {
-            this.fitBounds(constrainedBounds.rotate(this.getRotation()),
+            this.fitBounds(
+                constrainedBounds.rotate(-this.getRotation()),
                 immediately);
         }
         return this;
