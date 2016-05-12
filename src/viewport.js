@@ -474,6 +474,13 @@ $.Viewport.prototype = {
         }
     },
 
+    // private
+    _applyZoomConstraints: function(zoom) {
+        return Math.max(
+            Math.min(zoom, this.getMaxZoom()),
+            this.getMinZoom());
+    },
+
     /**
      * @function
      * @private
@@ -563,7 +570,23 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function(immediately) {
-        this.fitBoundsWithConstraints(this.getBounds(), immediately);
+        var actualZoom = this.getZoom();
+        var constrainedZoom = this._applyZoomConstraints(actualZoom);
+
+        if (actualZoom !== constrainedZoom) {
+            this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
+        }
+
+        var bounds = this.getBoundsNoRotate();
+        var constrainedBounds = this._applyBoundaryConstraints(
+            bounds, immediately);
+
+        if (bounds.x !== constrainedBounds.x ||
+            bounds.y !== constrainedBounds.y ||
+            immediately) {
+            this.fitBounds(constrainedBounds.rotate(this.getRotation()),
+                immediately);
+        }
         return this;
     },
 
@@ -615,10 +638,7 @@ $.Viewport.prototype = {
 
         if (constraints) {
             var newBoundsAspectRatio = newBounds.getAspectRatio();
-            var newConstrainedZoom = Math.max(
-                Math.min(newZoom, this.getMaxZoom()),
-                this.getMinZoom()
-            );
+            var newConstrainedZoom = this._applyZoomConstraints(newZoom);
 
             if (newZoom !== newConstrainedZoom) {
                 newZoom = newConstrainedZoom;
