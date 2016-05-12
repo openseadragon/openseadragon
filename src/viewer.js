@@ -2975,35 +2975,26 @@ function updateOnce( viewer ) {
         return;
     }
 
-    var containerSize;
-    if ( viewer.autoResize ) {
-        containerSize = _getSafeElemSize( viewer.container );
-        if ( !containerSize.equals( THIS[ viewer.hash ].prevContainerSize ) ) {
-            if ( viewer.preserveImageSizeOnResize ) {
-                var prevContainerSize = THIS[ viewer.hash ].prevContainerSize;
-                var bounds = viewer.viewport.getBoundsNoRotate(true);
-                var deltaX = (containerSize.x - prevContainerSize.x);
-                var deltaY = (containerSize.y - prevContainerSize.y);
-                var viewportDiff = viewer.viewport.deltaPointsFromPixels(
-                    new $.Point(deltaX, deltaY), true);
-                viewer.viewport.resize(
-                    new $.Point(containerSize.x, containerSize.y), false);
-
-                // Keep the center of the image in the center and just adjust the amount of image shown
-                bounds.width += viewportDiff.x;
-                bounds.height += viewportDiff.y;
-                bounds.x -= (viewportDiff.x / 2);
-                bounds.y -= (viewportDiff.y / 2);
-                viewer.viewport.fitBoundsWithConstraints(bounds, true);
-            }
-            else {
+    if (viewer.autoResize) {
+        var containerSize = _getSafeElemSize(viewer.container);
+        var prevContainerSize = THIS[viewer.hash].prevContainerSize;
+        if (!containerSize.equals(prevContainerSize)) {
+            var viewport = viewer.viewport;
+            if (viewer.preserveImageSizeOnResize) {
+                var resizeRatio = prevContainerSize.x / containerSize.x;
+                var zoom = viewport.getZoom() * resizeRatio;
+                var center = viewport.getCenter();
+                viewport.resize(containerSize, false);
+                viewport.zoomTo(zoom, null, true);
+                viewport.panTo(center, true);
+            } else {
                 // maintain image position
-                var oldBounds = viewer.viewport.getBoundsNoRotate();
-                var oldCenter = viewer.viewport.getCenter();
-                resizeViewportAndRecenter(viewer, containerSize, oldBounds, oldCenter);
+                var oldBounds = viewport.getBounds();
+                viewport.resize(containerSize, true);
+                viewport.fitBoundsWithConstraints(oldBounds, true);
             }
-            THIS[ viewer.hash ].prevContainerSize = containerSize;
-            THIS[ viewer.hash ].forceRedraw = true;
+            THIS[viewer.hash].prevContainerSize = containerSize;
+            THIS[viewer.hash].forceRedraw = true;
         }
     }
 
@@ -3086,27 +3077,6 @@ function updateOnce( viewer ) {
     THIS[ viewer.hash ].animating = animated;
 
     //viewer.profiler.endUpdate();
-}
-
-// This function resizes the viewport and recenters the image
-// as it was before resizing.
-// TODO: better adjust width and height. The new width and height
-// should depend on the image dimensions and on the dimensions
-// of the viewport before and after switching mode.
-function resizeViewportAndRecenter( viewer, containerSize, oldBounds, oldCenter ) {
-    var viewport = viewer.viewport;
-
-    viewport.resize( containerSize, true );
-
-    var newBounds = new $.Rect(
-        oldCenter.x - ( oldBounds.width / 2.0 ),
-        oldCenter.y - ( oldBounds.height / 2.0 ),
-        oldBounds.width,
-        oldBounds.height
-    );
-
-    // let the viewport decide if the bounds are too big or too small
-    viewport.fitBoundsWithConstraints( newBounds, true );
 }
 
 function drawWorld( viewer ) {
