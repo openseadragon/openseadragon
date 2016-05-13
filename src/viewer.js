@@ -918,9 +918,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             docStyle.padding = "0";
 
             this.bodyWidth = bodyStyle.width;
-            this.bodyHeight = bodyStyle.height;
+            this.docWidth = docStyle.width;
             bodyStyle.width = "100%";
+            docStyle.width = "100%";
+
+            this.bodyHeight = bodyStyle.height;
+            this.docHeight = docStyle.height;
             bodyStyle.height = "100%";
+            docStyle.height = "100%";
 
             //when entering full screen on the ipad it wasnt sufficient to leave
             //the body intact as only only the top half of the screen would
@@ -981,7 +986,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             docStyle.padding = this.docPadding;
 
             bodyStyle.width = this.bodyWidth;
+            docStyle.width = this.docWidth;
+
             bodyStyle.height = this.bodyHeight;
+            docStyle.height = this.docHeight;
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
