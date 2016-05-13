@@ -366,10 +366,10 @@ $.Rect.prototype = {
             var thisSegment = thisSegments[i];
             for (var j = 0; j < rectSegments.length; j++) {
                 var rectSegment = rectSegments[j];
-                var point = getIntersection(thisSegment[0], thisSegment[1],
+                var intersect = getIntersection(thisSegment[0], thisSegment[1],
                     rectSegment[0], rectSegment[1]);
-                if (point) {
-                    intersectionPoints.push(point);
+                if (intersect) {
+                    intersectionPoints.push(intersect);
                 }
             }
         }
@@ -403,8 +403,8 @@ $.Rect.prototype = {
         var maxX = intersectionPoints[0].x;
         var minY = intersectionPoints[0].y;
         var maxY = intersectionPoints[0].y;
-        for (var i = 1; i < intersectionPoints.length; i++) {
-            var point = intersectionPoints[i];
+        for (var k = 1; k < intersectionPoints.length; k++) {
+            var point = intersectionPoints[k];
             if (point.x < minX) {
                 minX = point.x;
             }
