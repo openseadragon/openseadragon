@@ -5,6 +5,7 @@
     var VIEWER_ID = "example";
     var PREFIX_URL = "/build/openseadragon/images/";
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
+    var EPSILON = 0.0000000001;
 
      module("viewport", {
         setup: function () {
@@ -218,7 +219,27 @@
         });
     });
 
-    asyncTest('getHomeBoundsWithRotation', function() {
+    asyncTest('getHomeBoundsNoRotate with rotation', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(-675);
+            Util.assertRectangleEquals(
+                viewport.getHomeBoundsNoRotate(),
+                new OpenSeadragon.Rect(
+                    (1 - Math.sqrt(2)) / 2,
+                    (1 - Math.sqrt(2)) / 2,
+                    Math.sqrt(2),
+                    Math.sqrt(2)),
+                0.00000001,
+                "Test getHomeBoundsNoRotate with degrees = -675");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeBounds with rotation', function() {
         function openHandler() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -226,10 +247,11 @@
             Util.assertRectangleEquals(
                 viewport.getHomeBounds(),
                 new OpenSeadragon.Rect(
-                    (1 - Math.sqrt(2)) / 2,
-                    (1 - Math.sqrt(2)) / 2,
+                    0.5,
+                    -0.5,
                     Math.sqrt(2),
-                    Math.sqrt(2)),
+                    Math.sqrt(2),
+                    45),
                 0.00000001,
                 "Test getHomeBounds with degrees = -675");
             start();
@@ -387,7 +409,7 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('ensureVisible', function(){
+    asyncTest('ensureVisible', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -405,17 +427,114 @@
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('applyConstraints', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.visibilityRatio = 0.3;
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(0.7, 0.7, 1, 1),
+                EPSILON,
+                "Viewport.applyConstraints should move viewport.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('applyConstraints with rotation', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(1, 0, Math.sqrt(2), Math.sqrt(2), 45),
+                EPSILON,
+                "Viewport.applyConstraints with rotation should move viewport.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    // Fit bounds tests
+    var testRectsFitBounds = [
+        new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
+        new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.5, 0.25, Math.sqrt(0.125), Math.sqrt(0.125), 45)
+    ];
+
+    var expectedRectsFitBounds = [
+        new OpenSeadragon.Rect(-0.25, -0.75, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
+    ];
+
+    var expectedRectsFitBoundsWithRotation = [
+        new OpenSeadragon.Rect(
+            0.25,
+            -1,
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            45),
+        new OpenSeadragon.Rect(
+            0.75,
+            -0.25,
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            45),
+        new OpenSeadragon.Rect(
+            1,
+            0.5,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            -0.05,
+            -0.55,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            0.5,
+            0.25,
+            Math.sqrt(0.125),
+            Math.sqrt(0.125),
+            45)
+    ];
+
+    var expectedRectsFitBoundsWithConstraints = [
+        new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
+    ];
+
     asyncTest('fitBounds', function(){
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            for(var i = 0; i < testRects.length; i++){
-                var rect = testRects[i].times(viewport.getContainerSize());
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
                 viewport.fitBounds(rect, true);
                 propEqual(
                     viewport.getBounds(),
-                    rect,
+                    expectedRectsFitBounds[i],
                     "Fit bounds correctly."
                 );
             }
@@ -425,19 +544,27 @@
         viewer.open(DZI_PATH);
     });
 
-    var testRectsFitBounds = [
-        new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
-        new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
-        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
-    ];
+    asyncTest('fitBounds with viewport rotation', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
 
-    var expectedRectsFitBounds = [
-        new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
-        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
-        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
-    ];
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+                viewport.fitBounds(rect, true);
+                Util.assertRectangleEquals(
+                    viewport.getBounds(),
+                    expectedRectsFitBoundsWithRotation[i],
+                    EPSILON,
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
 
     asyncTest('fitBoundsWithConstraints', function(){
         var openHandler = function(event) {
@@ -450,7 +577,7 @@
                 viewport.fitBoundsWithConstraints(rect, true);
                 propEqual(
                     viewport.getBounds(),
-                    expectedRectsFitBounds[i],
+                    expectedRectsFitBoundsWithConstraints[i],
                     "Fit bounds correctly."
                 );
             }
@@ -491,6 +618,7 @@
         viewer.addHandler('open', openHandler);
         viewer.open(WIDE_PATH);
     });
+    // End fitBounds tests.
 
     asyncTest('panBy', function(){
         var openHandler = function(event) {

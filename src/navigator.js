@@ -306,8 +306,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             this.updateSize();
         }
 
-        if( viewport && this.viewport ) {
-            bounds      = viewport.getBounds( true );
+        if (viewport && this.viewport) {
+            bounds      = viewport.getBoundsNoRotate(true);
             topleft     = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
             bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
