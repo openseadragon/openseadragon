@@ -1357,11 +1357,11 @@
      * @private
      * @inner
      */
-    function capturePointer( tracker, pointerType, touchCount ) {
+    function capturePointer( tracker, pointerType, pointerCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount += (pointerType === 'touch' ? touchCount : 1);
+        pointsList.captureCount += (pointerCount || 1);
 
         if ( pointsList.captureCount === 1 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -1400,11 +1400,11 @@
      * @private
      * @inner
      */
-    function releasePointer( tracker, pointerType, touchCount ) {
+    function releasePointer( tracker, pointerType, pointerCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount -= (pointerType === 'touch' ? touchCount : 1);
+        pointsList.captureCount -= (pointerCount || 1);
 
         if ( pointsList.captureCount === 0 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
