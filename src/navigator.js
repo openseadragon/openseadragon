@@ -62,7 +62,7 @@ $.Navigator = function( options ){
         options.controlOptions  = {
             anchor:           $.ControlAnchor.TOP_RIGHT,
             attachToViewer:   true,
-            autoFade:         true
+            autoFade:         options.autoFade
         };
 
         if( options.position ){
