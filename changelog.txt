@@ -44,6 +44,7 @@ OPENSEADRAGON CHANGELOG
 * Now taking rotation into account in viewport getBounds and fitBounds methods (#934)
 * Added option to disable navigator auto-fade (#935)
 * Fixed issue with maintaining viewport position with full screen (#940)
+* Fixed an issue with simultaneous touch events (#930)
 
 2.1.0:
 
