@@ -43,6 +43,7 @@ OPENSEADRAGON CHANGELOG
 * Optimized sketch canvas clearing and blending for images with opacity or transfer modes (#927)
 * Now taking rotation into account in viewport getBounds and fitBounds methods (#934)
 * Added option to disable navigator auto-fade (#935)
+* Fixed issue with maintaining viewport position with full screen (#940)
 
 2.1.0:
 
