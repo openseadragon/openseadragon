@@ -587,6 +587,44 @@
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('fitBounds with almost same zoom', function() {
+        var openHandler = function() {
+            var viewport = viewer.viewport;
+            var rect1 = new OpenSeadragon.Rect(0, 0, 1, 1);
+            viewport.fitBounds(rect1, true);
+            Util.assertRectangleEquals(rect1, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect1);
+
+            // Zoom and pan
+            var rect2 = new OpenSeadragon.Rect(1, 1, 1 + 1e-8, 1 + 1e-8);
+            viewport.fitBounds(rect2);
+            Util.assertRectangleEquals(rect2, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect2);
+            start();
+        };
+        viewer.addOnceHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds with big rectangle', function() {
+        var openHandler = function() {
+            var viewport = viewer.viewport;
+            var rect1 = new OpenSeadragon.Rect(0, 0, 1e9, 1e9);
+            viewport.fitBounds(rect1, true);
+            Util.assertRectangleEquals(rect1, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect1);
+
+            // Zoom and pan
+            var rect2 = new OpenSeadragon.Rect(1, 1, 2e9, 2e9);
+            viewport.fitBounds(rect2);
+            Util.assertRectangleEquals(rect2, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect2);
+            start();
+        };
+        viewer.addOnceHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('fitHorizontally', function(){
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
