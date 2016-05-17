@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, TouchUtil, Util, testLog */
 
 (function () {
     var viewer;
@@ -676,6 +676,82 @@
         viewer.addHandler( 'open', onOpen );
         viewer.open( '/test/data/testpattern.dzi' );
     } );
+
+    // ----------
+    if ('TouchEvent' in window) {
+        asyncTest( 'MouseTracker: touch events', function () {
+            var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
+                tracker = viewer.innerTracker,
+                touches;
+
+            var reset = function () {
+                touches = [];
+                TouchUtil.reset();
+            };
+
+            var assessTouchExpectations = function ( expected ) {
+                var pointersList = tracker.getActivePointersListByType( 'touch' );
+                if ('captureCount' in expected) {
+                    equal( pointersList.captureCount, expected.captureCount, expected.description + 'Pointer capture count matches expected (' + expected.captureCount + ')' );
+                }
+                if ('contacts' in expected) {
+                    equal( pointersList.contacts, expected.contacts, expected.description + 'Pointer contact count matches expected (' + expected.contacts + ')' );
+                }
+                if ('trackedPointers' in expected) {
+                    equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Tracked pointer count matches expected (' + expected.trackedPointers + ')' );
+                }
+            };
+
+            var onOpen = function ( event ) {
+                viewer.removeHandler( 'open', onOpen );
+
+                TouchUtil.initTracker( tracker );
+
+                // start-end-end (multi-touch start event)
+                reset();
+                touches = TouchUtil.start( [0,0], [20,20] );
+                assessTouchExpectations({
+                    description:        'start-end-end (multi-touch start event) [capture]:  ',
+                    captureCount:       2,
+                    contacts:           2,
+                    trackedPointers:    2
+                });
+                TouchUtil.end( touches[1] );
+                TouchUtil.end( touches[0] );
+                assessTouchExpectations({
+                    description:        'start-end-end (multi-touch start event) [release]:  ',
+                    captureCount:       0,
+                    contacts:           0,
+                    trackedPointers:    0
+                });
+
+                // start-start-end (multi-touch end event)
+                reset();
+                touches.push( TouchUtil.start([0, 0]) );
+                touches.push( TouchUtil.start([20, 20]) );
+                assessTouchExpectations({
+                    description:        'start-start-end (multi-touch end event) [capture]:  ',
+                    captureCount:       2,
+                    contacts:           2,
+                    trackedPointers:    2
+                });
+                TouchUtil.end( touches );
+                assessTouchExpectations({
+                    description:        'start-start-end (multi-touch end event) [release]:  ',
+                    captureCount:       0,
+                    contacts:           0,
+                    trackedPointers:    0
+                });
+
+                TouchUtil.resetTracker( tracker );
+                viewer.close();
+                start();
+            };
+
+            viewer.addHandler( 'open', onOpen );
+            viewer.open( '/test/data/testpattern.dzi' );
+        } );
+    }
 
     // ----------
     asyncTest('Viewer: preventDefaultAction', function() {
