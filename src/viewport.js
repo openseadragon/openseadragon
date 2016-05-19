@@ -664,15 +664,15 @@ $.Viewport.prototype = {
         var oldBounds = this.getBounds();
         var oldZoom   = this.getZoom();
 
-        if (Math.abs(newZoom - oldZoom) < 0.00000001 ||
-                Math.abs(newBounds.width - oldBounds.width) < 0.00000001) {
+        if (oldZoom === 0 || Math.abs(newZoom / oldZoom - 1) < 0.00000001) {
+            this.zoomTo(newZoom, true);
             return this.panTo(center, immediately);
         }
 
         newBounds = newBounds.rotate(-this.getRotation());
-        var referencePoint = newBounds.getTopLeft().divide(newBounds.width)
-            .minus(oldBounds.getTopLeft().divide(oldBounds.width))
-            .divide(1 / newBounds.width - 1 / oldBounds.width);
+        var referencePoint = newBounds.getTopLeft().times(newZoom)
+            .minus(oldBounds.getTopLeft().times(oldZoom))
+            .divide(newZoom - oldZoom);
 
         return this.zoomTo(newZoom, referencePoint, immediately);
     },

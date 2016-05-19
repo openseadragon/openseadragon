@@ -787,7 +787,6 @@ function updateViewport( tiledImage ) {
                 Math.log( 2 )
             ))
         ),
-        degrees         = tiledImage.viewport.degrees,
         renderPixelRatioC,
         renderPixelRatioT,
         zeroRatioT,
@@ -795,15 +794,23 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportBounds = viewportBounds.getBoundingBox();
-    viewportBounds.x -= tiledImage._xSpring.current.value;
-    viewportBounds.y -= tiledImage._ySpring.current.value;
-
     // Reset tile's internal drawn state
-    while ( tiledImage.lastDrawn.length > 0 ) {
+    while (tiledImage.lastDrawn.length > 0) {
         tile = tiledImage.lastDrawn.pop();
         tile.beingDrawn = false;
     }
+
+    if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
+        var tiledImageBounds = tiledImage.getClippedBounds(true);
+        var intersection = viewportBounds.intersection(tiledImageBounds);
+        if (intersection === null) {
+            return;
+        }
+        viewportBounds = intersection;
+    }
+    viewportBounds = viewportBounds.getBoundingBox();
+    viewportBounds.x -= tiledImage._xSpring.current.value;
+    viewportBounds.y -= tiledImage._ySpring.current.value;
 
     var viewportTL = viewportBounds.getTopLeft();
     var viewportBR = viewportBounds.getBottomRight();
