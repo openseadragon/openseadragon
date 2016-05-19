@@ -45,6 +45,8 @@ OPENSEADRAGON CHANGELOG
 * Added option to disable navigator auto-fade (#935)
 * Fixed issue with maintaining viewport position with full screen (#940)
 * Fixed an issue with simultaneous touch events (#930)
+* Avoid loading clipped out tiles (#939)
+* Improved precision for subtle moves with fitBounds (#939)
 
 2.1.0:
 
