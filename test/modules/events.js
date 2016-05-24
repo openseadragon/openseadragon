@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global module, asyncTest, $, ok, equal, notEqual, start, test, TouchUtil, Util, testLog */
 
 (function () {
     var viewer;
@@ -678,45 +678,96 @@
     } );
 
     // ----------
-    asyncTest( 'Viewer: preventDefaultAction', function () {
-        var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
-            tracker = viewer.innerTracker,
-            origClickHandler,
-            origDragHandler,
-            dragCount = 10,
-            originalZoom = 0,
-            originalBounds = null;
+    if ('TouchEvent' in window) {
+        asyncTest( 'MouseTracker: touch events', function () {
+            var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
+                tracker = viewer.innerTracker,
+                touches;
 
-        var onOpen = function ( event ) {
-            viewer.removeHandler( 'open', onOpen );
-
-            // Hook viewer events to set preventDefaultAction
-            origClickHandler = tracker.clickHandler;
-            tracker.clickHandler = function ( event ) {
-                event.preventDefaultAction = true;
-                return origClickHandler( event );
-            };
-            origDragHandler = tracker.dragHandler;
-            tracker.dragHandler = function ( event ) {
-                event.preventDefaultAction = true;
-                return origDragHandler( event );
+            var reset = function () {
+                touches = [];
+                TouchUtil.reset();
             };
 
-            originalZoom = viewer.viewport.getZoom();
-            originalBounds = viewer.viewport.getBounds();
-
-            var event = {
-                clientX:1,
-                clientY:1
+            var assessTouchExpectations = function ( expected ) {
+                var pointersList = tracker.getActivePointersListByType( 'touch' );
+                if ('captureCount' in expected) {
+                    equal( pointersList.captureCount, expected.captureCount, expected.description + 'Pointer capture count matches expected (' + expected.captureCount + ')' );
+                }
+                if ('contacts' in expected) {
+                    equal( pointersList.contacts, expected.contacts, expected.description + 'Pointer contact count matches expected (' + expected.contacts + ')' );
+                }
+                if ('trackedPointers' in expected) {
+                    equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Tracked pointer count matches expected (' + expected.trackedPointers + ')' );
+                }
             };
 
+            var onOpen = function ( event ) {
+                viewer.removeHandler( 'open', onOpen );
+
+                TouchUtil.initTracker( tracker );
+
+                // start-end-end (multi-touch start event)
+                reset();
+                touches = TouchUtil.start( [0,0], [20,20] );
+                assessTouchExpectations({
+                    description:        'start-end-end (multi-touch start event) [capture]:  ',
+                    captureCount:       2,
+                    contacts:           2,
+                    trackedPointers:    2
+                });
+                TouchUtil.end( touches[1] );
+                TouchUtil.end( touches[0] );
+                assessTouchExpectations({
+                    description:        'start-end-end (multi-touch start event) [release]:  ',
+                    captureCount:       0,
+                    contacts:           0,
+                    trackedPointers:    0
+                });
+
+                // start-start-end (multi-touch end event)
+                reset();
+                touches.push( TouchUtil.start([0, 0]) );
+                touches.push( TouchUtil.start([20, 20]) );
+                assessTouchExpectations({
+                    description:        'start-start-end (multi-touch end event) [capture]:  ',
+                    captureCount:       2,
+                    contacts:           2,
+                    trackedPointers:    2
+                });
+                TouchUtil.end( touches );
+                assessTouchExpectations({
+                    description:        'start-start-end (multi-touch end event) [release]:  ',
+                    captureCount:       0,
+                    contacts:           0,
+                    trackedPointers:    0
+                });
+
+                TouchUtil.resetTracker( tracker );
+                viewer.close();
+                start();
+            };
+
+            viewer.addHandler( 'open', onOpen );
+            viewer.open( '/test/data/testpattern.dzi' );
+        } );
+    }
+
+    // ----------
+    asyncTest('Viewer: preventDefaultAction', function() {
+        var $canvas = $(viewer.element).find('.openseadragon-canvas')
+            .not('.navigator .openseadragon-canvas');
+        var tracker = viewer.innerTracker;
+        var epsilon = 0.0000001;
+
+        function simulateClickAndDrag() {
             $canvas.simulate( 'focus', event );
             // Drag to pan
             Util.simulateViewerClickWithDrag( {
                 viewer: viewer,
                 widthFactor: 0.25,
                 heightFactor: 0.25,
-                dragCount: dragCount,
+                dragCount: 10,
                 dragDx: 1,
                 dragDy: 1
             } );
@@ -730,20 +781,57 @@
                 dragDy: 0
             } );
             $canvas.simulate( 'blur', event );
+        }
 
-            var zoom = viewer.viewport.getZoom(),
-                bounds = viewer.viewport.getBounds();
+        var onOpen = function() {
+            viewer.removeHandler('open', onOpen);
 
-            equal( zoom, originalZoom, "Zoom prevented" );
-            ok( bounds.x == originalBounds.x && bounds.y == originalBounds.y, 'Pan prevented' );
+            // Hook viewer events to set preventDefaultAction
+            var origClickHandler = tracker.clickHandler;
+            tracker.clickHandler = function(event) {
+                event.preventDefaultAction = true;
+                return origClickHandler(event);
+            };
+            var origDragHandler = tracker.dragHandler;
+            tracker.dragHandler = function(event) {
+                event.preventDefaultAction = true;
+                return origDragHandler(event);
+            };
+
+            var originalZoom = viewer.viewport.getZoom();
+            var originalBounds = viewer.viewport.getBounds();
+
+            simulateClickAndDrag();
+
+            var zoom = viewer.viewport.getZoom();
+            var bounds = viewer.viewport.getBounds();
+            Util.assessNumericValue(zoom, originalZoom, epsilon,
+                "Zoom should be prevented");
+            Util.assertRectangleEquals(bounds, originalBounds, epsilon,
+                'Pan should be prevented');
+
+            tracker.clickHandler = origClickHandler;
+            tracker.dragHandler = origDragHandler;
+
+            simulateClickAndDrag();
+
+            var zoom = viewer.viewport.getZoom();
+            var bounds = viewer.viewport.getBounds();
+            Util.assessNumericValue(zoom, 0.002, epsilon,
+                "Zoom should not be prevented");
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(-250, -0.25, 500, 0.5),
+                epsilon,
+                'Pan should not be prevented');
 
             viewer.close();
             start();
         };
 
-        viewer.addHandler( 'open', onOpen );
-        viewer.open( '/test/data/testpattern.dzi' );
-    } );
+        viewer.addHandler('open', onOpen);
+        viewer.open('/test/data/testpattern.dzi');
+    });
 
     // ----------
     asyncTest( 'EventSource/MouseTracker/Viewer: event.originalEvent event.userData canvas-drag canvas-drag-end canvas-release canvas-click', function () {
@@ -948,6 +1036,59 @@
         viewer.addHandler( 'open', openHandler, userData );
         viewer.open( '/test/data/testpattern.dzi' );
     } );
+
+    // ----------
+    test('EventSource: addOnceHandler', function() {
+        var eventSource = new OpenSeadragon.EventSource();
+        var userData = 'data';
+        var eventData = {
+            foo: 1
+        };
+        var handlerCalledCount = 0;
+        eventSource.addOnceHandler('test-event', function(event) {
+            handlerCalledCount++;
+            strictEqual(event.foo, eventData.foo,
+                'Event data should be transmitted to the event.');
+            strictEqual(event.userData, userData,
+                'User data should be transmitted to the event.');
+        }, userData);
+        strictEqual(0, handlerCalledCount,
+            'Handler should not have been called yet.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should have been called once.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should still have been called once.');
+    });
+
+    // ----------
+    test('EventSource: addOnceHandler 2 times', function() {
+        var eventSource = new OpenSeadragon.EventSource();
+        var userData = 'data';
+        var eventData = {
+            foo: 1
+        };
+        var handlerCalledCount = 0;
+        eventSource.addOnceHandler('test-event', function(event) {
+            handlerCalledCount++;
+            strictEqual(event.foo, eventData.foo,
+                'Event data should be transmitted to the event.');
+            strictEqual(event.userData, userData,
+                'User data should be transmitted to the event.');
+        }, userData, 2);
+        strictEqual(0, handlerCalledCount,
+            'Handler should not have been called yet.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(1, handlerCalledCount,
+            'Handler should have been called once.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(2, handlerCalledCount,
+            'Handler should have been called twice.');
+        eventSource.raiseEvent('test-event', eventData);
+        strictEqual(2, handlerCalledCount,
+            'Handler should still have been called twice.');
+    });
 
     // ----------
     asyncTest( 'Viewer: tile-drawing event', function () {

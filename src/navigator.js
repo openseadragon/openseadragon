@@ -62,7 +62,7 @@ $.Navigator = function( options ){
         options.controlOptions  = {
             anchor:           $.ControlAnchor.TOP_RIGHT,
             attachToViewer:   true,
-            autoFade:         true
+            autoFade:         options.autoFade
         };
 
         if( options.position ){
@@ -306,8 +306,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             this.updateSize();
         }
 
-        if( viewport && this.viewport ) {
-            bounds      = viewport.getBounds( true );
+        if (viewport && this.viewport) {
+            bounds      = viewport.getBoundsNoRotate(true);
             topleft     = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
             bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );

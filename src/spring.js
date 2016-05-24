@@ -234,6 +234,15 @@ $.Spring.prototype = {
         } else {
             this.current.value = currentValue;
         }
+    },
+
+    /**
+     * Returns whether the spring is at the target value
+     * @function
+     * @returns {Boolean} True if at target value, false otherwise
+     */
+    isAtTargetValue: function() {
+        return this.current.value === this.target.value;
     }
 };
 

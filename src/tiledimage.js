@@ -52,6 +52,10 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
+ * to fit the image into. If specified, x, y, width and height get ignored.
+ * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
+ * How to anchor the image in the bounds if options.fitBounds is set.
  * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
  * (portions of the image outside of this area will not be visible). Only works on
  * browsers that support the HTML5 canvas.
@@ -122,6 +126,11 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
+    var fitBounds = options.fitBounds;
+    delete options.fitBounds;
+    var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
+    delete options.fitBoundsPlacement;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -171,6 +180,10 @@ $.TiledImage = function( options ) {
     });
 
     this._updateForScale();
+
+    if (fitBounds) {
+        this.fitBounds(fitBounds, fitBoundsPlacement, true);
+    }
 
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
@@ -272,6 +285,26 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     getWorldBounds: function() {
         $.console.error('[TiledImage.getWorldBounds] is deprecated; use TiledImage.getBounds instead');
         return this.getBounds();
+    },
+
+    /**
+     * Get the bounds of the displayed part of the tiled image.
+     * @param {Boolean} [current=false] Pass true for the current location,
+     * false for the target location.
+     * @returns {$.Rect} The clipped bounds in viewport coordinates.
+     */
+    getClippedBounds: function(current) {
+        var bounds = this.getBounds(current);
+        if (this._clip) {
+            var ratio = this._worldWidthCurrent / this.source.dimensions.x;
+            var clip = this._clip.times(ratio);
+            bounds = new $.Rect(
+                bounds.x + clip.x,
+                bounds.y + clip.y,
+                clip.width,
+                clip.height);
+        }
+        return bounds;
     },
 
     /**
@@ -544,6 +577,67 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Positions and scales the TiledImage to fit in the specified bounds.
+     * Note: this method fires OpenSeadragon.TiledImage.event:bounds-change
+     * twice
+     * @param {OpenSeadragon.Rect} bounds The bounds to fit the image into.
+     * @param {OpenSeadragon.Placement} [anchor=OpenSeadragon.Placement.CENTER]
+     * How to anchor the image in the bounds.
+     * @param {Boolean} [immediately=false] Whether to animate to the new size
+     * or snap immediately.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    fitBounds: function(bounds, anchor, immediately) {
+        anchor = anchor || $.Placement.CENTER;
+        var anchorProperties = $.Placement.properties[anchor];
+        var aspectRatio = this.contentAspectX;
+        var xOffset = 0;
+        var yOffset = 0;
+        var displayedWidthRatio = 1;
+        var displayedHeightRatio = 1;
+        if (this._clip) {
+            aspectRatio = this._clip.getAspectRatio();
+            displayedWidthRatio = this._clip.width / this.source.dimensions.x;
+            displayedHeightRatio = this._clip.height / this.source.dimensions.y;
+            if (bounds.getAspectRatio() > aspectRatio) {
+                xOffset = this._clip.x / this._clip.height * bounds.height;
+                yOffset = this._clip.y / this._clip.height * bounds.height;
+            } else {
+                xOffset = this._clip.x / this._clip.width * bounds.width;
+                yOffset = this._clip.y / this._clip.width * bounds.width;
+            }
+        }
+
+        if (bounds.getAspectRatio() > aspectRatio) {
+            // We will have margins on the X axis
+            var height = bounds.height / displayedHeightRatio;
+            var marginLeft = 0;
+            if (anchorProperties.isHorizontallyCentered) {
+                marginLeft = (bounds.width - bounds.height * aspectRatio) / 2;
+            } else if (anchorProperties.isRight) {
+                marginLeft = bounds.width - bounds.height * aspectRatio;
+            }
+            this.setPosition(
+                new $.Point(bounds.x - xOffset + marginLeft, bounds.y - yOffset),
+                immediately);
+            this.setHeight(height, immediately);
+        } else {
+            // We will have margins on the Y axis
+            var width = bounds.width / displayedWidthRatio;
+            var marginTop = 0;
+            if (anchorProperties.isVerticallyCentered) {
+                marginTop = (bounds.height - bounds.width / aspectRatio) / 2;
+            } else if (anchorProperties.isBottom) {
+                marginTop = bounds.height - bounds.width / aspectRatio;
+            }
+            this.setPosition(
+                new $.Point(bounds.x - xOffset, bounds.y - yOffset + marginTop),
+                immediately);
+            this.setWidth(width, immediately);
+        }
+    },
+
+    /**
      * @returns {OpenSeadragon.Rect|null} The TiledImage's current clip rectangle,
      * in image pixels, or null if none.
      */
@@ -650,6 +744,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent('bounds-change');
+    },
+
+    // private
+    _isBottomItem: function() {
+        return this.viewer.world.getItemAt(0) === this;
     }
 });
 
@@ -688,7 +787,6 @@ function updateViewport( tiledImage ) {
                 Math.log( 2 )
             ))
         ),
-        degrees         = tiledImage.viewport.degrees,
         renderPixelRatioC,
         renderPixelRatioT,
         zeroRatioT,
@@ -696,26 +794,23 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportBounds.x -= tiledImage._xSpring.current.value;
-    viewportBounds.y -= tiledImage._ySpring.current.value;
-
     // Reset tile's internal drawn state
-    while ( tiledImage.lastDrawn.length > 0 ) {
+    while (tiledImage.lastDrawn.length > 0) {
         tile = tiledImage.lastDrawn.pop();
         tile.beingDrawn = false;
     }
 
-    //Change bounds for rotation
-    if (degrees === 90 || degrees === 270) {
-        viewportBounds = viewportBounds.rotate( degrees );
-    } else if (degrees !== 0 && degrees !== 180) {
-        // This is just an approximation.
-        var orthBounds = viewportBounds.rotate(90);
-        viewportBounds.x -= orthBounds.width / 2;
-        viewportBounds.y -= orthBounds.height / 2;
-        viewportBounds.width += orthBounds.width;
-        viewportBounds.height += orthBounds.height;
+    if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
+        var tiledImageBounds = tiledImage.getClippedBounds(true);
+        var intersection = viewportBounds.intersection(tiledImageBounds);
+        if (intersection === null) {
+            return;
+        }
+        viewportBounds = intersection;
     }
+    viewportBounds = viewportBounds.getBoundingBox();
+    viewportBounds.x -= tiledImage._xSpring.current.value;
+    viewportBounds.y -= tiledImage._ySpring.current.value;
 
     var viewportTL = viewportBounds.getTopLeft();
     var viewportBR = viewportBounds.getBottomRight();
@@ -1324,22 +1419,22 @@ function compareTiles( previousBest, tile ) {
 }
 
 function drawTiles( tiledImage, lastDrawn ) {
-    var i,
-        tile = lastDrawn[0];
-
-    if ( tiledImage.opacity <= 0 ) {
-        drawDebugInfo( tiledImage, lastDrawn );
+    if (lastDrawn.length === 0) {
         return;
     }
+    var tile = lastDrawn[0];
+
     var useSketch = tiledImage.opacity < 1 ||
-          (tiledImage.compositeOperation && tiledImage.compositeOperation !== 'source-over');
+        (tiledImage.compositeOperation &&
+            tiledImage.compositeOperation !== 'source-over') ||
+        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
 
     var sketchScale;
     var sketchTranslate;
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && tile) {
+    if (imageZoom > tiledImage.smoothTileEdgesMinZoom) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         useSketch = true;
@@ -1349,8 +1444,17 @@ function drawTiles( tiledImage, lastDrawn ) {
             tiledImage._drawer.getCanvasSize(true));
     }
 
-    if ( useSketch ) {
-        tiledImage._drawer._clear( true );
+    var bounds;
+    if (useSketch) {
+        if (!sketchScale) {
+            // Except when edge smoothing, we only clean the part of the
+            // sketch canvas we are going to use for performance reasons.
+            bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+                tiledImage.getClippedBounds(true))
+                .getIntegerBoundingBox()
+                .times($.pixelDensityRatio);
+        }
+        tiledImage._drawer._clear(true, bounds);
     }
 
     // When scaling, we must rotate only when blending the sketch canvas to avoid
@@ -1396,7 +1500,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
-    for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
+    for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
@@ -1433,7 +1537,13 @@ function drawTiles( tiledImage, lastDrawn ) {
         if (offsetForRotation) {
             tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, false);
         }
-        tiledImage._drawer.blendSketch(tiledImage.opacity, sketchScale, sketchTranslate, tiledImage.compositeOperation);
+        tiledImage._drawer.blendSketch({
+            opacity: tiledImage.opacity,
+            scale: sketchScale,
+            translate: sketchTranslate,
+            compositeOperation: tiledImage.compositeOperation,
+            bounds: bounds
+        });
         if (offsetForRotation) {
             tiledImage._drawer._restoreRotationChanges(false);
         }

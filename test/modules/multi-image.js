@@ -5,12 +5,12 @@
 
     module( 'Multi-Image', {
         setup: function() {
-            $( '<div id="itemsexample"></div>' ).appendTo( "#qunit-fixture" );
+            $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
 
             viewer = OpenSeadragon( {
-                id: 'itemsexample',
+                id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             });
@@ -21,7 +21,7 @@
             }
 
             viewer = null;
-            $( "#itemsexample" ).remove();
+            $("#example").remove();
         }
     } );
 
@@ -206,6 +206,59 @@
             });
         });
         viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('Transparent image on top of others', function() {
+        viewer.open('/test/data/testpattern.dzi');
+
+        // TODO: replace with fully-loaded event listener when available.
+        setTimeout(function() {
+            var imageData = viewer.drawer.context.getImageData(0, 0, 500, 500);
+            // Pixel 250,250 will be in the hole of the A
+            var expectedVal = getPixelValue(imageData, 250, 250);
+
+            notEqual(expectedVal.r, 0, 'Red channel should not be 0');
+            notEqual(expectedVal.g, 0, 'Green channel should not be 0');
+            notEqual(expectedVal.b, 0, 'Blue channel should not be 0');
+            notEqual(expectedVal.a, 0, 'Alpha channel should not be 0');
+
+            viewer.addSimpleImage({
+                url: '/test/data/A.png'
+            });
+
+            // TODO: replace with fully-loaded event listener when available.
+            setTimeout(function() {
+                var imageData = viewer.drawer.context.getImageData(0, 0, 500, 500);
+                var actualVal = getPixelValue(imageData, 250, 250);
+
+                equal(actualVal.r, expectedVal.r,
+                    'Red channel should not change in transparent part of the A');
+                equal(actualVal.g, expectedVal.g,
+                    'Green channel should not change in transparent part of the A');
+                equal(actualVal.b, expectedVal.b,
+                    'Blue channel should not change in transparent part of the A');
+                equal(actualVal.a, expectedVal.a,
+                    'Alpha channel should not change in transparent part of the A');
+
+                var onAVal = getPixelValue(imageData, 333, 250);
+                equal(onAVal.r, 0, 'Red channel should be null on the A');
+                equal(onAVal.g, 0, 'Green channel should be null on the A');
+                equal(onAVal.b, 0, 'Blue channel should be null on the A');
+                equal(onAVal.a, 255, 'Alpha channel should be 255 on the A');
+
+                start();
+            }, 500);
+        }, 500);
+
+        function getPixelValue(imageData, x, y) {
+            var offset = 4 * (y * imageData.width + x);
+            return {
+                r: imageData.data[offset],
+                g: imageData.data[offset + 1],
+                b: imageData.data[offset + 2],
+                a: imageData.data[offset + 3]
+            };
+        }
     });
 
 })();

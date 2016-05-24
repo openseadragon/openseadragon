@@ -161,6 +161,65 @@
             "Incorrect union with non horizontal rectangles.");
     });
 
+    test('intersection', function() {
+        var rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
+        var rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        var expected = null;
+        var actual = rect1.intersection(rect2);
+        equal(expected, actual,
+            "Rectangle " + rect2 + " should not intersect " + rect1);
+        actual = rect2.intersection(rect1);
+        equal(expected, actual,
+            "Rectangle " + rect1 + " should not intersect " + rect2);
+
+        rect1 = new OpenSeadragon.Rect(0, 0, 2, 1);
+        rect2 = new OpenSeadragon.Rect(1, 0, 2, 2);
+        expected = new OpenSeadragon.Rect(1, 0, 1, 1);
+        actual = rect1.intersection(rect2);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect2 + " with " + rect1 + " should be " +
+            expected);
+        actual = rect2.intersection(rect1);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect1 + " with " + rect2 + " should be " +
+            expected);
+
+        rect1 = new OpenSeadragon.Rect(0, 0, 3, 3);
+        rect2 = new OpenSeadragon.Rect(1, 1, 1, 1);
+        expected = new OpenSeadragon.Rect(1, 1, 1, 1);
+        actual = rect1.intersection(rect2);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect2 + " with " + rect1 + " should be " +
+            expected);
+        actual = rect2.intersection(rect1);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect1 + " with " + rect2 + " should be " +
+            expected);
+
+
+        rect1 = new OpenSeadragon.Rect(2, 2, 2, 3, 45);
+        rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        expected = null;
+        actual = rect1.intersection(rect2);
+        equal(expected, actual,
+            "Rectangle " + rect2 + " should not intersect " + rect1);
+        actual = rect2.intersection(rect1);
+        equal(expected, actual,
+            "Rectangle " + rect1 + " should not intersect " + rect2);
+
+        rect1 = new OpenSeadragon.Rect(2, 0, 2, 3, 45);
+        rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        expected = new OpenSeadragon.Rect(0, 1, 1, 1);
+        actual = rect1.intersection(rect2);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect2 + " with " + rect1 + " should be " +
+            expected);
+        actual = rect2.intersection(rect1);
+        Util.assertRectangleEquals(expected, actual, precision,
+            "Intersection of " + rect1 + " with " + rect2 + " should be " +
+            expected);
+    });
+
     test('rotate', function() {
         var rect = new OpenSeadragon.Rect(0, 0, 2, 1);
 
@@ -216,6 +275,29 @@
         var expected = new OpenSeadragon.Rect(0, -2, 3, 2);
         Util.assertRectangleEquals(expected, rect.getBoundingBox(), precision,
             "Bounding box of rect rotated 270deg.");
+    });
+
+    test('containsPoint', function() {
+        var rect = new OpenSeadragon.Rect(0, 0, 1, 1, 45);
+
+        ok(rect.containsPoint(new OpenSeadragon.Point(0, 0)),
+            'Point 0,0 should be inside ' + rect);
+        ok(rect.containsPoint(rect.getTopRight()),
+            'Top right vertex should be inside ' + rect);
+        ok(rect.containsPoint(rect.getBottomRight()),
+            'Bottom right vertex should be inside ' + rect);
+        ok(rect.containsPoint(rect.getBottomLeft()),
+            'Bottom left vertex should be inside ' + rect);
+        ok(rect.containsPoint(rect.getCenter()),
+            'Center should be inside ' + rect);
+        notOk(rect.containsPoint(new OpenSeadragon.Point(1, 0)),
+            'Point 1,0 should not be inside ' + rect);
+        ok(rect.containsPoint(new OpenSeadragon.Point(0.5, 0.5)),
+            'Point 0.5,0.5 should be inside ' + rect);
+        ok(rect.containsPoint(new OpenSeadragon.Point(0.4, 0.5)),
+            'Point 0.4,0.5 should be inside ' + rect);
+        notOk(rect.containsPoint(new OpenSeadragon.Point(0.6, 0.5)),
+            'Point 0.6,0.5 should not be inside ' + rect);
     });
 
 })();

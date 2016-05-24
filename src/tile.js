@@ -193,6 +193,11 @@ $.Tile.prototype = {
         return this.level + "/" + this.x + "_" + this.y;
     },
 
+    // private
+    _hasTransparencyChannel: function() {
+        return !!this.context2D || this.url.match('.png');
+    },
+
     /**
      * Renders the tile in an html container.
      * @function
@@ -280,27 +285,6 @@ $.Tile.prototype = {
 
         context.globalAlpha = this.opacity;
 
-        //if we are supposed to be rendering fully opaque rectangle,
-        //ie its done fading or fading is turned off, and if we are drawing
-        //an image with an alpha channel, then the only way
-        //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 &&
-                (this.context2D || this.url.match('.png'))) {
-            //clearing only the inside of the rectangle occupied
-            //by the png prevents edge flikering
-            context.clearRect(
-                position.x + 1,
-                position.y + 1,
-                size.x - 2,
-                size.y - 2
-            );
-
-        }
-
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, tile: this, rendered: rendered});
-
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
             position = position.times(scale);
@@ -311,6 +295,25 @@ $.Tile.prototype = {
             // shift tile position slightly
             position = position.plus(translate);
         }
+
+        //if we are supposed to be rendering fully opaque rectangle,
+        //ie its done fading or fading is turned off, and if we are drawing
+        //an image with an alpha channel, then the only way
+        //to avoid seeing the tile underneath is to clear the rectangle
+        if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
+            //clearing only the inside of the rectangle occupied
+            //by the png prevents edge flikering
+            context.clearRect(
+                position.x + 1,
+                position.y + 1,
+                size.x - 2,
+                size.y - 2
+            );
+        }
+
+        // This gives the application a chance to make image manipulation
+        // changes as we are rendering the image
+        drawingHandler({context: context, tile: this, rendered: rendered});
 
         context.drawImage(
             rendered.canvas,
@@ -333,15 +336,18 @@ $.Tile.prototype = {
      * @return {Float}
      */
     getScaleForEdgeSmoothing: function() {
-        if (!this.cacheImageRecord) {
+        var context;
+        if (this.cacheImageRecord) {
+            context = this.cacheImageRecord.getRenderedContext();
+        } else if (this.context2D) {
+            context = this.context2D;
+        } else {
             $.console.warn(
                 '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
                 this.toString());
             return 1;
         }
-
-        var rendered = this.cacheImageRecord.getRenderedContext();
-        return rendered.canvas.width / this.size.times($.pixelDensityRatio).x;
+        return context.canvas.width / (this.size.x * $.pixelDensityRatio);
     },
 
     /**

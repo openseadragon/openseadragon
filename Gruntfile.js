@@ -28,6 +28,7 @@ module.exports = function(grunt) {
             "src/mousetracker.js",
             "src/control.js",
             "src/controldock.js",
+            "src/placement.js",
             "src/viewer.js",
             "src/navigator.js",
             "src/strings.js",
