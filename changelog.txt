@@ -47,6 +47,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue with simultaneous touch events (#930)
 * Avoid loading clipped out tiles (#939)
 * Improved precision for subtle moves with fitBounds (#939)
+* Fixed an issue in viewer.addTiledImage with replace:true when viewer has navigator (#948)
 
 2.1.0:
 
