@@ -1397,6 +1397,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 if (_this.navigator) {
                     optionsClone = $.extend({}, queueItem.options, {
+                        replace: false, // navigator already removed the layer, nothing to replace
                         originalTiledImage: tiledImage,
                         tileSource: queueItem.tileSource
                     });
