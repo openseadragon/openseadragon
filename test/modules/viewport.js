@@ -437,14 +437,35 @@
             viewport.applyConstraints(true);
             var bounds = viewport.getBounds();
             Util.assertRectangleEquals(
-                bounds,
                 new OpenSeadragon.Rect(0.7, 0.7, 1, 1),
+                bounds,
                 EPSILON,
                 "Viewport.applyConstraints should move viewport.");
             start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open(DZI_PATH);
+    });
+
+    asyncTest('applyConstraints with visibilityRatio = 1 shouldn\'t bounce around', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            viewport.visibilityRatio = 1;
+            viewport.zoomTo(0.5, undefined, true);
+            viewport.panBy(new OpenSeadragon.Point(0.75, 0), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(-0.5, 1, 2, 2),
+                bounds,
+                EPSILON,
+                "Viewport.applyConstraints should move viewport to the center, not to a side.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(TALL_PATH);
     });
 
     asyncTest('applyConstraints with rotation', function() {

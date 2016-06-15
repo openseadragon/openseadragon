@@ -820,8 +820,8 @@
             Util.assessNumericValue(zoom, 0.002, epsilon,
                 "Zoom should not be prevented");
             Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(-249.5, -0.25, 500, 0.5),
                 bounds,
-                new OpenSeadragon.Rect(-250, -0.25, 500, 0.5),
                 epsilon,
                 'Pan should not be prevented');
 
