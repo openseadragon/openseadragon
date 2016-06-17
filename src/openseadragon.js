@@ -240,6 +240,10 @@
   *     When zoomed in beyond this value alternative compositing will be used to
   *     smooth out the edges between tiles. This will have a performance impact.
   *
+  * @property {Boolean} [iOSDevice=?]
+  *     True if running on an iOS device, false otherwise.
+  *     Used to disable certain features that behave differently on iOS devices.
+  *
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
@@ -981,6 +985,18 @@ if (typeof define === 'function' && define.amd) {
         return target;
     };
 
+    var isIOSDevice = function () {
+      if (typeof navigator !== 'object') {
+        return false;
+      }
+      var userAgent = navigator.userAgent;
+      if (typeof userAgent !== 'string') {
+        return false;
+      }
+      return userAgent.indexOf('iPhone') !== -1 ||
+             userAgent.indexOf('iPad') !== -1 ||
+             userAgent.indexOf('iPod') !== -1;
+    };
 
     $.extend( $, /** @lends OpenSeadragon */{
         /**
@@ -1031,6 +1047,7 @@ if (typeof define === 'function' && define.amd) {
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
             smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
+            iOSDevice:              isIOSDevice(),
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
