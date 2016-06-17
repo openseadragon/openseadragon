@@ -239,6 +239,8 @@
   *     A zoom percentage ( where 1 is 100% ) of the highest resolution level.
   *     When zoomed in beyond this value alternative compositing will be used to
   *     smooth out the edges between tiles. This will have a performance impact.
+  *     Can be set to Infinity to turn it off.
+  *     Note: This setting is ignored on iOS devices due to a known bug (See {@link https://github.com/openseadragon/openseadragon/issues/952})
   *
   * @property {Boolean} [iOSDevice=?]
   *     True if running on an iOS device, false otherwise.
@@ -986,16 +988,16 @@ if (typeof define === 'function' && define.amd) {
     };
 
     var isIOSDevice = function () {
-      if (typeof navigator !== 'object') {
-        return false;
-      }
-      var userAgent = navigator.userAgent;
-      if (typeof userAgent !== 'string') {
-        return false;
-      }
-      return userAgent.indexOf('iPhone') !== -1 ||
-             userAgent.indexOf('iPad') !== -1 ||
-             userAgent.indexOf('iPod') !== -1;
+        if (typeof navigator !== 'object') {
+            return false;
+        }
+        var userAgent = navigator.userAgent;
+        if (typeof userAgent !== 'string') {
+            return false;
+        }
+        return userAgent.indexOf('iPhone') !== -1 ||
+               userAgent.indexOf('iPad') !== -1 ||
+               userAgent.indexOf('iPod') !== -1;
     };
 
     $.extend( $, /** @lends OpenSeadragon */{
