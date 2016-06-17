@@ -495,51 +495,40 @@ $.Viewport.prototype = {
                 bounds.width,
                 bounds.height);
 
-        var horizontalThreshold = this.visibilityRatio * newBounds.width;
-        var verticalThreshold   = this.visibilityRatio * newBounds.height;
-
         if (this.wrapHorizontal) {
             //do nothing
         } else {
-            var dx = 0;
-            var thresholdLeft = newBounds.x + (newBounds.width - horizontalThreshold);
-            if (this._contentBoundsNoRotate.x > thresholdLeft) {
-                dx = this._contentBoundsNoRotate.x - thresholdLeft;
-            }
-
+            var horizontalThreshold = this.visibilityRatio * newBounds.width;
+            var boundsRight = newBounds.x + newBounds.width;
             var contentRight = this._contentBoundsNoRotate.x + this._contentBoundsNoRotate.width;
-            var thresholdRight = newBounds.x + horizontalThreshold;
-            if (contentRight < thresholdRight) {
-                var newDx = contentRight - thresholdRight;
-                if (dx) {
-                    dx = (dx + newDx) / 2;
-                } else {
-                    dx = newDx;
-                }
+            var leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
+            var rightDx = contentRight - newBounds.x - horizontalThreshold;
+
+            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+                newBounds.x += (leftDx + rightDx) / 2;
+            } else if (rightDx < 0) {
+                newBounds.x += rightDx;
+            } else if (leftDx > 0) {
+                newBounds.x += leftDx;
             }
-            newBounds.x += dx;
         }
 
         if (this.wrapVertical) {
             //do nothing
         } else {
-            var dy = 0;
-            var thresholdTop = newBounds.y + (newBounds.height - verticalThreshold);
-            if (this._contentBoundsNoRotate.y > thresholdTop) {
-                dy = this._contentBoundsNoRotate.y - thresholdTop;
-            }
-
+            var verticalThreshold   = this.visibilityRatio * newBounds.height;
+            var boundsBottom = newBounds.y + newBounds.height;
             var contentBottom = this._contentBoundsNoRotate.y + this._contentBoundsNoRotate.height;
-            var thresholdBottom = newBounds.y + verticalThreshold;
-            if (contentBottom < thresholdBottom) {
-                var newDy = contentBottom - thresholdBottom;
-                if (dy) {
-                    dy = (dy + newDy) / 2;
-                } else {
-                    dy = newDy;
-                }
+            var topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
+            var bottomDy = contentBottom - newBounds.y - verticalThreshold;
+
+            if (verticalThreshold > this._contentBoundsNoRotate.height) {
+                newBounds.y += (topDy + bottomDy) / 2;
+            } else if (bottomDy < 0) {
+                newBounds.y += bottomDy;
+            } else if (topDy > 0) {
+                newBounds.y += topDy;
             }
-            newBounds.y += dy;
         }
 
         if (this.viewer) {

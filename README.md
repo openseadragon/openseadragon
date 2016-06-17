@@ -1,5 +1,5 @@
 # OpenSeadragon
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/openseadragon/openseadragon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](https://secure.travis-ci.org/openseadragon/openseadragon.png?branch=master)](http://travis-ci.org/openseadragon/openseadragon)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openseadragon/openseadragon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](https://secure.travis-ci.org/openseadragon/openseadragon.png?branch=master)](http://travis-ci.org/openseadragon/openseadragon)
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 

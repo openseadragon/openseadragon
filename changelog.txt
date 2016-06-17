@@ -1,7 +1,11 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.2.0: (in progress)
+2.2.1: (in progress)
+
+* Fixed problems with zoom/pan constraints with certain extreme settings (#965)
+
+2.2.0:
 
 * BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
     Viewport.contentAspectY have been removed. (#846)
@@ -47,6 +51,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue with simultaneous touch events (#930)
 * Avoid loading clipped out tiles (#939)
 * Improved precision for subtle moves with fitBounds (#939)
+* Fixed an issue in viewer.addTiledImage with replace:true when viewer has navigator (#948)
 
 2.1.0:
 
