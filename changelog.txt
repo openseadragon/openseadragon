@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.2.1: (in progress)
 
 * Fixed problems with zoom/pan constraints with certain extreme settings (#965)
+* Fixed an issue causing the browser to crash on iOS (#966)
 
 2.2.0:
 
