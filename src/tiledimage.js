@@ -69,6 +69,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
  * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
@@ -153,6 +154,7 @@ $.TiledImage = function( options ) {
         alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
         smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:              $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
@@ -1434,9 +1436,10 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    if (imageZoom > tiledImage.smoothTileEdgesMinZoom) {
+    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && !tiledImage.iOSDevice) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
+        // Note: Disabled on iOS devices per default as it causes a native crash
         useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
