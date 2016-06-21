@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.2.2: (in progress)
+
 2.2.1:
 
 * Fixed problems with zoom/pan constraints with certain extreme settings (#965)
