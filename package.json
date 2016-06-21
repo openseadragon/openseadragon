@@ -1,6 +1,6 @@
 {
   "name": "openseadragon",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
   "keywords": ["image", "zoom", "pan", "openseadragon", "seadragon", "deepzoom", "dzi", "iiif", "osm", "tms"],
   "homepage": "http://openseadragon.github.io/",
