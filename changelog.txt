@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 2.2.2: (in progress)
 
+*  Fixed CORS bug in IE 10 (#967)
+
 2.2.1:
 
 * Fixed problems with zoom/pan constraints with certain extreme settings (#965)
