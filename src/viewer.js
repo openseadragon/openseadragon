@@ -1229,6 +1229,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * browsers that support the HTML5 canvas.
      * @param {Number} [options.opacity] Opacity the tiled image should be drawn at by default.
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
+     * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
+     * overriding viewer.crossOriginPolicy.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", the resulting TiledImage.
@@ -1263,6 +1265,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         if (options.compositeOperation === undefined) {
             options.compositeOperation = this.compositeOperation;
+        }
+        if (options.crossOriginPolicy === undefined) {
+            options.crossOriginPolicy = options.tileSource.crossOriginPolicy ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
         }
 
         var myQueueItem = {
@@ -1376,7 +1381,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     minPixelRatio: _this.minPixelRatio,
                     smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     iOSDevice: _this.iOSDevice,
-                    crossOriginPolicy: _this.crossOriginPolicy,
+                    crossOriginPolicy: queueItem.options.crossOriginPolicy,
                     debugMode: _this.debugMode
                 });
 
