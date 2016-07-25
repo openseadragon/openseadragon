@@ -10,6 +10,7 @@
 
   "globals": {
     "OpenSeadragon": true,
-    "define": false
+    "define": false,
+    "module": false
   }
 }
