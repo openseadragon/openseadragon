@@ -685,18 +685,9 @@
   * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
-window.OpenSeadragon = window.OpenSeadragon || function( options ){
-
+function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
-
-};
-
-if (typeof define === 'function' && define.amd) {
-   define(function () {
-       return (window.OpenSeadragon);
-   });
 }
-
 
 (function( $ ){
 
@@ -2596,3 +2587,20 @@ if (typeof define === 'function' && define.amd) {
     }
 
 }(OpenSeadragon));
+
+
+// Universal Module Definition, supports CommonJS, AMD and simple script tag
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // expose as amd module
+        define([], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // expose as commonjs module
+        module.exports = factory();
+    } else {
+        // expose as window.OpenSeadragon
+        root.OpenSeadragon = factory();
+    }
+}(this, function () {
+    return OpenSeadragon;
+}));
