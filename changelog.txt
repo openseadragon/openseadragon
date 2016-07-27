@@ -3,7 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 2.2.2: (in progress)
 
-*  Fixed CORS bug in IE 10 (#967)
+* Fixed CORS bug in IE 10 (#967)
+* Added support for commonjs (#984)
 
 2.2.1:
 
