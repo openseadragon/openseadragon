@@ -967,10 +967,14 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
 
     resetCoverage( tiledImage.coverage, level );
 
-    if ( !tiledImage.wrapHorizontal ) {
+    if ( tiledImage.wrapHorizontal ) {
+        tileTL.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
+    } else {
         tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
     }
-    if ( !tiledImage.wrapVertical ) {
+    if ( tiledImage.wrapVertical ) {
+        tileTL.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
+    } else {
         tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
     }
 
