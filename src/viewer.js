@@ -1267,7 +1267,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.compositeOperation = this.compositeOperation;
         }
         if (options.crossOriginPolicy === undefined) {
-            options.crossOriginPolicy = options.tileSource.crossOriginPolicy ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
+            options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
         }
 
         var myQueueItem = {
@@ -1331,7 +1331,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._loadQueue.push(myQueueItem);
 
-        getTileSourceImplementation( this, options.tileSource, function( tileSource ) {
+        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
 
             myQueueItem.tileSource = tileSource;
 
@@ -2115,7 +2115,7 @@ function _getSafeElemSize (oElement) {
  * @function
  * @private
  */
-function getTileSourceImplementation( viewer, tileSource, successCallback,
+function getTileSourceImplementation( viewer, tileSource, imgOptions, successCallback,
     failCallback ) {
     var _this = viewer;
 
@@ -2149,7 +2149,8 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
             //If its still a string it means it must be a url at this point
             tileSource = new $.TileSource({
                 url: tileSource,
-                crossOriginPolicy: viewer.crossOriginPolicy,
+                crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
+                    imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
@@ -2161,8 +2162,10 @@ function getTileSourceImplementation( viewer, tileSource, successCallback,
             } );
 
         } else if ($.isPlainObject(tileSource) || tileSource.nodeType) {
-            if (!tileSource.crossOriginPolicy && viewer.crossOriginPolicy) {
-                tileSource.crossOriginPolicy = viewer.crossOriginPolicy;
+            if (tileSource.crossOriginPolicy === undefined &&
+                (imgOptions.crossOriginPolicy !== undefined || viewer.crossOriginPolicy !== undefined)) {
+                tileSource.crossOriginPolicy = imgOptions.crossOriginPolicy !== undefined ?
+                    imgOptions.crossOriginPolicy : viewer.crossOriginPolicy;
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
