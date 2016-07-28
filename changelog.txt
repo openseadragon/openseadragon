@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * Fixed CORS bug in IE 10 (#967)
 * Added support for commonjs (#984)
+* Added an option to addTiledImage to change the crossOriginPolicy (#981)
 
 2.2.1:
 
