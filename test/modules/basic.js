@@ -365,4 +365,62 @@
 
     } );
 
+    asyncTest( 'CrossOriginPolicyOption', function () {
+
+        browserSupportsImgCrossOrigin(function(supported) {
+            if (!supported) {
+                expect(0);
+                start();
+            } else {
+                viewer.crossOriginPolicy = "Anonymous";
+                viewer.smoothTileEdgesMinZoom = Infinity;
+                viewer.addTiledImage( {
+                    tileSource: {
+                        type: 'legacy-image-pyramid',
+                        levels: [ {
+                            url: corsImg,
+                            width: 135,
+                            height: 155
+                        } ]
+                    },
+                    crossOriginPolicy : false
+                } );
+                viewer.addHandler('tile-drawn', function() {
+                    ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should be tainted.");
+                    start();
+                });
+            }
+        });
+
+    } );
+    asyncTest( 'CrossOriginPolicyTileSource', function () {
+
+        browserSupportsImgCrossOrigin(function(supported) {
+            if (!supported) {
+                expect(0);
+                start();
+            } else {
+                viewer.crossOriginPolicy = false;
+                viewer.smoothTileEdgesMinZoom = Infinity;
+                viewer.addTiledImage( {
+                    tileSource: {
+                        type: 'legacy-image-pyramid',
+                        levels: [ {
+                            url: corsImg,
+                            width: 135,
+                            height: 155
+                        } ],
+                        crossOriginPolicy : "Anonymous"
+                    }
+                } );
+                viewer.addHandler('tile-drawn', function() {
+                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should not be tainted.");
+                    start();
+                });
+            }
+        });
+
+    } );
 })();
