@@ -171,9 +171,7 @@
          * @param {Number} level
          * @param {OpenSeadragon.Point} point
          */
-        getTileAtPoint: function (level, point) {
-            return new $.Point(0, 0);
-        },
+        getTileAtPoint: $.TileSource.prototype.getTileAtPoint,
         /**
          * Retrieves a tile url
          * @function
