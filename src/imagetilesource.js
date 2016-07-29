@@ -167,12 +167,6 @@
             }
         },
         /**
-         * @function
-         * @param {Number} level
-         * @param {OpenSeadragon.Point} point
-         */
-        getTileAtPoint: $.TileSource.prototype.getTileAtPoint,
-        /**
          * Retrieves a tile url
          * @function
          * @param {Number} level Level of the tile
