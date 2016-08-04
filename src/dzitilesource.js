@@ -197,10 +197,10 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
             xMax = xMin + rect.width * scale;
             yMax = yMin + rect.height * scale;
 
-            xMin = Math.floor( xMin / this.tileSize );
-            yMin = Math.floor( yMin / this.tileSize );
-            xMax = Math.ceil( xMax / this.tileSize );
-            yMax = Math.ceil( yMax / this.tileSize );
+            xMin = Math.floor( xMin / this._tileWidth );
+            yMin = Math.floor( yMin / this._tileWidth );
+            xMax = Math.ceil( xMax / this._tileWidth );
+            yMax = Math.ceil( yMax / this._tileWidth );
 
             if ( xMin <= x && x < xMax && yMin <= y && y < yMax ) {
                 return true;
