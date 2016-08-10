@@ -276,7 +276,6 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
             }
 
             this.currentPage = page;
-            $.getElement( element.id + '-displayregion' ).focus();
             onStripEnter.call( this, { eventSource: this.innerTracker } );
         }
     },

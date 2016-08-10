@@ -1,8 +1,30 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.1.1: (in progress)
+2.2.2: (in progress)
 
+* Fixed CORS bug in IE 10 (#967)
+* Added support for commonjs (#984)
+* Added an option to addTiledImage to change the crossOriginPolicy (#981)
+* Fixed issue with tiles not appearing with wrapHorizontal/wrapVertical if you pan too far away from the origin (#987)
+
+2.2.1:
+
+* Fixed problems with zoom/pan constraints with certain extreme settings (#965)
+* Fixed an issue causing the browser to crash on iOS (#966)
+
+2.2.0:
+
+* BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
+    Viewport.contentAspectY have been removed. (#846)
+* BREAKING CHANGE: The Overlay.getBounds method now takes the viewport as parameter. (#896)
+* DEPRECATION: Overlay.scales, Overlay.bounds and Overlay.position have been deprecated. (#896)
+    * Overlay.width !== null should be used to test whether the overlay scales horizontally
+    * Overlay.height !== null should be used to test whether the overlay scales vertically
+    * The Overlay.getBounds method should be used to get the bounds of the overlay in viewport coordinates
+    * Overlay.location replaces Overlay.position
+* DEPRECATION: Viewport.setHomeBounds has been deprecated (#846)
+* DEPRECATION: the Viewport constructor is now ignoring the contentSize option (#846)
 * Tile edge smoothing at high zoom (#764)
 * Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
 * Now supporting rotation in the Rect class (#782)
@@ -15,6 +37,29 @@ OPENSEADRAGON CHANGELOG
 * Added globalCompositeOperation option for tiledImage, to allow for different transfer modes (#814)
 * Added Viewer.addSimpleImage method for easily adding non-tiled images (#827)
 * DziTileSource now works properly with DZI files that have no extension (#835)
+* Fixed content clipping with rotation (#463, #567 and #833)
+* Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
+* Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
+* Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
+* Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
+* Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
+* Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
+* Fixed: Images with transparency were clearing images layered below them (#861)
+* Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
+* Added addOnceHandler method to EventSource (#887)
+* Added TiledImage.fitBounds method (#888)
+* Overlays can now be scaled in a single dimension by providing a point location and either width or height (#896)
+* Added full rotation support to overlays (#729, #193)
+* Viewport.goHome() now takes clipping into account (#910)
+* Improved zoom to point (#923)
+* Optimized sketch canvas clearing and blending for images with opacity or transfer modes (#927)
+* Now taking rotation into account in viewport getBounds and fitBounds methods (#934)
+* Added option to disable navigator auto-fade (#935)
+* Fixed issue with maintaining viewport position with full screen (#940)
+* Fixed an issue with simultaneous touch events (#930)
+* Avoid loading clipped out tiles (#939)
+* Improved precision for subtle moves with fitBounds (#939)
+* Fixed an issue in viewer.addTiledImage with replace:true when viewer has navigator (#948)
 
 2.1.0:
 

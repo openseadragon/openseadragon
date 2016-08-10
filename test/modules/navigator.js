@@ -78,9 +78,11 @@
 
         if (navigator === null) {
             navigator = $(".navigator");
-            navigatorScaleFactor = Math.min(navigator.width() / viewer.viewport.contentSize.x, navigator.height() / viewer.viewport.contentSize.y);
-            displayRegionWidth = viewer.viewport.contentSize.x * navigatorScaleFactor;
-            displayRegionHeight = viewer.viewport.contentSize.y * navigatorScaleFactor;
+            navigatorScaleFactor = Math.min(
+                navigator.width() / viewer.viewport._contentSize.x,
+                navigator.height() / viewer.viewport._contentSize.y);
+            displayRegionWidth = viewer.viewport._contentSize.x * navigatorScaleFactor;
+            displayRegionHeight = viewer.viewport._contentSize.y * navigatorScaleFactor;
             contentStartFromLeft = (navigator.width() - displayRegionWidth) / 2;
             contentStartFromTop = (navigator.height() - displayRegionHeight) / 2;
         }
@@ -91,8 +93,8 @@
         regionBoundsInPoints = new OpenSeadragon.Rect(expectedDisplayRegionXLocation, expectedDisplayRegionYLocation, expectedDisplayRegionWidth, expectedDisplayRegionHeight);
 
         if (debug) {
-            console.log('Image width: ' + viewer.viewport.contentSize.x + '\n' +
-                        'Image height: ' + viewer.viewport.contentSize.y + '\n' +
+            console.log('Image width: ' + viewer.viewport._contentSize.x + '\n' +
+                        'Image height: ' + viewer.viewport._contentSize.y + '\n' +
                         'navigator.width(): ' + navigator.width() + '\n' +
                         'navigator.height(): ' + navigator.height() + '\n' +
                         'navigatorScaleFactor: ' + navigatorScaleFactor + '\n' +
@@ -865,6 +867,59 @@
             start();
         });
 
+    });
+
+    asyncTest('Viewer rotation applied to navigator by default', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 45,
+                "Rotation set in constructor should be applied to navigator by default.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 90,
+                "Rotation set by setRotation should be applied to navigator by default.");
+
+            start();
+        });
+    });
+
+    asyncTest('Viewer rotation not applied to navigator when navigatorRotate=false', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45,
+            navigatorRotate: false
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set in constructor should not be applied to navigator when navigatorRotate is false.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set by setRotation should not be applied to navigator when navigatorRotate is false.");
+
+            start();
+        });
     });
 
 })();

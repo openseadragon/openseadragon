@@ -190,7 +190,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.aspectRatio = ( options.width && options.height ) ?
             (  options.width / options.height ) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
-        
+
         if ( this.tileSize ){
             this._tileWidth = this._tileHeight = this.tileSize;
             delete this.tileSize;
@@ -212,7 +212,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
                 this._tileHeight = 0;
             }
         }
-        
+
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
         this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
@@ -240,7 +240,7 @@ $.TileSource.prototype = {
         );
         return this._tileWidth;
     },
-    
+
     /**
      * Return the tileWidth for a given level.
      * Subclasses should override this if tileWidth can be different at different levels
@@ -331,7 +331,7 @@ $.TileSource.prototype = {
               Math.floor( rect.x / this.getTileWidth(i) ),
               Math.floor( rect.y / this.getTileHeight(i) )
             );
-            
+
             if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
                 break;
             }
@@ -345,11 +345,11 @@ $.TileSource.prototype = {
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function( level, point ) {
-        var pixel = point.times( this.dimensions.x ).times( this.getLevelScale(level) ),
-            tx = Math.floor( pixel.x / this.getTileWidth(level) ),
-            ty = Math.floor( pixel.y / this.getTileHeight(level) );
-
-        return new $.Point( tx, ty );
+        var numTiles = this.getNumTiles( level );
+        return new $.Point(
+            Math.floor( (point.x * numTiles.x) / 1 ),
+            Math.floor( (point.y * numTiles.y * this.dimensions.x) / this.dimensions.y )
+        );
     },
 
     /**
@@ -544,7 +544,7 @@ $.TileSource.prototype = {
 
     /**
      * Responsible for retriving the url which will return an image for the
-     * region speified by the given x, y, and level components.
+     * region specified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image

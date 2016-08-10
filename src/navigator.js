@@ -62,7 +62,7 @@ $.Navigator = function( options ){
         options.controlOptions  = {
             anchor:           $.ControlAnchor.TOP_RIGHT,
             attachToViewer:   true,
-            autoFade:         true
+            autoFade:         options.autoFade
         };
 
         if( options.position ){
@@ -199,11 +199,18 @@ $.Navigator = function( options ){
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
 
+    function rotate(degrees) {
+        _setTransformRotate(_this.displayRegionContainer, degrees);
+        _setTransformRotate(_this.displayRegion, -degrees);
+        _this.viewport.setRotation(degrees);
+    }
     if (options.navigatorRotate) {
+        var degrees = options.viewer.viewport ?
+            options.viewer.viewport.getRotation() :
+            options.viewer.degrees || 0;
+        rotate(degrees);
         options.viewer.addHandler("rotate", function (args) {
-            _setTransformRotate(_this.displayRegionContainer, args.degrees);
-            _setTransformRotate(_this.displayRegion, -args.degrees);
-            _this.viewport.setRotation(args.degrees);
+            rotate(args.degrees);
         });
     }
 
@@ -299,8 +306,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             this.updateSize();
         }
 
-        if( viewport && this.viewport ) {
-            bounds      = viewport.getBounds( true );
+        if (viewport && this.viewport) {
+            bounds      = viewport.getBoundsNoRotate(true);
             topleft     = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
             bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
