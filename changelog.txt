@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Added support for commonjs (#984)
 * Added an option to addTiledImage to change the crossOriginPolicy (#981)
 * Fixed issue with tiles not appearing with wrapHorizontal/wrapVertical if you pan too far away from the origin (#987)
+* The Viewer's tileSources option is now smarter about detecting JSON vs XML vs URL (#999)
 
 2.2.1:
 
