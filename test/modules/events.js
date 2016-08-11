@@ -761,7 +761,7 @@
         var epsilon = 0.0000001;
 
         function simulateClickAndDrag() {
-            $canvas.simulate( 'focus', event );
+            $canvas.simulate('focus');
             // Drag to pan
             Util.simulateViewerClickWithDrag( {
                 viewer: viewer,
@@ -780,7 +780,7 @@
                 dragDx: 0,
                 dragDy: 0
             } );
-            $canvas.simulate( 'blur', event );
+            $canvas.simulate('blur');
         }
 
         var onOpen = function() {
