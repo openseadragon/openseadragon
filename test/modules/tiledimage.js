@@ -207,8 +207,8 @@
 
             Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
                 var homeBounds = viewer.viewport.getHomeBounds();
-                var canvasClip = viewer.viewport
-                    .viewportToViewerElementRectangle(homeBounds);
+                var canvasClip = viewer.drawer
+                    .viewportToDrawerRectangle(homeBounds);
                 var precision = 0.00000001;
                 Util.assertRectangleEquals(rect, canvasClip, precision,
                     'clipping should be ' + canvasClip);
