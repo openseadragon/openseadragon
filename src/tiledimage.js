@@ -163,6 +163,8 @@ $.TiledImage = function( options ) {
 
     }, options );
 
+    this._fullyLoaded = false;
+
     this._xSpring = new $.Spring({
         initial: x,
         springStiffness: this.springStiffness,
@@ -216,6 +218,37 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     needsDraw: function() {
         return this._needsDraw;
+    },
+
+    /**
+     * @returns {Boolean} Whether all tiles necessary for this TiledImage to draw at the current view have been loaded.
+     */
+    getFullyLoaded: function() {
+        return this._fullyLoaded;
+    },
+
+    // private
+    _setFullyLoaded: function(flag) {
+        if (flag === this._fullyLoaded) {
+            return;
+        }
+
+        this._fullyLoaded = flag;
+
+        /**
+         * Fired when the TiledImage's "fully loaded" flag (whether all tiles necessary for this TiledImage
+         * to draw at the current view have been loaded) changes.
+         *
+         * @event fully-loaded-change
+         * @memberof OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {Boolean} fullyLoaded - The new "fully loaded" value.
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('fully-loaded-change', {
+            fullyLoaded: this._fullyLoaded
+        });
     },
 
     /**
@@ -914,8 +947,10 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if (best && !best.context2D) {
         loadTile( tiledImage, best, currentTime );
+        tiledImage._setFullyLoaded(false);
+    } else {
+        tiledImage._setFullyLoaded(true);
     }
-
 }
 
 
