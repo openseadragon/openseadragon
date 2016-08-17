@@ -81,10 +81,7 @@ $.Rect = function(x, y, width, height, degrees) {
     this.degrees = typeof(degrees) === "number" ? degrees : 0;
 
     // Normalizes the rectangle.
-    this.degrees = this.degrees % 360;
-    if (this.degrees < 0) {
-        this.degrees += 360;
-    }
+    this.degrees = $.positiveModulo(this.degrees, 360);
     var newTopLeft, newWidth;
     if (this.degrees >= 270) {
         newTopLeft = this.getTopRight();
@@ -442,12 +439,9 @@ $.Rect.prototype = {
      * @return {OpenSeadragon.Rect}
      */
     rotate: function(degrees, pivot) {
-        degrees = degrees % 360;
+        degrees = $.positiveModulo(degrees, 360);
         if (degrees === 0) {
             return this.clone();
-        }
-        if (degrees < 0) {
-            degrees += 360;
         }
 
         pivot = pivot || this.getCenter();

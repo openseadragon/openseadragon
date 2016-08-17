@@ -190,10 +190,7 @@ $.Point.prototype = {
         var sin;
         // Avoid float computations when possible
         if (degrees % 90 === 0) {
-            var d = degrees % 360;
-            if (d < 0) {
-                d += 360;
-            }
+            var d = $.positiveModulo(degrees, 360);
             switch (d) {
                 case 0:
                     cos = 1;

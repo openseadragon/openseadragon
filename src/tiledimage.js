@@ -159,8 +159,8 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
-        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
-
+        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation,
+        degrees:                0
     }, options );
 
     this._xSpring = new $.Spring({
@@ -274,13 +274,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [current=false] - Pass true for the current location; false for target location.
      */
     getBounds: function(current) {
-        if (current) {
-            return new $.Rect( this._xSpring.current.value, this._ySpring.current.value,
-                this._worldWidthCurrent, this._worldHeightCurrent );
-        }
-
-        return new $.Rect( this._xSpring.target.value, this._ySpring.target.value,
-            this._worldWidthTarget, this._worldHeightTarget );
+        return current ?
+            new $.Rect(
+                this._xSpring.current.value,
+                this._ySpring.current.value,
+                this._worldWidthCurrent,
+                this._worldHeightCurrent,
+                this.degrees) :
+            new $.Rect(
+                this._xSpring.target.value,
+                this._ySpring.target.value,
+                this._worldWidthTarget,
+                this._worldHeightTarget,
+                this.degrees);
     },
 
     // deprecated
@@ -304,7 +310,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bounds.x + clip.x,
                 bounds.y + clip.y,
                 clip.width,
-                clip.height);
+                clip.height,
+                this.degrees);
         }
         return bounds;
     },
@@ -660,6 +667,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         $.console.assert(!newClip || newClip instanceof $.Rect,
             "[TiledImage.setClip] newClip must be an OpenSeadragon.Rect or null");
 
+//TODO: should this._raiseBoundsChange(); be called?
+
         if (newClip instanceof $.Rect) {
             this._clip = newClip.clone();
         } else {
@@ -681,6 +690,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setOpacity: function(opacity) {
         this.opacity = opacity;
+        this._needsDraw = true;
+    },
+
+    /**
+     * Get the current rotation of this tiled image in degrees.
+     * @returns {Number} the current rotation of this tiled image in degrees.
+     */
+    getRotation: function() {
+        return this.degrees;
+    },
+
+    /**
+     * Set the current rotation of this tiled image in degrees.
+     * @param {Number} the rotation in degrees.
+     */
+    setRotation: function(degrees) {
+        this.degrees = $.positiveModulo(degrees, 360);
         this._needsDraw = true;
     },
 
@@ -803,7 +829,8 @@ function updateViewport( tiledImage ) {
     }
 
     if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
-        var tiledImageBounds = tiledImage.getClippedBounds(true);
+        var tiledImageBounds = tiledImage.getClippedBounds(true)
+            .getBoundingBox();
         var intersection = viewportBounds.intersection(tiledImageBounds);
         if (intersection === null) {
             return;
@@ -1464,10 +1491,20 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer._clear(true, bounds);
     }
 
-    // When scaling, we must rotate only when blending the sketch canvas to avoid
-    // interpolation
-    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
-        tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, useSketch);
+    // When scaling, we must rotate only when blending the sketch canvas to
+    // avoid interpolation
+    if (!sketchScale) {
+        if (tiledImage.viewport.degrees !== 0) {
+            tiledImage._drawer._offsetForRotation(
+                tiledImage.viewport.degrees, useSketch);
+        }
+        if (tiledImage.degrees !== 0) {
+            tiledImage._drawer._offsetForRotation(
+                tiledImage.degrees,
+                tiledImage.viewport.pixelFromPointNoRotate(
+                    tiledImage.getBounds(true).getTopLeft(), true),
+                useSketch);
+        }
     }
 
     var usedClip = false;
@@ -1535,14 +1572,28 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
 
-    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
-        tiledImage._drawer._restoreRotationChanges(useSketch);
+    if (!sketchScale) {
+        if (tiledImage.degrees !== 0) {
+            tiledImage._drawer._restoreRotationChanges(useSketch);
+        }
+        if (tiledImage.viewport.degrees !== 0) {
+            tiledImage._drawer._restoreRotationChanges(useSketch);
+        }
     }
 
     if (useSketch) {
-        var offsetForRotation = tiledImage.viewport.degrees !== 0 && sketchScale;
-        if (offsetForRotation) {
-            tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, false);
+        if (sketchScale) {
+            if (tiledImage.viewport.degrees !== 0) {
+                tiledImage._drawer._offsetForRotation(
+                    tiledImage.viewport.degrees, false);
+            }
+            if (tiledImage.degrees !== 0) {
+                tiledImage._drawer._offsetForRotation(
+                    tiledImage.degrees,
+                    tiledImage.viewport.pixelFromPointNoRotate(
+                        tiledImage.getBounds(true).getTopLeft(), true),
+                    useSketch);
+            }
         }
         tiledImage._drawer.blendSketch({
             opacity: tiledImage.opacity,
@@ -1551,8 +1602,13 @@ function drawTiles( tiledImage, lastDrawn ) {
             compositeOperation: tiledImage.compositeOperation,
             bounds: bounds
         });
-        if (offsetForRotation) {
-            tiledImage._drawer._restoreRotationChanges(false);
+        if (sketchScale) {
+            if (tiledImage.degrees !== 0) {
+                tiledImage._drawer._restoreRotationChanges(false);
+            }
+            if (tiledImage.viewport.degrees !== 0) {
+                tiledImage._drawer._restoreRotationChanges(false);
+            }
         }
     }
     drawDebugInfo( tiledImage, lastDrawn );
@@ -1563,7 +1619,8 @@ function drawDebugInfo( tiledImage, lastDrawn ) {
         for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
             var tile = lastDrawn[ i ];
             try {
-                tiledImage._drawer.drawDebugInfo( tile, lastDrawn.length, i );
+                tiledImage._drawer.drawDebugInfo(
+                    tile, lastDrawn.length, i, tiledImage);
             } catch(e) {
                 $.console.error(e);
             }

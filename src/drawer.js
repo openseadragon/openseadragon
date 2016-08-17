@@ -464,7 +464,7 @@ $.Drawer.prototype = {
     },
 
     // private
-    drawDebugInfo: function( tile, count, i ){
+    drawDebugInfo: function(tile, count, i, tiledImage) {
         if ( !this.useCanvas ) {
             return;
         }
@@ -478,6 +478,12 @@ $.Drawer.prototype = {
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation(this.viewport.degrees);
+        }
+        if (tiledImage.degrees) {
+            this._offsetForRotation(
+                tiledImage.degrees,
+                tiledImage.viewport.pixelFromPointNoRotate(
+                    tiledImage.getBounds(true).getTopLeft(), true));
         }
 
         context.strokeRect(
@@ -541,6 +547,9 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._restoreRotationChanges();
         }
+        if (tiledImage.degrees) {
+            this._restoreRotationChanges();
+        }
         context.restore();
     },
 
@@ -574,17 +583,19 @@ $.Drawer.prototype = {
         return new $.Point(canvas.width, canvas.height);
     },
 
-    // private
-    _offsetForRotation: function(degrees, useSketch) {
-        var cx = this.canvas.width / 2;
-        var cy = this.canvas.height / 2;
+    getCanvasCenter: function() {
+        return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+    },
 
+    // private
+    _offsetForRotation: function(degrees, point, useSketch) {
+        point = point || this.getCanvasCenter();
         var context = this._getContext(useSketch);
         context.save();
 
-        context.translate(cx, cy);
+        context.translate(point.x, point.y);
         context.rotate(Math.PI / 180 * degrees);
-        context.translate(-cx, -cy);
+        context.translate(-point.x, -point.y);
     },
 
     // private
