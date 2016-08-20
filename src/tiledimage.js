@@ -536,7 +536,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     viewportToImageZoom: function( viewportZoom ) {
         var ratio = this._scaleSpring.current.value *
-                this.viewport._containerInnerSize.x / this.source.dimensions.x;
+                this.viewport.containerSize.x / this.source.dimensions.x;
         return ratio * viewportZoom ;
     },
 
@@ -553,7 +553,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     imageToViewportZoom: function( imageZoom ) {
         var ratio = this._scaleSpring.current.value *
-                this.viewport._containerInnerSize.x / this.source.dimensions.x;
+                this.viewport.containerSize.x / this.source.dimensions.x;
         return imageZoom / ratio;
     },
 
@@ -803,7 +803,7 @@ function updateViewport( tiledImage ) {
         best            = null,
         haveDrawn       = false,
         currentTime     = $.now(),
-        viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
+        viewportBounds  = tiledImage.viewport.getBounds(true),
         zeroRatioC      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( 0 ),
             true

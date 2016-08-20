@@ -107,6 +107,88 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    // ----------
+    asyncTest('Single image coordinates conversions with viewport margins', function () {
+
+        viewer.addOnceHandler("open", function () {
+            var viewport = viewer.viewport;
+            var tiledImage = viewer.world.getItemAt(0);
+
+            var point0_0 = new OpenSeadragon.Point(0, 0);
+            var point = viewport.viewerElementToViewportCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-0.25, -0.125), point,
+                'When opening, viewer coordinate 0,0 is point -0.25,-0.125');
+            var viewportPixel = viewport.viewerElementToImageCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-250, -125), viewportPixel,
+                'When opening, viewport coordinate 0,0 is viewer pixel -250,-125');
+            var imagePixel = tiledImage.viewerElementToImageCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-250, -125), imagePixel,
+                'When opening, viewer coordinate 0,0 is image pixel -250,-125');
+
+            var viewerWidth = $(viewer.element).width();
+            var viewerTopRight = new OpenSeadragon.Point(viewerWidth, 0);
+
+            point = viewport.viewerElementToViewportCoordinates(viewerTopRight);
+            pointEqual(new OpenSeadragon.Point(1, -0.125), point,
+                'Viewer top right has viewport coordinates -0.125,0.');
+            imagePixel = viewport.viewerElementToImageCoordinates(viewerTopRight);
+            pointEqual(new OpenSeadragon.Point(-250, -125), viewportPixel,
+                'Viewer top right has image pixel coordinates -250,-125.');
+
+            checkPoint(' after opening');
+            viewer.addOnceHandler('animation-finish', function() {
+                checkPoint(' after zoom and pan');
+                start();
+            });
+            viewer.viewport.zoomTo(0.8).panTo(new OpenSeadragon.Point(0.1, 0.2));
+        });
+        viewer.viewport.setMargins({
+            left: 100
+        });
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    // ----------
+    asyncTest('Single image coordinates conversions with viewport margins and rotation', function () {
+
+        viewer.addOnceHandler("open", function () {
+            var viewport = viewer.viewport;
+            var tiledImage = viewer.world.getItemAt(0);
+
+            var point0_0 = new OpenSeadragon.Point(0, 0);
+            var point = viewport.viewerElementToViewportCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-0.875, 0.625), point,
+                'When opening, viewer coordinate 0,0 is point -0.875,0.625');
+            var viewportPixel = viewport.viewerElementToImageCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-875, 625), viewportPixel,
+                'When opening, viewport coordinate 0,0 is viewer pixel -875,625');
+            var imagePixel = tiledImage.viewerElementToImageCoordinates(point0_0);
+            pointEqual(new OpenSeadragon.Point(-875, 625), imagePixel,
+                'When opening, viewer coordinate 0,0 is image pixel -875,625');
+
+            var viewerWidth = $(viewer.element).width();
+            var viewerTopRight = new OpenSeadragon.Point(viewerWidth, 0);
+
+            point = viewport.viewerElementToViewportCoordinates(viewerTopRight);
+            pointEqual(new OpenSeadragon.Point(0.375, -0.625), point,
+                'Viewer top right has viewport coordinates 0.375,-0.625.');
+            imagePixel = viewport.viewerElementToImageCoordinates(viewerTopRight);
+            pointEqual(new OpenSeadragon.Point(-875, 625), viewportPixel,
+                'Viewer top right has image pixel coordinates -875,625.');
+
+            checkPoint(' after opening');
+            viewer.addOnceHandler('animation-finish', function() {
+                checkPoint(' after zoom and pan');
+                start();
+            });
+            viewer.viewport.zoomTo(0.8).panTo(new OpenSeadragon.Point(0.1, 0.2));
+        });
+        viewer.viewport.setMargins({
+            left: 100
+        });
+        viewer.viewport.setRotation(45);
+        viewer.open('/test/data/testpattern.dzi');
+    });
 
     // ---------
     asyncTest('Multiple images coordinates conversion', function () {

@@ -111,8 +111,6 @@ $.Viewport = function( options ) {
 
     }, options );
 
-    this._updateContainerInnerSize();
-
     this.centerSpringX = new $.Spring({
         initial: 0,
         springStiffness: this.springStiffness,
@@ -220,7 +218,12 @@ $.Viewport.prototype = {
             return this.defaultZoomLevel;
         }
 
-        var aspectFactor = this._contentAspectRatio / this.getAspectRatio();
+        var homeWidth = this.containerSize.x - this._margins.left -
+            this._margins.right;
+        var homeHeight = this.containerSize.y - this._margins.top -
+            this._margins.bottom;
+        var homeAspectRatio = homeWidth / homeHeight;
+        var aspectFactor = this._contentAspectRatio / homeAspectRatio;
         var output;
         if (this.homeFillsViewer) { // fill the viewer and clip the image
             output = aspectFactor >= 1 ? aspectFactor : 1;
@@ -228,7 +231,8 @@ $.Viewport.prototype = {
             output = aspectFactor >= 1 ? 1 : aspectFactor;
         }
 
-        return output / this._contentBounds.width;
+        var marginRatio = homeWidth / this.containerSize.x;
+        return output * marginRatio / this._contentBounds.width;
     },
 
     /**
@@ -237,7 +241,8 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} The home bounds in vewport coordinates.
      */
     getHomeBounds: function() {
-        return this.getHomeBoundsNoRotate().rotate(-this.getRotation());
+        return this._getHomeBoundsNoRotate(this._contentBounds)
+            .rotate(-this.getRotation(), this._contentBounds.getCenter());
     },
 
     /**
@@ -248,16 +253,50 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} The home bounds in vewport coordinates.
      */
     getHomeBoundsNoRotate: function() {
-        var center = this._contentBounds.getCenter();
-        var width  = 1.0 / this.getHomeZoom();
+        return this._getHomeBoundsNoRotate(this._contentBoundsNoRotate);
+    },
+
+    // private
+    _getHomeBoundsNoRotate: function(contentBounds) {
+        var homeZoom = this.getHomeZoom();
+        var width  = 1.0 / homeZoom;
         var height = width / this.getAspectRatio();
 
+        var pointFromPixelFactor = this.containerSize.x * homeZoom;
+        var marginLeft = this._margins.left / pointFromPixelFactor;
+        var marginRight = this._margins.right / pointFromPixelFactor;
+        var marginTop = this._margins.top / pointFromPixelFactor;
+        var marginBottom = this._margins.bottom / pointFromPixelFactor;
+
+        var horizontalMargins = width - contentBounds.width;
+        var x = horizontalMargins / 2;
+        if (x >= 0) {
+            if (x < marginLeft) {
+                x = marginLeft;
+            }
+            var currentRightMargin = width - x - contentBounds.width;
+            if (currentRightMargin < marginRight) {
+                x -= marginRight - currentRightMargin;
+            }
+        }
+
+        var verticalMargins = height - contentBounds.height;
+        var y = verticalMargins / 2;
+        if (y >= 0) {
+            if (y < marginTop) {
+                y = marginTop;
+            }
+            var currentBottomMargin = height - y - contentBounds.height;
+            if (currentBottomMargin < marginBottom) {
+                y -= marginBottom - currentBottomMargin;
+            }
+        }
+
         return new $.Rect(
-            center.x - (width / 2.0),
-            center.y - (height / 2.0),
+            contentBounds.x - x,
+            contentBounds.y - y,
             width,
-            height
-        );
+            height);
     },
 
     /**
@@ -302,7 +341,8 @@ $.Viewport.prototype = {
     getMaxZoom: function() {
         var zoom = this.maxZoomLevel;
         if (!zoom) {
-            zoom = this._contentSize.x * this.maxZoomPixelRatio / this._containerInnerSize.x;
+            zoom = this._contentSize.x * this.maxZoomPixelRatio;
+            zoom /= this.containerSize.x;
             zoom /= this._contentBounds.width;
         }
 
@@ -313,7 +353,7 @@ $.Viewport.prototype = {
      * @function
      */
     getAspectRatio: function() {
-        return this._containerInnerSize.x / this._containerInnerSize.y;
+        return this.containerSize.x / this.containerSize.y;
     },
 
     /**
@@ -351,7 +391,6 @@ $.Viewport.prototype = {
             bottom: 0
         }, margins);
 
-        this._updateContainerInnerSize();
         if (this.viewer) {
             this.viewer.forceRedraw();
         }
@@ -395,6 +434,10 @@ $.Viewport.prototype = {
      * including the space taken by margins, in viewport coordinates.
      */
     getBoundsWithMargins: function(current) {
+        $.console.error("[Viewport.getBoundsWithMargins] " +
+            "this function is deprecated; [Viewport.getBounds] " +
+            "already takes the margins into account.");
+        return this.getBounds(current);
         return this.getBoundsNoRotateWithMargins(current).rotate(
             -this.getRotation(), this.getCenter(current));
     },
@@ -406,13 +449,10 @@ $.Viewport.prototype = {
      * including the space taken by margins, in viewport coordinates.
      */
     getBoundsNoRotateWithMargins: function(current) {
-        var bounds = this.getBoundsNoRotate(current);
-        var factor = this._containerInnerSize.x * this.getZoom(current);
-        bounds.x -= this._margins.left / factor;
-        bounds.y -= this._margins.top / factor;
-        bounds.width += (this._margins.left + this._margins.right) / factor;
-        bounds.height += (this._margins.top + this._margins.bottom) / factor;
-        return bounds;
+        $.console.error("[Viewport.getBoundsNoRotateWithMargins] " +
+            "this function is deprecated; [Viewport.getBoundsNoRotate] " +
+            "already takes the margins into account.");
+        return this.getBoundsNoRotate(current);
     },
 
     /**
@@ -457,7 +497,7 @@ $.Viewport.prototype = {
 
         newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
         deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
-        deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
+        deltaZoomPoints = deltaZoomPixels.divide(this.containerSize.x * zoom);
 
         return centerTarget.plus( deltaZoomPoints );
     },
@@ -898,8 +938,6 @@ $.Viewport.prototype = {
         this.containerSize.x = newContainerSize.x;
         this.containerSize.y = newContainerSize.y;
 
-        this._updateContainerInnerSize();
-
         if ( maintain ) {
             // TODO: widthDeltaFactor will always be 1; probably not what's intended
             widthDeltaFactor = newContainerSize.x / this.containerSize.x;
@@ -926,14 +964,6 @@ $.Viewport.prototype = {
         }
 
         return this.fitBounds( newBounds, true );
-    },
-
-    // private
-    _updateContainerInnerSize: function() {
-        this._containerInnerSize = new $.Point(
-            Math.max(1, this.containerSize.x - (this._margins.left + this._margins.right)),
-            Math.max(1, this.containerSize.y - (this._margins.top + this._margins.bottom))
-        );
     },
 
     /**
@@ -987,7 +1017,7 @@ $.Viewport.prototype = {
      */
     deltaPixelsFromPointsNoRotate: function(deltaPoints, current) {
         return deltaPoints.times(
-            this._containerInnerSize.x * this.getZoom(current)
+            this.containerSize.x * this.getZoom(current)
         );
     },
 
@@ -1016,7 +1046,7 @@ $.Viewport.prototype = {
      */
     deltaPointsFromPixelsNoRotate: function(deltaPixels, current) {
         return deltaPixels.divide(
-            this._containerInnerSize.x * this.getZoom(current)
+            this.containerSize.x * this.getZoom(current)
         );
     },
 
@@ -1063,9 +1093,7 @@ $.Viewport.prototype = {
         return point.minus(
             bounds.getTopLeft()
         ).times(
-            this._containerInnerSize.x / bounds.width
-        ).plus(
-            new $.Point(this._margins.left, this._margins.top)
+            this.containerSize.x / bounds.width
         );
     },
 
@@ -1087,10 +1115,8 @@ $.Viewport.prototype = {
      */
     pointFromPixelNoRotate: function(pixel, current) {
         var bounds = this.getBoundsNoRotate(current);
-        return pixel.minus(
-            new $.Point(this._margins.left, this._margins.top)
-        ).divide(
-            this._containerInnerSize.x / bounds.width
+        return pixel.divide(
+            this.containerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
         );
@@ -1448,7 +1474,7 @@ $.Viewport.prototype = {
         }
 
         var imageWidth = this._contentSizeNoRotate.x;
-        var containerWidth = this._containerInnerSize.x;
+        var containerWidth = this.containerSize.x;
         var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
@@ -1482,7 +1508,7 @@ $.Viewport.prototype = {
         }
 
         var imageWidth = this._contentSizeNoRotate.x;
-        var containerWidth = this._containerInnerSize.x;
+        var containerWidth = this.containerSize.x;
         var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
