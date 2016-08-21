@@ -292,6 +292,35 @@
         });
     });
 
+    // ----------
+    asyncTest('rotation', function() {
+
+        function testDefaultRotation() {
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getRotation(), 0, 'image has default rotation');
+
+            image.setRotation(400);
+            strictEqual(image.getRotation(), 40, 'rotation is set correctly');
+
+            viewer.addOnceHandler('open', testTileSourceRotation);
+            viewer.open({
+                tileSource: '/test/data/testpattern.dzi',
+                degrees: -60
+            });
+        }
+
+        function testTileSourceRotation() {
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getRotation(), 300, 'image has correct rotation');
+            start();
+        }
+
+        viewer.addOnceHandler('open', testDefaultRotation);
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi',
+        });
+    });
+
     asyncTest('fitBounds', function() {
 
         function assertRectEquals(actual, expected, message) {

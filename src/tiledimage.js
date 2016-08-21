@@ -132,6 +132,9 @@ $.TiledImage = function( options ) {
     var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
     delete options.fitBoundsPlacement;
 
+    this._degrees = $.positiveModulo(options.degrees || 0, 360);
+    delete options.degrees;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -159,8 +162,7 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
-        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation,
-        degrees:                0
+        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
 
     this._xSpring = new $.Spring({
@@ -280,13 +282,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 this._ySpring.current.value,
                 this._worldWidthCurrent,
                 this._worldHeightCurrent,
-                this.degrees) :
+                this._degrees) :
             new $.Rect(
                 this._xSpring.target.value,
                 this._ySpring.target.value,
                 this._worldWidthTarget,
                 this._worldHeightTarget,
-                this.degrees);
+                this._degrees);
     },
 
     // deprecated
@@ -311,7 +313,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bounds.y + clip.y,
                 clip.width,
                 clip.height,
-                this.degrees);
+                this._degrees);
         }
         return bounds;
     },
@@ -698,7 +700,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Number} the current rotation of this tiled image in degrees.
      */
     getRotation: function() {
-        return this.degrees;
+        return this._degrees;
     },
 
     /**
@@ -706,8 +708,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} the rotation in degrees.
      */
     setRotation: function(degrees) {
-        this.degrees = $.positiveModulo(degrees, 360);
+        degrees = $.positiveModulo(degrees, 360);
+        if (this._degrees === degrees) {
+            return;
+        }
+        this._degrees = degrees;
         this._needsDraw = true;
+        this._raiseBoundsChange();
     },
 
     /**
@@ -1498,9 +1505,9 @@ function drawTiles( tiledImage, lastDrawn ) {
             tiledImage._drawer._offsetForRotation(
                 tiledImage.viewport.degrees, useSketch);
         }
-        if (tiledImage.degrees !== 0) {
+        if (tiledImage._degrees !== 0) {
             tiledImage._drawer._offsetForRotation(
-                tiledImage.degrees,
+                tiledImage._degrees,
                 tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage.getBounds(true).getTopLeft(), true),
                 useSketch);
@@ -1573,7 +1580,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (!sketchScale) {
-        if (tiledImage.degrees !== 0) {
+        if (tiledImage._degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
         if (tiledImage.viewport.degrees !== 0) {
@@ -1587,9 +1594,9 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage._drawer._offsetForRotation(
                     tiledImage.viewport.degrees, false);
             }
-            if (tiledImage.degrees !== 0) {
+            if (tiledImage._degrees !== 0) {
                 tiledImage._drawer._offsetForRotation(
-                    tiledImage.degrees,
+                    tiledImage._degrees,
                     tiledImage.viewport.pixelFromPointNoRotate(
                         tiledImage.getBounds(true).getTopLeft(), true),
                     useSketch);
@@ -1603,7 +1610,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             bounds: bounds
         });
         if (sketchScale) {
-            if (tiledImage.degrees !== 0) {
+            if (tiledImage._degrees !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
             if (tiledImage.viewport.degrees !== 0) {
