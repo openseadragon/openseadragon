@@ -1749,7 +1749,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 if( this.toolbar ){
                     this.toolbar.addControl(
                         this.navControl,
-                        {anchor: $.ControlAnchor.TOP_LEFT}
+                        {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 } else {
                     this.addControl(
@@ -2124,9 +2124,11 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
 
     //allow plain xml strings or json strings to be parsed here
     if ( $.type( tileSource ) == 'string' ) {
-        if ( tileSource.match( /\s*<.*/ ) ) {
+        //xml should start with "<" and end with ">"
+        if ( tileSource.match( /^\s*<.*>\s*$/ ) ) {
             tileSource = $.parseXml( tileSource );
-        } else if ( tileSource.match( /\s*[\{\[].*/ ) ) {
+        //json should start with "{" or "[" and end with "}" or "]"
+        } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
             tileSource = $.parseJSON(tileSource);
         }
     }

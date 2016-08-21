@@ -207,8 +207,8 @@
 
             Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
                 var homeBounds = viewer.viewport.getHomeBounds();
-                var canvasClip = viewer.viewport
-                    .viewportToViewerElementRectangle(homeBounds);
+                var canvasClip = viewer.drawer
+                    .viewportToDrawerRectangle(homeBounds);
                 var precision = 0.00000001;
                 Util.assertRectangleEquals(rect, canvasClip, precision,
                     'clipping should be ' + canvasClip);
@@ -222,6 +222,7 @@
         });
     });
 
+    // ----------
     asyncTest('getClipBounds', function() {
         var clip = new OpenSeadragon.Rect(100, 200, 800, 500);
 
@@ -367,6 +368,7 @@
         ]);
     });
 
+    // ----------
     asyncTest('fitBounds in constructor', function() {
 
         function assertRectEquals(actual, expected, message) {
@@ -412,6 +414,7 @@
             }]);
     });
 
+    // ----------
     asyncTest('fitBounds with clipping', function() {
 
         function assertRectEquals(actual, expected, message) {
@@ -455,4 +458,40 @@
                 fitBoundsPlacement: OpenSeadragon.Placement.TOP_LEFT
             }]);
     });
+
+    // ----------
+    asyncTest('fullyLoaded', function() {
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var image = viewer.world.getItemAt(0);
+            equal(image.getFullyLoaded(), false, 'not fully loaded at first');
+
+            var count = 0;
+
+            var fullyLoadedChangeHandler = function(event) {
+                if (count === 0) {
+                    equal(event.fullyLoaded, true, 'event includes true fullyLoaded property');
+                    equal(image.getFullyLoaded(), true, 'image is fully loaded after event');
+                    viewer.viewport.zoomBy(5, null, true);
+                } else if (count === 1) {
+                    equal(event.fullyLoaded, false, 'event includes false fullyLoaded property');
+                    equal(image.getFullyLoaded(), false, 'image is not fully loaded after zoom');
+                } else {
+                    image.removeHandler('fully-loaded-change', fullyLoadedChangeHandler);
+                    equal(image.getFullyLoaded(), true, 'image is once again fully loaded');
+                    start();
+                }
+
+                count++;
+            };
+
+            image.addHandler('fully-loaded-change', fullyLoadedChangeHandler);
+        });
+
+        viewer.open([{
+            tileSource: '/test/data/tall.dzi',
+        }]);
+    });
+
 })();
