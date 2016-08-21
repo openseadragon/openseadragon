@@ -292,7 +292,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     draw: function() {
         if (this.opacity !== 0) {
             this._midDraw = true;
-            updateViewport(this);
+            this._updateViewport();
             this._midDraw = false;
         }
     },
@@ -817,187 +817,168 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     // private
     _isBottomItem: function() {
         return this.viewer.world.getItemAt(0) === this;
+    },
+
+    // private
+    _getLevelsInterval: function() {
+        var lowestLevel = Math.max(
+            this.source.minLevel,
+            Math.floor(Math.log(this.minZoomImageRatio) / Math.log(2))
+        );
+        var currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+            this.source.getPixelRatio(0), true).x *
+            this._scaleSpring.current.value;
+        var highestLevel = Math.min(
+            Math.abs(this.source.maxLevel),
+            Math.abs(Math.floor(
+                Math.log(currentZeroRatio / this.minPixelRatio) / Math.log(2)
+            ))
+        );
+
+        // Calculations for the interval of levels to draw
+        // can return invalid intervals; fix that here if necessary
+        lowestLevel = Math.min(lowestLevel, highestLevel);
+        return {
+            lowestLevel: lowestLevel,
+            highestLevel: highestLevel
+        };
+    },
+
+    // private
+    _updateViewport: function() {
+        this._needsDraw = false;
+
+        var viewport = this.viewport;
+        var viewportBounds  = viewport.getBoundsWithMargins(true);
+
+        // Reset tile's internal drawn state
+        while (this.lastDrawn.length > 0) {
+            var tile = this.lastDrawn.pop();
+            tile.beingDrawn = false;
+        }
+
+        if (!this.wrapHorizontal && !this.wrapVertical) {
+            var tiledImageBounds = this.getClippedBounds(true)
+                .getBoundingBox();
+            var intersection = viewportBounds.intersection(tiledImageBounds);
+            if (intersection === null) {
+                return;
+            }
+            viewportBounds = intersection;
+        }
+        viewportBounds = viewportBounds.getBoundingBox();
+        viewportBounds.x -= this._xSpring.current.value;
+        viewportBounds.y -= this._ySpring.current.value;
+
+        var viewportTL = viewportBounds.getTopLeft();
+        var viewportBR = viewportBounds.getBottomRight();
+
+        //Don't draw if completely outside of the viewport
+        if  (!this.wrapHorizontal &&
+            (viewportBR.x < 0 || viewportTL.x > this._worldWidthCurrent)) {
+            return;
+        }
+
+        if (!this.wrapVertical &&
+            (viewportBR.y < 0 || viewportTL.y > this._worldHeightCurrent)) {
+            return;
+        }
+
+        // Calculate viewport rect / bounds
+        if (!this.wrapHorizontal) {
+            viewportTL.x = Math.max(viewportTL.x, 0);
+            viewportBR.x = Math.min(viewportBR.x, this._worldWidthCurrent );
+        }
+
+        if (!this.wrapVertical) {
+            viewportTL.y = Math.max(viewportTL.y, 0);
+            viewportBR.y = Math.min(viewportBR.y, this._worldHeightCurrent);
+        }
+
+        var levelsInterval = this._getLevelsInterval();
+        var lowestLevel = levelsInterval.lowestLevel;
+        var highestLevel = levelsInterval.highestLevel;
+        var bestTile = null;
+        var haveDrawn = false;
+        var currentTime = $.now();
+
+        // Update any level that will be drawn
+        for (var level = highestLevel; level >= lowestLevel; level--) {
+            var drawLevel = false;
+
+            //Avoid calculations for draw if we have already drawn this
+            var currentRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
+                this.source.getPixelRatio(level),
+                true
+            ).x * this._scaleSpring.current.value;
+
+            if (level === lowestLevel ||
+                (!haveDrawn && currentRenderPixelRatio >= this.minPixelRatio)) {
+                drawLevel = true;
+                haveDrawn = true;
+            } else if (!haveDrawn) {
+                continue;
+            }
+
+            //Perform calculations for draw if we haven't drawn this
+            var targetRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
+                this.source.getPixelRatio(level),
+                false
+            ).x * this._scaleSpring.current.value; //TODO: shouldn't that be target.value?
+
+            var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
+                this.source.getPixelRatio(
+                    Math.max(
+                        this.source.getClosestLevel(viewport.containerSize) - 1,
+                        0
+                    )
+                ),
+                false
+            ).x * this._scaleSpring.current.value; //TODO: shouldn't that be target.value?
+
+            var optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
+            var levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
+            var levelVisibility = optimalRatio / Math.abs(
+                optimalRatio - targetRenderPixelRatio
+            );
+
+            // Update the level and keep track of 'best' tile to load
+            bestTile = updateLevel(
+                this,
+                haveDrawn,
+                drawLevel,
+                level,
+                levelOpacity,
+                levelVisibility,
+                viewportTL,
+                viewportBR,
+                currentTime,
+                bestTile
+            );
+
+            // Stop the loop if lower-res tiles would all be covered by
+            // already drawn tiles
+            if (providesCoverage(this.coverage, level)) {
+                break;
+            }
+        }
+
+        // Perform the actual drawing
+        drawTiles(this, this.lastDrawn);
+
+        // Load the new 'best' tile
+        if (bestTile && !bestTile.context2D) {
+            loadTile(this, bestTile, currentTime);
+            this._setFullyLoaded(false);
+        } else {
+            this._setFullyLoaded(true);
+        }
     }
 });
 
-/**
- * @private
- * @inner
- * Pretty much every other line in this needs to be documented so it's clear
- * how each piece of this routine contributes to the drawing process.  That's
- * why there are so many TODO's inside this function.
- */
-function updateViewport( tiledImage ) {
-
-    tiledImage._needsDraw = false;
-
-    var tile,
-        level,
-        best            = null,
-        haveDrawn       = false,
-        currentTime     = $.now(),
-        viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        zeroRatioC      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
-            tiledImage.source.getPixelRatio( 0 ),
-            true
-        ).x * tiledImage._scaleSpring.current.value,
-        lowestLevel     = Math.max(
-            tiledImage.source.minLevel,
-            Math.floor(
-                Math.log( tiledImage.minZoomImageRatio ) /
-                Math.log( 2 )
-            )
-        ),
-        highestLevel    = Math.min(
-            Math.abs(tiledImage.source.maxLevel),
-            Math.abs(Math.floor(
-                Math.log( zeroRatioC / tiledImage.minPixelRatio ) /
-                Math.log( 2 )
-            ))
-        ),
-        renderPixelRatioC,
-        renderPixelRatioT,
-        zeroRatioT,
-        optimalRatio,
-        levelOpacity,
-        levelVisibility;
-
-    // Reset tile's internal drawn state
-    while (tiledImage.lastDrawn.length > 0) {
-        tile = tiledImage.lastDrawn.pop();
-        tile.beingDrawn = false;
-    }
-
-    if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
-        var tiledImageBounds = tiledImage.getClippedBounds(true)
-            .getBoundingBox();
-        var intersection = viewportBounds.intersection(tiledImageBounds);
-        if (intersection === null) {
-            return;
-        }
-        viewportBounds = intersection;
-    }
-    viewportBounds = viewportBounds.getBoundingBox();
-    viewportBounds.x -= tiledImage._xSpring.current.value;
-    viewportBounds.y -= tiledImage._ySpring.current.value;
-
-    var viewportTL = viewportBounds.getTopLeft();
-    var viewportBR = viewportBounds.getBottomRight();
-
-    //Don't draw if completely outside of the viewport
-    if  ( !tiledImage.wrapHorizontal && (viewportBR.x < 0 || viewportTL.x > tiledImage._worldWidthCurrent ) ) {
-        return;
-    }
-
-    if ( !tiledImage.wrapVertical && ( viewportBR.y < 0 || viewportTL.y > tiledImage._worldHeightCurrent ) ) {
-        return;
-    }
-
-    // Calculate viewport rect / bounds
-    if ( !tiledImage.wrapHorizontal ) {
-        viewportTL.x = Math.max( viewportTL.x, 0 );
-        viewportBR.x = Math.min( viewportBR.x, tiledImage._worldWidthCurrent );
-    }
-
-    if ( !tiledImage.wrapVertical ) {
-        viewportTL.y = Math.max( viewportTL.y, 0 );
-        viewportBR.y = Math.min( viewportBR.y, tiledImage._worldHeightCurrent );
-    }
-
-    // Calculations for the interval of levels to draw
-    // (above in initial var statement)
-    // can return invalid intervals; fix that here if necessary
-    lowestLevel = Math.min( lowestLevel, highestLevel );
-
-    // Update any level that will be drawn
-    var drawLevel; // FIXME: drawLevel should have a more explanatory name
-    for ( level = highestLevel; level >= lowestLevel; level-- ) {
-        drawLevel = false;
-
-        //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
-            tiledImage.source.getPixelRatio( level ),
-            true
-        ).x * tiledImage._scaleSpring.current.value;
-
-        if ( ( !haveDrawn && renderPixelRatioC >= tiledImage.minPixelRatio ) ||
-             ( level == lowestLevel ) ) {
-            drawLevel = true;
-            haveDrawn = true;
-        } else if ( !haveDrawn ) {
-            continue;
-        }
-
-        //Perform calculations for draw if we haven't drawn this
-        renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
-            tiledImage.source.getPixelRatio( level ),
-            false
-        ).x * tiledImage._scaleSpring.current.value;
-
-        zeroRatioT      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
-            tiledImage.source.getPixelRatio(
-                Math.max(
-                    tiledImage.source.getClosestLevel( tiledImage.viewport.containerSize ) - 1,
-                    0
-                )
-            ),
-            false
-        ).x * tiledImage._scaleSpring.current.value;
-
-        optimalRatio    = tiledImage.immediateRender ?
-            1 :
-            zeroRatioT;
-
-        levelOpacity    = Math.min( 1, ( renderPixelRatioC - 0.5 ) / 0.5 );
-
-        levelVisibility = optimalRatio / Math.abs(
-            optimalRatio - renderPixelRatioT
-        );
-
-        // Update the level and keep track of 'best' tile to load
-        best = updateLevel(
-            tiledImage,
-            haveDrawn,
-            drawLevel,
-            level,
-            levelOpacity,
-            levelVisibility,
-            viewportTL,
-            viewportBR,
-            currentTime,
-            best
-        );
-
-        // Stop the loop if lower-res tiles would all be covered by
-        // already drawn tiles
-        if (  providesCoverage( tiledImage.coverage, level ) ) {
-            break;
-        }
-    }
-
-    // Perform the actual drawing
-    drawTiles( tiledImage, tiledImage.lastDrawn );
-
-    // Load the new 'best' tile
-    if (best && !best.context2D) {
-        loadTile( tiledImage, best, currentTime );
-        tiledImage._setFullyLoaded(false);
-    } else {
-        tiledImage._setFullyLoaded(true);
-    }
-}
-
-
 function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
 
-    var x, y,
-        tileTL,
-        tileBR,
-        numberOfTiles,
-        viewportCenter  = tiledImage.viewport.pixelFromPoint( tiledImage.viewport.getCenter() );
-
-
-    if( tiledImage.viewer ){
+    if (tiledImage.viewer) {
         /**
          * <em>- Needs documentation -</em>
          *
@@ -1016,7 +997,7 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
          * @property {Object} best
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        tiledImage.viewer.raiseEvent( 'update-level', {
+        tiledImage.viewer.raiseEvent('update-level', {
             tiledImage: tiledImage,
             havedrawn: haveDrawn,
             level: level,
@@ -1030,25 +1011,29 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
     }
 
     //OK, a new drawing so do your calculations
-    tileTL    = tiledImage.source.getTileAtPoint( level, viewportTL.divide( tiledImage._scaleSpring.current.value ));
-    tileBR    = tiledImage.source.getTileAtPoint( level, viewportBR.divide( tiledImage._scaleSpring.current.value ));
-    numberOfTiles  = tiledImage.source.getNumTiles( level );
+    var topLeftTile = tiledImage.source.getTileAtPoint(
+        level, viewportTL.divide(tiledImage._scaleSpring.current.value));
+    var bottomRightTile = tiledImage.source.getTileAtPoint(
+        level, viewportBR.divide(tiledImage._scaleSpring.current.value));
+    var numberOfTiles  = tiledImage.source.getNumTiles(level);
 
-    resetCoverage( tiledImage.coverage, level );
+    resetCoverage(tiledImage.coverage, level);
 
-    if ( tiledImage.wrapHorizontal ) {
-        tileTL.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
+    if (tiledImage.wrapHorizontal) {
+        topLeftTile.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
     } else {
-        tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
+        bottomRightTile.x = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
     }
-    if ( tiledImage.wrapVertical ) {
-        tileTL.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
+    if (tiledImage.wrapVertical) {
+        topLeftTile.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
     } else {
-        tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
+        bottomRightTile.y = Math.min(bottomRightTile.y, numberOfTiles.y - 1);
     }
 
-    for ( x = tileTL.x; x <= tileBR.x; x++ ) {
-        for ( y = tileTL.y; y <= tileBR.y; y++ ) {
+    var viewportCenter = tiledImage.viewport.pixelFromPoint(
+        tiledImage.viewport.getCenter());
+    for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
+        for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
 
             best = updateTile(
                 tiledImage,
