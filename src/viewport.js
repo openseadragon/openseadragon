@@ -220,8 +220,14 @@ $.Viewport.prototype = {
 
         var homeWidth = this.containerSize.x - this._margins.left -
             this._margins.right;
+        if (homeWidth <= 0) {
+            homeWidth = 1;
+        }
         var homeHeight = this.containerSize.y - this._margins.top -
             this._margins.bottom;
+        if (homeHeight <= 0) {
+            homeHeight = 1;
+        }
         var homeAspectRatio = homeWidth / homeHeight;
         var aspectFactor = this._contentAspectRatio / homeAspectRatio;
         var output;
@@ -267,10 +273,11 @@ $.Viewport.prototype = {
         var marginRight = this._margins.right / pointFromPixelFactor;
         var marginTop = this._margins.top / pointFromPixelFactor;
         var marginBottom = this._margins.bottom / pointFromPixelFactor;
+        var epsilon = 1e-9;
 
         var horizontalMargins = width - contentBounds.width;
         var x = horizontalMargins / 2;
-        if (x >= 0) {
+        if (x >= 0 && horizontalMargins + epsilon >= marginLeft + marginRight) {
             if (x < marginLeft) {
                 x = marginLeft;
             }
@@ -282,7 +289,7 @@ $.Viewport.prototype = {
 
         var verticalMargins = height - contentBounds.height;
         var y = verticalMargins / 2;
-        if (y >= 0) {
+        if (y >= 0 && verticalMargins + epsilon >= marginTop + marginBottom) {
             if (y < marginTop) {
                 y = marginTop;
             }
@@ -438,8 +445,6 @@ $.Viewport.prototype = {
             "this function is deprecated; [Viewport.getBounds] " +
             "already takes the margins into account.");
         return this.getBounds(current);
-        return this.getBoundsNoRotateWithMargins(current).rotate(
-            -this.getRotation(), this.getCenter(current));
     },
 
     /**

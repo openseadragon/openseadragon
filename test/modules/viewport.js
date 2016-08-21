@@ -236,6 +236,24 @@
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('getHomeBounds with margins bigger than container', function() {
+        function openHandler() {
+            var viewport = viewer.viewport;
+            viewport.setMargins({
+                top: 300,
+                bottom: 300
+            });
+            Util.assertRectangleEquals(
+                viewport.getHomeBounds(),
+                new OpenSeadragon.Rect(-249.5, -249.5, 500, 500),
+                0.00000001,
+                "Test getHomeBounds with margins bigger than container");
+            start();
+        }
+        viewer.addOnceHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('getHomeBoundsNoRotate with rotation', function() {
         function openHandler() {
             viewer.removeHandler('open', openHandler);
