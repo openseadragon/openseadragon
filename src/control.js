@@ -152,7 +152,8 @@ $.Control = function ( element, options, container ) {
     }
 };
 
-$.Control.prototype = /** @lends OpenSeadragon.Control.prototype */{
+/** @lends OpenSeadragon.Control.prototype */
+$.Control.prototype = {
 
     /**
      * Removes the control from the container.

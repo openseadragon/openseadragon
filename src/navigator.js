@@ -62,7 +62,7 @@ $.Navigator = function( options ){
         options.controlOptions  = {
             anchor:           $.ControlAnchor.TOP_RIGHT,
             attachToViewer:   true,
-            autoFade:         true
+            autoFade:         options.autoFade
         };
 
         if( options.position ){
@@ -199,11 +199,18 @@ $.Navigator = function( options ){
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
 
+    function rotate(degrees) {
+        _setTransformRotate(_this.displayRegionContainer, degrees);
+        _setTransformRotate(_this.displayRegion, -degrees);
+        _this.viewport.setRotation(degrees);
+    }
     if (options.navigatorRotate) {
+        var degrees = options.viewer.viewport ?
+            options.viewer.viewport.getRotation() :
+            options.viewer.degrees || 0;
+        rotate(degrees);
         options.viewer.addHandler("rotate", function (args) {
-            _setTransformRotate(_this.displayRegionContainer, args.degrees);
-            _setTransformRotate(_this.displayRegion, -args.degrees);
-            _this.viewport.setRotation(args.degrees);
+            rotate(args.degrees);
         });
     }
 
@@ -215,12 +222,6 @@ $.Navigator = function( options ){
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll )
-    });
-
-    this.addHandler("reset-size", function() {
-        if (_this.viewport) {
-            _this.viewport.goHome(true);
-        }
     });
 
     this.addHandler("reset-size", function() {
@@ -305,10 +306,10 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             this.updateSize();
         }
 
-        if( viewport && this.viewport ) {
-            bounds      = viewport.getBounds( true );
-            topleft     = this.viewport.pixelFromPoint( bounds.getTopLeft(), false );
-            bottomright = this.viewport.pixelFromPoint( bounds.getBottomRight(), false )
+        if (viewport && this.viewport) {
+            bounds      = viewport.getBoundsNoRotate(true);
+            topleft     = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
+            bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
 
             //update style for navigator-box
@@ -378,7 +379,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        this.viewer.viewport.panTo( this.viewport.pointFromPixel( event.position ).rotate( -this.viewer.viewport.degrees, this.viewer.viewport.getHomeBounds().getCenter() ) );
+        this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
         this.viewer.viewport.applyConstraints();
     }
 }

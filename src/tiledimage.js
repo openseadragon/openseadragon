@@ -52,6 +52,10 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
+ * to fit the image into. If specified, x, y, width and height get ignored.
+ * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
+ * How to anchor the image in the bounds if options.fitBounds is set.
  * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
  * (portions of the image outside of this area will not be visible). Only works on
  * browsers that support the HTML5 canvas.
@@ -64,7 +68,10 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
+ * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -120,6 +127,11 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
+    var fitBounds = options.fitBounds;
+    delete options.fitBounds;
+    var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
+    delete options.fitBoundsPlacement;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -130,24 +142,28 @@ $.TiledImage = function( options ) {
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
-        _hasOpaqueTile: false,  // Do we have even one fully opaque tile? 
-
+        _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         //configurable settings
-        springStiffness:      $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:        $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:    $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:       $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:         $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:      $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:            $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:          $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:        $.DEFAULT_SETTINGS.minPixelRatio,
-        debugMode:            $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:    $.DEFAULT_SETTINGS.crossOriginPolicy,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:              $.DEFAULT_SETTINGS.opacity
+        springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:          $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:      $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:         $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:           $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:        $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:              $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
+        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
+        debugMode:              $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:                $.DEFAULT_SETTINGS.opacity,
+        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
 
     }, options );
+
+    this._fullyLoaded = false;
 
     this._xSpring = new $.Spring({
         initial: x,
@@ -169,12 +185,16 @@ $.TiledImage = function( options ) {
 
     this._updateForScale();
 
+    if (fitBounds) {
+        this.fitBounds(fitBounds, fitBoundsPlacement, true);
+    }
+
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
       /**
        * This event is fired just before the tile is drawn giving the application a chance to alter the image.
        *
-       * NOTE: This event is only fired when the drawer is using a <canvas>.
+       * NOTE: This event is only fired when the drawer is using a &lt;canvas&gt;.
        *
        * @event tile-drawing
        * @memberof OpenSeadragon.Viewer
@@ -198,6 +218,37 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     needsDraw: function() {
         return this._needsDraw;
+    },
+
+    /**
+     * @returns {Boolean} Whether all tiles necessary for this TiledImage to draw at the current view have been loaded.
+     */
+    getFullyLoaded: function() {
+        return this._fullyLoaded;
+    },
+
+    // private
+    _setFullyLoaded: function(flag) {
+        if (flag === this._fullyLoaded) {
+            return;
+        }
+
+        this._fullyLoaded = flag;
+
+        /**
+         * Fired when the TiledImage's "fully loaded" flag (whether all tiles necessary for this TiledImage
+         * to draw at the current view have been loaded) changes.
+         *
+         * @event fully-loaded-change
+         * @memberof OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {Boolean} fullyLoaded - The new "fully loaded" value.
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('fully-loaded-change', {
+            fullyLoaded: this._fullyLoaded
+        });
     },
 
     /**
@@ -237,9 +288,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        this._midDraw = true;
-        updateViewport( this );
-        this._midDraw = false;
+        if (this.opacity !== 0) {
+            this._midDraw = true;
+            updateViewport(this);
+            this._midDraw = false;
+        }
     },
 
     /**
@@ -267,6 +320,26 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     getWorldBounds: function() {
         $.console.error('[TiledImage.getWorldBounds] is deprecated; use TiledImage.getBounds instead');
         return this.getBounds();
+    },
+
+    /**
+     * Get the bounds of the displayed part of the tiled image.
+     * @param {Boolean} [current=false] Pass true for the current location,
+     * false for the target location.
+     * @returns {$.Rect} The clipped bounds in viewport coordinates.
+     */
+    getClippedBounds: function(current) {
+        var bounds = this.getBounds(current);
+        if (this._clip) {
+            var ratio = this._worldWidthCurrent / this.source.dimensions.x;
+            var clip = this._clip.times(ratio);
+            bounds = new $.Rect(
+                bounds.x + clip.x,
+                bounds.y + clip.y,
+                clip.width,
+                clip.height);
+        }
+        return bounds;
     },
 
     /**
@@ -355,23 +428,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
     imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight, current ) {
-        if (imageX instanceof $.Rect) {
+        var rect = imageX;
+        if (rect instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = imageY;
-            pixelWidth = imageX.width;
-            pixelHeight = imageX.height;
-            imageY = imageX.y;
-            imageX = imageX.x;
+        } else {
+            rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
 
-        var coordA = this.imageToViewportCoordinates(imageX, imageY, current);
-        var coordB = this._imageToViewportDelta(pixelWidth, pixelHeight, current);
+        var coordA = this.imageToViewportCoordinates(rect.getTopLeft(), current);
+        var coordB = this._imageToViewportDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 
@@ -387,23 +460,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the image.
      */
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
+        var rect = viewerX;
         if (viewerX instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = viewerY;
-            pointWidth = viewerX.width;
-            pointHeight = viewerX.height;
-            viewerY = viewerX.y;
-            viewerX = viewerX.x;
+        } else {
+            rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
 
-        var coordA = this.viewportToImageCoordinates(viewerX, viewerY, current);
-        var coordB = this._viewportToImageDelta(pointWidth, pointHeight, current);
+        var coordA = this.viewportToImageCoordinates(rect.getTopLeft(), current);
+        var coordB = this._viewportToImageDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y
+            coordB.y,
+            rect.degrees
         );
     },
 
@@ -502,6 +575,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._xSpring.resetTo(position.x);
             this._ySpring.resetTo(position.y);
+            this._needsDraw = true;
         } else {
             if (sameTarget) {
                 return;
@@ -509,6 +583,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._xSpring.springTo(position.x);
             this._ySpring.springTo(position.y);
+            this._needsDraw = true;
         }
 
         if (!sameTarget) {
@@ -534,6 +609,67 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setHeight: function(height, immediately) {
         this._setScale(height / this.normHeight, immediately);
+    },
+
+    /**
+     * Positions and scales the TiledImage to fit in the specified bounds.
+     * Note: this method fires OpenSeadragon.TiledImage.event:bounds-change
+     * twice
+     * @param {OpenSeadragon.Rect} bounds The bounds to fit the image into.
+     * @param {OpenSeadragon.Placement} [anchor=OpenSeadragon.Placement.CENTER]
+     * How to anchor the image in the bounds.
+     * @param {Boolean} [immediately=false] Whether to animate to the new size
+     * or snap immediately.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    fitBounds: function(bounds, anchor, immediately) {
+        anchor = anchor || $.Placement.CENTER;
+        var anchorProperties = $.Placement.properties[anchor];
+        var aspectRatio = this.contentAspectX;
+        var xOffset = 0;
+        var yOffset = 0;
+        var displayedWidthRatio = 1;
+        var displayedHeightRatio = 1;
+        if (this._clip) {
+            aspectRatio = this._clip.getAspectRatio();
+            displayedWidthRatio = this._clip.width / this.source.dimensions.x;
+            displayedHeightRatio = this._clip.height / this.source.dimensions.y;
+            if (bounds.getAspectRatio() > aspectRatio) {
+                xOffset = this._clip.x / this._clip.height * bounds.height;
+                yOffset = this._clip.y / this._clip.height * bounds.height;
+            } else {
+                xOffset = this._clip.x / this._clip.width * bounds.width;
+                yOffset = this._clip.y / this._clip.width * bounds.width;
+            }
+        }
+
+        if (bounds.getAspectRatio() > aspectRatio) {
+            // We will have margins on the X axis
+            var height = bounds.height / displayedHeightRatio;
+            var marginLeft = 0;
+            if (anchorProperties.isHorizontallyCentered) {
+                marginLeft = (bounds.width - bounds.height * aspectRatio) / 2;
+            } else if (anchorProperties.isRight) {
+                marginLeft = bounds.width - bounds.height * aspectRatio;
+            }
+            this.setPosition(
+                new $.Point(bounds.x - xOffset + marginLeft, bounds.y - yOffset),
+                immediately);
+            this.setHeight(height, immediately);
+        } else {
+            // We will have margins on the Y axis
+            var width = bounds.width / displayedWidthRatio;
+            var marginTop = 0;
+            if (anchorProperties.isVerticallyCentered) {
+                marginTop = (bounds.height - bounds.width / aspectRatio) / 2;
+            } else if (anchorProperties.isBottom) {
+                marginTop = bounds.height - bounds.width / aspectRatio;
+            }
+            this.setPosition(
+                new $.Point(bounds.x - xOffset, bounds.y - yOffset + marginTop),
+                immediately);
+            this.setWidth(width, immediately);
+        }
     },
 
     /**
@@ -581,6 +717,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._needsDraw = true;
     },
 
+    /**
+     * @returns {String} The TiledImage's current compositeOperation.
+     */
+    getCompositeOperation: function() {
+        return this.compositeOperation;
+    },
+
+    /**
+     * @param {String} compositeOperation the tiled image should be drawn with this globalCompositeOperation.
+     */
+    setCompositeOperation: function(compositeOperation) {
+        this.compositeOperation = compositeOperation;
+        this._needsDraw = true;
+    },
+
     // private
     _setScale: function(scale, immediately) {
         var sameTarget = (this._scaleSpring.target.value === scale);
@@ -591,6 +742,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._scaleSpring.resetTo(scale);
             this._updateForScale();
+            this._needsDraw = true;
         } else {
             if (sameTarget) {
                 return;
@@ -598,6 +750,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._scaleSpring.springTo(scale);
             this._updateForScale();
+            this._needsDraw = true;
         }
 
         if (!sameTarget) {
@@ -626,6 +779,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent('bounds-change');
+    },
+
+    // private
+    _isBottomItem: function() {
+        return this.viewer.world.getItemAt(0) === this;
     }
 });
 
@@ -646,7 +804,7 @@ function updateViewport( tiledImage ) {
         haveDrawn       = false,
         currentTime     = $.now(),
         viewportBounds  = tiledImage.viewport.getBoundsWithMargins( true ),
-        zeroRatioC      = tiledImage.viewport.deltaPixelsFromPoints(
+        zeroRatioC      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( 0 ),
             true
         ).x * tiledImage._scaleSpring.current.value,
@@ -664,7 +822,6 @@ function updateViewport( tiledImage ) {
                 Math.log( 2 )
             ))
         ),
-        degrees         = tiledImage.viewport.degrees,
         renderPixelRatioC,
         renderPixelRatioT,
         zeroRatioT,
@@ -672,26 +829,23 @@ function updateViewport( tiledImage ) {
         levelOpacity,
         levelVisibility;
 
-    viewportBounds.x -= tiledImage._xSpring.current.value;
-    viewportBounds.y -= tiledImage._ySpring.current.value;
-
     // Reset tile's internal drawn state
-    while ( tiledImage.lastDrawn.length > 0 ) {
+    while (tiledImage.lastDrawn.length > 0) {
         tile = tiledImage.lastDrawn.pop();
         tile.beingDrawn = false;
     }
 
-    //Change bounds for rotation
-    if (degrees === 90 || degrees === 270) {
-        viewportBounds = viewportBounds.rotate( degrees );
-    } else if (degrees !== 0 && degrees !== 180) {
-        // This is just an approximation.
-        var orthBounds = viewportBounds.rotate(90);
-        viewportBounds.x -= orthBounds.width / 2;
-        viewportBounds.y -= orthBounds.height / 2;
-        viewportBounds.width += orthBounds.width;
-        viewportBounds.height += orthBounds.height;
+    if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
+        var tiledImageBounds = tiledImage.getClippedBounds(true);
+        var intersection = viewportBounds.intersection(tiledImageBounds);
+        if (intersection === null) {
+            return;
+        }
+        viewportBounds = intersection;
     }
+    viewportBounds = viewportBounds.getBoundingBox();
+    viewportBounds.x -= tiledImage._xSpring.current.value;
+    viewportBounds.y -= tiledImage._ySpring.current.value;
 
     var viewportTL = viewportBounds.getTopLeft();
     var viewportBR = viewportBounds.getBottomRight();
@@ -727,7 +881,7 @@ function updateViewport( tiledImage ) {
         drawLevel = false;
 
         //Avoid calculations for draw if we have already drawn this
-        renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPoints(
+        renderPixelRatioC = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( level ),
             true
         ).x * tiledImage._scaleSpring.current.value;
@@ -741,12 +895,12 @@ function updateViewport( tiledImage ) {
         }
 
         //Perform calculations for draw if we haven't drawn this
-        renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPoints(
+        renderPixelRatioT = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio( level ),
             false
         ).x * tiledImage._scaleSpring.current.value;
 
-        zeroRatioT      = tiledImage.viewport.deltaPixelsFromPoints(
+        zeroRatioT      = tiledImage.viewport.deltaPixelsFromPointsNoRotate(
             tiledImage.source.getPixelRatio(
                 Math.max(
                     tiledImage.source.getClosestLevel( tiledImage.viewport.containerSize ) - 1,
@@ -791,10 +945,12 @@ function updateViewport( tiledImage ) {
     drawTiles( tiledImage, tiledImage.lastDrawn );
 
     // Load the new 'best' tile
-    if ( best ) {
+    if (best && !best.context2D) {
         loadTile( tiledImage, best, currentTime );
+        tiledImage._setFullyLoaded(false);
+    } else {
+        tiledImage._setFullyLoaded(true);
     }
-
 }
 
 
@@ -846,10 +1002,14 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
 
     resetCoverage( tiledImage.coverage, level );
 
-    if ( !tiledImage.wrapHorizontal ) {
+    if ( tiledImage.wrapHorizontal ) {
+        tileTL.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
+    } else {
         tileBR.x = Math.min( tileBR.x, numberOfTiles.x - 1 );
     }
-    if ( !tiledImage.wrapVertical ) {
+    if ( tiledImage.wrapVertical ) {
+        tileTL.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
+    } else {
         tileBR.y = Math.min( tileBR.y, numberOfTiles.y - 1 );
     }
 
@@ -936,10 +1096,14 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     );
 
     if (!tile.loaded) {
-        var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
-        if (imageRecord) {
-            var image = imageRecord.getImage();
-            setTileLoaded(tiledImage, tile, image);
+        if (tile.context2D) {
+            setTileLoaded(tiledImage, tile);
+        } else {
+            var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+            if (imageRecord) {
+                var image = imageRecord.getImage();
+                setTileLoaded(tiledImage, tile, image);
+            }
         }
     }
 
@@ -972,6 +1136,7 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds,
         exists,
         url,
+        context2D,
         tile;
 
     if ( !tilesMatrix[ level ] ) {
@@ -987,6 +1152,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+        context2D = tileSource.getContext2D ?
+            tileSource.getContext2D(level, xMod, yMod) : undefined;
 
         bounds.x += ( x - xMod ) / numTiles.x;
         bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
@@ -997,7 +1164,8 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
             y,
             bounds,
             exists,
-            url
+            url,
+            context2D
         );
     }
 
@@ -1036,12 +1204,12 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
          * @property {string} message - The error message.
          */
         tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
-        if( !tiledImage.debugMode ){
-            tile.loading = false;
-            tile.exists = false;
-            return;
-        }
-    } else if ( time < tiledImage.lastResetTime ) {
+        tile.loading = false;
+        tile.exists = false;
+        return;
+    }
+
+    if ( time < tiledImage.lastResetTime ) {
         $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         tile.loading = false;
         return;
@@ -1076,12 +1244,14 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
         if (increment === 0) {
             tile.loading = false;
             tile.loaded = true;
-            tiledImage._tileCache.cacheTile({
-                image: image,
-                tile: tile,
-                cutoff: cutoff,
-                tiledImage: tiledImage
-            });
+            if (!tile.context2D) {
+                tiledImage._tileCache.cacheTile({
+                    image: image,
+                    tile: tile,
+                    cutoff: cutoff,
+                    tiledImage: tiledImage
+                });
+            }
             tiledImage._needsDraw = true;
         }
     }
@@ -1124,10 +1294,10 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     boundsSize.x *= tiledImage._scaleSpring.current.value;
     boundsSize.y *= tiledImage._scaleSpring.current.value;
 
-    var positionC    = viewport.pixelFromPoint( boundsTL, true ),
-        positionT    = viewport.pixelFromPoint( boundsTL, false ),
-        sizeC        = viewport.deltaPixelsFromPoints( boundsSize, true ),
-        sizeT        = viewport.deltaPixelsFromPoints( boundsSize, false ),
+    var positionC    = viewport.pixelFromPointNoRotate(boundsTL, true),
+        positionT    = viewport.pixelFromPointNoRotate(boundsTL, false),
+        sizeC        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
+        sizeT        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
         tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
         tileDistance = viewportCenter.distanceTo( tileCenter );
 
@@ -1290,16 +1460,49 @@ function compareTiles( previousBest, tile ) {
 }
 
 function drawTiles( tiledImage, lastDrawn ) {
-    var i,
-        tile;
-
-    if ( tiledImage.opacity <= 0 ) {
-        drawDebugInfo( tiledImage, lastDrawn );
+    if (lastDrawn.length === 0) {
         return;
     }
-    var useSketch = tiledImage.opacity < 1;
-    if ( useSketch ) {
-        tiledImage._drawer._clear( true );
+    var tile = lastDrawn[0];
+
+    var useSketch = tiledImage.opacity < 1 ||
+        (tiledImage.compositeOperation &&
+            tiledImage.compositeOperation !== 'source-over') ||
+        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
+
+    var sketchScale;
+    var sketchTranslate;
+
+    var zoom = tiledImage.viewport.getZoom(true);
+    var imageZoom = tiledImage.viewportToImageZoom(zoom);
+    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && !tiledImage.iOSDevice) {
+        // When zoomed in a lot (>100%) the tile edges are visible.
+        // So we have to composite them at ~100% and scale them up together.
+        // Note: Disabled on iOS devices per default as it causes a native crash
+        useSketch = true;
+        sketchScale = tile.getScaleForEdgeSmoothing();
+        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
+            tiledImage._drawer.getCanvasSize(false),
+            tiledImage._drawer.getCanvasSize(true));
+    }
+
+    var bounds;
+    if (useSketch) {
+        if (!sketchScale) {
+            // Except when edge smoothing, we only clean the part of the
+            // sketch canvas we are going to use for performance reasons.
+            bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+                tiledImage.getClippedBounds(true))
+                .getIntegerBoundingBox()
+                .times($.pixelDensityRatio);
+        }
+        tiledImage._drawer._clear(true, bounds);
+    }
+
+    // When scaling, we must rotate only when blending the sketch canvas to avoid
+    // interpolation
+    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
+        tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, useSketch);
     }
 
     var usedClip = false;
@@ -1308,6 +1511,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
+        if (sketchScale) {
+            clipRect = clipRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            clipRect = clipRect.translate(sketchTranslate);
+        }
         tiledImage._drawer.setClip(clipRect, useSketch);
 
         usedClip = true;
@@ -1315,6 +1524,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
+        if (sketchScale) {
+            placeholderRect = placeholderRect.times(sketchScale);
+        }
+        if (sketchTranslate) {
+            placeholderRect = placeholderRect.translate(sketchTranslate);
+        }
 
         var fillStyle = null;
         if ( typeof tiledImage.placeholderFillStyle === "function" ) {
@@ -1327,9 +1542,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
-    for ( i = lastDrawn.length - 1; i >= 0; i-- ) {
+    for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
@@ -1355,8 +1570,25 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
 
-    if ( useSketch ) {
-        tiledImage._drawer.blendSketch( tiledImage.opacity );
+    if (tiledImage.viewport.degrees !== 0 && !sketchScale) {
+        tiledImage._drawer._restoreRotationChanges(useSketch);
+    }
+
+    if (useSketch) {
+        var offsetForRotation = tiledImage.viewport.degrees !== 0 && sketchScale;
+        if (offsetForRotation) {
+            tiledImage._drawer._offsetForRotation(tiledImage.viewport.degrees, false);
+        }
+        tiledImage._drawer.blendSketch({
+            opacity: tiledImage.opacity,
+            scale: sketchScale,
+            translate: sketchTranslate,
+            compositeOperation: tiledImage.compositeOperation,
+            bounds: bounds
+        });
+        if (offsetForRotation) {
+            tiledImage._drawer._restoreRotationChanges(false);
+        }
     }
     drawDebugInfo( tiledImage, lastDrawn );
 }

@@ -314,26 +314,15 @@
             var canvas = document.createElement("canvas");
             var ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0);
-            callback(!isCanvasTainted(ctx));
+            callback(!OpenSeadragon.isCanvasTainted(canvas));
         };
         img.src = corsImg;
-    }
-
-    function isCanvasTainted(context) {
-        var isTainted = false;
-        try {
-            // We test if the canvas is tainted by retrieving data from it.
-            // An exception will be raised if the canvas is tainted.
-            var url = context.getImageData(0, 0, 1, 1);
-        } catch (e) {
-            isTainted = true;
-        }
-        return isTainted;
     }
 
     asyncTest( 'CrossOriginPolicyMissing', function () {
 
         viewer.crossOriginPolicy = false;
+        viewer.smoothTileEdgesMinZoom = Infinity;
         viewer.open( {
             type: 'legacy-image-pyramid',
             levels: [ {
@@ -343,7 +332,8 @@
                 } ]
         } );
         viewer.addHandler('tile-drawn', function() {
-            ok(isCanvasTainted(viewer.drawer.context), "Canvas should be tainted.");
+            ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                "Canvas should be tainted.");
             start();
         });
 
@@ -366,7 +356,8 @@
                         } ]
                 } );
                 viewer.addHandler('tile-drawn', function() {
-                    ok(!isCanvasTainted(viewer.drawer.context), "Canvas should not be tainted.");
+                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should not be tainted.");
                     start();
                 });
             }
@@ -374,4 +365,62 @@
 
     } );
 
+    asyncTest( 'CrossOriginPolicyOption', function () {
+
+        browserSupportsImgCrossOrigin(function(supported) {
+            if (!supported) {
+                expect(0);
+                start();
+            } else {
+                viewer.crossOriginPolicy = "Anonymous";
+                viewer.smoothTileEdgesMinZoom = Infinity;
+                viewer.addTiledImage( {
+                    tileSource: {
+                        type: 'legacy-image-pyramid',
+                        levels: [ {
+                            url: corsImg,
+                            width: 135,
+                            height: 155
+                        } ]
+                    },
+                    crossOriginPolicy : false
+                } );
+                viewer.addHandler('tile-drawn', function() {
+                    ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should be tainted.");
+                    start();
+                });
+            }
+        });
+
+    } );
+    asyncTest( 'CrossOriginPolicyTileSource', function () {
+
+        browserSupportsImgCrossOrigin(function(supported) {
+            if (!supported) {
+                expect(0);
+                start();
+            } else {
+                viewer.crossOriginPolicy = false;
+                viewer.smoothTileEdgesMinZoom = Infinity;
+                viewer.addTiledImage( {
+                    tileSource: {
+                        type: 'legacy-image-pyramid',
+                        levels: [ {
+                            url: corsImg,
+                            width: 135,
+                            height: 155
+                        } ],
+                        crossOriginPolicy : "Anonymous"
+                    }
+                } );
+                viewer.addHandler('tile-drawn', function() {
+                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                        "Canvas should not be tainted.");
+                    start();
+                });
+            }
+        });
+
+    } );
 })();

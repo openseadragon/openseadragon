@@ -83,27 +83,8 @@
 
 
 /**
- * @version  <%= pkg.name %> <%= pkg.version %>
- *
- * @file
- * <h2><strong>OpenSeadragon - Javascript Deep Zooming</strong></h2>
- * <p>
- * OpenSeadragon provides an html interface for creating
- * deep zoom user interfaces.  The simplest examples include deep
- * zoom for large resolution images, and complex examples include
- * zoomable map interfaces driven by SVG files.
- * </p>
- *
- */
-
-/**
- * @module OpenSeadragon
- *
- */
-
-/**
  * @namespace OpenSeadragon
- *
+ * @version <%= pkg.name %> <%= pkg.version %>
  * @classdesc The root namespace for OpenSeadragon.  All utility methods
  * and classes are defined on or below this namespace.
  *
@@ -154,7 +135,7 @@
   *       created.
   *     * placement a string to define the relative position to the viewport.
   *       Only used if no width and height are specified. Default: 'TOP_LEFT'.
-  *       See {@link OpenSeadragon.OverlayPlacement} for possible values.
+  *       See {@link OpenSeadragon.Placement} for possible values.
   *
   * @property {String} [xmlPath=null]
   *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
@@ -206,6 +187,11 @@
   * @property {Number} [opacity=1]
   *     Default opacity of the tiled images (1=opaque, 0=transparent)
   *
+  * @property {String} [compositeOperation=null]
+  *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
+  *     'destination-over', 'destination-atop', 'destination-in',
+  *     'destination-out', 'lighter', 'copy' or 'xor'
+  *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
   *     You can pass a CSS color value like "#FF8800".
@@ -249,11 +235,27 @@
   *     image though it is less effective visually if the HTML5 Canvas is not
   *     availble on the viewing device.
   *
+  * @property {Number} [smoothTileEdgesMinZoom=1.1]
+  *     A zoom percentage ( where 1 is 100% ) of the highest resolution level.
+  *     When zoomed in beyond this value alternative compositing will be used to
+  *     smooth out the edges between tiles. This will have a performance impact.
+  *     Can be set to Infinity to turn it off.
+  *     Note: This setting is ignored on iOS devices due to a known bug (See {@link https://github.com/openseadragon/openseadragon/issues/952})
+  *
+  * @property {Boolean} [iOSDevice=?]
+  *     True if running on an iOS device, false otherwise.
+  *     Used to disable certain features that behave differently on iOS devices.
+  *
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
   * @property {Boolean} [preserveImageSizeOnResize=false]
   *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
+  *
+  * @property {Number} [minScrollDeltaTime=50]
+  *     Number of milliseconds between canvas-scroll events. This value helps normalize the rate of canvas-scroll
+  *     events between different devices, causing the faster devices to slow down enough to make the zoom control
+  *     more manageable.
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
@@ -358,16 +360,16 @@
   *
   * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
-  *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, and navigatorTop|Left|Height|Width options will be ignored.
+  *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, navigator[Top|Left|Height|Width] and navigatorAutoFade options will be ignored.
   *     If an ID is not specified, a div element will be generated and placed on top of the main image.
   *
   * @property {String} [navigatorPosition='TOP_RIGHT']
   *     Valid values are 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', or 'ABSOLUTE'.<br>
-  *     If 'ABSOLUTE' is specified, then navigatorTop|Left|Height|Width determines the size and position of the navigator minimap in the viewer, and navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.<br>
-  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the navigatorSizeRatio or navigatorHeight|Width values determine the size of the navigator minimap.
+  *     If 'ABSOLUTE' is specified, then navigator[Top|Left|Height|Width] determines the size and position of the navigator minimap in the viewer, and navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.<br>
+  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the navigatorSizeRatio or navigator[Height|Width] values determine the size of the navigator minimap.
   *
   * @property {Number} [navigatorSizeRatio=0.2]
-  *     Ratio of navigator size to viewer size. Ignored if navigatorHeight|Width are specified.
+  *     Ratio of navigator size to viewer size. Ignored if navigator[Height|Width] are specified.
   *
   * @property {Boolean} [navigatorMaintainSizeRatio=false]
   *     If true, the navigator minimap is resized (using navigatorSizeRatio) when the viewer size changes.
@@ -389,6 +391,10 @@
   * @property {Boolean} [navigatorAutoResize=true]
   *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
   *     Setting to false can also improve performance when the navigator is configured to a fixed size.
+  *
+  * @property {Boolean} [navigatorAutoFade=true]
+  *     If the user stops interacting with the viewport, fade the navigator minimap.
+  *     Setting to false will make the navigator minimap always visible.
   *
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
@@ -676,23 +682,12 @@
   * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
   * combinations of out-of-the-box configurable features.
   *
-  * @function OpenSeadragon
-  * @memberof module:OpenSeadragon
   * @param {OpenSeadragon.Options} options - Viewer options.
   * @returns {OpenSeadragon.Viewer}
   */
-window.OpenSeadragon = window.OpenSeadragon || function( options ){
-
+function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
-
-};
-
-if (typeof define === 'function' && define.amd) {
-   define(function () {
-       return (window.OpenSeadragon);
-   });
 }
-
 
 (function( $ ){
 
@@ -827,6 +822,21 @@ if (typeof define === 'function' && define.amd) {
         return true;
     };
 
+    /**
+     * Shim around Object.freeze. Does nothing if Object.freeze is not supported.
+     * @param {Object} obj The object to freeze.
+     * @return {Object} obj The frozen object.
+     */
+    $.freezeObject = function(obj) {
+        if (Object.freeze) {
+            $.freezeObject = Object.freeze;
+        } else {
+            $.freezeObject = function(obj) {
+                return obj;
+            };
+        }
+        return $.freezeObject(obj);
+    };
 
     /**
      * True if the browser supports the HTML5 canvas element
@@ -838,6 +848,23 @@ if (typeof define === 'function' && define.amd) {
         return !!( $.isFunction( canvasElement.getContext ) &&
                     canvasElement.getContext( '2d' ) );
     }());
+
+    /**
+     * Test whether the submitted canvas is tainted or not.
+     * @argument {Canvas} canvas The canvas to test.
+     * @returns {Boolean} True if the canvas is tainted.
+     */
+    $.isCanvasTainted = function(canvas) {
+        var isTainted = false;
+        try {
+            // We test if the canvas is tainted by retrieving data from it.
+            // An exception will be raised if the canvas is tainted.
+            var data = canvas.getContext('2d').getImageData(0, 0, 1, 1);
+        } catch (e) {
+            isTainted = true;
+        }
+        return isTainted;
+    };
 
     /**
      * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
@@ -951,6 +978,18 @@ if (typeof define === 'function' && define.amd) {
         return target;
     };
 
+    var isIOSDevice = function () {
+        if (typeof navigator !== 'object') {
+            return false;
+        }
+        var userAgent = navigator.userAgent;
+        if (typeof userAgent !== 'string') {
+            return false;
+        }
+        return userAgent.indexOf('iPhone') !== -1 ||
+               userAgent.indexOf('iPad') !== -1 ||
+               userAgent.indexOf('iPod') !== -1;
+    };
 
     $.extend( $, /** @lends OpenSeadragon */{
         /**
@@ -1000,9 +1039,12 @@ if (typeof define === 'function' && define.amd) {
             immediateRender:        false,
             minZoomImageRatio:      0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio:      1.1, //-> higher allows 'over zoom' into pixels
+            smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
+            iOSDevice:              isIOSDevice(),
             pixelsPerWheelLine:     40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
+            minScrollDeltaTime:     50,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -1031,6 +1073,7 @@ if (typeof define === 'function' && define.amd) {
             navigatorHeight:            null,
             navigatorWidth:             null,
             navigatorAutoResize:        true,
+            navigatorAutoFade:          true,
             navigatorRotate:            true,
 
             // INITIAL ROTATION
@@ -1038,6 +1081,7 @@ if (typeof define === 'function' && define.amd) {
 
             // APPEARANCE
             opacity:                    1,
+            compositeOperation:         null,
             placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS
@@ -1287,6 +1331,49 @@ if (typeof define === 'function' && define.amd) {
                 return window.getComputedStyle( element, "" );
             },
 
+        /**
+         * Returns the property with the correct vendor prefix appended.
+         * @param {String} property the property name
+         * @returns {String} the property with the correct prefix or null if not
+         * supported.
+         */
+        getCssPropertyWithVendorPrefix: function(property) {
+            var memo = {};
+
+            $.getCssPropertyWithVendorPrefix = function(property) {
+                if (memo[property] !== undefined) {
+                    return memo[property];
+                }
+                var style = document.createElement('div').style;
+                var result = null;
+                if (style[property] !== undefined) {
+                    result = property;
+                } else {
+                    var prefixes = ['Webkit', 'Moz', 'MS', 'O',
+                        'webkit', 'moz', 'ms', 'o'];
+                    var suffix = $.capitalizeFirstLetter(property);
+                    for (var i = 0; i < prefixes.length; i++) {
+                        var prop = prefixes[i] + suffix;
+                        if (style[prop] !== undefined) {
+                            result = prop;
+                            break;
+                        }
+                    }
+                }
+                memo[property] = result;
+                return result;
+            };
+            return $.getCssPropertyWithVendorPrefix(property);
+        },
+
+        /**
+         * Capitalizes the first letter of a string
+         * @param {String} string
+         * @returns {String} The string with the first letter capitalized
+         */
+        capitalizeFirstLetter: function(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        },
 
         /**
          * Determines if a point is within the bounding rectangle of the given element (hit-test).
@@ -2023,12 +2110,13 @@ if (typeof define === 'function' && define.amd) {
                 }
             };
 
-            if (withCredentials) {
-                request.withCredentials = true;
-            }
-
             try {
                 request.open( "GET", url, true );
+
+                if (withCredentials) {
+                    request.withCredentials = true;
+                }
+
                 request.send( null );
             } catch (e) {
                 var msg = e.message;
@@ -2498,185 +2586,21 @@ if (typeof define === 'function' && define.amd) {
         }
     }
 
-    /**
-     * @private
-     * @inner
-     * @function
-     * @param {XMLHttpRequest} xhr
-     * @param {String} tilesUrl
-     * @deprecated
-     */
-    function processDZIResponse( xhr, tilesUrl ) {
-        var status,
-            statusText,
-            doc = null;
+}(OpenSeadragon));
 
-        if ( !xhr ) {
-            throw new Error( $.getString( "Errors.Security" ) );
-        } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
-            status     = xhr.status;
-            statusText = ( status == 404 ) ?
-                "Not Found" :
-                xhr.statusText;
-            throw new Error( $.getString( "Errors.Status", status, statusText ) );
-        }
 
-        if ( xhr.responseXML && xhr.responseXML.documentElement ) {
-            doc = xhr.responseXML;
-        } else if ( xhr.responseText ) {
-            doc = $.parseXml( xhr.responseText );
-        }
-
-        return processDZIXml( doc, tilesUrl );
+// Universal Module Definition, supports CommonJS, AMD and simple script tag
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // expose as amd module
+        define([], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // expose as commonjs module
+        module.exports = factory();
+    } else {
+        // expose as window.OpenSeadragon
+        root.OpenSeadragon = factory();
     }
-
-    /**
-     * @private
-     * @inner
-     * @function
-     * @param {Document} xmlDoc
-     * @param {String} tilesUrl
-     * @deprecated
-     */
-    function processDZIXml( xmlDoc, tilesUrl ) {
-
-        if ( !xmlDoc || !xmlDoc.documentElement ) {
-            throw new Error( $.getString( "Errors.Xml" ) );
-        }
-
-        var root     = xmlDoc.documentElement,
-            rootName = root.tagName;
-
-        if ( rootName == "Image" ) {
-            try {
-                return processDZI( root, tilesUrl );
-            } catch ( e ) {
-                throw (e instanceof Error) ?
-                    e :
-                    new Error( $.getString("Errors.Dzi") );
-            }
-        } else if ( rootName == "Collection" ) {
-            throw new Error( $.getString( "Errors.Dzc" ) );
-        } else if ( rootName == "Error" ) {
-            return $._processDZIError( root );
-        }
-
-        throw new Error( $.getString( "Errors.Dzi" ) );
-    }
-
-    /**
-     * @private
-     * @inner
-     * @function
-     * @param {Element} imageNode
-     * @param {String} tilesUrl
-     * @deprecated
-     */
-    function processDZI( imageNode, tilesUrl ) {
-        var fileFormat    = imageNode.getAttribute( "Format" ),
-            sizeNode      = imageNode.getElementsByTagName( "Size" )[ 0 ],
-            dispRectNodes = imageNode.getElementsByTagName( "DisplayRect" ),
-            width         = parseInt( sizeNode.getAttribute( "Width" ), 10 ),
-            height        = parseInt( sizeNode.getAttribute( "Height" ), 10 ),
-            tileSize      = parseInt( imageNode.getAttribute( "TileSize" ), 10 ),
-            tileOverlap   = parseInt( imageNode.getAttribute( "Overlap" ), 10 ),
-            dispRects     = [],
-            dispRectNode,
-            rectNode,
-            i;
-
-        if ( !$.imageFormatSupported( fileFormat ) ) {
-            throw new Error(
-                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
-            );
-        }
-
-        for ( i = 0; i < dispRectNodes.length; i++ ) {
-            dispRectNode = dispRectNodes[ i ];
-            rectNode     = dispRectNode.getElementsByTagName( "Rect" )[ 0 ];
-
-            dispRects.push( new $.DisplayRect(
-                parseInt( rectNode.getAttribute( "X" ), 10 ),
-                parseInt( rectNode.getAttribute( "Y" ), 10 ),
-                parseInt( rectNode.getAttribute( "Width" ), 10 ),
-                parseInt( rectNode.getAttribute( "Height" ), 10 ),
-                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( dispRectNode.getAttribute( "MaxLevel" ), 10 )
-            ));
-        }
-        return new $.DziTileSource(
-            width,
-            height,
-            tileSize,
-            tileOverlap,
-            tilesUrl,
-            fileFormat,
-            dispRects
-        );
-    }
-
-    /**
-     * @private
-     * @inner
-     * @function
-     * @param {Element} imageNode
-     * @param {String} tilesUrl
-     * @deprecated
-     */
-    function processDZIJSON( imageData, tilesUrl ) {
-        var fileFormat    = imageData.Format,
-            sizeData      = imageData.Size,
-            dispRectData  = imageData.DisplayRect || [],
-            width         = parseInt( sizeData.Width, 10 ),
-            height        = parseInt( sizeData.Height, 10 ),
-            tileSize      = parseInt( imageData.TileSize, 10 ),
-            tileOverlap   = parseInt( imageData.Overlap, 10 ),
-            dispRects     = [],
-            rectData,
-            i;
-
-        if ( !$.imageFormatSupported( fileFormat ) ) {
-            throw new Error(
-                $.getString( "Errors.ImageFormat", fileFormat.toUpperCase() )
-            );
-        }
-
-        for ( i = 0; i < dispRectData.length; i++ ) {
-            rectData     = dispRectData[ i ].Rect;
-
-            dispRects.push( new $.DisplayRect(
-                parseInt( rectData.X, 10 ),
-                parseInt( rectData.Y, 10 ),
-                parseInt( rectData.Width, 10 ),
-                parseInt( rectData.Height, 10 ),
-                0,  // ignore MinLevel attribute, bug in Deep Zoom Composer
-                parseInt( rectData.MaxLevel, 10 )
-            ));
-        }
-        return new $.DziTileSource(
-            width,
-            height,
-            tileSize,
-            tileOverlap,
-            tilesUrl,
-            fileFormat,
-            dispRects
-        );
-    }
-
-    /**
-     * @private
-     * @inner
-     * @function
-     * @param {Document} errorNode
-     * @throws {Error}
-     * @deprecated
-     */
-    $._processDZIError = function ( errorNode ) {
-        var messageNode = errorNode.getElementsByTagName( "Message" )[ 0 ],
-            message     = messageNode.firstChild.nodeValue;
-
-        throw new Error(message);
-    };
-
-}( OpenSeadragon ));
+}(this, function () {
+    return OpenSeadragon;
+}));

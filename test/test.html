@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -17,6 +17,7 @@
     <script src="/build/openseadragon/openseadragon.js"></script>
     <script src="/test/helpers/legacy.mouse.shim.js"></script>
     <script src="/test/helpers/test.js"></script>
+    <script src="/test/helpers/touch.js"></script>
 
     <!-- Polyfill must be inserted first because it is testing functions
          reassignments which could be done by other test. -->
@@ -37,8 +38,10 @@
     <script src="/test/modules/tilecache.js"></script>
     <script src="/test/modules/referencestrip.js"></script>
     <script src="/test/modules/tilesource.js"></script>
+    <script src="/test/modules/dzitilesource.js"></script>
     <script src="/test/modules/tilesourcecollection.js"></script>
     <script src="/test/modules/spring.js"></script>
+    <script src="/test/modules/rectangle.js"></script>
     <!-- The navigator tests are the slowest (for now; hopefully they can be sped up)
     so we put them last. -->
     <script src="/test/modules/navigator.js"></script>

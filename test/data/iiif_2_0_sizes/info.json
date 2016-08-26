@@ -1,0 +1,15 @@
+{
+  "@context": "http://iiif.io/api/image/2/context.json",
+  "@id": "http://localhost:8000/test/data/iiif_2_0_sizes",
+  "protocol": "http://iiif.io/api/image",
+  "width": 6976,
+  "height": 5074,
+  "profile": ["http://iiif.io/api/image/2/level0.json"],
+  "sizes" : [
+    {"width" : 400, "height" : 291},
+    {"width" : 800, "height" : 582},
+    {"width" : 1600, "height" : 1164},
+    {"width" : 3200, "height": 2328},
+    {"width" : 6976, "height": 5074}
+  ]
+}

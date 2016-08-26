@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Demo - IIIF emulation of legacy image pyramid</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+
+    </style>
+</head>
+<body>
+<div>
+    <p>Default OpenSeadragon viewer from IIIF Source</p>
+    <p>This allows IIIF even if you only have a handful of static image sizes.</p>
+</div>
+<!--
+
+Notes:
+
+legacy               iiif
+
+supports
+configure
+                    getTileWidth
+                    getTileHeight
+getLevelScale
+getNumTiles
+getTileAtPoint
+getTileUrl          getTileUrl
+
+-->
+
+<div id="contentDiv" class="openseadragon1"></div>
+<script type="text/javascript">
+
+    var viewer = OpenSeadragon({
+        // debugMode: true,
+        id: "contentDiv",
+        prefixUrl: "../../build/openseadragon/images/",
+        tileSources: "../data/iiif_2_0_sizes/info.json",
+        showNavigator:true
+    });
+
+</script>
+</body>
+</html>

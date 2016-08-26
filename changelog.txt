@@ -1,36 +1,107 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.1.0: (in progress)
+2.2.2: (in progress)
+
+* Fixed CORS bug in IE 10 (#967)
+* Added support for commonjs (#984)
+* Added an option to addTiledImage to change the crossOriginPolicy (#981)
+* Fixed issue with tiles not appearing with wrapHorizontal/wrapVertical if you pan too far away from the origin (#987)
+* The Viewer's tileSources option is now smarter about detecting JSON vs XML vs URL (#999)
+* The navigationControlAnchor option now works for custom toolbar as well (#1004)
+* Added getFullyLoaded method and "fully-loaded-change" event to TiledImage to know when tiles are fully loaded (#837)
+
+2.2.1:
+
+* Fixed problems with zoom/pan constraints with certain extreme settings (#965)
+* Fixed an issue causing the browser to crash on iOS (#966)
+
+2.2.0:
+
+* BREAKING CHANGE: Viewport.homeBounds, Viewport.contentSize, Viewport.contentAspectX and
+    Viewport.contentAspectY have been removed. (#846)
+* BREAKING CHANGE: The Overlay.getBounds method now takes the viewport as parameter. (#896)
+* DEPRECATION: Overlay.scales, Overlay.bounds and Overlay.position have been deprecated. (#896)
+    * Overlay.width !== null should be used to test whether the overlay scales horizontally
+    * Overlay.height !== null should be used to test whether the overlay scales vertically
+    * The Overlay.getBounds method should be used to get the bounds of the overlay in viewport coordinates
+    * Overlay.location replaces Overlay.position
+* DEPRECATION: Viewport.setHomeBounds has been deprecated (#846)
+* DEPRECATION: the Viewport constructor is now ignoring the contentSize option (#846)
+* Tile edge smoothing at high zoom (#764)
+* Fixed issue with reference strip popping up virtual keyboard on mobile devices (#779)
+* Now supporting rotation in the Rect class (#782)
+* Drag outside of iframe now works better, as long as both pages are on the same domain (#790)
+* Coordinate conversion now takes rotation into account (#796)
+* Support tile-less IIIF as per LegacyTileSource (#816)
+* You can now give an empty string to the tabIndex option (#805)
+* Fixed issue with rotation and clicking in the navigator (#807)
+* Broadened the check for mime type in LegacyTileSource URLs to allow query strings (#819)
+* Added globalCompositeOperation option for tiledImage, to allow for different transfer modes (#814)
+* Added Viewer.addSimpleImage method for easily adding non-tiled images (#827)
+* DziTileSource now works properly with DZI files that have no extension (#835)
+* Fixed content clipping with rotation (#463, #567 and #833)
+* Fixed navigator not being rotated when viewport rotation is set in constructor (#840)
+* Fixed: Viewer.setMouseNavEnabled wasn't affecting all of the viewer's trackers (#845)
+* Fixed: with scrollToZoom disabled, the viewer caused page scrolling to slow down (#858)
+* Added Viewer.getOverlayById and Overlay.getBounds functions (#853)
+* Tiled images with 0 opacity no longer load their tiles or do drawing calculations (#859)
+* Fixed issue with edge smoothing with PNG tiles at high zoom (#860)
+* Fixed: Images with transparency were clearing images layered below them (#861)
+* Fixed issue causing HTML pages to jump unwantedly to the reference strip upon loading (#872)
+* Added addOnceHandler method to EventSource (#887)
+* Added TiledImage.fitBounds method (#888)
+* Overlays can now be scaled in a single dimension by providing a point location and either width or height (#896)
+* Added full rotation support to overlays (#729, #193)
+* Viewport.goHome() now takes clipping into account (#910)
+* Improved zoom to point (#923)
+* Optimized sketch canvas clearing and blending for images with opacity or transfer modes (#927)
+* Now taking rotation into account in viewport getBounds and fitBounds methods (#934)
+* Added option to disable navigator auto-fade (#935)
+* Fixed issue with maintaining viewport position with full screen (#940)
+* Fixed an issue with simultaneous touch events (#930)
+* Avoid loading clipped out tiles (#939)
+* Improved precision for subtle moves with fitBounds (#939)
+* Fixed an issue in viewer.addTiledImage with replace:true when viewer has navigator (#948)
+
+2.1.0:
+
 * BREAKING CHANGE: the tile does not hold a reference to its image anymore. Only the tile cache keep a reference to images.
 * BREAKING CHANGE: TileSource.tileSize no longer exists; use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
 * DEPRECATION: let ImageRecord.getRenderedContext create the rendered context instead of using ImageRecord.setRenderedContext
 * DEPRECATION: TileSource.getTileSize() is deprecated. Use TileSource.getTileWidth() and TileSource.getTileHeight() instead.
-* Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
-* Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
-* Fixed flickering tiles with useCanvas=false when no cache is used (#661)
-* Added additional coordinates conversion methods to TiledImage (#662)
-* 'display: none' no longer gets reset on overlays during draw (#668)
-* Added `preserveImageSizeOnResize` option (#666)
-* Better error reporting for tile load failures (#679)
-* Added collectionColumns as a configuration parameter (#680)
+* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
 * Added support for non-square tiles (#673)
     * TileSource.Options objects can now optionally provide tileWidth/tileHeight instead of tileSize for non-square tile support.
     * IIIFTileSources will now respect non-square tiles if available.
+* Added new tile source for simple images: ImageTileSource (#760)
+* Optimized adding large numbers of items to the world with collectionMode (#735)
+* Registers as an AMD module where possible (#719)
+* Added "tile-loaded" event on the viewer allowing to modify a tile before it is marked ready to be drawn (#659)
+* Added "tile-unloaded" event on the viewer allowing to free up memory one has allocated on a tile (#659)
+* Added 'tile-load-failed' event (#725)
+* Added additional coordinates conversion methods to TiledImage (#662)
+* Added `preserveImageSizeOnResize` option (#666)
+* Added collectionColumns as a configuration parameter (#680)
+* Added option in addTiledImage to replace tiledImage at index (#706)
+* Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
+* You can now change viewport margins after the viewer is created (#721)
+* Added a patch to help slow down the scroll devices that fire too fast (#754)
+* Fixed flickering tiles with useCanvas=false when no cache is used (#661)
+* 'display: none' no longer gets reset on overlays during draw (#668)
+* Better error reporting for tile load failures (#679)
 * Added XDomainRequest as fallback method for ajax requests if XMLHttpRequest fails (for IE < 10) (#693)
 * Now avoiding using eval when JSON.parse is available (#696)
 * Rotation now works properly on retina display (#708)
-* Added option in addTiledImage to replace tiledImage at index (#706)
-* Changed resize behaviour to prevent "snapping" to world bounds when constraints allow more space (#711)
-* Registers as an AMD module where possible (#719)
-* Added autoRefigureSizes flag to World for optimizing mass rearrangements (#715)
-* Added 'tile-load-failed' event (#725)
 * Fixed issue with tiledImages loading tiles at every level instead of just the best level (#728)
 * Fixed placeholderFillStyle flicker (#727)
 * Fix for Chrome (v45) issue that key is sometimes undefined outside of the for-in loop (#730)
 * World.removeAll now cancels any in-flight image loads; same for Viewer.open and Viewer.close (#734)
-* Optimized adding large numbers of items to the world with collectionMode (#735)
 * Fixed overlays position (use rounding instead of flooring and ceiling) (#741)
+* Fixed issue with including overlays in your tileSources array when creating/opening in the viewer (#745)
+* Fixed issue in iOS devices that would cause all touch events to fail after a Multitasking Gesture was triggered (#744)
+* Fixed an issue with TiledImage setPosition/setWidth/setHeight not reliably triggering a redraw (#720)
+* Fixed zooming in with plus key on a Swedish keyboard (#763)
 
 2.0.0:
 

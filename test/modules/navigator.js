@@ -78,9 +78,11 @@
 
         if (navigator === null) {
             navigator = $(".navigator");
-            navigatorScaleFactor = Math.min(navigator.width() / viewer.viewport.contentSize.x, navigator.height() / viewer.viewport.contentSize.y);
-            displayRegionWidth = viewer.viewport.contentSize.x * navigatorScaleFactor;
-            displayRegionHeight = viewer.viewport.contentSize.y * navigatorScaleFactor;
+            navigatorScaleFactor = Math.min(
+                navigator.width() / viewer.viewport._contentSize.x,
+                navigator.height() / viewer.viewport._contentSize.y);
+            displayRegionWidth = viewer.viewport._contentSize.x * navigatorScaleFactor;
+            displayRegionHeight = viewer.viewport._contentSize.y * navigatorScaleFactor;
             contentStartFromLeft = (navigator.width() - displayRegionWidth) / 2;
             contentStartFromTop = (navigator.height() - displayRegionHeight) / 2;
         }
@@ -91,8 +93,8 @@
         regionBoundsInPoints = new OpenSeadragon.Rect(expectedDisplayRegionXLocation, expectedDisplayRegionYLocation, expectedDisplayRegionWidth, expectedDisplayRegionHeight);
 
         if (debug) {
-            console.log('Image width: ' + viewer.viewport.contentSize.x + '\n' +
-                        'Image height: ' + viewer.viewport.contentSize.y + '\n' +
+            console.log('Image width: ' + viewer.viewport._contentSize.x + '\n' +
+                        'Image height: ' + viewer.viewport._contentSize.y + '\n' +
                         'navigator.width(): ' + navigator.width() + '\n' +
                         'navigator.height(): ' + navigator.height() + '\n' +
                         'navigatorScaleFactor: ' + navigatorScaleFactor + '\n' +
@@ -200,28 +202,28 @@
 
     var assessViewerInCorner = function (theContentCorner) {
         return function () {
-            var expectedXCoordinate, expecteYCoordinate;
+            var expectedXCoordinate, expectedYCoordinate;
             if (theContentCorner === "TOPLEFT") {
                 expectedXCoordinate = 0;
-                expecteYCoordinate = 0;
+                expectedYCoordinate = 0;
             }
             else if (theContentCorner === "TOPRIGHT") {
                 expectedXCoordinate = 1 - viewer.viewport.getBounds().width;
-                expecteYCoordinate = 0;
+                expectedYCoordinate = 0;
             }
             else if (theContentCorner === "BOTTOMRIGHT") {
                 expectedXCoordinate = 1 - viewer.viewport.getBounds().width;
-                expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
+                expectedYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             else if (theContentCorner === "BOTTOMLEFT") {
                 expectedXCoordinate = 0;
-                expecteYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
+                expectedYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             if (viewer.viewport.getBounds().width < 1) {
                 Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, 0.04, ' Viewer at ' + theContentCorner + ', x coord');
             }
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
-                Util.assessNumericValue(expecteYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
+                Util.assessNumericValue(expectedYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
             }
         };
     };
@@ -801,7 +803,6 @@
     });
 
     asyncTest('Item positions including collection mode', function() {
-        var navAddCount = 0;
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -815,16 +816,16 @@
         var openHandler = function() {
             viewer.removeHandler('open', openHandler);
             viewer.navigator.world.addHandler('add-item', navOpenHandler);
+            // The navigator may already have added the items.
+            navOpenHandler();
         };
 
         var navOpenHandler = function(event) {
-            navAddCount++;
-            if (navAddCount === 2) {
+            if (viewer.navigator.world.getItemCount() === 2) {
                 viewer.navigator.world.removeHandler('add-item', navOpenHandler);
 
                 setTimeout(function() {
                     // Test initial formation
-                    equal(viewer.navigator.world.getItemCount(), 2, 'navigator has both items');
                     for (var i = 0; i < 2; i++) {
                         propEqual(viewer.navigator.world.getItemAt(i).getBounds(),
                             viewer.world.getItemAt(i).getBounds(), 'bounds are the same');
@@ -866,6 +867,59 @@
             start();
         });
 
+    });
+
+    asyncTest('Viewer rotation applied to navigator by default', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 45,
+                "Rotation set in constructor should be applied to navigator by default.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 90,
+                "Rotation set by setRotation should be applied to navigator by default.");
+
+            start();
+        });
+    });
+
+    asyncTest('Viewer rotation not applied to navigator when navigatorRotate=false', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            degrees:        45,
+            navigatorRotate: false
+        });
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            var navigator = viewer.navigator;
+
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set in constructor should not be applied to navigator when navigatorRotate is false.");
+
+            viewer.viewport.setRotation(90);
+            equal(navigator.viewport.getRotation(), 0,
+                "Rotation set by setRotation should not be applied to navigator when navigatorRotate is false.");
+
+            start();
+        });
     });
 
 })();

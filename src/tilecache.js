@@ -122,7 +122,8 @@ $.TileCache = function( options ) {
     this._imagesLoadedCount = 0;
 };
 
-$.TileCache.prototype = /** @lends OpenSeadragon.TileCache.prototype */{
+/** @lends OpenSeadragon.TileCache.prototype */
+$.TileCache.prototype = {
     /**
      * @returns {Number} The total number of tiles that have been loaded by
      * this TileCache.

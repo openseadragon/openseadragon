@@ -108,7 +108,8 @@ $.ButtonGroup = function( options ) {
     });
 };
 
-$.ButtonGroup.prototype = /** @lends OpenSeadragon.ButtonGroup.prototype */{
+/** @lends OpenSeadragon.ButtonGroup.prototype */
+$.ButtonGroup.prototype = {
 
     /**
      * TODO: Figure out why this is used on the public API and if a more useful

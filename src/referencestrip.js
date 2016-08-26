@@ -276,7 +276,6 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
             }
 
             this.currentPage = page;
-            $.getElement( element.id + '-displayregion' ).focus();
             onStripEnter.call( this, { eventSource: this.innerTracker } );
         }
     },
@@ -436,7 +435,7 @@ function loadPanels( strip, viewerSize, scroll ) {
                 animationTime:          0
             } );
 
-            miniViewer.displayRegion           = $.makeNeutralElement( "textarea" );
+            miniViewer.displayRegion           = $.makeNeutralElement( "div" );
             miniViewer.displayRegion.id        = element.id + '-displayregion';
             miniViewer.displayRegion.className = 'displayregion';
 

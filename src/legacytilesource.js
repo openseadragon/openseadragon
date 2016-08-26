@@ -170,16 +170,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
     },
 
     /**
-     * @function
-     * @param {Number} level
-     * @param {OpenSeadragon.Point} point
-     */
-    getTileAtPoint: function( level, point ) {
-        return new $.Point( 0, 0 );
-    },
-
-
-    /**
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile
      * server technologies, and various specifications for building image
@@ -215,7 +205,7 @@ function filterFiles( files ){
         if( file.height &&
             file.width &&
             file.url && (
-                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)$/) || (
+                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/) || (
                     file.mimetype &&
                     file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
                 )

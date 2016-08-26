@@ -5,12 +5,12 @@
 
     module( 'Multi-Image', {
         setup: function() {
-            $( '<div id="itemsexample"></div>' ).appendTo( "#qunit-fixture" );
+            $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
 
             viewer = OpenSeadragon( {
-                id: 'itemsexample',
+                id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             });
@@ -21,7 +21,7 @@
             }
 
             viewer = null;
-            $( "#itemsexample" ).remove();
+            $("#example").remove();
         }
     } );
 
@@ -187,6 +187,85 @@
                 width: 2
             }
         ]);
+    });
+
+    asyncTest('Viewer.addSimpleImage', function() {
+        viewer.addHandler("open", function openHandler() {
+            viewer.removeHandler("open", openHandler);
+
+            viewer.world.addHandler('add-item', function itemAdded(event) {
+                viewer.world.removeHandler('add-item', itemAdded);
+                equal(event.item.opacity, 0.5,
+                    'Opacity option should be set when using addSimpleImage');
+                start();
+            });
+
+            viewer.addSimpleImage({
+                url: '/test/data/A.png',
+                opacity: 0.5
+            });
+        });
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    asyncTest('Transparent image on top of others', function() {
+        viewer.open('/test/data/testpattern.dzi');
+
+        var density = OpenSeadragon.pixelDensityRatio;
+
+        viewer.addHandler('open', function() {
+            var firstImage = viewer.world.getItemAt(0);
+            firstImage.addHandler('fully-loaded-change', function() {
+                var imageData = viewer.drawer.context.getImageData(0, 0,
+                    500 * OpenSeadragon.pixelDensityRatio, 500 * density);
+
+                // Pixel 250,250 will be in the hole of the A
+                var expectedVal = getPixelValue(imageData, 250 * density, 250 * density);
+
+                notEqual(expectedVal.r, 0, 'Red channel should not be 0');
+                notEqual(expectedVal.g, 0, 'Green channel should not be 0');
+                notEqual(expectedVal.b, 0, 'Blue channel should not be 0');
+                notEqual(expectedVal.a, 0, 'Alpha channel should not be 0');
+
+                viewer.addSimpleImage({
+                    url: '/test/data/A.png',
+                    success: function() {
+                        var secondImage = viewer.world.getItemAt(1);
+                        secondImage.addHandler('fully-loaded-change', function() {
+                            var imageData = viewer.drawer.context.getImageData(0, 0, 500 * density, 500 * density);
+                            var actualVal = getPixelValue(imageData, 250 * density, 250 * density);
+
+                            equal(actualVal.r, expectedVal.r,
+                                'Red channel should not change in transparent part of the A');
+                            equal(actualVal.g, expectedVal.g,
+                                'Green channel should not change in transparent part of the A');
+                            equal(actualVal.b, expectedVal.b,
+                                'Blue channel should not change in transparent part of the A');
+                            equal(actualVal.a, expectedVal.a,
+                                'Alpha channel should not change in transparent part of the A');
+
+                            var onAVal = getPixelValue(imageData, 333 * density, 250 * density);
+                            equal(onAVal.r, 0, 'Red channel should be null on the A');
+                            equal(onAVal.g, 0, 'Green channel should be null on the A');
+                            equal(onAVal.b, 0, 'Blue channel should be null on the A');
+                            equal(onAVal.a, 255, 'Alpha channel should be 255 on the A');
+
+                            start();
+                        });
+                    }
+                });
+            });
+        });
+
+        function getPixelValue(imageData, x, y) {
+            var offset = 4 * (y * imageData.width + x);
+            return {
+                r: imageData.data[offset],
+                g: imageData.data[offset + 1],
+                b: imageData.data[offset + 2],
+                a: imageData.data[offset + 3]
+            };
+        }
     });
 
 })();

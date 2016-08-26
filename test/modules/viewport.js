@@ -5,6 +5,7 @@
     var VIEWER_ID = "example";
     var PREFIX_URL = "/build/openseadragon/images/";
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
+    var EPSILON = 0.0000000001;
 
      module("viewport", {
         setup: function () {
@@ -98,7 +99,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             var orig, expected, actual;
             for (var i = 0; i < config.testArray.length; i++){
@@ -125,7 +125,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             propEqual(viewport.getContainerSize(), new OpenSeadragon.Point(500, 500), "Test container size");
             start();
@@ -139,7 +138,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             equal(viewport.getAspectRatio(), 1, "Test aspect ratio");
             start();
@@ -221,6 +219,98 @@
         });
     });
 
+    asyncTest('getHomeBoundsNoRotate with rotation', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(-675);
+            Util.assertRectangleEquals(
+                viewport.getHomeBoundsNoRotate(),
+                new OpenSeadragon.Rect(
+                    (1 - Math.sqrt(2)) / 2,
+                    (1 - Math.sqrt(2)) / 2,
+                    Math.sqrt(2),
+                    Math.sqrt(2)),
+                0.00000001,
+                "Test getHomeBoundsNoRotate with degrees = -675");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeBounds with rotation', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(-675);
+            Util.assertRectangleEquals(
+                viewport.getHomeBounds(),
+                new OpenSeadragon.Rect(
+                    0.5,
+                    -0.5,
+                    Math.sqrt(2),
+                    Math.sqrt(2),
+                    45),
+                0.00000001,
+                "Test getHomeBounds with degrees = -675");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('getHomeBoundsWithMultiImages', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(0, 0, 4, 4),
+                viewport.getHomeBounds(),
+                0.00000001,
+                "Test getHomeBoundsWithMultiImages");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open([{
+                tileSource: DZI_PATH,
+                x: 0,
+                y: 0,
+                width: 2
+        }, {
+                tileSource: DZI_PATH,
+                x: 3,
+                y: 3,
+                width: 1
+        }]);
+    });
+
+    asyncTest('getHomeBoundsWithMultiImagesAndClipping', function() {
+        function openHandler() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(1, 1, 4, 4),
+                viewport.getHomeBounds(),
+                0.00000001,
+                "Test getHomeBoundsWithMultiImagesAndClipping");
+            start();
+        }
+        viewer.addHandler('open', openHandler);
+        viewer.open([{
+                tileSource: DZI_PATH,
+                x: 0,
+                y: 0,
+                width: 2,
+                clip: new OpenSeadragon.Rect(500, 500, 500, 500)
+        }, {
+                tileSource: DZI_PATH,
+                x: 4,
+                y: 4,
+                width: 1
+        }]);
+    });
+
     asyncTest('getHomeZoom', function() {
         reopenViewerHelper({
             property: 'defaultZoomLevel',
@@ -243,7 +333,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update(); // need to call this even with immediately=true
 
             // Special cases for oddball levels
             if (level === -1) {
@@ -288,9 +377,8 @@
             for(var i = 0; i < testRects.length; i++){
                 var rect = testRects[i].times(viewport.getContainerSize());
                 viewport.resetContentSize(rect.getSize());
-                viewport.update();
                 propEqual(
-                    viewport.contentSize,
+                    viewport._contentSize,
                     rect.getSize(),
                     "Reset content size correctly."
                 );
@@ -308,10 +396,8 @@
 
             // zoom/pan somewhere
             viewport.zoomTo(ZOOM_FACTOR, true);
-            viewport.update();
 
             viewport.goHome(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 viewport.getHomeBounds(),
@@ -323,7 +409,7 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('ensureVisible', function(){
+    asyncTest('ensureVisible', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
@@ -331,10 +417,8 @@
             // zoom/pan so that the image is out of view
             viewport.zoomTo(ZOOM_FACTOR * -50, true);
             viewport.panBy(new OpenSeadragon.Point(5000, 5000), null, true);
-            viewport.update();
 
             viewport.ensureVisible(true);
-            viewport.update();
             var bounds = viewport.getBounds();
             ok(bounds.getSize().x > 1 && bounds.getSize().y > 1, "Moved viewport so that image is visible.");
             start();
@@ -343,52 +427,132 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('fitBounds', function(){
-        var openHandler = function(event) {
+    asyncTest('applyConstraints', function() {
+        var openHandler = function() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            for(var i = 0; i < testRects.length; i++){
-                var rect = testRects[i].times(viewport.getContainerSize());
-                viewport.fitBounds(rect, true);
-                viewport.update();
-                propEqual(
-                    viewport.getBounds(),
-                    rect,
-                    "Fit bounds correctly."
-                );
-            }
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.visibilityRatio = 0.3;
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(0.7, 0.7, 1, 1),
+                bounds,
+                EPSILON,
+                "Viewport.applyConstraints should move viewport.");
             start();
         };
         viewer.addHandler('open', openHandler);
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('applyConstraints with visibilityRatio = 1 shouldn\'t bounce around', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            viewport.visibilityRatio = 1;
+            viewport.zoomTo(0.5, undefined, true);
+            viewport.panBy(new OpenSeadragon.Point(0.75, 0), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                new OpenSeadragon.Rect(-0.5, 1, 2, 2),
+                bounds,
+                EPSILON,
+                "Viewport.applyConstraints should move viewport to the center, not to a side.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(TALL_PATH);
+    });
+
+    asyncTest('applyConstraints with rotation', function() {
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                bounds,
+                new OpenSeadragon.Rect(1, 0, Math.sqrt(2), Math.sqrt(2), 45),
+                EPSILON,
+                "Viewport.applyConstraints with rotation should move viewport.");
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    // Fit bounds tests
     var testRectsFitBounds = [
         new OpenSeadragon.Rect(0, -0.75, 0.5, 1),
         new OpenSeadragon.Rect(0.5, 0, 0.5, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5)
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.5, 0.25, Math.sqrt(0.125), Math.sqrt(0.125), 45)
     ];
 
     var expectedRectsFitBounds = [
+        new OpenSeadragon.Rect(-0.25, -0.75, 1, 1),
+        new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
+        new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
+        new OpenSeadragon.Rect(-0.3, -0.3, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
+    ];
+
+    var expectedRectsFitBoundsWithRotation = [
+        new OpenSeadragon.Rect(
+            0.25,
+            -1,
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            Math.sqrt(0.125) + Math.sqrt(0.5),
+            45),
+        new OpenSeadragon.Rect(
+            0.75,
+            -0.25,
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            Math.sqrt(0.125) + Math.sqrt(8 / 25),
+            45),
+        new OpenSeadragon.Rect(
+            1,
+            0.5,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            -0.05,
+            -0.55,
+            Math.sqrt(0.125) * 2,
+            Math.sqrt(0.125) * 2,
+            45),
+        new OpenSeadragon.Rect(
+            0.5,
+            0.25,
+            Math.sqrt(0.125),
+            Math.sqrt(0.125),
+            45)
+    ];
+
+    var expectedRectsFitBoundsWithConstraints = [
         new OpenSeadragon.Rect(-0.25, -0.5, 1, 1),
         new OpenSeadragon.Rect(0.35, 0, 0.8, 0.8),
         new OpenSeadragon.Rect(0.75, 0.75, 0.5, 0.5),
-        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5)
+        new OpenSeadragon.Rect(-0.25, -0.25, 0.5, 0.5),
+        new OpenSeadragon.Rect(0.25, 0.25, 0.5, 0.5)
     ];
 
-    asyncTest('fitBoundsWithConstraints', function(){
+    asyncTest('fitBounds', function(){
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.zoomTo(ZOOM_FACTOR, null, true);
-            viewport.update();
+
             for(var i = 0; i < testRectsFitBounds.length; i++){
                 var rect = testRectsFitBounds[i];
-
-                viewport.fitBoundsWithConstraints(rect, true);
-                viewport.update();
+                viewport.fitBounds(rect, true);
                 propEqual(
                     viewport.getBounds(),
                     expectedRectsFitBounds[i],
@@ -401,12 +565,92 @@
         viewer.open(DZI_PATH);
     });
 
+    asyncTest('fitBounds with viewport rotation', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.setRotation(45);
+
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+                viewport.fitBounds(rect, true);
+                Util.assertRectangleEquals(
+                    viewport.getBounds(),
+                    expectedRectsFitBoundsWithRotation[i],
+                    EPSILON,
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBoundsWithConstraints', function(){
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+            viewport.zoomTo(ZOOM_FACTOR, null, true);
+            for(var i = 0; i < testRectsFitBounds.length; i++){
+                var rect = testRectsFitBounds[i];
+
+                viewport.fitBoundsWithConstraints(rect, true);
+                propEqual(
+                    viewport.getBounds(),
+                    expectedRectsFitBoundsWithConstraints[i],
+                    "Fit bounds correctly."
+                );
+            }
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds with almost same zoom', function() {
+        var openHandler = function() {
+            var viewport = viewer.viewport;
+            var rect1 = new OpenSeadragon.Rect(0, 0, 1, 1);
+            viewport.fitBounds(rect1, true);
+            Util.assertRectangleEquals(rect1, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect1);
+
+            // Zoom and pan
+            var rect2 = new OpenSeadragon.Rect(1, 1, 1 + 1e-8, 1 + 1e-8);
+            viewport.fitBounds(rect2);
+            Util.assertRectangleEquals(rect2, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect2);
+            start();
+        };
+        viewer.addOnceHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('fitBounds with big rectangle', function() {
+        var openHandler = function() {
+            var viewport = viewer.viewport;
+            var rect1 = new OpenSeadragon.Rect(0, 0, 1e9, 1e9);
+            viewport.fitBounds(rect1, true);
+            Util.assertRectangleEquals(rect1, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect1);
+
+            // Zoom and pan
+            var rect2 = new OpenSeadragon.Rect(1, 1, 2e9, 2e9);
+            viewport.fitBounds(rect2);
+            Util.assertRectangleEquals(rect2, viewport.getBounds(), 1e-6,
+                'Bounds should be ' + rect2);
+            start();
+        };
+        viewer.addOnceHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
     asyncTest('fitHorizontally', function(){
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.fitHorizontally(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 new OpenSeadragon.Rect(0, 1.5, 1, 1),
@@ -423,7 +667,6 @@
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.fitVertically(true);
-            viewport.update();
             propEqual(
                 viewport.getBounds(),
                 new OpenSeadragon.Rect(0.375, 0, 0.25, 0.25),
@@ -434,6 +677,7 @@
         viewer.addHandler('open', openHandler);
         viewer.open(WIDE_PATH);
     });
+    // End fitBounds tests.
 
     asyncTest('panBy', function(){
         var openHandler = function(event) {
@@ -443,7 +687,6 @@
             for (var i = 0; i < testPoints.length; i++){
                 var expected = viewport.getCenter().plus(testPoints[i]);
                 viewport.panBy(testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getCenter(),
                     expected,
@@ -464,7 +707,6 @@
 
             for (var i = 0; i < testPoints.length; i++){
                 viewport.panTo(testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getCenter(),
                     testPoints[i],
@@ -485,7 +727,6 @@
 
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomBy(testZoomLevels[i], null, true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -495,7 +736,6 @@
                 // now use a ref point
                 // TODO: check the ending position due to ref point
                 viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
-                viewport.update();
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -516,7 +756,6 @@
 
             for (var i = 0; i < testZoomLevels.length; i++){
                 viewport.zoomTo(testZoomLevels[i], null, true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -526,7 +765,6 @@
                 // now use a ref point
                 // TODO: check the ending position due to ref point
                 viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
-                viewport.update(); // need to call this even with immediately=true
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -565,7 +803,6 @@
             for(var i = 0; i < testPoints.length; i++){
                 var new_size = testPoints[i].times(viewer.source.dimensions.x);
                 viewport.resize(new_size);
-                viewport.update();
                 propEqual(viewport.getContainerSize(), new_size, "Viewport resized successfully.");
             }
             start();

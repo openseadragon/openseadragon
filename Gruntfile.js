@@ -28,6 +28,7 @@ module.exports = function(grunt) {
             "src/mousetracker.js",
             "src/control.js",
             "src/controldock.js",
+            "src/placement.js",
             "src/viewer.js",
             "src/navigator.js",
             "src/strings.js",
@@ -39,6 +40,7 @@ module.exports = function(grunt) {
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/legacytilesource.js",
+            "src/imagetilesource.js",
             "src/tilesourcecollection.js",
             "src/button.js",
             "src/buttongroup.js",
@@ -55,6 +57,12 @@ module.exports = function(grunt) {
             "src/tilecache.js",
             "src/world.js"
         ];
+
+    var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
+                 "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
+                 "//! Git commit: <%= gitInfo %>\n" +
+                 "//! http://openseadragon.github.io\n" +
+                 "//! License: http://openseadragon.github.io/license/\n\n";
 
     // ----------
     grunt.event.once('git-describe', function (rev) {
@@ -84,12 +92,9 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                banner: "//! <%= pkg.name %> <%= pkg.version %>\n" +
-                    "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
-                    "//! Git commit: <%= gitInfo %>\n" +
-                    "//! http://openseadragon.github.io\n" +
-                    "//! License: http://openseadragon.github.io/license/\n\n",
-                process: true
+                banner: banner,
+                process: true,
+                sourceMap: true
             },
             dist: {
                 src:  [ "<banner>" ].concat(sources),
@@ -110,12 +115,17 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                preserveComments: "some",
+                preserveComments: false,
+                banner: banner,
+                compress: {
+                    sequences: false,
+                    join_vars: false
+                },
                 sourceMap: true,
                 sourceMapName: 'build/openseadragon/openseadragon.min.js.map'
             },
             openseadragon: {
-                src: [ distribution ],
+                src: sources,
                 dest: minified
             }
         },

@@ -265,7 +265,8 @@
         }
     };
 
-    $.MouseTracker.prototype = /** @lends OpenSeadragon.MouseTracker.prototype */{
+    /** @lends OpenSeadragon.MouseTracker.prototype */
+    $.MouseTracker.prototype = {
 
         /**
          * Clean up any events or objects created by the tracker.
@@ -1117,7 +1118,9 @@
          */
         this.captureCount = 0;
     };
-    $.MouseTracker.GesturePointList.prototype = /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */{
+
+    /** @lends OpenSeadragon.MouseTracker.GesturePointList.prototype */
+    $.MouseTracker.GesturePointList.prototype = {
         /**
          * @function
          * @returns {Number} Number of gesture points in the list.
@@ -1354,11 +1357,11 @@
      * @private
      * @inner
      */
-    function capturePointer( tracker, pointerType ) {
+    function capturePointer( tracker, pointerType, pointerCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount++;
+        pointsList.captureCount += (pointerCount || 1);
 
         if ( pointsList.captureCount === 1 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -1367,6 +1370,14 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                if (isInIframe && canAccessEvents(window.top)) {
+                    $.addEvent(
+                        window.top,
+                        eventParams.upName,
+                        eventParams.upHandler,
+                        true
+                    );
+                }
                 $.addEvent(
                     $.MouseTracker.captureElement,
                     eventParams.upName,
@@ -1389,11 +1400,11 @@
      * @private
      * @inner
      */
-    function releasePointer( tracker, pointerType ) {
+    function releasePointer( tracker, pointerType, pointerCount ) {
         var pointsList = tracker.getActivePointersListByType( pointerType ),
             eventParams;
 
-        pointsList.captureCount--;
+        pointsList.captureCount -= (pointerCount || 1);
 
         if ( pointsList.captureCount === 0 ) {
             if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
@@ -1402,6 +1413,14 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                if (isInIframe && canAccessEvents(window.top)) {
+                    $.removeEvent(
+                        window.top,
+                        eventParams.upName,
+                        eventParams.upHandler,
+                        true
+                    );
+                }
                 $.removeEvent(
                     $.MouseTracker.captureElement,
                     eventParams.moveName,
@@ -2055,7 +2074,7 @@
 
         if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
             $.stopEvent( event );
-            capturePointer( tracker, 'touch' );
+            capturePointer( tracker, 'touch', touchCount );
         }
 
         $.cancelEvent( event );
@@ -2109,7 +2128,7 @@
         }
 
         if ( updatePointersUp( tracker, event, gPoints, 0 ) ) {
-            releasePointer( tracker, 'touch' );
+            releasePointer( tracker, 'touch', touchCount );
         }
 
         // simulate touchleave on our tracked element
@@ -2190,16 +2209,10 @@
     function onTouchCancel( tracker, event ) {
         var i,
             touchCount = event.changedTouches.length,
-            gPoints = [];
-
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoints.push( {
-                id: event.changedTouches[ i ].identifier,
-                type: 'touch'
-            } );
-        }
-
-        updatePointersCancel( tracker, event, gPoints );
+            gPoints = [],
+            pointsList = tracker.getActivePointersListByType( 'touch' );
+        
+        abortTouchContacts( tracker, event, pointsList );
     }
 
 
@@ -3252,6 +3265,30 @@
                 preventDefaultAction: false,
                 userData:             tracker.userData
             } );
+        }
+    }
+    
+    // True if inside an iframe, otherwise false.
+    // @member {Boolean} isInIframe
+    // @private
+    // @inner
+    var isInIframe = (function() {
+        try {
+            return window.self !== window.top;
+        } catch (e) {
+            return true;
+        }
+    })();
+ 
+    // @function
+    // @private
+    // @inner
+    // @returns {Boolean} True if the target has access rights to events, otherwise false.
+    function canAccessEvents (target) {
+        try {
+            return target.addEventListener && target.removeEventListener;
+        } catch (e) {
+            return false;
         }
     }
 

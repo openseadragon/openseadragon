@@ -139,7 +139,8 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         }
 
         if (url && !options.tilesUrl) {
-            options.tilesUrl = url.replace(/([^\/]+)\.(dzi|xml|js)(\?.*|$)/, '$1_files/');
+            options.tilesUrl = url.replace(
+                    /([^\/]+?)(\.(dzi|xml|js))?\/?(\?.*)?$/, '$1_files/');
 
             if (url.search(/\.(dzi|xml|js)\?/) != -1) {
                 options.queryParams = url.match(/\?.*/);
@@ -300,7 +301,9 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName == "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName == "Error" ) {
-        return $._processDZIError( root );
+        var messageNode = root.getElementsByTagName("Message")[0];
+        var message = messageNode.firstChild.nodeValue;
+        throw new Error(message);
     }
 
     throw new Error( $.getString( "Errors.Dzi" ) );

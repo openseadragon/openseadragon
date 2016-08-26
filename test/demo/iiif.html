@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Demo - IIIF Tiled</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+
+    </style>
+</head>
+<body>
+<div>
+    <p>Default OpenSeadragon viewer from IIIF Tile Source.</p>
+    <p>This depends on a remote server providing a IIIF Image API endpoint.</p>
+</div>
+<div id="contentDiv" class="openseadragon1"></div>
+<script type="text/javascript">
+
+    var viewer = OpenSeadragon({
+        // debugMode: true,
+        id: "contentDiv",
+        prefixUrl: "../../build/openseadragon/images/",
+        tileSources: "http://wellcomelibrary.org/iiif-img/b11768265-0/a6801943-b8b4-4674-908c-7d5b27e70569/info.json",
+        showNavigator:true
+    });
+
+</script>
+</body>
+</html>
