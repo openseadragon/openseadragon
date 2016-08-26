@@ -947,6 +947,7 @@ function updateViewport( tiledImage ) {
     // Load the new 'best' tile
     if (best && !best.context2D) {
         loadTile( tiledImage, best, currentTime );
+        tiledImage._needsDraw = true;
         tiledImage._setFullyLoaded(false);
     } else {
         tiledImage._setFullyLoaded(true);
