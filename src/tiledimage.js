@@ -305,23 +305,35 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Get this TiledImage's bounds in viewport coordinates.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * false for target location.
      * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
-     * @param {Boolean} [current=false] - Pass true for the current location; false for target location.
      */
     getBounds: function(current) {
+        return this.getBoundsNoRotate(current)
+            .rotate(this._degrees, this._getRotationPoint(current));
+    },
+
+    /**
+     * Get this TiledImage's bounds in viewport coordinates without taking
+     * rotation into account.
+     * @param {Boolean} [current=false] - Pass true for the current location;
+     * false for target location.
+     * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
+     */
+    getBoundsNoRotate: function(current) {
         return current ?
             new $.Rect(
                 this._xSpring.current.value,
                 this._ySpring.current.value,
                 this._worldWidthCurrent,
-                this._worldHeightCurrent,
-                this._degrees) :
+                this._worldHeightCurrent) :
             new $.Rect(
                 this._xSpring.target.value,
                 this._ySpring.target.value,
                 this._worldWidthTarget,
-                this._worldHeightTarget,
-                this._degrees);
+                this._worldHeightTarget);
     },
 
     // deprecated
@@ -337,18 +349,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {$.Rect} The clipped bounds in viewport coordinates.
      */
     getClippedBounds: function(current) {
-        var bounds = this.getBounds(current);
+        var bounds = this.getBoundsNoRotate(current);
         if (this._clip) {
-            var ratio = this._worldWidthCurrent / this.source.dimensions.x;
+            var worldWidth = current ?
+                this._worldWidthCurrent : this._worldWidthTarget;
+            var ratio = worldWidth / this.source.dimensions.x;
             var clip = this._clip.times(ratio);
             bounds = new $.Rect(
                 bounds.x + clip.x,
                 bounds.y + clip.y,
                 clip.width,
-                clip.height,
-                this._degrees);
+                clip.height);
         }
-        return bounds;
+        return bounds.rotate(this._degrees, this._getRotationPoint(current));
     },
 
     /**
@@ -373,21 +386,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
      * @return {OpenSeadragon.Point} A point representing the coordinates in the image.
      */
-    viewportToImageCoordinates: function( viewerX, viewerY, current ) {
+    viewportToImageCoordinates: function(viewerX, viewerY, current) {
+        var point;
         if (viewerX instanceof $.Point) {
             //they passed a point instead of individual components
             current = viewerY;
-            viewerY = viewerX.y;
-            viewerX = viewerX.x;
+            point = viewerX;
+        } else {
+            point = new $.Point(viewerX, viewerY);
         }
 
-        if (current) {
-            return this._viewportToImageDelta(viewerX - this._xSpring.current.value,
-                viewerY - this._ySpring.current.value);
-        }
-
-        return this._viewportToImageDelta(viewerX - this._xSpring.target.value,
-            viewerY - this._ySpring.target.value);
+        point = point.rotate(-this._degrees, this._getRotationPoint(current));
+        return current ?
+            this._viewportToImageDelta(
+                point.x - this._xSpring.current.value,
+                point.y - this._ySpring.current.value) :
+            this._viewportToImageDelta(
+                point.x - this._xSpring.target.value,
+                point.y - this._ySpring.target.value);
     },
 
     // private
@@ -405,7 +421,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
      * @return {OpenSeadragon.Point} A point representing the coordinates in the viewport.
      */
-    imageToViewportCoordinates: function( imageX, imageY, current ) {
+    imageToViewportCoordinates: function(imageX, imageY, current) {
         if (imageX instanceof $.Point) {
             //they passed a point instead of individual components
             current = imageY;
@@ -422,7 +438,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             point.y += this._ySpring.target.value;
         }
 
-        return point;
+        return point.rotate(this._degrees, this._getRotationPoint(current));
     },
 
     /**
@@ -453,7 +469,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees
+            rect.degrees + this._degrees
         );
     },
 
@@ -485,7 +501,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees
+            rect.degrees - this._degrees
         );
     },
 
@@ -531,6 +547,32 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
         return viewerCoordinates.plus(
                 OpenSeadragon.getElementPosition( this.viewer.element ));
+    },
+
+    // private
+    // Convert rectangle in tiled image coordinates to viewport coordinates.
+    _tiledImageToViewportRectangle: function(rect) {
+        var scale = this._scaleSpring.current.value;
+        return new $.Rect(
+            rect.x * scale + this._xSpring.current.value,
+            rect.y * scale + this._ySpring.current.value,
+            rect.width * scale,
+            rect.height * scale,
+            rect.degrees)
+            .rotate(this.getRotation(), this._getRotationPoint(true));
+    },
+
+    // private
+    // Convert rectangle in viewport coordinates to tiled image coordinates.
+    _viewportToTiledImageRectangle: function(rect) {
+        var scale = this._scaleSpring.current.value;
+        rect = rect.rotate(-this.getRotation(), this._getRotationPoint(true));
+        return new $.Rect(
+            (rect.x - this._xSpring.current.value) / scale,
+            (rect.y - this._ySpring.current.value) / scale,
+            rect.width / scale,
+            rect.height / scale,
+            rect.degrees);
     },
 
     /**
@@ -738,7 +780,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Set the current rotation of this tiled image in degrees.
-     * @param {Number} the rotation in degrees.
+     * @param {Number} degrees the rotation in degrees.
      */
     setRotation: function(degrees) {
         degrees = $.positiveModulo(degrees, 360);
@@ -748,6 +790,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._degrees = degrees;
         this._needsDraw = true;
         this._raiseBoundsChange();
+    },
+
+    /**
+     * @private
+     * Get the point around which this tiled image is rotated
+     * @param {Boolean} current True for current rotation point, false for target.
+     * @returns {OpenSeadragon.Point}
+     */
+    _getRotationPoint: function(current) {
+        return this.getBoundsNoRotate(current).getTopLeft();
     },
 
     /**
@@ -848,51 +900,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateViewport: function() {
         this._needsDraw = false;
 
-        var viewport = this.viewport;
-        var viewportBounds  = viewport.getBoundsWithMargins(true);
-
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
             var tile = this.lastDrawn.pop();
             tile.beingDrawn = false;
         }
 
+        var viewport = this.viewport;
+        var drawArea = this._viewportToTiledImageRectangle(
+            viewport.getBoundsWithMargins(true));
+
         if (!this.wrapHorizontal && !this.wrapVertical) {
-            var tiledImageBounds = this.getClippedBounds(true)
-                .getBoundingBox();
-            var intersection = viewportBounds.intersection(tiledImageBounds);
-            if (intersection === null) {
+            var tiledImageBounds = this._viewportToTiledImageRectangle(
+                this.getClippedBounds(true));
+            drawArea = drawArea.intersection(tiledImageBounds);
+            if (drawArea === null) {
                 return;
             }
-            viewportBounds = intersection;
-        }
-        viewportBounds = viewportBounds.getBoundingBox();
-        viewportBounds.x -= this._xSpring.current.value;
-        viewportBounds.y -= this._ySpring.current.value;
-
-        var viewportTL = viewportBounds.getTopLeft();
-        var viewportBR = viewportBounds.getBottomRight();
-
-        //Don't draw if completely outside of the viewport
-        if  (!this.wrapHorizontal &&
-            (viewportBR.x < 0 || viewportTL.x > this._worldWidthCurrent)) {
-            return;
-        }
-
-        if (!this.wrapVertical &&
-            (viewportBR.y < 0 || viewportTL.y > this._worldHeightCurrent)) {
-            return;
-        }
-
-        // Calculate viewport rect / bounds
-        if (!this.wrapHorizontal) {
-            viewportTL.x = Math.max(viewportTL.x, 0);
-            viewportBR.x = Math.min(viewportBR.x, this._worldWidthCurrent );
-        }
-
-        if (!this.wrapVertical) {
-            viewportTL.y = Math.max(viewportTL.y, 0);
-            viewportBR.y = Math.min(viewportBR.y, this._worldHeightCurrent);
         }
 
         var levelsInterval = this._getLevelsInterval();
@@ -950,8 +974,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 level,
                 levelOpacity,
                 levelVisibility,
-                viewportTL,
-                viewportBR,
+                drawArea,
                 currentTime,
                 bestTile
             );
@@ -976,7 +999,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     }
 });
 
-function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, levelVisibility, viewportTL, viewportBR, currentTime, best ){
+function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
+    levelVisibility, drawArea, currentTime, best) {
+
+    var topLeftBound = drawArea.getBoundingBox().getTopLeft();
+    var bottomRightBound = drawArea.getBoundingBox().getBottomRight();
 
     if (tiledImage.viewer) {
         /**
@@ -991,8 +1018,9 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
          * @property {Object} level
          * @property {Object} opacity
          * @property {Object} visibility
-         * @property {Object} topleft
-         * @property {Object} bottomright
+         * @property {OpenSeadragon.Rect} drawArea
+         * @property {Object} topleft deprecated, use drawArea instead
+         * @property {Object} bottomright deprecated, use drawArea instead
          * @property {Object} currenttime
          * @property {Object} best
          * @property {?Object} userData - Arbitrary subscriber-defined object.
@@ -1003,18 +1031,17 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
             level: level,
             opacity: levelOpacity,
             visibility: levelVisibility,
-            topleft: viewportTL,
-            bottomright: viewportBR,
+            drawArea: drawArea,
+            topleft: topLeftBound,
+            bottomright: bottomRightBound,
             currenttime: currentTime,
             best: best
         });
     }
 
     //OK, a new drawing so do your calculations
-    var topLeftTile = tiledImage.source.getTileAtPoint(
-        level, viewportTL.divide(tiledImage._scaleSpring.current.value));
-    var bottomRightTile = tiledImage.source.getTileAtPoint(
-        level, viewportBR.divide(tiledImage._scaleSpring.current.value));
+    var topLeftTile = tiledImage.source.getTileAtPoint(level, topLeftBound);
+    var bottomRightTile = tiledImage.source.getTileAtPoint(level, bottomRightBound);
     var numberOfTiles  = tiledImage.source.getNumTiles(level);
 
     resetCoverage(tiledImage.coverage, level);
@@ -1022,11 +1049,15 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
     if (tiledImage.wrapHorizontal) {
         topLeftTile.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
     } else {
+        // Adjust for floating point error
+        topLeftTile.x = Math.max(topLeftTile.x, 0);
         bottomRightTile.x = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
     }
     if (tiledImage.wrapVertical) {
         topLeftTile.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
     } else {
+        // Adjust for floating point error
+        topLeftTile.y = Math.max(topLeftTile.y, 0);
         bottomRightTile.y = Math.min(bottomRightTile.y, numberOfTiles.y - 1);
     }
 
@@ -1034,6 +1065,13 @@ function updateLevel( tiledImage, haveDrawn, drawLevel, level, levelOpacity, lev
         tiledImage.viewport.getCenter());
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
+
+            var tileBounds = tiledImage.source.getTileBounds(level, x, y);
+
+            if (drawArea.intersection(tileBounds) === null) {
+                // This tile is outside of the viewport, no need to draw it
+                continue;
+            }
 
             best = updateTile(
                 tiledImage,
@@ -1529,7 +1567,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             tiledImage._drawer._offsetForRotation(
                 tiledImage._degrees,
                 tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage.getBounds(true).getTopLeft(), true),
+                    tiledImage._getRotationPoint(true), true),
                 useSketch);
         }
     }
@@ -1539,6 +1577,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+        box = box.rotate(-tiledImage._degrees, tiledImage._getRotationPoint());
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
         if (sketchScale) {
             clipRect = clipRect.times(sketchScale);
@@ -1618,7 +1657,7 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage._drawer._offsetForRotation(
                     tiledImage._degrees,
                     tiledImage.viewport.pixelFromPointNoRotate(
-                        tiledImage.getBounds(true).getTopLeft(), true),
+                        tiledImage._getRotationPoint(true), true),
                     useSketch);
             }
         }

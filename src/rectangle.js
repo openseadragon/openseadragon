@@ -449,6 +449,11 @@ $.Rect.prototype = {
         var newTopRight = this.getTopRight().rotate(degrees, pivot);
 
         var diff = newTopRight.minus(newTopLeft);
+        // Handle floating point error
+        diff = diff.apply(function(x) {
+            var EPSILON = 1e-15;
+            return Math.abs(x) < EPSILON ? 0 : x;
+        });
         var radians = Math.atan(diff.y / diff.x);
         if (diff.x < 0) {
             radians += Math.PI;

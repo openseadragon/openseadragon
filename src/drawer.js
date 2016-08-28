@@ -483,7 +483,7 @@ $.Drawer.prototype = {
             this._offsetForRotation(
                 tiledImage.getRotation(),
                 tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage.getBounds(true).getTopLeft(), true));
+                    tiledImage._getRotationPoint(true), true));
         }
 
         context.strokeRect(

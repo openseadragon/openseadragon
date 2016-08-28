@@ -383,7 +383,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             var item = this._items[0];
             var bounds = item.getBounds();
             this._contentFactor = item.getContentSize().x / bounds.width;
-            var clippedBounds = item.getClippedBounds();
+            var clippedBounds = item.getClippedBounds().getBoundingBox();
             var left = clippedBounds.x;
             var top = clippedBounds.y;
             var right = clippedBounds.x + clippedBounds.width;
@@ -393,7 +393,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 bounds = item.getBounds();
                 this._contentFactor = Math.max(this._contentFactor,
                     item.getContentSize().x / bounds.width);
-                clippedBounds = item.getClippedBounds();
+                clippedBounds = item.getClippedBounds().getBoundingBox();
                 left = Math.min(left, clippedBounds.x);
                 top = Math.min(top, clippedBounds.y);
                 right = Math.max(right, clippedBounds.x + clippedBounds.width);
