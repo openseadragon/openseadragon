@@ -739,12 +739,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Rect|null} newClip - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
+     * @fires OpenSeadragon.TiledImage.event:clip-change
      */
     setClip: function(newClip) {
         $.console.assert(!newClip || newClip instanceof $.Rect,
             "[TiledImage.setClip] newClip must be an OpenSeadragon.Rect or null");
-
-//TODO: should this._raiseBoundsChange(); be called?
 
         if (newClip instanceof $.Rect) {
             this._clip = newClip.clone();
@@ -753,6 +752,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         this._needsDraw = true;
+        /**
+         * Raised when the TiledImage's clip is changed.
+         * @event clip-change
+         * @memberOf OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the
+         * TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('clip-change');
     },
 
     /**
@@ -781,6 +790,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Set the current rotation of this tiled image in degrees.
      * @param {Number} degrees the rotation in degrees.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setRotation: function(degrees) {
         degrees = $.positiveModulo(degrees, 360);
@@ -860,7 +870,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event bounds-change
          * @memberOf OpenSeadragon.TiledImage
          * @type {object}
-         * @property {OpenSeadragon.World} eventSource - A reference to the TiledImage which raised the event.
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the
+         * TiledImage which raised the event.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent('bounds-change');

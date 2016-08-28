@@ -94,6 +94,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         this._needsDraw = true;
 
         item.addHandler('bounds-change', this._delegatedFigureSizes);
+        item.addHandler('clip-change', this._delegatedFigureSizes);
 
         /**
          * Raised when an item is added to the World.
@@ -194,6 +195,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         }
 
         item.removeHandler('bounds-change', this._delegatedFigureSizes);
+        item.removeHandler('clip-change', this._delegatedFigureSizes);
         item.destroy();
         this._items.splice( index, 1 );
         this._figureSizes();
@@ -213,6 +215,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         for (var i = 0; i < this._items.length; i++) {
             item = this._items[i];
             item.removeHandler('bounds-change', this._delegatedFigureSizes);
+            item.removeHandler('clip-change', this._delegatedFigureSizes);
             item.destroy();
         }
 
