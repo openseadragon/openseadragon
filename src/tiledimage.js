@@ -992,6 +992,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // Load the new 'best' tile
         if (bestTile && !bestTile.context2D) {
             loadTile(this, bestTile, currentTime);
+            this._needsDraw = true;
             this._setFullyLoaded(false);
         } else {
             this._setFullyLoaded(true);
