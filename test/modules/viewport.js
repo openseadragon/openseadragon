@@ -105,7 +105,8 @@
                 orig = config.getOrig(config.testArray[i], viewport);
                 expected = config.getExpected(orig, viewport);
                 actual = viewport[config.method](orig);
-                propEqual(
+                var assert = config.assert || propEqual;
+                assert(
                     actual,
                     expected,
                     "Correctly converted coordinates " + orig
@@ -117,6 +118,10 @@
         viewer.addHandler('open', openHandler);
         viewer.open(DZI_PATH);
     };
+
+    function assertPointsEquals(actual, expected, message) {
+        Util.assertPointsEquals(actual, expected, 1e-15, message);
+    }
 
 // Tests start here.
 
@@ -872,7 +877,8 @@
             getExpected: function(orig, viewport) {
                 return orig.divide(viewer.source.dimensions.x);
             },
-            method: 'imageToViewportCoordinates'
+            method: 'imageToViewportCoordinates',
+            assert: assertPointsEquals
         });
     });
 
@@ -885,7 +891,8 @@
             getExpected: function(orig, viewport) {
                 return orig.divide(ZOOM_FACTOR * viewport.getContainerSize().x);
             },
-            method: 'imageToViewportCoordinates'
+            method: 'imageToViewportCoordinates',
+            assert: assertPointsEquals
         });
     });
     asyncTest('imageToViewportRectangle', function() {
@@ -902,7 +909,8 @@
                     orig.height / viewer.source.dimensions.x
                 );
             },
-            method: 'imageToViewportRectangle'
+            method: 'imageToViewportRectangle',
+            assert: assertPointsEquals
         });
     });
 
