@@ -154,6 +154,16 @@
             url: "/test/data/A.png"
         });
     });
+    // ----------
+    asyncTest('Zoomify', function () {
+        testOpen({
+            type: "zoomifytileservice", 
+            tileSize: 256,
+            width: 1000,
+            height: 1000,
+            tilesUrl: "/test/data/zoomify/"
+           }); 
+    }); 
     
     
     // ----------
