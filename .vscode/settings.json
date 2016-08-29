@@ -1,0 +1,32 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+	// Controls the font size.
+	"editor.fontSize": 14,
+
+	// The number of spaces a tab is equal to.
+	"editor.tabSize": 4,
+
+	// Insert spaces when pressing Tab.
+	"editor.insertSpaces": true,
+
+	// When opening a file, `editor.tabSize` and `editor.insertSpaces` will be detected based on the file contents.
+	"editor.detectIndentation": false,
+
+	// Columns at which to show vertical rulers
+	"editor.rulers": [80],
+
+	// Controls after how many characters the editor will wrap to the next line. Setting this to 0 turns on viewport width wrapping
+	"editor.wrappingColumn": 0,
+
+	// Controls the indentation of wrapped lines. Can be one of 'none', 'same' or 'indent'.
+	"editor.wrappingIndent": "none",
+
+	// The default character set encoding to use when reading and writing files.
+	"files.encoding": "utf8",
+
+	// The default end of line character.
+	"files.eol": "\n",
+
+	// When enabled, will trim trailing whitespace when you save a file.
+	"files.trimTrailingWhitespace": true
+}
