@@ -18,7 +18,7 @@
      *      tilesUrl: "/test/data/zoomify/"
      * }
      *
-     * The tilesize if currently hardcoded to 256. The tileUrl must the the path to the image _directory_.
+     * The tileSize is currently hardcoded to 256 (the usual Zoomify default). The tileUrl must the the path to the image _directory_.
      *
      * 2) Loading image metadata from xml file: (CURRENTLY NOT SUPPORTED)
      *
@@ -87,7 +87,7 @@
         _calculateAbsoluteTileNumber: function(level, x, y) {
             var num = 0;
             var size = {};
-            
+
             //Sum up all tiles below the level we want the number of tiles
             for (var z = 0; z < level; z++) {
                 size = this.gridSize[z];

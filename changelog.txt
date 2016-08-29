@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * The navigationControlAnchor option now works for custom toolbar as well (#1004)
 * Added getFullyLoaded method and "fully-loaded-change" event to TiledImage to know when tiles are fully loaded (#837)
 * Fixed: Initial tile load wasn't happening in parallel (#1014)
+* Added Zoomify tile source (#863)
 
 2.2.1:
 
