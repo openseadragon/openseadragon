@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * Added getFullyLoaded method and "fully-loaded-change" event to TiledImage to know when tiles are fully loaded (#837)
 * Fixed: Initial tile load wasn't happening in parallel (#1014)
 * Added Zoomify tile source (#863)
+* Fixed problem with "sparse image" DZI files (#995)
 
 2.2.1:
 

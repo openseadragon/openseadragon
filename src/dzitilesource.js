@@ -198,7 +198,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
             yMax = yMin + rect.height * scale;
 
             xMin = Math.floor( xMin / this._tileWidth );
-            yMin = Math.floor( yMin / this._tileWidth );
+            yMin = Math.floor( yMin / this._tileWidth ); // DZI tiles are square, so we just use _tileWidth
             xMax = Math.ceil( xMax / this._tileWidth );
             yMax = Math.ceil( yMax / this._tileWidth );
 
