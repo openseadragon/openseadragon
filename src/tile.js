@@ -154,11 +154,12 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D) {
      */
     this.opacity    = null;
     /**
-     * The distance of this tile to the viewport center.
-     * @member {Number} distance
+     * The squared distance of this tile to the viewport center.
+     * Use for comparing tiles.
+     * @member {Number} squaredDistance
      * @memberof OpenSeadragon.Tile#
      */
-    this.distance   = null;
+    this.squaredDistance   = null;
     /**
      * The visibility score of this tile.
      * @member {Number} visibility

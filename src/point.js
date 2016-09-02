@@ -149,6 +149,18 @@ $.Point.prototype = {
     },
 
     /**
+     * Compute the squared distance between this point and another point.
+     * Useful for optimizing things like comparing distances.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to compute the distance with.
+     * @returns {Number} The distance between the 2 points
+     */
+    squaredDistanceTo: function( point ) {
+        return Math.pow( this.x - point.x, 2 ) +
+            Math.pow( this.y - point.y, 2 );
+    },
+
+    /**
      * Apply a function to each coordinate of this point and return a new point.
      * @function
      * @param {function} func The function to apply to each coordinate.
