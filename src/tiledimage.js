@@ -1124,6 +1124,9 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     } else if ( tile.loading ) {
         // the tile is already in the download queue
         // thanks josh1093 for finally translating this typo
+        if (levelOpacity == 1) {
+          setCoverage( tiledImage.coverage, level, x, y, true );
+        }
     } else {
         best = compareTiles( best, tile );
     }
