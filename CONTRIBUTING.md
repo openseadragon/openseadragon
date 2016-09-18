@@ -12,7 +12,7 @@ When fixing bugs and adding features, when appropriate please also:
 
 If you're new to the project, check out our [good first bug](https://github.com/openseadragon/openseadragon/issues?labels=good+first+bug&page=1&state=open) issues for some places to dip your toe in the water.
 
-If you're new to open source in general, check out [GitHub's open source intro guide](https://guides.github.com/overviews/os-contributing/).
+If you're new to open source in general, check out [GitHub's open source intro guide](https://guides.github.com/activities/contributing-to-open-source/).
 
 ### First Time Setup
 
