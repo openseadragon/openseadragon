@@ -430,15 +430,15 @@ $.Drawer.prototype = {
                 bounds.width += bounds.x;
                 bounds.x = 0;
             }
-            if (bounds.width > this.sketchCanvas.width) {
-                bounds.width = this.sketchCanvas.width;
+            if (bounds.width > this.canvas.width) {
+                bounds.width = this.canvas.width;
             }
             if (bounds.y < 0) {
                 bounds.height += bounds.y;
                 bounds.y = 0;
             }
-            if (bounds.height > this.sketchCanvas.height) {
-                bounds.height = this.sketchCanvas.height;
+            if (bounds.height > this.canvas.height) {
+                bounds.height = this.canvas.height;
             }
             
             this.context.drawImage(
