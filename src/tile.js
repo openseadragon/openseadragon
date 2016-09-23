@@ -156,6 +156,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D) {
     /**
      * The squared distance of this tile to the viewport center.
      * Use for comparing tiles.
+     * @private
      * @member {Number} squaredDistance
      * @memberof OpenSeadragon.Tile#
      */
