@@ -423,6 +423,24 @@ $.Drawer.prototype = {
             this.context.globalCompositeOperation = compositeOperation;
         }
         if (bounds) {
+            // Internet Explorer and Microsoft Edge throw IndexSizeError 
+            // when you call context.drawImage with negative x or y 
+            // or width or height greater than the canvas width or height respectively
+            if (bounds.x < 0) {
+                bounds.width += bounds.x;
+                bounds.x = 0;
+            }
+            if (bounds.width > this.sketchCanvas.width) {
+                bounds.width = this.sketchCanvas.width;
+            }
+            if (bounds.y < 0) {
+                bounds.height += bounds.y;
+                bounds.y = 0;
+            }
+            if (bounds.height > this.sketchCanvas.height) {
+                bounds.height = this.sketchCanvas.height;
+            }
+            
             this.context.drawImage(
                 this.sketchCanvas,
                 bounds.x,
