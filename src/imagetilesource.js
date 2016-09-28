@@ -72,6 +72,13 @@
         $.TileSource.apply(this, [options]);
 
     };
+    
+    /* IE8 fix for tileSources type: 'image' */
+    $.getNatural = function (DOMelement) {
+        var img = new Image();
+        img.src = DOMelement.src;
+        return { width: img.width, height: img.height };
+    };
 
     $.extend($.ImageTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.ImageTileSource.prototype */{
         /**
@@ -114,8 +121,8 @@
             }
 
             $.addEvent(image, 'load', function () {
-                _this.width = image.naturalWidth;
-                _this.height = image.naturalHeight;
+                _this.width = $.getNatural(image).width;
+                _this.height = $.getNatural(image).height;
                 _this.aspectRatio = _this.width / _this.height;
                 _this.dimensions = new $.Point(_this.width, _this.height);
                 _this._tileWidth = _this.width;
@@ -202,8 +209,8 @@
         _buildLevels: function () {
             var levels = [{
                     url: this._image.src,
-                    width: this._image.naturalWidth,
-                    height: this._image.naturalHeight
+                    width: $.getNatural(this._image).width,
+                    height: $.getNatural(this._image).height
                 }];
 
             if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
