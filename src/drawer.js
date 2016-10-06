@@ -323,13 +323,13 @@ $.Drawer.prototype = {
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
 
+                // FIXME: should check if any tiled image get rotated as well.
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
                 // the viewport get rotated later on, we will need to resize it.
                 if (this.viewport.getRotation() === 0) {
                     var self = this;
-                    this.viewer.addHandler('rotate', function resizeSketchCanvas() {
-                        self.viewer.removeHandler('rotate', resizeSketchCanvas);
+                    this.viewer.addOnceHandler('rotate', function resizeSketchCanvas() {
                         var sketchCanvasSize = self._calculateSketchCanvasSize();
                         self.sketchCanvas.width = sketchCanvasSize.x;
                         self.sketchCanvas.height = sketchCanvasSize.y;
@@ -617,7 +617,8 @@ $.Drawer.prototype = {
     // private
     _calculateSketchCanvasSize: function() {
         var canvasSize = this._calculateCanvasSize();
-        if (this.viewport.getRotation() === 0) {
+        if (this.viewport.getRotation() === 0 &&
+            !this.viewer.world._hasRotatedItem()) {
             return canvasSize;
         }
         // If the viewport is rotated, we need a larger sketch canvas in order

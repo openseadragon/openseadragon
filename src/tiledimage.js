@@ -1670,7 +1670,7 @@ function drawTiles( tiledImage, lastDrawn ) {
                     tiledImage._degrees,
                     tiledImage.viewport.pixelFromPointNoRotate(
                         tiledImage._getRotationPoint(true), true),
-                    useSketch);
+                    false);
             }
         }
         tiledImage._drawer.blendSketch({
