@@ -1295,12 +1295,12 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     boundsSize.x *= tiledImage._scaleSpring.current.value;
     boundsSize.y *= tiledImage._scaleSpring.current.value;
 
-    var positionC    = viewport.pixelFromPointNoRotate(boundsTL, true),
-        positionT    = viewport.pixelFromPointNoRotate(boundsTL, false),
-        sizeC        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
-        sizeT        = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
-        tileCenter   = positionT.plus( sizeT.divide( 2 ) ),
-        tileDistance = viewportCenter.distanceTo( tileCenter );
+    var positionC = viewport.pixelFromPointNoRotate(boundsTL, true),
+        positionT = viewport.pixelFromPointNoRotate(boundsTL, false),
+        sizeC = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
+        sizeT = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
+        tileCenter = positionT.plus( sizeT.divide( 2 ) ),
+        tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
     if ( !overlap ) {
         sizeC = sizeC.plus( new $.Point( 1, 1 ) );
@@ -1308,7 +1308,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
 
     tile.position   = positionC;
     tile.size       = sizeC;
-    tile.distance   = tileDistance;
+    tile.squaredDistance   = tileSquaredDistance;
     tile.visibility = levelVisibility;
 }
 
@@ -1452,7 +1452,7 @@ function compareTiles( previousBest, tile ) {
     if ( tile.visibility > previousBest.visibility ) {
         return tile;
     } else if ( tile.visibility == previousBest.visibility ) {
-        if ( tile.distance < previousBest.distance ) {
+        if ( tile.squaredDistance < previousBest.squaredDistance ) {
             return tile;
         }
     }
