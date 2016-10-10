@@ -3,6 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 2.2.2: (in progress)
 
+* BREAKING CHANGE: Tile.distance has been removed (#1027)
 * Fixed CORS bug in IE 10 (#967)
 * Added support for commonjs (#984)
 * Added an option to addTiledImage to change the crossOriginPolicy (#981)
@@ -13,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Initial tile load wasn't happening in parallel (#1014)
 * Added Zoomify tile source (#863)
 * Fixed problem with "sparse image" DZI files (#995)
+* Optimization: Use the squared distance when comparing tiles (#1027)
 
 2.2.1:
 
