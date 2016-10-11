@@ -15,6 +15,7 @@ OPENSEADRAGON CHANGELOG
 * Added Zoomify tile source (#863)
 * Fixed problem with "sparse image" DZI files (#995)
 * Optimization: Use the squared distance when comparing tiles (#1027)
+* Fix IndexSizeError on IE and Edge that occurred under certain circumstances (e.g. multi-image with transparency) (#1035)
 
 2.2.1:
 
