@@ -323,13 +323,13 @@ $.Drawer.prototype = {
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
 
+                // FIXME: should check if any tiled image get rotated as well.
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
                 // the viewport get rotated later on, we will need to resize it.
                 if (this.viewport.getRotation() === 0) {
                     var self = this;
-                    this.viewer.addHandler('rotate', function resizeSketchCanvas() {
-                        self.viewer.removeHandler('rotate', resizeSketchCanvas);
+                    this.viewer.addOnceHandler('rotate', function resizeSketchCanvas() {
                         var sketchCanvasSize = self._calculateSketchCanvasSize();
                         self.sketchCanvas.width = sketchCanvasSize.x;
                         self.sketchCanvas.height = sketchCanvasSize.y;
@@ -482,7 +482,7 @@ $.Drawer.prototype = {
     },
 
     // private
-    drawDebugInfo: function( tile, count, i ){
+    drawDebugInfo: function(tile, count, i, tiledImage) {
         if ( !this.useCanvas ) {
             return;
         }
@@ -496,6 +496,12 @@ $.Drawer.prototype = {
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation(this.viewport.degrees);
+        }
+        if (tiledImage.getRotation() !== 0) {
+            this._offsetForRotation(
+                tiledImage.getRotation(),
+                tiledImage.viewport.pixelFromPointNoRotate(
+                    tiledImage._getRotationPoint(true), true));
         }
 
         context.strokeRect(
@@ -559,6 +565,9 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._restoreRotationChanges();
         }
+        if (tiledImage.getRotation() !== 0) {
+            this._restoreRotationChanges();
+        }
         context.restore();
     },
 
@@ -592,17 +601,19 @@ $.Drawer.prototype = {
         return new $.Point(canvas.width, canvas.height);
     },
 
-    // private
-    _offsetForRotation: function(degrees, useSketch) {
-        var cx = this.canvas.width / 2;
-        var cy = this.canvas.height / 2;
+    getCanvasCenter: function() {
+        return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+    },
 
+    // private
+    _offsetForRotation: function(degrees, point, useSketch) {
+        point = point || this.getCanvasCenter();
         var context = this._getContext(useSketch);
         context.save();
 
-        context.translate(cx, cy);
+        context.translate(point.x, point.y);
         context.rotate(Math.PI / 180 * degrees);
-        context.translate(-cx, -cy);
+        context.translate(-point.x, -point.y);
     },
 
     // private
@@ -624,7 +635,8 @@ $.Drawer.prototype = {
     // private
     _calculateSketchCanvasSize: function() {
         var canvasSize = this._calculateCanvasSize();
-        if (this.viewport.getRotation() === 0) {
+        if (this.viewport.getRotation() === 0 &&
+            !this.viewer.world._hasRotatedItem()) {
             return canvasSize;
         }
         // If the viewport is rotated, we need a larger sketch canvas in order

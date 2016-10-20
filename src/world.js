@@ -94,6 +94,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         this._needsDraw = true;
 
         item.addHandler('bounds-change', this._delegatedFigureSizes);
+        item.addHandler('clip-change', this._delegatedFigureSizes);
 
         /**
          * Raised when an item is added to the World.
@@ -194,6 +195,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         }
 
         item.removeHandler('bounds-change', this._delegatedFigureSizes);
+        item.removeHandler('clip-change', this._delegatedFigureSizes);
         item.destroy();
         this._items.splice( index, 1 );
         this._figureSizes();
@@ -213,6 +215,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         for (var i = 0; i < this._items.length; i++) {
             item = this._items[i];
             item.removeHandler('bounds-change', this._delegatedFigureSizes);
+            item.removeHandler('clip-change', this._delegatedFigureSizes);
             item.destroy();
         }
 
@@ -383,7 +386,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             var item = this._items[0];
             var bounds = item.getBounds();
             this._contentFactor = item.getContentSize().x / bounds.width;
-            var clippedBounds = item.getClippedBounds();
+            var clippedBounds = item.getClippedBounds().getBoundingBox();
             var left = clippedBounds.x;
             var top = clippedBounds.y;
             var right = clippedBounds.x + clippedBounds.width;
@@ -393,7 +396,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 bounds = item.getBounds();
                 this._contentFactor = Math.max(this._contentFactor,
                     item.getContentSize().x / bounds.width);
-                clippedBounds = item.getClippedBounds();
+                clippedBounds = item.getClippedBounds().getBoundingBox();
                 left = Math.min(left, clippedBounds.x);
                 top = Math.min(top, clippedBounds.y);
                 right = Math.max(right, clippedBounds.x + clippedBounds.width);
@@ -433,6 +436,16 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'remove-item', { item: item } );
+    },
+
+    // private
+    _hasRotatedItem: function() {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].getRotation() !== 0) {
+                return true;
+            }
+        }
+        return false;
     }
 });
 

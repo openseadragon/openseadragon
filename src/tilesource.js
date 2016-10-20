@@ -344,12 +344,13 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {OpenSeadragon.Point} point
      */
-    getTileAtPoint: function( level, point ) {
-        var numTiles = this.getNumTiles( level );
-        return new $.Point(
-            Math.floor( (point.x * numTiles.x) / 1 ),
-            Math.floor( (point.y * numTiles.y * this.dimensions.x) / this.dimensions.y )
-        );
+    getTileAtPoint: function(level, point) {
+        var widthScaled = this.dimensions.x * this.getLevelScale(level);
+        var pixelX = point.x * widthScaled;
+        var pixelY = point.y * widthScaled;
+        var x = Math.floor(pixelX / this.getTileWidth());
+        var y = Math.floor(pixelY / this.getTileHeight());
+        return new $.Point(x, y);
     },
 
     /**

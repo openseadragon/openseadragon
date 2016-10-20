@@ -852,11 +852,7 @@ $.Viewport.prototype = {
             return this;
         }
 
-        degrees = degrees % 360;
-        if (degrees < 0) {
-            degrees += 360;
-        }
-        this.degrees = degrees;
+        this.degrees = $.positiveModulo(degrees, 360);
         this._setContentBounds(
             this.viewer.world.getHomeBounds(),
             this.viewer.world.getContentFactor());
