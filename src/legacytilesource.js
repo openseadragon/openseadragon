@@ -204,12 +204,7 @@ function filterFiles( files ){
         file = files[ i ];
         if( file.height &&
             file.width &&
-            file.url && (
-                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/) || (
-                    file.mimetype &&
-                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
-                )
-            ) ){
+            file.url ){
             //This is sufficient to serve as a level
             filtered.push({
                 url: file.url,
