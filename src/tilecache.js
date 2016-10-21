@@ -149,16 +149,16 @@ $.TileCache.prototype = {
     cacheTile: function( options ) {
         $.console.assert( options, "[TileCache.cacheTile] options is required" );
         $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
-        $.console.assert( options.tile.url, "[TileCache.cacheTile] options.tile.url is required" );
+        $.console.assert( options.tile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required" );
         $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
         var cutoff = options.cutoff || 0;
         var insertionIndex = this._tilesLoaded.length;
 
-        var imageRecord = this._imagesLoaded[options.tile.url];
+        var imageRecord = this._imagesLoaded[options.tile.cacheKey];
         if (!imageRecord) {
             $.console.assert( options.image, "[TileCache.cacheTile] options.image is required to create an ImageRecord" );
-            imageRecord = this._imagesLoaded[options.tile.url] = new ImageRecord({
+            imageRecord = this._imagesLoaded[options.tile.cacheKey] = new ImageRecord({
                 image: options.image
             });
 
@@ -232,9 +232,9 @@ $.TileCache.prototype = {
     },
 
     // private
-    getImageRecord: function(url) {
-        $.console.assert(url, '[TileCache.getImageRecord] url is required');
-        return this._imagesLoaded[url];
+    getImageRecord: function(cacheKey) {
+        $.console.assert(cacheKey, '[TileCache.getImageRecord] cacheKey is required');
+        return this._imagesLoaded[cacheKey];
     },
 
     // private
@@ -246,11 +246,11 @@ $.TileCache.prototype = {
         tile.unload();
         tile.cacheImageRecord = null;
 
-        var imageRecord = this._imagesLoaded[tile.url];
+        var imageRecord = this._imagesLoaded[tile.cacheKey];
         imageRecord.removeTile(tile);
         if (!imageRecord.getTileCount()) {
             imageRecord.destroy();
-            delete this._imagesLoaded[tile.url];
+            delete this._imagesLoaded[tile.cacheKey];
             this._imagesLoadedCount--;
         }
 

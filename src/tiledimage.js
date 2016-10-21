@@ -75,6 +75,13 @@
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.loadTilesWithAjax]
+ *      Whether to load tile data using AJAX requests.
+ *      Defaults to the setting in {@link OpenSeadragon.Options}.
+ * @param {Object} [options.ajaxRequestHeaders={}]
+ *      A set of headers to include when making tile AJAX requests.
+ *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
     var _this = this;
@@ -161,6 +168,7 @@ $.TiledImage = function( options ) {
         iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:              $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        ajaxWithCredentials:    $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
@@ -1179,6 +1187,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
     var tile = getTile(
             x, y,
             level,
+            tiledImage,
             tiledImage.source,
             tiledImage.tilesMatrix,
             currentTime,
@@ -1237,7 +1246,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
         if (tile.context2D) {
             setTileLoaded(tiledImage, tile);
         } else {
-            var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+            var imageRecord = tiledImage._tileCache.getImageRecord(tile.cacheKey);
             if (imageRecord) {
                 var image = imageRecord.getImage();
                 setTileLoaded(tiledImage, tile, image);
@@ -1275,6 +1284,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
  * @param {Number} x
  * @param {Number} y
  * @param {Number} level
+ * @param {OpenSeadragon.TiledImage} tiledImage
  * @param {OpenSeadragon.TileSource} tileSource
  * @param {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
  * @param {Number} time
@@ -1283,12 +1293,23 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
  * @param {Number} worldHeight
  * @returns {OpenSeadragon.Tile}
  */
-function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWidth, worldHeight ) {
+function getTile(
+    x, y,
+    level,
+    tiledImage,
+    tileSource,
+    tilesMatrix,
+    time,
+    numTiles,
+    worldWidth,
+    worldHeight
+) {
     var xMod,
         yMod,
         bounds,
         exists,
         url,
+        headers,
         context2D,
         tile;
 
@@ -1305,6 +1326,18 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+
+        // Headers are only applicable if loadTilesWithAjax is set
+        if (tiledImage.loadTilesWithAjax) {
+            headers = tileSource.getTileHeaders( level, xMod, yMod );
+            // Combine tile headers with global headers (if applicable)
+            if ($.isPlainObject(tiledImage.ajaxRequestHeaders)) {
+                headers = $.extend({}, tiledImage.ajaxRequestHeaders, headers);
+            }
+        } else {
+            headers = null;
+        }
+
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
 
@@ -1318,7 +1351,9 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
             bounds,
             exists,
             url,
-            context2D
+            context2D,
+            tiledImage.loadTilesWithAjax,
+            headers
         );
     }
 
@@ -1340,9 +1375,12 @@ function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        loadWithAjax: tile.loadWithAjax,
+        headers: tile.headers,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
-        callback: function( image, errorMsg ){
-            onTileLoad( tiledImage, tile, time, image, errorMsg );
+        ajaxWithCredentials: tiledImage.ajaxWithCredentials,
+        callback: function( image, errorMsg, tileRequest ){
+            onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
         },
         abort: function() {
             tile.loading = false;
@@ -1359,8 +1397,9 @@ function loadTile( tiledImage, tile, time ) {
  * @param {Number} time
  * @param {Image} image
  * @param {String} errorMsg
+ * @param {XMLHttpRequest} tileRequest
  */
-function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
+function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
         $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         /**
@@ -1373,8 +1412,15 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
          * @property {number} time - The time in milliseconds when the tile load began.
          * @property {string} message - The error message.
+         * @property {XMLHttpRequest} tileRequest - The XMLHttpRequest used to load the tile if available.
          */
-        tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
+        tiledImage.viewer.raiseEvent("tile-load-failed", {
+            tile: tile,
+            tiledImage: tiledImage,
+            time: time,
+            message: errorMsg,
+            tileRequest: tileRequest
+        });
         tile.loading = false;
         tile.exists = false;
         return;

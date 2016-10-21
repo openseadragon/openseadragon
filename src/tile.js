@@ -47,8 +47,10 @@
  * @param {String} url The URL of this tile's image.
  * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
  * is provided directly by the tile source.
+ * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
+ * @param {Object} headers The headers to send with this tile's AJAX request (if applicable).
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, headers) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -91,6 +93,29 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D) {
      * @memberOf OpenSeadragon.Tile#
      */
     this.context2D = context2D;
+    /**
+     * Whether to load this tile's image with an AJAX request. 
+     * @member {Boolean} loadWithAjax
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.loadWithAjax = loadWithAjax;
+    /**
+     * The headers to be used in requesting this tile's image.
+     * Only used if loadWithAjax is set to true.
+     * @member {Object} headers
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.headers = headers;
+    /**
+     * The unique cache key for this tile.
+     * @member {String} cacheKey
+     * @memberof OpenSeadragon.Tile#
+     */
+    if (this.headers) {
+        this.cacheKey = this.url + "+" + JSON.stringify(this.headers);
+    } else {
+        this.cacheKey = this.url;
+    }
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded

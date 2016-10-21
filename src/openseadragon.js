@@ -584,8 +584,15 @@
   *     not use CORS, and the canvas will be tainted.
   *
   * @property {Boolean} [ajaxWithCredentials=false]
-  *     Whether to set the withCredentials XHR flag for AJAX requests (when loading tile sources).
+  *     Whether to set the withCredentials XHR flag for AJAX requests.
   *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Boolean} [loadTilesWithAjax=false]
+  *     Whether to load tile data using AJAX requests.
+  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Object} [ajaxRequestHeaders={}]
+  *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
   */
 
@@ -1005,6 +1012,8 @@ function OpenSeadragon( options ){
             initialPage:            0,
             crossOriginPolicy:      false,
             ajaxWithCredentials:    false,
+            loadTilesWithAjax:      false,
+            ajaxRequestHeaders:     {},
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -2120,11 +2129,16 @@ function OpenSeadragon( options ){
          * @param {String} options.url - the url to request
          * @param {Function} options.success - a function to call on a successful response
          * @param {Function} options.error - a function to call on when an error occurs
+         * @param {Object} options.headers - headers to add to the AJAX request
+         * @param {String} options.responseType - the response type of the the AJAX request
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
+         * @returns {XMLHttpRequest}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;
+            var headers;
+            var responseType;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2132,6 +2146,8 @@ function OpenSeadragon( options ){
                 onSuccess = url.success;
                 onError = url.error;
                 withCredentials = url.withCredentials;
+                headers = url.headers;
+                responseType = url.responseType || null;
                 url = url.url;
             }
 
@@ -2147,9 +2163,9 @@ function OpenSeadragon( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    // With protocols other than http/https, the status is 200
+                    // With protocols other than http/https, the status is in [200, 300)
                     // on Firefox and 0 on other browsers
-                    if ( request.status === 200 ||
+                    if ( (request.status >= 200 && request.status < 300) ||
                         ( request.status === 0 &&
                           protocol !== "http:" &&
                           protocol !== "https:" )) {
@@ -2167,11 +2183,21 @@ function OpenSeadragon( options ){
             try {
                 request.open( "GET", url, true );
 
+                if (responseType) {
+                    request.responseType = responseType;
+                }
+
+                if (headers) {
+                    Object.keys(headers).forEach(function (headerName) {
+                        request.setRequestHeader(headerName, headers[headerName]);
+                    });
+                }
+
                 if (withCredentials) {
                     request.withCredentials = true;
                 }
 
-                request.send( null );
+                request.send(null);
             } catch (e) {
                 var msg = e.message;
 
@@ -2231,6 +2257,8 @@ function OpenSeadragon( options ){
                     }
                 }
             }
+
+            return request;
         },
 
         /**
