@@ -959,7 +959,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             var targetRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
                 false
-            ).x * this._scaleSpring.current.value; //TODO: shouldn't that be target.value?
+            ).x * this._scaleSpring.current.value;
 
             var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(
@@ -969,7 +969,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     )
                 ),
                 false
-            ).x * this._scaleSpring.current.value; //TODO: shouldn't that be target.value?
+            ).x * this._scaleSpring.current.value;
 
             var optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
             var levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
