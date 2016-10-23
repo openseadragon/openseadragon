@@ -1058,16 +1058,12 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
 
     resetCoverage(tiledImage.coverage, level);
 
-    if (tiledImage.wrapHorizontal) {
-        topLeftTile.x -= 1; // left invisible column (othervise we will have empty space after scroll at left)
-    } else {
+    if (!tiledImage.wrapHorizontal) {
         // Adjust for floating point error
         topLeftTile.x = Math.max(topLeftTile.x, 0);
         bottomRightTile.x = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
     }
-    if (tiledImage.wrapVertical) {
-        topLeftTile.y -= 1; // top invisible row (othervise we will have empty space after scroll at top)
-    } else {
+    if (!tiledImage.wrapVertical) {
         // Adjust for floating point error
         topLeftTile.y = Math.max(topLeftTile.y, 0);
         bottomRightTile.y = Math.min(bottomRightTile.y, numberOfTiles.y - 1);
@@ -1078,11 +1074,14 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
 
-            var tileBounds = tiledImage.source.getTileBounds(level, x, y);
-
-            if (drawArea.intersection(tileBounds) === null) {
-                // This tile is outside of the viewport, no need to draw it
-                continue;
+            // Optimisation disabled with wrapping because getTileBounds does not
+            // work correctly with x and y outside of the number of tiles
+            if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
+                var tileBounds = tiledImage.source.getTileBounds(level, x, y);
+                if (drawArea.intersection(tileBounds) === null) {
+                    // This tile is outside of the viewport, no need to draw it
+                    continue;
+                }
             }
 
             best = updateTile(
