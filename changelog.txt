@@ -17,6 +17,7 @@ OPENSEADRAGON CHANGELOG
 * Optimization: Use the squared distance when comparing tiles (#1027)
 * Fix IndexSizeError on IE and Edge that occurred under certain circumstances (e.g. multi-image with transparency) (#1035)
 * ImageTileSource now works in IE8 (#1041)
+* LegacyTileSource now allows any image URLs regardless of type (#1056)
 
 2.2.1:
 
