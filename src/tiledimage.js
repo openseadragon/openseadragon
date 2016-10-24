@@ -1573,15 +1573,18 @@ function drawTiles( tiledImage, lastDrawn ) {
     // avoid interpolation
     if (!sketchScale) {
         if (tiledImage.viewport.degrees !== 0) {
-            tiledImage._drawer._offsetForRotation(
-                tiledImage.viewport.degrees, useSketch);
+            tiledImage._drawer._offsetForRotation({
+                degrees: tiledImage.viewport.degrees,
+                useSketch: useSketch
+            });
         }
         if (tiledImage._degrees !== 0) {
-            tiledImage._drawer._offsetForRotation(
-                tiledImage._degrees,
-                tiledImage.viewport.pixelFromPointNoRotate(
+            tiledImage._drawer._offsetForRotation({
+                degrees: tiledImage._degrees,
+                point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true),
-                useSketch);
+                useSketch: useSketch
+            });
         }
     }
 
@@ -1663,15 +1666,18 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (useSketch) {
         if (sketchScale) {
             if (tiledImage.viewport.degrees !== 0) {
-                tiledImage._drawer._offsetForRotation(
-                    tiledImage.viewport.degrees, false);
+                tiledImage._drawer._offsetForRotation({
+                    degrees: tiledImage.viewport.degrees,
+                    useSketch: false
+                });
             }
             if (tiledImage._degrees !== 0) {
-                tiledImage._drawer._offsetForRotation(
-                    tiledImage._degrees,
-                    tiledImage.viewport.pixelFromPointNoRotate(
+                tiledImage._drawer._offsetForRotation({
+                    degrees: tiledImage._degrees,
+                    point: tiledImage.viewport.pixelFromPointNoRotate(
                         tiledImage._getRotationPoint(true), true),
-                    false);
+                    useSketch: false
+                });
             }
         }
         tiledImage._drawer.blendSketch({
