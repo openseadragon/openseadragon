@@ -436,16 +436,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent( 'remove-item', { item: item } );
-    },
-
-    // private
-    _hasRotatedItem: function() {
-        for (var i = 0; i < this._items.length; i++) {
-            if (this._items[i].getRotation() !== 0) {
-                return true;
-            }
-        }
-        return false;
     }
 });
 

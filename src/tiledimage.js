@@ -550,20 +550,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     // private
-    // Convert rectangle in tiled image coordinates to viewport coordinates.
-    _tiledImageToViewportRectangle: function(rect) {
-        var scale = this._scaleSpring.current.value;
-        return new $.Rect(
-            rect.x * scale + this._xSpring.current.value,
-            rect.y * scale + this._ySpring.current.value,
-            rect.width * scale,
-            rect.height * scale,
-            rect.degrees)
-            .rotate(this.getRotation(), this._getRotationPoint(true));
-    },
-
-    // private
-    // Convert rectangle in viewport coordinates to tiled image coordinates.
+    // Convert rectangle in viewport coordinates to this tiled image point
+    // coordinates (x in [0, 1] and y in [0, aspectRatio])
     _viewportToTiledImageRectangle: function(rect) {
         var scale = this._scaleSpring.current.value;
         rect = rect.rotate(-this.getRotation(), this._getRotationPoint(true));
