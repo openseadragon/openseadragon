@@ -223,6 +223,27 @@
     });
 
     // ----------
+    asyncTest('clip-change event', function() {
+        expect(0);
+        var clip = new OpenSeadragon.Rect(100, 100, 800, 800);
+
+        viewer.addHandler('open', function() {
+            var image = viewer.world.getItemAt(0);
+            image.addOnceHandler('clip-change', function() {
+                image.addOnceHandler('clip-change', function() {
+                    start();
+                });
+                image.setClip(clip);
+            });
+            image.setClip(null);
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
     asyncTest('getClipBounds', function() {
         var clip = new OpenSeadragon.Rect(100, 200, 800, 500);
 
@@ -294,6 +315,34 @@
     });
 
     // ----------
+    asyncTest('rotation', function() {
+
+        function testDefaultRotation() {
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getRotation(), 0, 'image has default rotation');
+
+            image.setRotation(400);
+            strictEqual(image.getRotation(), 40, 'rotation is set correctly');
+
+            viewer.addOnceHandler('open', testTileSourceRotation);
+            viewer.open({
+                tileSource: '/test/data/testpattern.dzi',
+                degrees: -60
+            });
+        }
+
+        function testTileSourceRotation() {
+            var image = viewer.world.getItemAt(0);
+            strictEqual(image.getRotation(), 300, 'image has correct rotation');
+            start();
+        }
+
+        viewer.addOnceHandler('open', testDefaultRotation);
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi',
+        });
+    });
+
     asyncTest('fitBounds', function() {
 
         function assertRectEquals(actual, expected, message) {
