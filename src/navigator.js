@@ -341,9 +341,12 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 myItem._originalForNavigator = original;
                 _this._matchBounds(myItem, original, true);
 
-                original.addHandler('bounds-change', function() {
+                function matchBounds() {
                     _this._matchBounds(myItem, original);
-                });
+                }
+
+                original.addHandler('bounds-change', matchBounds);
+                original.addHandler('clip-change', matchBounds);
             }
         });
 
