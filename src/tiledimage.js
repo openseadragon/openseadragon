@@ -1533,7 +1533,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
     // TODO: support tile edge smoothing with tiled image rotation.
     if (imageZoom > tiledImage.smoothTileEdgesMinZoom && !tiledImage.iOSDevice &&
-        tiledImage.getRotation() === 0) {
+        tiledImage.getRotation() === 0 && $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         // Note: Disabled on iOS devices per default as it causes a native crash
