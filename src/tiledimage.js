@@ -996,6 +996,47 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         } else {
             this._setFullyLoaded(true);
         }
+    },
+
+    // private
+    _getCornerTiles: function(level, topLeftBound, bottomRightBound) {
+        var leftX;
+        var rightX;
+        if (this.wrapHorizontal) {
+            leftX = $.positiveModulo(topLeftBound.x, 1);
+            rightX = $.positiveModulo(bottomRightBound.x, 1);
+        } else {
+            leftX = Math.max(0, topLeftBound.x);
+            rightX = Math.min(1, bottomRightBound.x);
+        }
+        var topY;
+        var bottomY;
+        var aspectRatio = 1 / this.source.aspectRatio;
+        if (this.wrapVertical) {
+            topY = $.positiveModulo(topLeftBound.y, aspectRatio);
+            bottomY = $.positiveModulo(bottomRightBound.y, aspectRatio);
+        } else {
+            topY = Math.max(0, topLeftBound.y);
+            bottomY = Math.min(aspectRatio, bottomRightBound.y);
+        }
+
+        var topLeftTile = this.source.getTileAtPoint(level, new $.Point(leftX, topY));
+        var bottomRightTile = this.source.getTileAtPoint(level, new $.Point(rightX, bottomY));
+        var numTiles  = this.source.getNumTiles(level);
+
+        if (this.wrapHorizontal) {
+            topLeftTile.x += numTiles.x * Math.floor(topLeftBound.x);
+            bottomRightTile.x += numTiles.x * Math.floor(bottomRightBound.x);
+        }
+        if (this.wrapVertical) {
+            topLeftTile.y += numTiles.y * Math.floor(topLeftBound.y / aspectRatio);
+            bottomRightTile.y += numTiles.y * Math.floor(bottomRightBound.y / aspectRatio);
+        }
+
+        return {
+            topLeft: topLeftTile,
+            bottomRight: bottomRightTile,
+        };
     }
 });
 
@@ -1039,23 +1080,13 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
         });
     }
 
-    //OK, a new drawing so do your calculations
-    var topLeftTile = tiledImage.source.getTileAtPoint(level, topLeftBound);
-    var bottomRightTile = tiledImage.source.getTileAtPoint(level, bottomRightBound);
-    var numberOfTiles  = tiledImage.source.getNumTiles(level);
-
     resetCoverage(tiledImage.coverage, level);
 
-    if (!tiledImage.wrapHorizontal) {
-        // Adjust for floating point error
-        topLeftTile.x = Math.max(topLeftTile.x, 0);
-        bottomRightTile.x = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
-    }
-    if (!tiledImage.wrapVertical) {
-        // Adjust for floating point error
-        topLeftTile.y = Math.max(topLeftTile.y, 0);
-        bottomRightTile.y = Math.min(bottomRightTile.y, numberOfTiles.y - 1);
-    }
+    //OK, a new drawing so do your calculations
+    var cornerTiles = tiledImage._getCornerTiles(level, topLeftBound, bottomRightBound);
+    var topLeftTile = cornerTiles.topLeft;
+    var bottomRightTile = cornerTiles.bottomRight;
+    var numberOfTiles  = tiledImage.source.getNumTiles(level);
 
     var viewportCenter = tiledImage.viewport.pixelFromPoint(
         tiledImage.viewport.getCenter());
