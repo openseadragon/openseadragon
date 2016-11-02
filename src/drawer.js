@@ -323,7 +323,6 @@ $.Drawer.prototype = {
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
 
-                // FIXME: should check if any tiled image get rotated as well.
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
                 // the viewport get rotated later on, we will need to resize it.
@@ -495,13 +494,14 @@ $.Drawer.prototype = {
         context.fillStyle = this.debugGridColor;
 
         if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation(this.viewport.degrees);
+            this._offsetForRotation({degrees: this.viewport.degrees});
         }
         if (tiledImage.getRotation() !== 0) {
-            this._offsetForRotation(
-                tiledImage.getRotation(),
-                tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage._getRotationPoint(true), true));
+            this._offsetForRotation({
+                degrees: tiledImage.getRotation(),
+                point: tiledImage.viewport.pixelFromPointNoRotate(
+                    tiledImage._getRotationPoint(true), true)
+            });
         }
 
         context.strokeRect(
@@ -606,13 +606,16 @@ $.Drawer.prototype = {
     },
 
     // private
-    _offsetForRotation: function(degrees, point, useSketch) {
-        point = point || this.getCanvasCenter();
-        var context = this._getContext(useSketch);
+    _offsetForRotation: function(options) {
+        var point = options.point ?
+            options.point.times($.pixelDensityRatio) :
+            this.getCanvasCenter();
+
+        var context = this._getContext(options.useSketch);
         context.save();
 
         context.translate(point.x, point.y);
-        context.rotate(Math.PI / 180 * degrees);
+        context.rotate(Math.PI / 180 * options.degrees);
         context.translate(-point.x, -point.y);
     },
 
@@ -635,8 +638,7 @@ $.Drawer.prototype = {
     // private
     _calculateSketchCanvasSize: function() {
         var canvasSize = this._calculateCanvasSize();
-        if (this.viewport.getRotation() === 0 &&
-            !this.viewer.world._hasRotatedItem()) {
+        if (this.viewport.getRotation() === 0) {
             return canvasSize;
         }
         // If the viewport is rotated, we need a larger sketch canvas in order
