@@ -781,7 +781,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} whether to load tiles without drawing in this tiledImage.
      */
     setPreload: function(preload) {
-        this.preload = (true == preload);
+        this.preload = !!preload;
         this._needsDraw = true;
     },
 
