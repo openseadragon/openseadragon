@@ -71,6 +71,7 @@
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
+ * @param {Boolean} [options.preload=false] - If true, tiles in image load without drawing. Defaults to false, so tiles are loaded and drawn.
  * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
@@ -162,6 +163,7 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
+        preload:                $.DEFAULT_SETTINGS.preload,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
 
@@ -290,7 +292,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        if (this.opacity !== 0) {
+        if (this.opacity !== 0 && !this.preload) {
             this._midDraw = true;
             this._updateViewport();
             this._midDraw = false;
@@ -764,6 +766,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     setOpacity: function(opacity) {
         this.opacity = opacity;
+        this._needsDraw = true;
+    },
+
+    /**
+     * @returns {Boolean} whether the tiledImage is set to load tiles without drawing them.
+     */
+    getPreload: function() {
+        return this.preload;
+    },
+
+    /**
+     * Set true to load without drawing. Set false for default loading and drawing.
+     * @param {Boolean} whether to load tiles without drawing in this tiledImage.
+     */
+    setPreload: function(preload) {
+        this.preload = Boolean(preload);
         this._needsDraw = true;
     },
 

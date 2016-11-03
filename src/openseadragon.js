@@ -187,6 +187,9 @@
   * @property {Number} [opacity=1]
   *     Default opacity of the tiled images (1=opaque, 0=transparent)
   *
+  * @property {Boolean} [preload=false]
+  *     If true, tiles in image load without drawing. Defaults to false, so tiles are loaded and drawn.
+  *
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
   *     'destination-over', 'destination-atop', 'destination-in',
@@ -1081,6 +1084,7 @@ function OpenSeadragon( options ){
 
             // APPEARANCE
             opacity:                    1,
+            preload:                    false,
             compositeOperation:         null,
             placeholderFillStyle:       null,
 

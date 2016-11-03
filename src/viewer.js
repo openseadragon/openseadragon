@@ -1227,7 +1227,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
-     * @param {Number} [options.opacity] Opacity the tiled image should be drawn at by default.
+     * @param {Number} [options.opacity=1] Opacity the tiled image should be drawn at by default.
+     * @param {Boolean} [options.preload=false]  If true, tiles in image load without drawing by default.
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
@@ -1264,6 +1265,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         if (options.opacity === undefined) {
             options.opacity = this.opacity;
+        }
+        if (options.preload === undefined) {
+            options.preload = this.preload;
         }
         if (options.compositeOperation === undefined) {
             options.compositeOperation = this.compositeOperation;
@@ -1371,6 +1375,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     clip: queueItem.options.clip,
                     placeholderFillStyle: queueItem.options.placeholderFillStyle,
                     opacity: queueItem.options.opacity,
+                    preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
