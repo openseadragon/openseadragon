@@ -70,8 +70,8 @@
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
- * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
- * @param {Boolean} [options.preload=false] - If true, tiles in image load without drawing. Defaults to false, so tiles are loaded and drawn.
+ * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
+ * @param {Boolean} [options.preload=false] - Set true to load even when the image is hidden by zero opacity.
  * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
@@ -770,15 +770,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @returns {Boolean} whether the tiledImage is set to load tiles without drawing them.
+     * @returns {Boolean} whether the tiledImage can load hidden tiles of zero opacity.
      */
     getPreload: function() {
         return this.preload;
     },
 
     /**
-     * Set true to load without drawing. Set false for default loading and drawing.
-     * @param {Boolean} whether to load tiles without drawing in this tiledImage.
+     * Set true to load even when hidden. Set false to block loading when hidden.
+     * @param {Boolean}  whether the tiledImage can load hidden tiles of zero opacity.
      */
     setPreload: function(preload) {
         this.preload = !!preload;
