@@ -1533,7 +1533,7 @@ function compareTiles( previousBest, tile ) {
 }
 
 function drawTiles( tiledImage, lastDrawn ) {
-    if (this.opacity == 0 || lastDrawn.length === 0) {
+    if (this.opacity === 0 || lastDrawn.length === 0) {
         return;
     }
     var tile = lastDrawn[0];
