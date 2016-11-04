@@ -163,7 +163,7 @@ $.TiledImage = function( options ) {
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
-        preload:                $.DEFAULT_SETTINGS.preload,
+        _preload:               $.DEFAULT_SETTINGS.preload,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
 
@@ -292,7 +292,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        if (this.opacity !== 0 && !this.preload) {
+        if (this.opacity !== 0 && !this._preload) {
             this._midDraw = true;
             this._updateViewport();
             this._midDraw = false;
@@ -773,15 +773,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} whether the tiledImage can load hidden tiles of zero opacity.
      */
     getPreload: function() {
-        return this.preload;
+        return this._preload;
     },
 
     /**
      * Set true to load even when hidden. Set false to block loading when hidden.
-     * @param {Boolean}  whether the tiledImage can load hidden tiles of zero opacity.
      */
     setPreload: function(preload) {
-        this.preload = !!preload;
+        this._preload = !!preload;
         this._needsDraw = true;
     },
 
