@@ -140,7 +140,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
 
         if (url && !options.tilesUrl) {
             options.tilesUrl = url.replace(
-                    /([^\/]+?)(\.(dzi|xml|js))?\/?(\?.*)?$/, '$1_files/');
+                    /([^\/]+?)(\.(dzi|xml|js))?(\?[^\/]*)?\/?$/, '$1_files/');
 
             if (url.search(/\.(dzi|xml|js)\?/) != -1) {
                 options.queryParams = url.match(/\?.*/);
