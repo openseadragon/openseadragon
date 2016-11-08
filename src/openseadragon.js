@@ -591,7 +591,7 @@
   *     Whether to load tile data using AJAX requests.
   *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
   *
-  * @property {Object} [ajaxRequestHeaders={}]
+  * @property {Object} [ajaxHeaders={}]
   *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
   */
@@ -1013,7 +1013,7 @@ function OpenSeadragon( options ){
             crossOriginPolicy:      false,
             ajaxWithCredentials:    false,
             loadTilesWithAjax:      false,
-            ajaxRequestHeaders:     {},
+            ajaxHeaders:            {},
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -2163,8 +2163,8 @@ function OpenSeadragon( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    // With protocols other than http/https, the status is in [200, 300)
-                    // on Firefox and 0 on other browsers
+                    // With protocols other than http/https, a successful request status is in
+                    // the 200's on Firefox and 0 on other browsers
                     if ( (request.status >= 200 && request.status < 300) ||
                         ( request.status === 0 &&
                           protocol !== "http:" &&

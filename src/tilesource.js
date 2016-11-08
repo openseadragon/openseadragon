@@ -65,7 +65,7 @@
  * @param {Boolean} [options.ajaxWithCredentials]
  *      If this TileSource needs to make an AJAX call, this specifies whether to set
  *      the XHR's withCredentials (for accessing secure data).
- * @param {Object} [options.ajaxRequestHeaders]
+ * @param {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
@@ -477,7 +477,7 @@ $.TileSource.prototype = {
             $.makeAjaxRequest( {
                 url: url,
                 withCredentials: this.ajaxWithCredentials,
-                headers: this.ajaxRequestHeaders,
+                headers: this.ajaxHeaders,
                 success: function( xhr ) {
                     var data = processResponse( xhr );
                     callback( data );
@@ -588,7 +588,7 @@ $.TileSource.prototype = {
      * @param {Number} y
      * @returns {Object}
      */
-    getTileHeaders: function( level, x, y ) {
+    getTileAjaxHeaders: function( level, x, y ) {
         return {};
     },
 

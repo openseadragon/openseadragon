@@ -48,9 +48,9 @@
  * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
  * is provided directly by the tile source.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
- * @param {Object} headers The headers to send with this tile's AJAX request (if applicable).
+ * @param {Object} ajaxHeaders The headers to send with this tile's AJAX request (if applicable).
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, headers) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -94,7 +94,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, hea
      */
     this.context2D = context2D;
     /**
-     * Whether to load this tile's image with an AJAX request. 
+     * Whether to load this tile's image with an AJAX request.
      * @member {Boolean} loadWithAjax
      * @memberof OpenSeadragon.Tile#
      */
@@ -102,17 +102,17 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, hea
     /**
      * The headers to be used in requesting this tile's image.
      * Only used if loadWithAjax is set to true.
-     * @member {Object} headers
+     * @member {Object} ajaxHeaders
      * @memberof OpenSeadragon.Tile#
      */
-    this.headers = headers;
+    this.ajaxHeaders = ajaxHeaders;
     /**
      * The unique cache key for this tile.
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
-    if (this.headers) {
-        this.cacheKey = this.url + "+" + JSON.stringify(this.headers);
+    if (this.ajaxHeaders) {
+        this.cacheKey = this.url + "+" + JSON.stringify(this.ajaxHeaders);
     } else {
         this.cacheKey = this.url;
     }

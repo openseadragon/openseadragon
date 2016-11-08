@@ -15,7 +15,7 @@
 </head>
 <body>
     <p>
-        Demo of how the loadTilesWithAjax and ajaxRequestHeaders options as well as the getTileHeaders() method on TileSource can be applied.
+        Demo of how the loadTilesWithAjax and ajaxHeaders options as well as the getTileHeaders() method on TileSource can be applied.
     </p>
     <p>
         Examine the network requests in your browser developer tools to see the custom headers sent with each request.
@@ -42,7 +42,7 @@
             },
             // This method will send the appropriate range header for this tile based on the data
             // in tileByteRanges.
-            getTileHeaders: function(level, x, y) {
+            getTileAjaxHeaders: function(level, x, y) {
                 return {
                     Range: "bytes=" + tileManifest.tileRanges[level][x][y].join("-") + "/" + tileManifest.totalSize
                 }
@@ -55,8 +55,8 @@
             prefixUrl: "../../build/openseadragon/images/",
             showNavigator: true,
             loadTilesWithAjax: true,
-            ajaxRequestHeaders: {
-                // Example of using the viewer-level ajaxRequestHeaders option
+            ajaxHeaders: {
+                // Example of using the viewer-level ajaxHeaders option
                 // for providing an authentication token.
                 'Authentication': 'Bearer MY_AUTH_TOKEN'
             }
@@ -64,7 +64,7 @@
 
         viewer.addTiledImage({
             // The headers specified here will be combined with those in the Viewer object (if any)
-            ajaxRequestHeaders: {
+            ajaxHeaders: {
                 "X-My-TileSource-Header": "Something"
             },
             tileSource: myCustomTileSource

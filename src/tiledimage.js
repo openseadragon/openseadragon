@@ -79,7 +79,7 @@
  * @param {Boolean} [options.loadTilesWithAjax]
  *      Whether to load tile data using AJAX requests.
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
- * @param {Object} [options.ajaxRequestHeaders={}]
+ * @param {Object} [options.ajaxHeaders={}]
  *      A set of headers to include when making tile AJAX requests.
  *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
  */
@@ -1309,7 +1309,7 @@ function getTile(
         bounds,
         exists,
         url,
-        headers,
+        ajaxHeaders,
         context2D,
         tile;
 
@@ -1329,13 +1329,13 @@ function getTile(
 
         // Headers are only applicable if loadTilesWithAjax is set
         if (tiledImage.loadTilesWithAjax) {
-            headers = tileSource.getTileHeaders( level, xMod, yMod );
-            // Combine tile headers with global headers (if applicable)
-            if ($.isPlainObject(tiledImage.ajaxRequestHeaders)) {
-                headers = $.extend({}, tiledImage.ajaxRequestHeaders, headers);
+            ajaxHeaders = tileSource.getTileAjaxHeaders( level, xMod, yMod );
+            // Combine tile AJAX headers with tiled image AJAX headers (if applicable)
+            if ($.isPlainObject(tiledImage.ajaxHeaders)) {
+                ajaxHeaders = $.extend({}, tiledImage.ajaxHeaders, ajaxHeaders);
             }
         } else {
-            headers = null;
+            ajaxHeaders = null;
         }
 
         context2D = tileSource.getContext2D ?
@@ -1353,7 +1353,7 @@ function getTile(
             url,
             context2D,
             tiledImage.loadTilesWithAjax,
-            headers
+            ajaxHeaders
         );
     }
 
@@ -1376,7 +1376,7 @@ function loadTile( tiledImage, tile, time ) {
     tiledImage._imageLoader.addJob({
         src: tile.url,
         loadWithAjax: tile.loadWithAjax,
-        headers: tile.headers,
+        ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
         callback: function( image, errorMsg, tileRequest ){

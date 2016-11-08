@@ -41,7 +41,7 @@
  * @param {Object} options - Options for this ImageJob.
  * @param {String} [options.src] - URL of image to download.
  * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
- * @param {String} [options.headers] - Headers to add to the image request.
+ * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
@@ -93,7 +93,7 @@ ImageJob.prototype = {
             this.request = $.makeAjaxRequest({
                 url: this.src,
                 withCredentials: this.ajaxWithCredentials,
-                headers: this.headers,
+                headers: this.ajaxHeaders,
                 responseType: "arraybuffer",
                 success: function(request) {
                     // Make the raw data into a blob
@@ -174,7 +174,7 @@ $.ImageLoader.prototype = {
      * @param {Object} options - Options for this job.
      * @param {String} [options.src] - URL of image to download.
      * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
-     * @param {String} [options.headers] - Headers to add to the image request.
+     * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
      * requests.
@@ -189,7 +189,7 @@ $.ImageLoader.prototype = {
             jobOptions = {
                 src: options.src,
                 loadWithAjax: options.loadWithAjax,
-                headers: options.loadWithAjax ? options.headers : null,
+                ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
                 callback: complete,

@@ -140,6 +140,7 @@ $.TileCache.prototype = {
      * may temporarily surpass that number, but should eventually come back down to the max specified.
      * @param {Object} options - Tile info.
      * @param {OpenSeadragon.Tile} options.tile - The tile to cache.
+     * @param {String} options.tile.cacheKey - The unique key used to identify this tile in the cache.
      * @param {Image} options.image - The image of the tile to cache.
      * @param {OpenSeadragon.TiledImage} options.tiledImage - The TiledImage that owns that tile.
      * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this

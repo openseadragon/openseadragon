@@ -1236,7 +1236,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} [options.loadTilesWithAjax]
      *      Whether to load tile data using AJAX requests.
      *      Defaults to the setting in {@link OpenSeadragon.Options}.
-     * @param {Object} [options.ajaxRequestHeaders]
+     * @param {Object} [options.ajaxHeaders]
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
      * requests.
@@ -1284,14 +1284,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
-        if (options.ajaxRequestHeaders === undefined) {
-            options.ajaxRequestHeaders = this.ajaxRequestHeaders;
-        } else if (
-            $.isPlainObject(options.ajaxRequestHeaders) &&
-            $.isPlainObject(this.ajaxRequestHeaders)
-        ) {
-            options.ajaxRequestHeaders = $.extend({},
-                this.ajaxRequestHeaders, options.ajaxRequestHeaders);
+        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
+            options.ajaxHeaders = this.ajaxHeaders;
+        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
+            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
         }
 
         var myQueueItem = {
@@ -1409,7 +1405,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     crossOriginPolicy: queueItem.options.crossOriginPolicy,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
-                    ajaxRequestHeaders: queueItem.options.ajaxRequestHeaders,
+                    ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode
                 });
 
@@ -2182,7 +2178,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
                     imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
-                ajaxRequestHeaders: viewer.ajaxRequestHeaders,
+                ajaxHeaders: viewer.ajaxHeaders,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
