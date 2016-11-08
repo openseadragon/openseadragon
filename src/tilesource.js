@@ -353,8 +353,8 @@ $.TileSource.prototype = {
         var pixelX = point.x * widthScaled;
         var pixelY = point.y * widthScaled;
 
-        var x = Math.floor(pixelX / this.getTileWidth());
-        var y = Math.floor(pixelY / this.getTileHeight());
+        var x = Math.floor(pixelX / this.getTileWidth(level));
+        var y = Math.floor(pixelY / this.getTileHeight(level));
 
         return new $.Point(x, y);
     },
