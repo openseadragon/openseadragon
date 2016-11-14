@@ -896,7 +896,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
     },
 
-    // private
+    /**
+     * @private
+     * @inner
+     * Pretty much every other line in this needs to be documented so it's clear
+     * how each piece of this routine contributes to the drawing process.  That's
+     * why there are so many TODO's inside this function.
+     */
     _updateViewport: function() {
         this._needsDraw = false;
         this._tilesLoading = 0;
@@ -1042,6 +1048,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     }
 });
 
+/**
+ * @private
+ * @inner
+ * Updates all tiles at a given resolution level.
+ * @param {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+ * @param {Boolean} haveDrawn
+ * @param {Boolean} drawLevel
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.Point} viewportTL - The index of the most top-left visible tile.
+ * @param {OpenSeadragon.Point} viewportBR - The index of the most bottom-right visible tile.
+ * @param {Number} currentTime
+ * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+ */
 function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     levelVisibility, drawArea, currentTime, best) {
 
@@ -1125,7 +1146,24 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     return best;
 }
 
-function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
+/**
+ * @private
+ * @inner
+ * Update a single tile at a particular resolution level.
+ * @param {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+ * @param {Boolean} haveDrawn
+ * @param {Boolean} drawLevel
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.Point} viewportCenter
+ * @param {Number} numberOfTiles
+ * @param {Number} currentTime
+ * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+ */
+function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
 
     var tile = getTile(
             x, y,
@@ -1219,6 +1257,21 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     return best;
 }
 
+/**
+ * @private
+ * @inner
+ * Obtains a tile at the given location.
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {OpenSeadragon.TileSource} tileSource
+ * @param {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
+ * @param {Number} time
+ * @param {Number} numTiles
+ * @param {Number} worldWidth
+ * @param {Number} worldHeight
+ * @returns {OpenSeadragon.Tile}
+ */
 function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWidth, worldHeight ) {
     var xMod,
         yMod,
@@ -1264,6 +1317,14 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
     return tile;
 }
 
+/**
+ * @private
+ * @inner
+ * Dispatch a job to the ImageLoader to load the Image for a Tile.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} time
+ */
 function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
     tiledImage._imageLoader.addJob({
@@ -1278,6 +1339,16 @@ function loadTile( tiledImage, tile, time ) {
     });
 }
 
+/**
+ * @private
+ * @inner
+ * Callback fired when a Tile's Image finished downloading.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} time
+ * @param {Image} image
+ * @param {String} errorMsg
+ */
 function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     if ( !image ) {
         $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
@@ -1320,6 +1391,14 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     }
 }
 
+/**
+ * @private
+ * @inner
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Image} image
+ * @param {Number} cutoff
+ */
 function setTileLoaded(tiledImage, tile, image, cutoff) {
     var increment = 0;
 
@@ -1370,6 +1449,16 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
     getCompletionCallback()();
 }
 
+/**
+ * @private
+ * @inner
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Boolean} overlap
+ * @param {OpenSeadragon.Viewport} viewport
+ * @param {OpenSeadragon.Point} viewportCenter
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ */
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
 
@@ -1400,7 +1489,23 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     tile.visibility = levelVisibility;
 }
 
-
+/**
+ * @private
+ * @inner
+ * Updates the opacity of a tile according to the time it has been on screen
+ * to perform a fade-in.
+ * Updates coverage once a tile is fully opaque.
+ * Returns whether the fade-in has completed.
+ *
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} currentTime
+ * @returns {Boolean}
+ */
 function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
     var blendTimeMillis = 1000 * tiledImage.blendTime,
         deltaTime,
@@ -1441,6 +1546,12 @@ function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
  * Note that out-of-bounds tiles provide coverage in this sense, since
  * there's no content that they would need to cover. Tiles at non-existent
  * levels that are within the image bounds, however, do not.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @returns {Boolean}
  */
 function providesCoverage( coverage, level, x, y ) {
     var rows,
@@ -1480,6 +1591,12 @@ function providesCoverage( coverage, level, x, y ) {
  * Returns true if the given tile is completely covered by higher-level
  * tiles of higher resolution representing the same content. If neither x
  * nor y is given, returns true if the entire visible level is covered.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @returns {Boolean}
  */
 function isCovered( coverage, level, x, y ) {
     if ( x === undefined || y === undefined ) {
@@ -1498,6 +1615,12 @@ function isCovered( coverage, level, x, y ) {
  * @private
  * @inner
  * Sets whether the given tile provides coverage or not.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @param {Boolean} covers - Whether the tile provides coverage.
  */
 function setCoverage( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
@@ -1521,6 +1644,9 @@ function setCoverage( coverage, level, x, y, covers ) {
  * Resets coverage information for the given level. This should be called
  * after every draw routine. Note that at the beginning of the next draw
  * routine, coverage for every visible tile should be explicitly set.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of tiles to completely reset.
  */
 function resetCoverage( coverage, level ) {
     coverage[ level ] = {};
@@ -1531,6 +1657,10 @@ function resetCoverage( coverage, level ) {
  * @inner
  * Determines whether the 'last best' tile for the area is better than the
  * tile in question.
+ *
+ * @param {OpenSeadragon.Tile} previousBest
+ * @param {OpenSeadragon.Tile} tile
+ * @returns {OpenSeadragon.Tile} The new best tile.
  */
 function compareTiles( previousBest, tile ) {
     if ( !previousBest ) {
@@ -1548,6 +1678,13 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
+/**
+ * @private
+ * @inner
+ * Draws a TiledImage.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
+ */
 function drawTiles( tiledImage, lastDrawn ) {
     if (lastDrawn.length === 0) {
         return;
@@ -1720,6 +1857,13 @@ function drawTiles( tiledImage, lastDrawn ) {
     drawDebugInfo( tiledImage, lastDrawn );
 }
 
+/**
+ * @private
+ * @inner
+ * Draws special debug information for a TiledImage if in debug mode.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
+ */
 function drawDebugInfo( tiledImage, lastDrawn ) {
     if( tiledImage.debugMode ) {
         for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
