@@ -2189,7 +2189,10 @@ function OpenSeadragon( options ){
 
                 if (headers) {
                     Object.keys(headers).forEach(function (headerName) {
-                        request.setRequestHeader(headerName, headers[headerName]);
+                        // Falsy header values will be ignored
+                        if (headers[headerName]) {
+                            request.setRequestHeader(headerName, headers[headerName]);
+                        }
                     });
                 }
 

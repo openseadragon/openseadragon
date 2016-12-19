@@ -81,7 +81,6 @@
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
  * @param {Object} [options.ajaxHeaders={}]
  *      A set of headers to include when making tile AJAX requests.
- *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
  */
 $.TiledImage = function( options ) {
     var _this = this;

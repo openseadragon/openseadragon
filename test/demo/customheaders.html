@@ -58,14 +58,14 @@
             ajaxHeaders: {
                 // Example of using the viewer-level ajaxHeaders option
                 // for providing an authentication token.
-                'Authentication': 'Bearer MY_AUTH_TOKEN'
+                "Authentication": "Bearer MY_AUTH_TOKEN"
             }
         });
 
         viewer.addTiledImage({
             // The headers specified here will be combined with those in the Viewer object (if any)
             ajaxHeaders: {
-                "X-My-TileSource-Header": "Something"
+                "X-My-TiledImage-Header": "Something"
             },
             tileSource: myCustomTileSource
         });

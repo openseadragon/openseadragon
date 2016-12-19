@@ -582,6 +582,9 @@ $.TileSource.prototype = {
      * Responsible for retrieving the headers which will be attached to the image request for the
      * region specified by the given x, y, and level components.
      * This option is only relevant if {@link OpenSeadragon.Options}.loadTilesWithAjax is set to true.
+     * The headers returned here will override headers specified at the Viewer or TiledImage level.
+     * Specifying a falsy value for a header will clear its existing value set at the Viewer or
+     * TiledImage level (if any).
      * @function
      * @param {Number} level
      * @param {Number} x
