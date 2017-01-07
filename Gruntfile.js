@@ -123,10 +123,11 @@ module.exports = function(grunt) {
                     join_vars: false
                 },
                 sourceMap: true,
-                sourceMapName: 'build/openseadragon/openseadragon.min.js.map'
+                sourceMapName: 'build/openseadragon/openseadragon.min.js.map',
+                sourceMapIn: 'build/openseadragon/openseadragon.js.map'
             },
             openseadragon: {
-                src: sources,
+                src: distribution,
                 dest: minified
             }
         },
