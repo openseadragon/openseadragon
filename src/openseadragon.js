@@ -859,7 +859,7 @@ function OpenSeadragon( options ){
         try {
             // We test if the canvas is tainted by retrieving data from it.
             // An exception will be raised if the canvas is tainted.
-            var data = canvas.getContext('2d').getImageData(0, 0, 1, 1);
+            canvas.getContext('2d').getImageData(0, 0, 1, 1);
         } catch (e) {
             isTainted = true;
         }
@@ -1026,10 +1026,46 @@ function OpenSeadragon( options ){
             dblClickDistThreshold:  20,
             springStiffness:        6.5,
             animationTime:          1.2,
-            gestureSettingsMouse:   { scrollToZoom: true,  clickToZoom: true,  dblClickToZoom: false, pinchToZoom: false, flickEnabled: false, flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsTouch:   { scrollToZoom: false, clickToZoom: false, dblClickToZoom: true,  pinchToZoom: true,  flickEnabled: true,  flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsPen:     { scrollToZoom: false, clickToZoom: true,  dblClickToZoom: false, pinchToZoom: false, flickEnabled: false, flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsUnknown: { scrollToZoom: false, clickToZoom: false, dblClickToZoom: true,  pinchToZoom: true,  flickEnabled: true,  flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
+            gestureSettingsMouse:   {
+                scrollToZoom: true,
+                clickToZoom: true,
+                dblClickToZoom: false,
+                pinchToZoom: false,
+                flickEnabled: false,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsTouch:   {
+                scrollToZoom: false,
+                clickToZoom: false,
+                dblClickToZoom: true,
+                pinchToZoom: true,
+                flickEnabled: true,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsPen:     {
+                scrollToZoom: false,
+                clickToZoom: true,
+                dblClickToZoom: false,
+                pinchToZoom: false,
+                flickEnabled: false,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsUnknown: {
+                scrollToZoom: false,
+                clickToZoom: false,
+                dblClickToZoom: true,
+                pinchToZoom: true,
+                flickEnabled: true,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
             zoomPerClick:           2,
             zoomPerScroll:          1.2,
             zoomPerSecond:          1.0,
@@ -1504,7 +1540,7 @@ function OpenSeadragon( options ){
                 };
             } else {
                 // We can't reassign the function yet, as there was no scroll.
-                return new $.Point(0,0);
+                return new $.Point(0, 0);
             }
 
             return $.getPageScroll();
@@ -1672,13 +1708,15 @@ function OpenSeadragon( options ){
          * @function
          */
         now: function( ) {
-          if (Date.now) {
-            $.now = Date.now;
-          } else {
-            $.now = function() { return new Date().getTime(); };
-          }
+            if (Date.now) {
+                $.now = Date.now;
+            } else {
+                $.now = function() {
+                    return new Date().getTime();
+                };
+            }
 
-          return $.now();
+            return $.now();
         },
 
 
@@ -1788,7 +1826,7 @@ function OpenSeadragon( options ){
         addClass: function( element, className ) {
             element = $.getElement( element );
 
-            if ( ! element.className ) {
+            if (!element.className) {
                 element.className = className;
             } else if ( ( ' ' + element.className + ' ' ).
                 indexOf( ' ' + className + ' ' ) === -1 ) {
@@ -2012,6 +2050,7 @@ function OpenSeadragon( options ){
          * @returns {String} The value of the url parameter or null if no param matches.
          */
         getUrlParameter: function( key ) {
+            // eslint-disable-next-line no-use-before-define
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
@@ -2169,7 +2208,7 @@ function OpenSeadragon( options ){
                             }
                         };
                         xdr.onerror = function (e) {
-                            if ( $.isFunction ( onError ) ) {
+                            if ($.isFunction(onError)) {
                                 onError({ // Faking an xhr object
                                     responseText: xdr.responseText,
                                     status: 444, // 444 No Response
@@ -2332,6 +2371,7 @@ function OpenSeadragon( options ){
                 // Should only be used by IE8 in non standards mode
                 $.parseJSON = function(string) {
                     /*jshint evil:true*/
+                    //eslint-disable-next-line no-eval
                     return eval('(' + string + ')');
                 };
             }
@@ -2347,6 +2387,7 @@ function OpenSeadragon( options ){
          */
         imageFormatSupported: function( extension ) {
             extension = extension ? extension : "";
+            // eslint-disable-next-line no-use-before-define
             return !!FILEFORMATS[ extension.toLowerCase() ];
         }
 
@@ -2383,8 +2424,7 @@ function OpenSeadragon( options ){
     (function() {
         //A small auto-executing routine to determine the browser vendor,
         //version and supporting feature sets.
-        var app = navigator.appName,
-            ver = navigator.appVersion,
+        var ver = navigator.appVersion,
             ua  = navigator.userAgent,
             regex;
 
@@ -2406,7 +2446,7 @@ function OpenSeadragon( options ){
                 }
                 break;
             case "Netscape":
-                if( !!window.addEventListener ){
+                if (window.addEventListener) {
                     if ( ua.indexOf( "Firefox" ) >= 0 ) {
                         $.Browser.vendor = $.BROWSERS.FIREFOX;
                         $.Browser.version = parseFloat(

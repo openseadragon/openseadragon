@@ -187,8 +187,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         //explicit configuration via positional args in constructor
         //or the more idiomatic 'options' object
         this.ready       = true;
-        this.aspectRatio = ( options.width && options.height ) ?
-            (  options.width / options.height ) : 1;
+        this.aspectRatio = (options.width && options.height) ?
+            (options.width / options.height) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
 
         if ( this.tileSize ){
@@ -454,7 +454,7 @@ $.TileSource.prototype = {
             //TODO: Its not very flexible to require tile sources to end jsonp
             //      request for info  with a url that ends with '.js' but for
             //      now it's the only way I see to distinguish uniformly.
-            callbackName = url.split( '/' ).pop().replace('.js','');
+            callbackName = url.split('/').pop().replace('.js', '');
             $.jsonp({
                 url: url,
                 async: false,
@@ -574,12 +574,12 @@ $.TileSource.prototype = {
      */
     tileExists: function( level, x, y ) {
         var numTiles = this.getNumTiles( level );
-        return  level >= this.minLevel &&
-                level <= this.maxLevel &&
-                x >= 0 &&
-                y >= 0 &&
-                x < numTiles.x &&
-                y < numTiles.y;
+        return level >= this.minLevel &&
+               level <= this.maxLevel &&
+               x >= 0 &&
+               y >= 0 &&
+               x < numTiles.x &&
+               y < numTiles.y;
     }
 };
 

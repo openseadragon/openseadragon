@@ -75,7 +75,7 @@ $.extend( $, /** @lends OpenSeadragon */{
             container = I18N,
             i;
 
-        for ( i = 0; i < props.length-1; i++ ) {
+        for (i = 0; i < props.length - 1; i++) {
             // in case not a subproperty
             container = container[ props[ i ] ] || {};
         }

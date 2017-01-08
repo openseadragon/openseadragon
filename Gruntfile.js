@@ -11,6 +11,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
 
@@ -194,6 +195,12 @@ module.exports = function(grunt) {
             beforeconcat: sources,
             afterconcat: [ distribution ]
         },
+        eslint: {
+            options: {
+                configFile: '.eslintrc.json'
+            },
+            target: sources
+        },
         "git-describe": {
             build: {}
         }
@@ -266,7 +273,7 @@ module.exports = function(grunt) {
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
         "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat",
-        "uglify", "replace:cleanPaths", "copy:build"
+        "eslint", "uglify", "replace:cleanPaths", "copy:build"
     ]);
 
     // ----------

@@ -32,11 +32,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function($) {
 
 // deprecated
-$.TileSourceCollection = function( tileSize, tileSources, rows, layout  ) {
+$.TileSourceCollection = function(tileSize, tileSources, rows, layout) {
     $.console.error('TileSourceCollection is deprecated; use World instead');
 };
 
-}( OpenSeadragon ));
+}(OpenSeadragon));

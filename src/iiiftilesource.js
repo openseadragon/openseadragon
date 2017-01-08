@@ -45,6 +45,7 @@
  */
 $.IIIFTileSource = function( options ){
 
+    /* eslint-disable camelcase */
 
     $.extend( true, this, options );
 
@@ -86,7 +87,7 @@ $.IIIFTileSource = function( options ){
     } else if ( canBeTiled(options.profile) ) {
         // use the largest of tileOptions that is smaller than the short dimension
         var shortDim = Math.min( this.height, this.width ),
-            tileOptions = [256,512,1024],
+            tileOptions = [256, 512, 1024],
             smallerTiles = [];
 
         for ( var c = 0; c < tileOptions.length; c++ ) {
@@ -102,11 +103,11 @@ $.IIIFTileSource = function( options ){
             options.tileSize = shortDim;
         }
     } else if (this.sizes && this.sizes.length > 0) {
-        // This info.json can't be tiled, but we can still construct a legacy pyramid from the sizes array. 
-        // In this mode, IIIFTileSource will call functions from the abstract baseTileSource or the 
-        // LegacyTileSource instead of performing IIIF tiling.      
+        // This info.json can't be tiled, but we can still construct a legacy pyramid from the sizes array.
+        // In this mode, IIIFTileSource will call functions from the abstract baseTileSource or the
+        // LegacyTileSource instead of performing IIIF tiling.
         this.emulateLegacyImagePyramid = true;
-        
+
         options.levels = constructLevels( this );
         // use the largest available size to define tiles
         $.extend( true, options, {
@@ -141,7 +142,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object|Array} data
      * @param {String} optional - url
      */
-     
+
     supports: function( data, url ) {
         // Version 2.0 and forwards
         if (data.protocol && data.protocol == 'http://iiif.io/api/image') {
@@ -393,14 +394,16 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      */
     function constructLevels(options) {
         var levels = [];
-        for(var i=0; i<options.sizes.length; i++) {
+        for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
                 url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.jpg',
                 width: options.sizes[i].width,
                 height: options.sizes[i].height
             });
         }
-        return levels.sort(function(a,b){return a.width - b.width;});
+        return levels.sort(function(a, b) {
+            return a.width - b.width;
+        });
     }
 
 

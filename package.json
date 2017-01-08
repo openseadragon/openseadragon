@@ -24,6 +24,7 @@
     "grunt-contrib-uglify": "^2.0.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-git-describe": "^2.3.2",
+    "grunt-eslint": "^19.0.0",
     "grunt-qunit-istanbul": "^0.6.0",
     "grunt-text-replace": "^0.4.0",
     "qunitjs": "^1.20.0"

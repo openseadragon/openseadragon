@@ -226,7 +226,7 @@ $.Spring.prototype = {
                 transform(
                     this.springStiffness,
                     ( this.current.time - this.start.time ) /
-                    ( this.target.time  - this.start.time )
+                    ( this.target.time - this.start.time )
                 );
 
         if (this._exponential) {

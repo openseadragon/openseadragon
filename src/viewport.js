@@ -60,11 +60,11 @@ $.Viewport = function( options ) {
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
     var args = arguments;
-    if(  args.length && args[ 0 ] instanceof $.Point ){
+    if (args.length && args[0] instanceof $.Point) {
         options = {
-            containerSize:  args[ 0 ],
-            contentSize:    args[ 1 ],
-            config:         args[ 2 ]
+            containerSize:  args[0],
+            contentSize:    args[1],
+            config:         args[2]
         };
     }
 
