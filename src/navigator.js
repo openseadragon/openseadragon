@@ -405,6 +405,9 @@ function onCanvasDrag( event ) {
                 event.delta
             )
         );
+        if( this.viewer.constrainDuringPan ){
+            this.viewer.viewport.applyConstraints();
+        }
     }
 }
 
