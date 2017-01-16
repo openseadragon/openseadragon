@@ -21,6 +21,9 @@ OPENSEADRAGON CHANGELOG
 * LegacyTileSource now allows any image URLs regardless of type (#1056)
 * Fixed error in IE8 when zooming in (due to edge smoothing) (#1064)
 * Improved DziTileSource guessing of tilesUrl (#1074)
+* Fixed issue with OpenSeadragon.version in the minified JavaScript (#1099)
+* Fixed smoothTileEdgesMinZoom performance degradation on single-tile images (#1101)
+* Fixed issue with tiles not appearing after rotation (#1102)
 
 2.2.1:
 
