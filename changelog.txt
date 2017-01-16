@@ -24,6 +24,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with OpenSeadragon.version in the minified JavaScript (#1099)
 * Fixed smoothTileEdgesMinZoom performance degradation on single-tile images (#1101)
 * Fixed issue with tiles not appearing after rotation (#1102)
+* Fixed: The navigator wasn't respecting the constrainDuringPan setting (#1104)
 
 2.2.1:
 
