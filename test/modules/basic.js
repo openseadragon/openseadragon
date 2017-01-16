@@ -423,4 +423,12 @@
         });
 
     } );
+
+    test('version object', function() {
+        equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
+        ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
+        ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
+        ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+    });
+
 })();
