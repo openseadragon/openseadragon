@@ -285,8 +285,8 @@ $.Drawer.prototype = {
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
             topLeft.y * $.pixelDensityRatio,
-            size.x    * $.pixelDensityRatio,
-            size.y    * $.pixelDensityRatio
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio
         );
     },
 
@@ -474,7 +474,7 @@ $.Drawer.prototype = {
                 position.x - widthExt * scale,
                 position.y - heightExt * scale,
                 (this.canvas.width + 2 * widthExt) * scale,
-                (this.canvas.height  + 2 * heightExt) * scale,
+                (this.canvas.height + 2 * heightExt) * scale,
                 -widthExt,
                 -heightExt,
                 this.canvas.width + 2 * widthExt,

@@ -115,10 +115,10 @@ $.Control = function ( element, options, container ) {
     if ( this.anchor == $.ControlAnchor.ABSOLUTE ) {
         this.wrapper    = $.makeNeutralElement( "div" );
         this.wrapper.style.position = "absolute";
-        this.wrapper.style.top = typeof ( options.top )  == "number" ? ( options.top + 'px' ) : options.top;
-        this.wrapper.style.left  = typeof ( options.left )  == "number" ?  (options.left + 'px' ) : options.left;
-        this.wrapper.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
-        this.wrapper.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+        this.wrapper.style.top = typeof (options.top) == "number" ? (options.top + 'px') : options.top;
+        this.wrapper.style.left  = typeof (options.left) == "number" ? (options.left + 'px') : options.left;
+        this.wrapper.style.height = typeof (options.height) == "number" ? (options.height + 'px') : options.height;
+        this.wrapper.style.width  = typeof (options.width) == "number" ? (options.width + 'px') : options.width;
         this.wrapper.style.margin = "0px";
         this.wrapper.style.padding = "0px";
 

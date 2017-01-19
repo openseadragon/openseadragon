@@ -217,7 +217,7 @@ function filterFiles( files ){
         }
     }
 
-    return filtered.sort(function(a,b){
+    return filtered.sort(function(a, b) {
         return a.height - b.height;
     });
 
@@ -253,7 +253,7 @@ function configureFromXML( tileSource, xmlDoc ){
             for ( i = 0; i < levels.length; i++ ) {
                 level = levels[ i ];
 
-                conf.levels .push({
+                conf.levels.push({
                     url:    level.getAttribute( "url" ),
                     width:  parseInt( level.getAttribute( "width" ), 10 ),
                     height: parseInt( level.getAttribute( "height" ), 10 )

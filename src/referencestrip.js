@@ -592,6 +592,4 @@ function onKeyPress( event ) {
     }
 }
 
-
-
-} ( OpenSeadragon ) );
+}(OpenSeadragon));

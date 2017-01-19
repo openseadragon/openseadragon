@@ -212,7 +212,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         // We need to make sure any pending images are canceled so the world items don't get messed up
         this.viewer._cancelPendingImages();
         var item;
-        for (var i = 0; i < this._items.length; i++) {
+        var i;
+        for (i = 0; i < this._items.length; i++) {
             item = this._items[i];
             item.removeHandler('bounds-change', this._delegatedFigureSizes);
             item.removeHandler('clip-change', this._delegatedFigureSizes);

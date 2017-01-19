@@ -120,7 +120,7 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element        = options.element   || $.makeNeutralElement( "div" );
+    this.element = options.element || $.makeNeutralElement("div");
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -158,7 +158,7 @@ $.Button = function( options ) {
         this.imgDown.style.visibility  =
             "hidden";
 
-        if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
+        if ($.Browser.vendor == $.BROWSERS.FIREFOX && $.Browser.version < 3) {
             this.imgGroup.style.top =
             this.imgHover.style.top =
             this.imgDown.style.top  =
@@ -172,13 +172,13 @@ $.Button = function( options ) {
     }
 
 
-    this.addHandler( "press",     this.onPress );
-    this.addHandler( "release",   this.onRelease );
-    this.addHandler( "click",     this.onClick );
-    this.addHandler( "enter",     this.onEnter );
-    this.addHandler( "exit",      this.onExit );
-    this.addHandler( "focus",     this.onFocus );
-    this.addHandler( "blur",      this.onBlur );
+    this.addHandler("press", this.onPress);
+    this.addHandler("release", this.onRelease);
+    this.addHandler("click", this.onClick);
+    this.addHandler("enter", this.onEnter);
+    this.addHandler("exit", this.onExit);
+    this.addHandler("focus", this.onFocus);
+    this.addHandler("blur", this.onBlur);
 
     /**
      * The button's current state.

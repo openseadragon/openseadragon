@@ -121,7 +121,7 @@ $.Navigator = function( options ){
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
     this.fudge = new $.Point(1, 1);
-    this.totalBorderWidths = new $.Point(this.borderWidth*2, this.borderWidth*2).minus(this.fudge);
+    this.totalBorderWidths = new $.Point(this.borderWidth * 2, this.borderWidth * 2).minus(this.fudge);
 
 
     if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
@@ -180,8 +180,8 @@ $.Navigator = function( options ){
 
     if ( this._resizeWithViewer ) {
         if ( options.width && options.height ) {
-            this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
-            this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+            this.element.style.height = typeof (options.height) == "number" ? (options.height + 'px') : options.height;
+            this.element.style.width  = typeof (options.width) == "number" ? (options.width + 'px') : options.width;
         } else {
             viewerSize = $.getElementSize( viewer.element );
             this.element.style.height = Math.round( viewerSize.y * options.sizeRatio ) + 'px';
