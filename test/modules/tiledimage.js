@@ -319,10 +319,16 @@
 
         function testDefaultRotation() {
             var image = viewer.world.getItemAt(0);
-            strictEqual(image.getRotation(), 0, 'image has default rotation');
+            strictEqual(image.getRotation(true), 0, 'image has default current rotation');
+            strictEqual(image.getRotation(false), 0, 'image has default target rotation');
 
             image.setRotation(400);
-            strictEqual(image.getRotation(), 40, 'rotation is set correctly');
+            strictEqual(image.getRotation(true), 0, 'current rotation is not changed');
+            strictEqual(image.getRotation(false), 400, 'target rotation is set correctly');
+
+            image.setRotation(200, true);
+            strictEqual(image.getRotation(true), 200, 'current rotation is set correctly');
+            strictEqual(image.getRotation(false), 200, 'target rotation is set correctly');
 
             viewer.addOnceHandler('open', testTileSourceRotation);
             viewer.open({
@@ -333,7 +339,8 @@
 
         function testTileSourceRotation() {
             var image = viewer.world.getItemAt(0);
-            strictEqual(image.getRotation(), 300, 'image has correct rotation');
+            strictEqual(image.getRotation(true), -60, 'image has correct current rotation');
+            strictEqual(image.getRotation(false), -60, 'image has correct target rotation');
             start();
         }
 

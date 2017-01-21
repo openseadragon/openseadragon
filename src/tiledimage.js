@@ -132,7 +132,7 @@ $.TiledImage = function( options ) {
     var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
     delete options.fitBoundsPlacement;
 
-    var degrees = $.positiveModulo(options.degrees || 0, 360);
+    var degrees = options.degrees || 0;
     delete options.degrees;
 
     $.extend( true, this, {
@@ -789,7 +789,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setRotation: function(degrees, immediately) {
-        degrees = $.positiveModulo(degrees, 360);
         if (this._degreesSpring.target.value === degrees &&
             this._degreesSpring.isAtTargetValue()) {
             return;
@@ -1713,11 +1712,11 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    // TODO: support tile edge smoothing with tiled image rotation.
+
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
-        tiledImage.getRotation(true) === 0 &&
+        tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
@@ -1751,7 +1750,7 @@ function drawTiles( tiledImage, lastDrawn ) {
                 useSketch: useSketch
             });
         }
-        if (tiledImage.getRotation(true) !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
                 degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
@@ -1828,7 +1827,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (!sketchScale) {
-        if (tiledImage.getRotation(true) !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
         if (tiledImage.viewport.degrees !== 0) {
@@ -1844,7 +1843,7 @@ function drawTiles( tiledImage, lastDrawn ) {
                     useSketch: false
                 });
             }
-            if (tiledImage.getRotation(true) !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._offsetForRotation({
                     degrees: tiledImage.getRotation(true),
                     point: tiledImage.viewport.pixelFromPointNoRotate(
@@ -1861,7 +1860,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             bounds: bounds
         });
         if (sketchScale) {
-            if (tiledImage.getRotation(true) !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
             if (tiledImage.viewport.degrees !== 0) {
