@@ -500,9 +500,9 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
         }
-        if (tiledImage.getRotation() !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
-                degrees: tiledImage.getRotation(),
+                degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true)
             });
@@ -569,7 +569,7 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._restoreRotationChanges();
         }
-        if (tiledImage.getRotation() !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             this._restoreRotationChanges();
         }
         context.restore();

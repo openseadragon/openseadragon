@@ -369,9 +369,11 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // private
     _matchBounds: function(myItem, theirItem, immediately) {
-        var bounds = theirItem.getBounds();
+        var bounds = theirItem.getBoundsNoRotate();
         myItem.setPosition(bounds.getTopLeft(), immediately);
         myItem.setWidth(bounds.width, immediately);
+        myItem.setRotation(theirItem.getRotation(), immediately);
+        myItem.setClip(theirItem.getClip());
     }
 });
 

@@ -132,7 +132,7 @@ $.TiledImage = function( options ) {
     var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
     delete options.fitBoundsPlacement;
 
-    this._degrees = $.positiveModulo(options.degrees || 0, 360);
+    var degrees = options.degrees || 0;
     delete options.degrees;
 
     $.extend( true, this, {
@@ -182,6 +182,12 @@ $.TiledImage = function( options ) {
 
     this._scaleSpring = new $.Spring({
         initial: scale,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
+    this._degreesSpring = new $.Spring({
+        initial: degrees,
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
@@ -269,16 +275,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} Whether the TiledImage animated.
      */
     update: function() {
-        var oldX = this._xSpring.current.value;
-        var oldY = this._ySpring.current.value;
-        var oldScale = this._scaleSpring.current.value;
+        var xUpdated = this._xSpring.update();
+        var yUpdated = this._ySpring.update();
+        var scaleUpdated = this._scaleSpring.update();
+        var degreesUpdated = this._degreesSpring.update();
 
-        this._xSpring.update();
-        this._ySpring.update();
-        this._scaleSpring.update();
-
-        if (this._xSpring.current.value !== oldX || this._ySpring.current.value !== oldY ||
-                this._scaleSpring.current.value !== oldScale) {
+        if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
             this._updateForScale();
             this._needsDraw = true;
             return true;
@@ -313,7 +315,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     getBounds: function(current) {
         return this.getBoundsNoRotate(current)
-            .rotate(this._degrees, this._getRotationPoint(current));
+            .rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -362,7 +364,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 clip.width,
                 clip.height);
         }
-        return bounds.rotate(this._degrees, this._getRotationPoint(current));
+        return bounds.rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -397,7 +399,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             point = new $.Point(viewerX, viewerY);
         }
 
-        point = point.rotate(-this._degrees, this._getRotationPoint(current));
+        point = point.rotate(-this.getRotation(current), this._getRotationPoint(current));
         return current ?
             this._viewportToImageDelta(
                 point.x - this._xSpring.current.value,
@@ -439,7 +441,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             point.y += this._ySpring.target.value;
         }
 
-        return point.rotate(this._degrees, this._getRotationPoint(current));
+        return point.rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -453,7 +455,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
-    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight, current ) {
+    imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight, current) {
         var rect = imageX;
         if (rect instanceof $.Rect) {
             //they passed a rect instead of individual components
@@ -470,7 +472,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees + this._degrees
+            rect.degrees + this.getRotation(current)
         );
     },
 
@@ -502,7 +504,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees - this._degrees
+            rect.degrees - this.getRotation(current)
         );
     },
 
@@ -555,7 +557,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     // coordinates (x in [0, 1] and y in [0, aspectRatio])
     _viewportToTiledImageRectangle: function(rect) {
         var scale = this._scaleSpring.current.value;
-        rect = rect.rotate(-this.getRotation(), this._getRotationPoint(true));
+        rect = rect.rotate(-this.getRotation(true), this._getRotationPoint(true));
         return new $.Rect(
             (rect.x - this._xSpring.current.value) / scale,
             (rect.y - this._ySpring.current.value) / scale,
@@ -769,24 +771,33 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Get the current rotation of this tiled image in degrees.
-     * @returns {Number} the current rotation of this tiled image in degrees.
+     * Get the rotation of this tiled image in degrees.
+     * @param {Boolean} [current=false] True for current rotation, false for target.
+     * @returns {Number} the rotation of this tiled image in degrees.
      */
-    getRotation: function() {
-        return this._degrees;
+    getRotation: function(current) {
+        return current ?
+            this._degreesSpring.current.value :
+            this._degreesSpring.target.value;
     },
 
     /**
      * Set the current rotation of this tiled image in degrees.
      * @param {Number} degrees the rotation in degrees.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    setRotation: function(degrees) {
-        degrees = $.positiveModulo(degrees, 360);
-        if (this._degrees === degrees) {
+    setRotation: function(degrees, immediately) {
+        if (this._degreesSpring.target.value === degrees &&
+            this._degreesSpring.isAtTargetValue()) {
             return;
         }
-        this._degrees = degrees;
+        if (immediately) {
+            this._degreesSpring.resetTo(degrees);
+        } else {
+            this._degreesSpring.springTo(degrees);
+        }
         this._needsDraw = true;
         this._raiseBoundsChange();
     },
@@ -1701,11 +1712,11 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    // TODO: support tile edge smoothing with tiled image rotation.
+
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
-        tiledImage.getRotation() === 0 &&
+        tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
@@ -1739,9 +1750,9 @@ function drawTiles( tiledImage, lastDrawn ) {
                 useSketch: useSketch
             });
         }
-        if (tiledImage._degrees !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
-                degrees: tiledImage._degrees,
+                degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true),
                 useSketch: useSketch
@@ -1754,7 +1765,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        box = box.rotate(-tiledImage._degrees, tiledImage._getRotationPoint());
+        box = box.rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
         if (sketchScale) {
             clipRect = clipRect.times(sketchScale);
@@ -1816,7 +1827,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (!sketchScale) {
-        if (tiledImage._degrees !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
         if (tiledImage.viewport.degrees !== 0) {
@@ -1832,9 +1843,9 @@ function drawTiles( tiledImage, lastDrawn ) {
                     useSketch: false
                 });
             }
-            if (tiledImage._degrees !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._offsetForRotation({
-                    degrees: tiledImage._degrees,
+                    degrees: tiledImage.getRotation(true),
                     point: tiledImage.viewport.pixelFromPointNoRotate(
                         tiledImage._getRotationPoint(true), true),
                     useSketch: false
@@ -1849,7 +1860,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             bounds: bounds
         });
         if (sketchScale) {
-            if (tiledImage._degrees !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
             if (tiledImage.viewport.degrees !== 0) {
