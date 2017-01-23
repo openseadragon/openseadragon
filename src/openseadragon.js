@@ -2188,12 +2188,11 @@ function OpenSeadragon( options ){
                 }
 
                 if (headers) {
-                    Object.keys(headers).forEach(function (headerName) {
-                        // Falsy header values will be ignored
-                        if (headers[headerName]) {
+                    for (var headerName in headers) {
+                        if (headers.hasOwnProperty(headerName) && headers[headerName]) {
                             request.setRequestHeader(headerName, headers[headerName]);
                         }
-                    });
+                    }
                 }
 
                 if (withCredentials) {
