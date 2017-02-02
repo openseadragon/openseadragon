@@ -248,6 +248,8 @@
                 element.prevNextSibling = element.nextSibling;
                 container.appendChild(element);
 
+                // have to set position before calculating size, fix #1116
+                this.style.position = "absolute";
                 // this.size is used by overlays which don't get scaled in at
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
@@ -286,7 +288,6 @@
                         style[transformProp] = "";
                     }
                 }
-                style.position = "absolute";
 
                 if (style.display !== 'none') {
                     style.display = 'block';
