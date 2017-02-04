@@ -356,6 +356,15 @@ $.TileSource.prototype = {
         var x = Math.floor(pixelX / this.getTileWidth(level));
         var y = Math.floor(pixelY / this.getTileHeight(level));
 
+        // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
+        // return the last tile of the row/column
+        if (point.x >= 1) {
+            x = this.getNumTiles(level).x - 1;
+        }
+        if (point.y >= 1 / this.aspectRatio) {
+            y = this.getNumTiles(level).y - 1;
+        }
+
         return new $.Point(x, y);
     },
 
