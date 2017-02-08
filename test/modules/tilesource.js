@@ -85,6 +85,17 @@
             assertTileAtPoint(level, new OpenSeadragon.Point(0.5, 0.5), new OpenSeadragon.Point(0, 0));
             assertTileAtPoint(level, new OpenSeadragon.Point(1, 10 / 15), new OpenSeadragon.Point(0, 0));
         }
+
+        // Test for issue #1113
+        tileSource = new OpenSeadragon.TileSource({
+            width: 1006,
+            height: 1009,
+            tileWidth: 1006,
+            tileHeight: 1009,
+            tileOverlap: 0,
+            maxLevel: 0,
+        });
+        assertTileAtPoint(0, new OpenSeadragon.Point(1, 1009 / 1006), new OpenSeadragon.Point(0, 0));
     });
 
 }());

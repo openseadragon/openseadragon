@@ -61,7 +61,7 @@ $.ButtonState = {
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;div&gt; element is created.
  * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
  * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
