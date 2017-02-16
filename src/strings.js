@@ -56,6 +56,8 @@ var I18N = {
         ZoomOut:        "Zoom out",
         NextPage:       "Next page",
         PreviousPage:   "Previous page",
+        NextRow:        "Next row",
+        PreviousRow:    "Previous row",
         RotateLeft:     "Rotate left",
         RotateRight:    "Rotate right"
     }

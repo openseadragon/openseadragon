@@ -1088,6 +1088,8 @@ function OpenSeadragon( options ){
             preserveViewport:        false, //SEQUENCE
             preserveOverlays:        false, //SEQUENCE
             navPrevNextWrap:         false, //SEQUENCE
+            imagesPerRow:            0,     //SEQUENCE
+            inverseVertical:         false, //SEQUENCE
             showNavigationControl:   true,  //ZOOM/HOME/FULL/ROTATION
             navigationControlAnchor: null,  //ZOOM/HOME/FULL/ROTATION
             showZoomControl:         true,  //ZOOM
@@ -1193,6 +1195,18 @@ function OpenSeadragon( options ){
                     GROUP:  'next_grouphover.png',
                     HOVER:  'next_hover.png',
                     DOWN:   'next_pressed.png'
+                },
+                previousRow: {
+                    REST:   'previous_row_rest.png',
+                    GROUP:  'previous_row_grouphover.png',
+                    HOVER:  'previous_row_hover.png',
+                    DOWN:   'previous_row_pressed.png'
+                },
+                nextRow: {
+                    REST:   'next_row_rest.png',
+                    GROUP:  'next_row_grouphover.png',
+                    HOVER:  'next_row_hover.png',
+                    DOWN:   'next_row_pressed.png'
                 }
             },
 
