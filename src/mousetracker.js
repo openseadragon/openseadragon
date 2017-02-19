@@ -862,6 +862,21 @@
         blurHandler: function () { }
     };
 
+    /**
+     * Resets all active mousetrakers. (Added to patch issue #697 "Mouse up outside map will cause "canvas-drag" event to stick")
+     *
+     * @private
+     * @member resetAllMouseTrackers
+     * @memberof OpenSeadragon.MouseTracker
+     */
+    $.MouseTracker.resetAllMouseTrackers = function(){
+        MOUSETRACKERS.forEach(function(mt){
+            if (mt.isTracking()){
+                mt.setTracking(false);
+                mt.setTracking(true);
+            }
+        });
+    };
 
     /**
      * Provides continuous computation of velocity (speed and direction) of active pointers.

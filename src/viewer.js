@@ -2530,6 +2530,7 @@ function onCanvasDblClick( event ) {
     });
 }
 
+// Modified to improve constrained panning
 function onCanvasDrag( event ) {
     var gestureSettings;
 
@@ -2541,11 +2542,31 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
+
         if( this.constrainDuringPan ){
-            this.viewport.applyConstraints();
+            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+
+            this["viewport"].centerSpringX.target.value += delta.x;
+            this["viewport"].centerSpringY.target.value += delta.y;
+
+            var bounds = this.viewport.getBounds();
+            var constrainedBounds = this.viewport.getConstrainedBounds();
+
+            this["viewport"].centerSpringX.target.value -= delta.x;
+            this["viewport"].centerSpringY.target.value -= delta.y;
+
+            if (bounds.x != constrainedBounds.x) {
+                event.delta.x = 0;
+            }
+
+            if (bounds.y != constrainedBounds.y) {
+                event.delta.y = 0;
+            }
         }
+
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
     }
+
     /**
      * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2652,6 +2673,8 @@ function onCanvasEnter( event ) {
 }
 
 function onCanvasExit( event ) {
+
+    $.MouseTracker.resetAllMouseTrackers(); // <== Necessary to patch issue #697 "Mouse up outside map will cause "canvas-drag" event to stick"
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *

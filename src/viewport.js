@@ -734,6 +734,33 @@ $.Viewport.prototype = {
 
 
     /**
+     * Returns bounds taking constrains into account
+     * Added to improve constrained panning
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    // Added to improve constrained panning
+    getConstrainedBounds: function( immediately ) {
+        var actualZoom = this.getZoom(),
+            constrainedZoom = Math.max(
+                Math.min( actualZoom, this.getMaxZoom() ),
+                this.getMinZoom()
+            ),
+            bounds,
+            constrainedBounds;
+
+        if ( actualZoom != constrainedZoom ) {
+            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
+        }
+
+        bounds = this.getBounds();
+
+        constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
+
+        return constrainedBounds;
+    },
+
+    /**
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately

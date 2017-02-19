@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon fitBoundsWithConstraints() Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+      #highlights li {
+        cursor: pointer;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        <p>Simple demo to see panning improvements using the following settings:</p>
+        <ul>
+            <li>homeFillsViewer: true</li>
+            <li>showZoomControl: false,</li>
+            <li>constrainDuringPan: true,</li>
+            <li>visibilityRatio: 1,</li>
+        </ul>
+    </div>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+
+    <script type="text/javascript">
+
+        var _viewer;
+
+        var _viewer = OpenSeadragon({
+            element: document.getElementById("contentDiv"),
+            tileSources:  "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+            homeFillsViewer: true,
+            showZoomControl: false,
+            constrainDuringPan: true,
+            visibilityRatio: 1,
+            prefixUrl: "../../build/openseadragon/images/",
+            minZoomImageRatio: 1
+        });
+    </script>
+</body>
+</html>
