@@ -28,6 +28,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue causing overlays to be mis-positioned in some circumstances (#1119)
 * Fixed: ImageTileSource would sometimes produce a double image (#1123)
 * Fixed: console.debug caused exceptions on IE10 (#1129)
+* Better compression for our UI images (#1134)
 
 2.2.1:
 
