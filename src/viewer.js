@@ -2530,7 +2530,6 @@ function onCanvasDblClick( event ) {
     });
 }
 
-// Modified to improve constrained panning
 function onCanvasDrag( event ) {
     var gestureSettings;
 
@@ -2546,14 +2545,14 @@ function onCanvasDrag( event ) {
         if( this.constrainDuringPan ){
             var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
 
-            this["viewport"].centerSpringX.target.value += delta.x;
-            this["viewport"].centerSpringY.target.value += delta.y;
+            this.viewport.centerSpringX.target.value += delta.x;
+            this.viewport.centerSpringY.target.value += delta.y;
 
             var bounds = this.viewport.getBounds();
             var constrainedBounds = this.viewport.getConstrainedBounds();
 
-            this["viewport"].centerSpringX.target.value -= delta.x;
-            this["viewport"].centerSpringY.target.value -= delta.y;
+            this.viewport.centerSpringX.target.value -= delta.x;
+            this.viewport.centerSpringY.target.value -= delta.y;
 
             if (bounds.x != constrainedBounds.x) {
                 event.delta.x = 0;

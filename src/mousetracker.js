@@ -870,12 +870,12 @@
      * @memberof OpenSeadragon.MouseTracker
      */
     $.MouseTracker.resetAllMouseTrackers = function(){
-        MOUSETRACKERS.forEach(function(mt){
-            if (mt.isTracking()){
-                mt.setTracking(false);
-                mt.setTracking(true);
+        for(var i = 0; i < MOUSETRACKERS.length; i++){
+            if (MOUSETRACKERS[i].isTracking()){
+                MOUSETRACKERS[i].setTracking(false);
+                MOUSETRACKERS[i].setTracking(true);
             }
-        });
+        }
     };
 
     /**

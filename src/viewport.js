@@ -734,7 +734,7 @@ $.Viewport.prototype = {
 
 
     /**
-     * Returns bounds taking constrains into account
+     * Returns bounds taking constraints into account
      * Added to improve constrained panning
      * @param {Boolean} immediately
      * @return {OpenSeadragon.Viewport} Chainable.
