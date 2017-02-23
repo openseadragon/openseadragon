@@ -2673,7 +2673,10 @@ function onCanvasEnter( event ) {
 
 function onCanvasExit( event ) {
 
-    $.MouseTracker.resetAllMouseTrackers(); // <== Necessary to patch issue #697 "Mouse up outside map will cause "canvas-drag" event to stick"
+    if (window.location != window.parent.location){
+        $.MouseTracker.resetAllMouseTrackers();
+    }
+
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *
