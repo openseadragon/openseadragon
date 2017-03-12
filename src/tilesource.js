@@ -318,7 +318,7 @@ $.TileSource.prototype = {
 
     /**
      * @function
-     * @param {Number} level
+     * @param {Rect} rect
      */
     getClosestLevel: function( rect ) {
         var i,
