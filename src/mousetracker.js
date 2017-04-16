@@ -2354,6 +2354,7 @@
         if ( updatePointersUp( tracker, event, [ gPoint ], event.button ) ) {
             releasePointer( tracker, gPoint.type );
         }
+        updatePointersExit(tracker, event, [gPoint]);
     }
 
 
