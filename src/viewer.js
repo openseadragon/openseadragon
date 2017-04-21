@@ -2573,7 +2573,9 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
+        if( event.delta.x !== 0 || event.delta.y !== 0){
+            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
+        }
         if( this.constrainDuringPan ){
             this.viewport.applyConstraints();
         }
