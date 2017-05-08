@@ -27,7 +27,7 @@
         // in tileByteRanges.
         getTileAjaxHeaders: function(level, x, y) {
             return {
-                Range: 'bytes ' + tileManifest.tileRanges[level][x][y].join('-') + '/' + tileManifest.totalSize
+                Range: 'bytes=' + tileManifest.tileRanges[level][x][y].join('-') + '/' + tileManifest.totalSize
             };
         },
     };
