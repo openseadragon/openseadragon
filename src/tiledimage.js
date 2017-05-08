@@ -1434,7 +1434,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     var finish = function() {
         var cutoff = Math.ceil( Math.log(
             tiledImage.source.getTileWidth(tile.level) ) / Math.log( 2 ) );
-        setTileLoaded(tiledImage, tile, image, cutoff);
+        setTileLoaded(tiledImage, tile, image, cutoff, tileRequest);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -1455,7 +1455,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
  * @param {Image} image
  * @param {Number} cutoff
  */
-function setTileLoaded(tiledImage, tile, image, cutoff) {
+function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
     var increment = 0;
 
     function getCompletionCallback() {
@@ -1490,6 +1490,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
      * @property {Image} image - The image of the tile.
      * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {XMLHttpRequest} tiledImage - The AJAX request that loaded this tile (if applicable).
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
      * marked as entirely loaded when the callback has been called once for each
@@ -1498,6 +1499,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
     tiledImage.viewer.raiseEvent("tile-loaded", {
         tile: tile,
         tiledImage: tiledImage,
+        tileRequest: tileRequest,
         image: image,
         getCompletionCallback: getCompletionCallback
     });
