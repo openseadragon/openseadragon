@@ -96,8 +96,25 @@ ImageJob.prototype = {
                 headers: this.ajaxHeaders,
                 responseType: "arraybuffer",
                 success: function(request) {
-                    // Make the raw data into a blob
-                    var blb = new window.Blob([request.response]);
+                    var blb;
+                    // Make the raw data into a blob.
+                    // BlobBuilder fallback adapted from
+                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
+                    try {
+                        blb = new window.Blob([request.response]);
+                    } catch (e) {
+                        var BlobBuilder = (
+                            window.BlobBuilder ||
+                            window.WebKitBlobBuilder ||
+                            window.MozBlobBuilder ||
+                            window.MSBlobBuilder
+                        );
+                        if (e.name === 'TypeError' && BlobBuilder) {
+                            var bb = new BlobBuilder();
+                            bb.append(request.response);
+                            blb = bb.getBlob();
+                        }
+                    }
                     // If the blob is empty for some reason consider the image load a failure.
                     if (blb.size === 0) {
                         self.errorMsg = "Empty image response.";
