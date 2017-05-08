@@ -9,6 +9,10 @@
     // eslint-disable-next-line
     var tileManifest  = {"tileRanges":[[[[0,3467]]],[[[3467,6954]]],[[[344916,348425]]],[[[348425,351948]]],[[[351948,355576]]],[[[355576,359520]]],[[[359520,364663]]],[[[364663,374196]]],[[[374196,407307]]],[[[407307,435465],[435465,463663]],[[463663,491839],[491839,520078]]],[[[6954,29582],[29582,50315],[50315,71936],[71936,92703]],[[92703,113385],[113385,133265],[133265,154763],[154763,175710]],[[175710,197306],[197306,218807],[218807,242177],[242177,263007]],[[263007,283790],[283790,304822],[304822,325691],[325691,344916]]]],"totalSize":520078}
 
+    function getTileRangeHeader(level, x, y) {
+        return 'bytes=' + tileManifest.tileRanges[level][x][y].join('-') + '/' + tileManifest.totalSize;
+    }
+
     // This tile source demonstrates how you can retrieve individual tiles from a single file
     // using the Range header.
     var customTileSource = {
@@ -27,7 +31,7 @@
         // in tileByteRanges.
         getTileAjaxHeaders: function(level, x, y) {
             return {
-                Range: 'bytes=' + tileManifest.tileRanges[level][x][y].join('-') + '/' + tileManifest.totalSize
+                Range: getTileRangeHeader(level, x, y)
             };
         },
     };
@@ -69,6 +73,22 @@
         viewer.open(customTileSource);
     });
 
+    asyncTest('withCredentials is set in tile AJAX requests', function() {
+        var tileLoaded = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            ok(evt.tileRequest, 'Event includes tileRequest property');
+            equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
+            equal(evt.tileRequest.withCredentials, true, 'withCredentials is set in tile request');
+            start();
+        };
+
+        viewer.addHandler('tile-loaded', tileLoaded);
+        viewer.addTiledImage({
+            tileSource: customTileSource,
+            ajaxWithCredentials: true
+        });
+    });
+
     asyncTest('tile-load-failed event includes AJAX request object', function() {
         // Create a tile source that points to a broken URL
         var brokenTileSource = OpenSeadragon.extend({}, customTileSource, {
@@ -86,6 +106,21 @@
 
         viewer.addHandler('tile-load-failed', tileLoadFailed);
         viewer.open(brokenTileSource);
+    });
+
+    asyncTest('Headers can be set per-tile', function() {
+        var tileLoaded = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            var tile = evt.tile;
+            ok(tile, 'tile property exists on event');
+            ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
+            equal(tile.ajaxHeaders.Range, getTileRangeHeader(tile.level, tile.x, tile.y), 'Tile has correct range header.');
+            start();
+        };
+
+        viewer.addHandler('tile-loaded', tileLoaded);
+
+        viewer.open(customTileSource);
     });
 
     asyncTest('Headers are propagated correctly', function() {
