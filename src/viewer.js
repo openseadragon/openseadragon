@@ -2113,6 +2113,20 @@ function _getSafeElemSize (oElement) {
     );
 }
 
+
+/*
+ * @function
+ * @private
+ */
+function _isJSON(str){
+  try{
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * @function
  * @private
@@ -2127,7 +2141,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
         if ( tileSource.match( /^\s*<.*>\s*$/ ) ) {
             tileSource = $.parseXml( tileSource );
         //json should start with "{" or "[" and end with "}" or "]"
-        } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
+        } else if ( _isJSON(tileSource) ) {
             tileSource = $.parseJSON(tileSource);
         }
     }
