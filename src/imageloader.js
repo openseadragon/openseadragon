@@ -32,15 +32,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function($){
 
-// private class
-function ImageJob ( options ) {
+/**
+ * @private
+ * @class ImageJob
+ * @classdesc Handles downloading of a single image.
+ * @param {Object} options - Options for this ImageJob.
+ * @param {String} [options.src] - URL of image to download.
+ * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
+ * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
+ * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
+ * @param {Function} [options.callback] - Called once image has been downloaded.
+ * @param {Function} [options.abort] - Called when this image job is aborted.
+ */
+function ImageJob (options) {
 
-    $.extend( true, this, {
-        timeout:        $.DEFAULT_SETTINGS.timeout,
-        jobId:          null
-    }, options );
+    $.extend(true, this, {
+        timeout: $.DEFAULT_SETTINGS.timeout,
+        jobId: null
+    }, options);
 
     /**
      * Image object which will contain downloaded image.
@@ -52,42 +63,103 @@ function ImageJob ( options ) {
 
 ImageJob.prototype = {
     errorMsg: null,
+
+    /**
+     * Starts the image job.
+     * @method
+     */
     start: function(){
-        var _this = this;
+        var self = this;
+        var selfAbort = this.abort;
 
         this.image = new Image();
 
-        if ( this.crossOriginPolicy !== false ) {
-            this.image.crossOrigin = this.crossOriginPolicy;
-        }
-
         this.image.onload = function(){
-            _this.finish( true );
+            self.finish(true);
         };
-        this.image.onabort = this.image.onerror = function(){
-            _this.errorMsg = "Image load aborted";
-            _this.finish( false );
+        this.image.onabort = this.image.onerror = function() {
+            self.errorMsg = "Image load aborted";
+            self.finish(false);
         };
 
-        this.jobId = window.setTimeout( function(){
-            _this.errorMsg = "Image load exceeded timeout";
-            _this.finish( false );
+        this.jobId = window.setTimeout(function(){
+            self.errorMsg = "Image load exceeded timeout";
+            self.finish(false);
         }, this.timeout);
 
-        this.image.src = this.src;
+        // Load the tile with an AJAX request if the loadWithAjax option is
+        // set. Otherwise load the image by setting the source proprety of the image object.
+        if (this.loadWithAjax) {
+            this.request = $.makeAjaxRequest({
+                url: this.src,
+                withCredentials: this.ajaxWithCredentials,
+                headers: this.ajaxHeaders,
+                responseType: "arraybuffer",
+                success: function(request) {
+                    var blb;
+                    // Make the raw data into a blob.
+                    // BlobBuilder fallback adapted from
+                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
+                    try {
+                        blb = new window.Blob([request.response]);
+                    } catch (e) {
+                        var BlobBuilder = (
+                            window.BlobBuilder ||
+                            window.WebKitBlobBuilder ||
+                            window.MozBlobBuilder ||
+                            window.MSBlobBuilder
+                        );
+                        if (e.name === 'TypeError' && BlobBuilder) {
+                            var bb = new BlobBuilder();
+                            bb.append(request.response);
+                            blb = bb.getBlob();
+                        }
+                    }
+                    // If the blob is empty for some reason consider the image load a failure.
+                    if (blb.size === 0) {
+                        self.errorMsg = "Empty image response.";
+                        self.finish(false);
+                    }
+                    // Create a URL for the blob data and make it the source of the image object.
+                    // This will still trigger Image.onload to indicate a successful tile load.
+                    var url = (window.URL || window.webkitURL).createObjectURL(blb);
+                    self.image.src = url;
+                },
+                error: function(request) {
+                    self.errorMsg = "Image load aborted - XHR error";
+                    self.finish(false);
+                }
+            });
+
+            // Provide a function to properly abort the request.
+            this.abort = function() {
+                self.request.abort();
+
+                // Call the existing abort function if available
+                if (typeof selfAbort === "function") {
+                    selfAbort();
+                }
+            };
+        } else {
+            if (this.crossOriginPolicy !== false) {
+                this.image.crossOrigin = this.crossOriginPolicy;
+            }
+
+            this.image.src = this.src;
+        }
     },
 
-    finish: function( successful ) {
+    finish: function(successful) {
         this.image.onload = this.image.onerror = this.image.onabort = null;
         if (!successful) {
             this.image = null;
         }
 
-        if ( this.jobId ) {
-            window.clearTimeout( this.jobId );
+        if (this.jobId) {
+            window.clearTimeout(this.jobId);
         }
 
-        this.callback( this );
+        this.callback(this);
     }
 
 };
@@ -100,13 +172,13 @@ ImageJob.prototype = {
  * @param {Object} options - Options for this ImageLoader.
  * @param {Number} [options.jobLimit] - The number of concurrent image requests. See imageLoaderLimit in {@link OpenSeadragon.Options} for details.
  */
-$.ImageLoader = function( options ) {
+$.ImageLoader = function(options) {
 
-    $.extend( true, this, {
+    $.extend(true, this, {
         jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
         jobQueue:       [],
         jobsInProgress: 0
-    }, options );
+    }, options);
 
 };
 
@@ -116,22 +188,31 @@ $.ImageLoader.prototype = {
     /**
      * Add an unloaded image to the loader queue.
      * @method
-     * @param {String} src - URL of image to download.
-     * @param {String} crossOriginPolicy - CORS policy to use for downloads
-     * @param {Function} callback - Called once image has been downloaded.
+     * @param {Object} options - Options for this job.
+     * @param {String} [options.src] - URL of image to download.
+     * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
+     * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
+     * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
+     * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
+     * requests.
+     * @param {Function} [options.callback] - Called once image has been downloaded.
+     * @param {Function} [options.abort] - Called when this image job is aborted.
      */
-    addJob: function( options ) {
+    addJob: function(options) {
         var _this = this,
-            complete = function( job ) {
-                completeJob( _this, job, options.callback );
+            complete = function(job) {
+                completeJob(_this, job, options.callback);
             },
             jobOptions = {
                 src: options.src,
+                loadWithAjax: options.loadWithAjax,
+                ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
+                ajaxWithCredentials: options.ajaxWithCredentials,
                 callback: complete,
                 abort: options.abort
             },
-            newJob = new ImageJob( jobOptions );
+            newJob = new ImageJob(jobOptions);
 
         if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
             newJob.start();
@@ -166,18 +247,18 @@ $.ImageLoader.prototype = {
  * @param job - The ImageJob that has completed.
  * @param callback - Called once cleanup is finished.
  */
-function completeJob( loader, job, callback ) {
+function completeJob(loader, job, callback) {
     var nextJob;
 
     loader.jobsInProgress--;
 
-    if ( (!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.jobQueue.length > 0) {
+    if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.jobQueue.length > 0) {
         nextJob = loader.jobQueue.shift();
         nextJob.start();
         loader.jobsInProgress++;
     }
 
-    callback( job.image, job.errorMsg );
+    callback(job.image, job.errorMsg, job.request);
 }
 
-}( OpenSeadragon ));
+}(OpenSeadragon));
