@@ -34,6 +34,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: console.debug caused exceptions on IE10 (#1129)
 * Better compression for our UI images (#1134)
 * Fixed: the reference strip would leak memory when opening new sets of images (#1175)
+* You can now load tiles via AJAX and custom AJAX request headers (#1055)
 
 2.2.1:
 
