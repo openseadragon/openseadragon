@@ -806,6 +806,7 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomTo: function(zoom, refPoint, immediately) {
+        var _this = this;
 
         this.zoomPoint = refPoint instanceof $.Point &&
             !isNaN(refPoint.x) &&
@@ -814,7 +815,6 @@ $.Viewport.prototype = {
             null;
 
         if (immediately) {
-            var _this = this;
             this._adjustCenterSpringsForZoomPoint(function() {
                 _this.zoomSpring.resetTo(zoom);
             });

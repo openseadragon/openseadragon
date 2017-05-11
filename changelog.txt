@@ -36,6 +36,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: the reference strip would leak memory when opening new sets of images (#1175)
 * You can now load tiles via AJAX and custom AJAX request headers (#1055)
 * Added fix for supporting weird filenames that look like JSONs (#1189)
+* Fixed: zoomTo/zoomBy ignore refPoint if immediately is true (#1184)
 
 2.2.1:
 
