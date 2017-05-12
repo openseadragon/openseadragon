@@ -45,6 +45,7 @@
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
+ * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
  */
 function ImageJob (options) {
 
@@ -171,11 +172,13 @@ ImageJob.prototype = {
  * You generally won't have to interact with the ImageLoader directly.
  * @param {Object} options - Options for this ImageLoader.
  * @param {Number} [options.jobLimit] - The number of concurrent image requests. See imageLoaderLimit in {@link OpenSeadragon.Options} for details.
+ * @param {Number} [options.timeout] - The max number of milliseconds that an image job may take to complete.
  */
 $.ImageLoader = function(options) {
 
     $.extend(true, this, {
         jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
+        timeout:        $.DEFAULT_SETTINGS.timeout,
         jobQueue:       [],
         jobsInProgress: 0
     }, options);
@@ -210,7 +213,8 @@ $.ImageLoader.prototype = {
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
                 callback: complete,
-                abort: options.abort
+                abort: options.abort,
+                timeout: this.timeout
             },
             newJob = new ImageJob(jobOptions);
 
