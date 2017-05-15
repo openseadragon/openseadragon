@@ -97,7 +97,7 @@ $.Viewer = function( options ) {
         id:             options.id,
         hash:           options.hash || nextHash++,
         /**
-         * If sequenceMode is true, display this page initially for the given tileSources.
+         * Index for page to be shown first next time open() is called (only used in sequenceMode).
          * @member {Number} initialPage
          * @memberof OpenSeadragon.Viewer#
          */
@@ -489,7 +489,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * A TileSource specifier is anything you could pass as the tileSource property
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
      * @param {Number} initialPage - If sequenceMode is true, display this page initially
-     * for the given tileSources. If specified, will overwrite the existing homonymous option.
+     * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
