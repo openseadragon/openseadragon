@@ -925,6 +925,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateViewport: function() {
         this._needsDraw = false;
         this._tilesLoading = 0;
+        this.loadingCoverage = {};
 
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
