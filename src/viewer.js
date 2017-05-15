@@ -1334,7 +1334,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     columns: _this.collectionColumns,
                     layout: _this.collectionLayout,
                     tileSize: _this.collectionTileSize,
-                    tileMargin: _this.collectionTileMargin
+                    tileMargin: _this.collectionTileMargin,
+                    maxMosaicRatio: _this.collectionMaxMosaicRatio,
                 });
                 _this.world.setAutoRefigureSizes(true);
             }
