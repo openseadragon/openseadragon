@@ -320,21 +320,14 @@ $.TileSource.prototype = {
 
     /**
      * @function
-     * @param {Rect} rect
      */
-    getClosestLevel: function( rect ) {
+    getClosestLevel: function() {
         var i,
-            tilesPerSide,
             tiles;
 
-        for( i = this.minLevel; i < this.maxLevel; i++ ){
+        for( i = this.minLevel; i <= this.maxLevel; i++ ){
             tiles = this.getNumTiles( i );
-            tilesPerSide = new $.Point(
-              Math.floor( rect.x / this.getTileWidth(i) ),
-              Math.floor( rect.y / this.getTileHeight(i) )
-            );
-
-            if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
+            if (tiles.x > 1 || tiles.y > 1) {
                 break;
             }
         }
