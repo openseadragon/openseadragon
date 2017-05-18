@@ -1018,6 +1018,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // Load the new 'best' tile
         if (bestTile && !bestTile.context2D) {
+            $.console.log('loading tile, level: ' + bestTile.level + ', x: ' + bestTile.x + ', y: ' + bestTile.y);
             loadTile(this, bestTile, currentTime);
             this._needsDraw = true;
             this._setFullyLoaded(false);
