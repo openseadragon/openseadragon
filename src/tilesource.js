@@ -320,18 +320,20 @@ $.TileSource.prototype = {
 
     /**
      * @function
+     * @returns {Number} The highest level in this tile source that can be contained in a single tile.
      */
     getClosestLevel: function() {
         var i,
             tiles;
 
-        for( i = this.minLevel; i <= this.maxLevel; i++ ){
-            tiles = this.getNumTiles( i );
+        for (i = this.minLevel + 1; i <= this.maxLevel; i++){
+            tiles = this.getNumTiles(i);
             if (tiles.x > 1 || tiles.y > 1) {
                 break;
             }
         }
-        return Math.max( 0, i - 1 );
+
+        return i - 1;
     },
 
     /**
