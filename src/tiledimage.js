@@ -980,7 +980,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(
                     Math.max(
-                        this.source.getClosestLevel(viewport.containerSize) - 1,
+                        this.source.getClosestLevel(),
                         0
                     )
                 ),

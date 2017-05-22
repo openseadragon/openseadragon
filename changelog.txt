@@ -39,6 +39,9 @@ OPENSEADRAGON CHANGELOG
 * Fixed: zoomTo/zoomBy ignore refPoint if immediately is true (#1184)
 * Enabled configuration of ImageLoader timeout (#1192)
 * Viewer.open() now supports an initialPage argument for sequenceMode (#1196)
+* Fixed: IIPImageServer didn't work with the latest OSD release (#1199)
+* Now clamping pixel ratio density to a minimum of 1, fixing display issues on low density devices (#1200)
+* Improved calculation for determining which level to load first (#1198)
 
 2.2.1:
 
