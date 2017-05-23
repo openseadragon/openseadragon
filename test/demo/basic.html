@@ -20,12 +20,51 @@
     <div id="contentDiv" class="openseadragon1"></div>
     <script type="text/javascript">
 
+        var duomo = {
+            Image: {
+                xmlns: "http://schemas.microsoft.com/deepzoom/2008",
+                Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
+                Format: "jpg",
+                Overlap: "2",
+                TileSize: "256",
+                Size: {
+                    Width:  "13920",
+                    Height: "10200"
+                }
+            }
+        };
+
         var viewer = OpenSeadragon({
-            // debugMode: true,
+            debugMode: true,
+            // immediateRender: true,
             id: "contentDiv",
+            minZoomLevel: 0.01,
             prefixUrl: "../../build/openseadragon/images/",
-            tileSources: "../data/testpattern.dzi",
-            showNavigator:true
+            tileSources: '../data/testpattern.dzi',
+            // showNavigator: true,
+
+            // toolbar: "NBViewerOSDToolbar",
+      constrainDuringPan: true,
+      visibilityRatio: 1,
+      showNavigator:  true,
+      navigatorAutoFade: false,
+    //   showRotationControl: _data.nbViewerRotationControl,
+      // change the size of the navigator window
+    //   navigatorPosition: "ABSOLUTE",
+      navigatorAutoResize: false,
+      navigatorRotate: false,
+      navigatorHeight: "150px",
+      navigatorWidth: "150px",
+      //debugMode: true,
+      immediateRender: true,
+      // adds precision to the zoom click
+      zoomPerClick: 1.3,
+      // adjusts the floating at the end of a zoom
+      animationTime: 0.5,
+    //   prefixUrl: _data.nbViewerImagePath,
+    //   tileSources: _data.nbViewerSettings.response.params.dzi_path,
+      // Settings remove the zoom functions from the mouse.
+      gestureSettingsMouse: { scrollToZoom: false, dblClickToZoom: false, clickToZoom: false }
         });
 
     </script>

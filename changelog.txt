@@ -42,6 +42,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: IIPImageServer didn't work with the latest OSD release (#1199)
 * Now clamping pixel ratio density to a minimum of 1, fixing display issues on low density devices (#1200)
 * Improved calculation for determining which level to load first (#1198)
+* Fixed: setItemIndex method not working with navigator inside "open" event (#1201)
 
 2.2.1:
 
