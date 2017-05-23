@@ -231,8 +231,10 @@ $.Navigator = function( options ){
     });
 
     viewer.world.addHandler("item-index-change", function(event) {
-        var item = _this.world.getItemAt(event.previousIndex);
-        _this.world.setItemIndex(item, event.newIndex);
+        window.setTimeout(function(){
+            var item = _this.world.getItemAt(event.previousIndex);
+            _this.world.setItemIndex(item, event.newIndex);
+        }, 1);
     });
 
     viewer.world.addHandler("remove-item", function(event) {
