@@ -771,10 +771,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @param {Number} opacity Opacity the tiled image should be drawn at.
+     * @fires OpenSeadragon.TiledImage.event:opacity-change
      */
     setOpacity: function(opacity) {
         this.opacity = opacity;
         this._needsDraw = true;
+        this.raiseEvent('opacity-change');
     },
 
     /**
@@ -828,10 +830,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @param {String} compositeOperation the tiled image should be drawn with this globalCompositeOperation.
+     * @fires OpenSeadragon.TiledImage.event:composite-operation-change
      */
     setCompositeOperation: function(compositeOperation) {
         this.compositeOperation = compositeOperation;
         this._needsDraw = true;
+        this.raiseEvent('composite-operation-change');
     },
 
     // private
