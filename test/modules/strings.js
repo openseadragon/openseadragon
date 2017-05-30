@@ -22,11 +22,11 @@
 
     test("getInvalidString", function() {
         equal(OpenSeadragon.getString("Greeting"), "", "Handled unset string key");
-        ok(testLog.debug.contains('["Untranslated source string:","Greeting"]'),
+        ok(testLog.log.contains('["Untranslated source string:","Greeting"]'),
                                   'Invalid string keys are logged');
 
         equal(OpenSeadragon.getString("Errors"), "", "Handled requesting parent key");
-        ok(testLog.debug.contains('["Untranslated source string:","Errors"]'),
+        ok(testLog.log.contains('["Untranslated source string:","Errors"]'),
                                   'Invalid string parent keys are logged');
     });
 

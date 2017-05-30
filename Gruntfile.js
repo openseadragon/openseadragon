@@ -5,12 +5,12 @@ module.exports = function(grunt) {
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
     grunt.loadNpmTasks("grunt-contrib-concat");
-    grunt.loadNpmTasks("grunt-contrib-jshint");
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks("grunt-qunit-istanbul");
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
+    grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
 
@@ -123,10 +123,11 @@ module.exports = function(grunt) {
                     join_vars: false
                 },
                 sourceMap: true,
-                sourceMapName: 'build/openseadragon/openseadragon.min.js.map'
+                sourceMapName: 'build/openseadragon/openseadragon.min.js.map',
+                sourceMapIn: 'build/openseadragon/openseadragon.js.map'
             },
             openseadragon: {
-                src: sources,
+                src: distribution,
                 dest: minified
             }
         },
@@ -186,12 +187,11 @@ module.exports = function(grunt) {
             files: [ "Gruntfile.js", "src/*.js", "images/*" ],
             tasks: "watchTask"
         },
-        jshint: {
+        eslint: {
             options: {
-                jshintrc: '.jshintrc'
+                configFile: '.eslintrc.json'
             },
-            beforeconcat: sources,
-            afterconcat: [ distribution ]
+            target: sources
         },
         "git-describe": {
             build: {}
@@ -264,8 +264,8 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "jshint:beforeconcat", "git-describe", "concat", "jshint:afterconcat",
-        "uglify", "replace:cleanPaths", "copy:build"
+        "clean:build", "git-describe", "eslint", "concat", "uglify",
+        "replace:cleanPaths", "copy:build"
     ]);
 
     // ----------

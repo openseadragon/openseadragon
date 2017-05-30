@@ -76,6 +76,12 @@
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.loadTilesWithAjax]
+ *      Whether to load tile data using AJAX requests.
+ *      Defaults to the setting in {@link OpenSeadragon.Options}.
+ * @param {Object} [options.ajaxHeaders={}]
+ *      A set of headers to include when making tile AJAX requests.
  */
 $.TiledImage = function( options ) {
     var _this = this;
@@ -133,7 +139,7 @@ $.TiledImage = function( options ) {
     var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
     delete options.fitBoundsPlacement;
 
-    this._degrees = $.positiveModulo(options.degrees || 0, 360);
+    var degrees = options.degrees || 0;
     delete options.degrees;
 
     $.extend( true, this, {
@@ -147,6 +153,7 @@ $.TiledImage = function( options ) {
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
+        _tilesLoading:  0,     // The number of pending tile requests.
         //configurable settings
         springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
         animationTime:          $.DEFAULT_SETTINGS.animationTime,
@@ -161,6 +168,7 @@ $.TiledImage = function( options ) {
         iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:              $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        ajaxWithCredentials:    $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
         preload:                $.DEFAULT_SETTINGS.preload,
@@ -186,6 +194,12 @@ $.TiledImage = function( options ) {
 
     this._scaleSpring = new $.Spring({
         initial: scale,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
+    this._degreesSpring = new $.Spring({
+        initial: degrees,
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
@@ -273,16 +287,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} Whether the TiledImage animated.
      */
     update: function() {
-        var oldX = this._xSpring.current.value;
-        var oldY = this._ySpring.current.value;
-        var oldScale = this._scaleSpring.current.value;
+        var xUpdated = this._xSpring.update();
+        var yUpdated = this._ySpring.update();
+        var scaleUpdated = this._scaleSpring.update();
+        var degreesUpdated = this._degreesSpring.update();
 
-        this._xSpring.update();
-        this._ySpring.update();
-        this._scaleSpring.update();
-
-        if (this._xSpring.current.value !== oldX || this._ySpring.current.value !== oldY ||
-                this._scaleSpring.current.value !== oldScale) {
+        if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
             this._updateForScale();
             this._needsDraw = true;
             return true;
@@ -317,7 +327,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     getBounds: function(current) {
         return this.getBoundsNoRotate(current)
-            .rotate(this._degrees, this._getRotationPoint(current));
+            .rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -366,7 +376,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 clip.width,
                 clip.height);
         }
-        return bounds.rotate(this._degrees, this._getRotationPoint(current));
+        return bounds.rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -401,7 +411,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             point = new $.Point(viewerX, viewerY);
         }
 
-        point = point.rotate(-this._degrees, this._getRotationPoint(current));
+        point = point.rotate(-this.getRotation(current), this._getRotationPoint(current));
         return current ?
             this._viewportToImageDelta(
                 point.x - this._xSpring.current.value,
@@ -443,7 +453,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             point.y += this._ySpring.target.value;
         }
 
-        return point.rotate(this._degrees, this._getRotationPoint(current));
+        return point.rotate(this.getRotation(current), this._getRotationPoint(current));
     },
 
     /**
@@ -457,7 +467,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
      * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
-    imageToViewportRectangle: function( imageX, imageY, pixelWidth, pixelHeight, current ) {
+    imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight, current) {
         var rect = imageX;
         if (rect instanceof $.Rect) {
             //they passed a rect instead of individual components
@@ -474,7 +484,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees + this._degrees
+            rect.degrees + this.getRotation(current)
         );
     },
 
@@ -506,7 +516,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees - this._degrees
+            rect.degrees - this.getRotation(current)
         );
     },
 
@@ -559,7 +569,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     // coordinates (x in [0, 1] and y in [0, aspectRatio])
     _viewportToTiledImageRectangle: function(rect) {
         var scale = this._scaleSpring.current.value;
-        rect = rect.rotate(-this.getRotation(), this._getRotationPoint(true));
+        rect = rect.rotate(-this.getRotation(true), this._getRotationPoint(true));
         return new $.Rect(
             (rect.x - this._xSpring.current.value) / scale,
             (rect.y - this._ySpring.current.value) / scale,
@@ -581,7 +591,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     viewportToImageZoom: function( viewportZoom ) {
         var ratio = this._scaleSpring.current.value *
                 this.viewport._containerInnerSize.x / this.source.dimensions.x;
-        return ratio * viewportZoom ;
+        return ratio * viewportZoom;
     },
 
     /**
@@ -788,24 +798,33 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Get the current rotation of this tiled image in degrees.
-     * @returns {Number} the current rotation of this tiled image in degrees.
+     * Get the rotation of this tiled image in degrees.
+     * @param {Boolean} [current=false] True for current rotation, false for target.
+     * @returns {Number} the rotation of this tiled image in degrees.
      */
-    getRotation: function() {
-        return this._degrees;
+    getRotation: function(current) {
+        return current ?
+            this._degreesSpring.current.value :
+            this._degreesSpring.target.value;
     },
 
     /**
      * Set the current rotation of this tiled image in degrees.
      * @param {Number} degrees the rotation in degrees.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
-    setRotation: function(degrees) {
-        degrees = $.positiveModulo(degrees, 360);
-        if (this._degrees === degrees) {
+    setRotation: function(degrees, immediately) {
+        if (this._degreesSpring.target.value === degrees &&
+            this._degreesSpring.isAtTargetValue()) {
             return;
         }
-        this._degrees = degrees;
+        if (immediately) {
+            this._degreesSpring.resetTo(degrees);
+        } else {
+            this._degreesSpring.springTo(degrees);
+        }
         this._needsDraw = true;
         this._raiseBoundsChange();
     },
@@ -915,9 +934,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
     },
 
-    // private
+    /**
+     * @private
+     * @inner
+     * Pretty much every other line in this needs to be documented so it's clear
+     * how each piece of this routine contributes to the drawing process.  That's
+     * why there are so many TODO's inside this function.
+     */
     _updateViewport: function() {
         this._needsDraw = false;
+        this._tilesLoading = 0;
 
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
@@ -972,7 +998,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(
                     Math.max(
-                        this.source.getClosestLevel(viewport.containerSize) - 1,
+                        this.source.getClosestLevel(),
                         0
                     )
                 ),
@@ -1014,11 +1040,67 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._needsDraw = true;
             this._setFullyLoaded(false);
         } else {
-            this._setFullyLoaded(true);
+            this._setFullyLoaded(this._tilesLoading === 0);
         }
+    },
+
+    // private
+    _getCornerTiles: function(level, topLeftBound, bottomRightBound) {
+        var leftX;
+        var rightX;
+        if (this.wrapHorizontal) {
+            leftX = $.positiveModulo(topLeftBound.x, 1);
+            rightX = $.positiveModulo(bottomRightBound.x, 1);
+        } else {
+            leftX = Math.max(0, topLeftBound.x);
+            rightX = Math.min(1, bottomRightBound.x);
+        }
+        var topY;
+        var bottomY;
+        var aspectRatio = 1 / this.source.aspectRatio;
+        if (this.wrapVertical) {
+            topY = $.positiveModulo(topLeftBound.y, aspectRatio);
+            bottomY = $.positiveModulo(bottomRightBound.y, aspectRatio);
+        } else {
+            topY = Math.max(0, topLeftBound.y);
+            bottomY = Math.min(aspectRatio, bottomRightBound.y);
+        }
+
+        var topLeftTile = this.source.getTileAtPoint(level, new $.Point(leftX, topY));
+        var bottomRightTile = this.source.getTileAtPoint(level, new $.Point(rightX, bottomY));
+        var numTiles  = this.source.getNumTiles(level);
+
+        if (this.wrapHorizontal) {
+            topLeftTile.x += numTiles.x * Math.floor(topLeftBound.x);
+            bottomRightTile.x += numTiles.x * Math.floor(bottomRightBound.x);
+        }
+        if (this.wrapVertical) {
+            topLeftTile.y += numTiles.y * Math.floor(topLeftBound.y / aspectRatio);
+            bottomRightTile.y += numTiles.y * Math.floor(bottomRightBound.y / aspectRatio);
+        }
+
+        return {
+            topLeft: topLeftTile,
+            bottomRight: bottomRightTile,
+        };
     }
 });
 
+/**
+ * @private
+ * @inner
+ * Updates all tiles at a given resolution level.
+ * @param {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+ * @param {Boolean} haveDrawn
+ * @param {Boolean} drawLevel
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.Point} viewportTL - The index of the most top-left visible tile.
+ * @param {OpenSeadragon.Point} viewportBR - The index of the most bottom-right visible tile.
+ * @param {Number} currentTime
+ * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+ */
 function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     levelVisibility, drawArea, currentTime, best) {
 
@@ -1059,23 +1141,13 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
         });
     }
 
-    //OK, a new drawing so do your calculations
-    var topLeftTile = tiledImage.source.getTileAtPoint(level, topLeftBound);
-    var bottomRightTile = tiledImage.source.getTileAtPoint(level, bottomRightBound);
-    var numberOfTiles  = tiledImage.source.getNumTiles(level);
-
     resetCoverage(tiledImage.coverage, level);
 
-    if (!tiledImage.wrapHorizontal) {
-        // Adjust for floating point error
-        topLeftTile.x = Math.max(topLeftTile.x, 0);
-        bottomRightTile.x = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
-    }
-    if (!tiledImage.wrapVertical) {
-        // Adjust for floating point error
-        topLeftTile.y = Math.max(topLeftTile.y, 0);
-        bottomRightTile.y = Math.min(bottomRightTile.y, numberOfTiles.y - 1);
-    }
+    //OK, a new drawing so do your calculations
+    var cornerTiles = tiledImage._getCornerTiles(level, topLeftBound, bottomRightBound);
+    var topLeftTile = cornerTiles.topLeft;
+    var bottomRightTile = cornerTiles.bottomRight;
+    var numberOfTiles  = tiledImage.source.getNumTiles(level);
 
     var viewportCenter = tiledImage.viewport.pixelFromPoint(
         tiledImage.viewport.getCenter());
@@ -1112,11 +1184,29 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     return best;
 }
 
-function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
+/**
+ * @private
+ * @inner
+ * Update a single tile at a particular resolution level.
+ * @param {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+ * @param {Boolean} haveDrawn
+ * @param {Boolean} drawLevel
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.Point} viewportCenter
+ * @param {Number} numberOfTiles
+ * @param {Number} currentTime
+ * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+ */
+function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
 
     var tile = getTile(
             x, y,
             level,
+            tiledImage,
             tiledImage.source,
             tiledImage.tilesMatrix,
             currentTime,
@@ -1175,7 +1265,7 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         if (tile.context2D) {
             setTileLoaded(tiledImage, tile);
         } else {
-            var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+            var imageRecord = tiledImage._tileCache.getImageRecord(tile.cacheKey);
             if (imageRecord) {
                 var image = imageRecord.getImage();
                 setTileLoaded(tiledImage, tile, image);
@@ -1198,7 +1288,7 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         }
     } else if ( tile.loading ) {
         // the tile is already in the download queue
-        // thanks josh1093 for finally translating this typo
+        tiledImage._tilesLoading++;
     } else {
         best = compareTiles( best, tile );
     }
@@ -1206,12 +1296,39 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
     return best;
 }
 
-function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWidth, worldHeight ) {
+/**
+ * @private
+ * @inner
+ * Obtains a tile at the given location.
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.TileSource} tileSource
+ * @param {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
+ * @param {Number} time
+ * @param {Number} numTiles
+ * @param {Number} worldWidth
+ * @param {Number} worldHeight
+ * @returns {OpenSeadragon.Tile}
+ */
+function getTile(
+    x, y,
+    level,
+    tiledImage,
+    tileSource,
+    tilesMatrix,
+    time,
+    numTiles,
+    worldWidth,
+    worldHeight
+) {
     var xMod,
         yMod,
         bounds,
         exists,
         url,
+        ajaxHeaders,
         context2D,
         tile;
 
@@ -1228,6 +1345,18 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+
+        // Headers are only applicable if loadTilesWithAjax is set
+        if (tiledImage.loadTilesWithAjax) {
+            ajaxHeaders = tileSource.getTileAjaxHeaders( level, xMod, yMod );
+            // Combine tile AJAX headers with tiled image AJAX headers (if applicable)
+            if ($.isPlainObject(tiledImage.ajaxHeaders)) {
+                ajaxHeaders = $.extend({}, tiledImage.ajaxHeaders, ajaxHeaders);
+            }
+        } else {
+            ajaxHeaders = null;
+        }
+
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
 
@@ -1241,7 +1370,9 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
             bounds,
             exists,
             url,
-            context2D
+            context2D,
+            tiledImage.loadTilesWithAjax,
+            ajaxHeaders
         );
     }
 
@@ -1251,13 +1382,24 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
     return tile;
 }
 
+/**
+ * @private
+ * @inner
+ * Dispatch a job to the ImageLoader to load the Image for a Tile.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} time
+ */
 function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        loadWithAjax: tile.loadWithAjax,
+        ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
-        callback: function( image, errorMsg ){
-            onTileLoad( tiledImage, tile, time, image, errorMsg );
+        ajaxWithCredentials: tiledImage.ajaxWithCredentials,
+        callback: function( image, errorMsg, tileRequest ){
+            onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
         },
         abort: function() {
             tile.loading = false;
@@ -1265,7 +1407,18 @@ function loadTile( tiledImage, tile, time ) {
     });
 }
 
-function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
+/**
+ * @private
+ * @inner
+ * Callback fired when a Tile's Image finished downloading.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} time
+ * @param {Image} image
+ * @param {String} errorMsg
+ * @param {XMLHttpRequest} tileRequest
+ */
+function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
         $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         /**
@@ -1278,8 +1431,15 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
          * @property {number} time - The time in milliseconds when the tile load began.
          * @property {string} message - The error message.
+         * @property {XMLHttpRequest} tileRequest - The XMLHttpRequest used to load the tile if available.
          */
-        tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
+        tiledImage.viewer.raiseEvent("tile-load-failed", {
+            tile: tile,
+            tiledImage: tiledImage,
+            time: time,
+            message: errorMsg,
+            tileRequest: tileRequest
+        });
         tile.loading = false;
         tile.exists = false;
         return;
@@ -1294,7 +1454,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     var finish = function() {
         var cutoff = Math.ceil( Math.log(
             tiledImage.source.getTileWidth(tile.level) ) / Math.log( 2 ) );
-        setTileLoaded(tiledImage, tile, image, cutoff);
+        setTileLoaded(tiledImage, tile, image, cutoff, tileRequest);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -1307,7 +1467,15 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     }
 }
 
-function setTileLoaded(tiledImage, tile, image, cutoff) {
+/**
+ * @private
+ * @inner
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Image} image
+ * @param {Number} cutoff
+ */
+function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
     var increment = 0;
 
     function getCompletionCallback() {
@@ -1342,6 +1510,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
      * @property {Image} image - The image of the tile.
      * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {XMLHttpRequest} tiledImage - The AJAX request that loaded this tile (if applicable).
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
      * marked as entirely loaded when the callback has been called once for each
@@ -1350,6 +1519,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
     tiledImage.viewer.raiseEvent("tile-loaded", {
         tile: tile,
         tiledImage: tiledImage,
+        tileRequest: tileRequest,
         image: image,
         getCompletionCallback: getCompletionCallback
     });
@@ -1357,6 +1527,16 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
     getCompletionCallback()();
 }
 
+/**
+ * @private
+ * @inner
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Boolean} overlap
+ * @param {OpenSeadragon.Viewport} viewport
+ * @param {OpenSeadragon.Point} viewportCenter
+ * @param {Number} levelVisibility
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ */
 function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility, tiledImage ){
     var boundsTL     = tile.bounds.getTopLeft();
 
@@ -1387,7 +1567,23 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     tile.visibility = levelVisibility;
 }
 
-
+/**
+ * @private
+ * @inner
+ * Updates the opacity of a tile according to the time it has been on screen
+ * to perform a fade-in.
+ * Updates coverage once a tile is fully opaque.
+ * Returns whether the fade-in has completed.
+ *
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile} tile
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} level
+ * @param {Number} levelOpacity
+ * @param {Number} currentTime
+ * @returns {Boolean}
+ */
 function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
     var blendTimeMillis = 1000 * tiledImage.blendTime,
         deltaTime,
@@ -1428,6 +1624,12 @@ function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
  * Note that out-of-bounds tiles provide coverage in this sense, since
  * there's no content that they would need to cover. Tiles at non-existent
  * levels that are within the image bounds, however, do not.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @returns {Boolean}
  */
 function providesCoverage( coverage, level, x, y ) {
     var rows,
@@ -1467,6 +1669,12 @@ function providesCoverage( coverage, level, x, y ) {
  * Returns true if the given tile is completely covered by higher-level
  * tiles of higher resolution representing the same content. If neither x
  * nor y is given, returns true if the entire visible level is covered.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @returns {Boolean}
  */
 function isCovered( coverage, level, x, y ) {
     if ( x === undefined || y === undefined ) {
@@ -1485,6 +1693,12 @@ function isCovered( coverage, level, x, y ) {
  * @private
  * @inner
  * Sets whether the given tile provides coverage or not.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of the tile.
+ * @param {Number} x - The X position of the tile.
+ * @param {Number} y - The Y position of the tile.
+ * @param {Boolean} covers - Whether the tile provides coverage.
  */
 function setCoverage( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
@@ -1508,6 +1722,9 @@ function setCoverage( coverage, level, x, y, covers ) {
  * Resets coverage information for the given level. This should be called
  * after every draw routine. Note that at the beginning of the next draw
  * routine, coverage for every visible tile should be explicitly set.
+ *
+ * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+ * @param {Number} level - The resolution level of tiles to completely reset.
  */
 function resetCoverage( coverage, level ) {
     coverage[ level ] = {};
@@ -1518,6 +1735,10 @@ function resetCoverage( coverage, level ) {
  * @inner
  * Determines whether the 'last best' tile for the area is better than the
  * tile in question.
+ *
+ * @param {OpenSeadragon.Tile} previousBest
+ * @param {OpenSeadragon.Tile} tile
+ * @returns {OpenSeadragon.Tile} The new best tile.
  */
 function compareTiles( previousBest, tile ) {
     if ( !previousBest ) {
@@ -1535,6 +1756,13 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
+/**
+ * @private
+ * @inner
+ * Draws a TiledImage.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
+ */
 function drawTiles( tiledImage, lastDrawn ) {
     if (tiledImage.opacity === 0 || lastDrawn.length === 0) {
         return;
@@ -1551,9 +1779,12 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
-    // TODO: support tile edge smoothing with tiled image rotation.
-    if (imageZoom > tiledImage.smoothTileEdgesMinZoom && !tiledImage.iOSDevice &&
-        tiledImage.getRotation() === 0 && $.supportsCanvas) {
+
+    if (lastDrawn.length > 1 &&
+        imageZoom > tiledImage.smoothTileEdgesMinZoom &&
+        !tiledImage.iOSDevice &&
+        tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
+        $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         // Note: Disabled on iOS devices per default as it causes a native crash
@@ -1586,9 +1817,9 @@ function drawTiles( tiledImage, lastDrawn ) {
                 useSketch: useSketch
             });
         }
-        if (tiledImage._degrees !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
-                degrees: tiledImage._degrees,
+                degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true),
                 useSketch: useSketch
@@ -1601,7 +1832,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        box = box.rotate(-tiledImage._degrees, tiledImage._getRotationPoint());
+        box = box.rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
         if (sketchScale) {
             clipRect = clipRect.times(sketchScale);
@@ -1663,7 +1894,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (!sketchScale) {
-        if (tiledImage._degrees !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
         if (tiledImage.viewport.degrees !== 0) {
@@ -1679,9 +1910,9 @@ function drawTiles( tiledImage, lastDrawn ) {
                     useSketch: false
                 });
             }
-            if (tiledImage._degrees !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._offsetForRotation({
-                    degrees: tiledImage._degrees,
+                    degrees: tiledImage.getRotation(true),
                     point: tiledImage.viewport.pixelFromPointNoRotate(
                         tiledImage._getRotationPoint(true), true),
                     useSketch: false
@@ -1696,7 +1927,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             bounds: bounds
         });
         if (sketchScale) {
-            if (tiledImage._degrees !== 0) {
+            if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
             if (tiledImage.viewport.degrees !== 0) {
@@ -1707,6 +1938,13 @@ function drawTiles( tiledImage, lastDrawn ) {
     drawDebugInfo( tiledImage, lastDrawn );
 }
 
+/**
+ * @private
+ * @inner
+ * Draws special debug information for a TiledImage if in debug mode.
+ * @param {OpenSeadragon.TiledImage} tiledImage
+ * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
+ */
 function drawDebugInfo( tiledImage, lastDrawn ) {
     if( tiledImage.debugMode ) {
         for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {

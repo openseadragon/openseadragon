@@ -83,7 +83,7 @@ $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     } else {
         max = bufferedHeight / 256;
     }
-    options.maxLevel = Math.ceil(Math.log(max)/Math.log(2)) - 1;
+    options.maxLevel = Math.ceil(Math.log(max) / Math.log(2)) - 1;
     options.tileSize = 256;
     options.width = bufferedWidth;
     options.height = bufferedHeight;
@@ -129,7 +129,7 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         // Convert from Deep Zoom definition to TMS zoom definition
         var yTiles = this.getNumTiles( level ).y - 1;
 
-        return this.tilesUrl + level + "/" + x + "/" +  (yTiles - y) + ".png";
+        return this.tilesUrl + level + "/" + x + "/" + (yTiles - y) + ".png";
     }
 });
 

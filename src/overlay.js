@@ -41,6 +41,7 @@
      * compatibility.
      * @member OverlayPlacement
      * @memberof OpenSeadragon
+     * @see OpenSeadragon.Placement
      * @static
      * @readonly
      * @type {Object}
@@ -247,6 +248,8 @@
                 element.prevNextSibling = element.nextSibling;
                 container.appendChild(element);
 
+                // have to set position before calculating size, fix #1116
+                this.style.position = "absolute";
                 // this.size is used by overlays which don't get scaled in at
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
@@ -285,7 +288,6 @@
                         style[transformProp] = "";
                     }
                 }
-                style.position = "absolute";
 
                 if (style.display !== 'none') {
                     style.display = 'block';
@@ -400,7 +402,7 @@
          * @param {OpenSeadragon.Point|OpenSeadragon.Rect|Object} location
          * If an object is specified, the options are the same than the constructor
          * except for the element which can not be changed.
-         * @param {OpenSeadragon.Placement} position
+         * @param {OpenSeadragon.Placement} placement
          */
         update: function(location, placement) {
             var options = $.isPlainObject(location) ? location : {

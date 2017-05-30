@@ -32,7 +32,13 @@
             'relative link should stay the same');
         testImplicitTilesUrl(
             '/p/foo.dzi?a=1&b=2', '/p/foo_files/',
-            'querystring in dzi url should be ignored');
+            'querystring in dzi url should be ignored after slashes');
+        testImplicitTilesUrl(
+                '/iiipsrv?DeepZoom=/path/my.dzi', '/iiipsrv?DeepZoom=/path/my_files/',
+                'querystring in dzi url should not be ignored before slashes');
+        testImplicitTilesUrl(
+                '/fcg-bin/iipsrv.fcgi?Deepzoom=123test.tif.dzi', '/fcg-bin/iipsrv.fcgi?Deepzoom=123test.tif_files/',
+                'filename in querystring does not have to contain slash');
     });
 
 }());

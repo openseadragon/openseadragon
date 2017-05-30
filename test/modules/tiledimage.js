@@ -319,10 +319,16 @@
 
         function testDefaultRotation() {
             var image = viewer.world.getItemAt(0);
-            strictEqual(image.getRotation(), 0, 'image has default rotation');
+            strictEqual(image.getRotation(true), 0, 'image has default current rotation');
+            strictEqual(image.getRotation(false), 0, 'image has default target rotation');
 
             image.setRotation(400);
-            strictEqual(image.getRotation(), 40, 'rotation is set correctly');
+            strictEqual(image.getRotation(true), 0, 'current rotation is not changed');
+            strictEqual(image.getRotation(false), 400, 'target rotation is set correctly');
+
+            image.setRotation(200, true);
+            strictEqual(image.getRotation(true), 200, 'current rotation is set correctly');
+            strictEqual(image.getRotation(false), 200, 'target rotation is set correctly');
 
             viewer.addOnceHandler('open', testTileSourceRotation);
             viewer.open({
@@ -333,7 +339,8 @@
 
         function testTileSourceRotation() {
             var image = viewer.world.getItemAt(0);
-            strictEqual(image.getRotation(), 300, 'image has correct rotation');
+            strictEqual(image.getRotation(true), -60, 'image has correct current rotation');
+            strictEqual(image.getRotation(false), -60, 'image has correct target rotation');
             start();
         }
 
@@ -513,6 +520,161 @@
         viewer.open([{
             tileSource: '/test/data/tall.dzi',
         }]);
+    });
+
+    // PhantomJS is missing Function.prototype.bind
+    function bind(func, _this) {
+        return function() {
+            return func.apply(_this, arguments);
+        };
+    }
+
+    test('_getCornerTiles without wrapping', function() {
+        var tiledImageMock = {
+            wrapHorizontal: false,
+            wrapVertical: false,
+            source: new OpenSeadragon.TileSource({
+                width: 1500,
+                height: 1000,
+                tileWidth: 200,
+                tileHeight: 150,
+                tileOverlap: 1,
+            }),
+        };
+        var _getCornerTiles = bind(
+            OpenSeadragon.TiledImage.prototype._getCornerTiles,
+            tiledImageMock);
+
+        function assertCornerTiles(topLeftBound, bottomRightBound,
+            expectedTopLeft, expectedBottomRight) {
+            var cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
+            ok(cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() +
+                ' found ' + cornerTiles.topLeft.toString());
+            ok(cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' + expectedBottomRight.toString() +
+                ' found ' + cornerTiles.bottomRight.toString());
+        }
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(1, 10 / 15),
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(7, 6)
+        )
+
+        // Floating point errors should be handled
+        assertCornerTiles(
+            new OpenSeadragon.Point(-1e-14, -1e-14),
+            new OpenSeadragon.Point(1 + 1e-14, 10 / 15 + 1e-14),
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(7, 6)
+        )
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0.3, 0.5),
+            new OpenSeadragon.Point(0.5, 0.6),
+            new OpenSeadragon.Point(2, 5),
+            new OpenSeadragon.Point(3, 6)
+        )
+    });
+
+    test('_getCornerTiles with horizontal wrapping', function() {
+        var tiledImageMock = {
+            wrapHorizontal: true,
+            wrapVertical: false,
+            source: new OpenSeadragon.TileSource({
+                width: 1500,
+                height: 1000,
+                tileWidth: 200,
+                tileHeight: 150,
+                tileOverlap: 1,
+            }),
+        };
+        var _getCornerTiles = bind(
+            OpenSeadragon.TiledImage.prototype._getCornerTiles,
+            tiledImageMock);
+
+        function assertCornerTiles(topLeftBound, bottomRightBound,
+            expectedTopLeft, expectedBottomRight) {
+            var cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
+            ok(cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() +
+                ' found ' + cornerTiles.topLeft.toString());
+            ok(cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' + expectedBottomRight.toString() +
+                ' found ' + cornerTiles.bottomRight.toString());
+        }
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(1, 10 / 15),
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(8, 6)
+        )
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(-1, 0),
+            new OpenSeadragon.Point(0.5, 10 / 15 + 1e-14),
+            new OpenSeadragon.Point(-8, 0),
+            new OpenSeadragon.Point(3, 6)
+        )
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(1.3, 0.5),
+            new OpenSeadragon.Point(1.5, 0.6),
+            new OpenSeadragon.Point(10, 5),
+            new OpenSeadragon.Point(11, 6)
+        )
+    });
+
+    test('_getCornerTiles with vertical wrapping', function() {
+        var tiledImageMock = {
+            wrapHorizontal: false,
+            wrapVertical: true,
+            source: new OpenSeadragon.TileSource({
+                width: 1500,
+                height: 1000,
+                tileWidth: 200,
+                tileHeight: 150,
+                tileOverlap: 1,
+            }),
+        };
+        var _getCornerTiles = bind(
+            OpenSeadragon.TiledImage.prototype._getCornerTiles,
+            tiledImageMock);
+
+        function assertCornerTiles(topLeftBound, bottomRightBound,
+            expectedTopLeft, expectedBottomRight) {
+            var cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
+            ok(cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() +
+                ' found ' + cornerTiles.topLeft.toString());
+            ok(cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' + expectedBottomRight.toString() +
+                ' found ' + cornerTiles.bottomRight.toString());
+        }
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(1, 10 / 15),
+            new OpenSeadragon.Point(0, 0),
+            new OpenSeadragon.Point(7, 7)
+        )
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0, -10 / 15 / 2),
+            new OpenSeadragon.Point(0.5, 0.5),
+            new OpenSeadragon.Point(0, -4),
+            new OpenSeadragon.Point(3, 5)
+        )
+
+        assertCornerTiles(
+            new OpenSeadragon.Point(0, 10 / 15 + 0.1),
+            new OpenSeadragon.Point(0.3, 10 / 15 + 0.3),
+            new OpenSeadragon.Point(0, 7),
+            new OpenSeadragon.Point(2, 9)
+        )
     });
 
 })();

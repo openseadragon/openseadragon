@@ -285,8 +285,8 @@ $.Drawer.prototype = {
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
             topLeft.y * $.pixelDensityRatio,
-            size.x    * $.pixelDensityRatio,
-            size.y    * $.pixelDensityRatio
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio
         );
     },
 
@@ -328,7 +328,11 @@ $.Drawer.prototype = {
                 // the viewport get rotated later on, we will need to resize it.
                 if (this.viewport.getRotation() === 0) {
                     var self = this;
-                    this.viewer.addOnceHandler('rotate', function resizeSketchCanvas() {
+                    this.viewer.addHandler('rotate', function resizeSketchCanvas() {
+                        if (self.viewport.getRotation() === 0) {
+                            return;
+                        }
+                        self.viewer.removeHandler('rotate', resizeSketchCanvas);
                         var sketchCanvasSize = self._calculateSketchCanvasSize();
                         self.sketchCanvas.width = sketchCanvasSize.x;
                         self.sketchCanvas.height = sketchCanvasSize.y;
@@ -422,8 +426,8 @@ $.Drawer.prototype = {
             this.context.globalCompositeOperation = compositeOperation;
         }
         if (bounds) {
-            // Internet Explorer and Microsoft Edge throw IndexSizeError 
-            // when you call context.drawImage with negative x or y 
+            // Internet Explorer and Microsoft Edge throw IndexSizeError
+            // when you call context.drawImage with negative x or y
             // or width or height greater than the canvas width or height respectively
             if (bounds.x < 0) {
                 bounds.width += bounds.x;
@@ -439,7 +443,7 @@ $.Drawer.prototype = {
             if (bounds.height > this.canvas.height) {
                 bounds.height = this.canvas.height;
             }
-            
+
             this.context.drawImage(
                 this.sketchCanvas,
                 bounds.x,
@@ -470,7 +474,7 @@ $.Drawer.prototype = {
                 position.x - widthExt * scale,
                 position.y - heightExt * scale,
                 (this.canvas.width + 2 * widthExt) * scale,
-                (this.canvas.height  + 2 * heightExt) * scale,
+                (this.canvas.height + 2 * heightExt) * scale,
                 -widthExt,
                 -heightExt,
                 this.canvas.width + 2 * widthExt,
@@ -496,9 +500,9 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
         }
-        if (tiledImage.getRotation() !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
-                degrees: tiledImage.getRotation(),
+                degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true)
             });
@@ -565,7 +569,7 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._restoreRotationChanges();
         }
-        if (tiledImage.getRotation() !== 0) {
+        if (tiledImage.getRotation(true) % 360 !== 0) {
             this._restoreRotationChanges();
         }
         context.restore();

@@ -178,6 +178,7 @@ $.ReferenceStrip = function ( options ) {
     this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 8;
     this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
     this.panels = [];
+    this.miniViewers = {};
 
     /*jshint loopfunc:true*/
     for ( i = 0; i < viewer.tileSources.length; i++ ) {
@@ -293,6 +294,12 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
 
     // Overrides Viewer.destroy
     destroy: function() {
+        if (this.miniViewers) {
+          for (var key in this.miniViewers) {
+            this.miniViewers[key].destroy();
+          }
+        }
+
         if (this.element) {
             this.element.parentNode.removeChild(this.element);
         }
@@ -463,6 +470,8 @@ function loadPanels( strip, viewerSize, scroll ) {
                 miniViewer.displayRegion
             );
 
+            strip.miniViewers[element.id] = miniViewer;
+
             element.activePanel = true;
         }
     }
@@ -592,6 +601,4 @@ function onKeyPress( event ) {
     }
 }
 
-
-
-} ( OpenSeadragon ) );
+}(OpenSeadragon));

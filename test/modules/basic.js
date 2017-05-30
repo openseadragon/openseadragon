@@ -331,7 +331,7 @@
                     height: 155
                 } ]
         } );
-        viewer.addHandler('tile-drawn', function() {
+        viewer.addOnceHandler('tile-drawn', function() {
             ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                 "Canvas should be tainted.");
             start();
@@ -355,7 +355,7 @@
                             height: 155
                         } ]
                 } );
-                viewer.addHandler('tile-drawn', function() {
+                viewer.addOnceHandler('tile-drawn', function() {
                     ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should not be tainted.");
                     start();
@@ -385,7 +385,7 @@
                     },
                     crossOriginPolicy : false
                 } );
-                viewer.addHandler('tile-drawn', function() {
+                viewer.addOnceHandler('tile-drawn', function() {
                     ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should be tainted.");
                     start();
@@ -414,7 +414,7 @@
                         crossOriginPolicy : "Anonymous"
                     }
                 } );
-                viewer.addHandler('tile-drawn', function() {
+                viewer.addOnceHandler('tile-drawn', function() {
                     ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should not be tainted.");
                     start();
@@ -423,4 +423,12 @@
         });
 
     } );
+
+    test('version object', function() {
+        equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
+        ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
+        ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
+        ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+    });
+
 })();

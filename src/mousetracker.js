@@ -160,6 +160,7 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
+        /*eslint-disable no-multi-spaces*/
         this.userData              = options.userData          || null;
         this.stopDelay             = options.stopDelay         || 50;
 
@@ -182,6 +183,7 @@
         this.keyHandler               = options.keyHandler               || null;
         this.focusHandler             = options.focusHandler             || null;
         this.blurHandler              = options.blurHandler              || null;
+        /*eslint-enable no-multi-spaces*/
 
         //Store private properties in a scope sealed hash map
         var _this = this;
@@ -1370,6 +1372,7 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                // eslint-disable-next-line no-use-before-define
                 if (isInIframe && canAccessEvents(window.top)) {
                     $.addEvent(
                         window.top,
@@ -1413,6 +1416,7 @@
                 eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : pointerType );
                 // We emulate mouse capture by hanging listeners on the document object.
                 //    (Note we listen on the capture phase so the captured handlers will get called first)
+                // eslint-disable-next-line no-use-before-define
                 if (isInIframe && canAccessEvents(window.top)) {
                     $.removeEvent(
                         window.top,
@@ -1703,7 +1707,7 @@
 
         // Calculate deltaY
         if ( $.MouseTracker.wheelEventName == "mousewheel" ) {
-            simulatedEvent.deltaY = - 1 / $.DEFAULT_SETTINGS.pixelsPerWheelLine * event.wheelDelta;
+            simulatedEvent.deltaY = -event.wheelDelta / $.DEFAULT_SETTINGS.pixelsPerWheelLine;
         } else {
             simulatedEvent.deltaY = event.detail;
         }
@@ -2207,11 +2211,8 @@
      * @inner
      */
     function onTouchCancel( tracker, event ) {
-        var i,
-            touchCount = event.changedTouches.length,
-            gPoints = [],
-            pointsList = tracker.getActivePointersListByType( 'touch' );
-        
+        var pointsList = tracker.getActivePointersListByType('touch');
+
         abortTouchContacts( tracker, event, pointsList );
     }
 
@@ -2565,8 +2566,7 @@
      *      Gesture points associated with the event.
      */
     function updatePointersExit( tracker, event, gPoints ) {
-        var delegate = THIS[ tracker.hash ],
-            pointsList = tracker.getActivePointersListByType( gPoints[ 0 ].type ),
+        var pointsList = tracker.getActivePointersListByType(gPoints[0].type),
             i,
             gPointCount = gPoints.length,
             curGPoint,
@@ -2801,7 +2801,6 @@
         var delegate = THIS[ tracker.hash ],
             pointsList = tracker.getActivePointersListByType( gPoints[ 0 ].type ),
             propagate,
-            insideElementReleased,
             releasePoint,
             releaseTime,
             i,
@@ -2866,7 +2865,7 @@
                     {
                         eventSource:           tracker,
                         pointerType:           gPoints[ 0 ].type,
-                        position:              getPointRelativeToAbsolute(  gPoints[ 0 ].currentPos, tracker.element ),
+                        position:              getPointRelativeToAbsolute(gPoints[0].currentPos, tracker.element),
                         button:                buttonChanged,
                         buttons:               pointsList.buttons,
                         isTouchEvent:          gPoints[ 0 ].type === 'touch',
@@ -3267,7 +3266,7 @@
             } );
         }
     }
-    
+
     // True if inside an iframe, otherwise false.
     // @member {Boolean} isInIframe
     // @private
@@ -3279,7 +3278,7 @@
             return true;
         }
     })();
- 
+
     // @function
     // @private
     // @inner
@@ -3292,4 +3291,4 @@
         }
     }
 
-} ( OpenSeadragon ) );
+}(OpenSeadragon));

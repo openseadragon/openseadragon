@@ -60,11 +60,11 @@ $.Viewport = function( options ) {
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
     var args = arguments;
-    if(  args.length && args[ 0 ] instanceof $.Point ){
+    if (args.length && args[0] instanceof $.Point) {
         options = {
-            containerSize:  args[ 0 ],
-            contentSize:    args[ 1 ],
-            config:         args[ 2 ]
+            containerSize:  args[0],
+            contentSize:    args[1],
+            config:         args[2]
         };
     }
 
@@ -805,7 +805,8 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:zoom
      */
-    zoomTo: function( zoom, refPoint, immediately ) {
+    zoomTo: function(zoom, refPoint, immediately) {
+        var _this = this;
 
         this.zoomPoint = refPoint instanceof $.Point &&
             !isNaN(refPoint.x) &&
@@ -813,13 +814,15 @@ $.Viewport.prototype = {
             refPoint :
             null;
 
-        if ( immediately ) {
-            this.zoomSpring.resetTo( zoom );
+        if (immediately) {
+            this._adjustCenterSpringsForZoomPoint(function() {
+                _this.zoomSpring.resetTo(zoom);
+            });
         } else {
-            this.zoomSpring.springTo( zoom );
+            this.zoomSpring.springTo(zoom);
         }
 
-        if( this.viewer ){
+        if (this.viewer) {
             /**
              * Raised when the viewport zoom level changes (see {@link OpenSeadragon.Viewport#zoomBy} and {@link OpenSeadragon.Viewport#zoomTo}).
              *
@@ -832,7 +835,7 @@ $.Viewport.prototype = {
              * @property {Boolean} immediately
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            this.viewer.raiseEvent( 'zoom', {
+            this.viewer.raiseEvent('zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
                 immediately: immediately
@@ -938,25 +941,10 @@ $.Viewport.prototype = {
      * @returns {Boolean} True if any change has been made, false otherwise.
      */
     update: function() {
-
-        if (this.zoomPoint) {
-            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-            this.zoomSpring.update();
-            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-
-            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
-            var deltaZoomPoints = this.deltaPointsFromPixels(
-                deltaZoomPixels, true);
-
-            this.centerSpringX.shiftBy(deltaZoomPoints.x);
-            this.centerSpringY.shiftBy(deltaZoomPoints.y);
-
-            if (this.zoomSpring.isAtTargetValue()) {
-                this.zoomPoint = null;
-            }
-        } else {
-            this.zoomSpring.update();
-        }
+        var _this = this;
+        this._adjustCenterSpringsForZoomPoint(function() {
+            _this.zoomSpring.update();
+        });
 
         this.centerSpringX.update();
         this.centerSpringY.update();
@@ -970,6 +958,27 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
 
         return changed;
+    },
+
+    _adjustCenterSpringsForZoomPoint: function(zoomSpringHandler) {
+        if (this.zoomPoint) {
+            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            zoomSpringHandler();
+            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+
+            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+            var deltaZoomPoints = this.deltaPointsFromPixels(
+                deltaZoomPixels, true);
+
+            this.centerSpringX.shiftBy(deltaZoomPoints.x);
+            this.centerSpringY.shiftBy(deltaZoomPoints.y);
+
+            if (this.zoomSpring.isAtTargetValue()) {
+                this.zoomPoint = null;
+            }
+        } else {
+            zoomSpringHandler();
+        }
     },
 
     /**
@@ -1208,6 +1217,7 @@ $.Viewport.prototype = {
      * in image coordinate system.
      * @param {Number} [pixelWidth] the width in pixel of the rectangle.
      * @param {Number} [pixelHeight] the height in pixel of the rectangle.
+     * @returns {OpenSeadragon.Rect} This image's bounds in viewport coordinates
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
         var rect = imageX;

@@ -45,7 +45,7 @@
             i;
 
         $.extend( true, this, {
-            id: 'controldock-'+$.now()+'-'+Math.floor(Math.random()*1000000),
+            id: 'controldock-' + $.now() + '-' + Math.floor(Math.random() * 1000000),
             container: $.makeNeutralElement( 'div' ),
             controls: []
         }, options );

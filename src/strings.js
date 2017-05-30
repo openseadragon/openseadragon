@@ -75,14 +75,14 @@ $.extend( $, /** @lends OpenSeadragon */{
             container = I18N,
             i;
 
-        for ( i = 0; i < props.length-1; i++ ) {
+        for (i = 0; i < props.length - 1; i++) {
             // in case not a subproperty
             container = container[ props[ i ] ] || {};
         }
         string = container[ props[ i ] ];
 
         if ( typeof( string ) != "string" ) {
-            $.console.debug( "Untranslated source string:", prop );
+            $.console.log( "Untranslated source string:", prop );
             string = ""; // FIXME: this breaks gettext()-style convention, which would return source
         }
 

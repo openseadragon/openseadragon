@@ -36,7 +36,7 @@
     var TALL_PATH = '/test/data/tall.dzi';
     var WIDE_PATH = '/test/data/wide.dzi';
 
-    var testZoomLevels = [-1, 0, 0.1, 0.5, 4, 10];
+    var testZoomLevels = [0.1, 0.2, 0.5, 1, 4, 10];
 
     var testPoints = [
         new OpenSeadragon.Point(0, 0),
@@ -59,7 +59,6 @@
     var reopenViewerHelper = function(config) {
         var expected, level, actual, i = 0;
         var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             expected = config.processExpected(level, expected);
             actual = viewport[config.method]();
@@ -70,7 +69,7 @@
                 "Test " + config.method + " with zoom level of " + level + ". Expected : " + expected + ", got " + actual
             );
             i++;
-            if(i < testZoomLevels.length){
+            if (i < testZoomLevels.length) {
                 level = expected = testZoomLevels[i];
                 var viewerConfig = {
                     id:            VIEWER_ID,
@@ -80,15 +79,22 @@
 
                 viewerConfig[config.property] = level;
                 viewer = OpenSeadragon(viewerConfig);
-                viewer.addHandler('open', openHandler);
+                viewer.addOnceHandler('open', openHandler);
                 viewer.open(DZI_PATH);
             } else {
                 start();
             }
         };
-        viewer.addHandler('open', openHandler);
         level = expected = testZoomLevels[i];
-        viewer[config.property] = level;
+        var viewerConfig = {
+            id: VIEWER_ID,
+            prefixUrl: PREFIX_URL,
+            springStiffness: SPRING_STIFFNESS
+        };
+
+        viewerConfig[config.property] = level;
+        viewer = OpenSeadragon(viewerConfig);
+        viewer.addOnceHandler('open', openHandler);
         viewer.open(DZI_PATH);
     };
 
@@ -211,15 +217,9 @@
             property: 'defaultZoomLevel',
             method: 'getHomeBounds',
             processExpected: function(level, expected) {
-                // Have to special case this to avoid dividing by 0
-                if(level === -1 || level === 0){
-                    expected = new OpenSeadragon.Rect(0, 0, 1, 1);
-                } else {
-                    var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
-                    var position = 0.5 - (sideLength / 2.0);
-                    expected = new OpenSeadragon.Rect(position, position, sideLength, sideLength);
-                }
-                return expected;
+                var sideLength = 1.0 / viewer.defaultZoomLevel;  // it's a square in this case
+                var position = 0.5 - (sideLength / 2.0);
+                return new OpenSeadragon.Rect(position, position, sideLength, sideLength);
             }
         });
     });
@@ -333,44 +333,39 @@
     // I don't use the helper for this one because it sets a couple more
     // properties that would need special casing.
     asyncTest('getHomeZoomWithHomeFillsViewer', function() {
-        var expected, level, i = 0;
+        var i = 0;
         var openHandler = function(event) {
-            viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
             viewport.zoomTo(ZOOM_FACTOR, null, true);
 
-            // Special cases for oddball levels
-            if (level === -1) {
-                expected = 0.25;
-            } else if(level === 0){
-                expected = 1;
-            }
-
             equal(
                 viewport.getHomeZoom(),
-                expected,
-                "Test getHomeZoom with homeFillsViewer = true and default zoom level of " + expected
+                testZoomLevels[i],
+                "Test getHomeZoom with homeFillsViewer = true and default zoom level of " + testZoomLevels[i]
             );
             i++;
-            if(i < testZoomLevels.length){
-                level = expected = testZoomLevels[i];
+            if (i < testZoomLevels.length) {
                 viewer = OpenSeadragon({
-                    id:            VIEWER_ID,
-                    prefixUrl:     PREFIX_URL,
+                    id: VIEWER_ID,
+                    prefixUrl: PREFIX_URL,
                     springStiffness: SPRING_STIFFNESS,
-                    defaultZoomLevel: level,
+                    defaultZoomLevel: testZoomLevels[i],
                     homeFillsViewer: true
                 });
-                viewer.addHandler('open', openHandler);
+                viewer.addOnceHandler('open', openHandler);
                 viewer.open(TALL_PATH);  // use a different image for homeFillsViewer
             } else {
                 start();
             }
         };
-        viewer.addHandler('open', openHandler);
-        level = expected = testZoomLevels[i];
-        viewer.homeFillsViewer = true;
-        viewer.defaultZoomLevel = expected;
+        viewer = OpenSeadragon({
+            id: VIEWER_ID,
+            prefixUrl: PREFIX_URL,
+            springStiffness: SPRING_STIFFNESS,
+            defaultZoomLevel: testZoomLevels[i],
+            homeFillsViewer: true
+        });
+        viewer.addOnceHandler('open', openHandler);
         viewer.open(TALL_PATH); // use a different image for homeFillsViewer
     });
 
@@ -725,22 +720,13 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('zoomBy', function(){
+    asyncTest('zoomBy no ref point', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            for (var i = 0; i < testZoomLevels.length; i++){
+            for (var i = 0; i < testZoomLevels.length; i++) {
                 viewport.zoomBy(testZoomLevels[i], null, true);
-                propEqual(
-                    viewport.getZoom(),
-                    testZoomLevels[i],
-                    "Zoomed by the correct amount."
-                );
-
-                // now use a ref point
-                // TODO: check the ending position due to ref point
-                viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
@@ -754,26 +740,87 @@
         viewer.open(DZI_PATH);
     });
 
-    asyncTest('zoomTo', function(){
+    asyncTest('zoomBy with ref point', function() {
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
 
-            for (var i = 0; i < testZoomLevels.length; i++){
+            var expectedCenters = [
+                new OpenSeadragon.Point(5, 5),
+                new OpenSeadragon.Point(6.996, 6.996),
+                new OpenSeadragon.Point(7.246, 6.996),
+                new OpenSeadragon.Point(7.246, 6.996),
+                new OpenSeadragon.Point(7.621, 7.371),
+                new OpenSeadragon.Point(7.621, 7.371),
+            ];
+
+            for (var i = 0; i < testZoomLevels.length; i++) {
+                viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
+                propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed by the correct amount."
+                );
+                assertPointsEquals(
+                    viewport.getCenter(),
+                    expectedCenters[i],
+                    1e-14,
+                    "Panned to the correct location."
+                );
+            }
+
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('zoomTo no ref point', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            for (var i = 0; i < testZoomLevels.length; i++) {
                 viewport.zoomTo(testZoomLevels[i], null, true);
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
                     "Zoomed to the correct level."
                 );
+            }
 
-                // now use a ref point
-                // TODO: check the ending position due to ref point
+            start();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    asyncTest('zoomTo with ref point', function() {
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            var expectedCenters = [
+                new OpenSeadragon.Point(5, 5),
+                new OpenSeadragon.Point(4.7505, 4.7505),
+                new OpenSeadragon.Point(4.6005, 4.7505),
+                new OpenSeadragon.Point(4.8455, 4.9955),
+                new OpenSeadragon.Point(5.2205, 5.3705),
+                new OpenSeadragon.Point(5.2205, 5.3705),
+            ];
+
+            for (var i = 0; i < testZoomLevels.length; i++) {
                 viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
                 propEqual(
                     viewport.getZoom(),
                     testZoomLevels[i],
                     "Zoomed to the correct level."
+                );
+                assertPointsEquals(
+                    viewport.getCenter(),
+                    expectedCenters[i],
+                    1e-14,
+                    "Panned to the correct location."
                 );
             }
 

@@ -65,6 +65,8 @@
  * @param {Boolean} [options.ajaxWithCredentials]
  *      If this TileSource needs to make an AJAX call, this specifies whether to set
  *      the XHR's withCredentials (for accessing secure data).
+ * @param {Object} [options.ajaxHeaders]
+ *      A set of headers to include in AJAX requests.
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -187,8 +189,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         //explicit configuration via positional args in constructor
         //or the more idiomatic 'options' object
         this.ready       = true;
-        this.aspectRatio = ( options.width && options.height ) ?
-            (  options.width / options.height ) : 1;
+        this.aspectRatio = (options.width && options.height) ?
+            (options.width / options.height) : 1;
         this.dimensions  = new $.Point( options.width, options.height );
 
         if ( this.tileSize ){
@@ -318,25 +320,20 @@ $.TileSource.prototype = {
 
     /**
      * @function
-     * @param {Number} level
+     * @returns {Number} The highest level in this tile source that can be contained in a single tile.
      */
-    getClosestLevel: function( rect ) {
+    getClosestLevel: function() {
         var i,
-            tilesPerSide,
             tiles;
 
-        for( i = this.minLevel; i < this.maxLevel; i++ ){
-            tiles = this.getNumTiles( i );
-            tilesPerSide = new $.Point(
-              Math.floor( rect.x / this.getTileWidth(i) ),
-              Math.floor( rect.y / this.getTileHeight(i) )
-            );
-
-            if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
+        for (i = this.minLevel + 1; i <= this.maxLevel; i++){
+            tiles = this.getNumTiles(i);
+            if (tiles.x > 1 || tiles.y > 1) {
                 break;
             }
         }
-        return Math.max( 0, i - 1 );
+
+        return i - 1;
     },
 
     /**
@@ -345,17 +342,25 @@ $.TileSource.prototype = {
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function(level, point) {
+        var validPoint = point.x >= 0 && point.x <= 1 &&
+            point.y >= 0 && point.y <= 1 / this.aspectRatio;
+        $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
+
         var widthScaled = this.dimensions.x * this.getLevelScale(level);
-        var pixelX = $.positiveModulo(point.x, 1) * widthScaled;
-        var pixelY = $.positiveModulo(point.y, 1 / this.aspectRatio) * widthScaled;
+        var pixelX = point.x * widthScaled;
+        var pixelY = point.y * widthScaled;
 
-        var x = Math.floor(pixelX / this.getTileWidth());
-        var y = Math.floor(pixelY / this.getTileHeight());
+        var x = Math.floor(pixelX / this.getTileWidth(level));
+        var y = Math.floor(pixelY / this.getTileHeight(level));
 
-        // Fix for wrapping
-        var numTiles = this.getNumTiles(level);
-        x += numTiles.x * Math.floor(point.x);
-        y += numTiles.y * Math.floor(point.y * this.aspectRatio);
+        // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
+        // return the last tile of the row/column
+        if (point.x >= 1) {
+            x = this.getNumTiles(level).x - 1;
+        }
+        if (point.y >= 1 / this.aspectRatio) {
+            y = this.getNumTiles(level).y - 1;
+        }
 
         return new $.Point(x, y);
     },
@@ -455,7 +460,7 @@ $.TileSource.prototype = {
             //TODO: Its not very flexible to require tile sources to end jsonp
             //      request for info  with a url that ends with '.js' but for
             //      now it's the only way I see to distinguish uniformly.
-            callbackName = url.split( '/' ).pop().replace('.js','');
+            callbackName = url.split('/').pop().replace('.js', '');
             $.jsonp({
                 url: url,
                 async: false,
@@ -467,6 +472,7 @@ $.TileSource.prototype = {
             $.makeAjaxRequest( {
                 url: url,
                 withCredentials: this.ajaxWithCredentials,
+                headers: this.ajaxHeaders,
                 success: function( xhr ) {
                     var data = processResponse( xhr );
                     callback( data );
@@ -551,7 +557,7 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Responsible for retriving the url which will return an image for the
+     * Responsible for retrieving the url which will return an image for the
      * region specified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile
@@ -568,6 +574,23 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Responsible for retrieving the headers which will be attached to the image request for the
+     * region specified by the given x, y, and level components.
+     * This option is only relevant if {@link OpenSeadragon.Options}.loadTilesWithAjax is set to true.
+     * The headers returned here will override headers specified at the Viewer or TiledImage level.
+     * Specifying a falsy value for a header will clear its existing value set at the Viewer or
+     * TiledImage level (if any).
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @returns {Object}
+     */
+    getTileAjaxHeaders: function( level, x, y ) {
+        return {};
+    },
+
+    /**
      * @function
      * @param {Number} level
      * @param {Number} x
@@ -575,12 +598,12 @@ $.TileSource.prototype = {
      */
     tileExists: function( level, x, y ) {
         var numTiles = this.getNumTiles( level );
-        return  level >= this.minLevel &&
-                level <= this.maxLevel &&
-                x >= 0 &&
-                y >= 0 &&
-                x < numTiles.x &&
-                y < numTiles.y;
+        return level >= this.minLevel &&
+               level <= this.maxLevel &&
+               x >= 0 &&
+               y >= 0 &&
+               x < numTiles.x &&
+               y < numTiles.y;
     }
 };
 
@@ -621,7 +644,11 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
-        data = $.parseJSON(responseText);
+        try{
+          data = $.parseJSON(responseText);
+        } catch(e){
+          data =  responseText;
+        }
     }else{
         data = responseText;
     }

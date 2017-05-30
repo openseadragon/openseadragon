@@ -217,7 +217,7 @@
             var firstImage = viewer.world.getItemAt(0);
             firstImage.addHandler('fully-loaded-change', function() {
                 var imageData = viewer.drawer.context.getImageData(0, 0,
-                    500 * OpenSeadragon.pixelDensityRatio, 500 * density);
+                    500 * density, 500 * density);
 
                 // Pixel 250,250 will be in the hole of the A
                 var expectedVal = getPixelValue(imageData, 250 * density, 250 * density);
