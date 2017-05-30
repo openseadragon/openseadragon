@@ -295,7 +295,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        if (!(this.opacity === 0 && !this._preload)) {
+        if (this.opacity !== 0 || this._preload) {
             this._midDraw = true;
             this._updateViewport();
             this._midDraw = false;
@@ -773,7 +773,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @returns {Boolean} whether the tiledImage can load hidden tiles of zero opacity.
+     * @returns {Boolean} whether the tiledImage can load its tiles even when it has zero opacity.
      */
     getPreload: function() {
         return this._preload;
@@ -783,7 +783,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Set true to load even when hidden. Set false to block loading when hidden.
      */
     setPreload: function(preload) {
-        this._preload = !!preload;
+        this._preload = new Boolean(preload).valueOf();
         this._needsDraw = true;
     },
 
@@ -1536,7 +1536,7 @@ function compareTiles( previousBest, tile ) {
 }
 
 function drawTiles( tiledImage, lastDrawn ) {
-    if (this.opacity === 0 || lastDrawn.length === 0) {
+    if (tiledImage.opacity === 0 || lastDrawn.length === 0) {
         return;
     }
     var tile = lastDrawn[0];
