@@ -844,6 +844,88 @@
         viewer.addHandler('open', openHandler);
     });
 
+    asyncTest('Item opacity is synchronized', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   ['/test/data/testpattern.dzi', '/test/data/testpattern.dzi'],
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true
+        });
+
+        var navOpenHandler = function(event) {
+            if (viewer.navigator.world.getItemCount() === 2) {
+                viewer.navigator.world.removeHandler('add-item', navOpenHandler);
+
+                setTimeout(function() {
+                    // Test initial formation
+                    for (var i = 0; i < 2; i++) {
+                        equal(viewer.navigator.world.getItemAt(i).getOpacity(),
+                            viewer.world.getItemAt(i).getOpacity(), 'opacity is the same');
+                    }
+
+                    // Try changing the opacity of one
+                    viewer.world.getItemAt(1).setOpacity(0.5);
+                    equal(viewer.navigator.world.getItemAt(1).getOpacity(),
+                        viewer.world.getItemAt(1).getOpacity(), 'opacity is the same after change');
+
+                    start();
+                }, 1);
+            }
+        };
+
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler);
+            // The navigator may already have added the items.
+            navOpenHandler();
+        };
+
+        viewer.addHandler('open', openHandler);
+    });
+
+    asyncTest('Item composite operation is synchronized', function() {
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   ['/test/data/testpattern.dzi', '/test/data/testpattern.dzi'],
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true
+        });
+
+        var navOpenHandler = function(event) {
+            if (viewer.navigator.world.getItemCount() === 2) {
+                viewer.navigator.world.removeHandler('add-item', navOpenHandler);
+
+                setTimeout(function() {
+                    // Test initial formation
+                    for (var i = 0; i < 2; i++) {
+                        equal(viewer.navigator.world.getItemAt(i).getCompositeOperation(),
+                            viewer.world.getItemAt(i).getCompositeOperation(), 'composite operation is the same');
+                    }
+
+                    // Try changing the composite operation of one
+                    viewer.world.getItemAt(1).setCompositeOperation('multiply');
+                    equal(viewer.navigator.world.getItemAt(1).getCompositeOperation(),
+                        viewer.world.getItemAt(1).getCompositeOperation(), 'composite operation is the same after change');
+
+                    start();
+                }, 1);
+            }
+        };
+
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            viewer.navigator.world.addHandler('add-item', navOpenHandler);
+            // The navigator may already have added the items.
+            navOpenHandler();
+        };
+
+        viewer.addHandler('open', openHandler);
+    });
+
     asyncTest('Viewer options transmitted to navigator', function() {
 
         viewer = OpenSeadragon({
