@@ -530,6 +530,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         prefixUrl:   this.prefixUrl,
                         viewer:      this
                     });
+
+                    this.referenceStrip.setFocus( this._sequenceIndex );
                 }
             }
 
