@@ -2132,6 +2132,58 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     _cancelPendingImages: function() {
         this._loadQueue = [];
+    },
+
+    /**
+     * Remove the reference strip.
+     * @function
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    removeReferenceStrip: function() {
+        this.showReferenceStrip = false;
+
+        if (this.sequenceMode) {
+            if (this.referenceStrip) {
+                this.referenceStrip.destroy();
+                this.referenceStrip = null;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Display the reference strip based on the currently set tileSources.
+     * @function
+     * @return {OpenSeadragon.Viewer} Chainable.
+     */
+    addReferenceStrip: function() {
+        this.showReferenceStrip = true;
+
+        if (this.sequenceMode) {
+            if (this.referenceStrip) {
+                this.referenceStrip.destroy();
+                this.referenceStrip = null;
+            }
+
+            if (this.tileSources.length && this.tileSources.length > 1) {
+                this.referenceStrip = new $.ReferenceStrip({
+                    id:          this.referenceStripElement,
+                    position:    this.referenceStripPosition,
+                    sizeRatio:   this.referenceStripSizeRatio,
+                    scroll:      this.referenceStripScroll,
+                    height:      this.referenceStripHeight,
+                    width:       this.referenceStripWidth,
+                    tileSources: this.tileSources,
+                    prefixUrl:   this.prefixUrl,
+                    viewer:      this
+                });
+
+                this.referenceStrip.setFocus( this._sequenceIndex );
+            }
+        }
+
+        return this;
     }
 });
 
