@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OpenSeadragon Basic Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        Turn debug mode on and off after viewer has been created.
+        <button onclick="debugModeOn()">Debug Mode On</button>
+        <button onclick="debugModeOff()">Debug Mode Off</button>
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator: true,
+            debugMode: true
+        });
+
+        function debugModeOn() {
+            viewer.setDebugMode(true);
+        }
+
+        function debugModeOff() {
+            viewer.setDebugMode(false);
+        }
+    </script>
+</body>
+
+</html>
