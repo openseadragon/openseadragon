@@ -2881,7 +2881,7 @@
 
             // A primary mouse button may have been released while the non-primary button was down
             if (pointsList.contacts > 0 && pointsList.type === 'mouse') {
-                // Stop tracking the mouse
+                // Stop tracking the mouse; see https://github.com/openseadragon/openseadragon/pull/1223
                 pointsList.contacts--;
                 return true;
             }
