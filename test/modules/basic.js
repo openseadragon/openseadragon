@@ -424,6 +424,40 @@
 
     } );
 
+
+    asyncTest('SetDebugMode', function() {
+        ok(viewer, 'Viewer exists');
+
+        var checkImageTilesDebugState = function (expectedState) {
+
+            for (var i = 0; i < viewer.world.getItemCount(); i++) {
+                if(viewer.world.getItemAt(i).debugMode != expectedState) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+
+            //Ensure we start with debug mode turned off
+            viewer.setDebugMode(false);
+            ok(checkImageTilesDebugState(false), "All image tiles have debug mode turned off.");
+            ok(!viewer.debugMode, "Viewer debug mode is turned off.");
+
+            //Turn debug mode on and check that the Viewer and all tiled images are in debug mode.
+            viewer.setDebugMode(true);
+            ok(checkImageTilesDebugState(true), "All image tiles have debug mode turned on.");
+            ok(viewer.debugMode, "Viewer debug mode is turned on.");
+
+            start();
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     test('version object', function() {
         equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
         ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
