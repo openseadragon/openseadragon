@@ -47,6 +47,7 @@ OPENSEADRAGON CHANGELOG
 * New events for opacity and compositeOperation changes (#1203)
 * Fixed: The reference strip didn't show the initial page if it wasn't the first page (#1208)
 * Added support for setting debug mode after the Viewer object has been constructed (#1224)
+* Fixed: Sometimes the image would stick to the mouse when right-clicking and left-clicking simultaneously (#1223)
 
 2.2.1:
 
