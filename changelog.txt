@@ -49,6 +49,7 @@ OPENSEADRAGON CHANGELOG
 * Added support for setting debug mode after the Viewer object has been constructed (#1224)
 * Fixed: Sometimes the image would stick to the mouse when right-clicking and left-clicking simultaneously (#1223)
 * Fixed issue with transparent images sometimes disappearing on Safari (#1222)
+* Better calculation for TileCache release cutoff (#1214)
 
 2.2.1:
 
