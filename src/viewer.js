@@ -504,10 +504,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         if (this.sequenceMode && $.isArray(tileSources)) {
-            if (this.referenceStrip) {
-                this.referenceStrip.destroy();
-                this.referenceStrip = null;
-            }
+            this.removeReferenceStrip();
 
             if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
               this.initialPage = initialPage;
@@ -519,19 +516,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.open(this.tileSources[this._sequenceIndex]);
 
                 if ( this.showReferenceStrip ){
-                    this.referenceStrip = new $.ReferenceStrip({
-                        id:          this.referenceStripElement,
-                        position:    this.referenceStripPosition,
-                        sizeRatio:   this.referenceStripSizeRatio,
-                        scroll:      this.referenceStripScroll,
-                        height:      this.referenceStripHeight,
-                        width:       this.referenceStripWidth,
-                        tileSources: this.tileSources,
-                        prefixUrl:   this.prefixUrl,
-                        viewer:      this
-                    });
-
-                    this.referenceStrip.setFocus( this._sequenceIndex );
+                    this.addReferenceStrip();
                 }
             }
 
@@ -2136,20 +2121,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Remove the reference strip.
+     * @param {Boolean} hide - Disables automatic showing of the reference strip in the future until manually re-enabled.
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
      */
-    removeReferenceStrip: function() {
-        this.showReferenceStrip = false;
-
-        if (this.sequenceMode) {
-            if (this.referenceStrip) {
-                this.referenceStrip.destroy();
-                this.referenceStrip = null;
-            }
+    removeReferenceStrip: function(hide) {
+        if (hide) {
+            this.showReferenceStrip = false;
         }
 
-        return this;
+        if (this.referenceStrip) {
+            this.referenceStrip.destroy();
+            this.referenceStrip = null;
+        }
     },
 
     /**
@@ -2162,8 +2145,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         if (this.sequenceMode) {
             if (this.referenceStrip) {
-                this.referenceStrip.destroy();
-                this.referenceStrip = null;
+                return this;
             }
 
             if (this.tileSources.length && this.tileSources.length > 1) {
