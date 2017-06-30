@@ -1383,11 +1383,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._loadQueue.push(myQueueItem);
 
-        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
-
-            myQueueItem.tileSource = tileSource;
-
-            // add everybody at the front of the queue that's ready to go
+        function processReadyItems() {
             var queueItem, tiledImage, optionsClone;
             while (_this._loadQueue.length) {
                 queueItem = _this._loadQueue[0];
@@ -1473,9 +1469,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     });
                 }
             }
+        }
+
+        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
+
+            myQueueItem.tileSource = tileSource;
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         }, function( event ) {
             event.options = options;
             raiseAddItemFailed(event);
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         } );
     },
 
