@@ -741,17 +741,8 @@ $.Viewport.prototype = {
      */
     // Added to improve constrained panning
     getConstrainedBounds: function( immediately ) {
-        var actualZoom = this.getZoom(),
-            constrainedZoom = Math.max(
-                Math.min( actualZoom, this.getMaxZoom() ),
-                this.getMinZoom()
-            ),
-            bounds,
+        var bounds,
             constrainedBounds;
-
-        if ( actualZoom != constrainedZoom ) {
-            this.zoomTo( constrainedZoom, this.zoomPoint, immediately );
-        }
 
         bounds = this.getBounds();
 
