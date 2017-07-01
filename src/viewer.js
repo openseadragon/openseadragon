@@ -504,7 +504,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         if (this.sequenceMode && $.isArray(tileSources)) {
-            this.removeReferenceStrip();
+            if (this.referenceStrip) {
+                this.referenceStrip.destroy();
+                this.referenceStrip = null;
+            }
 
             if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
               this.initialPage = initialPage;
@@ -2120,14 +2123,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Remove the reference strip.
-     * @param {Boolean} hide - Disables automatic showing of the reference strip in the future until manually re-enabled.
+     * Removes the reference strip and disables displaying it.
      * @function
      */
-    removeReferenceStrip: function(hide) {
-        if (hide) {
-            this.showReferenceStrip = false;
-        }
+    removeReferenceStrip: function() {
+        this.showReferenceStrip = false;
 
         if (this.referenceStrip) {
             this.referenceStrip.destroy();
@@ -2136,16 +2136,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Display the reference strip based on the currently set tileSources.
+     * Enables and displays the reference strip based on the currently set tileSources.
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
      */
     addReferenceStrip: function() {
         this.showReferenceStrip = true;
 
         if (this.sequenceMode) {
             if (this.referenceStrip) {
-                return this;
+                return;
             }
 
             if (this.tileSources.length && this.tileSources.length > 1) {
@@ -2163,9 +2162,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 this.referenceStrip.setFocus( this._sequenceIndex );
             }
+        } else {
+            $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
         }
-
-        return this;
     }
 });
 
