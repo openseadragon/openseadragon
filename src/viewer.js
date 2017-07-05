@@ -2160,6 +2160,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Enables and displays the reference strip based on the currently set tileSources.
+     * Works only when the Viewer has sequenceMode set to true.
      * @function
      */
     addReferenceStrip: function() {

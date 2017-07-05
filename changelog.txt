@@ -51,6 +51,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with transparent images sometimes disappearing on Safari (#1222)
 * Better calculation for TileCache release cutoff (#1214)
 * Fixed: One image failing to load could cause the others to never load (#1229)
+* Added functions for dynamically adding and removing the reference strip in sequence mode (#1213)
 
 2.2.1:
 
