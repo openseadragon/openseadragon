@@ -50,6 +50,7 @@
      * @extends OpenSeadragon.TileSource
      * @param {Object} options Options object.
      * @param {String} options.url URL of the image
+     * @param {String} options.referenceStripThumbnailUrl URL of the dedicated thumbnail image
      * @param {Boolean} [options.buildPyramid=true] If set to true (default), a
      * pyramid will be built internally to provide a better downsampling.
      * @param {String|Boolean} [options.crossOriginPolicy=false] Valid values are
