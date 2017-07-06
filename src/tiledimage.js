@@ -1475,8 +1475,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     }
 
     var finish = function() {
-        var cutoff = Math.ceil( Math.log(
-            tiledImage.source.getTileWidth(tile.level) ) / Math.log( 2 ) );
+        var cutoff = tiledImage.source.getClosestLevel();
         setTileLoaded(tiledImage, tile, image, cutoff, tileRequest);
     };
 
