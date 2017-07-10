@@ -25,12 +25,14 @@
 
         var fakeTile0 = {
             url: 'foo.jpg',
+            cacheKey: 'foo.jpg',
             image: {},
             unload: function() {}
         };
 
         var fakeTile1 = {
             url: 'foo.jpg',
+            cacheKey: 'foo.jpg',
             image: {},
             unload: function() {}
         };
@@ -74,18 +76,21 @@
 
         var fakeTile0 = {
             url: 'different.jpg',
+            cacheKey: 'different.jpg',
             image: {},
             unload: function() {}
         };
 
         var fakeTile1 = {
             url: 'same.jpg',
+            cacheKey: 'same.jpg',
             image: {},
             unload: function() {}
         };
 
         var fakeTile2 = {
             url: 'same.jpg',
+            cacheKey: 'same.jpg',
             image: {},
             unload: function() {}
         };

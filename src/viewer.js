@@ -96,6 +96,12 @@ $.Viewer = function( options ) {
         //internal state and dom identifiers
         id:             options.id,
         hash:           options.hash || nextHash++,
+        /**
+         * Index for page to be shown first next time open() is called (only used in sequenceMode).
+         * @member {Number} initialPage
+         * @memberof OpenSeadragon.Viewer#
+         */
+        initialPage:    0,
 
         //dom nodes
         /**
@@ -370,7 +376,8 @@ $.Viewer = function( options ) {
 
     // Create the image loader
     this.imageLoader = new $.ImageLoader({
-        jobLimit: this.imageLoaderLimit
+        jobLimit: this.imageLoaderLimit,
+        timeout: options.timeout
     });
 
     // Create the tile cache
@@ -481,11 +488,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * except for the index property; images are added in sequence.
      * A TileSource specifier is anything you could pass as the tileSource property
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * @param {Number} initialPage - If sequenceMode is true, display this page initially
+     * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function (tileSources) {
+    open: function (tileSources, initialPage) {
         var _this = this;
 
         this.close();
@@ -500,23 +509,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.referenceStrip = null;
             }
 
+            if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
+              this.initialPage = initialPage;
+            }
+
             this.tileSources = tileSources;
             this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
             if (this.tileSources.length) {
                 this.open(this.tileSources[this._sequenceIndex]);
 
                 if ( this.showReferenceStrip ){
-                    this.referenceStrip = new $.ReferenceStrip({
-                        id:          this.referenceStripElement,
-                        position:    this.referenceStripPosition,
-                        sizeRatio:   this.referenceStripSizeRatio,
-                        scroll:      this.referenceStripScroll,
-                        height:      this.referenceStripHeight,
-                        width:       this.referenceStripWidth,
-                        tileSources: this.tileSources,
-                        prefixUrl:   this.prefixUrl,
-                        viewer:      this
-                    });
+                    this.addReferenceStrip();
                 }
             }
 
@@ -843,6 +846,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
          */
         this.raiseEvent( 'controls-enabled', { enabled: enabled } );
         return this;
+    },
+
+    /**
+     * Turns debugging mode on or off for this viewer.
+     *
+     * @function
+     * @param {Boolean} true to turn debug on, false to turn debug off.
+     */
+    setDebugMode: function(debugMode){
+
+        for (var i = 0; i < this.world.getItemCount(); i++) {
+            this.world.getItemAt(i).debugMode = debugMode;
+        }
+
+        this.debugMode = debugMode;
+        this.forceRedraw();
     },
 
     /**
@@ -1232,6 +1251,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
+     * @param {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
+     * @param {Boolean} [options.loadTilesWithAjax]
+     *      Whether to load tile data using AJAX requests.
+     *      Defaults to the setting in {@link OpenSeadragon.Options}.
+     * @param {Object} [options.ajaxHeaders]
+     *      A set of headers to include when making tile AJAX requests.
+     *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
+     *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
+     * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", the resulting TiledImage.
@@ -1269,6 +1297,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         if (options.crossOriginPolicy === undefined) {
             options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
+        }
+        if (options.ajaxWithCredentials === undefined) {
+            options.ajaxWithCredentials = this.ajaxWithCredentials;
+        }
+        if (options.loadTilesWithAjax === undefined) {
+            options.loadTilesWithAjax = this.loadTilesWithAjax;
+        }
+        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
+            options.ajaxHeaders = this.ajaxHeaders;
+        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
+            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
         }
 
         var myQueueItem = {
@@ -1332,11 +1371,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._loadQueue.push(myQueueItem);
 
-        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
-
-            myQueueItem.tileSource = tileSource;
-
-            // add everybody at the front of the queue that's ready to go
+        function processReadyItems() {
             var queueItem, tiledImage, optionsClone;
             while (_this._loadQueue.length) {
                 queueItem = _this._loadQueue[0];
@@ -1384,6 +1419,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     iOSDevice: _this.iOSDevice,
                     crossOriginPolicy: queueItem.options.crossOriginPolicy,
+                    ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
+                    loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
+                    ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode
                 });
 
@@ -1419,9 +1457,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     });
                 }
             }
+        }
+
+        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
+
+            myQueueItem.tileSource = tileSource;
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         }, function( event ) {
             event.options = options;
             raiseAddItemFailed(event);
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         } );
     },
 
@@ -2094,6 +2143,52 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     _cancelPendingImages: function() {
         this._loadQueue = [];
+    },
+
+    /**
+     * Removes the reference strip and disables displaying it.
+     * @function
+     */
+    removeReferenceStrip: function() {
+        this.showReferenceStrip = false;
+
+        if (this.referenceStrip) {
+            this.referenceStrip.destroy();
+            this.referenceStrip = null;
+        }
+    },
+
+    /**
+     * Enables and displays the reference strip based on the currently set tileSources.
+     * Works only when the Viewer has sequenceMode set to true.
+     * @function
+     */
+    addReferenceStrip: function() {
+        this.showReferenceStrip = true;
+
+        if (this.sequenceMode) {
+            if (this.referenceStrip) {
+                return;
+            }
+
+            if (this.tileSources.length && this.tileSources.length > 1) {
+                this.referenceStrip = new $.ReferenceStrip({
+                    id:          this.referenceStripElement,
+                    position:    this.referenceStripPosition,
+                    sizeRatio:   this.referenceStripSizeRatio,
+                    scroll:      this.referenceStripScroll,
+                    height:      this.referenceStripHeight,
+                    width:       this.referenceStripWidth,
+                    tileSources: this.tileSources,
+                    prefixUrl:   this.prefixUrl,
+                    viewer:      this
+                });
+
+                this.referenceStrip.setFocus( this._sequenceIndex );
+            }
+        } else {
+            $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
+        }
     }
 });
 
@@ -2113,6 +2208,7 @@ function _getSafeElemSize (oElement) {
     );
 }
 
+
 /**
  * @function
  * @private
@@ -2128,7 +2224,12 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             tileSource = $.parseXml( tileSource );
         //json should start with "{" or "[" and end with "}" or "]"
         } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
-            tileSource = $.parseJSON(tileSource);
+            try {
+              var tileSourceJ = $.parseJSON(tileSource);
+              tileSource = tileSourceJ;
+            } catch (e) {
+              //tileSource = tileSource;
+            }
         }
     }
 
@@ -2156,6 +2257,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
                     imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
+                ajaxHeaders: viewer.ajaxHeaders,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
@@ -2463,16 +2565,15 @@ function onCanvasClick( event ) {
         this.canvas.focus();
     }
 
-    if ( !event.preventDefaultAction && this.viewport && event.quick ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.clickToZoom ) {
-            this.viewport.zoomBy(
-                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
-                this.viewport.pointFromPixel( event.position, true )
-            );
-            this.viewport.applyConstraints();
-        }
-    }
+    var canvasClickEventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        quick: event.quick,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: event.preventDefaultAction
+    };
+
     /**
      * Raised when a mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2485,15 +2586,21 @@ function onCanvasClick( event ) {
      * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-click', {
-        tracker: event.eventSource,
-        position: event.position,
-        quick: event.quick,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-click', canvasClickEventArgs);
+
+    if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.clickToZoom ) {
+            this.viewport.zoomBy(
+                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
+    }
 }
 
 function onCanvasDblClick( event ) {
@@ -2533,6 +2640,35 @@ function onCanvasDblClick( event ) {
 function onCanvasDrag( event ) {
     var gestureSettings;
 
+    var canvasDragEventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        delta: event.delta,
+        speed: event.speed,
+        direction: event.direction,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: event.preventDefaultAction
+    };
+    /**
+     * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-drag
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
+     * @property {Number} speed - Current computed speed, in pixels per second.
+     * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag behaviour. Default: false.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
+
     if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if( !this.panHorizontal ){
@@ -2565,32 +2701,6 @@ function onCanvasDrag( event ) {
 
         this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
     }
-
-    /**
-     * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-drag
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
-     * @property {Number} speed - Current computed speed, in pixels per second.
-     * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
-     * @property {Boolean} shift - True if the shift key was pressed during this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent( 'canvas-drag', {
-        tracker: event.eventSource,
-        position: event.position,
-        delta: event.delta,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
 }
 
 function onCanvasDragEnd( event ) {
