@@ -325,10 +325,15 @@
          */
         getActivePointersListExceptType: function ( type ) {
             var delegate = THIS[ this.hash ];
+            var listArray = [];
 
-            return delegate.activePointersLists.filter(function(pointersList) {
-                return pointersList.type !== type;
-            });
+            for (var i = 0; i < delegate.activePointersLists.length; ++i) {
+                if (delegate.activePointersLists[i].type !== type) {
+                    listArray.push(delegate.activePointersLists[i]);
+                }
+            }
+
+            return listArray;
         },
 
         /**
