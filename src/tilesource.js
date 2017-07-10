@@ -60,6 +60,8 @@
  *      the extending classes implementation of 'configure'.
  * @param {String} [options.url]
  *      The URL for the data necessary for this TileSource.
+ * @param {String} [options.referenceStripThumbnailUrl]
+ *      The URL for the thumbnail image to be used by the reference strip
  * @param {Function} [options.success]
  *      A function to be called upon successful creation.
  * @param {Boolean} [options.ajaxWithCredentials]
