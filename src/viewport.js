@@ -734,6 +734,24 @@ $.Viewport.prototype = {
 
 
     /**
+     * Returns bounds taking constraints into account
+     * Added to improve constrained panning
+     * @param {Boolean} immediately
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    // Added to improve constrained panning
+    getConstrainedBounds: function( immediately ) {
+        var bounds,
+            constrainedBounds;
+
+        bounds = this.getBounds();
+
+        constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
+
+        return constrainedBounds;
+    },
+
+    /**
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately

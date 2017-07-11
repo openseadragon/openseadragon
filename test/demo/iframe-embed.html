@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Iframe example embed</title>
+
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; background-color: white;}
+    </style>
+  </head>
+
+  <body>
+    <div id="contentDiv" allowfullscreen style="height: 100%"> </div>
+
+    <script type="text/javascript">
+
+        var _viewer = OpenSeadragon({
+            element: document.getElementById("contentDiv"),
+            tileSources:  "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+            homeFillsViewer: true,
+            showZoomControl: false,
+            constrainDuringPan: true,
+            visibilityRatio: 1,
+            prefixUrl: "../../build/openseadragon/images/",
+            minZoomImageRatio: 1
+        });
+    </script>
+  </body>
+</html>

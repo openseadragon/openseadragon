@@ -428,9 +428,19 @@ function loadPanels( strip, viewerSize, scroll ) {
     for ( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ) {
         element = strip.panels[i];
         if ( !element.activePanel ) {
+            var miniTileSource;
+            var originalTileSource = strip.viewer.tileSources[i];
+            if (originalTileSource.referenceStripThumbnailUrl) {
+                miniTileSource = {
+                    type: 'image',
+                    url: originalTileSource.referenceStripThumbnailUrl
+                };
+            } else {
+                miniTileSource = originalTileSource;
+            }
             miniViewer = new $.Viewer( {
                 id:                     element.id,
-                tileSources:            [strip.viewer.tileSources[i]],
+                tileSources:            [miniTileSource],
                 element:                element,
                 navigatorSizeRatio:     strip.sizeRatio,
                 showNavigator:          false,
