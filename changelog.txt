@@ -53,6 +53,8 @@ OPENSEADRAGON CHANGELOG
 * Fixed: One image failing to load could cause the others to never load (#1229)
 * Added functions for dynamically adding and removing the reference strip in sequence mode (#1213)
 * Added ability to provide thumbnail URLs for reference strip (#1241)
+* Fixed: Mouse up outside map will cause "canvas-drag" event to stick (#1133)
+* Improved panning constraints for constrainDuringPan (#1133)
 
 2.2.1:
 
