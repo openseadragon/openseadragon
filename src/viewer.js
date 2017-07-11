@@ -2639,6 +2639,7 @@ function onCanvasDblClick( event ) {
 
 function onCanvasDrag( event ) {
     var gestureSettings;
+
     var canvasDragEventArgs = {
         tracker: event.eventSource,
         position: event.position,
@@ -2667,7 +2668,8 @@ function onCanvasDrag( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
-    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
+
+    if ( !event.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if( !this.panHorizontal ){
             event.delta.x = 0;
@@ -2675,12 +2677,29 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if( event.delta.x !== 0 || event.delta.y !== 0 ){
-            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
-            if( this.constrainDuringPan ){
-                this.viewport.applyConstraints();
+
+        if( this.constrainDuringPan ){
+            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+
+            this.viewport.centerSpringX.target.value += delta.x;
+            this.viewport.centerSpringY.target.value += delta.y;
+
+            var bounds = this.viewport.getBounds();
+            var constrainedBounds = this.viewport.getConstrainedBounds();
+
+            this.viewport.centerSpringX.target.value -= delta.x;
+            this.viewport.centerSpringY.target.value -= delta.y;
+
+            if (bounds.x != constrainedBounds.x) {
+                event.delta.x = 0;
+            }
+
+            if (bounds.y != constrainedBounds.y) {
+                event.delta.y = 0;
             }
         }
+
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
     }
 }
 
@@ -2763,6 +2782,11 @@ function onCanvasEnter( event ) {
 }
 
 function onCanvasExit( event ) {
+
+    if (window.location != window.parent.location){
+        $.MouseTracker.resetAllMouseTrackers();
+    }
+
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *
