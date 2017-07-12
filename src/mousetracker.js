@@ -318,12 +318,12 @@
         },
 
         /**
-         * Returns {Array.<OpenSeadragon.MouseTracker>} excluding the given pointer device type
+         * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for all but the given pointer device type.
          * @function
          * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
-         * @returns {Array.<OpenSeadragon.MouseTracker>}
+         * @returns {Array.<OpenSeadragon.MouseTracker.GesturePointList>}
          */
-        getActivePointersListExceptType: function ( type ) {
+        getActivePointersListsExceptType: function ( type ) {
             var delegate = THIS[ this.hash ];
             var listArray = [];
 
@@ -2053,18 +2053,21 @@
             gPointCount = pointsList.getLength(),
             abortGPoints = [];
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            abortGPoints.push( pointsList.getByIndex( i ) );
-        }
+        // Check contact count for hoverable pointer types before aborting
+        if (pointsList.type === 'touch' || pointsList.contacts > 0) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                abortGPoints.push( pointsList.getByIndex( i ) );
+            }
 
-        if ( abortGPoints.length > 0 ) {
-            // simulate touchend/mouseup
-            updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
-            // release pointer capture
-            pointsList.captureCount = 1;
-            releasePointer( tracker, pointsList.type );
-            // simulate touchleave/mouseout
-            updatePointersExit( tracker, event, abortGPoints );
+            if ( abortGPoints.length > 0 ) {
+                // simulate touchend/mouseup
+                updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
+                // release pointer capture
+                pointsList.captureCount = 1;
+                releasePointer( tracker, pointsList.type );
+                // simulate touchleave/mouseout
+                updatePointersExit( tracker, event, abortGPoints );
+            }
         }
     }
 
@@ -2735,7 +2738,7 @@
 
         // Some pointers may steal control from another pointer without firing the appropriate release events
         // e.g. Touching a screen while click-dragging with certain mice.
-        var otherPointsLists = tracker.getActivePointersListExceptType(gPoints[ 0 ].type);
+        var otherPointsLists = tracker.getActivePointersListsExceptType(gPoints[ 0 ].type);
         for (i = 0; i < otherPointsLists.length; i++) {
             //If another pointer has contact, simulate the release
             abortContacts(tracker, event, otherPointsLists[i]); // No-op if no active pointer
