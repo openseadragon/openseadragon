@@ -485,10 +485,9 @@ $.Viewport.prototype = {
      * @function
      * @private
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Boolean} immediately
      * @return {OpenSeadragon.Rect} constrained bounds.
      */
-    _applyBoundaryConstraints: function(bounds, immediately) {
+    _applyBoundaryConstraints: function(bounds) {
         var newBounds = new $.Rect(
                 bounds.x,
                 bounds.y,
@@ -531,6 +530,16 @@ $.Viewport.prototype = {
             }
         }
 
+        return newBounds;
+    },
+
+    /**
+     * @function
+     * @private
+     * @param {Boolean} [immediately=false] - whether the function that triggered this event was
+     * called with the "immediately" flag
+     */
+    _raiseConstraintsEvent: function(immediately) {
         if (this.viewer) {
             /**
              * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
@@ -539,15 +548,14 @@ $.Viewport.prototype = {
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-             * @property {Boolean} immediately
+             * @property {Boolean} immediately - whether the function that triggered this event was
+             * called with the "immediately" flag
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
         }
-
-        return newBounds;
     },
 
     /**
@@ -567,8 +575,8 @@ $.Viewport.prototype = {
         }
 
         var bounds = this.getBoundsNoRotate();
-        var constrainedBounds = this._applyBoundaryConstraints(
-            bounds, immediately);
+        var constrainedBounds = this._applyBoundaryConstraints(bounds);
+        this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
@@ -638,8 +646,9 @@ $.Viewport.prototype = {
                 newBounds.y = center.y - newBounds.height / 2;
             }
 
-            newBounds = this._applyBoundaryConstraints(newBounds, immediately);
+            newBounds = this._applyBoundaryConstraints(newBounds);
             center = newBounds.getCenter();
+            this._raiseConstraintsEvent(immediately);
         }
 
         if (immediately) {
@@ -736,17 +745,16 @@ $.Viewport.prototype = {
     /**
      * Returns bounds taking constraints into account
      * Added to improve constrained panning
-     * @param {Boolean} immediately
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    // Added to improve constrained panning
-    getConstrainedBounds: function( immediately ) {
+    getConstrainedBounds: function(current) {
         var bounds,
             constrainedBounds;
 
-        bounds = this.getBounds();
+        bounds = this.getBounds(current);
 
-        constrainedBounds = this._applyBoundaryConstraints( bounds, immediately );
+        constrainedBounds = this._applyBoundaryConstraints(bounds);
 
         return constrainedBounds;
     },
