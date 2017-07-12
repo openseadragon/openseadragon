@@ -54,7 +54,7 @@ OPENSEADRAGON CHANGELOG
 * Added functions for dynamically adding and removing the reference strip in sequence mode (#1213)
 * Added ability to provide thumbnail URLs for reference strip (#1241)
 * Fixed: Mouse up outside map will cause "canvas-drag" event to stick (#1133)
-* Improved panning constraints for constrainDuringPan (#1133)
+* Improved panning constraints for constrainDuringPan (#1133 and #1245)
 
 2.2.1:
 
