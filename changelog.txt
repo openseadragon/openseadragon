@@ -55,6 +55,7 @@ OPENSEADRAGON CHANGELOG
 * Added ability to provide thumbnail URLs for reference strip (#1241)
 * Fixed: Mouse up outside map will cause "canvas-drag" event to stick (#1133)
 * Improved panning constraints for constrainDuringPan (#1133 and #1245)
+* Fix more issues with tracking multiple pointers (#1244)
 
 2.2.1:
 
