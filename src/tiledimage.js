@@ -146,7 +146,8 @@ $.TiledImage = function( options ) {
         //internal state properties
         viewer:         null,
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
-        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
+        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean; shows what areas have been drawn.
+        loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
@@ -960,6 +961,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateViewport: function() {
         this._needsDraw = false;
         this._tilesLoading = 0;
+        this.loadingCoverage = {};
 
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
@@ -1158,6 +1160,7 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     }
 
     resetCoverage(tiledImage.coverage, level);
+    resetCoverage(tiledImage.loadingCoverage, level);
 
     //OK, a new drawing so do your calculations
     var cornerTiles = tiledImage._getCornerTiles(level, topLeftBound, bottomRightBound);
@@ -1252,6 +1255,9 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
 
     setCoverage( tiledImage.coverage, level, x, y, false );
 
+    var loadingCoverage = tile.loaded || tile.loading || isCovered(tiledImage.loadingCoverage, level, x, y);
+    setCoverage(tiledImage.loadingCoverage, level, x, y, loadingCoverage);
+
     if ( !tile.exists ) {
         return best;
     }
@@ -1305,7 +1311,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
     } else if ( tile.loading ) {
         // the tile is already in the download queue
         tiledImage._tilesLoading++;
-    } else {
+    } else if (!loadingCoverage) {
         best = compareTiles( best, tile );
     }
 
