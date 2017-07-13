@@ -812,7 +812,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Set true to load even when hidden. Set false to block loading when hidden.
      */
     setPreload: function(preload) {
-        this._preload = new Boolean(preload).valueOf();
+        this._preload = !!preload;
         this._needsDraw = true;
     },
 
