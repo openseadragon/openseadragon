@@ -185,7 +185,11 @@
   *     If 0, adjusts to fit viewer.
   *
   * @property {Number} [opacity=1]
-  *     Default opacity of the tiled images (1=opaque, 0=transparent)
+  *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
+  *     Hidden images do not draw and only load when preloading is allowed.
+  *
+  * @property {Boolean} [preload=false]
+  *     Default switch for loading hidden images (true loads, false blocks)
   *
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
@@ -1128,6 +1132,7 @@ function OpenSeadragon( options ){
 
             // APPEARANCE
             opacity:                    1,
+            preload:                    false,
             compositeOperation:         null,
             placeholderFillStyle:       null,
 
