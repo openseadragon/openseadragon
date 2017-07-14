@@ -56,6 +56,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Mouse up outside map will cause "canvas-drag" event to stick (#1133)
 * Improved panning constraints for constrainDuringPan (#1133 and #1245)
 * Fix more issues with tracking multiple pointers (#1244)
+* You can now preload images without drawing them to the screen (#1071)
 
 2.2.1:
 
