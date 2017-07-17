@@ -30,6 +30,6 @@
   },
   "scripts": {
     "test": "grunt test",
-    "prepublish": "grunt build"
+    "prepare": "grunt build"
   }
 }
