@@ -1238,8 +1238,9 @@
         },
 
         /**
-         * @function Increment this pointer's contact count.
+         * Increment this pointer's contact count.
          * It will evaluate whether this pointer type is allowed to have multiple contacts.
+         * @function
          */
         addContact: function() {
             ++this.contacts;
@@ -1250,8 +1251,9 @@
         },
 
         /**
-         * @function Decrement this pointer's contact count.
+         * Decrement this pointer's contact count.
          * It will make sure the count does not go below 0.
+         * @function
          */
         removeContact: function() {
             --this.contacts;
@@ -3341,10 +3343,12 @@
         }
     }
 
-    // True if inside an iframe, otherwise false.
-    // @member {Boolean} isInIframe
-    // @private
-    // @inner
+    /**
+     * True if inside an iframe, otherwise false.
+     * @member {Boolean} isInIframe
+     * @private
+     * @inner
+     */
     var isInIframe = (function() {
         try {
             return window.self !== window.top;
@@ -3353,10 +3357,12 @@
         }
     })();
 
-    // @function
-    // @private
-    // @inner
-    // @returns {Boolean} True if the target has access rights to events, otherwise false.
+    /**
+     * @function
+     * @private
+     * @inner
+     * @returns {Boolean} True if the target has access rights to events, otherwise false.
+     */
     function canAccessEvents (target) {
         try {
             return target.addEventListener && target.removeEventListener;
