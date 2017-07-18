@@ -849,8 +849,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @private
      * Get the point around which this tiled image is rotated
+     * @private
      * @param {Boolean} current True for current rotation point, false for target.
      * @returns {OpenSeadragon.Point}
      */

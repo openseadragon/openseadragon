@@ -690,13 +690,6 @@
   */
 
 
- /**
-  * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
-  * combinations of out-of-the-box configurable features.
-  *
-  * @param {OpenSeadragon.Options} options - Viewer options.
-  * @returns {OpenSeadragon.Viewer}
-  */
 function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
 }
