@@ -194,8 +194,12 @@ module.exports = function(grunt) {
             target: sources
         },
         "git-describe": {
+            "options": {
+                failOnError: false
+            },
             build: {}
-        }
+        },
+        gitInfo: "unknown"
     });
 
     // ----------
