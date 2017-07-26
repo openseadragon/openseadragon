@@ -113,8 +113,10 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
             }
         }
 
-        return ( "http://schemas.microsoft.com/deepzoom/2008" == ns ||
-            "http://schemas.microsoft.com/deepzoom/2009" == ns );
+        ns = (ns || '').toLowerCase();
+
+        return (ns.indexOf('schemas.microsoft.com/deepzoom/2008') !== -1 ||
+            ns.indexOf('schemas.microsoft.com/deepzoom/2009') !== -1);
     },
 
     /**
@@ -140,7 +142,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
 
         if (url && !options.tilesUrl) {
             options.tilesUrl = url.replace(
-                    /([^\/]+?)(\.(dzi|xml|js))?(\?[^\/]*)?\/?$/, '$1_files/');
+                    /([^\/]+?)(\.(dzi|xml|js)?(\?[^\/]*)?)?\/?$/, '$1_files/');
 
             if (url.search(/\.(dzi|xml|js)\?/) != -1) {
                 options.queryParams = url.match(/\?.*/);

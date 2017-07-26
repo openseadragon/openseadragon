@@ -60,11 +60,15 @@
  *      the extending classes implementation of 'configure'.
  * @param {String} [options.url]
  *      The URL for the data necessary for this TileSource.
+ * @param {String} [options.referenceStripThumbnailUrl]
+ *      The URL for a thumbnail image to be used by the reference strip
  * @param {Function} [options.success]
  *      A function to be called upon successful creation.
  * @param {Boolean} [options.ajaxWithCredentials]
  *      If this TileSource needs to make an AJAX call, this specifies whether to set
  *      the XHR's withCredentials (for accessing secure data).
+ * @param {Object} [options.ajaxHeaders]
+ *      A set of headers to include in AJAX requests.
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -318,25 +322,20 @@ $.TileSource.prototype = {
 
     /**
      * @function
-     * @param {Number} level
+     * @returns {Number} The highest level in this tile source that can be contained in a single tile.
      */
-    getClosestLevel: function( rect ) {
+    getClosestLevel: function() {
         var i,
-            tilesPerSide,
             tiles;
 
-        for( i = this.minLevel; i < this.maxLevel; i++ ){
-            tiles = this.getNumTiles( i );
-            tilesPerSide = new $.Point(
-              Math.floor( rect.x / this.getTileWidth(i) ),
-              Math.floor( rect.y / this.getTileHeight(i) )
-            );
-
-            if( tiles.x + 1 >= tilesPerSide.x && tiles.y + 1 >= tilesPerSide.y ){
+        for (i = this.minLevel + 1; i <= this.maxLevel; i++){
+            tiles = this.getNumTiles(i);
+            if (tiles.x > 1 || tiles.y > 1) {
                 break;
             }
         }
-        return Math.max( 0, i - 1 );
+
+        return i - 1;
     },
 
     /**
@@ -475,6 +474,7 @@ $.TileSource.prototype = {
             $.makeAjaxRequest( {
                 url: url,
                 withCredentials: this.ajaxWithCredentials,
+                headers: this.ajaxHeaders,
                 success: function( xhr ) {
                     var data = processResponse( xhr );
                     callback( data );
@@ -559,7 +559,7 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Responsible for retriving the url which will return an image for the
+     * Responsible for retrieving the url which will return an image for the
      * region specified by the given x, y, and level components.
      * This method is not implemented by this class other than to throw an Error
      * announcing you have to implement it.  Because of the variety of tile
@@ -573,6 +573,23 @@ $.TileSource.prototype = {
      */
     getTileUrl: function( level, x, y ) {
         throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Responsible for retrieving the headers which will be attached to the image request for the
+     * region specified by the given x, y, and level components.
+     * This option is only relevant if {@link OpenSeadragon.Options}.loadTilesWithAjax is set to true.
+     * The headers returned here will override headers specified at the Viewer or TiledImage level.
+     * Specifying a falsy value for a header will clear its existing value set at the Viewer or
+     * TiledImage level (if any).
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @returns {Object}
+     */
+    getTileAjaxHeaders: function( level, x, y ) {
+        return {};
     },
 
     /**
@@ -629,7 +646,11 @@ function processResponse( xhr ){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[\{\[].*/) ){
-        data = $.parseJSON(responseText);
+        try{
+          data = $.parseJSON(responseText);
+        } catch(e){
+          data =  responseText;
+        }
     }else{
         data = responseText;
     }

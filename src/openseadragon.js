@@ -185,7 +185,11 @@
   *     If 0, adjusts to fit viewer.
   *
   * @property {Number} [opacity=1]
-  *     Default opacity of the tiled images (1=opaque, 0=transparent)
+  *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
+  *     Hidden images do not draw and only load when preloading is allowed.
+  *
+  * @property {Boolean} [preload=false]
+  *     Default switch for loading hidden images (true loads, false blocks)
   *
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
@@ -411,6 +415,7 @@
   *     The max number of images we should keep in memory (per drawer).
   *
   * @property {Number} [timeout=30000]
+  *     The max number of milliseconds that an image job may take to complete.
   *
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
@@ -584,8 +589,15 @@
   *     not use CORS, and the canvas will be tainted.
   *
   * @property {Boolean} [ajaxWithCredentials=false]
-  *     Whether to set the withCredentials XHR flag for AJAX requests (when loading tile sources).
+  *     Whether to set the withCredentials XHR flag for AJAX requests.
   *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Boolean} [loadTilesWithAjax=false]
+  *     Whether to load tile data using AJAX requests.
+  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Object} [ajaxHeaders={}]
+  *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
   */
 
@@ -678,13 +690,6 @@
   */
 
 
- /**
-  * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
-  * combinations of out-of-the-box configurable features.
-  *
-  * @param {OpenSeadragon.Options} options - Viewer options.
-  * @returns {OpenSeadragon.Viewer}
-  */
 function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
 }
@@ -867,7 +872,8 @@ function OpenSeadragon( options ){
     };
 
     /**
-     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
+     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
+     * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      * @member {Number} pixelDensityRatio
      * @memberof OpenSeadragon
      */
@@ -880,7 +886,7 @@ function OpenSeadragon( options ){
                                     context.msBackingStorePixelRatio ||
                                     context.oBackingStorePixelRatio ||
                                     context.backingStorePixelRatio || 1;
-            return devicePixelRatio / backingStoreRatio;
+            return Math.max(devicePixelRatio, 1) / backingStoreRatio;
         } else {
             return 1;
         }
@@ -1005,6 +1011,8 @@ function OpenSeadragon( options ){
             initialPage:            0,
             crossOriginPolicy:      false,
             ajaxWithCredentials:    false,
+            loadTilesWithAjax:      false,
+            ajaxHeaders:            {},
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -1117,6 +1125,7 @@ function OpenSeadragon( options ){
 
             // APPEARANCE
             opacity:                    1,
+            preload:                    false,
             compositeOperation:         null,
             placeholderFillStyle:       null,
 
@@ -2120,11 +2129,16 @@ function OpenSeadragon( options ){
          * @param {String} options.url - the url to request
          * @param {Function} options.success - a function to call on a successful response
          * @param {Function} options.error - a function to call on when an error occurs
+         * @param {Object} options.headers - headers to add to the AJAX request
+         * @param {String} options.responseType - the response type of the the AJAX request
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
+         * @returns {XMLHttpRequest}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;
+            var headers;
+            var responseType;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2132,6 +2146,8 @@ function OpenSeadragon( options ){
                 onSuccess = url.success;
                 onError = url.error;
                 withCredentials = url.withCredentials;
+                headers = url.headers;
+                responseType = url.responseType || null;
                 url = url.url;
             }
 
@@ -2147,9 +2163,9 @@ function OpenSeadragon( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    // With protocols other than http/https, the status is 200
-                    // on Firefox and 0 on other browsers
-                    if ( request.status === 200 ||
+                    // With protocols other than http/https, a successful request status is in
+                    // the 200's on Firefox and 0 on other browsers
+                    if ( (request.status >= 200 && request.status < 300) ||
                         ( request.status === 0 &&
                           protocol !== "http:" &&
                           protocol !== "https:" )) {
@@ -2167,11 +2183,23 @@ function OpenSeadragon( options ){
             try {
                 request.open( "GET", url, true );
 
+                if (responseType) {
+                    request.responseType = responseType;
+                }
+
+                if (headers) {
+                    for (var headerName in headers) {
+                        if (headers.hasOwnProperty(headerName) && headers[headerName]) {
+                            request.setRequestHeader(headerName, headers[headerName]);
+                        }
+                    }
+                }
+
                 if (withCredentials) {
                     request.withCredentials = true;
                 }
 
-                request.send( null );
+                request.send(null);
             } catch (e) {
                 var msg = e.message;
 
@@ -2231,6 +2259,8 @@ function OpenSeadragon( options ){
                     }
                 }
             }
+
+            return request;
         },
 
         /**

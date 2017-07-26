@@ -8,10 +8,6 @@
             "off",
             4
         ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
         "quotes": [
             "off",
             "double"

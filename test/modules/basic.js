@@ -424,11 +424,47 @@
 
     } );
 
-    test('version object', function() {
-        equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
-        ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
-        ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
-        ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+
+    asyncTest('SetDebugMode', function() {
+        ok(viewer, 'Viewer exists');
+
+        var checkImageTilesDebugState = function (expectedState) {
+
+            for (var i = 0; i < viewer.world.getItemCount(); i++) {
+                if(viewer.world.getItemAt(i).debugMode != expectedState) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+
+            //Ensure we start with debug mode turned off
+            viewer.setDebugMode(false);
+            ok(checkImageTilesDebugState(false), "All image tiles have debug mode turned off.");
+            ok(!viewer.debugMode, "Viewer debug mode is turned off.");
+
+            //Turn debug mode on and check that the Viewer and all tiled images are in debug mode.
+            viewer.setDebugMode(true);
+            ok(checkImageTilesDebugState(true), "All image tiles have debug mode turned on.");
+            ok(viewer.debugMode, "Viewer debug mode is turned on.");
+
+            start();
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
     });
 
+    //Version numbers are injected by the build process, so skip version tests if we are only running code coverage
+    if(!window.isCoverageTest ){
+        test('version object', function() {
+            equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
+            ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
+            ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
+            ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+        });
+    }
 })();

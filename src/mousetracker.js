@@ -318,6 +318,25 @@
         },
 
         /**
+         * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for all but the given pointer device type.
+         * @function
+         * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
+         * @returns {Array.<OpenSeadragon.MouseTracker.GesturePointList>}
+         */
+        getActivePointersListsExceptType: function ( type ) {
+            var delegate = THIS[ this.hash ];
+            var listArray = [];
+
+            for (var i = 0; i < delegate.activePointersLists.length; ++i) {
+                if (delegate.activePointersLists[i].type !== type) {
+                    listArray.push(delegate.activePointersLists[i]);
+                }
+            }
+
+            return listArray;
+        },
+
+        /**
          * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for the given pointer device type,
          * creating and caching a new {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} if one doesn't already exist for the type.
          * @function
@@ -862,6 +881,21 @@
         blurHandler: function () { }
     };
 
+    /**
+     * Resets all active mousetrakers. (Added to patch issue #697 "Mouse up outside map will cause "canvas-drag" event to stick")
+     *
+     * @private
+     * @member resetAllMouseTrackers
+     * @memberof OpenSeadragon.MouseTracker
+     */
+    $.MouseTracker.resetAllMouseTrackers = function(){
+        for(var i = 0; i < MOUSETRACKERS.length; i++){
+            if (MOUSETRACKERS[i].isTracking()){
+                MOUSETRACKERS[i].setTracking(false);
+                MOUSETRACKERS[i].setTracking(true);
+            }
+        }
+    };
 
     /**
      * Provides continuous computation of velocity (speed and direction) of active pointers.
@@ -1201,6 +1235,32 @@
                 }
             }
             return null;
+        },
+
+        /**
+         * Increment this pointer's contact count.
+         * It will evaluate whether this pointer type is allowed to have multiple contacts.
+         * @function
+         */
+        addContact: function() {
+            ++this.contacts;
+
+            if (this.contacts > 1 && (this.type === "mouse" || this.type === "pen")) {
+                this.contacts = 1;
+            }
+        },
+
+        /**
+         * Decrement this pointer's contact count.
+         * It will make sure the count does not go below 0.
+         * @function
+         */
+        removeContact: function() {
+            --this.contacts;
+
+            if (this.contacts < 0) {
+                this.contacts = 0;
+            }
         }
     };
 
@@ -2005,23 +2065,26 @@
      * @private
      * @inner
      */
-    function abortTouchContacts( tracker, event, pointsList ) {
+    function abortContacts( tracker, event, pointsList ) {
         var i,
             gPointCount = pointsList.getLength(),
             abortGPoints = [];
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            abortGPoints.push( pointsList.getByIndex( i ) );
-        }
+        // Check contact count for hoverable pointer types before aborting
+        if (pointsList.type === 'touch' || pointsList.contacts > 0) {
+            for ( i = 0; i < gPointCount; i++ ) {
+                abortGPoints.push( pointsList.getByIndex( i ) );
+            }
 
-        if ( abortGPoints.length > 0 ) {
-            // simulate touchend
-            updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
-            // release pointer capture
-            pointsList.captureCount = 1;
-            releasePointer( tracker, 'touch' );
-            // simulate touchleave
-            updatePointersExit( tracker, event, abortGPoints );
+            if ( abortGPoints.length > 0 ) {
+                // simulate touchend/mouseup
+                updatePointersUp( tracker, event, abortGPoints, 0 ); // 0 means primary button press/release or touch contact
+                // release pointer capture
+                pointsList.captureCount = 1;
+                releasePointer( tracker, pointsList.type );
+                // simulate touchleave/mouseout
+                updatePointersExit( tracker, event, abortGPoints );
+            }
         }
     }
 
@@ -2043,7 +2106,7 @@
 
         if ( pointsList.getLength() > event.touches.length - touchCount ) {
             $.console.warn('Tracked touch contact count doesn\'t match event.touches.length. Removing all tracked touch pointers.');
-            abortTouchContacts( tracker, event, pointsList );
+            abortContacts( tracker, event, pointsList );
         }
 
         for ( i = 0; i < touchCount; i++ ) {
@@ -2213,7 +2276,7 @@
     function onTouchCancel( tracker, event ) {
         var pointsList = tracker.getActivePointersListByType('touch');
 
-        abortTouchContacts( tracker, event, pointsList );
+        abortContacts( tracker, event, pointsList );
     }
 
 
@@ -2690,6 +2753,14 @@
             }
         }
 
+        // Some pointers may steal control from another pointer without firing the appropriate release events
+        // e.g. Touching a screen while click-dragging with certain mice.
+        var otherPointsLists = tracker.getActivePointersListsExceptType(gPoints[ 0 ].type);
+        for (i = 0; i < otherPointsLists.length; i++) {
+            //If another pointer has contact, simulate the release
+            abortContacts(tracker, event, otherPointsLists[i]); // No-op if no active pointer
+        }
+
         // Only capture and track primary button, pen, and touch contacts
         if ( buttonChanged !== 0 ) {
             // Aux Press
@@ -2740,7 +2811,7 @@
                 startTrackingPointer( pointsList, curGPoint );
             }
 
-            pointsList.contacts++;
+            pointsList.addContact();
             //$.console.log('contacts++ ', pointsList.contacts);
 
             if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
@@ -2879,6 +2950,11 @@
                 }
             }
 
+            // A primary mouse button may have been released while the non-primary button was down
+            var otherPointsList = tracker.getActivePointersListByType("mouse");
+            // Stop tracking the mouse; see https://github.com/openseadragon/openseadragon/pull/1223
+            abortContacts(tracker, event, otherPointsList); // No-op if no active pointer
+
             return false;
         }
 
@@ -2907,7 +2983,7 @@
                 if ( wasCaptured ) {
                     // Pointer was activated in our element but could have been removed in any element since events are captured to our element
 
-                    pointsList.contacts--;
+                    pointsList.removeContact();
                     //$.console.log('contacts-- ', pointsList.contacts);
 
                     if ( tracker.dragHandler || tracker.dragEndHandler || tracker.pinchHandler ) {
@@ -3267,10 +3343,12 @@
         }
     }
 
-    // True if inside an iframe, otherwise false.
-    // @member {Boolean} isInIframe
-    // @private
-    // @inner
+    /**
+     * True if inside an iframe, otherwise false.
+     * @member {Boolean} isInIframe
+     * @private
+     * @inner
+     */
     var isInIframe = (function() {
         try {
             return window.self !== window.top;
@@ -3279,10 +3357,12 @@
         }
     })();
 
-    // @function
-    // @private
-    // @inner
-    // @returns {Boolean} True if the target has access rights to events, otherwise false.
+    /**
+     * @function
+     * @private
+     * @inner
+     * @returns {Boolean} True if the target has access rights to events, otherwise false.
+     */
     function canAccessEvents (target) {
         try {
             return target.addEventListener && target.removeEventListener;

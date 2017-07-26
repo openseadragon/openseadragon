@@ -70,11 +70,18 @@
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
- * @param {Number} [options.opacity=1] - Opacity the tiled image should be drawn at.
+ * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
+ * @param {Boolean} [options.preload=false] - Set true to load even when the image is hidden by zero opacity.
  * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.loadTilesWithAjax]
+ *      Whether to load tile data using AJAX requests.
+ *      Defaults to the setting in {@link OpenSeadragon.Options}.
+ * @param {Object} [options.ajaxHeaders={}]
+ *      A set of headers to include when making tile AJAX requests.
  */
 $.TiledImage = function( options ) {
     var _this = this;
@@ -140,7 +147,8 @@ $.TiledImage = function( options ) {
         //internal state properties
         viewer:         null,
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
-        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean.
+        coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean; shows what areas have been drawn.
+        loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
@@ -161,10 +169,15 @@ $.TiledImage = function( options ) {
         iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:              $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
+        ajaxWithCredentials:    $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
+        preload:                $.DEFAULT_SETTINGS.preload,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
+
+    this._preload = this.preload;
+    delete this.preload;
 
     this._fullyLoaded = false;
 
@@ -293,7 +306,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Draws the TiledImage to its Drawer.
      */
     draw: function() {
-        if (this.opacity !== 0) {
+        if (this.opacity !== 0 || this._preload) {
             this._midDraw = true;
             this._updateViewport();
             this._midDraw = false;
@@ -764,9 +777,42 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @param {Number} opacity Opacity the tiled image should be drawn at.
+     * @fires OpenSeadragon.TiledImage.event:opacity-change
      */
     setOpacity: function(opacity) {
+        if (opacity === this.opacity) {
+            return;
+        }
+
         this.opacity = opacity;
+        this._needsDraw = true;
+        /**
+         * Raised when the TiledImage's opacity is changed.
+         * @event opacity-change
+         * @memberOf OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {Number} opacity - The new opacity value.
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the
+         * TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('opacity-change', {
+            opacity: this.opacity
+        });
+    },
+
+    /**
+     * @returns {Boolean} whether the tiledImage can load its tiles even when it has zero opacity.
+     */
+    getPreload: function() {
+        return this._preload;
+    },
+
+    /**
+     * Set true to load even when hidden. Set false to block loading when hidden.
+     */
+    setPreload: function(preload) {
+        this._preload = !!preload;
         this._needsDraw = true;
     },
 
@@ -803,8 +849,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @private
      * Get the point around which this tiled image is rotated
+     * @private
      * @param {Boolean} current True for current rotation point, false for target.
      * @returns {OpenSeadragon.Point}
      */
@@ -821,10 +867,28 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @param {String} compositeOperation the tiled image should be drawn with this globalCompositeOperation.
+     * @fires OpenSeadragon.TiledImage.event:composite-operation-change
      */
     setCompositeOperation: function(compositeOperation) {
+        if (compositeOperation === this.compositeOperation) {
+            return;
+        }
+
         this.compositeOperation = compositeOperation;
         this._needsDraw = true;
+        /**
+         * Raised when the TiledImage's opacity is changed.
+         * @event composite-operation-change
+         * @memberOf OpenSeadragon.TiledImage
+         * @type {object}
+         * @property {String} compositeOperation - The new compositeOperation value.
+         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the
+         * TiledImage which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent('composite-operation-change', {
+            compositeOperation: this.compositeOperation
+        });
     },
 
     // private
@@ -917,6 +981,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateViewport: function() {
         this._needsDraw = false;
         this._tilesLoading = 0;
+        this.loadingCoverage = {};
 
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
@@ -971,7 +1036,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(
                     Math.max(
-                        this.source.getClosestLevel(viewport.containerSize) - 1,
+                        this.source.getClosestLevel(),
                         0
                     )
                 ),
@@ -1115,6 +1180,7 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     }
 
     resetCoverage(tiledImage.coverage, level);
+    resetCoverage(tiledImage.loadingCoverage, level);
 
     //OK, a new drawing so do your calculations
     var cornerTiles = tiledImage._getCornerTiles(level, topLeftBound, bottomRightBound);
@@ -1179,6 +1245,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
     var tile = getTile(
             x, y,
             level,
+            tiledImage,
             tiledImage.source,
             tiledImage.tilesMatrix,
             currentTime,
@@ -1207,6 +1274,9 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
     }
 
     setCoverage( tiledImage.coverage, level, x, y, false );
+
+    var loadingCoverage = tile.loaded || tile.loading || isCovered(tiledImage.loadingCoverage, level, x, y);
+    setCoverage(tiledImage.loadingCoverage, level, x, y, loadingCoverage);
 
     if ( !tile.exists ) {
         return best;
@@ -1237,7 +1307,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
         if (tile.context2D) {
             setTileLoaded(tiledImage, tile);
         } else {
-            var imageRecord = tiledImage._tileCache.getImageRecord(tile.url);
+            var imageRecord = tiledImage._tileCache.getImageRecord(tile.cacheKey);
             if (imageRecord) {
                 var image = imageRecord.getImage();
                 setTileLoaded(tiledImage, tile, image);
@@ -1261,7 +1331,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
     } else if ( tile.loading ) {
         // the tile is already in the download queue
         tiledImage._tilesLoading++;
-    } else {
+    } else if (!loadingCoverage) {
         best = compareTiles( best, tile );
     }
 
@@ -1275,6 +1345,7 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
  * @param {Number} x
  * @param {Number} y
  * @param {Number} level
+ * @param {OpenSeadragon.TiledImage} tiledImage
  * @param {OpenSeadragon.TileSource} tileSource
  * @param {Object} tilesMatrix - A '3d' dictionary [level][x][y] --> Tile.
  * @param {Number} time
@@ -1283,12 +1354,23 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
  * @param {Number} worldHeight
  * @returns {OpenSeadragon.Tile}
  */
-function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWidth, worldHeight ) {
+function getTile(
+    x, y,
+    level,
+    tiledImage,
+    tileSource,
+    tilesMatrix,
+    time,
+    numTiles,
+    worldWidth,
+    worldHeight
+) {
     var xMod,
         yMod,
         bounds,
         exists,
         url,
+        ajaxHeaders,
         context2D,
         tile;
 
@@ -1305,6 +1387,18 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+
+        // Headers are only applicable if loadTilesWithAjax is set
+        if (tiledImage.loadTilesWithAjax) {
+            ajaxHeaders = tileSource.getTileAjaxHeaders( level, xMod, yMod );
+            // Combine tile AJAX headers with tiled image AJAX headers (if applicable)
+            if ($.isPlainObject(tiledImage.ajaxHeaders)) {
+                ajaxHeaders = $.extend({}, tiledImage.ajaxHeaders, ajaxHeaders);
+            }
+        } else {
+            ajaxHeaders = null;
+        }
+
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
 
@@ -1318,7 +1412,9 @@ function getTile( x, y, level, tileSource, tilesMatrix, time, numTiles, worldWid
             bounds,
             exists,
             url,
-            context2D
+            context2D,
+            tiledImage.loadTilesWithAjax,
+            ajaxHeaders
         );
     }
 
@@ -1340,9 +1436,12 @@ function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        loadWithAjax: tile.loadWithAjax,
+        ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
-        callback: function( image, errorMsg ){
-            onTileLoad( tiledImage, tile, time, image, errorMsg );
+        ajaxWithCredentials: tiledImage.ajaxWithCredentials,
+        callback: function( image, errorMsg, tileRequest ){
+            onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
         },
         abort: function() {
             tile.loading = false;
@@ -1359,8 +1458,9 @@ function loadTile( tiledImage, tile, time ) {
  * @param {Number} time
  * @param {Image} image
  * @param {String} errorMsg
+ * @param {XMLHttpRequest} tileRequest
  */
-function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
+function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
         $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         /**
@@ -1373,8 +1473,15 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
          * @property {number} time - The time in milliseconds when the tile load began.
          * @property {string} message - The error message.
+         * @property {XMLHttpRequest} tileRequest - The XMLHttpRequest used to load the tile if available.
          */
-        tiledImage.viewer.raiseEvent("tile-load-failed", {tile: tile, tiledImage: tiledImage, time: time, message: errorMsg});
+        tiledImage.viewer.raiseEvent("tile-load-failed", {
+            tile: tile,
+            tiledImage: tiledImage,
+            time: time,
+            message: errorMsg,
+            tileRequest: tileRequest
+        });
         tile.loading = false;
         tile.exists = false;
         return;
@@ -1387,9 +1494,8 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
     }
 
     var finish = function() {
-        var cutoff = Math.ceil( Math.log(
-            tiledImage.source.getTileWidth(tile.level) ) / Math.log( 2 ) );
-        setTileLoaded(tiledImage, tile, image, cutoff);
+        var cutoff = tiledImage.source.getClosestLevel();
+        setTileLoaded(tiledImage, tile, image, cutoff, tileRequest);
     };
 
     // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -1410,7 +1516,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg ) {
  * @param {Image} image
  * @param {Number} cutoff
  */
-function setTileLoaded(tiledImage, tile, image, cutoff) {
+function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
     var increment = 0;
 
     function getCompletionCallback() {
@@ -1445,6 +1551,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
      * @property {Image} image - The image of the tile.
      * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+     * @property {XMLHttpRequest} tiledImage - The AJAX request that loaded this tile (if applicable).
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
      * marked as entirely loaded when the callback has been called once for each
@@ -1453,6 +1560,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff) {
     tiledImage.viewer.raiseEvent("tile-loaded", {
         tile: tile,
         tiledImage: tiledImage,
+        tileRequest: tileRequest,
         image: image,
         getCompletionCallback: getCompletionCallback
     });
@@ -1697,7 +1805,7 @@ function compareTiles( previousBest, tile ) {
  * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
  */
 function drawTiles( tiledImage, lastDrawn ) {
-    if (lastDrawn.length === 0) {
+    if (tiledImage.opacity === 0 || lastDrawn.length === 0) {
         return;
     }
     var tile = lastDrawn[0];

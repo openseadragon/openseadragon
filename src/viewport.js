@@ -485,10 +485,9 @@ $.Viewport.prototype = {
      * @function
      * @private
      * @param {OpenSeadragon.Rect} bounds
-     * @param {Boolean} immediately
      * @return {OpenSeadragon.Rect} constrained bounds.
      */
-    _applyBoundaryConstraints: function(bounds, immediately) {
+    _applyBoundaryConstraints: function(bounds) {
         var newBounds = new $.Rect(
                 bounds.x,
                 bounds.y,
@@ -531,6 +530,16 @@ $.Viewport.prototype = {
             }
         }
 
+        return newBounds;
+    },
+
+    /**
+     * @function
+     * @private
+     * @param {Boolean} [immediately=false] - whether the function that triggered this event was
+     * called with the "immediately" flag
+     */
+    _raiseConstraintsEvent: function(immediately) {
         if (this.viewer) {
             /**
              * Raised when the viewport constraints are applied (see {@link OpenSeadragon.Viewport#applyConstraints}).
@@ -539,15 +548,14 @@ $.Viewport.prototype = {
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-             * @property {Boolean} immediately
+             * @property {Boolean} immediately - whether the function that triggered this event was
+             * called with the "immediately" flag
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent( 'constrain', {
                 immediately: immediately
             });
         }
-
-        return newBounds;
     },
 
     /**
@@ -567,8 +575,8 @@ $.Viewport.prototype = {
         }
 
         var bounds = this.getBoundsNoRotate();
-        var constrainedBounds = this._applyBoundaryConstraints(
-            bounds, immediately);
+        var constrainedBounds = this._applyBoundaryConstraints(bounds);
+        this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
@@ -638,8 +646,9 @@ $.Viewport.prototype = {
                 newBounds.y = center.y - newBounds.height / 2;
             }
 
-            newBounds = this._applyBoundaryConstraints(newBounds, immediately);
+            newBounds = this._applyBoundaryConstraints(newBounds);
             center = newBounds.getCenter();
+            this._raiseConstraintsEvent(immediately);
         }
 
         if (immediately) {
@@ -734,6 +743,23 @@ $.Viewport.prototype = {
 
 
     /**
+     * Returns bounds taking constraints into account
+     * Added to improve constrained panning
+     * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    getConstrainedBounds: function(current) {
+        var bounds,
+            constrainedBounds;
+
+        bounds = this.getBounds(current);
+
+        constrainedBounds = this._applyBoundaryConstraints(bounds);
+
+        return constrainedBounds;
+    },
+
+    /**
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
@@ -805,7 +831,8 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:zoom
      */
-    zoomTo: function( zoom, refPoint, immediately ) {
+    zoomTo: function(zoom, refPoint, immediately) {
+        var _this = this;
 
         this.zoomPoint = refPoint instanceof $.Point &&
             !isNaN(refPoint.x) &&
@@ -813,13 +840,15 @@ $.Viewport.prototype = {
             refPoint :
             null;
 
-        if ( immediately ) {
-            this.zoomSpring.resetTo( zoom );
+        if (immediately) {
+            this._adjustCenterSpringsForZoomPoint(function() {
+                _this.zoomSpring.resetTo(zoom);
+            });
         } else {
-            this.zoomSpring.springTo( zoom );
+            this.zoomSpring.springTo(zoom);
         }
 
-        if( this.viewer ){
+        if (this.viewer) {
             /**
              * Raised when the viewport zoom level changes (see {@link OpenSeadragon.Viewport#zoomBy} and {@link OpenSeadragon.Viewport#zoomTo}).
              *
@@ -832,7 +861,7 @@ $.Viewport.prototype = {
              * @property {Boolean} immediately
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            this.viewer.raiseEvent( 'zoom', {
+            this.viewer.raiseEvent('zoom', {
                 zoom: zoom,
                 refPoint: refPoint,
                 immediately: immediately
@@ -938,25 +967,10 @@ $.Viewport.prototype = {
      * @returns {Boolean} True if any change has been made, false otherwise.
      */
     update: function() {
-
-        if (this.zoomPoint) {
-            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-            this.zoomSpring.update();
-            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
-
-            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
-            var deltaZoomPoints = this.deltaPointsFromPixels(
-                deltaZoomPixels, true);
-
-            this.centerSpringX.shiftBy(deltaZoomPoints.x);
-            this.centerSpringY.shiftBy(deltaZoomPoints.y);
-
-            if (this.zoomSpring.isAtTargetValue()) {
-                this.zoomPoint = null;
-            }
-        } else {
-            this.zoomSpring.update();
-        }
+        var _this = this;
+        this._adjustCenterSpringsForZoomPoint(function() {
+            _this.zoomSpring.update();
+        });
 
         this.centerSpringX.update();
         this.centerSpringY.update();
@@ -970,6 +984,27 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
 
         return changed;
+    },
+
+    _adjustCenterSpringsForZoomPoint: function(zoomSpringHandler) {
+        if (this.zoomPoint) {
+            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            zoomSpringHandler();
+            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+
+            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+            var deltaZoomPoints = this.deltaPointsFromPixels(
+                deltaZoomPixels, true);
+
+            this.centerSpringX.shiftBy(deltaZoomPoints.x);
+            this.centerSpringY.shiftBy(deltaZoomPoints.y);
+
+            if (this.zoomSpring.isAtTargetValue()) {
+                this.zoomPoint = null;
+            }
+        } else {
+            zoomSpringHandler();
+        }
     },
 
     /**
@@ -1208,6 +1243,7 @@ $.Viewport.prototype = {
      * in image coordinate system.
      * @param {Number} [pixelWidth] the width in pixel of the rectangle.
      * @param {Number} [pixelHeight] the height in pixel of the rectangle.
+     * @returns {OpenSeadragon.Rect} This image's bounds in viewport coordinates
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
         var rect = imageX;

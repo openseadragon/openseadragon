@@ -178,6 +178,7 @@ $.ReferenceStrip = function ( options ) {
     this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 8;
     this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
     this.panels = [];
+    this.miniViewers = {};
 
     /*jshint loopfunc:true*/
     for ( i = 0; i < viewer.tileSources.length; i++ ) {
@@ -293,6 +294,12 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
 
     // Overrides Viewer.destroy
     destroy: function() {
+        if (this.miniViewers) {
+          for (var key in this.miniViewers) {
+            this.miniViewers[key].destroy();
+          }
+        }
+
         if (this.element) {
             this.element.parentNode.removeChild(this.element);
         }
@@ -421,9 +428,19 @@ function loadPanels( strip, viewerSize, scroll ) {
     for ( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ) {
         element = strip.panels[i];
         if ( !element.activePanel ) {
+            var miniTileSource;
+            var originalTileSource = strip.viewer.tileSources[i];
+            if (originalTileSource.referenceStripThumbnailUrl) {
+                miniTileSource = {
+                    type: 'image',
+                    url: originalTileSource.referenceStripThumbnailUrl
+                };
+            } else {
+                miniTileSource = originalTileSource;
+            }
             miniViewer = new $.Viewer( {
                 id:                     element.id,
-                tileSources:            [strip.viewer.tileSources[i]],
+                tileSources:            [miniTileSource],
                 element:                element,
                 navigatorSizeRatio:     strip.sizeRatio,
                 showNavigator:          false,
@@ -462,6 +479,8 @@ function loadPanels( strip, viewerSize, scroll ) {
             element.getElementsByTagName( 'div' )[0].appendChild(
                 miniViewer.displayRegion
             );
+
+            strip.miniViewers[element.id] = miniViewer;
 
             element.activePanel = true;
         }
