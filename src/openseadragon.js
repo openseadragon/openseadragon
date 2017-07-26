@@ -1,4 +1,4 @@
-/*
+﻿/*
  * OpenSeadragon
  *
  * Copyright (C) 2009 CodePlex Foundation
@@ -159,7 +159,7 @@
   * @property {Boolean} [debugMode=false]
   *     TODO: provide an in-screen panel providing event detail feedback.
   *
-  * @property {String} [debugGridColor='#437AB2']
+  * @property {String} [debugGridColor=['#437AB2']]
   *
   * @property {Number} [blendTime=0]
   *     Specifies the duration of animation as higher or lower level tiles are
@@ -1207,7 +1207,7 @@ function OpenSeadragon( options ){
 
             //DEVELOPER SETTINGS
             debugMode:              false,
-            debugGridColor:         '#437AB2'
+            debugGridColor:         ['#437AB2']
         },
 
 
