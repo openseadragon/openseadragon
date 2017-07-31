@@ -490,13 +490,13 @@ $.Drawer.prototype = {
             return;
         }
 
-        var indexOfImage = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
+        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-        context.strokeStyle = this.debugGridColor[indexOfImage];
-        context.fillStyle = this.debugGridColor[indexOfImage];
+        context.strokeStyle = this.debugGridColor[colorIndex];
+        context.fillStyle = this.debugGridColor[colorIndex];
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
