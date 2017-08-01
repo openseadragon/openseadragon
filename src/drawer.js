@@ -69,7 +69,7 @@ $.Drawer = function( options ) {
 
     this.viewer = options.viewer;
     this.viewport = options.viewport;
-    this.debugGridColor = options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
+    this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
     if (options.opacity) {
         $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
     }
@@ -490,12 +490,13 @@ $.Drawer.prototype = {
             return;
         }
 
+        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-        context.strokeStyle = this.debugGridColor;
-        context.fillStyle = this.debugGridColor;
+        context.strokeStyle = this.debugGridColor[colorIndex];
+        context.fillStyle = this.debugGridColor[colorIndex];
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
@@ -581,8 +582,8 @@ $.Drawer.prototype = {
             var context = this.context;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
-            context.strokeStyle = this.debugGridColor;
-            context.fillStyle = this.debugGridColor;
+            context.strokeStyle = this.debugGridColor[0];
+            context.fillStyle = this.debugGridColor[0];
 
             context.strokeRect(
                 rect.x * $.pixelDensityRatio,
