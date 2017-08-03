@@ -2655,6 +2655,7 @@ function onCanvasDrag( event ) {
         originalEvent: event.originalEvent,
         preventDefaultAction: event.preventDefaultAction
     };
+
     /**
      * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2674,7 +2675,7 @@ function onCanvasDrag( event ) {
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
 
-    if ( !event.preventDefaultAction && this.viewport ) {
+    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if( !this.panHorizontal ){
             event.delta.x = 0;

@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.3.1: (In Progress)
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
+* Fixed a problem with preventDefaultAction for the canvas-drag event ()
 
 2.3.0:
 
