@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
 * Fixed a problem with preventDefaultAction for the canvas-drag event (#1278)
 * Fixed an issue causing double images with certain aspect ratios (#1280)
+* Fixed: placeholderFillStyle had no effect (#1286)
 
 2.3.0:
 
