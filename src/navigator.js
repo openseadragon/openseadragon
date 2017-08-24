@@ -121,7 +121,7 @@ $.Navigator = function( options ){
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.
     this.fudge = new $.Point(1, 1);
-    this.totalBorderWidths = new $.Point(this.borderWidth*2, this.borderWidth*2).minus(this.fudge);
+    this.totalBorderWidths = new $.Point(this.borderWidth * 2, this.borderWidth * 2).minus(this.fudge);
 
 
     if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
@@ -180,8 +180,8 @@ $.Navigator = function( options ){
 
     if ( this._resizeWithViewer ) {
         if ( options.width && options.height ) {
-            this.element.style.height = typeof ( options.height )  == "number" ? ( options.height + 'px' ) : options.height;
-            this.element.style.width  = typeof ( options.width )  == "number" ? ( options.width + 'px' ) : options.width;
+            this.element.style.height = typeof (options.height) == "number" ? (options.height + 'px') : options.height;
+            this.element.style.width  = typeof (options.width) == "number" ? (options.width + 'px') : options.width;
         } else {
             viewerSize = $.getElementSize( viewer.element );
             this.element.style.height = Math.round( viewerSize.y * options.sizeRatio ) + 'px';
@@ -231,8 +231,10 @@ $.Navigator = function( options ){
     });
 
     viewer.world.addHandler("item-index-change", function(event) {
-        var item = _this.world.getItemAt(event.previousIndex);
-        _this.world.setItemIndex(item, event.newIndex);
+        window.setTimeout(function(){
+            var item = _this.world.getItemAt(event.previousIndex);
+            _this.world.setItemIndex(item, event.newIndex);
+        }, 1);
     });
 
     viewer.world.addHandler("remove-item", function(event) {
@@ -341,9 +343,22 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 myItem._originalForNavigator = original;
                 _this._matchBounds(myItem, original, true);
 
-                original.addHandler('bounds-change', function() {
+                function matchBounds() {
                     _this._matchBounds(myItem, original);
-                });
+                }
+
+                function matchOpacity() {
+                    _this._matchOpacity(myItem, original);
+                }
+
+                function matchCompositeOperation() {
+                    _this._matchCompositeOperation(myItem, original);
+                }
+
+                original.addHandler('bounds-change', matchBounds);
+                original.addHandler('clip-change', matchBounds);
+                original.addHandler('opacity-change', matchOpacity);
+                original.addHandler('composite-operation-change', matchCompositeOperation);
             }
         });
 
@@ -366,9 +381,21 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // private
     _matchBounds: function(myItem, theirItem, immediately) {
-        var bounds = theirItem.getBounds();
+        var bounds = theirItem.getBoundsNoRotate();
         myItem.setPosition(bounds.getTopLeft(), immediately);
         myItem.setWidth(bounds.width, immediately);
+        myItem.setRotation(theirItem.getRotation(), immediately);
+        myItem.setClip(theirItem.getClip());
+    },
+
+    // private
+    _matchOpacity: function(myItem, theirItem) {
+        myItem.setOpacity(theirItem.opacity);
+    },
+
+    // private
+    _matchCompositeOperation: function(myItem, theirItem) {
+        myItem.setCompositeOperation(theirItem.compositeOperation);
     }
 });
 
@@ -402,6 +429,9 @@ function onCanvasDrag( event ) {
                 event.delta
             )
         );
+        if( this.viewer.constrainDuringPan ){
+            this.viewer.viewport.applyConstraints();
+        }
     }
 }
 

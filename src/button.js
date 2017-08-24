@@ -61,7 +61,7 @@ $.ButtonState = {
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;div&gt; element is created.
  * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
  * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
@@ -120,7 +120,7 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element        = options.element   || $.makeNeutralElement( "div" );
+    this.element = options.element || $.makeNeutralElement("div");
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -158,7 +158,7 @@ $.Button = function( options ) {
         this.imgDown.style.visibility  =
             "hidden";
 
-        if ( $.Browser.vendor == $.BROWSERS.FIREFOX  && $.Browser.version < 3 ){
+        if ($.Browser.vendor == $.BROWSERS.FIREFOX && $.Browser.version < 3) {
             this.imgGroup.style.top =
             this.imgHover.style.top =
             this.imgDown.style.top  =
@@ -172,13 +172,13 @@ $.Button = function( options ) {
     }
 
 
-    this.addHandler( "press",     this.onPress );
-    this.addHandler( "release",   this.onRelease );
-    this.addHandler( "click",     this.onClick );
-    this.addHandler( "enter",     this.onEnter );
-    this.addHandler( "exit",      this.onExit );
-    this.addHandler( "focus",     this.onFocus );
-    this.addHandler( "blur",      this.onBlur );
+    this.addHandler("press", this.onPress);
+    this.addHandler("release", this.onRelease);
+    this.addHandler("click", this.onClick);
+    this.addHandler("enter", this.onEnter);
+    this.addHandler("exit", this.onExit);
+    this.addHandler("focus", this.onFocus);
+    this.addHandler("blur", this.onBlur);
 
     /**
      * The button's current state.

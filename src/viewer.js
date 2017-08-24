@@ -96,6 +96,12 @@ $.Viewer = function( options ) {
         //internal state and dom identifiers
         id:             options.id,
         hash:           options.hash || nextHash++,
+        /**
+         * Index for page to be shown first next time open() is called (only used in sequenceMode).
+         * @member {Number} initialPage
+         * @memberof OpenSeadragon.Viewer#
+         */
+        initialPage:    0,
 
         //dom nodes
         /**
@@ -221,7 +227,7 @@ $.Viewer = function( options ) {
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
-    if ( this.xmlPath  ){
+    if (this.xmlPath) {
         //Deprecated option.  Now it is preferred to use the tileSources option
         this.tileSources = [ this.xmlPath ];
     }
@@ -268,7 +274,7 @@ $.Viewer = function( options ) {
 
     this.innerTracker = new $.MouseTracker({
         element:                  this.canvas,
-        startDisabled:            this.mouseNavEnabled ? false : true,
+        startDisabled:            !this.mouseNavEnabled,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
@@ -291,7 +297,7 @@ $.Viewer = function( options ) {
 
     this.outerTracker = new $.MouseTracker({
         element:               this.container,
-        startDisabled:         this.mouseNavEnabled ? false : true,
+        startDisabled:         !this.mouseNavEnabled,
         clickTimeThreshold:    this.clickTimeThreshold,
         clickDistThreshold:    this.clickDistThreshold,
         dblClickTimeThreshold: this.dblClickTimeThreshold,
@@ -370,7 +376,8 @@ $.Viewer = function( options ) {
 
     // Create the image loader
     this.imageLoader = new $.ImageLoader({
-        jobLimit: this.imageLoaderLimit
+        jobLimit: this.imageLoaderLimit,
+        timeout: options.timeout
     });
 
     // Create the tile cache
@@ -481,11 +488,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * except for the index property; images are added in sequence.
      * A TileSource specifier is anything you could pass as the tileSource property
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * @param {Number} initialPage - If sequenceMode is true, display this page initially
+     * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
      * @return {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function (tileSources) {
+    open: function (tileSources, initialPage) {
         var _this = this;
 
         this.close();
@@ -500,23 +509,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.referenceStrip = null;
             }
 
+            if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
+              this.initialPage = initialPage;
+            }
+
             this.tileSources = tileSources;
             this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
             if (this.tileSources.length) {
                 this.open(this.tileSources[this._sequenceIndex]);
 
                 if ( this.showReferenceStrip ){
-                    this.referenceStrip = new $.ReferenceStrip({
-                        id:          this.referenceStripElement,
-                        position:    this.referenceStripPosition,
-                        sizeRatio:   this.referenceStripSizeRatio,
-                        scroll:      this.referenceStripScroll,
-                        height:      this.referenceStripHeight,
-                        width:       this.referenceStripWidth,
-                        tileSources: this.tileSources,
-                        prefixUrl:   this.prefixUrl,
-                        viewer:      this
-                    });
+                    this.addReferenceStrip();
                 }
             }
 
@@ -674,7 +677,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.close();
         }
 
-        if( ! this.preserveOverlays) {
+        if (!this.preserveOverlays) {
             this.clearOverlays();
             this.overlaysContainer.innerHTML = "";
         }
@@ -846,6 +849,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Turns debugging mode on or off for this viewer.
+     *
+     * @function
+     * @param {Boolean} true to turn debug on, false to turn debug off.
+     */
+    setDebugMode: function(debugMode){
+
+        for (var i = 0; i < this.world.getItemCount(); i++) {
+            this.world.getItemAt(i).debugMode = debugMode;
+        }
+
+        this.debugMode = debugMode;
+        this.forceRedraw();
+    },
+
+    /**
      * @function
      * @return {Boolean}
      */
@@ -869,7 +888,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle = body.style,
             docStyle = document.documentElement.style,
             _this = this,
-            hash,
             nodes,
             i;
 
@@ -1031,9 +1049,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 $.setPageScroll( _this.pageScroll );
                 var pageScroll = $.getPageScroll();
                 restoreScrollCounter++;
-                if ( restoreScrollCounter < 10 &&
-                    pageScroll.x !== _this.pageScroll.x ||
-                    pageScroll.y !== _this.pageScroll.y ) {
+                if (restoreScrollCounter < 10 &&
+                    (pageScroll.x !== _this.pageScroll.x ||
+                    pageScroll.y !== _this.pageScroll.y)) {
                     $.requestAnimationFrame( restoreScroll );
                 }
             };
@@ -1227,10 +1245,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
-     * @param {Number} [options.opacity] Opacity the tiled image should be drawn at by default.
+     * @param {Number} [options.opacity=1] Proportional opacity of the tiled images (1=opaque, 0=hidden)
+     * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
+     * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
+     * its top left corner in degrees.
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
+     * @param {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
+     * @param {Boolean} [options.loadTilesWithAjax]
+     *      Whether to load tile data using AJAX requests.
+     *      Defaults to the setting in {@link OpenSeadragon.Options}.
+     * @param {Object} [options.ajaxHeaders]
+     *      A set of headers to include when making tile AJAX requests.
+     *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
+     *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
+     * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", the resulting TiledImage.
@@ -1263,11 +1293,25 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.opacity === undefined) {
             options.opacity = this.opacity;
         }
+        if (options.preload === undefined) {
+            options.preload = this.preload;
+        }
         if (options.compositeOperation === undefined) {
             options.compositeOperation = this.compositeOperation;
         }
         if (options.crossOriginPolicy === undefined) {
             options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
+        }
+        if (options.ajaxWithCredentials === undefined) {
+            options.ajaxWithCredentials = this.ajaxWithCredentials;
+        }
+        if (options.loadTilesWithAjax === undefined) {
+            options.loadTilesWithAjax = this.loadTilesWithAjax;
+        }
+        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
+            options.ajaxHeaders = this.ajaxHeaders;
+        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
+            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
         }
 
         var myQueueItem = {
@@ -1331,11 +1375,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._loadQueue.push(myQueueItem);
 
-        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
-
-            myQueueItem.tileSource = tileSource;
-
-            // add everybody at the front of the queue that's ready to go
+        function processReadyItems() {
             var queueItem, tiledImage, optionsClone;
             while (_this._loadQueue.length) {
                 queueItem = _this._loadQueue[0];
@@ -1369,6 +1409,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     clip: queueItem.options.clip,
                     placeholderFillStyle: queueItem.options.placeholderFillStyle,
                     opacity: queueItem.options.opacity,
+                    preload: queueItem.options.preload,
+                    degrees: queueItem.options.degrees,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -1382,6 +1424,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     iOSDevice: _this.iOSDevice,
                     crossOriginPolicy: queueItem.options.crossOriginPolicy,
+                    ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
+                    loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
+                    ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode
                 });
 
@@ -1417,9 +1462,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     });
                 }
             }
+        }
+
+        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
+
+            myQueueItem.tileSource = tileSource;
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         }, function( event ) {
             event.options = options;
             raiseAddItemFailed(event);
+
+            // add everybody at the front of the queue that's ready to go
+            processReadyItems();
         } );
     },
 
@@ -1523,7 +1579,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onNextHandler           = $.delegate( this, onNext ),
             onPreviousHandler       = $.delegate( this, onPrevious ),
             navImages               = this.navImages,
-            useGroup                = true ;
+            useGroup                = true;
 
         if( this.showSequenceControl ){
 
@@ -1619,7 +1675,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
             buttons                 = [],
-            useGroup                = true ;
+            useGroup                = true;
 
 
         if ( this.showNavigationControl ) {
@@ -1990,7 +2046,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         element = $.getElement( element );
         i = getOverlayIndex( this.currentOverlays, element );
 
-        if (i>=0) {
+        if (i >= 0) {
             return this.currentOverlays[i];
         } else {
             return null;
@@ -2092,6 +2148,52 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     _cancelPendingImages: function() {
         this._loadQueue = [];
+    },
+
+    /**
+     * Removes the reference strip and disables displaying it.
+     * @function
+     */
+    removeReferenceStrip: function() {
+        this.showReferenceStrip = false;
+
+        if (this.referenceStrip) {
+            this.referenceStrip.destroy();
+            this.referenceStrip = null;
+        }
+    },
+
+    /**
+     * Enables and displays the reference strip based on the currently set tileSources.
+     * Works only when the Viewer has sequenceMode set to true.
+     * @function
+     */
+    addReferenceStrip: function() {
+        this.showReferenceStrip = true;
+
+        if (this.sequenceMode) {
+            if (this.referenceStrip) {
+                return;
+            }
+
+            if (this.tileSources.length && this.tileSources.length > 1) {
+                this.referenceStrip = new $.ReferenceStrip({
+                    id:          this.referenceStripElement,
+                    position:    this.referenceStripPosition,
+                    sizeRatio:   this.referenceStripSizeRatio,
+                    scroll:      this.referenceStripScroll,
+                    height:      this.referenceStripHeight,
+                    width:       this.referenceStripWidth,
+                    tileSources: this.tileSources,
+                    prefixUrl:   this.prefixUrl,
+                    viewer:      this
+                });
+
+                this.referenceStrip.setFocus( this._sequenceIndex );
+            }
+        } else {
+            $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
+        }
     }
 });
 
@@ -2111,6 +2213,7 @@ function _getSafeElemSize (oElement) {
     );
 }
 
+
 /**
  * @function
  * @private
@@ -2126,7 +2229,12 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             tileSource = $.parseXml( tileSource );
         //json should start with "{" or "[" and end with "}" or "]"
         } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
-            tileSource = $.parseJSON(tileSource);
+            try {
+              var tileSourceJ = $.parseJSON(tileSource);
+              tileSource = tileSourceJ;
+            } catch (e) {
+              //tileSource = tileSource;
+            }
         }
     }
 
@@ -2154,6 +2262,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
                     imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
+                ajaxHeaders: viewer.ajaxHeaders,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
@@ -2461,16 +2570,15 @@ function onCanvasClick( event ) {
         this.canvas.focus();
     }
 
-    if ( !event.preventDefaultAction && this.viewport && event.quick ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.clickToZoom ) {
-            this.viewport.zoomBy(
-                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
-                this.viewport.pointFromPixel( event.position, true )
-            );
-            this.viewport.applyConstraints();
-        }
-    }
+    var canvasClickEventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        quick: event.quick,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: event.preventDefaultAction
+    };
+
     /**
      * Raised when a mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2483,15 +2591,21 @@ function onCanvasClick( event ) {
      * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-click', {
-        tracker: event.eventSource,
-        position: event.position,
-        quick: event.quick,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-click', canvasClickEventArgs);
+
+    if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.clickToZoom ) {
+            this.viewport.zoomBy(
+                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
+    }
 }
 
 function onCanvasDblClick( event ) {
@@ -2531,19 +2645,17 @@ function onCanvasDblClick( event ) {
 function onCanvasDrag( event ) {
     var gestureSettings;
 
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if( !this.panHorizontal ){
-            event.delta.x = 0;
-        }
-        if( !this.panVertical ){
-            event.delta.y = 0;
-        }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled );
-        if( this.constrainDuringPan ){
-            this.viewport.applyConstraints();
-        }
-    }
+    var canvasDragEventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        delta: event.delta,
+        speed: event.speed,
+        direction: event.direction,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: event.preventDefaultAction
+    };
+
     /**
      * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2558,17 +2670,43 @@ function onCanvasDrag( event ) {
      * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-drag', {
-        tracker: event.eventSource,
-        position: event.position,
-        delta: event.delta,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
+
+    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if( !this.panHorizontal ){
+            event.delta.x = 0;
+        }
+        if( !this.panVertical ){
+            event.delta.y = 0;
+        }
+
+        if( this.constrainDuringPan ){
+            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+
+            this.viewport.centerSpringX.target.value += delta.x;
+            this.viewport.centerSpringY.target.value += delta.y;
+
+            var bounds = this.viewport.getBounds();
+            var constrainedBounds = this.viewport.getConstrainedBounds();
+
+            this.viewport.centerSpringX.target.value -= delta.x;
+            this.viewport.centerSpringY.target.value -= delta.y;
+
+            if (bounds.x != constrainedBounds.x) {
+                event.delta.x = 0;
+            }
+
+            if (bounds.y != constrainedBounds.y) {
+                event.delta.y = 0;
+            }
+        }
+
+        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
+    }
 }
 
 function onCanvasDragEnd( event ) {
@@ -2650,6 +2788,11 @@ function onCanvasEnter( event ) {
 }
 
 function onCanvasExit( event ) {
+
+    if (window.location != window.parent.location){
+        $.MouseTracker.resetAllMouseTrackers();
+    }
+
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *

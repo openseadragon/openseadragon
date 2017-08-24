@@ -159,7 +159,9 @@
   * @property {Boolean} [debugMode=false]
   *     TODO: provide an in-screen panel providing event detail feedback.
   *
-  * @property {String} [debugGridColor='#437AB2']
+  * @property {String} [debugGridColor=['#437AB2', '#1B9E77', '#D95F02', '#7570B3', '#E7298A', '#66A61E', '#E6AB02', '#A6761D', '#666666']]
+  *     The colors of grids in debug mode. Each tiled image's grid uses a consecutive color.
+  *     If there are more tiled images than provided colors, the color vector is recycled.
   *
   * @property {Number} [blendTime=0]
   *     Specifies the duration of animation as higher or lower level tiles are
@@ -185,7 +187,11 @@
   *     If 0, adjusts to fit viewer.
   *
   * @property {Number} [opacity=1]
-  *     Default opacity of the tiled images (1=opaque, 0=transparent)
+  *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
+  *     Hidden images do not draw and only load when preloading is allowed.
+  *
+  * @property {Boolean} [preload=false]
+  *     Default switch for loading hidden images (true loads, false blocks)
   *
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
@@ -411,6 +417,7 @@
   *     The max number of images we should keep in memory (per drawer).
   *
   * @property {Number} [timeout=30000]
+  *     The max number of milliseconds that an image job may take to complete.
   *
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
@@ -584,8 +591,15 @@
   *     not use CORS, and the canvas will be tainted.
   *
   * @property {Boolean} [ajaxWithCredentials=false]
-  *     Whether to set the withCredentials XHR flag for AJAX requests (when loading tile sources).
+  *     Whether to set the withCredentials XHR flag for AJAX requests.
   *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Boolean} [loadTilesWithAjax=false]
+  *     Whether to load tile data using AJAX requests.
+  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *
+  * @property {Object} [ajaxHeaders={}]
+  *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
   */
 
@@ -678,13 +692,6 @@
   */
 
 
- /**
-  * This function serves as a single point of instantiation for an {@link OpenSeadragon.Viewer}, including all
-  * combinations of out-of-the-box configurable features.
-  *
-  * @param {OpenSeadragon.Options} options - Viewer options.
-  * @returns {OpenSeadragon.Viewer}
-  */
 function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
 }
@@ -859,7 +866,7 @@ function OpenSeadragon( options ){
         try {
             // We test if the canvas is tainted by retrieving data from it.
             // An exception will be raised if the canvas is tainted.
-            var data = canvas.getContext('2d').getImageData(0, 0, 1, 1);
+            canvas.getContext('2d').getImageData(0, 0, 1, 1);
         } catch (e) {
             isTainted = true;
         }
@@ -867,7 +874,8 @@ function OpenSeadragon( options ){
     };
 
     /**
-     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density. Defaults to 1 if canvas isn't supported by the browser.
+     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
+     * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      * @member {Number} pixelDensityRatio
      * @memberof OpenSeadragon
      */
@@ -880,7 +888,7 @@ function OpenSeadragon( options ){
                                     context.msBackingStorePixelRatio ||
                                     context.oBackingStorePixelRatio ||
                                     context.backingStorePixelRatio || 1;
-            return devicePixelRatio / backingStoreRatio;
+            return Math.max(devicePixelRatio, 1) / backingStoreRatio;
         } else {
             return 1;
         }
@@ -1005,6 +1013,8 @@ function OpenSeadragon( options ){
             initialPage:            0,
             crossOriginPolicy:      false,
             ajaxWithCredentials:    false,
+            loadTilesWithAjax:      false,
+            ajaxHeaders:            {},
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -1026,10 +1036,46 @@ function OpenSeadragon( options ){
             dblClickDistThreshold:  20,
             springStiffness:        6.5,
             animationTime:          1.2,
-            gestureSettingsMouse:   { scrollToZoom: true,  clickToZoom: true,  dblClickToZoom: false, pinchToZoom: false, flickEnabled: false, flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsTouch:   { scrollToZoom: false, clickToZoom: false, dblClickToZoom: true,  pinchToZoom: true,  flickEnabled: true,  flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsPen:     { scrollToZoom: false, clickToZoom: true,  dblClickToZoom: false, pinchToZoom: false, flickEnabled: false, flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
-            gestureSettingsUnknown: { scrollToZoom: false, clickToZoom: false, dblClickToZoom: true,  pinchToZoom: true,  flickEnabled: true,  flickMinSpeed: 120, flickMomentum: 0.25, pinchRotate: false },
+            gestureSettingsMouse:   {
+                scrollToZoom: true,
+                clickToZoom: true,
+                dblClickToZoom: false,
+                pinchToZoom: false,
+                flickEnabled: false,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsTouch:   {
+                scrollToZoom: false,
+                clickToZoom: false,
+                dblClickToZoom: true,
+                pinchToZoom: true,
+                flickEnabled: true,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsPen:     {
+                scrollToZoom: false,
+                clickToZoom: true,
+                dblClickToZoom: false,
+                pinchToZoom: false,
+                flickEnabled: false,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
+            gestureSettingsUnknown: {
+                scrollToZoom: false,
+                clickToZoom: false,
+                dblClickToZoom: true,
+                pinchToZoom: true,
+                flickEnabled: true,
+                flickMinSpeed: 120,
+                flickMomentum: 0.25,
+                pinchRotate: false
+            },
             zoomPerClick:           2,
             zoomPerScroll:          1.2,
             zoomPerSecond:          1.0,
@@ -1081,6 +1127,7 @@ function OpenSeadragon( options ){
 
             // APPEARANCE
             opacity:                    1,
+            preload:                    false,
             compositeOperation:         null,
             placeholderFillStyle:       null,
 
@@ -1162,7 +1209,7 @@ function OpenSeadragon( options ){
 
             //DEVELOPER SETTINGS
             debugMode:              false,
-            debugGridColor:         '#437AB2'
+            debugGridColor:         ['#437AB2', '#1B9E77', '#D95F02', '#7570B3', '#E7298A', '#66A61E', '#E6AB02', '#A6761D', '#666666']
         },
 
 
@@ -1376,6 +1423,21 @@ function OpenSeadragon( options ){
         },
 
         /**
+         * Compute the modulo of a number but makes sure to always return
+         * a positive value.
+         * @param {Number} number the number to computes the modulo of
+         * @param {Number} modulo the modulo
+         * @returns {Number} the result of the modulo of number
+         */
+        positiveModulo: function(number, modulo) {
+            var result = number % modulo;
+            if (result < 0) {
+                result += modulo;
+            }
+            return result;
+        },
+
+        /**
          * Determines if a point is within the bounding rectangle of the given element (hit-test).
          * @function
          * @param {Element|String} element
@@ -1489,7 +1551,7 @@ function OpenSeadragon( options ){
                 };
             } else {
                 // We can't reassign the function yet, as there was no scroll.
-                return new $.Point(0,0);
+                return new $.Point(0, 0);
             }
 
             return $.getPageScroll();
@@ -1657,13 +1719,15 @@ function OpenSeadragon( options ){
          * @function
          */
         now: function( ) {
-          if (Date.now) {
-            $.now = Date.now;
-          } else {
-            $.now = function() { return new Date().getTime(); };
-          }
+            if (Date.now) {
+                $.now = Date.now;
+            } else {
+                $.now = function() {
+                    return new Date().getTime();
+                };
+            }
 
-          return $.now();
+            return $.now();
         },
 
 
@@ -1773,7 +1837,7 @@ function OpenSeadragon( options ){
         addClass: function( element, className ) {
             element = $.getElement( element );
 
-            if ( ! element.className ) {
+            if (!element.className) {
                 element.className = className;
             } else if ( ( ' ' + element.className + ' ' ).
                 indexOf( ' ' + className + ' ' ) === -1 ) {
@@ -1997,6 +2061,7 @@ function OpenSeadragon( options ){
          * @returns {String} The value of the url parameter or null if no param matches.
          */
         getUrlParameter: function( key ) {
+            // eslint-disable-next-line no-use-before-define
             var value = URLPARAMS[ key ];
             return value ? value : null;
         },
@@ -2066,11 +2131,16 @@ function OpenSeadragon( options ){
          * @param {String} options.url - the url to request
          * @param {Function} options.success - a function to call on a successful response
          * @param {Function} options.error - a function to call on when an error occurs
+         * @param {Object} options.headers - headers to add to the AJAX request
+         * @param {String} options.responseType - the response type of the the AJAX request
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
+         * @returns {XMLHttpRequest}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;
+            var headers;
+            var responseType;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2078,6 +2148,8 @@ function OpenSeadragon( options ){
                 onSuccess = url.success;
                 onError = url.error;
                 withCredentials = url.withCredentials;
+                headers = url.headers;
+                responseType = url.responseType || null;
                 url = url.url;
             }
 
@@ -2093,9 +2165,9 @@ function OpenSeadragon( options ){
                 if ( request.readyState == 4 ) {
                     request.onreadystatechange = function(){};
 
-                    // With protocols other than http/https, the status is 200
-                    // on Firefox and 0 on other browsers
-                    if ( request.status === 200 ||
+                    // With protocols other than http/https, a successful request status is in
+                    // the 200's on Firefox and 0 on other browsers
+                    if ( (request.status >= 200 && request.status < 300) ||
                         ( request.status === 0 &&
                           protocol !== "http:" &&
                           protocol !== "https:" )) {
@@ -2113,11 +2185,23 @@ function OpenSeadragon( options ){
             try {
                 request.open( "GET", url, true );
 
+                if (responseType) {
+                    request.responseType = responseType;
+                }
+
+                if (headers) {
+                    for (var headerName in headers) {
+                        if (headers.hasOwnProperty(headerName) && headers[headerName]) {
+                            request.setRequestHeader(headerName, headers[headerName]);
+                        }
+                    }
+                }
+
                 if (withCredentials) {
                     request.withCredentials = true;
                 }
 
-                request.send( null );
+                request.send(null);
             } catch (e) {
                 var msg = e.message;
 
@@ -2154,7 +2238,7 @@ function OpenSeadragon( options ){
                             }
                         };
                         xdr.onerror = function (e) {
-                            if ( $.isFunction ( onError ) ) {
+                            if ($.isFunction(onError)) {
                                 onError({ // Faking an xhr object
                                     responseText: xdr.responseText,
                                     status: 444, // 444 No Response
@@ -2177,6 +2261,8 @@ function OpenSeadragon( options ){
                     }
                 }
             }
+
+            return request;
         },
 
         /**
@@ -2317,6 +2403,7 @@ function OpenSeadragon( options ){
                 // Should only be used by IE8 in non standards mode
                 $.parseJSON = function(string) {
                     /*jshint evil:true*/
+                    //eslint-disable-next-line no-eval
                     return eval('(' + string + ')');
                 };
             }
@@ -2332,6 +2419,7 @@ function OpenSeadragon( options ){
          */
         imageFormatSupported: function( extension ) {
             extension = extension ? extension : "";
+            // eslint-disable-next-line no-use-before-define
             return !!FILEFORMATS[ extension.toLowerCase() ];
         }
 
@@ -2368,8 +2456,7 @@ function OpenSeadragon( options ){
     (function() {
         //A small auto-executing routine to determine the browser vendor,
         //version and supporting feature sets.
-        var app = navigator.appName,
-            ver = navigator.appVersion,
+        var ver = navigator.appVersion,
             ua  = navigator.userAgent,
             regex;
 
@@ -2391,7 +2478,7 @@ function OpenSeadragon( options ){
                 }
                 break;
             case "Netscape":
-                if( !!window.addEventListener ){
+                if (window.addEventListener) {
                     if ( ua.indexOf( "Firefox" ) >= 0 ) {
                         $.Browser.vendor = $.BROWSERS.FIREFOX;
                         $.Browser.version = parseFloat(

@@ -18,7 +18,7 @@
      *      tilesUrl: "/test/data/zoomify/"
      * }
      *
-     * The tileSize is currently hardcoded to 256 (the usual Zoomify default). The tileUrl must the the path to the image _directory_.
+     * The tileSize is currently hardcoded to 256 (the usual Zoomify default). The tileUrl must the path to the image _directory_.
      *
      * 2) Loading image metadata from xml file: (CURRENTLY NOT SUPPORTED)
      *

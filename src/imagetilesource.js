@@ -114,8 +114,9 @@
             }
 
             $.addEvent(image, 'load', function () {
-                _this.width = image.naturalWidth;
-                _this.height = image.naturalHeight;
+                /* IE8 fix since it has no naturalWidth and naturalHeight */
+                _this.width = Object.prototype.hasOwnProperty.call(image, 'naturalWidth') ? image.naturalWidth : image.width;
+                _this.height = Object.prototype.hasOwnProperty.call(image, 'naturalHeight') ? image.naturalHeight : image.height;
                 _this.aspectRatio = _this.width / _this.height;
                 _this.dimensions = new $.Point(_this.width, _this.height);
                 _this._tileWidth = _this.width;
@@ -202,8 +203,9 @@
         _buildLevels: function () {
             var levels = [{
                     url: this._image.src,
-                    width: this._image.naturalWidth,
-                    height: this._image.naturalHeight
+                    /* IE8 fix since it has no naturalWidth and naturalHeight */
+                    width: Object.prototype.hasOwnProperty.call(this._image, 'naturalWidth') ? this._image.naturalWidth : this._image.width,
+                    height:  Object.prototype.hasOwnProperty.call(this._image, 'naturalHeight') ? this._image.naturalHeight : this._image.height
                 }];
 
             if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
@@ -212,8 +214,10 @@
                 return levels;
             }
 
-            var currentWidth = this._image.naturalWidth;
-            var currentHeight = this._image.naturalHeight;
+            /* IE8 fix since it has no naturalWidth and naturalHeight */
+            var currentWidth = Object.prototype.hasOwnProperty.call(this._image, 'naturalWidth') ? this._image.naturalWidth : this._image.width;
+            var currentHeight = Object.prototype.hasOwnProperty.call(this._image, 'naturalHeight') ? this._image.naturalHeight : this._image.height;
+
 
             var bigCanvas = document.createElement("canvas");
             var bigContext = bigCanvas.getContext("2d");

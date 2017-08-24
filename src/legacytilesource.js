@@ -204,12 +204,7 @@ function filterFiles( files ){
         file = files[ i ];
         if( file.height &&
             file.width &&
-            file.url && (
-                file.url.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)(?:\?.*)?$/) || (
-                    file.mimetype &&
-                    file.mimetype.toLowerCase().match(/^.*\/(png|jpg|jpeg|gif)$/)
-                )
-            ) ){
+            file.url ){
             //This is sufficient to serve as a level
             filtered.push({
                 url: file.url,
@@ -222,7 +217,7 @@ function filterFiles( files ){
         }
     }
 
-    return filtered.sort(function(a,b){
+    return filtered.sort(function(a, b) {
         return a.height - b.height;
     });
 
@@ -258,7 +253,7 @@ function configureFromXML( tileSource, xmlDoc ){
             for ( i = 0; i < levels.length; i++ ) {
                 level = levels[ i ];
 
-                conf.levels .push({
+                conf.levels.push({
                     url:    level.getAttribute( "url" ),
                     width:  parseInt( level.getAttribute( "width" ), 10 ),
                     height: parseInt( level.getAttribute( "height" ), 10 )

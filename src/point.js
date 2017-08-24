@@ -149,6 +149,18 @@ $.Point.prototype = {
     },
 
     /**
+     * Compute the squared distance between this point and another point.
+     * Useful for optimizing things like comparing distances.
+     * @function
+     * @param {OpenSeadragon.Point} point The point to compute the squared distance with.
+     * @returns {Number} The squared distance between the 2 points
+     */
+    squaredDistanceTo: function( point ) {
+        return Math.pow( this.x - point.x, 2 ) +
+            Math.pow( this.y - point.y, 2 );
+    },
+
+    /**
      * Apply a function to each coordinate of this point and return a new point.
      * @function
      * @param {function} func The function to apply to each coordinate.
@@ -190,10 +202,7 @@ $.Point.prototype = {
         var sin;
         // Avoid float computations when possible
         if (degrees % 90 === 0) {
-            var d = degrees % 360;
-            if (d < 0) {
-                d += 360;
-            }
+            var d = $.positiveModulo(degrees, 360);
             switch (d) {
                 case 0:
                     cos = 1;

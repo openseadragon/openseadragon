@@ -75,3 +75,12 @@ You can also get a report of the tests' code coverage:
 
 The report shows up at `coverage/html/index.html` viewable in a browser.
 
+### Installing from forked Github repo/branch
+
+This project is now compatible with direct installation of forked Github repos/branches via npm/yarn (possible because of the new [prepare](https://docs.npmjs.com/misc/scripts) command).  This enables quick testing of a bugfix or feature addition via a forked repo.  In order to do this:
+
+1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli` (or `yarn global add grunt-cli`)
+1. Remove any currently installed openseadragon package via `npm uninstall openseadragon` or `yarn remove openseadragon`
+1. Add the specific forked repo/branch by running `npm install git://github.com/username/openseadragon.git#branch-name` or `yarn add git://github.com/username/openseadragon.git#branch-name`. Make sure to replace username and branch-name with proper targets.
+
+During installation, the package should be correctly built via grunt and can then be used via `import Openseadragon from 'openseadragon'` or `var Openseadragon = require('openseadragon')` statements as if the official package were installed.

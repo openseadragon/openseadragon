@@ -69,7 +69,7 @@ $.Drawer = function( options ) {
 
     this.viewer = options.viewer;
     this.viewport = options.viewport;
-    this.debugGridColor = options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
+    this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
     if (options.opacity) {
         $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
     }
@@ -285,8 +285,8 @@ $.Drawer.prototype = {
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
             topLeft.y * $.pixelDensityRatio,
-            size.x    * $.pixelDensityRatio,
-            size.y    * $.pixelDensityRatio
+            size.x * $.pixelDensityRatio,
+            size.y * $.pixelDensityRatio
         );
     },
 
@@ -329,6 +329,9 @@ $.Drawer.prototype = {
                 if (this.viewport.getRotation() === 0) {
                     var self = this;
                     this.viewer.addHandler('rotate', function resizeSketchCanvas() {
+                        if (self.viewport.getRotation() === 0) {
+                            return;
+                        }
                         self.viewer.removeHandler('rotate', resizeSketchCanvas);
                         var sketchCanvasSize = self._calculateSketchCanvasSize();
                         self.sketchCanvas.width = sketchCanvasSize.x;
@@ -423,6 +426,24 @@ $.Drawer.prototype = {
             this.context.globalCompositeOperation = compositeOperation;
         }
         if (bounds) {
+            // Internet Explorer, Microsoft Edge, and Safari have problems
+            // when you call context.drawImage with negative x or y
+            // or x + width or y + height greater than the canvas width or height respectively.
+            if (bounds.x < 0) {
+                bounds.width += bounds.x;
+                bounds.x = 0;
+            }
+            if (bounds.x + bounds.width > this.canvas.width) {
+                bounds.width = this.canvas.width - bounds.x;
+            }
+            if (bounds.y < 0) {
+                bounds.height += bounds.y;
+                bounds.y = 0;
+            }
+            if (bounds.y + bounds.height > this.canvas.height) {
+                bounds.height = this.canvas.height - bounds.y;
+            }
+
             this.context.drawImage(
                 this.sketchCanvas,
                 bounds.x,
@@ -453,7 +474,7 @@ $.Drawer.prototype = {
                 position.x - widthExt * scale,
                 position.y - heightExt * scale,
                 (this.canvas.width + 2 * widthExt) * scale,
-                (this.canvas.height  + 2 * heightExt) * scale,
+                (this.canvas.height + 2 * heightExt) * scale,
                 -widthExt,
                 -heightExt,
                 this.canvas.width + 2 * widthExt,
@@ -464,20 +485,28 @@ $.Drawer.prototype = {
     },
 
     // private
-    drawDebugInfo: function( tile, count, i ){
+    drawDebugInfo: function(tile, count, i, tiledImage) {
         if ( !this.useCanvas ) {
             return;
         }
 
+        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-        context.strokeStyle = this.debugGridColor;
-        context.fillStyle = this.debugGridColor;
+        context.strokeStyle = this.debugGridColor[colorIndex];
+        context.fillStyle = this.debugGridColor[colorIndex];
 
         if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation(this.viewport.degrees);
+            this._offsetForRotation({degrees: this.viewport.degrees});
+        }
+        if (tiledImage.getRotation(true) % 360 !== 0) {
+            this._offsetForRotation({
+                degrees: tiledImage.getRotation(true),
+                point: tiledImage.viewport.pixelFromPointNoRotate(
+                    tiledImage._getRotationPoint(true), true)
+            });
         }
 
         context.strokeRect(
@@ -541,6 +570,9 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._restoreRotationChanges();
         }
+        if (tiledImage.getRotation(true) % 360 !== 0) {
+            this._restoreRotationChanges();
+        }
         context.restore();
     },
 
@@ -550,8 +582,8 @@ $.Drawer.prototype = {
             var context = this.context;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
-            context.strokeStyle = this.debugGridColor;
-            context.fillStyle = this.debugGridColor;
+            context.strokeStyle = this.debugGridColor[0];
+            context.fillStyle = this.debugGridColor[0];
 
             context.strokeRect(
                 rect.x * $.pixelDensityRatio,
@@ -574,17 +606,22 @@ $.Drawer.prototype = {
         return new $.Point(canvas.width, canvas.height);
     },
 
-    // private
-    _offsetForRotation: function(degrees, useSketch) {
-        var cx = this.canvas.width / 2;
-        var cy = this.canvas.height / 2;
+    getCanvasCenter: function() {
+        return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+    },
 
-        var context = this._getContext(useSketch);
+    // private
+    _offsetForRotation: function(options) {
+        var point = options.point ?
+            options.point.times($.pixelDensityRatio) :
+            this.getCanvasCenter();
+
+        var context = this._getContext(options.useSketch);
         context.save();
 
-        context.translate(cx, cy);
-        context.rotate(Math.PI / 180 * degrees);
-        context.translate(-cx, -cy);
+        context.translate(point.x, point.y);
+        context.rotate(Math.PI / 180 * options.degrees);
+        context.translate(-point.x, -point.y);
     },
 
     // private
