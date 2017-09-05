@@ -55,43 +55,52 @@ $.Navigator = function( options ){
         navigatorSize;
 
     //We may need to create a new element and id if they did not
-    //provide the id for the existing element
-    if( !options.id ){
-        options.id              = 'navigator-' + $.now();
-        this.element            = $.makeNeutralElement( "div" );
-        options.controlOptions  = {
-            anchor:           $.ControlAnchor.TOP_RIGHT,
-            attachToViewer:   true,
-            autoFade:         options.autoFade
-        };
+    //provide the id for the existing element or the element itself
+    if( !options.element ){
+        if( !options.id ){
+            options.id              = 'navigator-' + $.now();
+            this.element            = $.makeNeutralElement( "div" );
+            options.controlOptions  = {
+                anchor:           $.ControlAnchor.TOP_RIGHT,
+                attachToViewer:   true,
+                autoFade:         options.autoFade
+            };
 
-        if( options.position ){
-            if( 'BOTTOM_RIGHT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
-            } else if( 'BOTTOM_LEFT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
-            } else if( 'TOP_RIGHT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
-            } else if( 'TOP_LEFT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
-            } else if( 'ABSOLUTE' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
-               options.controlOptions.top = options.top;
-               options.controlOptions.left = options.left;
-               options.controlOptions.height = options.height;
-               options.controlOptions.width = options.width;
+            if( options.position ){
+                if( 'BOTTOM_RIGHT' == options.position ){
+                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
+                } else if( 'BOTTOM_LEFT' == options.position ){
+                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
+                } else if( 'TOP_RIGHT' == options.position ){
+                options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
+                } else if( 'TOP_LEFT' == options.position ){
+                options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
+                } else if( 'ABSOLUTE' == options.position ){
+                options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
+                options.controlOptions.top = options.top;
+                options.controlOptions.left = options.left;
+                options.controlOptions.height = options.height;
+                options.controlOptions.width = options.width;
+                }
             }
-        }
 
+        } else {
+            this.element            = document.getElementById( options.id );
+            options.controlOptions  = {
+                anchor:           $.ControlAnchor.NONE,
+                attachToViewer:   false,
+                autoFade:         false
+            };
+        }
+        this.element.id         = options.id;
     } else {
-        this.element            = document.getElementById( options.id );
+        this.element            = options.element;
         options.controlOptions  = {
             anchor:           $.ControlAnchor.NONE,
             attachToViewer:   false,
             autoFade:         false
         };
     }
-    this.element.id         = options.id;
     this.element.className  += ' navigator';
 
     options = $.extend( true, {
