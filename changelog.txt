@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.4.0: (In Progress)
+
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
