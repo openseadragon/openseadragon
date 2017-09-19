@@ -834,6 +834,79 @@
     });
 
     // ----------
+    asyncTest('Viewer: preventDefaultAction in dblClickHandler', function() {
+        var tracker = viewer.innerTracker;
+        var epsilon = 0.0000001;
+
+        function simulateDblTap() {
+            var touches = [];
+            TouchUtil.reset();
+
+            touches.push(TouchUtil.start([0,0]));
+            TouchUtil.end( touches[0] );
+            touches.push(TouchUtil.start([0,0]));
+            TouchUtil.end( touches[1] );
+        }
+
+        var onOpen = function() {
+            viewer.removeHandler('open', onOpen);
+
+            var originalZoom = viewer.viewport.getZoom();
+
+            var origDblClickHandler = tracker.dblClickHandler;
+            tracker.dblClickHandler = function(event) {
+                event.preventDefaultAction = true;
+                return origDblClickHandler(event);
+            };
+
+            TouchUtil.initTracker(tracker);
+            simulateDblTap();
+
+            var zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(originalZoom, zoom, epsilon,
+                "Zoom on double tap should be prevented");
+
+            // Reset event handler to original
+            tracker.dblClickHandler = origDblClickHandler;
+
+            simulateDblTap();
+            originalZoom = originalZoom * viewer.zoomPerClick;
+
+            var zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(originalZoom, zoom, epsilon,
+                "Zoom on double tap should not be prevented");
+
+
+            var dblClickHandler = function(event) {
+                event.preventDefaultAction = true;
+            }
+
+            viewer.addHandler('canvas-double-click', dblClickHandler);
+
+            var zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(originalZoom, zoom, epsilon,
+                "Zoom on double tap should be prevented");
+
+            // Remove custom event handler
+            viewer.removeHandler('canvas-double-click', dblClickHandler);
+
+            simulateDblTap();
+            originalZoom = originalZoom * viewer.zoomPerClick;
+
+            var zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(originalZoom, zoom, epsilon,
+                "Zoom on double tap should not be prevented");
+
+            TouchUtil.resetTracker(tracker);
+            viewer.close();
+            start();
+        };
+
+        viewer.addHandler('open', onOpen);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    // ----------
     asyncTest( 'EventSource/MouseTracker/Viewer: event.originalEvent event.userData canvas-drag canvas-drag-end canvas-release canvas-click', function () {
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             mouseTracker = null,
