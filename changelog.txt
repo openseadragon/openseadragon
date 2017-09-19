@@ -3,6 +3,9 @@ OPENSEADRAGON CHANGELOG
 
 2.4.0: (In Progress)
 
+* BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
+* You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
+
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
