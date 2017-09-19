@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed a problem with preventDefaultAction for the canvas-drag event (#1278)
 * Fixed an issue causing double images with certain aspect ratios (#1280)
 * Fixed: placeholderFillStyle had no effect (#1286)
+* Fixed seams that appear in wrap mode on Safari and Firefox (#1305)
 
 2.3.0:
 
