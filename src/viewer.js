@@ -2611,16 +2611,14 @@ function onCanvasClick( event ) {
 function onCanvasDblClick( event ) {
     var gestureSettings;
 
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.dblClickToZoom ) {
-            this.viewport.zoomBy(
-                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
-                this.viewport.pointFromPixel( event.position, true )
-            );
-            this.viewport.applyConstraints();
-        }
-    }
+    var canvasDblClickEventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: event.preventDefaultAction
+    };
+
     /**
      * Raised when a double mouse press/release or touch/remove occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2632,14 +2630,21 @@ function onCanvasDblClick( event ) {
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default double tap to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-double-click', {
-        tracker: event.eventSource,
-        position: event.position,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-double-click', canvasDblClickEventArgs);
+
+    if ( !canvasDblClickEventArgs.preventDefaultAction && this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.dblClickToZoom ) {
+            this.viewport.zoomBy(
+                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
+                this.viewport.pointFromPixel( event.position, true )
+            );
+            this.viewport.applyConstraints();
+        }
+    }
 }
 
 function onCanvasDrag( event ) {
@@ -2655,6 +2660,7 @@ function onCanvasDrag( event ) {
         originalEvent: event.originalEvent,
         preventDefaultAction: event.preventDefaultAction
     };
+
     /**
      * Raised when a mouse or touch drag operation occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2674,7 +2680,7 @@ function onCanvasDrag( event ) {
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
 
-    if ( !event.preventDefaultAction && this.viewport ) {
+    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if( !this.panHorizontal ){
             event.delta.x = 0;

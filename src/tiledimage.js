@@ -1405,7 +1405,7 @@ function getTile(
         bounds.x += ( x - xMod ) / numTiles.x;
         bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
 
-        tilesMatrix[ level ][ x ][ y ] = new $.Tile(
+        tile = new $.Tile(
             level,
             x,
             y,
@@ -1416,6 +1416,16 @@ function getTile(
             tiledImage.loadTilesWithAjax,
             ajaxHeaders
         );
+
+        if (xMod === numTiles.x - 1) {
+            tile.isRightMost = true;
+        }
+
+        if (yMod === numTiles.y - 1) {
+            tile.isBottomMost = true;
+        }
+
+        tilesMatrix[ level ][ x ][ y ] = tile;
     }
 
     tile = tilesMatrix[ level ][ x ][ y ];
@@ -1600,6 +1610,14 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
 
     if ( !overlap ) {
         sizeC = sizeC.plus( new $.Point( 1, 1 ) );
+    }
+
+    if (tile.isRightMost && tiledImage.wrapHorizontal) {
+        sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
+    }
+
+    if (tile.isBottomMost && tiledImage.wrapVertical) {
+        sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
     }
 
     tile.position   = positionC;
@@ -1805,15 +1823,19 @@ function compareTiles( previousBest, tile ) {
  * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
  */
 function drawTiles( tiledImage, lastDrawn ) {
-    if (tiledImage.opacity === 0 || lastDrawn.length === 0) {
+    if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
         return;
     }
-    var tile = lastDrawn[0];
 
-    var useSketch = tiledImage.opacity < 1 ||
-        (tiledImage.compositeOperation &&
-            tiledImage.compositeOperation !== 'source-over') ||
-        (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
+    var tile = lastDrawn[0];
+    var useSketch;
+
+    if (tile) {
+        useSketch = tiledImage.opacity < 1 ||
+            (tiledImage.compositeOperation &&
+                tiledImage.compositeOperation !== 'source-over') ||
+            (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
+    }
 
     var sketchScale;
     var sketchTranslate;

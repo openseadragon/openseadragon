@@ -1,7 +1,18 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.3.1: (In Progress)
+2.4.0: (In Progress)
+
+* BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
+* You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
+
+2.3.1:
+
+* Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
+* Fixed a problem with preventDefaultAction for the canvas-drag event (#1278)
+* Fixed an issue causing double images with certain aspect ratios (#1280)
+* Fixed: placeholderFillStyle had no effect (#1286)
+* Fixed seams that appear in wrap mode on Safari and Firefox (#1305)
 
 2.3.0:
 
