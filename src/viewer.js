@@ -1842,8 +1842,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * @property {Number} page - The page index.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            this.raiseEvent( 'page', { page: page } );
-
             this._sequenceIndex = page;
 
             this._updateSequenceButtons( page );
@@ -1853,6 +1851,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             if( this.referenceStrip ){
                 this.referenceStrip.setFocus( page );
             }
+
+            this.raiseEvent( 'page', { page: page } );
         }
 
         return this;
