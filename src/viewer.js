@@ -487,7 +487,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage},
      * except for the index property; images are added in sequence.
      * A TileSource specifier is anything you could pass as the tileSource property
-     * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}. To get the TiledImage
+     * instance created by open, add an event listener for {@link OpenSeadragon.Viewer.html#.event:open}, which
+     * when fired can be used to get access, i.e., viewer.world.getItemAt(0).
      * @param {Number} initialPage - If sequenceMode is true, display this page initially
      * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -1263,7 +1265,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
-     * "item", the resulting TiledImage.
+     * "item", which is the resulting instance of TiledImage.
      * @param {Function} [options.error] A function that gets called if the image is
      * unable to be added. It's passed the error event object, which contains "message"
      * and "source" properties.
