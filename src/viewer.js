@@ -1832,16 +1832,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     goToPage: function( page ){
         if( this.tileSources && page >= 0 && page < this.tileSources.length ){
-            /**
-             * Raised when the page is changed on a viewer configured with multiple image sources (see {@link OpenSeadragon.Viewer#goToPage}).
-             *
-             * @event page
-             * @memberof OpenSeadragon.Viewer
-             * @type {Object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {Number} page - The page index.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
             this._sequenceIndex = page;
 
             this._updateSequenceButtons( page );
@@ -1852,6 +1842,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.referenceStrip.setFocus( page );
             }
 
+            /**
+             * Raised when the page is changed on a viewer configured with multiple image sources (see {@link OpenSeadragon.Viewer#goToPage}).
+             *
+             * @event page
+             * @memberof OpenSeadragon.Viewer
+             * @type {Object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {Number} page - The page index.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             this.raiseEvent( 'page', { page: page } );
         }
 
