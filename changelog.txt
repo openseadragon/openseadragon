@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
 * You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
 * Fixed: Opacity 0 images were causing unnecessary redraws (#1319)
+* The "page" event is now fired after the page index has been updated (#1330)
 
 2.3.1:
 
