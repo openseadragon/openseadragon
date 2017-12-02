@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+/* global QUnit, $, Util */
 
 (function () {
 
@@ -64,14 +64,14 @@
         },
 
         // ----------
-        assessNumericValue: function ( value1, value2, variance, message ) {
-            ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
+        assessNumericValue: function ( value1, value2, variance, message, assert ) {
+            assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
         },
 
         // ----------
-        assertPointsEquals: function (pointA, pointB, precision, message) {
-            Util.assessNumericValue(pointA.x, pointB.x, precision, message + " x: ");
-            Util.assessNumericValue(pointA.y, pointB.y, precision, message + " y: ");
+        assertPointsEquals: function (pointA, pointB, precision, message, assert) {
+            Util.assessNumericValue(pointA.x, pointB.x, precision, message + " x: ", assert);
+            Util.assessNumericValue(pointA.y, pointB.y, precision, message + " y: ", assert);
         },
 
         // ----------
@@ -87,15 +87,16 @@
         },
 
         // ----------
-        timeWatcher: function ( time ) {
+        timeWatcher: function ( time, assert ) {
+            var done = assert.async();
             time = time || 2000;
             var finished = false;
 
             setTimeout( function () {
                 if ( !finished ) {
                     finished = true;
-                    ok( false, 'finishes in ' + time + 'ms' );
-                    start();
+                    assert.ok( false, 'finishes in ' + time + 'ms' );
+                    done();
                 }
             }, time );
 
@@ -103,7 +104,7 @@
                 done: function () {
                     if ( !finished ) {
                         finished = true;
-                        start();
+                        done();
                     }
                 }
             };
@@ -124,7 +125,7 @@
         },
 
         // ----------
-        testDeprecation: function(obj0, member0, obj1, member1) {
+        testDeprecation: function(obj0, member0, obj1, member1, assert) {
             var called = false;
             var errored = false;
 
@@ -144,8 +145,8 @@
             });
 
             obj0[member0]();
-            equal(called, true, 'called through for ' + member0);
-            equal(errored, true, 'errored for ' + member0);
+            assert.equal(called, true, 'called through for ' + member0);
+            assert.equal(errored, true, 'errored for ' + member0);
         }
     };
 
