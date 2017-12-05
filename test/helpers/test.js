@@ -87,7 +87,7 @@
         },
 
         // ----------
-        timeWatcher: function ( time, assert ) {
+        timeWatcher: function ( assert, time ) {
             var done = assert.async();
             time = time || 2000;
             var finished = false;
