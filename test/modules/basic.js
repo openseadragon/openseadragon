@@ -97,8 +97,8 @@
             var panHandler = function() {
                 viewer.removeHandler('animation-finish', panHandler);
                 center = viewport.getCenter();
-                Util.assessNumericValue(center.x, 0.1, 0.00001, 'panned horizontally', assert);
-                Util.assessNumericValue(center.y, 0.1, 0.00001, 'panned vertically', assert);
+                Util.assessNumericValue(assert, center.x, 0.1, 0.00001, 'panned horizontally');
+                Util.assessNumericValue(assert, center.y, 0.1, 0.00001, 'panned vertically');
                 done();
             };
 

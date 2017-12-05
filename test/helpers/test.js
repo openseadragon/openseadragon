@@ -1,4 +1,4 @@
-/* global QUnit, $, Util */
+/* global $, Util */
 
 (function () {
 
@@ -64,25 +64,25 @@
         },
 
         // ----------
-        assessNumericValue: function ( value1, value2, variance, message, assert ) {
+        assessNumericValue: function ( assert, value1, value2, variance, message ) {
             assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
         },
 
         // ----------
-        assertPointsEquals: function (pointA, pointB, precision, message, assert) {
-            Util.assessNumericValue(pointA.x, pointB.x, precision, message + " x: ", assert);
-            Util.assessNumericValue(pointA.y, pointB.y, precision, message + " y: ", assert);
+        assertPointsEquals: function (assert, pointA, pointB, precision, message) {
+            Util.assessNumericValue(assert, pointA.x, pointB.x, precision, message + " x: ");
+            Util.assessNumericValue(assert, pointA.y, pointB.y, precision, message + " y: ");
         },
 
         // ----------
-        assertRectangleEquals: function (rectA, rectB, precision, message) {
-            Util.assessNumericValue(rectA.x, rectB.x, precision, message + " x: ");
-            Util.assessNumericValue(rectA.y, rectB.y, precision, message + " y: ");
-            Util.assessNumericValue(rectA.width, rectB.width, precision,
+        assertRectangleEquals: function (assert, rectA, rectB, precision, message) {
+            Util.assessNumericValue(assert, rectA.x, rectB.x, precision, message + " x: ");
+            Util.assessNumericValue(assert, rectA.y, rectB.y, precision, message + " y: ");
+            Util.assessNumericValue(assert, rectA.width, rectB.width, precision,
                 message + " width: ");
-            Util.assessNumericValue(rectA.height, rectB.height, precision,
+            Util.assessNumericValue(assert, rectA.height, rectB.height, precision,
                 message + " height: ");
-            Util.assessNumericValue(rectA.degrees, rectB.degrees, precision,
+            Util.assessNumericValue(assert, rectA.degrees, rectB.degrees, precision,
                 message + " degrees: ");
         },
 
