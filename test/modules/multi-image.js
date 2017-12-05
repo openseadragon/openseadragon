@@ -1,10 +1,10 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog, expect */
+/* global QUnit, $,testLog */
 
 ( function() {
     var viewer;
 
-    module( 'Multi-Image', {
-        setup: function() {
+    QUnit.module( 'Multi-Image', {
+        beforeEach: function() {
             $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
@@ -15,7 +15,7 @@
                 springStiffness: 100 // Faster animation = faster tests
             });
         },
-        teardown: function() {
+        afterEach: function() {
             if ( viewer && viewer.close ) {
                 viewer.close();
             }
@@ -26,10 +26,11 @@
     } );
 
     // ----------
-    asyncTest( 'Multi-image operations', function() {
-        expect( 24 );
+    QUnit.test( 'Multi-image operations', function(assert) {
+        var done = assert.async();
+        assert.expect( 24 );
         viewer.addHandler( "open", function( ) {
-            equal( 1, viewer.world.getItemCount( ),
+            assert.equal( 1, viewer.world.getItemCount( ),
                 "One item should be present after opening." );
             var options = {
                 tileSource: {
@@ -45,41 +46,41 @@
             viewer.world.addHandler( "add-item", function addFirstItemHandler( event ) {
                 viewer.world.removeHandler( "add-item", addFirstItemHandler );
                 var item1 = event.item;
-                equal( viewer.world.getItemCount( ), 2,
+                assert.equal( viewer.world.getItemCount( ), 2,
                     "2 items should be present after adding a item." );
-                equal( viewer.world.getIndexOfItem( item1 ), 1,
+                assert.equal( viewer.world.getIndexOfItem( item1 ), 1,
                     "The first added item should have a index of 1" );
-                equal( viewer.world.getItemAt( 1 ), item1,
+                assert.equal( viewer.world.getItemAt( 1 ), item1,
                     "The item at index 1 should be the first added item." );
 
                 viewer.addTiledImage( options );
                 viewer.world.addHandler( "add-item", function addSecondItemHandler( event ) {
                     viewer.world.removeHandler( "add-item", addSecondItemHandler );
                     var item2 = event.item;
-                    equal( viewer.world.getItemCount( ), 3,
+                    assert.equal( viewer.world.getItemCount( ), 3,
                         "3 items should be present after adding a second item." );
-                    equal( viewer.world.getIndexOfItem( item2 ), 2,
+                    assert.equal( viewer.world.getIndexOfItem( item2 ), 2,
                         "If not specified, a item should be added with the highest index." );
-                    equal( viewer.world.getItemAt( 2 ), item2,
+                    assert.equal( viewer.world.getItemAt( 2 ), item2,
                         "The item at index 2 should be the second added item." );
 
                     viewer.world.addHandler( "item-index-change",
                         function itemIndexChangedHandler( event ) {
                             viewer.world.removeHandler( "item-index-change",
                                 itemIndexChangedHandler );
-                            equal( event.item, item2,
+                            assert.equal( event.item, item2,
                                 "The item which changed index should be item2" );
-                            equal( event.previousIndex, 2, "Previous index should be 2." );
-                            equal( event.newIndex, 1, "New index should be 1." );
+                            assert.equal( event.previousIndex, 2, "Previous index should be 2." );
+                            assert.equal( event.newIndex, 1, "New index should be 1." );
                         });
                     viewer.world.setItemIndex( item2, 1 );
-                    equal( viewer.world.getIndexOfItem( item2 ), 1,
+                    assert.equal( viewer.world.getIndexOfItem( item2 ), 1,
                         "Item2 index should be 1 after setItemIndex." );
-                    equal( viewer.world.getIndexOfItem( item1 ), 2,
+                    assert.equal( viewer.world.getIndexOfItem( item1 ), 2,
                         "Item1 index should be 2 after setItemIndex." );
-                    equal( viewer.world.getItemAt( 1 ), item2,
+                    assert.equal( viewer.world.getItemAt( 1 ), item2,
                         "The item at index 1 should be item2." );
-                    equal( viewer.world.getItemAt( 2 ), item1,
+                    assert.equal( viewer.world.getItemAt( 2 ), item1,
                         "The item at index 2 should be item1." );
 
                     options.index = 2;
@@ -88,11 +89,11 @@
                     viewer.world.addHandler( "add-item", function addThirdItemHandler( event ) {
                         viewer.world.removeHandler( "add-item", addThirdItemHandler );
                         var item3 = event.item;
-                        equal( viewer.world.getItemCount( ), 4,
+                        assert.equal( viewer.world.getItemCount( ), 4,
                             "4 items should be present after adding a third item." );
-                        equal( viewer.world.getIndexOfItem( item3 ), 2,
+                        assert.equal( viewer.world.getIndexOfItem( item3 ), 2,
                             "Item 3 should be added with index 2." );
-                        equal( viewer.world.getIndexOfItem( item2 ), 1,
+                        assert.equal( viewer.world.getIndexOfItem( item2 ), 1,
                             "Item 2 should stay at index 1." );
 
                         options.index = 2;
@@ -101,26 +102,26 @@
                         viewer.world.addHandler( "add-item", function replaceAddItemHandler( event ) {
                             viewer.world.removeHandler( "add-item", replaceAddItemHandler );
                             var item4 = event.item;
-                            equal( viewer.world.getItemCount( ), 4,
+                            assert.equal( viewer.world.getItemCount( ), 4,
                                 "4 items should still be present after replacing the second item." );
-                            equal( viewer.world.getIndexOfItem( item4 ), 2,
+                            assert.equal( viewer.world.getIndexOfItem( item4 ), 2,
                                 "Item 4 should be added with index 2." );
-                            equal( viewer.world.getIndexOfItem( item3 ), -1,
+                            assert.equal( viewer.world.getIndexOfItem( item3 ), -1,
                                 "Item 3 should be at index -1." );
 
                             viewer.world.addHandler( "remove-item", function removeItemHandler( event ) {
                                 viewer.world.removeHandler( "remove-item", removeItemHandler );
 
-                                equal( item2, event.item, "Removed item should be item2." );
+                                assert.equal( item2, event.item, "Removed item should be item2." );
 
-                                equal( viewer.world.getIndexOfItem( item1 ), 2,
+                                assert.equal( viewer.world.getIndexOfItem( item1 ), 2,
                                     "Item 1 should be at index 2." );
-                                equal( viewer.world.getIndexOfItem( item2 ), -1,
+                                assert.equal( viewer.world.getIndexOfItem( item2 ), -1,
                                     "Item 2 should be at index -1." );
-                                equal( viewer.world.getIndexOfItem( item4 ), 1,
+                                assert.equal( viewer.world.getIndexOfItem( item4 ), 1,
                                     "Item 4 should be at index 1." );
 
-                                start();
+                                done();
                             });
 
                             viewer.world.removeItem( item2 );
@@ -133,7 +134,8 @@
     });
 
     // ----------
-    asyncTest( 'Sequences as items', function() {
+    QUnit.test( 'Sequences as items', function(assert) {
+        var done = assert.async();
         var options = {
             tileSource: [{
                     type: 'legacy-image-pyramid',
@@ -158,9 +160,9 @@
             viewer.addHandler( "add-item-failed",
                 function addItemFailedHandler( event ) {
                     viewer.removeHandler( "add-item-failed", addItemFailedHandler );
-                    equal( event.message, "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead." );
-                    equal( event.options, options, "Item failed event should give the options." );
-                    start();
+                    assert.equal( event.message, "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead." );
+                    assert.equal( event.options, options, "Item failed event should give the options." );
+                    done();
                 } );
             viewer.addTiledImage( options );
 
@@ -169,13 +171,14 @@
     });
 
     // ----------
-    asyncTest('items are added in order', function() {
+    QUnit.test('items are added in order', function(assert) {
+        var done = assert.async();
         viewer.addHandler('open', function(event) {
-            equal(viewer.world.getItemAt(0).getContentSize().y, 2000, 'first image is tall');
-            equal(viewer.world.getItemAt(0).getBounds().width, 4, 'first image has 4 width');
-            equal(viewer.world.getItemAt(1).getContentSize().x, 2000, 'second image is wide');
-            equal(viewer.world.getItemAt(1).getBounds().width, 2, 'second image has 2 width');
-            start();
+            assert.equal(viewer.world.getItemAt(0).getContentSize().y, 2000, 'first image is tall');
+            assert.equal(viewer.world.getItemAt(0).getBounds().width, 4, 'first image has 4 width');
+            assert.equal(viewer.world.getItemAt(1).getContentSize().x, 2000, 'second image is wide');
+            assert.equal(viewer.world.getItemAt(1).getBounds().width, 2, 'second image has 2 width');
+            done();
         });
 
         viewer.open([
@@ -189,15 +192,16 @@
         ]);
     });
 
-    asyncTest('Viewer.addSimpleImage', function() {
+    QUnit.test('Viewer.addSimpleImage', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function openHandler() {
             viewer.removeHandler("open", openHandler);
 
             viewer.world.addHandler('add-item', function itemAdded(event) {
                 viewer.world.removeHandler('add-item', itemAdded);
-                equal(event.item.opacity, 0.5,
+                assert.equal(event.item.opacity, 0.5,
                     'Opacity option should be set when using addSimpleImage');
-                start();
+                done();
             });
 
             viewer.addSimpleImage({
@@ -208,7 +212,8 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    asyncTest('Transparent image on top of others', function() {
+    QUnit.test('Transparent image on top of others', function(assert) {
+        var done = assert.async();
         viewer.open('/test/data/testpattern.dzi');
 
         var density = OpenSeadragon.pixelDensityRatio;
@@ -222,10 +227,10 @@
                 // Pixel 250,250 will be in the hole of the A
                 var expectedVal = getPixelValue(imageData, 250 * density, 250 * density);
 
-                notEqual(expectedVal.r, 0, 'Red channel should not be 0');
-                notEqual(expectedVal.g, 0, 'Green channel should not be 0');
-                notEqual(expectedVal.b, 0, 'Blue channel should not be 0');
-                notEqual(expectedVal.a, 0, 'Alpha channel should not be 0');
+                assert.notEqual(expectedVal.r, 0, 'Red channel should not be 0');
+                assert.notEqual(expectedVal.g, 0, 'Green channel should not be 0');
+                assert.notEqual(expectedVal.b, 0, 'Blue channel should not be 0');
+                assert.notEqual(expectedVal.a, 0, 'Alpha channel should not be 0');
 
                 viewer.addSimpleImage({
                     url: '/test/data/A.png',
@@ -235,22 +240,22 @@
                             var imageData = viewer.drawer.context.getImageData(0, 0, 500 * density, 500 * density);
                             var actualVal = getPixelValue(imageData, 250 * density, 250 * density);
 
-                            equal(actualVal.r, expectedVal.r,
+                            assert.equal(actualVal.r, expectedVal.r,
                                 'Red channel should not change in transparent part of the A');
-                            equal(actualVal.g, expectedVal.g,
+                            assert.equal(actualVal.g, expectedVal.g,
                                 'Green channel should not change in transparent part of the A');
-                            equal(actualVal.b, expectedVal.b,
+                            assert.equal(actualVal.b, expectedVal.b,
                                 'Blue channel should not change in transparent part of the A');
-                            equal(actualVal.a, expectedVal.a,
+                            assert.equal(actualVal.a, expectedVal.a,
                                 'Alpha channel should not change in transparent part of the A');
 
                             var onAVal = getPixelValue(imageData, 333 * density, 250 * density);
-                            equal(onAVal.r, 0, 'Red channel should be null on the A');
-                            equal(onAVal.g, 0, 'Green channel should be null on the A');
-                            equal(onAVal.b, 0, 'Blue channel should be null on the A');
-                            equal(onAVal.a, 255, 'Alpha channel should be 255 on the A');
+                            assert.equal(onAVal.r, 0, 'Red channel should be null on the A');
+                            assert.equal(onAVal.g, 0, 'Green channel should be null on the A');
+                            assert.equal(onAVal.b, 0, 'Blue channel should be null on the A');
+                            assert.equal(onAVal.a, 255, 'Alpha channel should be 255 on the A');
 
-                            start();
+                            done();
                         });
                     }
                 });
