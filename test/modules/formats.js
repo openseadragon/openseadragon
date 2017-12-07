@@ -21,7 +21,7 @@
     };
 
     var testOpen = function(tileSource, assert) {
-        var timeWatcher = Util.timeWatcher(7000, assert);
+        var timeWatcher = Util.timeWatcher(assert, 7000);
 
         viewer = OpenSeadragon({
             id:            'example',

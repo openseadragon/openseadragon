@@ -119,13 +119,12 @@
                 if (result === undefined) {
                     result = original.apply(this, arguments);
                 }
-
                 return result;
             };
         },
 
         // ----------
-        testDeprecation: function(obj0, member0, obj1, member1, assert) {
+        testDeprecation: function(assert, obj0, member0, obj1, member1) {
             var called = false;
             var errored = false;
 

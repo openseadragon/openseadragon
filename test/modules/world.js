@@ -1,11 +1,11 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, $, testLog */
 
 (function() {
     var viewer;
 
-    module('World', {
-        setup: function () {
-            var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+    QUnit.module('World', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
 
@@ -15,7 +15,7 @@
                 springStiffness: 100 // Faster animation = faster tests
             });
         },
-        teardown: function () {
+        afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -25,54 +25,56 @@
     });
 
     // ----------
-    var checkBounds = function(expected, message) {
+    var checkBounds = function(assert, expected, message) {
         var bounds = viewer.world.getHomeBounds();
-        ok(bounds.equals(expected), message + ' ' + bounds.toString());
+        assert.ok(bounds.equals(expected), message + ' ' + bounds.toString());
     };
 
     // ----------
-    asyncTest('adding a tiled image', function() {
-        ok(viewer.world, 'World exists');
+    QUnit.test('adding a tiled image', function(assert) {
+    var done = assert.async();
+        assert.ok(viewer.world, 'World exists');
 
         viewer.world.addHandler('add-item', function(event) {
-            ok(event, 'add-item handler received event data');
-            equal(event.eventSource, viewer.world, 'sender of add-item event was world');
-            ok(event.item, 'add-item event includes item');
-            equal(viewer.world.getItemCount(), 1, 'there is now 1 item');
-            equal(event.item, viewer.world.getItemAt(0), 'item is accessible via getItemAt');
-            equal(viewer.world.getIndexOfItem(event.item), 0, 'item index is 0');
-            start();
+            assert.ok(event, 'add-item handler received event data');
+            assert.equal(event.eventSource, viewer.world, 'sender of add-item event was world');
+            assert.ok(event.item, 'add-item event includes item');
+            assert.equal(viewer.world.getItemCount(), 1, 'there is now 1 item');
+            assert.equal(event.item, viewer.world.getItemAt(0), 'item is accessible via getItemAt');
+            assert.equal(viewer.world.getIndexOfItem(event.item), 0, 'item index is 0');
+            done();
         });
 
-        equal(viewer.world.getItemCount(), 0, 'no items to start with');
+        assert.equal(viewer.world.getItemCount(), 0, 'no items to start with');
 
         viewer.open('/test/data/testpattern.dzi');
     });
 
     // ----------
-    asyncTest('metrics', function() {
+    QUnit.test('metrics', function(assert) {
+        var done = assert.async();
         viewer.addHandler('open', function(event) {
-            checkBounds(new OpenSeadragon.Rect(0, 0, 4, 4), 'bounds after open');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 4, 4), 'bounds after open');
 
             var expectedContentFactor = viewer.world.getItemAt(1).getContentSize().x / 2;
-            equal(viewer.world.getContentFactor(), expectedContentFactor, 'content factor has changed');
+            assert.equal(viewer.world.getContentFactor(), expectedContentFactor, 'content factor has changed');
 
             viewer.world.addHandler('metrics-change', function metricsChangeHandler(event) {
                 viewer.world.removeHandler('metrics-change', metricsChangeHandler);
-                ok(event, 'metrics-change handler received event data');
-                equal(event.eventSource, viewer.world, 'sender of metrics-change event was world');
-                checkBounds(new OpenSeadragon.Rect(0, 0, 7, 12), 'bounds after position');
+                assert.ok(event, 'metrics-change handler received event data');
+                assert.equal(event.eventSource, viewer.world, 'sender of metrics-change event was world');
+                checkBounds(assert, new OpenSeadragon.Rect(0, 0, 7, 12), 'bounds after position');
                 viewer.world.getItemAt(0).setWidth(20);
-                checkBounds(new OpenSeadragon.Rect(0, 0, 20, 20), 'bounds after size');
+                checkBounds(assert, new OpenSeadragon.Rect(0, 0, 20, 20), 'bounds after size');
 
-                start();
+                done();
             });
 
             viewer.world.getItemAt(1).setPosition(new OpenSeadragon.Point(5, 10));
         });
 
-        checkBounds(new OpenSeadragon.Rect(0, 0, 1, 1), 'default bounds');
-        equal(viewer.world.getContentFactor(), 1, 'default content factor');
+        checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 1), 'default bounds');
+        assert.equal(viewer.world.getContentFactor(), 1, 'default content factor');
 
         viewer.open([
             {
@@ -86,23 +88,24 @@
     });
 
     // ----------
-    asyncTest('remove/reorder tiled images', function() {
+    QUnit.test('remove/reorder tiled images', function(assert) {
+        var done = assert.async();
         var handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
-            equal(viewer.world.getItemCount(), 3, 'there are now 3 items');
+            assert.equal(viewer.world.getItemCount(), 3, 'there are now 3 items');
             var item0 = viewer.world.getItemAt(0);
             var item1 = viewer.world.getItemAt(1);
 
             viewer.world.addHandler('item-index-change', function(event) {
                 handlerCount++;
-                ok(event, 'item-index-change handler received event data');
-                equal(event.eventSource, viewer.world, 'sender of item-index-change event was world');
-                equal(event.item, item0, 'item-index-change event includes correct item');
-                equal(event.newIndex, 1, 'item-index-change event includes correct newIndex');
-                equal(event.previousIndex, 0, 'item-index-change event includes correct previousIndex');
-                equal(viewer.world.getItemAt(0), item1, 'item1 is now at index 0');
-                equal(viewer.world.getItemAt(1), item0, 'item0 is now at index 1');
+                assert.ok(event, 'item-index-change handler received event data');
+                assert.equal(event.eventSource, viewer.world, 'sender of item-index-change event was world');
+                assert.equal(event.item, item0, 'item-index-change event includes correct item');
+                assert.equal(event.newIndex, 1, 'item-index-change event includes correct newIndex');
+                assert.equal(event.previousIndex, 0, 'item-index-change event includes correct previousIndex');
+                assert.equal(viewer.world.getItemAt(0), item1, 'item1 is now at index 0');
+                assert.equal(viewer.world.getItemAt(1), item0, 'item0 is now at index 1');
             });
 
             viewer.world.setItemIndex(item0, 1);
@@ -110,11 +113,11 @@
             viewer.world.addHandler('remove-item', function removeHandler(event) {
                 viewer.world.removeHandler('remove-item', removeHandler);
                 handlerCount++;
-                ok(event, 'remove-item handler received event data');
-                equal(event.eventSource, viewer.world, 'sender of remove-item event was world');
-                equal(event.item, item1, 'remove-item event includes correct item');
-                equal(viewer.world.getItemCount(), 2, 'after removal, only two items remain');
-                equal(viewer.world.getItemAt(0), item0, 'item0 is now at index 0');
+                assert.ok(event, 'remove-item handler received event data');
+                assert.equal(event.eventSource, viewer.world, 'sender of remove-item event was world');
+                assert.equal(event.item, item1, 'remove-item event includes correct item');
+                assert.equal(viewer.world.getItemCount(), 2, 'after removal, only two items remain');
+                assert.equal(viewer.world.getItemAt(0), item0, 'item0 is now at index 0');
             });
 
             viewer.world.removeItem(item1);
@@ -124,17 +127,17 @@
                 removeCount++;
                 if (removeCount === 2) {
                     handlerCount++;
-                    equal(viewer.world.getItemCount(), 0, 'after removeAll, no items remain');
+                    assert.equal(viewer.world.getItemCount(), 0, 'after removeAll, no items remain');
                 }
             });
 
             viewer.world.removeAll();
 
-            equal(handlerCount, 3, 'correct number of handlers called');
-            start();
+            assert.equal(handlerCount, 3, 'correct number of handlers called');
+            done();
         });
 
-        equal(viewer.world.getItemCount(), 0, 'no items to start with');
+        assert.equal(viewer.world.getItemCount(), 0, 'no items to start with');
 
         viewer.open([
             '/test/data/testpattern.dzi',
@@ -144,11 +147,12 @@
     });
 
     // ----------
-    asyncTest('draw', function() {
+    QUnit.test('draw', function(assert) {
+        var done = assert.async();
         var handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
-            equal(viewer.world.needsDraw(), true, 'needs draw after open');
+            assert.equal(viewer.world.needsDraw(), true, 'needs draw after open');
 
             viewer.addHandler('update-level', function updateHandler() {
                 viewer.removeHandler('update-level', updateHandler);
@@ -157,34 +161,36 @@
 
             viewer.world.draw();
 
-            equal(handlerCount, 1, 'correct number of handlers called');
-            start();
+            assert.equal(handlerCount, 1, 'correct number of handlers called');
+            done();
         });
 
-        equal(viewer.world.needsDraw(), false, 'needs no draw at first');
+        assert.equal(viewer.world.needsDraw(), false, 'needs no draw at first');
 
         viewer.open('/test/data/testpattern.dzi');
     });
 
     // ----------
-    asyncTest('resetItems', function() {
+    QUnit.test('resetItems', function(assert) {
+        var done = assert.async();
         viewer.addHandler('tile-drawn', function updateHandler() {
             viewer.removeHandler('tile-drawn', updateHandler);
-            ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tile-drawn');
+            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tile-drawn');
             viewer.world.resetItems();
-            equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after reset');
-            start();
+            assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after reset');
+            done();
         });
 
-        equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles at start');
+        assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles at start');
 
         viewer.open('/test/data/testpattern.dzi');
     });
 
     // ----------
-    asyncTest('arrange', function() {
+    QUnit.test('arrange', function(assert) {
+        var done = assert.async();
         viewer.addHandler('open', function(event) {
-            checkBounds(new OpenSeadragon.Rect(0, 0, 1, 1), 'all stacked');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 1), 'all stacked');
 
             viewer.world.arrange({
                 layout: 'horizontal',
@@ -193,7 +199,7 @@
                 tileMargin: 0.5
             });
 
-            checkBounds(new OpenSeadragon.Rect(0, 0, 4, 1), 'one horizontal row');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 4, 1), 'one horizontal row');
 
             viewer.world.arrange({
                 layout: 'horizontal',
@@ -202,7 +208,7 @@
                 tileMargin: 0.5
             });
 
-            checkBounds(new OpenSeadragon.Rect(0, 0, 2.5, 2.5), 'grid');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 2.5, 2.5), 'grid');
 
             viewer.world.arrange({
                 layout: 'vertical',
@@ -211,7 +217,7 @@
                 tileMargin: 0.5
             });
 
-            checkBounds(new OpenSeadragon.Rect(0, 0, 1, 4), 'one vertical column');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 4), 'one vertical column');
 
             viewer.world.arrange({
                 layout: 'horizontal',
@@ -221,7 +227,7 @@
                 tileMargin: 0.5
             });
 
-            checkBounds(new OpenSeadragon.Rect(0, 0, 4, 1), 'three horizontal columns (one horizontal row)');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 4, 1), 'three horizontal columns (one horizontal row)');
 
             viewer.world.arrange({
                 layout: 'vertical',
@@ -231,9 +237,9 @@
                 tileMargin: 0.5
             });
 
-            checkBounds(new OpenSeadragon.Rect(0, 0, 1, 4), 'three vertical rows (one vertical column)');
+            checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 4), 'three vertical rows (one vertical column)');
 
-            start();
+            done();
         });
 
         viewer.open([

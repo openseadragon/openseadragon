@@ -1,18 +1,20 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, testLog */
 
 (function() {
 
     // ----------
-    module('TileCache', {
-        setup: function () {
+    QUnit.module('TileCache', {
+        beforeEach: function () {
             testLog.reset();
         },
-        teardown: function () {
+        afterEach: function () {
         }
     });
 
     // ----------
-    asyncTest('basics', function() {
+    // TODO: this used to be async
+    QUnit.test('basics', function(assert) {
+        var done = assert.async();
         var fakeViewer = {
             raiseEvent: function() {}
         };
@@ -38,35 +40,36 @@
         };
 
         var cache = new OpenSeadragon.TileCache();
-        equal(cache.numTilesLoaded(), 0, 'no tiles to begin with');
+        assert.equal(cache.numTilesLoaded(), 0, 'no tiles to begin with');
 
         cache.cacheTile({
             tile: fakeTile0,
             tiledImage: fakeTiledImage0
         });
 
-        equal(cache.numTilesLoaded(), 1, 'tile count after cache');
+        assert.equal(cache.numTilesLoaded(), 1, 'tile count after cache');
 
         cache.cacheTile({
             tile: fakeTile1,
             tiledImage: fakeTiledImage1
         });
 
-        equal(cache.numTilesLoaded(), 2, 'tile count after second cache');
+        assert.equal(cache.numTilesLoaded(), 2, 'tile count after second cache');
 
         cache.clearTilesFor(fakeTiledImage0);
 
-        equal(cache.numTilesLoaded(), 1, 'tile count after first clear');
+        assert.equal(cache.numTilesLoaded(), 1, 'tile count after first clear');
 
         cache.clearTilesFor(fakeTiledImage1);
 
-        equal(cache.numTilesLoaded(), 0, 'tile count after second clear');
+        assert.equal(cache.numTilesLoaded(), 0, 'tile count after second clear');
 
-        start();
+        done();
     });
 
     // ----------
-    asyncTest('maxImageCacheCount', function() {
+    QUnit.test('maxImageCacheCount', function(assert) {
+        var done = assert.async();
         var fakeViewer = {
             raiseEvent: function() {}
         };
@@ -99,30 +102,30 @@
             maxImageCacheCount: 1
         });
 
-        equal(cache.numTilesLoaded(), 0, 'no tiles to begin with');
+        assert.equal(cache.numTilesLoaded(), 0, 'no tiles to begin with');
 
         cache.cacheTile({
             tile: fakeTile0,
             tiledImage: fakeTiledImage0
         });
 
-        equal(cache.numTilesLoaded(), 1, 'tile count after add');
+        assert.equal(cache.numTilesLoaded(), 1, 'tile count after add');
 
         cache.cacheTile({
             tile: fakeTile1,
             tiledImage: fakeTiledImage0
         });
 
-        equal(cache.numTilesLoaded(), 1, 'tile count after add of second image');
+        assert.equal(cache.numTilesLoaded(), 1, 'tile count after add of second image');
 
         cache.cacheTile({
             tile: fakeTile2,
             tiledImage: fakeTiledImage0
         });
 
-        equal(cache.numTilesLoaded(), 2, 'tile count after additional same image');
+        assert.equal(cache.numTilesLoaded(), 2, 'tile count after additional same image');
 
-        start();
+        done();
     });
 
 })();
