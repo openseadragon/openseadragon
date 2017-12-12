@@ -1,4 +1,4 @@
-/* global QUnit, module, Util, $, console, test, asyncTest, start, ok, equal, propEqual */
+/* global QUnit, module, Util, $, console, propEqual */
 
 (function () {
     var debug = false,
@@ -12,14 +12,14 @@
         displayRegionHeight,
         topNavigatorClickAdjustment;
 
-    module("navigator", {
-        setup: function () {
+    QUnit.module("navigator", {
+        beforeEach: function () {
             Util.initializeTestDOM();
             resetTestVariables();
             $(document).scrollTop(0);
             $(document).scrollLeft(0);
         },
-        teardown: function () {
+        afterEach: function () {
             // jQuery UI creates its controls outside the normal DOM hierarchy which QUnit cleans up:
             if ($('#exampleNavigator').is(':ui-dialog')) {
                 $('#exampleNavigator').dialog('destroy');
@@ -43,30 +43,30 @@
         topNavigatorClickAdjustment = 0;
     };
 
-    var assessNavigatorLocation = function (expectedX, expectedY) {
+    var assessNavigatorLocation = function (assert, expectedX, expectedY) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedX, navigator.offset().left, 10, ' Navigator x Position');
-        Util.assessNumericValue(expectedY, navigator.offset().top, 10, ' Navigator y Position');
+        Util.assessNumericValue(assert,  expectedX, navigator.offset().left, 10, ' Navigator x Position');
+        Util.assessNumericValue(assert, expectedY, navigator.offset().top, 10, ' Navigator y Position');
     };
 
-    var assessNavigatorSize = function (expectedWidth, expectedHeight, msg) {
+    var assessNavigatorSize = function (assert, expectedWidth, expectedHeight, msg) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedWidth, navigator.width(), 2, ' Navigator Width ' + (msg ? msg : ''));
-        Util.assessNumericValue(expectedHeight, navigator.height(), 2, ' Navigator Height ' + (msg ? msg : ''));
+        Util.assessNumericValue(assert, expectedWidth, navigator.width(), 2, ' Navigator Width ' + (msg ? msg : ''));
+        Util.assessNumericValue(assert, expectedHeight, navigator.height(), 2, ' Navigator Height ' + (msg ? msg : ''));
     };
 
-    var assessNavigatorAspectRatio = function (expectedAspectRatio, variance, msg) {
+    var assessNavigatorAspectRatio = function (assert, expectedAspectRatio, variance, msg) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedAspectRatio, navigator.width() / navigator.height(), variance, ' Navigator Aspect Ratio ' + (msg ? msg : ''));
+        Util.assessNumericValue(assert, expectedAspectRatio, navigator.width() / navigator.height(), variance, ' Navigator Aspect Ratio ' + (msg ? msg : ''));
     };
 
-    var assessNavigatorArea = function (expectedArea, msg) {
+    var assessNavigatorArea = function (assert, expectedArea, msg) {
         var navigator = $(".navigator");
 
-        Util.assessNumericValue(expectedArea, navigator.width() * navigator.height(), Math.max(navigator.width(), navigator.height()), ' Navigator Area ' + (msg ? msg : ''));
+        Util.assessNumericValue(assert, expectedArea, navigator.width() * navigator.height(), Math.max(navigator.width(), navigator.height()), ' Navigator Area ' + (msg ? msg : ''));
     };
 
     var navigatorRegionBoundsInPoints = function () {
@@ -113,19 +113,19 @@
 
     };
 
-    var assessDisplayRegion = function (status) {
+    var assessDisplayRegion = function (assert, status) {
 
         if (debug) {
             console.log(status);
         }
         var expectedBounds = navigatorRegionBoundsInPoints();
-        Util.assessNumericValue(expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
-        Util.assessNumericValue(expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
-        Util.assessNumericValue(expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
-        Util.assessNumericValue(expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
+        Util.assessNumericValue(assert, expectedBounds.width, displayRegion.width() + viewer.navigator.totalBorderWidths.x, 2, status + ' Width synchronization');
+        Util.assessNumericValue(assert, expectedBounds.height, displayRegion.height() + viewer.navigator.totalBorderWidths.y, 2, status + ' Height synchronization');
+        Util.assessNumericValue(assert, expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
+        Util.assessNumericValue(assert, expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
     };
 
-    var waitForViewer = function () {
+    var waitForViewer(assert,  = function (assert) {
         return function (handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
             var viewerAndNavigatorDisplayReady = false,
                 currentDisplayRegionLeft,
@@ -144,11 +144,11 @@
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
                     !viewer.world.needsDraw() &&
                     currentDisplayWidth > 0 &&
-                    Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
-                    Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, 0.0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, 0.0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, 0.0001) &&
-                    Util.equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, 0.0001);
+                    Util.equalsWithVariance(assert, lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
+                    Util.equalsWithVariance(assert, lastDisplayWidth, currentDisplayWidth, 0.0001) &&
+                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, 0.0001) &&
+                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, 0.0001) &&
+                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, 0.0001);
             }
             catch (err) {
                 //Ignore.  Subsequent code will try again shortly
@@ -156,12 +156,12 @@
             if (( !viewerAndNavigatorDisplayReady) && count < 50) {
                 count++;
                 setTimeout(function () {
-                    waitForViewer(handler, count, currentDisplayRegionLeft, currentDisplayWidth);
+                    waitForViewer(assert, (handler, count, currentDisplayRegionLeft, currentDisplayWidth);
                 }, 100);
             }
             else {
                 if (count === 40) {
-                    console.log("waitForViewer:" +
+                    console.log("waitForViewer(assert, :" +
                         viewer.drawer + ":" + viewer.world.needsDraw() + ":" +
                         viewerAndNavigatorDisplayReady + ":" +
                         lastDisplayRegionLeft + ":" + currentDisplayRegionLeft + ":" +
@@ -200,7 +200,7 @@
             .simulate('drag', event);
     };
 
-    var assessViewerInCorner = function (theContentCorner) {
+    var assessViewerInCorner = function (assert, theContentCorner) {
         return function () {
             var expectedXCoordinate, expectedYCoordinate;
             if (theContentCorner === "TOPLEFT") {
@@ -220,21 +220,21 @@
                 expectedYCoordinate = 1 / viewer.source.aspectRatio - viewer.viewport.getBounds().height;
             }
             if (viewer.viewport.getBounds().width < 1) {
-                Util.assessNumericValue(expectedXCoordinate, viewer.viewport.getBounds().x, 0.04, ' Viewer at ' + theContentCorner + ', x coord');
+                Util.assessNumericValue(assert, expectedXCoordinate, viewer.viewport.getBounds().x, 0.04, ' Viewer at ' + theContentCorner + ', x coord');
             }
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
-                Util.assessNumericValue(expectedYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
+                Util.assessNumericValue(assert, expectedYCoordinate, viewer.viewport.getBounds().y, 0.04, ' Viewer at ' + theContentCorner + ', y coord');
             }
         };
     };
 
-    var assessViewerInCenter = function () {
+    var assessViewerInCenter = function (assert) {
         var yPositionVariance = 0.04;
         if (viewer.source.aspectRatio < 1) {
             yPositionVariance = yPositionVariance / viewer.source.aspectRatio;
         }
-        Util.assessNumericValue(1 / viewer.source.aspectRatio / 2, viewer.viewport.getCenter().y, yPositionVariance, ' Viewer at center, y coord');
-        Util.assessNumericValue(0.5, viewer.viewport.getCenter().x, 0.4, ' Viewer at center, x coord');
+        Util.assessNumericValue(assert, 1 / viewer.source.aspectRatio / 2, viewer.viewport.getCenter().y, yPositionVariance, ' Viewer at center, y coord');
+        Util.assessNumericValue(assert, 0.5, viewer.viewport.getCenter().x, 0.4, ' Viewer at center, x coord');
     };
 
     var clickOnNavigator = function (theContentCorner) {
@@ -277,31 +277,32 @@
         $element.height(height);
     };
 
-    var assessNavigatorViewerPlacement = function (seadragonProperties, testProperties) {
+    var assessNavigatorViewerPlacement = function (assert, seadragonProperties, testProperties) {
+        var done = assert.async();
         var navigatorOperationScenarios = [
                 {interactionOperation:clickOnNavigator("TOPRIGHT"),
-                  assessmentOperation:assessViewerInCorner("TOPRIGHT"),
+                  assessmentOperation:assessViewerInCorner(assert, "TOPRIGHT"),
                     assessmentMessage:"After click on navigator on top right"  },
                 {interactionOperation:dragNavigatorBackToCenter,
-                  assessmentOperation:assessViewerInCenter,
+                  assessmentOperation:assessViewerInCenter(assert),
                     assessmentMessage:"After drag on navigator from top right"  },
                 {interactionOperation:clickOnNavigator("BOTTOMLEFT"),
-                  assessmentOperation:assessViewerInCorner("BOTTOMLEFT"),
+                  assessmentOperation:assessViewerInCorner(assert, "BOTTOMLEFT"),
                     assessmentMessage:"After click on navigator on bottom left"  },
                 {interactionOperation:dragNavigatorBackToCenter,
-                  assessmentOperation:assessViewerInCenter,
+                  assessmentOperation:assessViewerInCenter(assert),
                     assessmentMessage:"After drag on navigator from bottom left"  },
                 {interactionOperation:clickOnNavigator("BOTTOMRIGHT"),
-                  assessmentOperation:assessViewerInCorner("BOTTOMRIGHT"),
+                  assessmentOperation:assessViewerInCorner(assert, "BOTTOMRIGHT"),
                     assessmentMessage:"After click on navigator on bottom right"  },
                 {interactionOperation:dragNavigatorBackToCenter,
-                  assessmentOperation:assessViewerInCenter,
+                  assessmentOperation:assessViewerInCenter(assert),
                     assessmentMessage:"After drag on navigator from bottom right"  },
                 {interactionOperation:clickOnNavigator("TOPLEFT"),
-                  assessmentOperation:assessViewerInCorner("TOPLEFT"),
+                  assessmentOperation:assessViewerInCorner(assert, "TOPLEFT"),
                     assessmentMessage:"After click on navigator on top left"  },
                 {interactionOperation:dragNavigatorBackToCenter,
-                  assessmentOperation:assessViewerInCenter,
+                  assessmentOperation:assessViewerInCenter(assert),
                     assessmentMessage:"After drag on navigator from top left"  }
             ],
             viewerResizeScenarios = [
@@ -331,83 +332,83 @@
         var assessNavigatorOperationAndTakeNextStep = function (step) {
             return function () {
                 var nextStep = step + 1;
-                assessDisplayRegion(navigatorOperationScenarios[step].assessmentMessage);
+                assessDisplayRegion(assert, navigatorOperationScenarios[step].assessmentMessage);
                 navigatorOperationScenarios[step].assessmentOperation();
                 if (step === navigatorOperationScenarios.length - 1) {
-                    start();
+                    done();
                 }
                 else {
                     navigatorOperationScenarios[nextStep].interactionOperation();
-                    waitForViewer(assessNavigatorOperationAndTakeNextStep(nextStep));
+                    waitForViewer(assert, (assessNavigatorOperationAndTakeNextStep(nextStep));
                 }
             };
         };
 
-        var assessAfterSnapback = function () {
-            assessDisplayRegion("After snapback");
+        var assessAfterSnapback = function (assert) {
+            assessDisplayRegion(assert, "After snapback");
             navigatorOperationScenarios[0].interactionOperation();
-            waitForViewer(assessNavigatorOperationAndTakeNextStep(0));
+            waitForViewer(assert, (assessNavigatorOperationAndTakeNextStep(0));
         };
 
-        var assessAfterDragOnViewer = function () {
-            assessDisplayRegion("After pan");
+        var assessAfterDragOnViewer = function (assert) {
+            assessDisplayRegion(assert, "After pan");
             viewer.viewport.applyConstraints();
-            waitForViewer(assessAfterSnapback);
+            waitForViewer(assert, assessAfterSnapback(assert));
         };
 
-        var assessAfterZoomOnViewer = function () {
+        var assessAfterZoomOnViewer = function (assert) {
             var target = new OpenSeadragon.Point(0.4, 0.4);
-            assessDisplayRegion("After image zoom");
+            assessDisplayRegion(assert, "After image zoom");
             viewer.viewport.panTo(target);
-            waitForViewer(assessAfterDragOnViewer);
+            waitForViewer(assert, (assessAfterDragOnViewer(assert));
         };
 
-        var assessAfterResizeNavigator = function () {
+        var assessAfterResizeNavigator = function (assert) {
             viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
-            waitForViewer(assessAfterZoomOnViewer);
+            waitForViewer(assert, (assessAfterZoomOnViewer(assert));
         };
 
-        var assessNavigatorResizeAndTakeNextStep = function (step) {
+        var assessNavigatorResizeAndTakeNextStep = function (assert, step) {
             return function () {
                 var nextStep = step + 1;
-                assessNavigatorSize(navigatorOriginalSize.x * navigatorResizeScenarios[step].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[step].resizeFactorY, navigatorResizeScenarios[step].assessmentMessage);
-                assessDisplayRegion(navigatorResizeScenarios[step].assessmentMessage);
+                assessNavigatorSize(assert, navigatorOriginalSize.x * navigatorResizeScenarios[step].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[step].resizeFactorY, navigatorResizeScenarios[step].assessmentMessage);
+                assessDisplayRegion(assert, navigatorResizeScenarios[step].assessmentMessage);
                 if (step === viewerResizeScenarios.length - 1) {
-                    assessAfterResizeNavigator();
+                    assessAfterResizeNavigator(assert);
                 }
                 else {
                     resizeElement(navigatorElement, navigatorOriginalSize.x * navigatorResizeScenarios[nextStep].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[nextStep].resizeFactorY);
-                    waitForViewer(assessNavigatorResizeAndTakeNextStep(nextStep));
+                    waitForViewer(assert, (assessNavigatorResizeAndTakeNextStep(assert, nextStep));
                 }
             };
         };
 
-        var assessViewerResizeAndTakeNextStep = function (step) {
+        var assessViewerResizeAndTakeNextStep = function (assert, step) {
             return function () {
                 var nextStep = step + 1;
                 if (seadragonProperties.navigatorId) {
                     // Navigator hosted in outside element...size shouldn't change
-                    assessNavigatorSize(navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                    assessNavigatorSize(assert, navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
                 }
                 else {
                     // Navigator hosted in viewer
                     if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition == 'ABSOLUTE') {
                         // Navigator positioned 'ABSOLUTE'...size shouldn't change
-                        assessNavigatorSize(navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                        assessNavigatorSize(assert, navigatorOriginalSize.x, navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
                     }
                     else {
                         // Navigator positioned 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', or 'BOTTOM_RIGHT'
                         if (seadragonProperties.navigatorMaintainSizeRatio) {
                             // Navigator should maintain aspect ratio and size proportioned to viewer size
-                            assessNavigatorAspectRatio(viewerElement.width() / viewerElement.height(), 0.0001, viewerResizeScenarios[step].assessmentMessage);
-                            assessNavigatorSize(viewerElement.width() * seadragonProperties.navigatorSizeRatio, viewerElement.height() * seadragonProperties.navigatorSizeRatio, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorAspectRatio(assert, viewerElement.width() / viewerElement.height(), 0.0001, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorSize(assert, viewerElement.width() * seadragonProperties.navigatorSizeRatio, viewerElement.height() * seadragonProperties.navigatorSizeRatio, viewerResizeScenarios[step].assessmentMessage);
                         }
                         else {
                             // Navigator should maintain aspect ratio and area
                             // Variances are loosened up here, since 1 pixel rounding difference in resizing to maintain area
                             //   can cause a relatively large difference in area and aspect ratio.
-                            assessNavigatorAspectRatio(viewerElement.width() / viewerElement.height(), 0.1, viewerResizeScenarios[step].assessmentMessage);
-                            assessNavigatorArea(navigatorOriginalSize.x * navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorAspectRatio(assert, viewerElement.width() / viewerElement.height(), 0.1, viewerResizeScenarios[step].assessmentMessage);
+                            assessNavigatorArea(assert, navigatorOriginalSize.x * navigatorOriginalSize.y, viewerResizeScenarios[step].assessmentMessage);
                         }
                     }
                 }
@@ -416,22 +417,22 @@
                     if (seadragonProperties.navigatorId) {
                         // Navigator hosted in outside element...run navigator resize tests
                         resizeElement(navigatorElement, navigatorOriginalSize.x * navigatorResizeScenarios[0].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[0].resizeFactorY);
-                        waitForViewer(assessNavigatorResizeAndTakeNextStep(0));
+                        waitForViewer(assert, (assessNavigatorResizeAndTakeNextStep(assert, 0));
                     }
                     else {
                         // Navigator hosted in viewer...skip navigator resize tests
-                        assessAfterResizeNavigator();
+                        assessAfterResizeNavigator(assert);
                     }
                 }
                 else {
                     resizeElement(viewerElement, viewerOriginalSize.x * viewerResizeScenarios[nextStep].resizeFactorX, viewerOriginalSize.y * viewerResizeScenarios[nextStep].resizeFactorY);
-                    waitForViewer(assessViewerResizeAndTakeNextStep(nextStep));
+                    waitForViewer(assert, (assessViewerResizeAndTakeNextStep(assert, (nextStep));
                 }
             };
         };
 
         var captureInitialStateThenAct = function () {
-            assessDisplayRegion("After image load");
+            assessDisplayRegion(assert, "After image load");
 
             testProperties.determineExpectationsAndAssessNavigatorLocation(seadragonProperties, testProperties);
 
@@ -439,17 +440,17 @@
             navigatorOriginalSize = new OpenSeadragon.Point(navigatorElement.width(), navigatorElement.height());
 
             resizeElement(viewerElement, viewerOriginalSize.x * viewerResizeScenarios[0].resizeFactorX, viewerOriginalSize.y * viewerResizeScenarios[0].resizeFactorY);
-            waitForViewer(assessViewerResizeAndTakeNextStep(0));
+            waitForViewer(assert, (assessViewerResizeAndTakeNextStep(assert, (0));
         };
 
         var assessAutoFadeTriggered = function () {
-            ok(navigatorElement.parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
-            waitForViewer(captureInitialStateThenAct);
+            assert.ok(navigatorElement.parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
+            waitForViewer(assert, (captureInitialStateThenAct);
         };
 
         var assessAutoFadeDisabled = function () {
-            ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
-            waitForViewer(captureInitialStateThenAct);
+            assert.ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
+            waitForViewer(assert, (captureInitialStateThenAct);
         };
 
         var openHandler = function () {
@@ -458,10 +459,10 @@
             viewerElement = $("#" + seadragonProperties.id);
             //TODO This should be testProperties.testAutoFade, but test hangs. Fix this!
             if (!testProperties.testAutohide) {
-                waitForViewer(captureInitialStateThenAct);
+                waitForViewer(assert, (captureInitialStateThenAct);
             }
             else {
-                ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be visible initially");
+                assert.ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be visible initially");
                 var event = {
                      clientX:1,
                      clientY:1
@@ -479,8 +480,8 @@
         viewer.addHandler('open', openHandler);
     };
 
-    asyncTest('DefaultNavigatorLocationWithWideImageTallViewer', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('DefaultNavigatorLocationWithWideImageTallViewer', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'tallexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/wide.dzi',
@@ -496,16 +497,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('DefaultNavigatorLocationWithTallImageWideViewer', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('DefaultNavigatorLocationWithTallImageWideViewer', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'wideexample',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/tall.dzi',
@@ -524,16 +525,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('TopLeftNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('TopLeftNavigatorLocation', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'example',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/testpattern.dzi',
@@ -554,16 +555,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left,
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left,
                         mainViewerElement.offset().top);
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('TopRightNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('TopRightNavigatorLocation', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'example',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/testpattern.dzi',
@@ -584,16 +585,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('BottomLeftNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('BottomLeftNavigatorLocation', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'example',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/testpattern.dzi',
@@ -614,16 +615,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left,
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left,
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('BottomRightNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('BottomRightNavigatorLocation', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'example',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/testpattern.dzi',
@@ -644,16 +645,16 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
-                    assessNavigatorSize(mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
-                    assessNavigatorAspectRatio(mainViewerElement.width() / mainViewerElement.height(), 0.0001);
+                    assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
+                    assessNavigatorAspectRatio(assert, mainViewerElement.width() / mainViewerElement.height(), 0.0001);
                 }
             });
     });
 
-    asyncTest('AbsoluteNavigatorLocation', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('AbsoluteNavigatorLocation', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'example',
                 prefixUrl:'/build/openseadragon/images/',
                 tileSources:'/test/data/testpattern.dzi',
@@ -676,15 +677,15 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorElement = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(mainViewerElement.offset().left + seadragonProperties.navigatorLeft,
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left + seadragonProperties.navigatorLeft,
                         mainViewerElement.offset().top + seadragonProperties.navigatorTop);
-                    assessNavigatorSize(seadragonProperties.navigatorWidth, seadragonProperties.navigatorHeight);
+                    assessNavigatorSize(assert, seadragonProperties.navigatorWidth, seadragonProperties.navigatorHeight);
                 }
             });
     });
 
-    asyncTest('CustomNavigatorElementWithWideImageWideViewer', function () {
-        assessNavigatorViewerPlacement({
+    QUnit.test('CustomNavigatorElementWithWideImageWideViewer', function (assert) {
+        assessNavigatorViewerPlacement(assert, {
                 id:'wideexample',
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
@@ -699,13 +700,13 @@
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var mainViewerElement = $("#" + seadragonProperties.id),
                         navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
-                    assessNavigatorLocation(mainViewerElement.offset().left,
+                    assessNavigatorLocation(assert, mainViewerElement.offset().left,
                         mainViewerElement.offset().top - navigatorViewerElement.parent().height());
                 }
             });
     });
 
-    asyncTest('CustomDialogNavigatorElementWithTallImageTallViewer', function () {
+    QUnit.test('CustomDialogNavigatorElementWithTallImageTallViewer', function (assert) {
         $('#exampleNavigator').dialog({ width: 150,
                                         height:100,
                                         open: function (event, ui) {
@@ -720,7 +721,7 @@
                                         //    //$('#exampleNavigator').dialog("option", "width", 200);
                                         //}
                                       });
-        assessNavigatorViewerPlacement({
+        assessNavigatorViewerPlacement(assert, {
                 id:'tallexample',
                 navigatorId:'exampleNavigator',
                 prefixUrl:'/build/openseadragon/images/',
@@ -740,14 +741,15 @@
                 topNavigatorClickAdjustment: 15,
                 determineExpectationsAndAssessNavigatorLocation:function (seadragonProperties, testProperties) {
                     var jqueryDialog = $(testProperties.navigatorLocator);
-                    assessNavigatorLocation(jqueryDialog.offset().left,
+                    assessNavigatorLocation(assert, jqueryDialog.offset().left,
                         jqueryDialog.offset().top);
-                    assessNavigatorSize(jqueryDialog.width(), jqueryDialog.height());
+                    assessNavigatorSize(assert, jqueryDialog.width(), jqueryDialog.height());
                 }
             });
     });
 
-    asyncTest('Viewer closing one image and opening another', function() {
+    QUnit.test('Viewer closing one image and opening another', function(assert) {
+        var done = assert.async();
         var timeWatcher = Util.timeWatcher();
 
         viewer = OpenSeadragon({
@@ -760,14 +762,14 @@
 
         var openHandler1 = function(event) {
             viewer.removeHandler('open', openHandler1);
-            ok(viewer.navigator, 'navigator exists');
+            assert.ok(viewer.navigator, 'navigator exists');
             viewer.navigator.world.addHandler('add-item', navOpenHandler1);
         };
 
         var navOpenHandler1 = function(event) {
             viewer.navigator.world.removeHandler('add-item', navOpenHandler1);
-            equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
-            ok(viewer.navigator._updateRequestId, 'navigator timer is on');
+            assert.equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
+            assert.ok(viewer.navigator._updateRequestId, 'navigator timer is on');
             viewer.addHandler('close', closeHandler1);
             viewer.addHandler('open', openHandler2);
             viewer.open('/test/data/tall.dzi');
@@ -775,8 +777,8 @@
 
         var closeHandler1 = function(event) {
             viewer.removeHandler('close', closeHandler1);
-            ok(true, 'calling open closes the old one');
-            equal(viewer.navigator.source, null, 'navigator source has been cleared');
+            assert.ok(true, 'calling open closes the old one');
+            assert.equal(viewer.navigator.source, null, 'navigator source has been cleared');
         };
 
         var openHandler2 = function(event) {
@@ -786,7 +788,7 @@
 
         var navOpenHandler2 = function(event) {
             viewer.navigator.world.removeHandler('add-item', navOpenHandler2);
-            equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
+            assert.equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             viewer.addHandler('close', closeHandler2);
             viewer.close();
         };
@@ -794,7 +796,7 @@
         var closeHandler2 = function(event) {
             viewer.removeHandler('close', closeHandler2);
             setTimeout(function() {
-                ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
+                assert.ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
                 timeWatcher.done();
             }, 100);
         };
@@ -802,7 +804,8 @@
         viewer.addHandler('open', openHandler1);
     });
 
-    asyncTest('Item positions including collection mode', function() {
+    QUnit.test('Item positions including collection mode', function(assert) {
+        var done = assert.async();
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -836,7 +839,7 @@
                     propEqual(viewer.navigator.world.getItemAt(0).getBounds(),
                         viewer.world.getItemAt(0).getBounds(), 'bounds are the same after move');
 
-                    start();
+                    done();
                 }, 1);
             }
         };
@@ -844,8 +847,8 @@
         viewer.addHandler('open', openHandler);
     });
 
-    asyncTest('Item opacity is synchronized', function() {
-
+    QUnit.test('Item opacity is synchronized', function(assert) {
+        var done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -861,16 +864,16 @@
                 setTimeout(function() {
                     // Test initial formation
                     for (var i = 0; i < 2; i++) {
-                        equal(viewer.navigator.world.getItemAt(i).getOpacity(),
+                        assert.equal(viewer.navigator.world.getItemAt(i).getOpacity(),
                             viewer.world.getItemAt(i).getOpacity(), 'opacity is the same');
                     }
 
                     // Try changing the opacity of one
                     viewer.world.getItemAt(1).setOpacity(0.5);
-                    equal(viewer.navigator.world.getItemAt(1).getOpacity(),
+                    assert.equal(viewer.navigator.world.getItemAt(1).getOpacity(),
                         viewer.world.getItemAt(1).getOpacity(), 'opacity is the same after change');
 
-                    start();
+                    done();
                 }, 1);
             }
         };
@@ -885,8 +888,8 @@
         viewer.addHandler('open', openHandler);
     });
 
-    asyncTest('Item composite operation is synchronized', function() {
-
+    QUnit.test('Item composite operation is synchronized', function(assert) {
+        var done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -902,16 +905,16 @@
                 setTimeout(function() {
                     // Test initial formation
                     for (var i = 0; i < 2; i++) {
-                        equal(viewer.navigator.world.getItemAt(i).getCompositeOperation(),
+                        assert.equal(viewer.navigator.world.getItemAt(i).getCompositeOperation(),
                             viewer.world.getItemAt(i).getCompositeOperation(), 'composite operation is the same');
                     }
 
                     // Try changing the composite operation of one
                     viewer.world.getItemAt(1).setCompositeOperation('multiply');
-                    equal(viewer.navigator.world.getItemAt(1).getCompositeOperation(),
+                    assert.equal(viewer.navigator.world.getItemAt(1).getCompositeOperation(),
                         viewer.world.getItemAt(1).getCompositeOperation(), 'composite operation is the same after change');
 
-                    start();
+                    done();
                 }, 1);
             }
         };
@@ -926,8 +929,8 @@
         viewer.addHandler('open', openHandler);
     });
 
-    asyncTest('Viewer options transmitted to navigator', function() {
-
+    QUnit.test('Viewer options transmitted to navigator', function(assert) {
+        var done = assert.async();a
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -942,17 +945,17 @@
 
             var navigator = viewer.navigator;
 
-            equal(navigator.prefixUrl, viewer.prefixUrl,
+            assert.equal(navigator.prefixUrl, viewer.prefixUrl,
                 "Prefix URL should be transmitted to the navigator.");
-            equal(navigator.crossOriginPolicy, viewer.crossOriginPolicy,
+            assert.equal(navigator.crossOriginPolicy, viewer.crossOriginPolicy,
                 "Cross origin policy should be transmitted to the navigator.");
-            start();
+            done();
         });
 
     });
 
-    asyncTest('Viewer rotation applied to navigator by default', function() {
-
+    QUnit.test('Viewer rotation applied to navigator by default', function(assert) {
+        var done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -966,19 +969,19 @@
 
             var navigator = viewer.navigator;
 
-            equal(navigator.viewport.getRotation(), 45,
+            assert.equal(navigator.viewport.getRotation(), 45,
                 "Rotation set in constructor should be applied to navigator by default.");
 
             viewer.viewport.setRotation(90);
-            equal(navigator.viewport.getRotation(), 90,
+            assert.equal(navigator.viewport.getRotation(), 90,
                 "Rotation set by setRotation should be applied to navigator by default.");
 
-            start();
+            done();
         });
     });
 
-    asyncTest('Viewer rotation not applied to navigator when navigatorRotate=false', function() {
-
+    QUnit.test('Viewer rotation not applied to navigator when navigatorRotate=false', function(assert) {
+        var done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -993,14 +996,14 @@
 
             var navigator = viewer.navigator;
 
-            equal(navigator.viewport.getRotation(), 0,
+            assert.equal(navigator.viewport.getRotation(), 0,
                 "Rotation set in constructor should not be applied to navigator when navigatorRotate is false.");
 
             viewer.viewport.setRotation(90);
-            equal(navigator.viewport.getRotation(), 0,
+            assert.equal(navigator.viewport.getRotation(), 0,
                 "Rotation set by setRotation should not be applied to navigator when navigatorRotate is false.");
 
-            start();
+            done();
         });
     });
 
