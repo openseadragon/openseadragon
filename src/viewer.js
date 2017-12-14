@@ -2483,7 +2483,7 @@ function onCanvasKeyDown( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
                 } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -this.pixelsPerArrowPress)));
                 }
                 this.viewport.applyConstraints();
                 return false;
@@ -2491,16 +2491,16 @@ function onCanvasKeyDown( event ) {
                 if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
                 } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, this.pixelsPerArrowPress)));
                 }
                 this.viewport.applyConstraints();
                 return false;
             case 37://left arrow
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
                 this.viewport.applyConstraints();
                 return false;
             case 39://right arrow
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
                 this.viewport.applyConstraints();
                 return false;
             default:
