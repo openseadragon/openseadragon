@@ -266,6 +266,9 @@
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
+  * @property {Number} [pixelsPerArrowPress=40]
+  *     The number of pixels viewport moves when an arrow key is pressed.
+  *
   * @property {Number} [visibilityRatio=0.5]
   *     The percentage ( as a number from 0 to 1 ) of the source image which
   *     must be kept within the viewport.  If the image is dragged beyond that
@@ -1088,6 +1091,7 @@ function OpenSeadragon( options ){
             smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
             iOSDevice:              isIOSDevice(),
             pixelsPerWheelLine:     40,
+            pixelsPerArrowPress:    40,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
