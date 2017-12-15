@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
 * Fixed: Opacity 0 images were causing unnecessary redraws (#1319)
 * The "page" event is now fired after the page index has been updated (#1330)
+* Added option pixelsPerArrowPress that sets the speed of arrow keys (#1364)
 
 2.3.1:
 
