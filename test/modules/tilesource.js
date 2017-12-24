@@ -107,6 +107,17 @@
             maxLevel: 0,
         });
         assertTileAtPoint(0, new OpenSeadragon.Point(1, 1239 / 4036), new OpenSeadragon.Point(0, 0));
+
+        // Test for issue #1362
+        tileSource = new OpenSeadragon.TileSource({
+            width: 2000,
+            height: 3033,
+            tileWidth: 2000,
+            tileHeight: 3033,
+            tileOverlap: 0,
+            maxLevel: 0,
+        });
+        assertTileAtPoint(0, new OpenSeadragon.Point(1, 3033 / 2000), new OpenSeadragon.Point(0, 0));
     });
 
 }());

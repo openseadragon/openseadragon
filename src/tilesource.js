@@ -360,7 +360,7 @@ $.TileSource.prototype = {
         if (point.x >= 1) {
             x = this.getNumTiles(level).x - 1;
         }
-        var EPSILON = 1e-16;
+        var EPSILON = 1e-15;
         if (point.y >= 1 / this.aspectRatio - EPSILON) {
             y = this.getNumTiles(level).y - 1;
         }
