@@ -3,7 +3,7 @@ node_modules
 build/
 sftp-config.json
 coverage/
-temp/
+instrumented/
 .idea
 /nbproject/private/
 .directory
