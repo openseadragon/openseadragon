@@ -182,11 +182,11 @@
                 }
                 //Ignore.  Subsequent code will try again shortly
             }
-            if (( !viewerAndNavigatorDisplayReady) && count < 200) {
+            if (( !viewerAndNavigatorDisplayReady) && count < 50) {
                 count++;
                 setTimeout(function () {
                     waitForViewer(assert, handler, count, currentDisplayRegionLeft, currentDisplayWidth);
-                }, 50);
+                }, 100);
             }
             else {
                 if (debug) {
