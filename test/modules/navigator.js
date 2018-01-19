@@ -1,4 +1,4 @@
-/* global QUnit, module, Util, $, console, propEqual */
+/* global QUnit, module, Util, $, console */
 
 (function () {
     var debug = false,
@@ -170,11 +170,11 @@
                 viewerAndNavigatorDisplayReady = viewer.drawer !== null &&
                     !viewer.world.needsDraw() &&
                     currentDisplayWidth > 0 &&
-                    Util.equalsWithVariance(assert, lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
-                    Util.equalsWithVariance(assert, lastDisplayWidth, currentDisplayWidth, 0.0001) &&
-                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, 0.0001) &&
-                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, 0.0001) &&
-                    Util.equalsWithVariance(assert, viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, 0.0001);
+                    Util.equalsWithVariance(lastDisplayRegionLeft, currentDisplayRegionLeft, 0.0001) &&
+                    Util.equalsWithVariance(lastDisplayWidth, currentDisplayWidth, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).x, viewer.viewport.getBounds().x, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).y, viewer.viewport.getBounds().y, 0.0001) &&
+                    Util.equalsWithVariance(viewer.viewport.getBounds(true).width, viewer.viewport.getBounds().width, 0.0001);
             }
             catch (err) {
                 if(debug) {
