@@ -158,7 +158,7 @@ module.exports = function(grunt) {
             normal: {
                 options: {
                     urls: [ "http://localhost:8000/test/test.html" ],
-                    timeout: 500000
+                    timeout: 10000
                 }
             },
             coverage: {
@@ -172,7 +172,7 @@ module.exports = function(grunt) {
                         disposeCollector: true
                     },
                     inject: 'test/helpers/phantom-bridge.js',
-                    timeout: 500000
+                    timeout: 10000
                 }
             },
             all: {
