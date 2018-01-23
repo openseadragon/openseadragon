@@ -1,18 +1,20 @@
 /* global module */
 
 module.exports = function(grunt) {
+    var dateFormat = require('dateformat');
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
     grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-uglify");
-    grunt.loadNpmTasks("grunt-qunit-istanbul");
+    grunt.loadNpmTasks("grunt-contrib-qunit");
     grunt.loadNpmTasks("grunt-contrib-connect");
     grunt.loadNpmTasks("grunt-contrib-watch");
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
+    grunt.loadNpmTasks('grunt-istanbul');
 
     // ----------
     var packageJson = grunt.file.readJSON("package.json"),
@@ -21,6 +23,7 @@ module.exports = function(grunt) {
         packageDirName = "openseadragon-bin-" + packageJson.version,
         packageDir = "build/" + packageDirName + "/",
         releaseRoot = "../site-build/built-openseadragon/",
+        coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
             "src/fullscreen.js",
@@ -83,7 +86,7 @@ module.exports = function(grunt) {
         clean: {
             build: ["build"],
             package: [packageDir],
-            coverage: ["coverage"],
+            coverage: ["instrumented"],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -154,7 +157,8 @@ module.exports = function(grunt) {
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" ]
+                    urls: [ "http://localhost:8000/test/test.html" ],
+                    timeout: 10000
                 }
             },
             coverage: {
@@ -162,11 +166,13 @@ module.exports = function(grunt) {
                     urls: [ "http://localhost:8000/test/coverage.html" ],
                     coverage: {
                         src: ['src/*.js'],
-                        htmlReport: 'coverage/html/',
-                        instrumentedFiles: 'temp/',
+                        htmlReport: coverageDir + '/html/',
+                        instrumentedFiles: 'instrumented/src/',
                         baseUrl: '.',
                         disposeCollector: true
-                    }
+                    },
+                    inject: 'test/helpers/phantom-bridge.js',
+                    timeout: 10000
                 }
             },
             all: {
@@ -199,7 +205,38 @@ module.exports = function(grunt) {
             },
             build: {}
         },
-        gitInfo: "unknown"
+        gitInfo: "unknown",
+        instrument: {
+          files: sources,
+          options: {
+              lazy: false,
+              basePath: 'instrumented/'
+          }
+        },
+        reloadTasks: {
+            rootPath: "instrumented/src/"
+        },
+        storeCoverage: {
+            options: {
+                dir: coverageDir,
+                'include-all-sources': true
+              }
+         },
+        makeReport: {
+          src: "coverage/**/*.json",
+          options: {
+              type: [ "lcov", "html" ],
+              dir: coverageDir,
+              print: "detail"
+          }
+      }
+    });
+
+    grunt.event.on("qunit.coverage", function(coverage) {
+        var reportPath = coverageDir + "/coverage.json";
+
+        // Create the coverage file
+        grunt.file.write(reportPath, JSON.stringify(coverage));
     });
 
     // ----------
@@ -287,7 +324,7 @@ module.exports = function(grunt) {
     // ----------
     // Coverage task.
     // Outputs unit test code coverage report.
-    grunt.registerTask("coverage", ["clean:coverage", "connect", "qunit:coverage"]);
+    grunt.registerTask("coverage", ["clean:coverage", "instrument", "connect", "qunit:coverage", "makeReport"]);
 
     // ----------
     // Package task.

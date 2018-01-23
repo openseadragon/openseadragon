@@ -1,20 +1,19 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, Util, testLog */
 
 (function() {
-    var viewer;
-
-    module('TileSourceCollection', {
-        setup: function () {
+    QUnit.module('TileSourceCollection', {
+        beforeEach: function () {
             testLog.reset();
         },
-        teardown: function () {
+        afterEach: function () {
         }
     });
 
     // ----------
-    asyncTest('deprecation', function() {
-        Util.testDeprecation(OpenSeadragon, 'TileSourceCollection');
-        start();
+    QUnit.test('deprecation', function(assert) {
+        var done = assert.async();
+        Util.testDeprecation(assert, OpenSeadragon, 'TileSourceCollection');
+        done();
     });
 
 })();

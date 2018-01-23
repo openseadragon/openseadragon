@@ -1,15 +1,15 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, $, testLog */
 
 (function() {
     var viewer;
 
-    module('ReferenceStrip', {
-        setup: function () {
-            var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+    QUnit.module('ReferenceStrip', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
         },
-        teardown: function () {
+        afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -29,7 +29,8 @@
     };
 
     // ----------
-    asyncTest('basics', function() {
+    QUnit.test('basics', function(assert) {
+        var done = assert.async();
         createViewer({
             sequenceMode: true,
             showReferenceStrip: true,
@@ -39,8 +40,8 @@
             ]
         });
 
-        ok(viewer.referenceStrip, 'referenceStrip exists');
-        start();
+        assert.ok(viewer.referenceStrip, 'referenceStrip exists');
+        done();
     });
 
 })();

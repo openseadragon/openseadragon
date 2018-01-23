@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util */
+/* global $, Util */
 
 (function () {
 
@@ -64,38 +64,39 @@
         },
 
         // ----------
-        assessNumericValue: function ( value1, value2, variance, message ) {
-            ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
+        assessNumericValue: function ( assert, value1, value2, variance, message ) {
+            assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
         },
 
         // ----------
-        assertPointsEquals: function (pointA, pointB, precision, message) {
-            Util.assessNumericValue(pointA.x, pointB.x, precision, message + " x: ");
-            Util.assessNumericValue(pointA.y, pointB.y, precision, message + " y: ");
+        assertPointsEquals: function (assert, pointA, pointB, precision, message) {
+            Util.assessNumericValue(assert, pointA.x, pointB.x, precision, message + " x: ");
+            Util.assessNumericValue(assert, pointA.y, pointB.y, precision, message + " y: ");
         },
 
         // ----------
-        assertRectangleEquals: function (rectA, rectB, precision, message) {
-            Util.assessNumericValue(rectA.x, rectB.x, precision, message + " x: ");
-            Util.assessNumericValue(rectA.y, rectB.y, precision, message + " y: ");
-            Util.assessNumericValue(rectA.width, rectB.width, precision,
+        assertRectangleEquals: function (assert, rectA, rectB, precision, message) {
+            Util.assessNumericValue(assert, rectA.x, rectB.x, precision, message + " x: ");
+            Util.assessNumericValue(assert, rectA.y, rectB.y, precision, message + " y: ");
+            Util.assessNumericValue(assert, rectA.width, rectB.width, precision,
                 message + " width: ");
-            Util.assessNumericValue(rectA.height, rectB.height, precision,
+            Util.assessNumericValue(assert, rectA.height, rectB.height, precision,
                 message + " height: ");
-            Util.assessNumericValue(rectA.degrees, rectB.degrees, precision,
+            Util.assessNumericValue(assert, rectA.degrees, rectB.degrees, precision,
                 message + " degrees: ");
         },
 
         // ----------
-        timeWatcher: function ( time ) {
+        timeWatcher: function ( assert, time ) {
+            var done = assert.async();
             time = time || 2000;
             var finished = false;
 
             setTimeout( function () {
                 if ( !finished ) {
                     finished = true;
-                    ok( false, 'finishes in ' + time + 'ms' );
-                    start();
+                    assert.ok( false, 'finishes in ' + time + 'ms' );
+                    done();
                 }
             }, time );
 
@@ -103,7 +104,7 @@
                 done: function () {
                     if ( !finished ) {
                         finished = true;
-                        start();
+                        done();
                     }
                 }
             };
@@ -118,13 +119,12 @@
                 if (result === undefined) {
                     result = original.apply(this, arguments);
                 }
-
                 return result;
             };
         },
 
         // ----------
-        testDeprecation: function(obj0, member0, obj1, member1) {
+        testDeprecation: function(assert, obj0, member0, obj1, member1) {
             var called = false;
             var errored = false;
 
@@ -144,8 +144,8 @@
             });
 
             obj0[member0]();
-            equal(called, true, 'called through for ' + member0);
-            equal(errored, true, 'errored for ' + member0);
+            assert.equal(called, true, 'called through for ' + member0);
+            assert.equal(errored, true, 'errored for ' + member0);
         }
     };
 

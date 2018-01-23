@@ -1,11 +1,11 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, TouchUtil, Util, testLog */
+/* global QUnit, $, TouchUtil, Util, testLog */
 
 (function () {
     var viewer;
 
-    module( 'Events', {
-        setup: function () {
-            var example = $( '<div id="eventsexample"></div>' ).appendTo( "#qunit-fixture" );
+    QUnit.module( 'Events', {
+        beforeEach: function () {
+            $( '<div id="eventsexample"></div>' ).appendTo( "#qunit-fixture" );
 
             testLog.reset();
 
@@ -15,7 +15,7 @@
                 springStiffness: 100 // Faster animation = faster tests
             } );
         },
-        teardown: function () {
+        afterEach: function () {
             if ( viewer && viewer.close ) {
                 viewer.close();
             }
@@ -25,12 +25,12 @@
     } );
 
     // ----------
-    asyncTest( 'MouseTracker: mouse gestures', function () {
+    QUnit.test( 'MouseTracker: mouse gestures', function (assert) {
+        var done = assert.async();
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             simEvent = {},
             offset = $canvas.offset(),
             tracker = viewer.innerTracker,
-            intervalId,
             origEnterHandler,
             origExitHandler,
             origPressHandler,
@@ -278,58 +278,58 @@
         var assessGestureExpectations = function (expected) {
             var pointersList = tracker.getActivePointersListByType('mouse');
             if ('enterCount' in expected) {
-                equal( enterCount, expected.enterCount, expected.description + 'enterHandler event count matches expected (' + expected.enterCount + ')' );
+                assert.equal( enterCount, expected.enterCount, expected.description + 'enterHandler event count matches expected (' + expected.enterCount + ')' );
             }
             if ('exitCount' in expected) {
-                equal( exitCount, expected.exitCount, expected.description + 'exitHandler event count matches expected (' + expected.exitCount + ')' );
+                assert.equal( exitCount, expected.exitCount, expected.description + 'exitHandler event count matches expected (' + expected.exitCount + ')' );
             }
             if ('pressCount' in expected) {
-                equal( pressCount, expected.pressCount, expected.description + 'pressHandler event count matches expected (' + expected.pressCount + ')' );
+                assert.equal( pressCount, expected.pressCount, expected.description + 'pressHandler event count matches expected (' + expected.pressCount + ')' );
             }
             if ('releaseCount' in expected) {
-                equal( releaseCount, expected.releaseCount, expected.description + 'releaseHandler event count matches expected (' + expected.releaseCount + ')' );
+                assert.equal( releaseCount, expected.releaseCount, expected.description + 'releaseHandler event count matches expected (' + expected.releaseCount + ')' );
             }
             if ('rightPressCount' in expected) {
-                equal( rightPressCount, expected.rightPressCount, expected.description + 'nonPrimaryPressHandler event count (secondary/right button) matches expected (' + expected.rightPressCount + ')' );
+                assert.equal( rightPressCount, expected.rightPressCount, expected.description + 'nonPrimaryPressHandler event count (secondary/right button) matches expected (' + expected.rightPressCount + ')' );
             }
             if ('rightReleaseCount' in expected) {
-                equal( rightReleaseCount, expected.rightReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (secondary/right button) matches expected (' + expected.rightReleaseCount + ')' );
+                assert.equal( rightReleaseCount, expected.rightReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (secondary/right button) matches expected (' + expected.rightReleaseCount + ')' );
             }
             if ('middlePressCount' in expected) {
-                equal( middlePressCount, expected.middlePressCount, expected.description + 'nonPrimaryPressHandler event count (aux/middle button) matches expected (' + expected.middlePressCount + ')' );
+                assert.equal( middlePressCount, expected.middlePressCount, expected.description + 'nonPrimaryPressHandler event count (aux/middle button) matches expected (' + expected.middlePressCount + ')' );
             }
             if ('middleReleaseCount' in expected) {
-                equal( middleReleaseCount, expected.middleReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (aux/middle button) matches expected (' + expected.middleReleaseCount + ')' );
+                assert.equal( middleReleaseCount, expected.middleReleaseCount, expected.description + 'nonPrimaryReleaseHandler event count (aux/middle button) matches expected (' + expected.middleReleaseCount + ')' );
             }
             if ('moveCount' in expected) {
-                equal( moveCount, expected.moveCount, expected.description + 'moveHandler event count matches expected (' + expected.moveCount + ')' );
+                assert.equal( moveCount, expected.moveCount, expected.description + 'moveHandler event count matches expected (' + expected.moveCount + ')' );
             }
             if ('clickCount' in expected) {
-                equal( clickCount, expected.clickCount, expected.description + 'clickHandler event count matches expected (' + expected.clickCount + ')' );
+                assert.equal( clickCount, expected.clickCount, expected.description + 'clickHandler event count matches expected (' + expected.clickCount + ')' );
             }
             if ('dblClickCount' in expected) {
-                equal( dblClickCount, expected.dblClickCount, expected.description + 'dblClickHandler event count matches expected (' + expected.dblClickCount + ')' );
+                assert.equal( dblClickCount, expected.dblClickCount, expected.description + 'dblClickHandler event count matches expected (' + expected.dblClickCount + ')' );
             }
             if ('dragCount' in expected) {
-                equal( dragCount, expected.dragCount, expected.description + 'dragHandler event count matches expected (' + expected.dragCount + ')' );
+                assert.equal( dragCount, expected.dragCount, expected.description + 'dragHandler event count matches expected (' + expected.dragCount + ')' );
             }
             if ('dragEndCount' in expected) {
-                equal( dragEndCount, expected.dragEndCount, expected.description + 'dragEndHandler event count matches expected (' + expected.dragEndCount + ')' );
+                assert.equal( dragEndCount, expected.dragEndCount, expected.description + 'dragEndHandler event count matches expected (' + expected.dragEndCount + ')' );
             }
             if ('insideElementPressed' in expected) {
-                equal( insideElementPressed, expected.insideElementPressed, expected.description + 'releaseHandler event.insideElementPressed matches expected (' + expected.insideElementPressed + ')' );
+                assert.equal( insideElementPressed, expected.insideElementPressed, expected.description + 'releaseHandler event.insideElementPressed matches expected (' + expected.insideElementPressed + ')' );
             }
             if ('insideElementReleased' in expected) {
-                equal( insideElementReleased, expected.insideElementReleased, expected.description + 'releaseHandler event.insideElementReleased matches expected (' + expected.insideElementReleased + ')' );
+                assert.equal( insideElementReleased, expected.insideElementReleased, expected.description + 'releaseHandler event.insideElementReleased matches expected (' + expected.insideElementReleased + ')' );
             }
             if ('contacts' in expected) {
-                equal( pointersList.contacts, expected.contacts, expected.description + 'Remaining pointer contact count matches expected (' + expected.contacts + ')' );
+                assert.equal( pointersList.contacts, expected.contacts, expected.description + 'Remaining pointer contact count matches expected (' + expected.contacts + ')' );
             }
             if ('trackedPointers' in expected) {
-                equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Remaining tracked pointer count matches expected (' + expected.trackedPointers + ')' );
+                assert.equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Remaining tracked pointer count matches expected (' + expected.trackedPointers + ')' );
             }
             if ('quickClick' in expected) {
-                equal( quickClick, expected.quickClick, expected.description + 'clickHandler event.quick matches expected (' + expected.quickClick + ')' );
+                assert.equal( quickClick, expected.quickClick, expected.description + 'clickHandler event.quick matches expected (' + expected.quickClick + ')' );
             }
             if ('speed' in expected) {
                 Util.assessNumericValue(expected.speed, speed, 1.0, expected.description + 'Drag speed ');
@@ -340,8 +340,6 @@
         };
 
         var onOpen = function ( event ) {
-            var timeStart,
-                timeElapsed;
 
             viewer.removeHandler( 'open', onOpen );
 
@@ -670,7 +668,7 @@
             unhookViewerHandlers();
 
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler( 'open', onOpen );
@@ -679,7 +677,8 @@
 
     // ----------
     if ('TouchEvent' in window) {
-        asyncTest( 'MouseTracker: touch events', function () {
+        QUnit.test( 'MouseTracker: touch events', function (assert) {
+            var done = assert.async();
             var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
                 tracker = viewer.innerTracker,
                 touches;
@@ -692,13 +691,13 @@
             var assessTouchExpectations = function ( expected ) {
                 var pointersList = tracker.getActivePointersListByType( 'touch' );
                 if ('captureCount' in expected) {
-                    equal( pointersList.captureCount, expected.captureCount, expected.description + 'Pointer capture count matches expected (' + expected.captureCount + ')' );
+                    assert.equal( pointersList.captureCount, expected.captureCount, expected.description + 'Pointer capture count matches expected (' + expected.captureCount + ')' );
                 }
                 if ('contacts' in expected) {
-                    equal( pointersList.contacts, expected.contacts, expected.description + 'Pointer contact count matches expected (' + expected.contacts + ')' );
+                    assert.equal( pointersList.contacts, expected.contacts, expected.description + 'Pointer contact count matches expected (' + expected.contacts + ')' );
                 }
                 if ('trackedPointers' in expected) {
-                    equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Tracked pointer count matches expected (' + expected.trackedPointers + ')' );
+                    assert.equal( pointersList.getLength(), expected.trackedPointers, expected.description + 'Tracked pointer count matches expected (' + expected.trackedPointers + ')' );
                 }
             };
 
@@ -745,7 +744,7 @@
 
                 TouchUtil.resetTracker( tracker );
                 viewer.close();
-                start();
+                done();
             };
 
             viewer.addHandler( 'open', onOpen );
@@ -754,7 +753,8 @@
     }
 
     // ----------
-    asyncTest('Viewer: preventDefaultAction', function() {
+    QUnit.test('Viewer: preventDefaultAction', function(assert) {
+        var done = assert.async();
         var $canvas = $(viewer.element).find('.openseadragon-canvas')
             .not('.navigator .openseadragon-canvas');
         var tracker = viewer.innerTracker;
@@ -805,9 +805,9 @@
 
             var zoom = viewer.viewport.getZoom();
             var bounds = viewer.viewport.getBounds();
-            Util.assessNumericValue(zoom, originalZoom, epsilon,
+            Util.assessNumericValue(assert, zoom, originalZoom, epsilon,
                 "Zoom should be prevented");
-            Util.assertRectangleEquals(bounds, originalBounds, epsilon,
+            Util.assertRectangleEquals(assert, bounds, originalBounds, epsilon,
                 'Pan should be prevented');
 
             tracker.clickHandler = origClickHandler;
@@ -815,18 +815,19 @@
 
             simulateClickAndDrag();
 
-            var zoom = viewer.viewport.getZoom();
-            var bounds = viewer.viewport.getBounds();
-            Util.assessNumericValue(zoom, 0.002, epsilon,
+            zoom = viewer.viewport.getZoom();
+            bounds = viewer.viewport.getBounds();
+            Util.assessNumericValue(assert, zoom, 0.002, epsilon,
                 "Zoom should not be prevented");
             Util.assertRectangleEquals(
+                assert,
                 new OpenSeadragon.Rect(-249.5, -0.25, 500, 0.5),
                 bounds,
                 epsilon,
                 'Pan should not be prevented');
 
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler('open', onOpen);
@@ -834,7 +835,8 @@
     });
 
     // ----------
-    asyncTest('Viewer: preventDefaultAction in dblClickHandler', function() {
+    QUnit.test('Viewer: preventDefaultAction in dblClickHandler', function(assert) {
+        var done = assert.async();
         var tracker = viewer.innerTracker;
         var epsilon = 0.0000001;
 
@@ -863,7 +865,7 @@
             simulateDblTap();
 
             var zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(originalZoom, zoom, epsilon,
+            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
                 "Zoom on double tap should be prevented");
 
             // Reset event handler to original
@@ -872,19 +874,19 @@
             simulateDblTap();
             originalZoom = originalZoom * viewer.zoomPerClick;
 
-            var zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(originalZoom, zoom, epsilon,
+            zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
                 "Zoom on double tap should not be prevented");
 
 
             var dblClickHandler = function(event) {
                 event.preventDefaultAction = true;
-            }
+            };
 
             viewer.addHandler('canvas-double-click', dblClickHandler);
 
-            var zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(originalZoom, zoom, epsilon,
+            zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
                 "Zoom on double tap should be prevented");
 
             // Remove custom event handler
@@ -893,13 +895,13 @@
             simulateDblTap();
             originalZoom = originalZoom * viewer.zoomPerClick;
 
-            var zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(originalZoom, zoom, epsilon,
+            zoom = viewer.viewport.getZoom();
+            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
                 "Zoom on double tap should not be prevented");
 
             TouchUtil.resetTracker(tracker);
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler('open', onOpen);
@@ -907,7 +909,8 @@
     });
 
     // ----------
-    asyncTest( 'EventSource/MouseTracker/Viewer: event.originalEvent event.userData canvas-drag canvas-drag-end canvas-release canvas-click', function () {
+    QUnit.test( 'EventSource/MouseTracker/Viewer: event.originalEvent event.userData canvas-drag canvas-drag-end canvas-release canvas-click', function (assert) {
+        var done = assert.async();
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             mouseTracker = null,
             userData = { item1: 'Test user data', item2: Math.random() },
@@ -1055,18 +1058,18 @@
             viewer.removeHandler( 'canvas-release', onEventSourceRelease );
             viewer.removeHandler( 'canvas-click', onEventSourceClick );
 
-            equal( dragsHandledEventSource, dragCount, "'canvas-drag' event count matches 'mousemove' event count (" + dragCount + ")" );
-            equal( dragEndsHandledEventSource, dragEndsExpected, "'canvas-drag-end' event count matches expected (" + dragEndsExpected + ")" );
-            equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
-            equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
-            equal( originalEventsPassedViewer, eventsHandledViewer, "Original event received count matches expected (" + eventsHandledViewer + ")" );
+            assert.equal( dragsHandledEventSource, dragCount, "'canvas-drag' event count matches 'mousemove' event count (" + dragCount + ")" );
+            assert.equal( dragEndsHandledEventSource, dragEndsExpected, "'canvas-drag-end' event count matches expected (" + dragEndsExpected + ")" );
+            assert.equal( releasesHandledEventSource, releasesExpected, "'canvas-release' event count matches expected (" + releasesExpected + ")" );
+            assert.equal( clicksHandledEventSource, releasesExpected, "'canvas-click' event count matches expected (" + releasesExpected + ")" );
+            assert.equal( originalEventsPassedViewer, eventsHandledViewer, "Original event received count matches expected (" + eventsHandledViewer + ")" );
 
-            equal( eventSourcePassedMouseTracker, eventsHandledMouseTracker, "Event source received count matches expected (" + eventsHandledMouseTracker + ")" );
-            equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );
-            deepEqual( event.userData, originalUserData, 'MouseTracker userData was untouched' );
+            assert.equal( eventSourcePassedMouseTracker, eventsHandledMouseTracker, "Event source received count matches expected (" + eventsHandledMouseTracker + ")" );
+            assert.equal( originalEventsPassedMouseTracker, eventsHandledMouseTracker, "Original event received count matches expected (" + eventsHandledMouseTracker + ")" );
+            assert.deepEqual( event.userData, originalUserData, 'MouseTracker userData was untouched' );
 
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler( 'open', onOpen );
@@ -1074,16 +1077,17 @@
     } );
 
     // ----------
-    asyncTest( 'EventSource: addHandler without userData', function () {
+    QUnit.test( 'EventSource: addHandler without userData', function (assert) {
+        var done = assert.async();
         var openHandler = function ( event ) {
             viewer.removeHandler( 'open', openHandler );
-            ok( event, 'Event handler received event data' );
+            assert.ok( event, 'Event handler received event data' );
             if ( event ) {
-                strictEqual( event.eventSource, viewer, 'eventSource sent, eventSource is viewer' );
-                strictEqual( event.userData, null, 'User data defaulted to null' );
+                assert.strictEqual( event.eventSource, viewer, 'eventSource sent, eventSource is viewer' );
+                assert.strictEqual( event.userData, null, 'User data defaulted to null' );
             }
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler( 'open', openHandler );
@@ -1091,19 +1095,20 @@
     } );
 
     // ----------
-    asyncTest( 'EventSource: addHandler with userData', function () {
+    QUnit.test( 'EventSource: addHandler with userData', function (assert) {
+        var done = assert.async();
         var userData = { item1: 'Test user data', item2: Math.random() },
             originalUserData = { item1: userData.item1, item2: userData.item2 };
 
         var openHandler = function ( event ) {
             viewer.removeHandler( 'open', openHandler );
-            ok( event, 'Event handler received event data' );
-            ok( event && event.userData, 'Event handler received user data' );
+            assert.ok( event, 'Event handler received event data' );
+            assert.ok( event && event.userData, 'Event handler received user data' );
             if ( event && event.userData ) {
-                deepEqual( event.userData, originalUserData, 'User data was untouched' );
+                assert.deepEqual( event.userData, originalUserData, 'User data was untouched' );
             }
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler( 'open', openHandler, userData );
@@ -1111,7 +1116,7 @@
     } );
 
     // ----------
-    test('EventSource: addOnceHandler', function() {
+    QUnit.test('EventSource: addOnceHandler', function(assert) {
         var eventSource = new OpenSeadragon.EventSource();
         var userData = 'data';
         var eventData = {
@@ -1120,23 +1125,23 @@
         var handlerCalledCount = 0;
         eventSource.addOnceHandler('test-event', function(event) {
             handlerCalledCount++;
-            strictEqual(event.foo, eventData.foo,
+            assert.strictEqual(event.foo, eventData.foo,
                 'Event data should be transmitted to the event.');
-            strictEqual(event.userData, userData,
+            assert.strictEqual(event.userData, userData,
                 'User data should be transmitted to the event.');
         }, userData);
-        strictEqual(0, handlerCalledCount,
+        assert.strictEqual(0, handlerCalledCount,
             'Handler should not have been called yet.');
         eventSource.raiseEvent('test-event', eventData);
-        strictEqual(1, handlerCalledCount,
+        assert.strictEqual(1, handlerCalledCount,
             'Handler should have been called once.');
         eventSource.raiseEvent('test-event', eventData);
-        strictEqual(1, handlerCalledCount,
+        assert.strictEqual(1, handlerCalledCount,
             'Handler should still have been called once.');
     });
 
     // ----------
-    test('EventSource: addOnceHandler 2 times', function() {
+    QUnit.test('EventSource: addOnceHandler 2 times', function(assert) {
         var eventSource = new OpenSeadragon.EventSource();
         var userData = 'data';
         var eventData = {
@@ -1145,37 +1150,38 @@
         var handlerCalledCount = 0;
         eventSource.addOnceHandler('test-event', function(event) {
             handlerCalledCount++;
-            strictEqual(event.foo, eventData.foo,
+            assert.strictEqual(event.foo, eventData.foo,
                 'Event data should be transmitted to the event.');
-            strictEqual(event.userData, userData,
+            assert.strictEqual(event.userData, userData,
                 'User data should be transmitted to the event.');
         }, userData, 2);
-        strictEqual(0, handlerCalledCount,
+        assert.strictEqual(0, handlerCalledCount,
             'Handler should not have been called yet.');
         eventSource.raiseEvent('test-event', eventData);
-        strictEqual(1, handlerCalledCount,
+        assert.strictEqual(1, handlerCalledCount,
             'Handler should have been called once.');
         eventSource.raiseEvent('test-event', eventData);
-        strictEqual(2, handlerCalledCount,
+        assert.strictEqual(2, handlerCalledCount,
             'Handler should have been called twice.');
         eventSource.raiseEvent('test-event', eventData);
-        strictEqual(2, handlerCalledCount,
+        assert.strictEqual(2, handlerCalledCount,
             'Handler should still have been called twice.');
     });
 
     // ----------
-    asyncTest( 'Viewer: tile-drawing event', function () {
+    QUnit.test( 'Viewer: tile-drawing event', function (assert) {
+        var done = assert.async();
         var tileDrawing = function ( event ) {
             viewer.removeHandler( 'tile-drawing', tileDrawing );
-            ok( event, 'Event handler should be invoked' );
+            assert.ok( event, 'Event handler should be invoked' );
             if ( event ) {
                 // Make sure we have the expected elements set
-                ok(event.context, "Context should be set");
-                ok(event.tile, "Tile should be set");
-                ok(event.rendered, "Rendered should be set");
+                assert.ok(event.context, "Context should be set");
+                assert.ok(event.tile, "Tile should be set");
+                assert.ok(event.rendered, "Rendered should be set");
             }
             viewer.close();
-            start();
+            done();
         };
 
         viewer.addHandler( 'tile-drawing', tileDrawing );
@@ -1183,17 +1189,17 @@
     } );
 
     // tile-loaded event tests
-    asyncTest( 'Viewer: tile-loaded event without callback.', function () {
-
+    QUnit.test( 'Viewer: tile-loaded event without callback.', function (assert) {
+        var done = assert.async();
         function tileLoaded ( event ) {
             viewer.removeHandler( 'tile-loaded', tileLoaded);
             var tile = event.tile;
-            ok( tile.loading, "The tile should be marked as loading.");
-            notOk( tile.loaded, "The tile should not be marked as loaded.");
+            assert.ok( tile.loading, "The tile should be marked as loading.");
+            assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
             setTimeout(function() {
-                notOk( tile.loading, "The tile should not be marked as loading.");
-                ok( tile.loaded, "The tile should be marked as loaded.");
-                start();
+                assert.notOk( tile.loading, "The tile should not be marked as loading.");
+                assert.ok( tile.loaded, "The tile should be marked as loaded.");
+                done();
             }, 0);
         }
 
@@ -1201,22 +1207,22 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
-    asyncTest( 'Viewer: tile-loaded event with 1 callback.', function () {
-
+    QUnit.test( 'Viewer: tile-loaded event with 1 callback.', function (assert) {
+        var done = assert.async();
         function tileLoaded ( event ) {
             viewer.removeHandler( 'tile-loaded', tileLoaded);
             var tile = event.tile;
             var callback = event.getCompletionCallback();
-            ok( tile.loading, "The tile should be marked as loading.");
-            notOk( tile.loaded, "The tile should not be marked as loaded.");
-            ok( callback, "The event should have a callback.");
+            assert.ok( tile.loading, "The tile should be marked as loading.");
+            assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
+            assert.ok( callback, "The event should have a callback.");
             setTimeout(function() {
-                ok( tile.loading, "The tile should be marked as loading.");
-                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                assert.ok( tile.loading, "The tile should be marked as loading.");
+                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
                 callback();
-                notOk( tile.loading, "The tile should not be marked as loading.");
-                ok( tile.loaded, "The tile should be marked as loaded.");
-                start();
+                assert.notOk( tile.loading, "The tile should not be marked as loading.");
+                assert.ok( tile.loaded, "The tile should be marked as loaded.");
+                done();
             }, 0);
         }
 
@@ -1224,28 +1230,28 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
-    asyncTest( 'Viewer: tile-loaded event with 2 callbacks.', function () {
-
+    QUnit.test( 'Viewer: tile-loaded event with 2 callbacks.', function (assert) {
+        var done = assert.async();
         function tileLoaded ( event ) {
             viewer.removeHandler( 'tile-loaded', tileLoaded);
             var tile = event.tile;
             var callback1 = event.getCompletionCallback();
             var callback2 = event.getCompletionCallback();
-            ok( tile.loading, "The tile should be marked as loading.");
-            notOk( tile.loaded, "The tile should not be marked as loaded.");
+            assert.ok( tile.loading, "The tile should be marked as loading.");
+            assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
             setTimeout(function() {
-                ok( tile.loading, "The tile should be marked as loading.");
-                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                assert.ok( tile.loading, "The tile should be marked as loading.");
+                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
                 callback1();
-                ok( tile.loading, "The tile should be marked as loading.");
-                notOk( tile.loaded, "The tile should not be marked as loaded.");
+                assert.ok( tile.loading, "The tile should be marked as loading.");
+                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
                 setTimeout(function() {
-                    ok( tile.loading, "The tile should be marked as loading.");
-                    notOk( tile.loaded, "The tile should not be marked as loaded.");
+                    assert.ok( tile.loading, "The tile should be marked as loading.");
+                    assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
                     callback2();
-                    notOk( tile.loading, "The tile should not be marked as loading.");
-                    ok( tile.loaded, "The tile should be marked as loaded.");
-                    start();
+                    assert.notOk( tile.loading, "The tile should not be marked as loading.");
+                    assert.ok( tile.loaded, "The tile should be marked as loaded.");
+                    done();
                 }, 0);
             }, 0);
         }
@@ -1254,9 +1260,10 @@
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
-    asyncTest( 'Viewer: tile-unloaded event.', function() {
+    QUnit.test( 'Viewer: tile-unloaded event.', function(assert) {
         var tiledImage;
         var tile;
+        var done = assert.async();
 
         function tileLoaded( event ) {
             viewer.removeHandler( 'tile-loaded', tileLoaded);
@@ -1269,11 +1276,11 @@
 
         function tileUnloaded( event ) {
             viewer.removeHandler( 'tile-unloaded', tileUnloaded );
-            equal( tile, event.tile,
+            assert.equal( tile, event.tile,
                 "The unloaded tile should be the same than the loaded one." );
-            equal( tiledImage, event.tiledImage,
+            assert.equal( tiledImage, event.tiledImage,
                 "The tiledImage of the unloaded tile should be the same than the one of the loaded one." );
-            start();
+            done();
         }
 
         viewer.addHandler( 'tile-loaded', tileLoaded );

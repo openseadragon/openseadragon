@@ -1,4 +1,4 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, $, testLog */
 
 (function() {
     var viewer,
@@ -8,13 +8,13 @@
             springStiffness: 100 // Faster animation = faster tests
         };
 
-    module('ImageLoader', {
-        setup: function () {
-            var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+    QUnit.module('ImageLoader', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
         },
-        teardown: function () {
+        afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -25,19 +25,19 @@
 
     // ----------
 
-    test('Default timeout', function() {
+    QUnit.test('Default timeout', function(assert) {
         var actual,
             expected = OpenSeadragon.DEFAULT_SETTINGS.timeout,
             message,
             options = OpenSeadragon.extend(true, baseOptions, {
                 imageLoaderLimit: 1
-            }), 
+            }),
             viewer = OpenSeadragon(options),
             imageLoader = viewer.imageLoader;
 
         message = 'ImageLoader timeout should be set to the default value of ' + expected + ' when none is specified';
         actual = imageLoader.timeout;
-        equal(actual, expected, message); 
+        assert.equal(actual, expected, message);
 
         // Manually seize the ImageLoader
         imageLoader.jobsInProgress = imageLoader.jobLimit;
@@ -51,12 +51,12 @@
 
         message = 'ImageJob should inherit the ImageLoader timeout value';
         actual = imageLoader.jobQueue.shift().timeout;
-        equal(actual, expected, message); 
+        assert.equal(actual, expected, message);
     });
 
     // ----------
-            
-    test('Configure timeout', function() {
+
+    QUnit.test('Configure timeout', function(assert) {
         var actual,
             expected = 123456,
             message,
@@ -69,7 +69,7 @@
 
         message = 'ImageLoader timeout should be configurable';
         actual = imageLoader.timeout;
-        equal(actual, expected, message); 
+        assert.equal(actual, expected, message);
 
         imageLoader.jobsInProgress = imageLoader.jobLimit;
         imageLoader.addJob({
@@ -82,7 +82,7 @@
 
         message = 'ImageJob should inherit the ImageLoader timeout value';
         actual = imageLoader.jobQueue.shift().timeout;
-        equal(actual, expected, message); 
+        assert.equal(actual, expected, message);
     });
 
 })();
