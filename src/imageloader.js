@@ -184,6 +184,7 @@
             jobLimit: $.DEFAULT_SETTINGS.imageLoaderLimit,
             timeout: $.DEFAULT_SETTINGS.timeout,
             jobQueue: [],
+            failedTiles: [],
             jobsInProgress: 0
         }, options);
 
@@ -259,12 +260,7 @@
     function completeJob(loader, job, callback) {
 
         if (job.errorMsg != '' && job.image === null && job.tries < 3) {
-            // Restart job with delay of 2500ms
-            setTimeout(function () {
-                job.start();
-            }, 2500);
-
-            return false;
+            loader.failedTiles.push(job);
         }
 
         var nextJob;
@@ -275,6 +271,17 @@
             nextJob = loader.jobQueue.shift();
             nextJob.start();
             loader.jobsInProgress++;
+        }
+
+        if (loader.refetchFailedTiles && loader.jobQueue.length === 0) {
+            //SAME AS ABOVE => REFACTOR
+            if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
+                nextJob = loader.failedTiles.shift();
+                setTimeout(function () {
+                    nextJob.start();
+                }, 2500);
+                loader.jobsInProgress++;
+            }
         }
 
         callback(job.image, job.errorMsg, job.request);
