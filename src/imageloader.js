@@ -259,7 +259,7 @@
      */
     function completeJob(loader, job, callback) {
 
-        if (job.errorMsg != '' && job.image === null && job.tries < 3) {
+        if (job.errorMsg != '' && job.image === null && job.tries < 1 + loader.tileRetryMax) {
             loader.failedTiles.push(job);
         }
 
@@ -273,13 +273,13 @@
             loader.jobsInProgress++;
         }
 
-        if (loader.refetchFailedTiles && loader.jobQueue.length === 0) {
+        if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
             //SAME AS ABOVE => REFACTOR
             if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
                 nextJob = loader.failedTiles.shift();
                 setTimeout(function () {
                     nextJob.start();
-                }, 2500);
+                }, loader.tileRetryDelay);
                 loader.jobsInProgress++;
             }
         }

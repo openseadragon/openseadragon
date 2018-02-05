@@ -1157,7 +1157,8 @@ function OpenSeadragon(options) {
             maxImageCacheCount: 200,
             timeout: 30000,
             useCanvas: true,  // Use canvas element for drawing if available
-            refetchFailedTiles: false,
+            tileRetryMax: 0,
+            tileRetryDelay: 2500,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl: "/images/",

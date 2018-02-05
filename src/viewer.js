@@ -378,7 +378,8 @@
         this.imageLoader = new $.ImageLoader({
             jobLimit: this.imageLoaderLimit,
             timeout: options.timeout,
-            refetchFailedTiles: this.refetchFailedTiles
+            tileRetryMax: this.tileRetryMax,
+            tileRetryDelay: this.tileRetryDelay,
         });
 
         // Create the tile cache

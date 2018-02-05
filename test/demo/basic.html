@@ -26,7 +26,8 @@
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
             showNavigator: true,
-            refetchFailedTiles: true
+            tileRetryMax: 1,
+            tileRetryDelay: 2500,
         });
 
     </script>
