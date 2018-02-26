@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Opacity 0 images were causing unnecessary redraws (#1319)
 * The "page" event is now fired after the page index has been updated (#1330)
 * Added option pixelsPerArrowPress that sets the speed of arrow keys (#1364)
+* Improved IIIF options.maxLevel calculation (#1401)
 
 2.3.1:
 
