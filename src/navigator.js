@@ -405,10 +405,24 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  * @function
  */
 function onCanvasClick( event ) {
-    if ( event.quick && this.viewer.viewport ) {
-        this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
-        this.viewer.viewport.applyConstraints();
+  if (event.quick && this.viewer.viewport && (this.panVertical ||  this.panHorizontal)) {
+    var target;
+    if (!this.panVertical) {
+      // allow only horizonal pan
+      var posX = this.viewport.pointFromPixel(event.position).x
+      var posY = this.viewport.getCenter().y;
+      target = new $.Point(posX, posY);
+    } else if (!this.panHorizontal) {
+      // allow only vertical pan
+      var posX = this.viewport.getCenter().x;
+      var posY = this.viewport.pointFromPixel(event.position).y
+      target = new $.Point(posX, posY);
+    } else {
+      target = this.viewport.pointFromPixel(event.position);
     }
+    this.viewer.viewport.panTo(target);
+    this.viewer.viewport.applyConstraints();
+  }
 }
 
 /**
