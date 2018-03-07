@@ -2483,6 +2483,7 @@ function onCanvasKeyDown( event ) {
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
+
     /**
      * Raised when a keyboard key is pressed and the focus is on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2548,20 +2549,8 @@ function onCanvasKeyPress( event ) {
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
-    /**
-     * Raised when a keyboard key is pressed and the focus is on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-key
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
-     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false.
-     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
 
+    // This event is documented in onCanvasKeyDown
     this.raiseEvent('canvas-key', canvasKeyPressEventArgs);
 
     if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
