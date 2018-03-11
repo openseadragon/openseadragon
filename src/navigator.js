@@ -417,6 +417,27 @@ function onCanvasClick( event ) {
     this.viewer.viewport.panTo(target);
     this.viewer.viewport.applyConstraints();
   }
+  /**
+   * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
+   *
+   * @event navigator-click
+   * @memberof OpenSeadragon.Viewer
+   * @type {object}
+   * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+   * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+   * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+   * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
+   * @property {Boolean} shift - True if the shift key was pressed during this event.
+   * @property {Object} originalEvent - The original DOM event.
+   * @property {?Object} userData - Arbitrary subscriber-defined object.
+   */
+   this.viewer.raiseEvent('navigator-click', {
+     tracker: event.eventSource,
+     position: event.position,
+     quick: event.quick,
+     shift: event.shift,
+     originalEvent: event.originalEvent
+   });
 }
 
 /**
