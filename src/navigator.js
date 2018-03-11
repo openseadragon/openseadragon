@@ -406,21 +406,13 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
   if (event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
-    var target,
-      posX,
-      posY;
+    var target = this.viewport.pointFromPixel(event.position);
     if (!this.panVertical) {
       // perform only horizonal pan
-      posX = this.viewport.pointFromPixel(event.position).x;
-      posY = this.viewport.getCenter().y;
-      target = new $.Point(posX, posY);
+      target.y = this.viewer.viewport.getCenter(true).y;
     } else if (!this.panHorizontal) {
       // perform only vertical pan
-      posX = this.viewport.getCenter().x;
-      posY = this.viewport.pointFromPixel(event.position).y;
-      target = new $.Point(posX, posY);
-    } else {
-      target = this.viewport.pointFromPixel(event.position);
+      target.x = this.viewer.viewport.getCenter(true).x;
     }
     this.viewer.viewport.panTo(target);
     this.viewer.viewport.applyConstraints();
