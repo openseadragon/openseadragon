@@ -481,6 +481,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * Open tiled images into the viewer, closing any others.
+     * To get the TiledImage instance created by open, add an event listener for
+     * {@link OpenSeadragon.Viewer.html#.event:open}, which when fired can be used to get access
+     * to the instance, i.e., viewer.world.getItemAt(0).
      * @function
      * @param {Array|String|Object|Function} tileSources - This can be a TiledImage
      * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
@@ -1263,7 +1266,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
-     * "item", the resulting TiledImage.
+     * "item", which is the resulting instance of TiledImage.
      * @param {Function} [options.error] A function that gets called if the image is
      * unable to be added. It's passed the error event object, which contains "message"
      * and "source" properties.
@@ -1832,6 +1835,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     goToPage: function( page ){
         if( this.tileSources && page >= 0 && page < this.tileSources.length ){
+            this._sequenceIndex = page;
+
+            this._updateSequenceButtons( page );
+
+            this.open( this.tileSources[ page ] );
+
+            if( this.referenceStrip ){
+                this.referenceStrip.setFocus( page );
+            }
+
             /**
              * Raised when the page is changed on a viewer configured with multiple image sources (see {@link OpenSeadragon.Viewer#goToPage}).
              *
@@ -1843,16 +1856,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.raiseEvent( 'page', { page: page } );
-
-            this._sequenceIndex = page;
-
-            this._updateSequenceButtons( page );
-
-            this.open( this.tileSources[ page ] );
-
-            if( this.referenceStrip ){
-                this.referenceStrip.setFocus( page );
-            }
         }
 
         return this;
@@ -2474,31 +2477,62 @@ function onBlur(){
 }
 
 function onCanvasKeyDown( event ) {
-    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+    var canvasKeyDownEventArgs = {
+      originalEvent: event.originalEvent,
+      preventDefaultAction: event.preventDefaultAction,
+      preventVerticalPan: event.preventVerticalPan,
+      preventHorizontalPan: event.preventHorizontalPan
+    };
+
+    /**
+     * Raised when a keyboard key is pressed and the focus is on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-key
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
+     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false.
+     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+
+    this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
+
+    if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
             case 38://up arrow
-                if ( event.shift ) {
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                  if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
-                } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
+                  } else {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -this.pixelsPerArrowPress)));
+                  }
+                  this.viewport.applyConstraints();
                 }
-                this.viewport.applyConstraints();
                 return false;
             case 40://down arrow
-                if ( event.shift ) {
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                  if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
-                } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                  } else {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, this.pixelsPerArrowPress)));
+                  }
+                  this.viewport.applyConstraints();
                 }
-                this.viewport.applyConstraints();
                 return false;
             case 37://left arrow
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                this.viewport.applyConstraints();
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
+                  this.viewport.applyConstraints();
+                }
                 return false;
             case 39://right arrow
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                this.viewport.applyConstraints();
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
+                  this.viewport.applyConstraints();
+                }
                 return false;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
@@ -2508,9 +2542,18 @@ function onCanvasKeyDown( event ) {
         return true;
     }
 }
-
 function onCanvasKeyPress( event ) {
-    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+    var canvasKeyPressEventArgs = {
+      originalEvent: event.originalEvent,
+      preventDefaultAction: event.preventDefaultAction,
+      preventVerticalPan: event.preventVerticalPan,
+      preventHorizontalPan: event.preventHorizontalPan
+    };
+
+    // This event is documented in onCanvasKeyDown
+    this.raiseEvent('canvas-key', canvasKeyPressEventArgs);
+
+    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
             case 43://=|+
             case 61://=|+
@@ -2527,29 +2570,37 @@ function onCanvasKeyPress( event ) {
                 return false;
             case 119://w
             case 87://W
-                if ( event.shift ) {
-                    this.viewport.zoomBy(1.1);
-                } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                }
-                this.viewport.applyConstraints();
-                return false;
+                if (!canvasKeyPressEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(1.1);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
+                    }
+                    this.viewport.applyConstraints();
+                  }
+                  return false;
             case 115://s
             case 83://S
-                if ( event.shift ) {
+                if (!canvasKeyPressEventArgs.preventVerticalPan) {
+                  if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
-                } else {
+                  } else {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                  }
+                  this.viewport.applyConstraints();
                 }
-                this.viewport.applyConstraints();
                 return false;
             case 97://a
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                this.viewport.applyConstraints();
+                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
+                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
+                  this.viewport.applyConstraints();
+                }
                 return false;
             case 100://d
-                this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                this.viewport.applyConstraints();
+                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
+                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                  this.viewport.applyConstraints();
+                }
                 return false;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );

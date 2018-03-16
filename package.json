@@ -2,31 +2,45 @@
   "name": "openseadragon",
   "version": "2.3.1",
   "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
-  "keywords": ["image", "zoom", "pan", "openseadragon", "seadragon", "deepzoom", "dzi", "iiif", "osm", "tms"],
+  "keywords": [
+    "image",
+    "zoom",
+    "pan",
+    "openseadragon",
+    "seadragon",
+    "deepzoom",
+    "dzi",
+    "iiif",
+    "osm",
+    "tms"
+  ],
   "homepage": "http://openseadragon.github.io/",
   "bugs": {
     "url": "https://github.com/openseadragon/openseadragon/issues"
   },
   "license": "BSD-3-Clause",
-  "files": ["build/openseadragon/"],
+  "files": [
+    "build/openseadragon/"
+  ],
   "main": "build/openseadragon/openseadragon.js",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/openseadragon/openseadragon.git"
+    "type": "git",
+    "url": "https://github.com/openseadragon/openseadragon.git"
   },
   "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-clean": "^0.7.0",
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-compress": "^1.4.3",
     "grunt-contrib-concat": "^1.0.1",
-    "grunt-contrib-connect": "^0.11.2",
-    "grunt-contrib-uglify": "^2.0.0",
-    "grunt-contrib-watch": "^0.6.1",
-    "grunt-git-describe": "^2.3.2",
+    "grunt-contrib-connect": "^1.0.2",
+    "grunt-contrib-qunit": "^2.0.0",
+    "grunt-contrib-uglify": "^3.2.1",
+    "grunt-contrib-watch": "^1.0.0",
     "grunt-eslint": "^19.0.0",
-    "grunt-qunit-istanbul": "^0.6.0",
+    "grunt-git-describe": "^2.3.2",
+    "grunt-istanbul": "^0.8.0",
     "grunt-text-replace": "^0.4.0",
-    "qunitjs": "^1.20.0"
+    "qunitjs": "2.4.1"
   },
   "scripts": {
     "test": "grunt test",

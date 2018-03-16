@@ -5,6 +5,11 @@ OPENSEADRAGON CHANGELOG
 
 * BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
 * You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
+* Fixed: Opacity 0 images were causing unnecessary redraws (#1319)
+* The "page" event is now fired after the page index has been updated (#1330)
+* Added option pixelsPerArrowPress that sets the speed of arrow keys (#1364)
+* Improved IIIF options.maxLevel calculation (#1401)
+* Added canvas-key events, along with the ability to cancel key actions (#1414)
 
 2.3.1:
 

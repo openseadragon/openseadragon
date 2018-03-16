@@ -1,11 +1,11 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, $, Util, testLog */
 
 (function() {
     var viewer;
 
-    module('Basic', {
-        setup: function () {
-            var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+    QUnit.module('Basic', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
 
@@ -15,7 +15,7 @@
                 springStiffness: 100 // Faster animation = faster tests
             });
         },
-        teardown: function () {
+        afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -25,57 +25,59 @@
     });
 
     // ----------
-    asyncTest('Open', function() {
-        ok(viewer, 'Viewer exists');
+    QUnit.test('Open', function(assert) {
+        var done = assert.async();
+        assert.ok(viewer, 'Viewer exists');
 
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
-            ok(true, 'Open event was sent');
-            ok(event, 'Handler received event data');
-            equal(event.eventSource, viewer, 'Sender of open event was viewer');
-            ok(viewer.viewport, 'Viewport exists');
-            ok(viewer.source, 'source exists');
-            ok(viewer._updateRequestId, 'timer is on');
-            start();
+            assert.ok(true, 'Open event was sent');
+            assert.ok(event, 'Handler received event data');
+            assert.equal(event.eventSource, viewer, 'Sender of open event was viewer');
+            assert.ok(viewer.viewport, 'Viewport exists');
+            assert.ok(viewer.source, 'source exists');
+            assert.ok(viewer._updateRequestId, 'timer is on');
+            done();
         };
 
         viewer.addHandler('open', openHandler);
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    asyncTest('Open Error Handling', function() {
-        ok(viewer, 'Viewer exists');
+    QUnit.test('Open Error Handling', function(assert) {
+        var done = assert.async();
+        assert.ok(viewer, 'Viewer exists');
 
         viewer.addHandler('open', function(event) {
-            ok(false, "The open event should not fire for failed opens");
-            start();
+            assert.ok(false, "The open event should not fire for failed opens");
+            done();
         });
 
         viewer.addHandler('open-failed', function(event) {
-            ok(true, "The open-failed event should be fired when the source 404s");
+            assert.ok(true, "The open-failed event should be fired when the source 404s");
 
-            equal($(".openseadragon-message").length, 1, "Open failures should display a message");
+            assert.equal($(".openseadragon-message").length, 1, "Open failures should display a message");
 
-            ok(testLog.log.contains('["AJAX request returned %d: %s",404,"/test/data/not-a-real-file"]'),
+            assert.ok(testLog.log.contains('["AJAX request returned %d: %s",404,"/test/data/not-a-real-file"]'),
                "AJAX failures should be logged to the console");
 
-            start();
+            done();
         });
 
         viewer.open('/test/data/not-a-real-file');
     });
 
-    // ----------
-    asyncTest('Zoom', function() {
+    QUnit.test('Zoom', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
             var viewport = viewer.viewport;
 
-            equal(viewport.getZoom(), 1, 'We start out unzoomed');
+            assert.equal(viewport.getZoom(), 1, 'We start out unzoomed');
 
             var zoomHandler = function() {
                 viewer.removeHandler('animation-finish', zoomHandler);
-                equal(viewport.getZoom(), 2, 'Zoomed correctly');
-                start();
+                assert.equal(viewport.getZoom(), 2, 'Zoomed correctly');
+                done();
             };
 
             viewer.addHandler('animation-finish', zoomHandler);
@@ -84,20 +86,20 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('Pan', function() {
+    QUnit.test('Pan', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
             var viewport = viewer.viewport,
                 center = viewport.getCenter();
 
-            ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
+            assert.ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
 
             var panHandler = function() {
                 viewer.removeHandler('animation-finish', panHandler);
                 center = viewport.getCenter();
-                Util.assessNumericValue(center.x, 0.1, 0.00001, 'panned horizontally');
-                Util.assessNumericValue(center.y, 0.1, 0.00001, 'panned vertically');
-                start();
+                Util.assessNumericValue(assert, center.x, 0.1, 0.00001, 'panned horizontally');
+                Util.assessNumericValue(assert, center.y, 0.1, 0.00001, 'panned vertically');
+                done();
             };
 
             viewer.addHandler('animation-finish', panHandler);
@@ -107,9 +109,9 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('Home', function() {
-        // Test setup:
+    QUnit.test('Home', function(assert) {
+        var done = assert.async();
+        // Test beforeEach:
         function opener() {
             var viewport = viewer.viewport;
             viewport.panTo(new OpenSeadragon.Point(0.1, 0.1));
@@ -122,15 +124,15 @@
 
             viewer.removeHandler('animation-finish', stage1);
 
-            ok(center.x !== 0.5 && center.y !== 0.5, 'We start out panned');
-            notEqual(viewport.getZoom(), 1, 'We start out zoomed');
+            assert.ok(center.x !== 0.5 && center.y !== 0.5, 'We start out panned');
+            assert.notEqual(viewport.getZoom(), 1, 'We start out zoomed');
 
             var homeHandler = function() {
                 viewer.removeHandler('animation-finish', homeHandler);
                 center = viewport.getCenter();
-                ok(center.x === 0.5 && center.y === 0.5, 'We end up unpanned');
-                equal(viewport.getZoom(), 1, 'We end up unzoomed');
-                start();
+                assert.ok(center.x === 0.5 && center.y === 0.5, 'We end up unpanned');
+                assert.equal(viewport.getZoom(), 1, 'We end up unzoomed');
+                done();
             };
 
             viewer.addHandler('animation-finish', homeHandler);
@@ -143,21 +145,21 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('Click', function() {
+    QUnit.test('Click', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
             var viewport = viewer.viewport,
             center = viewport.getCenter();
 
-            ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
-            equal(viewport.getZoom(), 1, 'We start out unzoomed');
+            assert.ok(center.x === 0.5 && center.y === 0.5, 'We start out unpanned');
+            assert.equal(viewport.getZoom(), 1, 'We start out unzoomed');
 
             var clickHandler = function() {
                 viewer.removeHandler('animation-finish', clickHandler);
                 center = viewport.getCenter();
-                ok(center.x > 0.37 && center.x < 0.38 && center.y > 0.37 && center.y < 0.38, 'Panned correctly');
-                equal(viewport.getZoom(), 2, 'Zoomed correctly');
-                start();
+                assert.ok(center.x > 0.37 && center.x < 0.38 && center.y > 0.37 && center.y < 0.38, 'Panned correctly');
+                assert.equal(viewport.getZoom(), 2, 'Zoomed correctly');
+                done();
             };
 
             viewer.addHandler('animation-finish', clickHandler);
@@ -174,39 +176,39 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('FullPage', function() {
+    QUnit.test('FullPage', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
-            ok(!viewer.isFullPage(), 'Started out not fullpage');
-            ok(!$(viewer.element).hasClass('fullpage'),
+            assert.ok(!viewer.isFullPage(), 'Started out not fullpage');
+            assert.ok(!$(viewer.element).hasClass('fullpage'),
                 'No fullpage class on div');
 
             var checkEnteringPreFullPage = function(event) {
                 viewer.removeHandler('pre-full-page', checkEnteringPreFullPage);
-                ok(event.fullPage, 'Switching to fullpage');
-                ok(!viewer.isFullPage(), 'Not yet fullpage');
+                assert.ok(event.fullPage, 'Switching to fullpage');
+                assert.ok(!viewer.isFullPage(), 'Not yet fullpage');
             };
 
             var checkEnteringFullPage = function(event) {
                 viewer.removeHandler('full-page', checkEnteringFullPage);
-                ok(event.fullPage, 'Switched to fullpage');
-                ok(viewer.isFullPage(), 'Enabled fullpage');
-                ok($(viewer.element).hasClass('fullpage'),
+                assert.ok(event.fullPage, 'Switched to fullpage');
+                assert.ok(viewer.isFullPage(), 'Enabled fullpage');
+                assert.ok($(viewer.element).hasClass('fullpage'),
                     'Fullpage class added to div');
 
                 var checkExitingPreFullPage = function(event) {
                     viewer.removeHandler('pre-full-page', checkExitingPreFullPage);
-                    ok(!event.fullPage, 'Exiting fullpage');
-                    ok(viewer.isFullPage(), 'Still fullpage');
+                    assert.ok(!event.fullPage, 'Exiting fullpage');
+                    assert.ok(viewer.isFullPage(), 'Still fullpage');
                 };
 
                 var checkExitingFullPage = function(event) {
                     viewer.removeHandler('full-page', checkExitingFullPage);
-                    ok(!event.fullPage, 'Exiting fullpage');
-                    ok(!viewer.isFullPage(), 'Disabled fullpage');
-                    ok(!$(viewer.element).hasClass('fullpage'),
+                    assert.ok(!event.fullPage, 'Exiting fullpage');
+                    assert.ok(!viewer.isFullPage(), 'Disabled fullpage');
+                    assert.ok(!$(viewer.element).hasClass('fullpage'),
                         'Fullpage class removed from div');
-                    start();
+                    done();
                 };
 
                 viewer.addHandler("pre-full-page", checkExitingPreFullPage);
@@ -221,30 +223,30 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    asyncTest('FullScreen', function() {
-
+    QUnit.test('FullScreen', function(assert) {
+        var done = assert.async();
         if (!OpenSeadragon.supportsFullScreen) {
-            expect(0);
-            start();
+            assert.expect(0);
+            done();
             return;
         }
 
         viewer.addHandler("open", function () {
-            ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
+            assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
 
             var checkEnteringPreFullScreen = function(event) {
                 viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
-                ok(event.fullScreen, 'Switching to fullscreen');
-                ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
+                assert.ok(event.fullScreen, 'Switching to fullscreen');
+                assert.ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
             };
 
             // The fullscreen mode is always denied during tests so we are
             // exiting directly.
             var checkExitingFullScreen = function(event) {
                 viewer.removeHandler('full-screen', checkExitingFullScreen);
-                ok(!event.fullScreen, 'Exiting fullscreen');
-                ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
-                start();
+                assert.ok(!event.fullScreen, 'Exiting fullscreen');
+                assert.ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
+                done();
             };
             viewer.addHandler("pre-full-screen", checkEnteringPreFullScreen);
             viewer.addHandler("full-screen", checkExitingFullScreen);
@@ -254,16 +256,16 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('Close', function() {
+    QUnit.test('Close', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
             var closeHandler = function() {
                 viewer.removeHandler('close', closeHandler);
-                ok(!viewer.source, 'no source');
-                ok(true, 'Close event was sent');
+                assert.ok(!viewer.source, 'no source');
+                assert.ok(true, 'Close event was sent');
                 setTimeout(function() {
-                    ok(!viewer._updateRequestId, 'timer is off');
-                    start();
+                    assert.ok(!viewer._updateRequestId, 'timer is off');
+                    done();
                 }, 100);
             };
 
@@ -273,11 +275,11 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // ----------
-    asyncTest('Destroy', function() {
+    QUnit.test('Destroy', function(assert) {
+        var done = assert.async();
         viewer.addHandler("open", function () {
             // Check that the DOM has been modified
-            notEqual(0, $('#example').children().length);
+            assert.notEqual(0, $('#example').children().length);
 
             var closeCalled = false;
             var closeHandler = function() {
@@ -289,14 +291,14 @@
             viewer.destroy();
 
             // Check that the DOM has been cleaned up
-            equal(0, $('#example').children().length);
-            equal(null, viewer.canvas);
-            equal(null, viewer.keyboardCommandArea);
-            equal(null, viewer.container);
-            equal(null, viewer.element);
-            equal(true, closeCalled);
+            assert.equal(0, $('#example').children().length);
+            assert.equal(null, viewer.canvas);
+            assert.equal(null, viewer.keyboardCommandArea);
+            assert.equal(null, viewer.container);
+            assert.equal(null, viewer.element);
+            assert.equal(true, closeCalled);
             viewer = null;
-            start();
+            done();
         });
         viewer.open('/test/data/testpattern.dzi');
     });
@@ -319,8 +321,8 @@
         img.src = corsImg;
     }
 
-    asyncTest( 'CrossOriginPolicyMissing', function () {
-
+    QUnit.test( 'CrossOriginPolicyMissing', function (assert) {
+        var done = assert.async();
         viewer.crossOriginPolicy = false;
         viewer.smoothTileEdgesMinZoom = Infinity;
         viewer.open( {
@@ -332,19 +334,19 @@
                 } ]
         } );
         viewer.addOnceHandler('tile-drawn', function() {
-            ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                 "Canvas should be tainted.");
-            start();
+            done();
         });
 
     } );
 
-    asyncTest( 'CrossOriginPolicyAnonymous', function () {
-
+    QUnit.test( 'CrossOriginPolicyAnonymous', function (assert) {
+        var done = assert.async();
         browserSupportsImgCrossOrigin(function(supported) {
             if (!supported) {
-                expect(0);
-                start();
+                assert.expect(0);
+                done();
             } else {
                 viewer.crossOriginPolicy = 'Anonymous';
                 viewer.open( {
@@ -356,21 +358,21 @@
                         } ]
                 } );
                 viewer.addOnceHandler('tile-drawn', function() {
-                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                    assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should not be tainted.");
-                    start();
+                    done();
                 });
             }
         });
 
     } );
 
-    asyncTest( 'CrossOriginPolicyOption', function () {
-
+    QUnit.test( 'CrossOriginPolicyOption', function (assert) {
+        var done = assert.async();
         browserSupportsImgCrossOrigin(function(supported) {
             if (!supported) {
-                expect(0);
-                start();
+                assert.expect(0);
+                done();
             } else {
                 viewer.crossOriginPolicy = "Anonymous";
                 viewer.smoothTileEdgesMinZoom = Infinity;
@@ -386,20 +388,21 @@
                     crossOriginPolicy : false
                 } );
                 viewer.addOnceHandler('tile-drawn', function() {
-                    ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                    assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should be tainted.");
-                    start();
+                    done();
                 });
             }
         });
 
     } );
-    asyncTest( 'CrossOriginPolicyTileSource', function () {
 
+    QUnit.test( 'CrossOriginPolicyTileSource', function (assert) {
+        var done = assert.async();
         browserSupportsImgCrossOrigin(function(supported) {
             if (!supported) {
-                expect(0);
-                start();
+                assert.expect(0);
+                done();
             } else {
                 viewer.crossOriginPolicy = false;
                 viewer.smoothTileEdgesMinZoom = Infinity;
@@ -415,9 +418,9 @@
                     }
                 } );
                 viewer.addOnceHandler('tile-drawn', function() {
-                    ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                    assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                         "Canvas should not be tainted.");
-                    start();
+                    done();
                 });
             }
         });
@@ -425,8 +428,9 @@
     } );
 
 
-    asyncTest('SetDebugMode', function() {
-        ok(viewer, 'Viewer exists');
+    QUnit.test('SetDebugMode', function(assert) {
+        var done = assert.async();
+        assert.ok(viewer, 'Viewer exists');
 
         var checkImageTilesDebugState = function (expectedState) {
 
@@ -443,15 +447,15 @@
 
             //Ensure we start with debug mode turned off
             viewer.setDebugMode(false);
-            ok(checkImageTilesDebugState(false), "All image tiles have debug mode turned off.");
-            ok(!viewer.debugMode, "Viewer debug mode is turned off.");
+            assert.ok(checkImageTilesDebugState(false), "All image tiles have debug mode turned off.");
+            assert.ok(!viewer.debugMode, "Viewer debug mode is turned off.");
 
             //Turn debug mode on and check that the Viewer and all tiled images are in debug mode.
             viewer.setDebugMode(true);
-            ok(checkImageTilesDebugState(true), "All image tiles have debug mode turned on.");
-            ok(viewer.debugMode, "Viewer debug mode is turned on.");
+            assert.ok(checkImageTilesDebugState(true), "All image tiles have debug mode turned on.");
+            assert.ok(viewer.debugMode, "Viewer debug mode is turned on.");
 
-            start();
+            done();
         };
 
         viewer.addHandler('open', openHandler);
@@ -460,11 +464,11 @@
 
     //Version numbers are injected by the build process, so skip version tests if we are only running code coverage
     if(!window.isCoverageTest ){
-        test('version object', function() {
-            equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
-            ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
-            ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
-            ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+        QUnit.test('version object', function(assert) {
+            assert.equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
+            assert.ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
+            assert.ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
+            assert.ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
         });
     }
 })();

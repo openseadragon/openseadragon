@@ -1,15 +1,15 @@
-/* global module, asyncTest, $, ok, equal, notEqual, start, test, Util, testLog */
+/* global QUnit, $, Util, testLog */
 
 (function() {
     var viewer;
 
-    module('Drawer', {
-        setup: function () {
-            var example = $('<div id="example"></div>').appendTo("#qunit-fixture");
+    QUnit.module('Drawer', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
         },
-        teardown: function () {
+        afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -29,15 +29,17 @@
     };
 
     // ----------
-    asyncTest('basics', function() {
+    QUnit.test('basics', function(assert) {
+        var done = assert.async();
         createViewer();
-        ok(viewer.drawer, 'Drawer exists');
-        equal(viewer.drawer.canRotate(), OpenSeadragon.supportsCanvas, 'we can rotate if we have canvas');
-        start();
+        assert.ok(viewer.drawer, 'Drawer exists');
+        assert.equal(viewer.drawer.canRotate(), OpenSeadragon.supportsCanvas, 'we can rotate if we have canvas');
+        done();
     });
 
     // ----------
-    asyncTest('rotation', function() {
+    QUnit.test('rotation', function(assert) {
+        var done = assert.async();
         createViewer({
             tileSources: '/test/data/testpattern.dzi'
         });
@@ -45,27 +47,29 @@
         viewer.addHandler('open', function handler(event) {
             viewer.viewport.setRotation(30);
             Util.spyOnce(viewer.drawer.context, 'rotate', function() {
-                ok(true, 'drawing with new rotation');
-                start();
+                assert.ok(true, 'drawing with new rotation');
+                done();
             });
         });
     });
 
     // ----------
-    asyncTest('debug', function() {
+    QUnit.test('debug', function(assert) {
+        var done = assert.async();
         createViewer({
             tileSources: '/test/data/testpattern.dzi',
             debugMode: true
         });
 
         Util.spyOnce(viewer.drawer, 'drawDebugInfo', function() {
-            ok(true, 'drawDebugInfo is called');
-            start();
+            assert.ok(true, 'drawDebugInfo is called');
+            done();
         });
     });
 
     // ----------
-    asyncTest('sketchCanvas', function() {
+    QUnit.test('sketchCanvas', function(assert) {
+        var done = assert.async();
         createViewer({
             tileSources: '/test/data/testpattern.dzi'
         });
@@ -73,9 +77,9 @@
 
         viewer.addHandler('tile-drawn', function noOpacityHandler() {
             viewer.removeHandler('tile-drawn', noOpacityHandler);
-            equal(drawer.sketchCanvas, null,
+            assert.equal(drawer.sketchCanvas, null,
                 'The sketch canvas should be null if no decimal opacity is used.');
-            equal(drawer.sketchContext, null,
+            assert.equal(drawer.sketchContext, null,
                 'The sketch context should be null if no decimal opacity is used.');
             testOpacityDecimal();
         });
@@ -95,32 +99,34 @@
                     return;
                 }
                 viewer.removeHandler('tile-drawn', opacityDecimalHandler);
-                notEqual(drawer.sketchCanvas, null,
+                assert.notEqual(drawer.sketchCanvas, null,
                     'The sketch canvas should not be null once a decimal opacity has been used.');
-                notEqual(drawer.sketchContext, null,
+                assert.notEqual(drawer.sketchContext, null,
                     'The sketch context should not be null once a decimal opacity has been used.');
-                start();
+                done();
             });
         }
     });
 
     // ----------
-    asyncTest('deprecations', function() {
+    QUnit.test('deprecations', function(assert) {
+        var done = assert.async();
+
         createViewer({
             tileSources: '/test/data/testpattern.dzi'
         });
         viewer.world.addHandler('add-item', function() {
-            Util.testDeprecation(viewer.drawer, 'addOverlay', viewer, 'addOverlay');
-            Util.testDeprecation(viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
-            Util.testDeprecation(viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
-            Util.testDeprecation(viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
-            Util.testDeprecation(viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
-            Util.testDeprecation(viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
-            Util.testDeprecation(viewer.drawer, 'reset', viewer.world, 'resetItems');
-            Util.testDeprecation(viewer.drawer, 'update', viewer.world, 'draw');
-            Util.testDeprecation(viewer.drawer, 'setOpacity', viewer.world.getItemAt(0), 'setOpacity');
-            Util.testDeprecation(viewer.drawer, 'getOpacity', viewer.world.getItemAt(0), 'getOpacity');
-            start();
+            Util.testDeprecation(assert, viewer.drawer, 'addOverlay', viewer, 'addOverlay');
+            Util.testDeprecation(assert, viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
+            Util.testDeprecation(assert, viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
+            Util.testDeprecation(assert, viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
+            Util.testDeprecation(assert, viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
+            Util.testDeprecation(assert, viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
+            Util.testDeprecation(assert, viewer.drawer, 'reset', viewer.world, 'resetItems');
+            Util.testDeprecation(assert, viewer.drawer, 'update', viewer.world, 'draw');
+            Util.testDeprecation(assert, viewer.drawer, 'setOpacity', viewer.world.getItemAt(0), 'setOpacity');
+            Util.testDeprecation(assert, viewer.drawer, 'getOpacity', viewer.world.getItemAt(0), 'getOpacity');
+            done();
         });
     });
 

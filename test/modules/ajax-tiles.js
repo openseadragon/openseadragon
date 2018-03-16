@@ -1,4 +1,4 @@
-/* global module, asyncTest, start, $, ok, equal, deepEqual, testLog */
+/* global QUnit, $, testLog */
 
 (function() {
     var viewer;
@@ -36,8 +36,8 @@
         },
     };
 
-    module('AJAX-Tiles', {
-        setup: function() {
+    QUnit.module('AJAX-Tiles', {
+        beforeEach: function() {
             $('<div id="example"></div>').appendTo('#qunit-fixture');
 
             testLog.reset();
@@ -52,7 +52,7 @@
                 }
             });
         },
-        teardown: function() {
+        afterEach: function() {
             if (viewer && viewer.close) {
                 viewer.close();
             }
@@ -61,25 +61,27 @@
         }
     });
 
-    asyncTest('tile-loaded event includes AJAX request object', function() {
+    QUnit.test('tile-loaded event includes AJAX request object', function(assert) {
+        var done = assert.async();
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
-            ok(evt.tileRequest, 'Event includes tileRequest property');
-            equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
-            start();
+            assert.ok(evt.tileRequest, 'Event includes tileRequest property');
+            assert.equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);
         viewer.open(customTileSource);
     });
 
-    asyncTest('withCredentials is set in tile AJAX requests', function() {
+    QUnit.test('withCredentials is set in tile AJAX requests', function(assert) {
+        var done = assert.async();
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
-            ok(evt.tileRequest, 'Event includes tileRequest property');
-            equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
-            equal(evt.tileRequest.withCredentials, true, 'withCredentials is set in tile request');
-            start();
+            assert.ok(evt.tileRequest, 'Event includes tileRequest property');
+            assert.equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
+            assert.equal(evt.tileRequest.withCredentials, true, 'withCredentials is set in tile request');
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);
@@ -89,7 +91,8 @@
         });
     });
 
-    asyncTest('tile-load-failed event includes AJAX request object', function() {
+    QUnit.test('tile-load-failed event includes AJAX request object', function(assert) {
+        var done = assert.async();
         // Create a tile source that points to a broken URL
         var brokenTileSource = OpenSeadragon.extend({}, customTileSource, {
             getTileUrl: function () {
@@ -99,31 +102,32 @@
 
         var tileLoadFailed = function tileLoadFailed(evt) {
             viewer.removeHandler('tile-load-failed', tileLoadFailed);
-            ok(evt.tileRequest, 'Event includes tileRequest property');
-            equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
-            start();
+            assert.ok(evt.tileRequest, 'Event includes tileRequest property');
+            assert.equal(evt.tileRequest.readyState, XMLHttpRequest.DONE, 'tileRequest is in completed state');
+            done();
         };
 
         viewer.addHandler('tile-load-failed', tileLoadFailed);
         viewer.open(brokenTileSource);
     });
 
-    asyncTest('Headers can be set per-tile', function() {
+    QUnit.test('Headers can be set per-tile', function(assert) {
+        var done = assert.async();
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
             var tile = evt.tile;
-            ok(tile, 'tile property exists on event');
-            ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
-            equal(tile.ajaxHeaders.Range, getTileRangeHeader(tile.level, tile.x, tile.y), 'Tile has correct range header.');
-            start();
+            assert.ok(tile, 'tile property exists on event');
+            assert.ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
+            assert.equal(tile.ajaxHeaders.Range, getTileRangeHeader(tile.level, tile.x, tile.y), 'Tile has correct range header.');
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);
-
         viewer.open(customTileSource);
     });
 
-    asyncTest('Headers are propagated correctly', function() {
+    QUnit.test('Headers are propagated correctly', function(assert) {
+        var done = assert.async();
         // Create a tile source that sets a static header for tiles
         var staticHeaderTileSource = OpenSeadragon.extend({}, customTileSource, {
             getTileAjaxHeaders: function() {
@@ -142,13 +146,13 @@
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
             var tile = evt.tile;
-            ok(tile, 'tile property exists on event');
-            ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
-            deepEqual(
+            assert.ok(tile, 'tile property exists on event');
+            assert.ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
+            assert.deepEqual(
                 tile.ajaxHeaders, expectedHeaders,
                 'Tile headers include headers set on Viewer and TiledImage'
             );
-            start();
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);
@@ -161,7 +165,8 @@
         });
     });
 
-    asyncTest('Viewer headers are overwritten by TiledImage', function() {
+    QUnit.test('Viewer headers are overwritten by TiledImage', function(assert) {
+        var done = assert.async();
         // Create a tile source that sets a static header for tiles
         var staticHeaderTileSource = OpenSeadragon.extend({}, customTileSource, {
             getTileAjaxHeaders: function() {
@@ -180,13 +185,13 @@
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
             var tile = evt.tile;
-            ok(tile, 'tile property exists on event');
-            ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
-            deepEqual(
+            assert.ok(tile, 'tile property exists on event');
+            assert.ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
+            assert.deepEqual(
                 tile.ajaxHeaders, expectedHeaders,
                 'TiledImage header overwrites viewer header'
             );
-            start();
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);
@@ -200,7 +205,8 @@
         });
     });
 
-    asyncTest('TiledImage headers are overwritten by Tile', function() {
+    QUnit.test('TiledImage headers are overwritten by Tile', function(assert) {
+        var done = assert.async();
 
         var expectedHeaders = {
             'X-Viewer-Header': 'ViewerHeaderValue',
@@ -211,13 +217,13 @@
         var tileLoaded = function tileLoaded(evt) {
             viewer.removeHandler('tile-loaded', tileLoaded);
             var tile = evt.tile;
-            ok(tile, 'tile property exists on event');
-            ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
-            deepEqual(
+            assert.ok(tile, 'tile property exists on event');
+            assert.ok(tile.ajaxHeaders, 'Tile has ajaxHeaders property');
+            assert.deepEqual(
                 tile.ajaxHeaders, expectedHeaders,
                 'Tile header overwrites TiledImage header'
             );
-            start();
+            done();
         };
 
         viewer.addHandler('tile-loaded', tileLoaded);

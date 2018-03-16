@@ -1,33 +1,33 @@
-/* global module, ok, equal, start, test, testLog, Util */
+/* global QUnit, testLog, Util */
 (function() {
 
-    module('TileSource', {
-        setup: function() {
+    QUnit.module('TileSource', {
+        beforeEach: function() {
             testLog.reset();
         }
     });
 
 
-    test("should set sane tile size defaults", function() {
+    QUnit.test("should set sane tile size defaults", function(assert) {
         var source = new OpenSeadragon.TileSource();
 
-        equal(source.getTileWidth(), 0, "getTileWidth() should return 0 if not provided a size");
-        equal(source.getTileHeight(), 0, "getTileHeight() should return 0 if not provided a size");
+        assert.equal(source.getTileWidth(), 0, "getTileWidth() should return 0 if not provided a size");
+        assert.equal(source.getTileHeight(), 0, "getTileHeight() should return 0 if not provided a size");
     });
 
-    test("providing tileSize", function(){
+    QUnit.test("providing tileSize", function(assert){
         var tileSize = 256,
             source = new OpenSeadragon.TileSource({
                 tileSize: tileSize
             });
 
-        equal(source.tileSize, undefined, "tileSize should not be set on the tileSource");
-        equal(source.getTileWidth(), tileSize, "getTileWidth() should equal tileSize");
-        equal(source.getTileHeight(), tileSize, "getTileHeight() should equal tileSize");
+        assert.equal(source.tileSize, undefined, "tileSize should not be set on the tileSource");
+        assert.equal(source.getTileWidth(), tileSize, "getTileWidth() should equal tileSize");
+        assert.equal(source.getTileHeight(), tileSize, "getTileHeight() should equal tileSize");
     });
 
 
-    test("providing tileWidth and tileHeight", function(){
+    QUnit.test("providing tileWidth and tileHeight", function(assert){
         var tileWidth = 256,
             tileHeight = 512,
             source = new OpenSeadragon.TileSource({
@@ -35,20 +35,20 @@
                 tileHeight: tileHeight
             });
 
-        equal(source._tileWidth, tileWidth, "tileWidth option should set _tileWidth");
-        equal(source._tileHeight, tileHeight, "tileHeight option should set _tileHeight");
-        equal(source.tileWidth, undefined, "tileWidth should be renamed _tileWidth");
-        equal(source.tileHeight, undefined, "tileHeight should be renamed _tileHeight");
-        equal(source.getTileWidth(), tileWidth, "getTileWidth() should equal tileWidth");
-        equal(source.getTileHeight(), tileHeight, "getTileHeight() should equal tileHeight");
+        assert.equal(source._tileWidth, tileWidth, "tileWidth option should set _tileWidth");
+        assert.equal(source._tileHeight, tileHeight, "tileHeight option should set _tileHeight");
+        assert.equal(source.tileWidth, undefined, "tileWidth should be renamed _tileWidth");
+        assert.equal(source.tileHeight, undefined, "tileHeight should be renamed _tileHeight");
+        assert.equal(source.getTileWidth(), tileWidth, "getTileWidth() should equal tileWidth");
+        assert.equal(source.getTileHeight(), tileHeight, "getTileHeight() should equal tileHeight");
     });
 
-    test('getTileSize() deprecation', function() {
+    QUnit.test('getTileSize() deprecation', function(assert) {
         var source = new OpenSeadragon.TileSource();
-        Util.testDeprecation(source, 'getTileSize');
+        Util.testDeprecation(assert, source, 'getTileSize');
     });
 
-    test('getTileAtPoint', function() {
+    QUnit.test('getTileAtPoint', function(assert) {
         var tileSource = new OpenSeadragon.TileSource({
             width: 1500,
             height: 1000,
@@ -57,11 +57,11 @@
             tileOverlap: 1,
         });
 
-        equal(tileSource.maxLevel, 11, "The max level should be 11.");
+        assert.equal(tileSource.maxLevel, 11, "The max level should be 11.");
 
         function assertTileAtPoint(level, position, expected) {
             var actual = tileSource.getTileAtPoint(level, position);
-            ok(actual.equals(expected), "The tile at level " + level +
+            assert.ok(actual.equals(expected), "The tile at level " + level +
                 ", position " + position.toString() +
                 " should be tile " + expected.toString() +
                 " got " + actual.toString());
