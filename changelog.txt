@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Added option pixelsPerArrowPress that sets the speed of arrow keys (#1364)
 * Improved IIIF options.maxLevel calculation (#1401)
 * Added canvas-key events, along with the ability to cancel key actions (#1414)
+* Added optional zoom in the middle of the image instead of pointer position (#1423)
 
 2.3.1:
 
