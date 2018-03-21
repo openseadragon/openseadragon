@@ -40,7 +40,7 @@
  * @param {Number} level The zoom level this tile belongs to.
  * @param {Number} x The vector component 'x'.
  * @param {Number} y The vector component 'y'.
- * @param {OpenSeadragon.Point} bounds Where this tile fits, in normalized
+ * @param {OpenSeadragon.Rect} bounds Where this tile fits, in normalized
  *      coordinates.
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
@@ -49,8 +49,11 @@
  * is provided directly by the tile source.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
  * @param {Object} ajaxHeaders The headers to send with this tile's AJAX request (if applicable).
+ * @param {OpenSeadragon.Rect} sourceBounds The portion of the tile to use as the source of the
+ * drawing operation, in pixels. Note that this only works when drawing with canvas; when drawing
+ * with HTML the entire tile is always used.
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -75,6 +78,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.bounds  = bounds;
+    /**
+    * The portion of the tile to use as the source of the drawing operation, in pixels. Note that
+    * this only works when drawing with canvas; when drawing with HTML the entire tile is always used.
+    * @member {OpenSeadragon.Rect} sourceBounds
+    * @memberof OpenSeadragon.Tile#
+    */
+    this.sourceBounds = sourceBounds;
     /**
      * Is this tile a part of a sparse image? Also has this tile failed to load?
      * @member {Boolean} exists
@@ -357,12 +367,16 @@ $.Tile.prototype = {
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
+        if (!this.sourceBounds) { // Just in case
+            this.sourceBounds = new $.Rect(0, 0, rendered.canvas.width, rendered.canvas.height);
+        }
+
         context.drawImage(
             rendered.canvas,
-            0,
-            0,
-            rendered.canvas.width,
-            rendered.canvas.height,
+            this.sourceBounds.x,
+            this.sourceBounds.y,
+            this.sourceBounds.width,
+            this.sourceBounds.height,
             position.x,
             position.y,
             size.x,
