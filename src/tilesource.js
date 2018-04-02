@@ -392,7 +392,7 @@ $.TileSource.prototype = {
         sy = Math.min( sy, dimensionsScaled.y - py );
 
         if (isSource) {
-            return new $.Rect(0, 0, Math.floor(sx), Math.floor(sy));
+            return new $.Rect(0, 0, sx, sy);
         }
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
