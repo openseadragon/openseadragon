@@ -844,7 +844,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
         if (immediately) {
-            this._degreesSpring.resetTo(degrees);
+          this._degreesSpring.resetTo(degrees);
         } else {
             this._degreesSpring.springTo(degrees);
         }
@@ -1886,6 +1886,10 @@ function drawTiles( tiledImage, lastDrawn ) {
                 degrees: tiledImage.viewport.degrees,
                 useSketch: useSketch
             });
+        } else {
+            if(tiledImage._drawer.viewer.flipped) {
+                tiledImage._drawer._flip({});
+            }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
@@ -1969,6 +1973,10 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         if (tiledImage.viewport.degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
+        } else{
+          if(tiledImage._drawer.viewer.flipped) {
+            tiledImage._drawer._flip({});
+          }
         }
     }
 

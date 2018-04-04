@@ -1252,6 +1252,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
+     * @param {Boolean} [options.flipped=false] Initial flip/mirror state
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
@@ -1414,6 +1415,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
+                    flipped: queueItem.options.flipped,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -1674,6 +1676,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
             onRotateRightHandler    = $.delegate( this, onRotateRight ),
+            onFlipHandler           = $.delegate( this, onFlip),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1685,7 +1688,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if( this.zoomInButton || this.zoomOutButton ||
                 this.homeButton || this.fullPageButton ||
-                this.rotateLeftButton || this.rotateRightButton ) {
+                this.rotateLeftButton || this.rotateRightButton ||
+                this.flipButton ) {
                 //if we are binding to custom buttons then layout and
                 //grouping is the responsibility of the page author
                 useGroup = false;
@@ -1789,7 +1793,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+            }
 
+            if ( this.showFlipControl ) {
+                buttons.push( this.flipButton = new $.Button({
+                    element:    this.flipButton ? $.getElement( this.flipButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.Flip" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.flip.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.flip.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.flip.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.flip.DOWN ),
+                    onRelease:  onFlipHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
             }
 
             if ( useGroup ) {
@@ -2602,8 +2621,26 @@ function onCanvasKeyPress( event ) {
                   this.viewport.applyConstraints();
                 }
                 return false;
+            case 114: //r
+            case 82: //R
+              if(this.flipped){
+                this.viewport.setRotation(this.viewport.degrees - 90);
+              } else{
+                this.viewport.setRotation(this.viewport.degrees + 90);
+              }
+              this.viewport.applyConstraints();
+              return false;
+            case 70: //F
+            case 102: //f
+              this.flipped = !this.flipped;
+              if(this.navigator){
+                this.navigator.toogleFlip();
+              }
+              this._forceRedraw = !this._forceRedraw;
+              this.forceRedraw();
+              return false;
             default:
-                //console.log( 'navigator keycode %s', event.keyCode );
+                // console.log( 'navigator keycode %s', event.keyCode );
                 return true;
         }
     } else {
@@ -2619,6 +2656,9 @@ function onCanvasClick( event ) {
     // If we don't have keyboard focus, request it.
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
+    }
+    if(this.flipped){
+        event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
     var canvasClickEventArgs = {
@@ -2738,6 +2778,9 @@ function onCanvasDrag( event ) {
         }
         if( !this.panVertical ){
             event.delta.y = 0;
+        }
+        if(this.flipped){
+            event.delta.x = -event.delta.x;
         }
 
         if( this.constrainDuringPan ){
@@ -3064,6 +3107,10 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
+        if(this.flipped){
+          event.position.x = this.viewport.getContainerSize().x - event.position.x;
+        }
+
         if ( !event.preventDefaultAction && this.viewport ) {
             gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
             if ( gestureSettings.scrollToZoom ) {
@@ -3259,7 +3306,7 @@ function updateOnce( viewer ) {
         drawWorld( viewer );
         viewer._drawOverlays();
         if( viewer.navigator ){
-            viewer.navigator.update( viewer.viewport );
+          viewer.navigator.update( viewer.viewport );
         }
 
         THIS[ viewer.hash ].forceRedraw = false;
@@ -3429,11 +3476,20 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation === 0) {
-            currRotation = 270;
-        }
-        else {
-            currRotation -= 90;
+        if ( this.flipped ){
+          if (currRotation === 270) {
+              currRotation = 0;
+          }
+          else {
+              currRotation += 90;
+          }
+        } else {
+          if (currRotation === 0) {
+              currRotation = 270;
+          }
+          else {
+              currRotation -= 90;
+          }
         }
         this.viewport.setRotation(currRotation);
     }
@@ -3445,15 +3501,37 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation === 270) {
-            currRotation = 0;
-        }
-        else {
-            currRotation += 90;
+        if ( this.flipped ){
+          if (currRotation === 0) {
+              currRotation = 270;
+          }
+          else {
+              currRotation -= 90;
+          }
+        } else {
+          if (currRotation === 270) {
+              currRotation = 0;
+          }
+          else {
+              currRotation += 90;
+          }
         }
         this.viewport.setRotation(currRotation);
     }
 }
+
+/**
+ * Note: The current rotation feature is limited to 90 degree turns.
+ */
+function onFlip() {
+  this.flipped = !this.flipped;
+  if(this.navigator){
+    this.navigator.toogleFlip();
+  }
+  this._forceRedraw = !this._forceRedraw;
+  this.forceRedraw();
+}
+
 
 
 function onPrevious(){

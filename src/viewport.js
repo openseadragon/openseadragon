@@ -886,7 +886,6 @@ $.Viewport.prototype = {
             this.viewer.world.getHomeBounds(),
             this.viewer.world.getContentFactor());
         this.viewer.forceRedraw();
-
         /**
          * Raised when rotation has been changed.
          *
