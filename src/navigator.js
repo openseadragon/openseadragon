@@ -277,45 +277,26 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
       /* Flip navigator element
       */
     toogleFlip: function() {
-      this.flipped = !this.flipped;
-      if (this.viewer.flipped){
-        this.displayRegion.style.webkitTransform = "scale(-1,1)";
-        this.displayRegion.style.mozTransform = "scale(-1,1)";
-        this.displayRegion.style.msTransform = "scale(-1,1)";
-        this.displayRegion.style.oTransform = "scale(-1,1)";
-        this.displayRegion.style.transform = "scale(-1,1)";
+      this.doFlip = !this.doFlip;
 
-        this.canvas.style.webkitTransform = "scale(-1,1)";
-        this.canvas.style.mozTransform = "scale(-1,1)";
-        this.canvas.style.msTransform = "scale(-1,1)";
-        this.canvas.style.oTransform = "scale(-1,1)";
-        this.canvas.style.transform = "scale(-1,1)";
-
-        this.element.style.webkitTransform = "scale(-1,1)";
-        this.element.style.mozTransform = "scale(-1,1)";
-        this.element.style.msTransform = "scale(-1,1)";
-        this.element.style.oTransform = "scale(-1,1)";
-        this.element.style.transform = "scale(-1,1)";
-      } else{
-        this.displayRegion.style.webkitTransform = "scale(1,1)";
-        this.displayRegion.style.mozTransform = "scale(1,1)";
-        this.displayRegion.style.msTransform = "scale(1,1)";
-        this.displayRegion.style.oTransform = "scale(1,1)";
-        this.displayRegion.style.transform = "scale(1,1)";
-
-        this.canvas.style.webkitTransform = "scale(1,1)";
-        this.canvas.style.mozTransform = "scale(1,1)";
-        this.canvas.style.msTransform = "scale(1,1)";
-        this.canvas.style.oTransform = "scale(1,1)";
-        this.canvas.style.transform = "scale(1,1)";
-
-        this.element.style.webkitTransform = "scale(1,1)";
-        this.element.style.mozTransform = "scale(1,1)";
-        this.element.style.msTransform = "scale(1,1)";
-        this.element.style.oTransform = "scale(1,1)";
-        this.element.style.transform = "scale(1,1)";
-      }
+      this.setDisplayTransform(this.viewer.doFlip ? "scale(-1,1)" : "scale(1,1)");
       this.viewport.viewer.forceRedraw();
+    },
+
+    setDisplayTransform: function(rule) {
+      this.displayRegion.style.webkitTransform = rule;
+      this.displayRegion.style.mozTransform = rule;
+      this.displayRegion.style.msTransform = rule;
+      this.displayRegion.style.oTransform = rule;
+      this.displayRegion.style.transform = rule;
+
+      this.canvas.style.webkitTransform = rule;
+      this.canvas.style.mozTransform = rule;
+      this.canvas.style.msTransform = rule;
+      this.canvas.style.oTransform = rule;
+      this.canvas.style.transform = rule;
+
+      setElementTransform(this.element, rule);
     },
 
     /**
@@ -445,6 +426,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     }
 });
 
+
 /**
  * @private
  * @inner
@@ -452,7 +434,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        if(this.viewer.flipped){
+        if(this.viewer.doFlip){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
         this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
@@ -474,7 +456,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if(this.viewer.flipped){
+        if(this.viewer.doFlip){
             event.delta.x = -event.delta.x;
         }
 
@@ -541,12 +523,17 @@ function onCanvasScroll( event ) {
     * @param {Object} element
     * @param {Number} degrees
     */
-function _setTransformRotate (element, degrees) {
-      element.style.webkitTransform = "rotate(" + degrees + "deg)";
-      element.style.mozTransform = "rotate(" + degrees + "deg)";
-      element.style.msTransform = "rotate(" + degrees + "deg)";
-      element.style.oTransform = "rotate(" + degrees + "deg)";
-      element.style.transform = "rotate(" + degrees + "deg)";
+function _setTransformRotate( element, degrees ) {
+  setElementTransform(element, "rotate(" + degrees + "deg)");
 }
+
+function setElementTransform( element, rule ) {
+  element.style.webkitTransform = rule;
+  element.style.mozTransform = rule;
+  element.style.msTransform = rule;
+  element.style.oTransform = rule;
+  element.style.transform = rule;
+}
+
 
 }( OpenSeadragon ));

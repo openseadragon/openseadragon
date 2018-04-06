@@ -1130,13 +1130,13 @@ function OpenSeadragon( options ){
             showHomeControl:         true,  //HOME
             showFullPageControl:     true,  //FULL
             showRotationControl:     false, //ROTATION
-            showFlipControl:         false,  //FLIP
+            showFlipControl:         true,  //FLIP
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS
-            showNavigator:              false,
+            showNavigator:              true,
             navigatorId:                null,
             navigatorPosition:          null,
             navigatorSizeRatio:         0.2,
@@ -1153,7 +1153,7 @@ function OpenSeadragon( options ){
             degrees:                    0,
 
             // INITIAL FLIP STATE
-            flipped:                    false,
+            doFlip:                    false,
 
             // APPEARANCE
             opacity:                    1,
@@ -1223,7 +1223,7 @@ function OpenSeadragon( options ){
                     HOVER:  'rotateright_hover.png',
                     DOWN:   'rotateright_pressed.png'
                 },
-                flip: { // Flip icon by Yaroslav Samoylov from the Noun Project
+                flip: { // Flip icon designed by Yaroslav Samoylov from the Noun Project and modified by Nelson Campos ncampos@criteriamarathon.com, https://thenounproject.com/term/flip/136289/
                     REST:   'flip_rest.png',
                     GROUP:  'flip_grouphover.png',
                     HOVER:  'flip_hover.png',

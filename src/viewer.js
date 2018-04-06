@@ -1252,7 +1252,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
-     * @param {Boolean} [options.flipped=false] Initial flip/mirror state
+     * @param {Boolean} [options.doFlip=false] Initial flip/mirror state
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
@@ -1415,7 +1415,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
-                    flipped: queueItem.options.flipped,
+                    doFlip: queueItem.options.doFlip,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -2621,18 +2621,24 @@ function onCanvasKeyPress( event ) {
                   this.viewport.applyConstraints();
                 }
                 return false;
-            case 114: //r
-            case 82: //R
-              if(this.flipped){
+            case 114: //r - 90 degrees clockwise rotation
+              if(this.doFlip){
                 this.viewport.setRotation(this.viewport.degrees - 90);
               } else{
                 this.viewport.setRotation(this.viewport.degrees + 90);
               }
               this.viewport.applyConstraints();
               return false;
-            case 70: //F
+            case 82: //R - 90 degrees counter clockwise  rotation
+              if(this.doFlip){
+                this.viewport.setRotation(this.viewport.degrees + 90);
+              } else{
+                this.viewport.setRotation(this.viewport.degrees - 90);
+              }
+              this.viewport.applyConstraints();
+              return false;
             case 102: //f
-              this.flipped = !this.flipped;
+              this.doFlip = !this.doFlip;
               if(this.navigator){
                 this.navigator.toogleFlip();
               }
@@ -2657,7 +2663,7 @@ function onCanvasClick( event ) {
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
     }
-    if(this.flipped){
+    if(this.doFlip){
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -2779,7 +2785,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if(this.flipped){
+        if(this.doFlip){
             event.delta.x = -event.delta.x;
         }
 
@@ -3107,7 +3113,7 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.flipped){
+        if(this.doFlip){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
 
@@ -3476,7 +3482,7 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.flipped ){
+        if ( this.doFlip ){
           if (currRotation === 270) {
               currRotation = 0;
           }
@@ -3501,7 +3507,7 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.flipped ){
+        if ( this.doFlip ){
           if (currRotation === 0) {
               currRotation = 270;
           }
@@ -3524,7 +3530,7 @@ function onRotateRight() {
  * Note: The current rotation feature is limited to 90 degree turns.
  */
 function onFlip() {
-  this.flipped = !this.flipped;
+  this.doFlip = !this.doFlip;
   if(this.navigator){
     this.navigator.toogleFlip();
   }
