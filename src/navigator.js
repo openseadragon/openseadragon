@@ -276,26 +276,16 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     /**
       /* Flip navigator element
       */
-    toogleFlip: function() {
-      this.doFlip = !this.doFlip;
+    toggleFlip: function() {
+      this.flipped = !this.flipped;
 
-      this.setDisplayTransform(this.viewer.doFlip ? "scale(-1,1)" : "scale(1,1)");
+      this.setDisplayTransform(this.viewer.flipped ? "scale(-1,1)" : "scale(1,1)");
       this.viewport.viewer.forceRedraw();
     },
 
     setDisplayTransform: function(rule) {
-      this.displayRegion.style.webkitTransform = rule;
-      this.displayRegion.style.mozTransform = rule;
-      this.displayRegion.style.msTransform = rule;
-      this.displayRegion.style.oTransform = rule;
-      this.displayRegion.style.transform = rule;
-
-      this.canvas.style.webkitTransform = rule;
-      this.canvas.style.mozTransform = rule;
-      this.canvas.style.msTransform = rule;
-      this.canvas.style.oTransform = rule;
-      this.canvas.style.transform = rule;
-
+      setElementTransform(this.displayRegion, rule);
+      setElementTransform(this.canvas, rule);
       setElementTransform(this.element, rule);
     },
 
@@ -434,7 +424,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        if(this.viewer.doFlip){
+        if(this.viewer.flipped){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
         this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
@@ -456,7 +446,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if(this.viewer.doFlip){
+        if(this.viewer.flipped){
             event.delta.x = -event.delta.x;
         }
 
@@ -534,6 +524,11 @@ function setElementTransform( element, rule ) {
   element.style.oTransform = rule;
   element.style.transform = rule;
 }
+
+
+
+
+
 
 
 }( OpenSeadragon ));

@@ -1153,7 +1153,7 @@ function OpenSeadragon( options ){
             degrees:                    0,
 
             // INITIAL FLIP STATE
-            doFlip:                    false,
+            flipped:                    false,
 
             // APPEARANCE
             opacity:                    1,

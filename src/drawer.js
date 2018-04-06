@@ -501,7 +501,7 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
         } else{
-          if(this.viewer.doFlip) {
+          if(this.viewer.flipped) {
             this._flip();
           }
         }
@@ -624,7 +624,7 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        if(this.viewer.doFlip){
+        if(this.viewer.flipped){
           context.rotate(Math.PI / 180 * -options.degrees);
           context.scale(-1, 1);
         } else{
@@ -640,7 +640,6 @@ $.Drawer.prototype = {
         options.point.times($.pixelDensityRatio) :
         this.getCanvasCenter();
       var context = this._getContext(options.useSketch);
-      // context.save();
 
       context.translate(point.x, 0);
       context.scale(-1, 1);

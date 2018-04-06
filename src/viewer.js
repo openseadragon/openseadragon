@@ -1252,7 +1252,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
-     * @param {Boolean} [options.doFlip=false] Initial flip/mirror state
+     * @param {Boolean} [options.flipped=false] Initial flip/mirror state
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
@@ -1415,7 +1415,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
-                    doFlip: queueItem.options.doFlip,
+                    flipped: queueItem.options.flipped,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -1676,7 +1676,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
             onRotateRightHandler    = $.delegate( this, onRotateRight ),
-            onFlipHandler           = $.delegate( this, onFlip),
+            onFlipHandler           = $.delegate( this, onButtonFlip),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -2622,15 +2622,15 @@ function onCanvasKeyPress( event ) {
                 }
                 return false;
             case 114: //r - 90 degrees clockwise rotation
-              if(this.doFlip){
+              if(this.flipped){
                 this.viewport.setRotation(this.viewport.degrees - 90);
               } else{
                 this.viewport.setRotation(this.viewport.degrees + 90);
               }
               this.viewport.applyConstraints();
               return false;
-            case 82: //R - 90 degrees counter clockwise  rotation
-              if(this.doFlip){
+            case 82: //R - 90 degrees counterclockwise  rotation
+              if(this.flipped){
                 this.viewport.setRotation(this.viewport.degrees + 90);
               } else{
                 this.viewport.setRotation(this.viewport.degrees - 90);
@@ -2638,12 +2638,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 102: //f
-              this.doFlip = !this.doFlip;
-              if(this.navigator){
-                this.navigator.toogleFlip();
-              }
-              this._forceRedraw = !this._forceRedraw;
-              this.forceRedraw();
+              onKeyboardFlip();
               return false;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
@@ -2663,7 +2658,7 @@ function onCanvasClick( event ) {
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
     }
-    if(this.doFlip){
+    if(this.flipped){
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -2785,7 +2780,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if(this.doFlip){
+        if(this.flipped){
             event.delta.x = -event.delta.x;
         }
 
@@ -3113,7 +3108,7 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.doFlip){
+        if(this.flipped){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
 
@@ -3482,7 +3477,7 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.doFlip ){
+        if ( this.flipped ){
           if (currRotation === 270) {
               currRotation = 0;
           }
@@ -3507,7 +3502,7 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.doFlip ){
+        if ( this.flipped ){
           if (currRotation === 0) {
               currRotation = 270;
           }
@@ -3527,15 +3522,24 @@ function onRotateRight() {
 }
 
 /**
- * Note: The current rotation feature is limited to 90 degree turns.
+ * Note: When pressed f on keyboard or flip control button
  */
-function onFlip() {
-  this.doFlip = !this.doFlip;
+function onButtonFlip() {
+  this.flipped = !this.flipped;
   if(this.navigator){
-    this.navigator.toogleFlip();
+    this.navigator.toggleFlip();
   }
   this._forceRedraw = !this._forceRedraw;
   this.forceRedraw();
+}
+
+function onKeyboardFlip() {
+  this.viewer.flipped = !this.viewer.flipped;
+  if(this.viewer.navigator){
+    this.viewer.navigator.toggleFlip();
+  }
+  this.viewer._forceRedraw = !this.viewer._forceRedraw;
+  this.viewer.forceRedraw();
 }
 
 
