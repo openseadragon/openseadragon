@@ -501,7 +501,7 @@ $.Drawer.prototype = {
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
         } else{
-          if(this.viewer.flipped) {
+          if(this.viewer.viewport.flipped) {
             this._flip();
           }
         }
@@ -624,7 +624,7 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        if(this.viewer.flipped){
+        if(this.viewer.viewport.flipped){
           context.rotate(Math.PI / 180 * -options.degrees);
           context.scale(-1, 1);
         } else{

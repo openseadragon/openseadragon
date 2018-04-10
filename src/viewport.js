@@ -107,6 +107,7 @@ $.Viewport = function( options ) {
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
         degrees:            $.DEFAULT_SETTINGS.degrees,
+        flipped:            $.DEFAULT_SETTINGS.flipped,
         homeFillsViewer:    $.DEFAULT_SETTINGS.homeFillsViewer
 
     }, options );

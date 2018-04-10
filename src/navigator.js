@@ -277,9 +277,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
       /* Flip navigator element
       */
     toggleFlip: function() {
-      this.flipped = !this.flipped;
+      this.viewport.flipped = !this.viewport.flipped;
 
-      this.setDisplayTransform(this.viewer.flipped ? "scale(-1,1)" : "scale(1,1)");
+      this.setDisplayTransform(this.viewer.viewport.flipped ? "scale(-1,1)" : "scale(1,1)");
       this.viewport.viewer.forceRedraw();
     },
 
@@ -424,7 +424,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  */
 function onCanvasClick( event ) {
     if ( event.quick && this.viewer.viewport ) {
-        if(this.viewer.flipped){
+        if(this.viewer.viewport.flipped){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
         this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
@@ -446,7 +446,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if(this.viewer.flipped){
+        if(this.viewer.viewport.flipped){
             event.delta.x = -event.delta.x;
         }
 

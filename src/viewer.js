@@ -1252,7 +1252,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
-     * @param {Boolean} [options.flipped=false] Initial flip/mirror state
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
@@ -1415,7 +1414,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
-                    flipped: queueItem.options.flipped,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -2622,7 +2620,7 @@ function onCanvasKeyPress( event ) {
                 }
                 return false;
             case 114: //r - 90 degrees clockwise rotation
-              if(this.flipped){
+              if(this.viewport.flipped){
                 this.viewport.setRotation(this.viewport.degrees - 90);
               } else{
                 this.viewport.setRotation(this.viewport.degrees + 90);
@@ -2630,7 +2628,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 82: //R - 90 degrees counterclockwise  rotation
-              if(this.flipped){
+              if(this.viewport.flipped){
                 this.viewport.setRotation(this.viewport.degrees + 90);
               } else{
                 this.viewport.setRotation(this.viewport.degrees - 90);
@@ -2638,7 +2636,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 102: //f
-              onKeyboardFlip();
+              onFlip(this);
               return false;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
@@ -2658,7 +2656,7 @@ function onCanvasClick( event ) {
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
     }
-    if(this.flipped){
+    if(this.viewport.flipped){
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -2780,7 +2778,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if(this.flipped){
+        if(this.viewport.flipped){
             event.delta.x = -event.delta.x;
         }
 
@@ -3108,7 +3106,7 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.flipped){
+        if(this.viewport.flipped){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
 
@@ -3477,7 +3475,7 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.flipped ){
+        if ( this.viewport.flipped ){
           if (currRotation === 270) {
               currRotation = 0;
           }
@@ -3502,7 +3500,7 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if ( this.flipped ){
+        if ( this.viewport.flipped ){
           if (currRotation === 0) {
               currRotation = 270;
           }
@@ -3524,22 +3522,18 @@ function onRotateRight() {
 /**
  * Note: When pressed f on keyboard or flip control button
  */
-function onButtonFlip() {
-  this.flipped = !this.flipped;
-  if(this.navigator){
-    this.navigator.toggleFlip();
-  }
-  this._forceRedraw = !this._forceRedraw;
-  this.forceRedraw();
+function onFlip( viewer ){
+   viewer.viewport.flipped = !viewer.viewport.flipped;
+
+   if(viewer.navigator){
+     viewer.navigator.toggleFlip();
+   }
+   viewer._forceRedraw = !viewer._forceRedraw;
+   viewer.forceRedraw();
 }
 
-function onKeyboardFlip() {
-  this.viewer.flipped = !this.viewer.flipped;
-  if(this.viewer.navigator){
-    this.viewer.navigator.toggleFlip();
-  }
-  this.viewer._forceRedraw = !this.viewer._forceRedraw;
-  this.viewer.forceRedraw();
+function onButtonFlip() {
+  onFlip(this);
 }
 
 
