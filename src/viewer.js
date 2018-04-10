@@ -3520,7 +3520,7 @@ function onRotateRight() {
 }
 
 /**
- * Note: When pressed f on keyboard or flip control button
+ * Note: When pressed f on keyboard
  */
 function onFlip( viewer ){
    viewer.viewport.flipped = !viewer.viewport.flipped;
@@ -3532,11 +3532,12 @@ function onFlip( viewer ){
    viewer.forceRedraw();
 }
 
+/**
+ * Note: When pressed flip control button
+ */
 function onButtonFlip() {
   onFlip(this);
 }
-
-
 
 function onPrevious(){
     var previous = this._sequenceIndex - 1;
