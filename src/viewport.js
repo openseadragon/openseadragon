@@ -1525,12 +1525,19 @@ $.Viewport.prototype = {
      * Toggle flip state and demands a new drawing on navigator and viewer objects.
     */
     toggleFlip: function() {
-      this.flipped = !this.flipped;
+      this.setFlip(!this.getFlip());
       if(this.viewer.navigator){
-        this.viewer.navigator.toggleFlip();
+        this.viewer.navigator.setFlip();
       }
-      this.viewer._forceRedraw = !this.viewer._forceRedraw;
       this.viewer.forceRedraw();
+    },
+
+    getFlip: function() {
+      return this.flipped;
+    },
+
+    setFlip: function( state ) {
+      this.flipped = state;
     }
 
 };

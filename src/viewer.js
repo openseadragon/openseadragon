@@ -367,6 +367,7 @@ $.Viewer = function( options ) {
         maxZoomLevel:       this.maxZoomLevel,
         viewer:             this,
         degrees:            this.degrees,
+        flipped:            this.flipped,
         navigatorRotate:    this.navigatorRotate,
         homeFillsViewer:    this.homeFillsViewer,
         margins:            this.viewportMargins

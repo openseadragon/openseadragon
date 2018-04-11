@@ -276,8 +276,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     /**
       /* Flip navigator element
       */
-    toggleFlip: function() {
-      this.viewport.flipped = !this.viewport.flipped;
+    setFlip: function() {
+      this.viewport.toggleFlip();
 
       this.setDisplayTransform(this.viewer.viewport.flipped ? "scale(-1,1)" : "scale(1,1)");
       this.viewport.viewer.forceRedraw();

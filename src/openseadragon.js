@@ -206,6 +206,9 @@
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
+  * @property {Boolean} [flip=false]
+  *     Initial flip state.
+  *
   * @property {Number} [minZoomLevel=null]
   *
   * @property {Number} [maxZoomLevel=null]
