@@ -1674,7 +1674,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
             onRotateRightHandler    = $.delegate( this, onRotateRight ),
-            onFlipHandler           = $.delegate( this, onButtonFlip),
+            onFlipHandler           = $.delegate( this, onFlip),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -2636,7 +2636,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 102: //f
-              onFlip(this);
+              this.viewport.toggleFlip();
               return false;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
@@ -3520,23 +3520,10 @@ function onRotateRight() {
 }
 
 /**
- * Note: When pressed f on keyboard
- */
-function onFlip( viewer ){
-   viewer.viewport.flipped = !viewer.viewport.flipped;
-
-   if(viewer.navigator){
-     viewer.navigator.toggleFlip();
-   }
-   viewer._forceRedraw = !viewer._forceRedraw;
-   viewer.forceRedraw();
-}
-
-/**
  * Note: When pressed flip control button
  */
-function onButtonFlip() {
-  onFlip(this);
+function onFlip() {
+   this.viewport.toggleFlip();
 }
 
 function onPrevious(){

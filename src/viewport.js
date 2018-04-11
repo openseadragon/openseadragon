@@ -1519,7 +1519,20 @@ $.Viewport.prototype = {
         var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
+    },
+
+    /**
+     * Toggle flip state and demands a new drawing on navigator and viewer objects.
+    */
+    toggleFlip: function() {
+      this.flipped = !this.flipped;
+      if(this.viewer.navigator){
+        this.viewer.navigator.toggleFlip();
+      }
+      this.viewer._forceRedraw = !this.viewer._forceRedraw;
+      this.viewer.forceRedraw();
     }
+
 };
 
 }( OpenSeadragon ));
