@@ -1528,10 +1528,6 @@ $.Viewport.prototype = {
      */
     toggleFlip: function() {
       this.setFlip(!this.getFlip());
-      if(this.viewer.navigator){
-        this.viewer.navigator.setFlip();
-      }
-      this.viewer.forceRedraw();
       return this;
     },
 
@@ -1554,6 +1550,9 @@ $.Viewport.prototype = {
      */
     setFlip: function( state ) {
       if ( this.flipped != state ) {
+        this.flipped = state;
+        this.viewer.forceRedraw();
+
         /**
          * Raised when flip state has been changed.
          *
@@ -1565,9 +1564,14 @@ $.Viewport.prototype = {
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.viewer.raiseEvent('flip', {"flipped": state});
+      } else {
+        this.flipped = state;
       }
 
-      this.flipped = state;
+      if(this.viewer.navigator){
+        this.viewer.navigator.setFlip(this.getFlip());
+      }
+      this.viewer.forceRedraw();
       return this;
     }
 

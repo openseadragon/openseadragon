@@ -275,12 +275,13 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     },
     /**
       /* Flip navigator element
+      * @param {Boolean} state - Flip state to set.
       */
-    setFlip: function() {
-      this.viewport.toggleFlip();
+    setFlip: function(state) {
+      this.viewport.setFlip(state);
 
-      this.setDisplayTransform(this.viewer.viewport.flipped ? "scale(-1,1)" : "scale(1,1)");
-      this.viewport.viewer.forceRedraw();
+      this.setDisplayTransform(this.viewer.viewport.getFlip() ? "scale(-1,1)" : "scale(1,1)");
+      return this;
     },
 
     setDisplayTransform: function(rule) {
