@@ -1549,6 +1549,7 @@ $.Viewport.prototype = {
     /**
      * Sets flip state according to the state input argument.
      * @function
+     * @param {Boolean} state - Flip state to set.
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setFlip: function( state ) {
