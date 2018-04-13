@@ -1549,29 +1549,27 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setFlip: function( state ) {
-      if ( this.flipped != state ) {
-        this.flipped = state;
-        this.viewer.forceRedraw();
-
-        /**
-         * Raised when flip state has been changed.
-         *
-         * @event flip
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {Number} flipped - The flip state after this change.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.viewer.raiseEvent('flip', {"flipped": state});
-      } else {
-        this.flipped = state;
+      if ( this.flipped === state ) {
+        return this;
       }
 
+      this.flipped = state;
       if(this.viewer.navigator){
         this.viewer.navigator.setFlip(this.getFlip());
       }
       this.viewer.forceRedraw();
+
+      /**
+       * Raised when flip state has been changed.
+       *
+       * @event flip
+       * @memberof OpenSeadragon.Viewer
+       * @type {object}
+       * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+       * @property {Number} flipped - The flip state after this change.
+       * @property {?Object} userData - Arbitrary subscriber-defined object.
+       */
+      this.viewer.raiseEvent('flip', {"flipped": state});
       return this;
     }
 
