@@ -360,7 +360,7 @@ $.TileSource.prototype = {
         if (point.x >= 1) {
             x = this.getNumTiles(level).x - 1;
         }
-        var EPSILON = 1e-16;
+        var EPSILON = 1e-15;
         if (point.y >= 1 / this.aspectRatio - EPSILON) {
             y = this.getNumTiles(level).y - 1;
         }
@@ -373,8 +373,12 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
+     * @param {Boolean} [isSource=false] Whether to return the source bounds of the tile.
+     * @returns {OpenSeadragon.Rect} Either where this tile fits (in normalized coordinates) or the
+     * portion of the tile to use as the source of the drawing operation (in pixels), depending on
+     * the isSource parameter.
      */
-    getTileBounds: function( level, x, y ) {
+    getTileBounds: function( level, x, y, isSource ) {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
             tileWidth = this.getTileWidth(level),
             tileHeight = this.getTileHeight(level),
@@ -386,6 +390,12 @@ $.TileSource.prototype = {
 
         sx = Math.min( sx, dimensionsScaled.x - px );
         sy = Math.min( sy, dimensionsScaled.y - py );
+
+        if (isSource) {
+            scale = 1;
+            px = 0;
+            py = 0;
+        }
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
     },

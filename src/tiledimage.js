@@ -1372,6 +1372,7 @@ function getTile(
     var xMod,
         yMod,
         bounds,
+        sourceBounds,
         exists,
         url,
         ajaxHeaders,
@@ -1389,6 +1390,7 @@ function getTile(
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
+        sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
 
@@ -1418,7 +1420,8 @@ function getTile(
             url,
             context2D,
             tiledImage.loadTilesWithAjax,
-            ajaxHeaders
+            ajaxHeaders,
+            sourceBounds
         );
 
         if (xMod === numTiles.x - 1) {
