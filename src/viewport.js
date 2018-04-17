@@ -881,7 +881,6 @@ $.Viewport.prototype = {
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
-
         this.degrees = $.positiveModulo(degrees, 360);
         this._setContentBounds(
             this.viewer.world.getHomeBounds(),
@@ -1531,7 +1530,6 @@ $.Viewport.prototype = {
       return this;
     },
 
-
     /**
      * Gets flip state stored on viewport.
      * @function
@@ -1540,7 +1538,6 @@ $.Viewport.prototype = {
     getFlip: function() {
       return this.flipped;
     },
-
 
     /**
      * Sets flip state according to the state input argument.

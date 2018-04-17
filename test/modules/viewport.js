@@ -1140,4 +1140,43 @@
         });
     });
 
+    QUnit.test('toggleFlipState', function(assert) {
+      var done = assert.async();
+      var openHandler = function(event) {
+          viewer.removeHandler('open', openHandler);
+          var viewport = viewer.viewport;
+
+          assert.deepEqual(viewport.getFlip(), false, "Get original flip state should be false");
+
+          viewport.toggleFlip();
+          assert.deepEqual(viewport.getFlip(), true, "Toggling flip state variable, viewport should be true");
+
+          viewport.toggleFlip();
+          assert.deepEqual(viewport.getFlip(), false, "Toggling back flip state variable, viewport should be false again");
+
+          done();
+      };
+      viewer.addHandler('open', openHandler);
+      viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('setFlipState', function(assert) {
+      var done = assert.async();
+      var openHandler = function(event) {
+          viewer.removeHandler('open', openHandler);
+          var viewport = viewer.viewport;
+
+          assert.deepEqual(viewport.getFlip(), false, "Get original flip state should be false");
+
+          viewport.setFlip(true);
+          assert.deepEqual(viewport.getFlip(), true, "Setting flip state variable should be true");
+
+          viewport.setFlip(false);
+          assert.deepEqual(viewport.getFlip(), false, "Unsetting flip state variable, viewport should be false again");
+
+          done();
+      };
+      viewer.addHandler('open', openHandler);
+      viewer.open(DZI_PATH);
+    });
 })();
