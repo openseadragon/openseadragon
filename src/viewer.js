@@ -3476,20 +3476,11 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
+
         if ( this.viewport.flipped ){
-          if (currRotation === 270) {
-              currRotation = 0;
-          }
-          else {
-              currRotation += 90;
-          }
+          currRotation = $.positiveModulo(currRotation + 90, 360);
         } else {
-          if (currRotation === 0) {
-              currRotation = 270;
-          }
-          else {
-              currRotation -= 90;
-          }
+          currRotation = $.positiveModulo(currRotation - 90, 360);
         }
         this.viewport.setRotation(currRotation);
     }
@@ -3501,20 +3492,11 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
+
         if ( this.viewport.flipped ){
-          if (currRotation === 0) {
-              currRotation = 270;
-          }
-          else {
-              currRotation -= 90;
-          }
+          currRotation = $.positiveModulo(currRotation - 90, 360);
         } else {
-          if (currRotation === 270) {
-              currRotation = 0;
-          }
-          else {
-              currRotation += 90;
-          }
+          currRotation = $.positiveModulo(currRotation + 90, 360);
         }
         this.viewport.setRotation(currRotation);
     }

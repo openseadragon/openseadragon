@@ -526,10 +526,4 @@ function setElementTransform( element, rule ) {
   element.style.transform = rule;
 }
 
-
-
-
-
-
-
 }( OpenSeadragon ));
