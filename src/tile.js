@@ -367,16 +367,21 @@ $.Tile.prototype = {
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
-        if (!this.sourceBounds) { // Just in case
-            this.sourceBounds = new $.Rect(0, 0, rendered.canvas.width, rendered.canvas.height);
+        var sourceWidth, sourceHeight;
+        if (this.sourceBounds) {
+            sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);
+            sourceHeight = Math.min(this.sourceBounds.height, rendered.canvas.height);
+        } else {
+            sourceWidth = rendered.canvas.width;
+            sourceHeight = rendered.canvas.height;
         }
 
         context.drawImage(
             rendered.canvas,
-            this.sourceBounds.x,
-            this.sourceBounds.y,
-            this.sourceBounds.width,
-            this.sourceBounds.height,
+            0,
+            0,
+            sourceWidth,
+            sourceHeight,
             position.x,
             position.y,
             size.x,
