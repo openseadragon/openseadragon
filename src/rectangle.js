@@ -58,27 +58,27 @@ $.Rect = function(x, y, width, height, degrees) {
      * @member {Number} x
      * @memberof OpenSeadragon.Rect#
      */
-    this.x = typeof(x) === "number" ? x : 0;
+    this.x = typeof (x) === "number" ? x : 0;
     /**
      * The vector component 'y'.
      * @member {Number} y
      * @memberof OpenSeadragon.Rect#
      */
-    this.y = typeof(y) === "number" ? y : 0;
+    this.y = typeof (y) === "number" ? y : 0;
     /**
      * The vector component 'width'.
      * @member {Number} width
      * @memberof OpenSeadragon.Rect#
      */
-    this.width  = typeof(width) === "number" ? width : 0;
+    this.width  = typeof (width) === "number" ? width : 0;
     /**
      * The vector component 'height'.
      * @member {Number} height
      * @memberof OpenSeadragon.Rect#
      */
-    this.height = typeof(height) === "number" ? height : 0;
+    this.height = typeof (height) === "number" ? height : 0;
 
-    this.degrees = typeof(degrees) === "number" ? degrees : 0;
+    this.degrees = typeof (degrees) === "number" ? degrees : 0;
 
     // Normalizes the rectangle.
     this.degrees = $.positiveModulo(this.degrees, 360);

@@ -1499,7 +1499,7 @@ function OpenSeadragon( options ){
          */
         getMousePosition: function( event ) {
 
-            if ( typeof( event.pageX ) == "number" ) {
+            if ( typeof ( event.pageX ) == "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1509,7 +1509,7 @@ function OpenSeadragon( options ){
 
                     return result;
                 };
-            } else if ( typeof( event.clientX ) == "number" ) {
+            } else if ( typeof ( event.clientX ) == "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1544,7 +1544,7 @@ function OpenSeadragon( options ){
             var docElement  = document.documentElement || {},
                 body        = document.body || {};
 
-            if ( typeof( window.pageXOffset ) == "number" ) {
+            if ( typeof ( window.pageXOffset ) == "number" ) {
                 $.getPageScroll = function(){
                     return new $.Point(
                         window.pageXOffset,
@@ -1633,7 +1633,7 @@ function OpenSeadragon( options ){
             var docElement = document.documentElement || {},
                 body    = document.body || {};
 
-            if ( typeof( window.innerWidth ) == 'number' ) {
+            if ( typeof ( window.innerWidth ) == 'number' ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         window.innerWidth,
@@ -2233,7 +2233,7 @@ function OpenSeadragon( options ){
                     error messages are localized.
                 */
                 var oldIE = $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 10;
-                if ( oldIE && typeof( e.number ) != "undefined" && e.number == -2147024891 ) {
+                if ( oldIE && typeof ( e.number ) != "undefined" && e.number == -2147024891 ) {
                     msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
                 }
 
