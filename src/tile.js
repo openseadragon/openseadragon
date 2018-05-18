@@ -358,8 +358,8 @@ $.Tile.prototype = {
             context.clearRect(
                 position.x + 1,
                 position.y + 1,
-                size.x - 2,
-                size.y - 2
+                size.x - 1,
+                size.y - 1
             );
         }
 
