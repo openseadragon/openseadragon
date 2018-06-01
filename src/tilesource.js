@@ -427,7 +427,7 @@ $.TileSource.prototype = {
         }
 
         callback = function( data ){
-            if( typeof(data) === "string" ) {
+            if( typeof (data) === "string" ) {
                 data = $.parseXml( data );
             }
             var $TileSource = $.TileSource.determineType( _this, data, url );
@@ -500,7 +500,7 @@ $.TileSource.prototype = {
                         msg = "HTTP " + xhr.status + " attempting to load TileSource";
                     } catch ( e ) {
                         var formattedExc;
-                        if ( typeof( exc ) == "undefined" || !exc.toString ) {
+                        if ( typeof ( exc ) == "undefined" || !exc.toString ) {
                             formattedExc = "Unknown error";
                         } else {
                             formattedExc = exc.toString();
