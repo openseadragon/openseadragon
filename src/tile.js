@@ -356,10 +356,10 @@ $.Tile.prototype = {
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                position.x + 1,
-                position.y + 1,
-                size.x - 1,
-                size.y - 1
+                position.x,
+                position.y,
+                size.x,
+                size.y
             );
         }
 
