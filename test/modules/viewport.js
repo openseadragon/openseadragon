@@ -471,6 +471,21 @@
                 bounds,
                 EPSILON,
                 "Viewport.applyConstraints should move viewport.");
+
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.visibilityRatio = 0.3;
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                assert,
+                new OpenSeadragon.Rect(0.7, 0.7, 1, 1),
+                bounds,
+                EPSILON,
+                "Viewport.applyConstraints should move flipped viewport.");
+
             done();
         };
         viewer.addHandler('open', openHandler);
@@ -515,6 +530,21 @@
                 new OpenSeadragon.Rect(1, 0, Math.sqrt(2), Math.sqrt(2), 45),
                 EPSILON,
                 "Viewport.applyConstraints with rotation should move viewport.");
+
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            viewport.setRotation(45);
+            viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
+            viewport.applyConstraints(true);
+            var bounds = viewport.getBounds();
+            Util.assertRectangleEquals(
+                assert,
+                bounds,
+                new OpenSeadragon.Rect(1, 0, Math.sqrt(2), Math.sqrt(2), 45),
+                EPSILON,
+                "Viewport.applyConstraints flipped and with rotation should move viewport.");
+
             done();
         };
         viewer.addHandler('open', openHandler);
@@ -927,6 +957,34 @@
                 );
             }
 
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            var expectedFlippedCenters = [
+                new OpenSeadragon.Point(54.7205, 54.8705),
+                new OpenSeadragon.Point(54.471, 54.621),
+                new OpenSeadragon.Point(54.321, 54.621),
+                new OpenSeadragon.Point(54.566, 54.866),
+                new OpenSeadragon.Point(54.941, 55.241),
+                new OpenSeadragon.Point(54.941, 55.241),
+            ];
+
+            for (var i = 0; i < testZoomLevels.length; i++) {
+                viewport.zoomTo(testZoomLevels[i], testPoints[i], true);
+                assert.propEqual(
+                    viewport.getZoom(),
+                    testZoomLevels[i],
+                    "Zoomed flipped to the correct level."
+                );
+                assertPointsEquals(
+                    assert,
+                    viewport.getCenter(),
+                    expectedFlippedCenters[i],
+                    1e-14,
+                    "Panned flipped to the correct location."
+                );
+            }
+
             done();
         };
         viewer.addHandler('open', openHandler);
@@ -944,6 +1002,16 @@
             assert.propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
             viewport.setRotation(-75);
             assert.propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            assert.propEqual(viewport.getRotation, 0, "Original rotation should be 0 degrees");
+            viewport.setRotation(90);
+            assert.propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
+            viewport.setRotation(-75);
+            assert.propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+
             done();
         };
 
@@ -1233,5 +1301,5 @@
       viewer.addHandler('open', openHandler);
       viewer.open(DZI_PATH);
     });
-    
+
 })();
