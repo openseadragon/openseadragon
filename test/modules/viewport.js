@@ -118,6 +118,7 @@
                         assert,
                         actual,
                         expected,
+                        1e-15,
                         "Correctly converted coordinates " + orig
                     );
                 } else {
@@ -136,8 +137,8 @@
         viewer.open(DZI_PATH);
     };
 
-    function assertPointsEquals(assert, actual, expected, message) {
-        Util.assertPointsEquals(assert, actual, expected, 1e-15, message);
+    function assertPointsEquals(assert, actual, expected, variance, message) {
+        Util.assertPointsEquals(assert, actual, expected, variance, message);
     }
 
 // Tests start here.
@@ -736,6 +737,19 @@
                 );
             }
 
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            for (var i = 0; i < testPoints.length; i++){
+                var expected = viewport.getCenter().plus(testPoints[i]);
+                viewport.panBy(testPoints[i], true);
+                assert.propEqual(
+                    viewport.getCenter(),
+                    expected,
+                    "Panned flipped by the correct amount."
+                );
+            }
+
             done();
         };
         viewer.addHandler('open', openHandler);
@@ -754,6 +768,18 @@
                     viewport.getCenter(),
                     testPoints[i],
                     "Panned to the correct location."
+                );
+            }
+
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            for (var i = 0; i < testPoints.length; i++){
+                viewport.panTo(testPoints[i], true);
+                assert.propEqual(
+                    viewport.getCenter(),
+                    testPoints[i],
+                    "Panned flipped to the correct location."
                 );
             }
 
@@ -812,6 +838,34 @@
                     expectedCenters[i],
                     1e-14,
                     "Panned to the correct location."
+                );
+            }
+
+            viewport = viewer.viewport; // Get viewport original state
+            viewport.setFlip(true);
+
+            var expectedFlippedCenters = [
+                new OpenSeadragon.Point(12.121, 11.871),
+                new OpenSeadragon.Point(14.117, 13.867),
+                new OpenSeadragon.Point(14.367, 13.867),
+                new OpenSeadragon.Point(14.367, 13.867),
+                new OpenSeadragon.Point(14.742, 14.242),
+                new OpenSeadragon.Point(14.742, 14.242),
+            ];
+
+            for (var i = 0; i < testZoomLevels.length; i++) {
+                viewport.zoomBy(testZoomLevels[i], testPoints[i], true);
+                assert.propEqual(
+                    testZoomLevels[i],
+                    viewport.getZoom(),
+                    "Zoomed flipped by the correct amount."
+                );
+                assertPointsEquals(
+                    assert,
+                    expectedFlippedCenters[i],
+                    viewport.getCenter(),
+                    1e-6,
+                    "Panned flipped to the correct location."
                 );
             }
 
@@ -1179,4 +1233,5 @@
       viewer.addHandler('open', openHandler);
       viewer.open(DZI_PATH);
     });
+    
 })();
