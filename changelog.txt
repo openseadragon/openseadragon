@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Added optional zoom in the middle of the image instead of pointer position (#1423)
 * Now supporting square edge tiles that are padded rather than cropped (#1426)
 * Fixed an issue causing the simple image tileSource to sometimes show duplicate copies (#1370)
+* Fixed an issue causing seams to appear in semi-transparent PNG tiled images (#1470)
 
 2.3.1:
 
