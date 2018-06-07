@@ -472,7 +472,18 @@
                 EPSILON,
                 "Viewport.applyConstraints should move viewport.");
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('applyConstraints flipped', function(assert) {
+        var done = assert.async();
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
             viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
@@ -531,10 +542,21 @@
                 EPSILON,
                 "Viewport.applyConstraints with rotation should move viewport.");
 
-            viewport = viewer.viewport; // Get viewport original state
-            viewport.setFlip(true);
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
 
+    QUnit.test('applyConstraints flipped with rotation', function(assert) {
+        var done = assert.async();
+        var openHandler = function() {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
+            viewport.setFlip(true);
             viewport.setRotation(45);
+
             viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
             viewport.applyConstraints(true);
             var bounds = viewport.getBounds();
@@ -767,7 +789,18 @@
                 );
             }
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('panBy flipped', function(assert) {
+        var done = assert.async();
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
             for (var i = 0; i < testPoints.length; i++){
@@ -801,7 +834,18 @@
                 );
             }
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('panTo flipped', function(assert) {
+        var done = assert.async();
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
             for (var i = 0; i < testPoints.length; i++){
@@ -871,16 +915,27 @@
                 );
             }
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('zoomBy flipped with ref point', function(assert) {
+        var done = assert.async();
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
             var expectedFlippedCenters = [
-                new OpenSeadragon.Point(12.121, 11.871),
-                new OpenSeadragon.Point(14.117, 13.867),
-                new OpenSeadragon.Point(14.367, 13.867),
-                new OpenSeadragon.Point(14.367, 13.867),
-                new OpenSeadragon.Point(14.742, 14.242),
-                new OpenSeadragon.Point(14.742, 14.242),
+                new OpenSeadragon.Point(5, 5),
+                new OpenSeadragon.Point(6.996, 6.996),
+                new OpenSeadragon.Point(7.246, 6.996),
+                new OpenSeadragon.Point(7.246, 6.996),
+                new OpenSeadragon.Point(7.621, 7.371),
+                new OpenSeadragon.Point(7.621, 7.371),
             ];
 
             for (var i = 0; i < testZoomLevels.length; i++) {
@@ -950,23 +1005,34 @@
                 );
                 assertPointsEquals(
                     assert,
-                    viewport.getCenter(),
                     expectedCenters[i],
+                    viewport.getCenter(),
                     1e-14,
                     "Panned to the correct location."
                 );
             }
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('zoomTo flipped with ref point', function(assert) {
+        var done = assert.async();
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
             var expectedFlippedCenters = [
-                new OpenSeadragon.Point(54.7205, 54.8705),
-                new OpenSeadragon.Point(54.471, 54.621),
-                new OpenSeadragon.Point(54.321, 54.621),
-                new OpenSeadragon.Point(54.566, 54.866),
-                new OpenSeadragon.Point(54.941, 55.241),
-                new OpenSeadragon.Point(54.941, 55.241),
+                new OpenSeadragon.Point(5, 5),
+                new OpenSeadragon.Point(4.7505, 4.7505),
+                new OpenSeadragon.Point(4.6005, 4.7505),
+                new OpenSeadragon.Point(4.8455, 4.9955),
+                new OpenSeadragon.Point(5.2205, 5.3705),
+                new OpenSeadragon.Point(5.2205, 5.3705),
             ];
 
             for (var i = 0; i < testZoomLevels.length; i++) {
@@ -978,8 +1044,8 @@
                 );
                 assertPointsEquals(
                     assert,
-                    viewport.getCenter(),
                     expectedFlippedCenters[i],
+                    viewport.getCenter(),
                     1e-14,
                     "Panned flipped to the correct location."
                 );
@@ -1003,14 +1069,26 @@
             viewport.setRotation(-75);
             assert.propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
 
-            viewport = viewer.viewport; // Get viewport original state
+            done();
+        };
+
+        viewer.addHandler('open', openHandler);
+        viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('rotation (flipped)', function(assert){
+        var done = assert.async();
+        var openHandler = function(event) {
+            viewer.removeHandler('open', openHandler);
+            var viewport = viewer.viewport;
+
             viewport.setFlip(true);
 
-            assert.propEqual(viewport.getRotation, 0, "Original rotation should be 0 degrees");
+            assert.propEqual(viewport.getRotation, 0, "Original flipped rotation should be 0 degrees");
             viewport.setRotation(90);
-            assert.propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
+            assert.propEqual(viewport.getRotation, 90, "Flipped rotation should be 90 degrees");
             viewport.setRotation(-75);
-            assert.propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+            assert.propEqual(viewport.getRotation, -75, "Flipped rotation should be -75 degrees");
 
             done();
         };
