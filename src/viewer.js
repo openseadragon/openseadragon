@@ -152,6 +152,11 @@ $.Viewer = function( options ) {
          * @memberof OpenSeadragon.Viewer#
          */
         drawer:             null,
+        /**
+         * Keeps track of all of the tiled images in the scene.
+         * @member {OpenSeadragon.Drawer} world
+         * @memberof OpenSeadragon.Viewer#
+         */
         world:              null,
         /**
          * Handles coordinate-related functionality - zoom, pan, rotation, etc. Created for each TileSource opened.
