@@ -145,6 +145,11 @@ $.Viewer = function( options ) {
 
         //These are originally not part options but declared as members
         //in initialize.  It's still considered idiomatic to put them here
+        /**
+         * The {@link OpenSeadragon.TileSource} that defines the TiledImage.
+         * @member {OpenSeadragon.TileSource} source
+         * @memberof OpenSeadragon.TiledImage#
+         */
         source:         null,
         /**
          * Handles rendering of tiles in the viewer. Created for each TileSource opened.
