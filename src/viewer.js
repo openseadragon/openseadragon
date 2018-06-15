@@ -429,6 +429,10 @@ $.Viewer = function( options ) {
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,
+            background:        this.navigatorBackground,
+            opacity:           this.navigatorOpacity,
+            borderColor:       this.navigatorBorderColor,
+            displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy
         });
     }

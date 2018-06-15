@@ -419,6 +419,18 @@
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
   *
+  * @property {String} [navigatorBackground='#000']
+  *     Specifies the background color of the navigator minimap
+  *
+  * @property {Number} [navigatorOpacity=0.8]
+  *     Specifies the opacity of the navigator minimap.
+  *
+  * @property {String} [navigatorBorderColor='#555']
+  *     Specifies the border color of the navigator minimap
+  *
+  * @property {String} [navigatorDisplayRegionColor='#900']
+  *     Specifies the border color of the display region rectangle of the navigator minimap
+  *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -1151,6 +1163,10 @@ function OpenSeadragon( options ){
             navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
+            navigatorBackground:        '#000',
+            navigatorOpacity:           0.8,
+            navigatorBorderColor:       '#555',
+            navigatorDisplayRegionColor: '#900',
 
             // INITIAL ROTATION
             degrees:                    0,
