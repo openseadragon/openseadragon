@@ -206,6 +206,9 @@
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
+  * @property {Boolean} [flipped=false]
+  *     Initial flip state.
+  *
   * @property {Number} [minZoomLevel=null]
   *
   * @property {Number} [maxZoomLevel=null]
@@ -416,6 +419,18 @@
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
   *
+  * @property {String} [navigatorBackground='#000']
+  *     Specifies the background color of the navigator minimap
+  *
+  * @property {Number} [navigatorOpacity=0.8]
+  *     Specifies the opacity of the navigator minimap.
+  *
+  * @property {String} [navigatorBorderColor='#555']
+  *     Specifies the border color of the navigator minimap
+  *
+  * @property {String} [navigatorDisplayRegionColor='#900']
+  *     Specifies the border color of the display region rectangle of the navigator minimap
+  *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
   *     with the interface before begining to fade the controls. Assumes
@@ -477,6 +492,10 @@
   *     (e.g. viewer.drawer.canRotate()).<br>
   *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
   *     this setting when set to false.
+  *
+  * @property {Boolean} [showFlipControl=false]
+  *     If true then the flip controls will be displayed as part of the
+  *     standard controls.
   *
   * @property {Boolean} [showSequenceControl=true]
   *     If sequenceMode is true, then provide buttons for navigating forward and
@@ -687,6 +706,12 @@
   * @property {String} rotateright.GROUP
   * @property {String} rotateright.HOVER
   * @property {String} rotateright.DOWN
+  *
+  * @property {Object} flip - Images for the flip button.
+  * @property {String} flip.REST
+  * @property {String} flip.GROUP
+  * @property {String} flip.HOVER
+  * @property {String} flip.DOWN
   *
   * @property {Object} previous - Images for the previous button.
   * @property {String} previous.REST
@@ -1120,6 +1145,7 @@ function OpenSeadragon( options ){
             showHomeControl:         true,  //HOME
             showFullPageControl:     true,  //FULL
             showRotationControl:     false, //ROTATION
+            showFlipControl:         false,  //FLIP
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
@@ -1137,9 +1163,16 @@ function OpenSeadragon( options ){
             navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
+            navigatorBackground:        '#000',
+            navigatorOpacity:           0.8,
+            navigatorBorderColor:       '#555',
+            navigatorDisplayRegionColor: '#900',
 
             // INITIAL ROTATION
             degrees:                    0,
+
+            // INITIAL FLIP STATE
+            flipped:                    false,
 
             // APPEARANCE
             opacity:                    1,
@@ -1208,6 +1241,12 @@ function OpenSeadragon( options ){
                     GROUP:  'rotateright_grouphover.png',
                     HOVER:  'rotateright_hover.png',
                     DOWN:   'rotateright_pressed.png'
+                },
+                flip: { // Flip icon designed by Yaroslav Samoylov from the Noun Project and modified by Nelson Campos ncampos@criteriamarathon.com, https://thenounproject.com/term/flip/136289/
+                    REST:   'flip_rest.png',
+                    GROUP:  'flip_grouphover.png',
+                    HOVER:  'flip_hover.png',
+                    DOWN:   'flip_pressed.png'
                 },
                 previous: {
                     REST:   'previous_rest.png',

@@ -107,6 +107,7 @@ $.Viewport = function( options ) {
         minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
         degrees:            $.DEFAULT_SETTINGS.degrees,
+        flipped:            $.DEFAULT_SETTINGS.flipped,
         homeFillsViewer:    $.DEFAULT_SETTINGS.homeFillsViewer
 
     }, options );
@@ -880,7 +881,6 @@ $.Viewport.prototype = {
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
-
         this.degrees = $.positiveModulo(degrees, 360);
         this._setContentBounds(
             this.viewer.world.getHomeBounds(),
@@ -1518,7 +1518,58 @@ $.Viewport.prototype = {
         var scale = this._contentBoundsNoRotate.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
+    },
+
+    /**
+     * Toggles flip state and demands a new drawing on navigator and viewer objects.
+     * @function
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    toggleFlip: function() {
+      this.setFlip(!this.getFlip());
+      return this;
+    },
+
+    /**
+     * Gets flip state stored on viewport.
+     * @function
+     * @return {Boolean} Flip state.
+     */
+    getFlip: function() {
+      return this.flipped;
+    },
+
+    /**
+     * Sets flip state according to the state input argument.
+     * @function
+     * @param {Boolean} state - Flip state to set.
+     * @return {OpenSeadragon.Viewport} Chainable.
+     */
+    setFlip: function( state ) {
+      if ( this.flipped === state ) {
+        return this;
+      }
+
+      this.flipped = state;
+      if(this.viewer.navigator){
+        this.viewer.navigator.setFlip(this.getFlip());
+      }
+      this.viewer.forceRedraw();
+
+      /**
+       * Raised when flip state has been changed.
+       *
+       * @event flip
+       * @memberof OpenSeadragon.Viewer
+       * @type {object}
+       * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+       * @property {Number} flipped - The flip state after this change.
+       * @property {?Object} userData - Arbitrary subscriber-defined object.
+       */
+      this.viewer.raiseEvent('flip', {"flipped": state});
+      return this;
     }
+
 };
 
 }( OpenSeadragon ));

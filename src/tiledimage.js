@@ -85,7 +85,11 @@
  */
 $.TiledImage = function( options ) {
     var _this = this;
-
+    /**
+     * The {@link OpenSeadragon.TileSource} that defines this TiledImage.
+     * @member {OpenSeadragon.TileSource} source
+     * @memberof OpenSeadragon.TiledImage#
+     */
     $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
     $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
     $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
@@ -1886,6 +1890,10 @@ function drawTiles( tiledImage, lastDrawn ) {
                 degrees: tiledImage.viewport.degrees,
                 useSketch: useSketch
             });
+        } else {
+            if(tiledImage._drawer.viewer.viewport.flipped) {
+                tiledImage._drawer._flip({});
+            }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
@@ -1969,6 +1977,10 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         if (tiledImage.viewport.degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
+        } else{
+          if(tiledImage._drawer.viewer.viewport.flipped) {
+            tiledImage._drawer._flip({});
+          }
         }
     }
 

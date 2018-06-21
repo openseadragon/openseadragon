@@ -145,6 +145,8 @@ $.Viewer = function( options ) {
 
         //These are originally not part options but declared as members
         //in initialize.  It's still considered idiomatic to put them here
+        //source is here for backwards compatibility. It is not an official
+        //part of the API and should not be relied upon.
         source:         null,
         /**
          * Handles rendering of tiles in the viewer. Created for each TileSource opened.
@@ -152,6 +154,11 @@ $.Viewer = function( options ) {
          * @memberof OpenSeadragon.Viewer#
          */
         drawer:             null,
+        /**
+         * Keeps track of all of the tiled images in the scene.
+         * @member {OpenSeadragon.Drawer} world
+         * @memberof OpenSeadragon.Viewer#
+         */
         world:              null,
         /**
          * Handles coordinate-related functionality - zoom, pan, rotation, etc. Created for each TileSource opened.
@@ -367,6 +374,7 @@ $.Viewer = function( options ) {
         maxZoomLevel:       this.maxZoomLevel,
         viewer:             this,
         degrees:            this.degrees,
+        flipped:            this.flipped,
         navigatorRotate:    this.navigatorRotate,
         homeFillsViewer:    this.homeFillsViewer,
         margins:            this.viewportMargins
@@ -428,6 +436,10 @@ $.Viewer = function( options ) {
             prefixUrl:         this.prefixUrl,
             viewer:            this,
             navigatorRotate:   this.navigatorRotate,
+            background:        this.navigatorBackground,
+            opacity:           this.navigatorOpacity,
+            borderColor:       this.navigatorBorderColor,
+            displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy
         });
     }
@@ -1674,6 +1686,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
             onRotateRightHandler    = $.delegate( this, onRotateRight ),
+            onFlipHandler           = $.delegate( this, onFlip),
             onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
             navImages               = this.navImages,
@@ -1685,7 +1698,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if( this.zoomInButton || this.zoomOutButton ||
                 this.homeButton || this.fullPageButton ||
-                this.rotateLeftButton || this.rotateRightButton ) {
+                this.rotateLeftButton || this.rotateRightButton ||
+                this.flipButton ) {
                 //if we are binding to custom buttons then layout and
                 //grouping is the responsibility of the page author
                 useGroup = false;
@@ -1789,7 +1803,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+            }
 
+            if ( this.showFlipControl ) {
+                buttons.push( this.flipButton = new $.Button({
+                    element:    this.flipButton ? $.getElement( this.flipButton ) : null,
+                    clickTimeThreshold: this.clickTimeThreshold,
+                    clickDistThreshold: this.clickDistThreshold,
+                    tooltip:    $.getString( "Tooltips.Flip" ),
+                    srcRest:    resolveUrl( this.prefixUrl, navImages.flip.REST ),
+                    srcGroup:   resolveUrl( this.prefixUrl, navImages.flip.GROUP ),
+                    srcHover:   resolveUrl( this.prefixUrl, navImages.flip.HOVER ),
+                    srcDown:    resolveUrl( this.prefixUrl, navImages.flip.DOWN ),
+                    onRelease:  onFlipHandler,
+                    onFocus:    onFocusHandler,
+                    onBlur:     onBlurHandler
+                }));
             }
 
             if ( useGroup ) {
@@ -2602,8 +2631,27 @@ function onCanvasKeyPress( event ) {
                   this.viewport.applyConstraints();
                 }
                 return false;
+            case 114: //r - 90 degrees clockwise rotation
+              if(this.viewport.flipped){
+                this.viewport.setRotation(this.viewport.degrees - 90);
+              } else{
+                this.viewport.setRotation(this.viewport.degrees + 90);
+              }
+              this.viewport.applyConstraints();
+              return false;
+            case 82: //R - 90 degrees counterclockwise  rotation
+              if(this.viewport.flipped){
+                this.viewport.setRotation(this.viewport.degrees + 90);
+              } else{
+                this.viewport.setRotation(this.viewport.degrees - 90);
+              }
+              this.viewport.applyConstraints();
+              return false;
+            case 102: //f
+              this.viewport.toggleFlip();
+              return false;
             default:
-                //console.log( 'navigator keycode %s', event.keyCode );
+                // console.log( 'navigator keycode %s', event.keyCode );
                 return true;
         }
     } else {
@@ -2619,6 +2667,9 @@ function onCanvasClick( event ) {
     // If we don't have keyboard focus, request it.
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
+    }
+    if(this.viewport.flipped){
+        event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
     var canvasClickEventArgs = {
@@ -2738,6 +2789,9 @@ function onCanvasDrag( event ) {
         }
         if( !this.panVertical ){
             event.delta.y = 0;
+        }
+        if(this.viewport.flipped){
+            event.delta.x = -event.delta.x;
         }
 
         if( this.constrainDuringPan ){
@@ -3064,6 +3118,10 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
+        if(this.viewport.flipped){
+          event.position.x = this.viewport.getContainerSize().x - event.position.x;
+        }
+
         if ( !event.preventDefaultAction && this.viewport ) {
             gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
             if ( gestureSettings.scrollToZoom ) {
@@ -3259,7 +3317,7 @@ function updateOnce( viewer ) {
         drawWorld( viewer );
         viewer._drawOverlays();
         if( viewer.navigator ){
-            viewer.navigator.update( viewer.viewport );
+          viewer.navigator.update( viewer.viewport );
         }
 
         THIS[ viewer.hash ].forceRedraw = false;
@@ -3429,11 +3487,11 @@ function onFullScreen() {
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation === 0) {
-            currRotation = 270;
-        }
-        else {
-            currRotation -= 90;
+
+        if ( this.viewport.flipped ){
+          currRotation = $.positiveModulo(currRotation + 90, 360);
+        } else {
+          currRotation = $.positiveModulo(currRotation - 90, 360);
         }
         this.viewport.setRotation(currRotation);
     }
@@ -3445,16 +3503,22 @@ function onRotateLeft() {
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
-        if (currRotation === 270) {
-            currRotation = 0;
-        }
-        else {
-            currRotation += 90;
+
+        if ( this.viewport.flipped ){
+          currRotation = $.positiveModulo(currRotation - 90, 360);
+        } else {
+          currRotation = $.positiveModulo(currRotation + 90, 360);
         }
         this.viewport.setRotation(currRotation);
     }
 }
 
+/**
+ * Note: When pressed flip control button
+ */
+function onFlip() {
+   this.viewport.toggleFlip();
+}
 
 function onPrevious(){
     var previous = this._sequenceIndex - 1;
