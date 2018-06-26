@@ -430,13 +430,15 @@ function onCanvasDrag( event ) {
     /**
      * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
      *
-     * @event navigator-click
+     * @event navigator-drag
      * @memberof OpenSeadragon.Viewer
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
+     * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
+     * @property {Number} speed - Current computed speed, in pixels per second.
+     * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
