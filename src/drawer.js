@@ -500,6 +500,10 @@ $.Drawer.prototype = {
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
+        } else{
+          if(this.viewer.viewport.flipped) {
+            this._flip();
+          }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
@@ -620,8 +624,26 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        context.rotate(Math.PI / 180 * options.degrees);
+        if(this.viewer.viewport.flipped){
+          context.rotate(Math.PI / 180 * -options.degrees);
+          context.scale(-1, 1);
+        } else{
+          context.rotate(Math.PI / 180 * options.degrees);
+        }
         context.translate(-point.x, -point.y);
+    },
+
+    // private
+    _flip: function(options) {
+      options = options || {};
+      var point = options.point ?
+        options.point.times($.pixelDensityRatio) :
+        this.getCanvasCenter();
+      var context = this._getContext(options.useSketch);
+
+      context.translate(point.x, 0);
+      context.scale(-1, 1);
+      context.translate(-point.x, 0);
     },
 
     // private

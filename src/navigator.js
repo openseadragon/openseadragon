@@ -110,7 +110,11 @@ $.Navigator = function( options ){
         animationTime:          0,
         autoResize:             options.autoResize,
         // prevent resizing the navigator from adding unwanted space around the image
-        minZoomImageRatio:      1.0
+        minZoomImageRatio:      1.0,
+        background:             options.background,
+        opacity:                options.opacity,
+        borderColor:            options.borderColor,
+        displayRegionColor:     options.displayRegionColor
     });
 
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
@@ -127,10 +131,10 @@ $.Navigator = function( options ){
     if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
         (function( style, borderWidth ){
             style.margin        = '0px';
-            style.border        = borderWidth + 'px solid #555';
+            style.border        = borderWidth + 'px solid ' + options.borderColor;
             style.padding       = '0px';
-            style.background    = '#000';
-            style.opacity       = 0.8;
+            style.background    = options.background;
+            style.opacity       = options.opacity;
             style.overflow      = 'hidden';
         }( this.element.style, this.borderWidth));
     }
@@ -145,7 +149,7 @@ $.Navigator = function( options ){
         style.left          = '0px';
         style.fontSize      = '0px';
         style.overflow      = 'hidden';
-        style.border        = borderWidth + 'px solid #900';
+        style.border        = borderWidth + 'px solid ' + options.displayRegionColor;
         style.margin        = '0px';
         style.padding       = '0px';
         //TODO: IE doesnt like this property being set
@@ -208,11 +212,13 @@ $.Navigator = function( options ){
         var degrees = options.viewer.viewport ?
             options.viewer.viewport.getRotation() :
             options.viewer.degrees || 0;
+
         rotate(degrees);
         options.viewer.addHandler("rotate", function (args) {
             rotate(args.degrees);
         });
     }
+
 
     // Remove the base class' (Viewer's) innerTracker and replace it with our own
     this.innerTracker.destroy();
@@ -270,6 +276,22 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 this.world.draw();
             }
         }
+    },
+    /**
+      /* Flip navigator element
+      * @param {Boolean} state - Flip state to set.
+      */
+    setFlip: function(state) {
+      this.viewport.setFlip(state);
+
+      this.setDisplayTransform(this.viewer.viewport.getFlip() ? "scale(-1,1)" : "scale(1,1)");
+      return this;
+    },
+
+    setDisplayTransform: function(rule) {
+      setElementTransform(this.displayRegion, rule);
+      setElementTransform(this.canvas, rule);
+      setElementTransform(this.element, rule);
     },
 
     /**
@@ -399,6 +421,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     }
 });
 
+
 /**
  * @private
  * @inner
@@ -432,6 +455,9 @@ function onCanvasClick( event ) {
    this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
 
    if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
+    if(this.viewer.viewport.flipped) {
+      event.position.x = this.viewport.getContainerSize().x - event.position.x;
+    }
     var target = this.viewport.pointFromPixel(event.position);
     if (!this.panVertical) {
       // perform only horizonal pan
@@ -459,6 +485,11 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
+
+        if(this.viewer.viewport.flipped){
+            event.delta.x = -event.delta.x;
+        }
+
         this.viewer.viewport.panBy(
             this.viewport.deltaPointsFromPixels(
                 event.delta
@@ -522,12 +553,16 @@ function onCanvasScroll( event ) {
     * @param {Object} element
     * @param {Number} degrees
     */
-function _setTransformRotate (element, degrees) {
-    element.style.webkitTransform = "rotate(" + degrees + "deg)";
-    element.style.mozTransform = "rotate(" + degrees + "deg)";
-    element.style.msTransform = "rotate(" + degrees + "deg)";
-    element.style.oTransform = "rotate(" + degrees + "deg)";
-    element.style.transform = "rotate(" + degrees + "deg)";
+function _setTransformRotate( element, degrees ) {
+  setElementTransform(element, "rotate(" + degrees + "deg)");
+}
+
+function setElementTransform( element, rule ) {
+  element.style.webkitTransform = rule;
+  element.style.mozTransform = rule;
+  element.style.msTransform = rule;
+  element.style.oTransform = rule;
+  element.style.transform = rule;
 }
 
 }( OpenSeadragon ));

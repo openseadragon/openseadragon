@@ -57,7 +57,8 @@ var I18N = {
         NextPage:       "Next page",
         PreviousPage:   "Previous page",
         RotateLeft:     "Rotate left",
-        RotateRight:    "Rotate right"
+        RotateRight:    "Rotate right",
+        Flip:           "Flip Horizontally"
     }
 };
 
@@ -81,7 +82,7 @@ $.extend( $, /** @lends OpenSeadragon */{
         }
         string = container[ props[ i ] ];
 
-        if ( typeof( string ) != "string" ) {
+        if ( typeof ( string ) != "string" ) {
             $.console.log( "Untranslated source string:", prop );
             string = ""; // FIXME: this breaks gettext()-style convention, which would return source
         }
