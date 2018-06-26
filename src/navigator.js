@@ -428,7 +428,7 @@ function onCanvasDrag( event ) {
       preventDefaultAction: event.preventDefaultAction
     };
     /**
-     * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
+     * Raised when a drag event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
      *
      * @event navigator-drag
      * @memberof OpenSeadragon.Viewer
@@ -444,7 +444,6 @@ function onCanvasDrag( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      */
-
      this.viewer.raiseEvent('navigator-drag', canvasDragEventArgs);
 
      if ( !canvasDragEventArgs.preventDefaultAction && this.viewer.viewport ) {
