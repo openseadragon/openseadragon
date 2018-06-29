@@ -16,6 +16,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue causing the simple image tileSource to sometimes show duplicate copies (#1370)
 * Fixed an issue causing seams to appear in semi-transparent PNG tiled images (#1470)
 * Added visual customization options for the navigator (#1480)
+* You can now prevent canvas-drag events on the navigator (#1484)
 
 2.3.1:
 
