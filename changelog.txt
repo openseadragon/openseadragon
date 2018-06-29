@@ -17,6 +17,8 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue causing seams to appear in semi-transparent PNG tiled images (#1470)
 * Added visual customization options for the navigator (#1480)
 * You can now prevent canvas-drag events on the navigator (#1484)
+* You can now prevent canvas-click events on the navigator (#1416)
+* The navigator can now be restricted to just horizontal or just vertical panning (#1416)
 
 2.3.1:
 
