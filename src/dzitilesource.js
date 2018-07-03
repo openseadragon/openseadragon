@@ -182,6 +182,10 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
             yMax,
             i;
 
+        if ((this.minLevel && level < this.minLevel) || (this.maxLevel && level > this.maxLevel)) {
+            return false;
+        }
+
         if ( !rects || !rects.length ) {
             return true;
         }
