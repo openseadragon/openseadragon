@@ -19,7 +19,8 @@ OPENSEADRAGON CHANGELOG
 * You can now prevent canvas-drag events on the navigator (#1484)
 * You can now prevent canvas-click events on the navigator (#1416)
 * The navigator can now be restricted to just horizontal or just vertical panning (#1416)
-
+* Fixed DziTileSource so it doesn't load levels above maxLevel or below minLevel, if set (#1492)
+ 
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
