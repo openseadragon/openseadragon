@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.4.1: (In progress)
+
 2.4.0:
 
 * BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
