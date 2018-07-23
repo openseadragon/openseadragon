@@ -428,13 +428,48 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  * @function
  */
 function onCanvasClick( event ) {
-    if ( event.quick && this.viewer.viewport ) {
-        if(this.viewer.viewport.flipped){
-          event.position.x = this.viewport.getContainerSize().x - event.position.x;
-        }
-        this.viewer.viewport.panTo(this.viewport.pointFromPixel(event.position));
-        this.viewer.viewport.applyConstraints();
+  var canvasClickEventArgs = {
+    tracker: event.eventSource,
+    position: event.position,
+    quick: event.quick,
+    shift: event.shift,
+    originalEvent: event.originalEvent,
+    preventDefaultAction: event.preventDefaultAction
+  };
+  /**
+   * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
+   *
+   * @event navigator-click
+   * @memberof OpenSeadragon.Viewer
+   * @type {object}
+   * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+   * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+   * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+   * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
+   * @property {Boolean} shift - True if the shift key was pressed during this event.
+   * @property {Object} originalEvent - The original DOM event.
+   * @property {?Object} userData - Arbitrary subscriber-defined object.
+   * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
+   */
+
+   this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
+
+   if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
+    if(this.viewer.viewport.flipped) {
+      event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
+    var target = this.viewport.pointFromPixel(event.position);
+    if (!this.panVertical) {
+      // perform only horizonal pan
+      target.y = this.viewer.viewport.getCenter(true).y;
+    } else if (!this.panHorizontal) {
+      // perform only vertical pan
+      target.x = this.viewer.viewport.getCenter(true).x;
+    }
+    this.viewer.viewport.panTo(target);
+    this.viewer.viewport.applyConstraints();
+  }
+
 }
 
 /**
@@ -443,8 +478,37 @@ function onCanvasClick( event ) {
  * @function
  */
 function onCanvasDrag( event ) {
-    if ( this.viewer.viewport ) {
-        if( !this.panHorizontal ){
+    var canvasDragEventArgs = {
+      tracker: event.eventSource,
+      position: event.position,
+      delta: event.delta,
+      speed: event.speed,
+      direction: event.direction,
+      shift: event.shift,
+      originalEvent: event.originalEvent,
+      preventDefaultAction: event.preventDefaultAction
+    };
+    /**
+     * Raised when a drag event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
+     *
+     * @event navigator-drag
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
+     * @property {Number} speed - Current computed speed, in pixels per second.
+     * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
+     */
+     this.viewer.raiseEvent('navigator-drag', canvasDragEventArgs);
+
+     if ( !canvasDragEventArgs.preventDefaultAction && this.viewer.viewport ) {
+       if( !this.panHorizontal ){
             event.delta.x = 0;
         }
         if( !this.panVertical ){

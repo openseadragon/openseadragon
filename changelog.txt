@@ -1,7 +1,9 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.4.0: (In Progress)
+2.4.1: (In progress)
+
+2.4.0:
 
 * BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
 * You can now flip the viewport to get a mirror image of the original (#1441)
@@ -16,7 +18,11 @@ OPENSEADRAGON CHANGELOG
 * Fixed an issue causing the simple image tileSource to sometimes show duplicate copies (#1370)
 * Fixed an issue causing seams to appear in semi-transparent PNG tiled images (#1470)
 * Added visual customization options for the navigator (#1480)
-
+* You can now prevent canvas-drag events on the navigator (#1484)
+* You can now prevent canvas-click events on the navigator (#1416)
+* The navigator can now be restricted to just horizontal or just vertical panning (#1416)
+* Fixed DziTileSource so it doesn't load levels above maxLevel or below minLevel, if set (#1492)
+ 
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
