@@ -377,10 +377,15 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                     _this._matchCompositeOperation(myItem, original);
                 }
 
+                function matchImageSmoothingEnabled() {
+                    _this._matchImageSmoothingEnabled(myItem, original);
+                }
+
                 original.addHandler('bounds-change', matchBounds);
                 original.addHandler('clip-change', matchBounds);
                 original.addHandler('opacity-change', matchOpacity);
                 original.addHandler('composite-operation-change', matchCompositeOperation);
+                original.addHandler('image-rendering-change', matchImageSmoothingEnabled);
             }
         });
 
@@ -418,6 +423,11 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     // private
     _matchCompositeOperation: function(myItem, theirItem) {
         myItem.setCompositeOperation(theirItem.compositeOperation);
+    },
+
+    // private
+    _matchImageSmoothingEnabled: function(myItem, theirItem) {
+        myItem.setImageSmoothingEnabled(theirItem.imageSmoothingEnabled);
     }
 });
 

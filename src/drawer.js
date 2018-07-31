@@ -300,12 +300,13 @@ $.Drawer.prototype = {
      * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
      */
-    drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
+    drawTile: function(tile, drawingHandler, useSketch, scale, translate, imageSmoothingEnabled) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
+            context.imageSmoothingEnabled = imageSmoothingEnabled;
             scale = scale || 1;
             tile.drawCanvas(context, drawingHandler, scale, translate);
         } else {
@@ -399,18 +400,22 @@ $.Drawer.prototype = {
      * @param {String} [options.compositeOperation] - How the image is
      * composited onto other images; see compositeOperation in
      * {@link OpenSeadragon.Options} for possible values.
+     * @param {Boolean} [options.imageSmoothingEnabled] - Wether or not the image is
+     * drawn smoothly on the canvas; see imageSmoothingEnabled in
+     * {@link OpenSeadragon.Options} for more explanation.
      * @param {OpenSeadragon.Rect} [options.bounds] The part of the sketch
      * canvas to blend in the main canvas. If specified, options.scale and
      * options.translate get ignored.
      */
-    blendSketch: function(opacity, scale, translate, compositeOperation) {
+    blendSketch: function(opacity, scale, translate, compositeOperation, imageSmoothingEnabled) {
         var options = opacity;
         if (!$.isPlainObject(options)) {
             options = {
                 opacity: opacity,
                 scale: scale,
                 translate: translate,
-                compositeOperation: compositeOperation
+                compositeOperation: compositeOperation,
+                imageSmoothingEnabled: imageSmoothingEnabled
             };
         }
         if (!this.useCanvas || !this.sketchCanvas) {
@@ -418,10 +423,12 @@ $.Drawer.prototype = {
         }
         opacity = options.opacity;
         compositeOperation = options.compositeOperation;
+        imageSmoothingEnabled = options.imageSmoothingEnabled;
         var bounds = options.bounds;
 
         this.context.save();
         this.context.globalAlpha = opacity;
+        this.context.imageSmoothingEnabled = imageSmoothingEnabled;
         if (compositeOperation) {
             this.context.globalCompositeOperation = compositeOperation;
         }
