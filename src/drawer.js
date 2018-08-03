@@ -600,6 +600,28 @@ $.Drawer.prototype = {
         }
     },
 
+
+    /**
+     * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
+     *
+     * @function
+     * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
+     * drawn smoothly on the canvas; see imageSmoothingEnabled in
+     * {@link OpenSeadragon.Options} for more explanation.
+     */
+    setImageSmoothingEnabled: function(imageSmoothingEnabled){
+        if ( this.useCanvas ) {
+            this.context.mozImageSmoothingEnabled = imageSmoothingEnabled;
+            this.context.webkitImageSmoothingEnabled = imageSmoothingEnabled;
+            this.context.msImageSmoothingEnabled = imageSmoothingEnabled;
+            this.context.imageSmoothingEnabled = imageSmoothingEnabled;
+
+            this.context.restore();
+
+            this.viewer.world.draw();
+        }
+    },
+
     /**
      * Get the canvas size
      * @param {Boolean} sketch If set to true return the size of the sketch canvas
