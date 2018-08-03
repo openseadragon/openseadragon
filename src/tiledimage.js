@@ -73,7 +73,6 @@
  * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
  * @param {Boolean} [options.preload=false] - Set true to load even when the image is hidden by zero opacity.
  * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible values.
- * @param {Boolean} [options.imageSmoothingEnabled] - How the image is rendered on the canvas; see imageSmoothingEnabled in {@link OpenSeadragon.Options} for more explanation.
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
@@ -178,8 +177,7 @@ $.TiledImage = function( options ) {
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
         preload:                $.DEFAULT_SETTINGS.preload,
-        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation,
-        imageSmoothingEnabled:  $.DEFAULT_SETTINGS.imageSmoothingEnabled
+        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
 
     this._preload = this.preload;
@@ -898,39 +896,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          */
         this.raiseEvent('composite-operation-change', {
             compositeOperation: this.compositeOperation
-        });
-    },
-
-    /**
-     * @returns {Boolean} Weather of not the current TiledImage is smoothed on the canvas.
-     */
-    getImageSmoothingEnabled: function() {
-        return this.imageSmoothingEnabled;
-    },
-
-    /**
-     * @param {Boolean} imageSmoothingEnabled if the tiled image should be drawn smoothly or not.
-     * @fires OpenSeadragon.TiledImage.event:image-rendering-change
-     */
-    setImageSmoothingEnabled: function(imageSmoothingEnabled) {
-        if (imageSmoothingEnabled === this.imageSmoothingEnabled) {
-            return;
-        }
-
-        this.imageSmoothingEnabled = imageSmoothingEnabled;
-        this._needsDraw = true;
-        /**
-         * Raised when the TiledImage's rendering option has changed.
-         * @event image-rendering-change
-         * @memberOf OpenSeadragon.TiledImage
-         * @type {object}
-         * @property {Boolean} imageSmoothingEnabled - The new image smoothing value (true or false).
-         * @property {OpenSeadragon.TiledImage} eventSource - A reference to the
-         * TiledImage which raised the event.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent('image-rendering-change', {
-            imageSmoothingEnabled: this.imageSmoothingEnabled
         });
     },
 
@@ -1980,8 +1945,8 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
-        tile = lastDrawn[i];
-        tiledImage._drawer.drawTile(tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate, tiledImage.imageSmoothingEnabled);
+        tile = lastDrawn[ i ];
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
@@ -2042,7 +2007,6 @@ function drawTiles( tiledImage, lastDrawn ) {
             scale: sketchScale,
             translate: sketchTranslate,
             compositeOperation: tiledImage.compositeOperation,
-            imageSmoothingEnabled: tiledImage.imageSmoothingEnabled,
             bounds: bounds
         });
         if (sketchScale) {

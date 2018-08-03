@@ -1265,7 +1265,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
      * @param {String} [options.compositeOperation] How the image is composited onto other images.
-     * @param {String} [options.imageSmoothingEnabled] If the image is drawn smoothly or not on the canvas.
      * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
      * @param {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
@@ -1314,9 +1313,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         if (options.compositeOperation === undefined) {
             options.compositeOperation = this.compositeOperation;
-        }
-        if (options.imageSmoothingEnabled === undefined) {
-            options.imageSmoothingEnabled = this.imageSmoothingEnabled;
         }
         if (options.crossOriginPolicy === undefined) {
             options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
@@ -1431,7 +1427,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
                     compositeOperation: queueItem.options.compositeOperation,
-                    imageSmoothingEnabled: queueItem.options.imageSmoothingEnabled,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
