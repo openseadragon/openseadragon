@@ -611,14 +611,16 @@ $.Drawer.prototype = {
      */
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
         if ( this.useCanvas ) {
-            this.context.mozImageSmoothingEnabled = imageSmoothingEnabled;
-            this.context.webkitImageSmoothingEnabled = imageSmoothingEnabled;
-            this.context.msImageSmoothingEnabled = imageSmoothingEnabled;
-            this.context.imageSmoothingEnabled = imageSmoothingEnabled;
+            var context = this.context;
+            context.save();
+            context.mozImageSmoothingEnabled = imageSmoothingEnabled;
+            context.webkitImageSmoothingEnabled = imageSmoothingEnabled;
+            context.msImageSmoothingEnabled = imageSmoothingEnabled;
+            context.imageSmoothingEnabled = imageSmoothingEnabled;
 
-            this.context.restore();
+            context.restore();
 
-            this.viewer.world.draw();
+            this.viewer.forceRedraw();
         }
     },
 
