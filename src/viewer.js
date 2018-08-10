@@ -466,6 +466,12 @@ $.Viewer = function( options ) {
     $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
     } );
+
+    // Initial canvas options
+    if ( this.imageSmoothingEnabled !== undefined && !this.imageSmoothingEnabled){
+        this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
+    }
+
 };
 
 $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, /** @lends OpenSeadragon.Viewer.prototype */{

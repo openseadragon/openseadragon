@@ -198,6 +198,11 @@
   *     'destination-over', 'destination-atop', 'destination-in',
   *     'destination-out', 'lighter', 'copy' or 'xor'
   *
+  * @property {Boolean} [imageSmoothingEnabled=true]
+  *     Image smoothing for canvas rendering (only if canvas is used). Note: Ignored
+  *     by some (especially older) browsers which do not support this canvas property.
+  *     This property can be changed in {@link Viewer.Drawer.setImageSmoothingEnabled}.
+  *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
   *     You can pass a CSS color value like "#FF8800".
@@ -1178,6 +1183,7 @@ function OpenSeadragon( options ){
             opacity:                    1,
             preload:                    false,
             compositeOperation:         null,
+            imageSmoothingEnabled:      true,
             placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS
