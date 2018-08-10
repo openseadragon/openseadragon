@@ -1174,7 +1174,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     }
                 }
                 if ( _this.navigator && _this.viewport ) {
-                    _this.navigator.update( _this.viewport );
+                    //09/08/2018 - Fabroh : Fix issue #1504 : Ensure to get the navigator updated on fullscreen out with custom location with a timeout
+                    setTimeout(function(){
+                        _this.navigator.update( _this.viewport );
+                    });
                 }
                 /**
                  * Raised when the viewer has changed to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
