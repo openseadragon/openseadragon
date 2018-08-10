@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon With Custom Navigator Location</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+        .openseadragon-small
+        {
+            width:      100px;
+            height:     80px;
+            border:     1px solid black;
+            color:      #333; /* text color for messages */
+            background-color: black;
+        }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show custom location for navigator.
+    </div>
+    <div id="navigatorDiv" class="openseadragon-small"></div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator:true,
+            navigatorId:   "navigatorDiv",
+        });
+
+    </script>
+</body>
+</html>
