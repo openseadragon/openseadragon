@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 2.4.1: (In progress)
 
 * You can now turn off the default canvas image smoothing, if you want sharp pixels when zoomed in past 100% (#1507)
+* Fixed problem with navigator highlight rectangle when returning from full screen with a custom navigator location (#1515)
 
 2.4.0:
 
