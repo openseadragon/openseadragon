@@ -612,13 +612,10 @@ $.Drawer.prototype = {
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
         if ( this.useCanvas ) {
             var context = this.context;
-            context.save();
             context.mozImageSmoothingEnabled = imageSmoothingEnabled;
             context.webkitImageSmoothingEnabled = imageSmoothingEnabled;
             context.msImageSmoothingEnabled = imageSmoothingEnabled;
             context.imageSmoothingEnabled = imageSmoothingEnabled;
-
-            context.restore();
 
             this.viewer.forceRedraw();
         }
