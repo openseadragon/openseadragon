@@ -2640,19 +2640,19 @@ function onCanvasKeyPress( event ) {
                   this.viewport.applyConstraints();
                 }
                 return false;
-            case 114: //r - 90 degrees clockwise rotation
+            case 114: //r - clockwise rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.degrees - 90);
+                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               } else{
-                this.viewport.setRotation(this.viewport.degrees + 90);
+                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
               return false;
-            case 82: //R - 90 degrees counterclockwise  rotation
+            case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.degrees + 90);
+                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               } else{
-                this.viewport.setRotation(this.viewport.degrees - 90);
+                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
               return false;
@@ -3490,38 +3490,31 @@ function onFullScreen() {
     }
 }
 
-/**
- * Note: The current rotation feature is limited to 90 degree turns.
- */
 function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
-          currRotation = $.positiveModulo(currRotation + 90, 360);
+          currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
         } else {
-          currRotation = $.positiveModulo(currRotation - 90, 360);
+          currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
         }
         this.viewport.setRotation(currRotation);
     }
 }
 
-/**
- * Note: The current rotation feature is limited to 90 degree turns.
- */
 function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
-          currRotation = $.positiveModulo(currRotation - 90, 360);
+          currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
         } else {
-          currRotation = $.positiveModulo(currRotation + 90, 360);
+          currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
         }
         this.viewport.setRotation(currRotation);
     }
 }
-
 /**
  * Note: When pressed flip control button
  */
