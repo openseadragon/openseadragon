@@ -190,7 +190,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
 } );
 
 /**
- * This method removes any files from the Array which dont conform to our
+ * This method removes any files from the Array which don't conform to our
  * basic requirements for a 'level' in the LegacyTileSource.
  * @private
  * @inner

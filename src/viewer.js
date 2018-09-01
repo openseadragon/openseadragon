@@ -69,7 +69,7 @@ $.Viewer = function( options ) {
         i;
 
 
-    //backward compatibility for positional args while prefering more
+    //backward compatibility for positional args while preferring more
     //idiomatic javascript options object as the only argument
     if( !$.isPlainObject( options ) ){
         options = {
@@ -912,7 +912,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             nodes,
             i;
 
-        //dont bother modifying the DOM if we are already in full page mode.
+        //don't bother modifying the DOM if we are already in full page mode.
         if ( fullPage == this.isFullPage() ) {
             return this;
         }
@@ -967,7 +967,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle.height = "100%";
             docStyle.height = "100%";
 
-            //when entering full screen on the ipad it wasnt sufficient to leave
+            //when entering full screen on the ipad it wasn't sufficient to leave
             //the body intact as only only the top half of the screen would
             //respond to touch events on the canvas, while the bottom half treated
             //them as touch events on the document body.  Thus we remove and store
@@ -1906,11 +1906,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * is closed which include when changing page.
      * @method
      * @param {Element|String|Object} element - A reference to an element or an id for
-     *      the element which will be overlayed. Or an Object specifying the configuration for the overlay.
+     *      the element which will be overlaid. Or an Object specifying the configuration for the overlay.
      *      If using an object, see {@link OpenSeadragon.Overlay} for a list of
      *      all available options.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
-     *      rectangle which will be overlayed. This is a viewport relative location.
+     *      rectangle which will be overlaid. This is a viewport relative location.
      * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
@@ -1969,9 +1969,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * element id moving it to the new location, relative to the new placement.
      * @method
      * @param {Element|String} element - A reference to an element or an id for
-     *      the element which is overlayed.
+     *      the element which is overlaid.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
-     *      rectangle which will be overlayed. This is a viewport relative location.
+     *      rectangle which will be overlaid. This is a viewport relative location.
      * @param {OpenSeadragon.Placement} placement - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.

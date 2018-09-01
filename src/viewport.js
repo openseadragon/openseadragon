@@ -57,7 +57,7 @@
  */
 $.Viewport = function( options ) {
 
-    //backward compatibility for positional args while prefering more
+    //backward compatibility for positional args while preferring more
     //idiomatic javascript options object as the only argument
     var args = arguments;
     if (args.length && args[0] instanceof $.Point) {

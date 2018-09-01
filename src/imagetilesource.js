@@ -198,7 +198,7 @@
 
         // private
         //
-        // Builds the differents levels of the pyramid if possible
+        // Builds the different levels of the pyramid if possible
         // (i.e. if canvas API enabled and no canvas tainting issue).
         _buildLevels: function () {
             var levels = [{

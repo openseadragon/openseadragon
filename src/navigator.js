@@ -152,7 +152,7 @@ $.Navigator = function( options ){
         style.border        = borderWidth + 'px solid ' + options.displayRegionColor;
         style.margin        = '0px';
         style.padding       = '0px';
-        //TODO: IE doesnt like this property being set
+        //TODO: IE doesn't like this property being set
         //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
 
         style.background    = 'transparent';
@@ -571,7 +571,7 @@ function onCanvasScroll( event ) {
         originalEvent: event.originalEvent
     });
 
-    //dont scroll the page up and down if the user is scrolling
+    //don't scroll the page up and down if the user is scrolling
     //in the navigator
     return false;
 }
