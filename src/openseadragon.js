@@ -2120,7 +2120,7 @@ function OpenSeadragon( options ){
 
 
         /**
-         * Retreives the value of a url parameter from the window.location string.
+         * Retrieves the value of a url parameter from the window.location string.
          * @function
          * @param {String} key
          * @returns {String} The value of the url parameter or null if no param matches.
