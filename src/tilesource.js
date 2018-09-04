@@ -113,7 +113,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     //by asynchronously fetching their configuration data.
     $.EventSource.call( this );
 
-    //we allow options to override anything we dont treat as
+    //we allow options to override anything we don't treat as
     //required via idiomatic options or which is functionally
     //set depending on the state of the readiness of this tile
     //source
@@ -172,7 +172,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     }
 
     if (this.url) {
-        //in case the getImageInfo method is overriden and/or implies an
+        //in case the getImageInfo method is overridden and/or implies an
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
         this.dimensions  = new $.Point( 10, 10 );

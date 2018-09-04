@@ -53,7 +53,7 @@ var THIS = {};
  *  TODO:   The difficult part of this feature is figuring out how to express
  *          this functionality as a combination of the functionality already
  *          provided by Drawer, Viewport, TileSource, and Navigator.  It may
- *          require better abstraction at those points in order to effeciently
+ *          require better abstraction at those points in order to efficiently
  *          reuse those paradigms.
  */
 /**

@@ -84,10 +84,10 @@ $.Point.prototype = {
     },
 
     /**
-     * Substract another Point to this point and return a new Point.
+     * Subtract another Point to this point and return a new Point.
      * @function
-     * @param {OpenSeadragon.Point} point The point to substract vector components.
-     * @returns {OpenSeadragon.Point} A new point representing the substraction of the
+     * @param {OpenSeadragon.Point} point The point to subtract vector components.
+     * @returns {OpenSeadragon.Point} A new point representing the subtraction of the
      *  vector components
      */
     minus: function( point ) {

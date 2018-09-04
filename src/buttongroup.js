@@ -83,7 +83,7 @@ $.ButtonGroup = function( options ) {
     $.setElementTouchActionNone( this.element );
 
     /**
-     * Tracks mouse/touch/key events accross the group of buttons.
+     * Tracks mouse/touch/key events across the group of buttons.
      * @member {OpenSeadragon.MouseTracker} tracker
      * @memberof OpenSeadragon.ButtonGroup#
      */

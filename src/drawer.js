@@ -48,7 +48,7 @@ $.Drawer = function( options ) {
 
     $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
-    //backward compatibility for positional args while prefering more
+    //backward compatibility for positional args while preferring more
     //idiomatic javascript options object as the only argument
     var args  = arguments;
 
