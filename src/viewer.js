@@ -2790,6 +2790,7 @@ function onCanvasDrag( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
+    event.preventDefaultAction = canvasDragEventArgs.preventDefaultAction;
 
     if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
@@ -2942,6 +2943,15 @@ function onCanvasExit( event ) {
 }
 
 function onCanvasPress( event ) {
+    var canvasPressEventArgs = {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        insideElementPressed: event.insideElementPressed,
+        insideElementReleased: event.insideElementReleased,
+        originalEvent: event.originalEvent
+    };
+
     /**
      * Raised when the primary mouse button is pressed or touch starts on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2957,14 +2967,9 @@ function onCanvasPress( event ) {
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-press', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-press', canvasPressEventArgs);
+
+    event.preventDefaultAction = canvasPressEventArgs.preventDefaultAction;
 }
 
 function onCanvasRelease( event ) {
