@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Demo - Timeout Certain</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+
+    </style>
+</head>
+<body>
+<div>
+    <p>The ImageLoader timeout is set to 0 ms, and the tile source is remote.</p>
+    <p>In any web browser on any network connection, OpenSeadragon should not load properly, and the browser console log should show tile loading errors.</p>
+</div>
+<div id="contentDiv" class="openseadragon1"></div>
+<script type="text/javascript">
+
+    var viewer = OpenSeadragon({
+        // debugMode: true,
+        id: "contentDiv",
+        prefixUrl: "../../build/openseadragon/images/",
+        tileSources: "http://wellcomelibrary.org/iiif-img/b11768265-0/a6801943-b8b4-4674-908c-7d5b27e70569/info.json",
+        showNavigator:true,
+        timeout: 0
+    });
+
+</script>
+</body>
+</html>

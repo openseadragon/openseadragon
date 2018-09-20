@@ -113,7 +113,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     //by asynchronously fetching their configuration data.
     $.EventSource.call( this );
 
-    //we allow options to override anything we dont treat as
+    //we allow options to override anything we don't treat as
     //required via idiomatic options or which is functionally
     //set depending on the state of the readiness of this tile
     //source
@@ -172,7 +172,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     }
 
     if (this.url) {
-        //in case the getImageInfo method is overriden and/or implies an
+        //in case the getImageInfo method is overridden and/or implies an
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
         this.dimensions  = new $.Point( 10, 10 );
@@ -360,7 +360,7 @@ $.TileSource.prototype = {
         if (point.x >= 1) {
             x = this.getNumTiles(level).x - 1;
         }
-        var EPSILON = 1e-16;
+        var EPSILON = 1e-15;
         if (point.y >= 1 / this.aspectRatio - EPSILON) {
             y = this.getNumTiles(level).y - 1;
         }
@@ -392,9 +392,7 @@ $.TileSource.prototype = {
         sy = Math.min( sy, dimensionsScaled.y - py );
 
         if (isSource) {
-            scale = 1;
-            px = 0;
-            py = 0;
+            return new $.Rect(0, 0, sx, sy);
         }
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
@@ -429,7 +427,7 @@ $.TileSource.prototype = {
         }
 
         callback = function( data ){
-            if( typeof(data) === "string" ) {
+            if( typeof (data) === "string" ) {
                 data = $.parseXml( data );
             }
             var $TileSource = $.TileSource.determineType( _this, data, url );
@@ -502,7 +500,7 @@ $.TileSource.prototype = {
                         msg = "HTTP " + xhr.status + " attempting to load TileSource";
                     } catch ( e ) {
                         var formattedExc;
-                        if ( typeof( exc ) == "undefined" || !exc.toString ) {
+                        if ( typeof ( exc ) == "undefined" || !exc.toString ) {
                             formattedExc = "Unknown error";
                         } else {
                             formattedExc = exc.toString();

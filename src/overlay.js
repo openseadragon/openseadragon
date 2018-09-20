@@ -93,7 +93,7 @@
      * Defines what part of the overlay should be at the specified options.location
      * @param {OpenSeadragon.Overlay.OnDrawCallback} [options.onDraw]
      * @param {Boolean} [options.checkResize=true] Set to false to avoid to
-     * check the size of the overlay everytime it is drawn in the directions
+     * check the size of the overlay every time it is drawn in the directions
      * which are not scaled. It will improve performances but will cause a
      * misalignment if the overlay size changes.
      * @param {Number} [options.width] The width of the overlay in viewport
