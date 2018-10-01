@@ -52,6 +52,7 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {Boolean} [options.flipped=false] - Whether to draw tiled image flipped.
  * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
  * to fit the image into. If specified, x, y, width and height get ignored.
  * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
@@ -146,6 +147,9 @@ $.TiledImage = function( options ) {
     var degrees = options.degrees || 0;
     delete options.degrees;
 
+    // var flipped = options.flipped || false;
+    // delete options.flipped;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -208,6 +212,9 @@ $.TiledImage = function( options ) {
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
+
+    this.flipped = options.flipped;
+    delete options.flipped;
 
     this._updateForScale();
 
@@ -1879,30 +1886,48 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage.getClippedBounds(true))
                 .getIntegerBoundingBox()
                 .times($.pixelDensityRatio);
+
+                if(tiledImage._drawer.viewer.viewport.flipped || tiledImage.flipped ) {
+                    // tiledImage._drawer._flip({});
+                    // bounds.width = bounds.width - bounds.x;
+                    // bounds.width = tiledImage._drawer.viewer.viewport.getContainerSize().width - bounds.x;
+                    // bounds.x = -bounds.x;
+                }
         }
         tiledImage._drawer._clear(true, bounds);
     }
+    console.log("BOUNDS: ", bounds);
 
     // When scaling, we must rotate only when blending the sketch canvas to
     // avoid interpolation
     if (!sketchScale) {
         if (tiledImage.viewport.degrees !== 0) {
+            console.log("tiledImage.viewport.degrees !== 0");
             tiledImage._drawer._offsetForRotation({
                 degrees: tiledImage.viewport.degrees,
                 useSketch: useSketch
             });
-        } else {
-            if(tiledImage._drawer.viewer.viewport.flipped) {
+        }/* else {
+            if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+                console.log("FLIP");
                 tiledImage._drawer._flip({});
             }
-        }
+        }*/
         if (tiledImage.getRotation(true) % 360 !== 0) {
+            console.log("tiledImage.getRotation(true) % 360 !== 0");
             tiledImage._drawer._offsetForRotation({
                 degrees: tiledImage.getRotation(true),
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true),
                 useSketch: useSketch
             });
+        }
+
+        if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
+          if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+              console.log("FLIP");
+              tiledImage._drawer._flip({});
+          }
         }
     }
 
@@ -1975,12 +2000,20 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (!sketchScale) {
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
-        }
+        }/* else {
+            if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+                console.log("FLIP");
+                tiledImage._drawer._flip({});
+            }
+        }*/
         if (tiledImage.viewport.degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
-        } else{
-          if(tiledImage._drawer.viewer.viewport.flipped) {
-            tiledImage._drawer._flip({});
+        }
+
+        if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
+          if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+              console.log("FLIP");
+              tiledImage._drawer._flip({});
           }
         }
     }
@@ -2010,6 +2043,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             bounds: bounds
         });
         if (sketchScale) {
+          console.log("--------------------sketchScale--------------------");
             if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
@@ -2018,6 +2052,7 @@ function drawTiles( tiledImage, lastDrawn ) {
             }
         }
     }
+
     drawDebugInfo( tiledImage, lastDrawn );
 }
 

@@ -1140,7 +1140,7 @@ function OpenSeadragon( options ){
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
-            rotationIncrement:      90,
+            rotationIncrement:      10,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
