@@ -1531,7 +1531,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Gets flip state stored on viewport.
+     * Get flip state stored on viewport.
      * @function
      * @return {Boolean} Flip state.
      */

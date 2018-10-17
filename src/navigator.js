@@ -284,7 +284,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     setFlip: function(state) {
       this.viewport.setFlip(state);
 
-      this.setDisplayTransform(this.viewer.viewport.getFlip() ? "scale(-1,1)" : "scale(1,1)");
+      var flip = ((this.viewport.getFlip() && !this.viewer.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.viewer.world._items[0].getFlip()));
+      this.setDisplayTransform(flip ? "scale(-1,1)" : "scale(1,1)");
       return this;
     },
 
@@ -349,6 +350,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
             style.height = Math.round( Math.max( height, 0 ) ) + 'px';
         }
+
+
 
     },
 
@@ -453,9 +456,8 @@ function onCanvasClick( event ) {
    */
 
    this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
-
    if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
-    if((this.viewer.viewport.flipped && !this.world._items[0].flipped) || (!this.viewer.viewport.flipped && this.world._items[0].flipped)) {
+    if((this.viewer.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewer.viewport.getFlip() && this.world._items[0].getFlip())) {
       event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
     var target = this.viewport.pointFromPixel(event.position);
@@ -515,7 +517,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if((this.viewer.viewport.flipped && !this.world._items[0].flipped) || (!this.viewer.viewport.flipped && this.world._items[0].flipped)) {
+        if((this.viewer.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewer.viewport.getFlip() && this.world._items[0].getFlip())) {
             event.delta.x = -event.delta.x;
         }
 

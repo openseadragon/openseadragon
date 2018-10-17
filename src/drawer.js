@@ -509,7 +509,7 @@ $.Drawer.prototype = {
             });
         }
         if((this.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 !== 0) || (this.viewport.degrees !== 0 && tiledImage.getRotation(true) % 360 == 0)){
-          if((this.viewport.flipped && !tiledImage.flipped) || (!this.viewport.flipped && tiledImage.flipped) ) {
+          if((this.viewport.getFlip() && !tiledImage.flipped) || (!this.viewport.getFlip() && tiledImage.flipped) ) {
               this._flip();
           }
         }
@@ -648,7 +648,7 @@ $.Drawer.prototype = {
         context.translate(point.x, point.y);
         // If viewport and tiledImage are flipped, it would draw the image without flipping
         // This if sentence is intended to represent a logical XOR
-        if((!this.viewer.viewport.flipped && this.viewer.world._items[0].flipped) || (this.viewer.viewport.flipped && !this.viewer.world._items[0].flipped)){
+        if((!this.viewer.viewport.getFlip() && this.viewer.world._items[0].flipped) || (this.viewer.viewport.getFlip() && !this.viewer.world._items[0].flipped)){
           context.rotate(Math.PI / 180 * -options.degrees);
           context.scale(-1, 1);
         } else{

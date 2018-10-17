@@ -861,6 +861,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Get flip state stored on tiledImage.
+     * @function
+     * @return {Boolean} Flip state.
+     */
+    getFlip: function() {
+      return this.flipped;
+    },
+
+
+    /**
      * Get the point around which this tiled image is rotated
      * @private
      * @param {Boolean} current True for current rotation point, false for target.
@@ -1884,7 +1894,7 @@ function drawTiles( tiledImage, lastDrawn ) {
                 .getIntegerBoundingBox()
                 .times($.pixelDensityRatio);
 
-            if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+            if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
               if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
                 bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
               }
@@ -1911,7 +1921,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
 
         if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
-          if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+          if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
               tiledImage._drawer._flip({});
           }
         }
@@ -2028,7 +2038,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if (!sketchScale) {
       if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
-        if((tiledImage._drawer.viewer.viewport.flipped && !tiledImage.flipped) || (!tiledImage._drawer.viewer.viewport.flipped && tiledImage.flipped) ) {
+        if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
             tiledImage._drawer._flip({});
         }
       }
