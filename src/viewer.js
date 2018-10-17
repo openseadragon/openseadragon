@@ -2642,7 +2642,7 @@ function onCanvasKeyPress( event ) {
                 }
                 return false;
             case 114: //r - clockwise rotation
-              if(this.viewport.flipped){
+              if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               } else{
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
@@ -2650,7 +2650,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 82: //R - counterclockwise  rotation
-              if(this.viewport.flipped){
+              if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               } else{
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
@@ -2678,7 +2678,7 @@ function onCanvasClick( event ) {
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
     }
-    if(this.viewport.flipped){
+    if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -2800,7 +2800,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if(this.viewport.flipped){
+        if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
             event.delta.x = -event.delta.x;
         }
 
@@ -3128,7 +3128,7 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.viewport.flipped){
+        if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
 
@@ -3495,7 +3495,7 @@ function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
-        if ( this.viewport.flipped ){
+        if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
           currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
         } else {
           currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
@@ -3508,7 +3508,7 @@ function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
-        if ( this.viewport.flipped ){
+        if((this.viewport.flipped && !this.world._items[0].flipped) || (!this.viewport.flipped && this.world._items[0].flipped)){
           currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
         } else {
           currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);

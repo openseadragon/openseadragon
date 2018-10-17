@@ -455,7 +455,7 @@ function onCanvasClick( event ) {
    this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
 
    if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
-    if(this.viewer.viewport.flipped) {
+    if((this.viewer.viewport.flipped && !this.world._items[0].flipped) || (!this.viewer.viewport.flipped && this.world._items[0].flipped)) {
       event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
     var target = this.viewport.pointFromPixel(event.position);
@@ -515,7 +515,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if(this.viewer.viewport.flipped){
+        if((this.viewer.viewport.flipped && !this.world._items[0].flipped) || (!this.viewer.viewport.flipped && this.world._items[0].flipped)) {
             event.delta.x = -event.delta.x;
         }
 
