@@ -2679,7 +2679,6 @@ function onCanvasClick( event ) {
         this.canvas.focus();
     }
     if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
-        console.log("FLipped Click");
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -3367,6 +3366,10 @@ function updateOnce( viewer ) {
 
     THIS[ viewer.hash ].animating = animated;
 
+    // Update navigator flip transformation
+    if (viewer.navigator && viewer.viewport != "undefined"){
+      viewer.navigator.setFlip(viewer.viewport.getFlip());
+    }
     //viewer.profiler.endUpdate();
 }
 
