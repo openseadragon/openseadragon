@@ -1902,6 +1902,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         tiledImage._drawer._clear(true, bounds);
     }
+
     // When scaling, we must rotate only when blending the sketch canvas to
     // avoid interpolation
     if (!sketchScale) {
@@ -2043,7 +2044,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
       }
     }
-
 
     drawDebugInfo( tiledImage, lastDrawn );
 }

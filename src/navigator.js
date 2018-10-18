@@ -351,8 +351,6 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             style.height = Math.round( Math.max( height, 0 ) ) + 'px';
         }
 
-
-
     },
 
     // overrides Viewer.addTiledImage
@@ -456,6 +454,7 @@ function onCanvasClick( event ) {
    */
 
    this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
+
    if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
     if((this.viewer.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewer.viewport.getFlip() && this.world._items[0].getFlip())) {
       event.position.x = this.viewport.getContainerSize().x - event.position.x;
