@@ -52,6 +52,7 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {Boolean} [options.flipped=false] - Whether to draw tiled image flipped.
  * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
  * to fit the image into. If specified, x, y, width and height get ignored.
  * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
@@ -208,6 +209,9 @@ $.TiledImage = function( options ) {
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
+
+    this.flipped = options.flipped;
+    delete options.flipped;
 
     this._updateForScale();
 
@@ -855,6 +859,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._needsDraw = true;
         this._raiseBoundsChange();
     },
+
+    /**
+     * Get flip state stored on tiledImage.
+     * @function
+     * @return {Boolean} Flip state.
+     */
+    getFlip: function() {
+      return this.flipped;
+    },
+
 
     /**
      * Get the point around which this tiled image is rotated
@@ -1879,10 +1893,15 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage.getClippedBounds(true))
                 .getIntegerBoundingBox()
                 .times($.pixelDensityRatio);
+
+            if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
+              if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
+                bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
+              }
+            }
         }
         tiledImage._drawer._clear(true, bounds);
     }
-
     // When scaling, we must rotate only when blending the sketch canvas to
     // avoid interpolation
     if (!sketchScale) {
@@ -1891,10 +1910,6 @@ function drawTiles( tiledImage, lastDrawn ) {
                 degrees: tiledImage.viewport.degrees,
                 useSketch: useSketch
             });
-        } else {
-            if(tiledImage._drawer.viewer.viewport.flipped) {
-                tiledImage._drawer._flip({});
-            }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
@@ -1903,6 +1918,12 @@ function drawTiles( tiledImage, lastDrawn ) {
                     tiledImage._getRotationPoint(true), true),
                 useSketch: useSketch
             });
+        }
+
+        if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
+          if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
+              tiledImage._drawer._flip({});
+          }
         }
     }
 
@@ -1978,10 +1999,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         if (tiledImage.viewport.degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
-        } else{
-          if(tiledImage._drawer.viewer.viewport.flipped) {
-            tiledImage._drawer._flip({});
-          }
         }
     }
 
@@ -2018,6 +2035,16 @@ function drawTiles( tiledImage, lastDrawn ) {
             }
         }
     }
+
+    if (!sketchScale) {
+      if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
+        if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
+            tiledImage._drawer._flip({});
+        }
+      }
+    }
+
+
     drawDebugInfo( tiledImage, lastDrawn );
 }
 

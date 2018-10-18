@@ -271,7 +271,7 @@
   *     events between different devices, causing the faster devices to slow down enough to make the zoom control
   *     more manageable.
   *
-  * @property {Number} [rotationIncrement=90]
+  * @property {Number} [rotationIncrement=10]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
   * @property {Number} [pixelsPerWheelLine=40]

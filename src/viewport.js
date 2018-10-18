@@ -1531,7 +1531,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Gets flip state stored on viewport.
+     * Get flip state stored on viewport.
      * @function
      * @return {Boolean} Flip state.
      */
@@ -1552,7 +1552,8 @@ $.Viewport.prototype = {
 
       this.flipped = state;
       if(this.viewer.navigator){
-        this.viewer.navigator.setFlip(this.getFlip());
+        var flip = ((this.getFlip() || !this.viewer.world._items[0].getFlip()) || (!this.getFlip() || this.viewer.world._items[0].getFlip()));
+        this.viewer.navigator.setFlip(flip);
       }
       this.viewer.forceRedraw();
 

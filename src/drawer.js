@@ -500,10 +500,6 @@ $.Drawer.prototype = {
 
         if ( this.viewport.degrees !== 0 ) {
             this._offsetForRotation({degrees: this.viewport.degrees});
-        } else{
-          if(this.viewer.viewport.flipped) {
-            this._flip();
-          }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
@@ -511,6 +507,11 @@ $.Drawer.prototype = {
                 point: tiledImage.viewport.pixelFromPointNoRotate(
                     tiledImage._getRotationPoint(true), true)
             });
+        }
+        if((this.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 !== 0) || (this.viewport.degrees !== 0 && tiledImage.getRotation(true) % 360 == 0)){
+          if((this.viewport.getFlip() && !tiledImage.getFlip()) || (!this.viewport.getFlip() && tiledImage.getFlip()) ) {
+              this._flip();
+          }
         }
 
         context.strokeRect(
@@ -645,7 +646,9 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        if(this.viewer.viewport.flipped){
+        // If viewport and tiledImage are flipped, it would draw the image without flipping
+        // This if sentence is intended to represent a logical XOR
+        if((!this.viewer.viewport.getFlip() && this.viewer.world._items[0].getFlip()) || (this.viewer.viewport.getFlip() && !this.viewer.world._items[0].getFlip())){
           context.rotate(Math.PI / 180 * -options.degrees);
           context.scale(-1, 1);
         } else{
