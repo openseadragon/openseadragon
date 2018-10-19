@@ -3367,7 +3367,7 @@ function updateOnce( viewer ) {
     THIS[ viewer.hash ].animating = animated;
 
     // Update navigator flip transformation
-    if (viewer.navigator && viewer.viewport != "undefined"){
+    if (viewer.navigator && viewer.viewport != undefined){
       viewer.navigator.setFlip(viewer.viewport.getFlip());
     }
     //viewer.profiler.endUpdate();

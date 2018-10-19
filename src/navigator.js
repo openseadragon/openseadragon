@@ -284,7 +284,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     setFlip: function(state) {
       this.viewport.setFlip(state);
 
-      var flip = ((this.viewport.getFlip() && !this.viewer.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.viewer.world._items[0].getFlip()));
+      var flip = ((this.viewport.getFlip() && this.viewer.world._items[0] && !this.viewer.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.viewer.world._items[0] && this.viewer.world._items[0].getFlip()));
       this.setDisplayTransform(flip ? "scale(-1,1)" : "scale(1,1)");
       return this;
     },
