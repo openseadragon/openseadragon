@@ -508,9 +508,9 @@ $.Drawer.prototype = {
                     tiledImage._getRotationPoint(true), true)
             });
         }
-        if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
-          if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
-              tiledImage._drawer._flip({});
+        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              tiledImage._drawer._flip();
           }
         }
 
@@ -579,9 +579,9 @@ $.Drawer.prototype = {
             this._restoreRotationChanges();
         }
 
-        if (tiledImage.viewport.degrees == 0 && tiledImage.getRotation(true) % 360 == 0){
-          if((tiledImage._drawer.viewer.viewport.getFlip() && !tiledImage.getFlip()) || (!tiledImage._drawer.viewer.viewport.getFlip() && tiledImage.getFlip()) ) {
-              tiledImage._drawer._flip({});
+        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              tiledImage._drawer._flip();
           }
         }
 
@@ -653,9 +653,7 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        // If viewport and tiledImage are flipped, it would draw the image without flipping
-        // This if sentence is intended to represent a logical XOR
-        if((!this.viewer.viewport.getFlip() && this.viewer.world._items[0].getFlip()) || (this.viewer.viewport.getFlip() && !this.viewer.world._items[0].getFlip())){
+        if(this.viewer.viewport.flipped){
           context.rotate(Math.PI / 180 * -options.degrees);
           context.scale(-1, 1);
         } else{

@@ -284,8 +284,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     setFlip: function(state) {
       this.viewport.setFlip(state);
 
-      var flip = ((this.viewport.getFlip() && this.viewer.world._items[0] && !this.viewer.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.viewer.world._items[0] && this.viewer.world._items[0].getFlip()));
-      this.setDisplayTransform(flip ? "scale(-1,1)" : "scale(1,1)");
+      this.setDisplayTransform(this.viewer.viewport.getFlip() ? "scale(-1,1)" : "scale(1,1)");
       return this;
     },
 
@@ -456,7 +455,7 @@ function onCanvasClick( event ) {
    this.viewer.raiseEvent('navigator-click', canvasClickEventArgs);
 
    if ( !canvasClickEventArgs.preventDefaultAction && event.quick && this.viewer.viewport && (this.panVertical || this.panHorizontal)) {
-    if((this.viewer.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewer.viewport.getFlip() && this.world._items[0].getFlip())) {
+    if(this.viewer.viewport.flipped) {
       event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
     var target = this.viewport.pointFromPixel(event.position);
@@ -516,7 +515,7 @@ function onCanvasDrag( event ) {
             event.delta.y = 0;
         }
 
-        if((this.viewer.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewer.viewport.getFlip() && this.world._items[0].getFlip())) {
+        if(this.viewer.viewport.flipped){
             event.delta.x = -event.delta.x;
         }
 

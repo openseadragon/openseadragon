@@ -1435,7 +1435,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
-                    flipped: queueItem.options.flipped,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -2642,7 +2641,7 @@ function onCanvasKeyPress( event ) {
                 }
                 return false;
             case 114: //r - clockwise rotation
-              if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+              if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               } else{
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
@@ -2650,7 +2649,7 @@ function onCanvasKeyPress( event ) {
               this.viewport.applyConstraints();
               return false;
             case 82: //R - counterclockwise  rotation
-              if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+              if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               } else{
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
@@ -2678,7 +2677,7 @@ function onCanvasClick( event ) {
     if ( !haveKeyboardFocus ) {
         this.canvas.focus();
     }
-    if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+    if(this.viewport.flipped){
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
@@ -2800,7 +2799,7 @@ function onCanvasDrag( event ) {
         if( !this.panVertical ){
             event.delta.y = 0;
         }
-        if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+        if(this.viewport.flipped){
             event.delta.x = -event.delta.x;
         }
 
@@ -3128,7 +3127,7 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+        if(this.viewport.flipped){
           event.position.x = this.viewport.getContainerSize().x - event.position.x;
         }
 
@@ -3366,10 +3365,6 @@ function updateOnce( viewer ) {
 
     THIS[ viewer.hash ].animating = animated;
 
-    // Update navigator flip transformation
-    if (viewer.navigator && viewer.viewport != undefined){
-      viewer.navigator.setFlip(viewer.viewport.getFlip());
-    }
     //viewer.profiler.endUpdate();
 }
 
@@ -3499,7 +3494,7 @@ function onRotateLeft() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
-        if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+        if ( this.viewport.flipped ){
           currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
         } else {
           currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
@@ -3512,7 +3507,7 @@ function onRotateRight() {
     if ( this.viewport ) {
         var currRotation = this.viewport.getRotation();
 
-        if((this.viewport.getFlip() && !this.world._items[0].getFlip()) || (!this.viewport.getFlip() && this.world._items[0].getFlip())){
+        if ( this.viewport.flipped ){
           currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
         } else {
           currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);

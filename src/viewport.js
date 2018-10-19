@@ -1552,8 +1552,7 @@ $.Viewport.prototype = {
 
       this.flipped = state;
       if(this.viewer.navigator){
-        var flip = ((this.getFlip() || !this.viewer.world._items[0].getFlip()) || (!this.getFlip() || this.viewer.world._items[0].getFlip()));
-        this.viewer.navigator.setFlip(flip);
+        this.viewer.navigator.setFlip(this.getFlip());
       }
       this.viewer.forceRedraw();
 
