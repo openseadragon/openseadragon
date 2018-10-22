@@ -1675,7 +1675,7 @@ function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
 
     tiledImage.lastDrawn.push( tile );
 
-    if ( opacity == 1 ) {
+    if ( opacity === 1 ) {
         setCoverage( tiledImage.coverage, level, x, y, true );
         tiledImage._hasOpaqueTile = true;
     } else if ( deltaTime < blendTimeMillis ) {
@@ -1879,6 +1879,12 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage.getClippedBounds(true))
                 .getIntegerBoundingBox()
                 .times($.pixelDensityRatio);
+
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
+                bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
+              }
+            }
         }
         tiledImage._drawer._clear(true, bounds);
     }
@@ -1891,10 +1897,6 @@ function drawTiles( tiledImage, lastDrawn ) {
                 degrees: tiledImage.viewport.degrees,
                 useSketch: useSketch
             });
-        } else {
-            if(tiledImage._drawer.viewer.viewport.flipped) {
-                tiledImage._drawer._flip({});
-            }
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
@@ -1903,6 +1905,12 @@ function drawTiles( tiledImage, lastDrawn ) {
                     tiledImage._getRotationPoint(true), true),
                 useSketch: useSketch
             });
+        }
+
+        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              tiledImage._drawer._flip();
+          }
         }
     }
 
@@ -1978,10 +1986,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         if (tiledImage.viewport.degrees !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
-        } else{
-          if(tiledImage._drawer.viewer.viewport.flipped) {
-            tiledImage._drawer._flip({});
-          }
         }
     }
 
@@ -2018,6 +2022,15 @@ function drawTiles( tiledImage, lastDrawn ) {
             }
         }
     }
+
+    if (!sketchScale) {
+      if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+        if(tiledImage._drawer.viewer.viewport.getFlip()) {
+            tiledImage._drawer._flip();
+        }
+      }
+    }
+
     drawDebugInfo( tiledImage, lastDrawn );
 }
 
