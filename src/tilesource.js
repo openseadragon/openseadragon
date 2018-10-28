@@ -239,7 +239,7 @@ $.TileSource.prototype = {
 
     getTileSize: function( level ) {
         $.console.error(
-            "[TileSource.getTileSize] is deprecated." +
+            "[TileSource.getTileSize] is deprecated. " +
             "Use TileSource.getTileWidth() and TileSource.getTileHeight() instead"
         );
         return this._tileWidth;
