@@ -835,7 +835,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var enabled = this.controls.length,
             i;
         for( i = 0; i < this.controls.length; i++ ){
-            enabled = enabled && this.controls[ i ].isVisibile();
+            enabled = enabled && this.controls[ i ].isVisible();
         }
         return enabled;
     },
