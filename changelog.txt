@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed problem with navigator highlight rectangle when returning from full screen with a custom navigator location (#1515)
 * Added option to set rotation increment for nav buttons and keyboard (#1524)
 * Fixed issue with flipping and opacity with multi-image (#1549)
+* Removed vestigial button group label element that was causing issues for accessibility tools (#1560)
 
 2.4.0:
 
