@@ -686,8 +686,9 @@ $.Drawer.prototype = {
         var pixelDensityRatio = $.pixelDensityRatio;
         var viewportSize = this.viewport.getContainerSize();
         return {
-            x: viewportSize.x * pixelDensityRatio,
-            y: viewportSize.y * pixelDensityRatio
+            // canvas width and height are integers
+            x: Math.floor(viewportSize.x * pixelDensityRatio),
+            y: Math.floor(viewportSize.y * pixelDensityRatio)
         };
     },
 
