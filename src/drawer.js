@@ -247,6 +247,7 @@ $.Drawer.prototype = {
             var viewportSize = this._calculateCanvasSize();
             if( this.canvas.width != viewportSize.x ||
                 this.canvas.height != viewportSize.y ) {
+                var imageSmoothingEnabled = this.canvas.getContext('2d').imageSmoothingEnabled;
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
                 if ( this.sketchCanvas !== null ) {
@@ -254,6 +255,7 @@ $.Drawer.prototype = {
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
                 }
+                this.setImageSmoothingEnabled(imageSmoothingEnabled);
             }
             this._clear();
         }
