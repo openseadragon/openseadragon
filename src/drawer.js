@@ -247,7 +247,6 @@ $.Drawer.prototype = {
             var viewportSize = this._calculateCanvasSize();
             if( this.canvas.width != viewportSize.x ||
                 this.canvas.height != viewportSize.y ) {
-                var imageSmoothingEnabled = this.canvas.getContext('2d').imageSmoothingEnabled;
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
                 if ( this.sketchCanvas !== null ) {
@@ -255,7 +254,7 @@ $.Drawer.prototype = {
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
                 }
-                this.setImageSmoothingEnabled(imageSmoothingEnabled);
+                this._setImageSmoothingEnabled();
             }
             this._clear();
         }
@@ -611,6 +610,9 @@ $.Drawer.prototype = {
     },
 
 
+    // private
+    _imageSmoothingEnabled: true,
+
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
      *
@@ -621,14 +623,19 @@ $.Drawer.prototype = {
      */
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
         if ( this.useCanvas ) {
-            var context = this.context;
-            context.mozImageSmoothingEnabled = imageSmoothingEnabled;
-            context.webkitImageSmoothingEnabled = imageSmoothingEnabled;
-            context.msImageSmoothingEnabled = imageSmoothingEnabled;
-            context.imageSmoothingEnabled = imageSmoothingEnabled;
-
+            this._imageSmoothingEnabled = imageSmoothingEnabled;
+            this._setImageSmoothingEnabled();
             this.viewer.forceRedraw();
         }
+    },
+
+    // private
+    _setImageSmoothingEnabled: function(){
+        var context = this.context;
+        context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.imageSmoothingEnabled = this._imageSmoothingEnabled;
     },
 
     /**
@@ -689,8 +696,8 @@ $.Drawer.prototype = {
         var viewportSize = this.viewport.getContainerSize();
         return {
             // canvas width and height are integers
-            x: Math.floor(viewportSize.x * pixelDensityRatio),
-            y: Math.floor(viewportSize.y * pixelDensityRatio)
+            x: Math.round(viewportSize.x * pixelDensityRatio),
+            y: Math.round(viewportSize.y * pixelDensityRatio)
         };
     },
 
