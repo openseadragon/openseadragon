@@ -130,6 +130,10 @@ $.Drawer = function( options ) {
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
+
+    // Image smoothing for canvas rendering (only if canvas is used).
+    // Canvas default is "true", so this will only be changed if user specified "false".
+    this._imageSmoothingEnabled = true;
 };
 
 /** @lends OpenSeadragon.Drawer.prototype */
@@ -254,7 +258,7 @@ $.Drawer.prototype = {
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
                 }
-                this._setImageSmoothingEnabled();
+                this._updateImageSmoothingEnabled();
             }
             this._clear();
         }
@@ -609,10 +613,6 @@ $.Drawer.prototype = {
         }
     },
 
-
-    // private
-    _imageSmoothingEnabled: true,
-
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
      *
@@ -624,13 +624,13 @@ $.Drawer.prototype = {
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
         if ( this.useCanvas ) {
             this._imageSmoothingEnabled = imageSmoothingEnabled;
-            this._setImageSmoothingEnabled();
+            this._updateImageSmoothingEnabled();
             this.viewer.forceRedraw();
         }
     },
 
     // private
-    _setImageSmoothingEnabled: function(){
+    _updateImageSmoothingEnabled: function(){
         var context = this.context;
         context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
