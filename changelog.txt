@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with flipping and opacity with multi-image (#1549)
 * Removed vestigial button group label element that was causing issues for accessibility tools (#1560)
 * Fixed a bug causing Viewer.areControlsEnabled to throw an exception (#1562)
+* Fixed a bug causing the imageSmoothingEnabled setting to sometimes be forgotten (#1595)
 
 2.4.0:
 
