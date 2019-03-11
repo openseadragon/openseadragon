@@ -352,9 +352,12 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         } else {
             iiifQuality = "default.jpg";
         }
-
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            iiifSize = levelWidth + ",";
+            // max will be canonical in 3.0
+            iiifSize = "max";
+            iiifRegion = 'full';
+        } else if ( x == 0 && y == 0 && levelWidth == this.width && levelHeight == this.height ) {
+            iiifSize = "max";
             iiifRegion = 'full';
         } else {
             iiifTileX = x * iiifTileSizeWidth;
