@@ -365,7 +365,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default." + this.usedFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            if (isv1) {
+            if ( isv1 || levelWidth != this.width ) {
                 iiifSize = levelWidth + ",";
             } else {
                 iiifSize = "max";
