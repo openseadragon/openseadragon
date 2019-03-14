@@ -425,7 +425,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var levels = [];
         for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
-                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.' + this.usedFormat,
+                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.' + options.usedFormat,
                 width: options.sizes[i].width,
                 height: options.sizes[i].height
             });
