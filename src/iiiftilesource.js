@@ -365,7 +365,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default." + this.usedFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            if ( isv1 || levelWidth != this.width ) {
+            if ( isv1 || levelWidth !== this.width ) {
                 iiifSize = levelWidth + ",";
             } else {
                 iiifSize = "max";
@@ -376,13 +376,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifTileY = y * iiifTileSizeHeight;
             iiifTileW = Math.min( iiifTileSizeWidth, this.width - iiifTileX );
             iiifTileH = Math.min( iiifTileSizeHeight, this.height - iiifTileY );
-            if ( x == 0 && y == 0 && iiifTileW == this.width && iiifTileH == this.height ) {
+            if ( x === 0 && y === 0 && iiifTileW === this.width && iiifTileH === this.height ) {
                 iiifRegion = "full";
             } else {
                 iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
             }
             iiifSizeW = Math.ceil( iiifTileW * scale );
-            if ( (!isv1) && iiifSizeW == this.width ) {
+            if ( (!isv1) && iiifSizeW === this.width ) {
                 iiifSize = "max";
             } else {
                 iiifSize = iiifSizeW + ",";
@@ -407,10 +407,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
             "http://iiif.io/api/image/2/level0.json"
         ];
-        var isLevel0 = (level0Profiles.indexOf(profile[0]) != -1);
+        var isLevel0 = (level0Profiles.indexOf(profile[0]) !== -1);
         var hasSizeByW = false;
         if ( profile.length > 1 && profile[1].supports ) {
-            hasSizeByW = profile[1].supports.indexOf( "sizeByW" ) != -1;
+            hasSizeByW = profile[1].supports.indexOf( "sizeByW" ) !== -1;
         }
         return !isLevel0 || hasSizeByW;
     }
