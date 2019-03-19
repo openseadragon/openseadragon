@@ -88,7 +88,7 @@ ImageJob.prototype = {
         };
 
         this.jobId = window.setTimeout(function(){
-            self.errorMsg = "Image load exceeded timeout";
+            self.errorMsg = "Image load exceeded timeout (" + self.timeout + " ms)";
             self.finish(false);
         }, this.timeout);
 

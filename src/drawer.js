@@ -48,7 +48,7 @@ $.Drawer = function( options ) {
 
     $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
-    //backward compatibility for positional args while prefering more
+    //backward compatibility for positional args while preferring more
     //idiomatic javascript options object as the only argument
     var args  = arguments;
 
@@ -130,6 +130,10 @@ $.Drawer = function( options ) {
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
+
+    // Image smoothing for canvas rendering (only if canvas is used).
+    // Canvas default is "true", so this will only be changed if user specified "false".
+    this._imageSmoothingEnabled = true;
 };
 
 /** @lends OpenSeadragon.Drawer.prototype */
@@ -254,6 +258,7 @@ $.Drawer.prototype = {
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
                 }
+                this._updateImageSmoothingEnabled();
             }
             this._clear();
         }
@@ -508,6 +513,11 @@ $.Drawer.prototype = {
                     tiledImage._getRotationPoint(true), true)
             });
         }
+        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              tiledImage._drawer._flip();
+          }
+        }
 
         context.strokeRect(
             tile.position.x * $.pixelDensityRatio,
@@ -573,6 +583,13 @@ $.Drawer.prototype = {
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._restoreRotationChanges();
         }
+
+        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
+          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+              tiledImage._drawer._flip();
+          }
+        }
+
         context.restore();
     },
 
@@ -594,6 +611,31 @@ $.Drawer.prototype = {
 
             context.restore();
         }
+    },
+
+    /**
+     * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
+     *
+     * @function
+     * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
+     * drawn smoothly on the canvas; see imageSmoothingEnabled in
+     * {@link OpenSeadragon.Options} for more explanation.
+     */
+    setImageSmoothingEnabled: function(imageSmoothingEnabled){
+        if ( this.useCanvas ) {
+            this._imageSmoothingEnabled = imageSmoothingEnabled;
+            this._updateImageSmoothingEnabled();
+            this.viewer.forceRedraw();
+        }
+    },
+
+    // private
+    _updateImageSmoothingEnabled: function(){
+        var context = this.context;
+        context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
+        context.imageSmoothingEnabled = this._imageSmoothingEnabled;
     },
 
     /**
@@ -620,8 +662,26 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        context.rotate(Math.PI / 180 * options.degrees);
+        if(this.viewer.viewport.flipped){
+          context.rotate(Math.PI / 180 * -options.degrees);
+          context.scale(-1, 1);
+        } else{
+          context.rotate(Math.PI / 180 * options.degrees);
+        }
         context.translate(-point.x, -point.y);
+    },
+
+    // private
+    _flip: function(options) {
+      options = options || {};
+      var point = options.point ?
+        options.point.times($.pixelDensityRatio) :
+        this.getCanvasCenter();
+      var context = this._getContext(options.useSketch);
+
+      context.translate(point.x, 0);
+      context.scale(-1, 1);
+      context.translate(-point.x, 0);
     },
 
     // private
@@ -635,8 +695,9 @@ $.Drawer.prototype = {
         var pixelDensityRatio = $.pixelDensityRatio;
         var viewportSize = this.viewport.getContainerSize();
         return {
-            x: viewportSize.x * pixelDensityRatio,
-            y: viewportSize.y * pixelDensityRatio
+            // canvas width and height are integers
+            x: Math.round(viewportSize.x * pixelDensityRatio),
+            y: Math.round(viewportSize.y * pixelDensityRatio)
         };
     },
 

@@ -1,6 +1,6 @@
 {
   "name": "openseadragon",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
   "keywords": [
     "image",
@@ -28,16 +28,16 @@
     "url": "https://github.com/openseadragon/openseadragon.git"
   },
   "devDependencies": {
-    "grunt": "^1.0.1",
+    "grunt": "^1.0.3",
     "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-compress": "^1.4.3",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-connect": "^1.0.2",
     "grunt-contrib-qunit": "^2.0.0",
-    "grunt-contrib-uglify": "^3.2.1",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-eslint": "^19.0.0",
-    "grunt-git-describe": "^2.3.2",
+    "grunt-contrib-uglify": "^3.4.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-eslint": "^20.2.0",
+    "grunt-git-describe": "^2.4.4",
     "grunt-istanbul": "^0.8.0",
     "grunt-text-replace": "^0.4.0",
     "qunitjs": "2.4.1"

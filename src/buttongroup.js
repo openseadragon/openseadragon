@@ -70,11 +70,11 @@ $.ButtonGroup = function( options ) {
 
     // TODO What if there IS an options.group specified?
     if( !options.group ){
-        this.label   = $.makeNeutralElement( "label" );
+        this.element.style.display = "inline-block";
+        //this.label   = $.makeNeutralElement( "label" );
         //TODO: support labels for ButtonGroups
         //this.label.innerHTML = this.labelText;
-        this.element.style.display = "inline-block";
-        this.element.appendChild( this.label );
+        //this.element.appendChild( this.label );
         for ( i = 0; i < buttons.length; i++ ) {
             this.element.appendChild( buttons[ i ].element );
         }
@@ -83,7 +83,7 @@ $.ButtonGroup = function( options ) {
     $.setElementTouchActionNone( this.element );
 
     /**
-     * Tracks mouse/touch/key events accross the group of buttons.
+     * Tracks mouse/touch/key events across the group of buttons.
      * @member {OpenSeadragon.MouseTracker} tracker
      * @memberof OpenSeadragon.ButtonGroup#
      */

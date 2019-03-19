@@ -198,6 +198,11 @@
   *     'destination-over', 'destination-atop', 'destination-in',
   *     'destination-out', 'lighter', 'copy' or 'xor'
   *
+  * @property {Boolean} [imageSmoothingEnabled=true]
+  *     Image smoothing for canvas rendering (only if canvas is used). Note: Ignored
+  *     by some (especially older) browsers which do not support this canvas property.
+  *     This property can be changed in {@link Viewer.Drawer.setImageSmoothingEnabled}.
+  *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
   *     You can pass a CSS color value like "#FF8800".
@@ -205,6 +210,9 @@
   *
   * @property {Number} [degrees=0]
   *     Initial rotation.
+  *
+  * @property {Boolean} [flipped=false]
+  *     Initial flip state.
   *
   * @property {Number} [minZoomLevel=null]
   *
@@ -239,7 +247,7 @@
   *     The maximum ratio to allow a zoom-in to affect the highest level pixel
   *     ratio. This can be set to Infinity to allow 'infinite' zooming into the
   *     image though it is less effective visually if the HTML5 Canvas is not
-  *     availble on the viewing device.
+  *     available on the viewing device.
   *
   * @property {Number} [smoothTileEdgesMinZoom=1.1]
   *     A zoom percentage ( where 1 is 100% ) of the highest resolution level.
@@ -262,6 +270,9 @@
   *     Number of milliseconds between canvas-scroll events. This value helps normalize the rate of canvas-scroll
   *     events between different devices, causing the faster devices to slow down enough to make the zoom control
   *     more manageable.
+  *
+  * @property {Number} [rotationIncrement=90]
+  *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
@@ -314,6 +325,8 @@
   * @property {Boolean} [gestureSettingsMouse.dblClickToZoom=false] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsMouse.pinchToZoom=false] - Zoom on pinch gesture
+  * @property {Boolean} [gestureSettingsMouse.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
+  *     the zoom is centered at the canvas center.
   * @property {Boolean} [gestureSettingsMouse.flickEnabled=false] - Enable flick gesture
   * @property {Number} [gestureSettingsMouse.flickMinSpeed=120] - If flickEnabled is true, the minimum speed to initiate a flick gesture (pixels-per-second)
   * @property {Number} [gestureSettingsMouse.flickMomentum=0.25] - If flickEnabled is true, the momentum factor for the flick gesture
@@ -326,6 +339,8 @@
   * @property {Boolean} [gestureSettingsTouch.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsTouch.pinchToZoom=true] - Zoom on pinch gesture
+  * @property {Boolean} [gestureSettingsTouch.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
+  *     the zoom is centered at the canvas center.
   * @property {Boolean} [gestureSettingsTouch.flickEnabled=true] - Enable flick gesture
   * @property {Number} [gestureSettingsTouch.flickMinSpeed=120] - If flickEnabled is true, the minimum speed to initiate a flick gesture (pixels-per-second)
   * @property {Number} [gestureSettingsTouch.flickMomentum=0.25] - If flickEnabled is true, the momentum factor for the flick gesture
@@ -338,6 +353,8 @@
   * @property {Boolean} [gestureSettingsPen.dblClickToZoom=false] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsPen.pinchToZoom=false] - Zoom on pinch gesture
+  * @property {Boolean} [gestureSettingsPan.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
+  *     the zoom is centered at the canvas center.
   * @property {Boolean} [gestureSettingsPen.flickEnabled=false] - Enable flick gesture
   * @property {Number} [gestureSettingsPen.flickMinSpeed=120] - If flickEnabled is true, the minimum speed to initiate a flick gesture (pixels-per-second)
   * @property {Number} [gestureSettingsPen.flickMomentum=0.25] - If flickEnabled is true, the momentum factor for the flick gesture
@@ -350,6 +367,8 @@
   * @property {Boolean} [gestureSettingsUnknown.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsUnknown.pinchToZoom=true] - Zoom on pinch gesture
+  * @property {Boolean} [gestureSettingsUnknown.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
+  *     the zoom is centered at the canvas center.
   * @property {Boolean} [gestureSettingsUnknown.flickEnabled=true] - Enable flick gesture
   * @property {Number} [gestureSettingsUnknown.flickMinSpeed=120] - If flickEnabled is true, the minimum speed to initiate a flick gesture (pixels-per-second)
   * @property {Number} [gestureSettingsUnknown.flickMomentum=0.25] - If flickEnabled is true, the momentum factor for the flick gesture
@@ -408,9 +427,21 @@
   * @property {Boolean} [navigatorRotate=true]
   *     If true, the navigator will be rotated together with the viewer.
   *
+  * @property {String} [navigatorBackground='#000']
+  *     Specifies the background color of the navigator minimap
+  *
+  * @property {Number} [navigatorOpacity=0.8]
+  *     Specifies the opacity of the navigator minimap.
+  *
+  * @property {String} [navigatorBorderColor='#555']
+  *     Specifies the border color of the navigator minimap
+  *
+  * @property {String} [navigatorDisplayRegionColor='#900']
+  *     Specifies the border color of the display region rectangle of the navigator minimap
+  *
   * @property {Number} [controlsFadeDelay=2000]
   *     The number of milliseconds to wait once the user has stopped interacting
-  *     with the interface before begining to fade the controls. Assumes
+  *     with the interface before beginning to fade the controls. Assumes
   *     showNavigationControl and autoHideControls are both true.
   *
   * @property {Number} [controlsFadeLength=1500]
@@ -428,7 +459,7 @@
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
-  *     example, if you are targeting mobile devices with less bandwith you may
+  *     example, if you are targeting mobile devices with less bandwidth you may
   *     try setting this to 1.5 or higher.
   *
   * @property {Boolean} [mouseNavEnabled=true]
@@ -469,6 +500,10 @@
   *     (e.g. viewer.drawer.canRotate()).<br>
   *     Note: {@link OpenSeadragon.Options.showNavigationControl} is overriding
   *     this setting when set to false.
+  *
+  * @property {Boolean} [showFlipControl=false]
+  *     If true then the flip controls will be displayed as part of the
+  *     standard controls.
   *
   * @property {Boolean} [showSequenceControl=true]
   *     If sequenceMode is true, then provide buttons for navigating forward and
@@ -679,6 +714,12 @@
   * @property {String} rotateright.GROUP
   * @property {String} rotateright.HOVER
   * @property {String} rotateright.DOWN
+  *
+  * @property {Object} flip - Images for the flip button.
+  * @property {String} flip.REST
+  * @property {String} flip.GROUP
+  * @property {String} flip.HOVER
+  * @property {String} flip.DOWN
   *
   * @property {Object} previous - Images for the previous button.
   * @property {String} previous.REST
@@ -1044,6 +1085,7 @@ function OpenSeadragon( options ){
                 clickToZoom: true,
                 dblClickToZoom: false,
                 pinchToZoom: false,
+                zoomToRefPoint: true,
                 flickEnabled: false,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
@@ -1054,6 +1096,7 @@ function OpenSeadragon( options ){
                 clickToZoom: false,
                 dblClickToZoom: true,
                 pinchToZoom: true,
+                zoomToRefPoint: true,
                 flickEnabled: true,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
@@ -1064,6 +1107,7 @@ function OpenSeadragon( options ){
                 clickToZoom: true,
                 dblClickToZoom: false,
                 pinchToZoom: false,
+                zoomToRefPoint: true,
                 flickEnabled: false,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
@@ -1074,6 +1118,7 @@ function OpenSeadragon( options ){
                 clickToZoom: false,
                 dblClickToZoom: true,
                 pinchToZoom: true,
+                zoomToRefPoint: true,
                 flickEnabled: true,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
@@ -1095,6 +1140,7 @@ function OpenSeadragon( options ){
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
+            rotationIncrement:      90,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -1108,6 +1154,7 @@ function OpenSeadragon( options ){
             showHomeControl:         true,  //HOME
             showFullPageControl:     true,  //FULL
             showRotationControl:     false, //ROTATION
+            showFlipControl:         false,  //FLIP
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
@@ -1125,14 +1172,22 @@ function OpenSeadragon( options ){
             navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
+            navigatorBackground:        '#000',
+            navigatorOpacity:           0.8,
+            navigatorBorderColor:       '#555',
+            navigatorDisplayRegionColor: '#900',
 
             // INITIAL ROTATION
             degrees:                    0,
+
+            // INITIAL FLIP STATE
+            flipped:                    false,
 
             // APPEARANCE
             opacity:                    1,
             preload:                    false,
             compositeOperation:         null,
+            imageSmoothingEnabled:      true,
             placeholderFillStyle:       null,
 
             //REFERENCE STRIP SETTINGS
@@ -1198,6 +1253,12 @@ function OpenSeadragon( options ){
                     GROUP:  'rotateright_grouphover.png',
                     HOVER:  'rotateright_hover.png',
                     DOWN:   'rotateright_pressed.png'
+                },
+                flip: { // Flip icon designed by Yaroslav Samoylov from the Noun Project and modified by Nelson Campos ncampos@criteriamarathon.com, https://thenounproject.com/term/flip/136289/
+                    REST:   'flip_rest.png',
+                    GROUP:  'flip_grouphover.png',
+                    HOVER:  'flip_hover.png',
+                    DOWN:   'flip_pressed.png'
                 },
                 previous: {
                     REST:   'previous_rest.png',
@@ -1284,7 +1345,7 @@ function OpenSeadragon( options ){
         /**
          * Determines the position of the upper-left corner of the element.
          * @function
-         * @param {Element|String} element - the elemenet we want the position for.
+         * @param {Element|String} element - the element we want the position for.
          * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element.
          */
         getElementPosition: function( element ) {
@@ -1489,7 +1550,7 @@ function OpenSeadragon( options ){
          */
         getMousePosition: function( event ) {
 
-            if ( typeof( event.pageX ) == "number" ) {
+            if ( typeof ( event.pageX ) == "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1499,7 +1560,7 @@ function OpenSeadragon( options ){
 
                     return result;
                 };
-            } else if ( typeof( event.clientX ) == "number" ) {
+            } else if ( typeof ( event.clientX ) == "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1534,7 +1595,7 @@ function OpenSeadragon( options ){
             var docElement  = document.documentElement || {},
                 body        = document.body || {};
 
-            if ( typeof( window.pageXOffset ) == "number" ) {
+            if ( typeof ( window.pageXOffset ) == "number" ) {
                 $.getPageScroll = function(){
                     return new $.Point(
                         window.pageXOffset,
@@ -1623,7 +1684,7 @@ function OpenSeadragon( options ){
             var docElement = document.documentElement || {},
                 body    = document.body || {};
 
-            if ( typeof( window.innerWidth ) == 'number' ) {
+            if ( typeof ( window.innerWidth ) == 'number' ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         window.innerWidth,
@@ -2027,7 +2088,7 @@ function OpenSeadragon( options ){
         /**
          * Similar to OpenSeadragon.delegate, but it does not immediately call
          * the method on the object, returning a function which can be called
-         * repeatedly to delegate the method. It also allows additonal arguments
+         * repeatedly to delegate the method. It also allows additional arguments
          * to be passed during construction which will be added during each
          * invocation, and each invocation can add additional arguments as well.
          *
@@ -2061,7 +2122,7 @@ function OpenSeadragon( options ){
 
 
         /**
-         * Retreives the value of a url parameter from the window.location string.
+         * Retrieves the value of a url parameter from the window.location string.
          * @function
          * @param {String} key
          * @returns {String} The value of the url parameter or null if no param matches.
@@ -2223,7 +2284,7 @@ function OpenSeadragon( options ){
                     error messages are localized.
                 */
                 var oldIE = $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 10;
-                if ( oldIE && typeof( e.number ) != "undefined" && e.number == -2147024891 ) {
+                if ( oldIE && typeof ( e.number ) != "undefined" && e.number == -2147024891 ) {
                     msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
                 }
 
@@ -2555,7 +2616,7 @@ function OpenSeadragon( options ){
     //TODO: $.console is often used inside a try/catch block which generally
     //      prevents allowings errors to occur with detection until a debugger
     //      is attached.  Although I've been guilty of the same anti-pattern
-    //      I eventually was convinced that errors should naturally propogate in
+    //      I eventually was convinced that errors should naturally propagate in
     //      all but the most special cases.
     /**
      * A convenient alias for console when available, and a simple null

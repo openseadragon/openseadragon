@@ -114,6 +114,11 @@
     });
 
     // ----------
+    QUnit.test('IIIF 2.0 JSON scaleFactors [1]', function(assert) {
+        testOpenUrl('iiif_2_0_tiled_sf1/info.json', assert);
+    });
+
+    // ----------
     QUnit.test('IIIF 2.0 JSON, sizes array only', function(assert) {
         testOpenUrl('iiif_2_0_sizes/info.json', assert);
     });

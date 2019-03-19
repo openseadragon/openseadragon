@@ -50,7 +50,7 @@
 $.Spring = function( options ) {
     var args = arguments;
 
-    if( typeof( options ) != 'object' ){
+    if( typeof ( options ) != 'object' ){
         //allows backward compatible use of ( initialValue, config ) as
         //constructor parameters
         options = {

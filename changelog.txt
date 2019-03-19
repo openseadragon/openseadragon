@@ -1,14 +1,36 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.4.0: (In Progress)
+2.4.1: (In progress)
+
+* You can now turn off the default canvas image smoothing, if you want sharp pixels when zoomed in past 100% (#1507, #1595)
+* Fixed problem with navigator highlight rectangle when returning from full screen with a custom navigator location (#1515)
+* Added option to set rotation increment for nav buttons and keyboard (#1524)
+* Fixed issue with flipping and opacity with multi-image (#1549)
+* Removed vestigial button group label element that was causing issues for accessibility tools (#1560)
+* Fixed a bug causing Viewer.areControlsEnabled to throw an exception (#1562)
+* Added tileFormat option to IIIFTileSource so you can specify the tile format (#1625)
+
+2.4.0:
 
 * BREAKING CHANGE: Viewer's canvas-double-click event is now fired before it initiates the zoom (#1288)
+* You can now flip the viewport to get a mirror image of the original (#1441)
 * You can now prevent canvas-double-click events from zooming on a per-event basis (#1288)
 * Fixed: Opacity 0 images were causing unnecessary redraws (#1319)
 * The "page" event is now fired after the page index has been updated (#1330)
 * Added option pixelsPerArrowPress that sets the speed of arrow keys (#1364)
-
+* Improved IIIF options.maxLevel calculation (#1401)
+* Added canvas-key events, along with the ability to cancel key actions (#1414)
+* Added optional zoom in the middle of the image instead of pointer position (#1423)
+* Now supporting square edge tiles that are padded rather than cropped (#1426)
+* Fixed an issue causing the simple image tileSource to sometimes show duplicate copies (#1370)
+* Fixed an issue causing seams to appear in semi-transparent PNG tiled images (#1470)
+* Added visual customization options for the navigator (#1480)
+* You can now prevent canvas-drag events on the navigator (#1484)
+* You can now prevent canvas-click events on the navigator (#1416)
+* The navigator can now be restricted to just horizontal or just vertical panning (#1416)
+* Fixed DziTileSource so it doesn't load levels above maxLevel or below minLevel, if set (#1492)
+ 
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)

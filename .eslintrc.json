@@ -50,6 +50,7 @@
         "no-multi-spaces": [
             "error",
             {
+                "ignoreEOLComments": true,
                 "exceptions": {
                     "Property": true,
                     "VariableDeclarator": true,
@@ -259,7 +260,7 @@
         "space-unary-ops": [
             "error",
             {
-                "words": false,
+                "words": true,
                 "nonwords": false
             }
         ],
