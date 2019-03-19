@@ -42,6 +42,8 @@
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @see http://iiif.io/api/image/
+ * @param {String} [options.tileFormat]
+ *      The extension that will be used when requiring tiles (defaults to "jpg").
  */
 $.IIIFTileSource = function( options ){
 
@@ -55,7 +57,7 @@ $.IIIFTileSource = function( options ){
 
     options.tileSizePerScaleFactor = {};
 
-    this.tileFormat = "jpg";
+    this.tileFormat = this.tileFormat || 'jpg';
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {
