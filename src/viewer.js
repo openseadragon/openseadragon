@@ -377,7 +377,9 @@ $.Viewer = function( options ) {
     // Create the image loader
     this.imageLoader = new $.ImageLoader({
         jobLimit: this.imageLoaderLimit,
-        timeout: options.timeout
+        timeout: options.timeout,
+        tileRetryMax: this.tileRetryMax,
+        tileRetryDelay: this.tileRetryDelay
     });
 
     // Create the tile cache
