@@ -55,7 +55,7 @@ $.IIIFTileSource = function( options ){
 
     options.tileSizePerScaleFactor = {};
 
-    this.usedFormat = "jpg";
+    this.tileFormat = "jpg";
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {
@@ -352,9 +352,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
              this['@context'].indexOf('/1.1/context.json') > -1 ||
              this['@context'].indexOf('/1/context.json') > -1 );
         if (isv1) {
-            iiifQuality = "native." + this.usedFormat;
+            iiifQuality = "native." + this.tileFormat;
         } else {
-            iiifQuality = "default." + this.usedFormat;
+            iiifQuality = "default." + this.tileFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
             if ( isv1 || levelWidth !== this.width ) {
@@ -417,7 +417,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var levels = [];
         for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
-                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.' + options.usedFormat,
+                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.' + options.tileFormat,
                 width: options.sizes[i].width,
                 height: options.sizes[i].height
             });
