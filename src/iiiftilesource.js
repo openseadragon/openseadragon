@@ -56,14 +56,6 @@ $.IIIFTileSource = function( options ){
     options.tileSizePerScaleFactor = {};
 
     this.usedFormat = "jpg";
-    if ( this.formatHints ) {
-        for (var f = 0; f < this.formatHints.length; f++ ) {
-            if ( $.imageFormatSupported(this.formatHints[f]) ) {
-                this.usedFormat = this.formatHints[f];
-                break;
-            }
-        }
-    }
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {

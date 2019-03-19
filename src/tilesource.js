@@ -69,11 +69,6 @@
  *      the XHR's withCredentials (for accessing secure data).
  * @param {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
- * @param {Object} [options.formatHints]
- *      An array of extensions to use for image URLs, by descending order of
- *      preference. The extensions are tested against the supported formats,
- *      in case none of the extension values is supported, the default (jpg)
- *      will be used.
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -223,7 +218,6 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         }
 
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
-        this.formatHints = options.formatHints;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
         this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
             options.maxLevel : (
