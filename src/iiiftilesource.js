@@ -42,8 +42,8 @@
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @see http://iiif.io/api/image/
- * @param {String} [options.tileFormat]
- *      The extension that will be used when requiring tiles (defaults to "jpg").
+ * @param {String} [options.tileFormat='jpg']
+ *      The extension that will be used when requiring tiles.
  */
 $.IIIFTileSource = function( options ){
 
