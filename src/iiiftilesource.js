@@ -42,6 +42,8 @@
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
  * @see http://iiif.io/api/image/
+ * @param {String} [options.tileFormat='jpg']
+ *      The extension that will be used when requiring tiles.
  */
 $.IIIFTileSource = function( options ){
 
@@ -54,6 +56,8 @@ $.IIIFTileSource = function( options ){
     }
 
     options.tileSizePerScaleFactor = {};
+
+    this.tileFormat = this.tileFormat || 'jpg';
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {
@@ -337,32 +341,46 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifTileW,
             iiifTileH,
             iiifSize,
+            iiifSizeW,
             iiifQuality,
-            uri;
+            uri,
+            isv1;
 
         tileWidth = this.getTileWidth(level);
         tileHeight = this.getTileHeight(level);
         iiifTileSizeWidth = Math.ceil( tileWidth / scale );
         iiifTileSizeHeight = Math.ceil( tileHeight / scale );
-
-        if ( this['@context'].indexOf('/1.0/context.json') > -1 ||
+        isv1 = ( this['@context'].indexOf('/1.0/context.json') > -1 ||
              this['@context'].indexOf('/1.1/context.json') > -1 ||
-             this['@context'].indexOf('/1/context.json') > -1 ) {
-            iiifQuality = "native.jpg";
+             this['@context'].indexOf('/1/context.json') > -1 );
+        if (isv1) {
+            iiifQuality = "native." + this.tileFormat;
         } else {
-            iiifQuality = "default.jpg";
+            iiifQuality = "default." + this.tileFormat;
         }
-
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            iiifSize = levelWidth + ",";
+            if ( isv1 || levelWidth !== this.width ) {
+                iiifSize = levelWidth + ",";
+            } else {
+                iiifSize = "max";
+            }
             iiifRegion = 'full';
         } else {
             iiifTileX = x * iiifTileSizeWidth;
             iiifTileY = y * iiifTileSizeHeight;
             iiifTileW = Math.min( iiifTileSizeWidth, this.width - iiifTileX );
             iiifTileH = Math.min( iiifTileSizeHeight, this.height - iiifTileY );
-            iiifSize = Math.ceil( iiifTileW * scale ) + ",";
-            iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
+            if ( x === 0 && y === 0 && iiifTileW === this.width && iiifTileH === this.height ) {
+                iiifRegion = "full";
+            } else {
+                iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
+            }
+            iiifSizeW = Math.ceil( iiifTileW * scale );
+            if ( (!isv1) && iiifSizeW === this.width ) {
+                iiifSize = "max";
+            } else {
+                iiifSize = iiifSizeW + ",";
+            }
         }
         uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
@@ -374,17 +392,21 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     /**
      * Determine whether arbitrary tile requests can be made against a service with the given profile
      * @function
-     * @param {object} profile - IIIF profile object
+     * @param {array} profile - IIIF profile array
      * @throws {Error}
      */
-    function canBeTiled (profile ) {
+    function canBeTiled ( profile ) {
         var level0Profiles = [
             "http://library.stanford.edu/iiif/image-api/compliance.html#level0",
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
             "http://iiif.io/api/image/2/level0.json"
         ];
-        var isLevel0 = (level0Profiles.indexOf(profile[0]) != -1);
-        return !isLevel0 || (profile.indexOf("sizeByW") != -1);
+        var isLevel0 = (level0Profiles.indexOf(profile[0]) !== -1);
+        var hasSizeByW = false;
+        if ( profile.length > 1 && profile[1].supports ) {
+            hasSizeByW = profile[1].supports.indexOf( "sizeByW" ) !== -1;
+        }
+        return !isLevel0 || hasSizeByW;
     }
 
     /**
@@ -397,7 +419,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var levels = [];
         for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
-                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.jpg',
+                url: options['@id'] + '/full/' + options.sizes[i].width + ',/0/default.' + options.tileFormat,
                 width: options.sizes[i].width,
                 height: options.sizes[i].height
             });
