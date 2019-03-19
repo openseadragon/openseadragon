@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issue with flipping and opacity with multi-image (#1549)
 * Removed vestigial button group label element that was causing issues for accessibility tools (#1560)
 * Fixed a bug causing Viewer.areControlsEnabled to throw an exception (#1562)
+* Added tileFormat option to IIIFTileSource so you can specify the tile format (#1625)
 
 2.4.0:
 
