@@ -258,7 +258,7 @@ $.Drawer.prototype = {
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
                 }
-                this._updateImageSmoothingEnabled();
+                this._updateImageSmoothingEnabled(this.context);
             }
             this._clear();
         }
@@ -343,6 +343,7 @@ $.Drawer.prototype = {
                         self.sketchCanvas.height = sketchCanvasSize.y;
                     });
                 }
+                this._updateImageSmoothingEnabled(this.sketchContext);
             }
             context = this.sketchContext;
         }
@@ -624,14 +625,13 @@ $.Drawer.prototype = {
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
         if ( this.useCanvas ) {
             this._imageSmoothingEnabled = imageSmoothingEnabled;
-            this._updateImageSmoothingEnabled();
+            this._updateImageSmoothingEnabled(this.context);
             this.viewer.forceRedraw();
         }
     },
 
     // private
-    _updateImageSmoothingEnabled: function(){
-        var context = this.context;
+    _updateImageSmoothingEnabled: function(context){
         context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
