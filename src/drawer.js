@@ -253,12 +253,13 @@ $.Drawer.prototype = {
                 this.canvas.height != viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
+                this._updateImageSmoothingEnabled(this.context);
                 if ( this.sketchCanvas !== null ) {
                     var sketchCanvasSize = this._calculateSketchCanvasSize();
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
+                    this._updateImageSmoothingEnabled(this.sketchContext);
                 }
-                this._updateImageSmoothingEnabled(this.context);
             }
             this._clear();
         }
