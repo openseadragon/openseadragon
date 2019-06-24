@@ -202,11 +202,19 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
             options['@id'] = url.replace('/info.xml', '');
             return options;
-        } else if ( !data['@context'] ) {
-            data['@context'] = 'http://iiif.io/api/image/1.0/context.json';
-            data['@id'] = url.replace('/info.json', '');
-            return data;
         } else {
+            if ( !data['@context'] ) {
+                data['@context'] = 'http://iiif.io/api/image/1.0/context.json';
+                data['@id'] = url.replace('/info.json', '');
+            }
+            if(data.preferredFormats) {
+                for (var f = 0; f < data.preferredFormats.length; f++ ) {
+                    if ( OpenSeadragon.imageFormatSupported(data.preferredFormats[f]) ) {
+                        data.tileFormat = data.preferredFormats[f];
+                        break;
+                    }
+                }
+            }
             return data;
         }
     },
