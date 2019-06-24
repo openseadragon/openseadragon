@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed a bug causing Viewer.areControlsEnabled to throw an exception (#1562)
 * Added tileFormat option to IIIFTileSource so you can specify the tile format (#1625)
 * Now using canonical URIs more consistently in IIIF to make caching and processing time easier on the server side (#1625)
+* Added support for IIIF's new preferredFormats property (#1656)
 
 2.4.0:
 
