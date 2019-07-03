@@ -1,6 +1,9 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.4.2: (In Progress)
+
+
 2.4.1:
 
 * You can now turn off the default canvas image smoothing, if you want sharp pixels when zoomed in past 100% (#1507, #1593, #1595, #1647, #1648)
