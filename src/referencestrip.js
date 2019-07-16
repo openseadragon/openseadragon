@@ -236,7 +236,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
      * @function
      */
     setFocus: function ( page ) {
-        var element      = $.getElement( this.element.id + '-' + page ),
+        var element      = this.element.querySelector('#' + this.element.id + '-' + page ),
             viewerSize   = $.getElementSize( this.viewer.canvas ),
             scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
             scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
