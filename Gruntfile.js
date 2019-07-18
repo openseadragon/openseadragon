@@ -171,7 +171,6 @@ module.exports = function(grunt) {
                         baseUrl: '.',
                         disposeCollector: true
                     },
-                    inject: 'test/helpers/phantom-bridge.js',
                     timeout: 10000
                 }
             },

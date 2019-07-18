@@ -307,20 +307,6 @@
     // The Wikipedia logo has CORS enabled
     var corsImg = 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
 
-    // PhantomJS always taint the canvas, so we only run some tests on browsers
-    // supporting CORS images.
-    function browserSupportsImgCrossOrigin(callback) {
-        var img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-            var canvas = document.createElement("canvas");
-            var ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-            callback(!OpenSeadragon.isCanvasTainted(canvas));
-        };
-        img.src = corsImg;
-    }
-
     QUnit.test( 'CrossOriginPolicyMissing', function (assert) {
         var done = assert.async();
         viewer.crossOriginPolicy = false;
@@ -343,86 +329,68 @@
 
     QUnit.test( 'CrossOriginPolicyAnonymous', function (assert) {
         var done = assert.async();
-        browserSupportsImgCrossOrigin(function(supported) {
-            if (!supported) {
-                assert.expect(0);
-                done();
-            } else {
-                viewer.crossOriginPolicy = 'Anonymous';
-                viewer.open( {
-                    type: 'legacy-image-pyramid',
-                    levels: [ {
-                            url: corsImg,
-                            width: 135,
-                            height: 155
-                        } ]
-                } );
-                viewer.addOnceHandler('tile-drawn', function() {
-                    assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
-                        "Canvas should not be tainted.");
-                    done();
-                });
-            }
+
+        viewer.crossOriginPolicy = 'Anonymous';
+        viewer.open( {
+            type: 'legacy-image-pyramid',
+            levels: [ {
+                    url: corsImg,
+                    width: 135,
+                    height: 155
+                } ]
+        } );
+        viewer.addOnceHandler('tile-drawn', function() {
+            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                "Canvas should not be tainted.");
+            done();
         });
 
     } );
 
     QUnit.test( 'CrossOriginPolicyOption', function (assert) {
         var done = assert.async();
-        browserSupportsImgCrossOrigin(function(supported) {
-            if (!supported) {
-                assert.expect(0);
-                done();
-            } else {
-                viewer.crossOriginPolicy = "Anonymous";
-                viewer.smoothTileEdgesMinZoom = Infinity;
-                viewer.addTiledImage( {
-                    tileSource: {
-                        type: 'legacy-image-pyramid',
-                        levels: [ {
-                            url: corsImg,
-                            width: 135,
-                            height: 155
-                        } ]
-                    },
-                    crossOriginPolicy : false
-                } );
-                viewer.addOnceHandler('tile-drawn', function() {
-                    assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
-                        "Canvas should be tainted.");
-                    done();
-                });
-            }
+
+        viewer.crossOriginPolicy = "Anonymous";
+        viewer.smoothTileEdgesMinZoom = Infinity;
+        viewer.addTiledImage( {
+            tileSource: {
+                type: 'legacy-image-pyramid',
+                levels: [ {
+                    url: corsImg,
+                    width: 135,
+                    height: 155
+                } ]
+            },
+            crossOriginPolicy : false
+        } );
+        viewer.addOnceHandler('tile-drawn', function() {
+            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                "Canvas should be tainted.");
+            done();
         });
 
     } );
 
     QUnit.test( 'CrossOriginPolicyTileSource', function (assert) {
         var done = assert.async();
-        browserSupportsImgCrossOrigin(function(supported) {
-            if (!supported) {
-                assert.expect(0);
-                done();
-            } else {
-                viewer.crossOriginPolicy = false;
-                viewer.smoothTileEdgesMinZoom = Infinity;
-                viewer.addTiledImage( {
-                    tileSource: {
-                        type: 'legacy-image-pyramid',
-                        levels: [ {
-                            url: corsImg,
-                            width: 135,
-                            height: 155
-                        } ],
-                        crossOriginPolicy : "Anonymous"
-                    }
-                } );
-                viewer.addOnceHandler('tile-drawn', function() {
-                    assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
-                        "Canvas should not be tainted.");
-                    done();
-                });
+
+        viewer.crossOriginPolicy = false;
+        viewer.smoothTileEdgesMinZoom = Infinity;
+        viewer.addTiledImage( {
+            tileSource: {
+                type: 'legacy-image-pyramid',
+                levels: [ {
+                    url: corsImg,
+                    width: 135,
+                    height: 155
+                } ],
+                crossOriginPolicy : "Anonymous"
             }
+        } );
+        viewer.addOnceHandler('tile-drawn', function() {
+            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+                "Canvas should not be tainted.");
+            done();
         });
 
     } );
