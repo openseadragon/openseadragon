@@ -530,13 +530,6 @@
         }]);
     });
 
-    // PhantomJS is missing Function.prototype.bind
-    function bind(func, _this) {
-        return function() {
-            return func.apply(_this, arguments);
-        };
-    }
-
     QUnit.test('_getCornerTiles without wrapping', function(assert) {
         var tiledImageMock = {
             wrapHorizontal: false,
@@ -549,9 +542,7 @@
                 tileOverlap: 1,
             }),
         };
-        var _getCornerTiles = bind(
-            OpenSeadragon.TiledImage.prototype._getCornerTiles,
-            tiledImageMock);
+        var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,
             expectedTopLeft, expectedBottomRight) {
@@ -599,9 +590,7 @@
                 tileOverlap: 1,
             }),
         };
-        var _getCornerTiles = bind(
-            OpenSeadragon.TiledImage.prototype._getCornerTiles,
-            tiledImageMock);
+        var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,
             expectedTopLeft, expectedBottomRight) {
@@ -648,9 +637,7 @@
                 tileOverlap: 1,
             }),
         };
-        var _getCornerTiles = bind(
-            OpenSeadragon.TiledImage.prototype._getCornerTiles,
-            tiledImageMock);
+        var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,
             expectedTopLeft, expectedBottomRight) {

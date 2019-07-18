@@ -57,7 +57,7 @@ You can also publish the built version to the site-build repository. This assume
 
 ### Testing
 
-Our tests are based on [QUnit](http://qunitjs.com/) and [PhantomJS](http://phantomjs.org/); they're both installed when you run `npm install`. To run on the command line:
+Our tests are based on [QUnit](http://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
 
     grunt test
 
