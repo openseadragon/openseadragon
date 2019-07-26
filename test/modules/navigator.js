@@ -1087,4 +1087,31 @@
         });
     });
 
+    QUnit.test('Explicit height/width', function(assert) {
+        var done = assert.async();
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100, // Faster animation = faster tests
+            showNavigator:  true,
+            navigatorWidth: 200,
+            navigatorHeight: 300
+        });
+        viewer.addOnceHandler('open', function() {
+            var $navigator = $('.navigator');
+
+            // With the current configuration, the default values would be 100 x 100 if we hadn't set navigatorWidth and navigatorHeight.
+            assert.equal($navigator.width(), 200, "Navigator starts with the correct width.");
+            assert.equal($navigator.height(), 300, "Navigator starts with the correct height.");
+
+            viewer.navigator.setWidth(400);
+            viewer.navigator.setHeight(500);
+            assert.equal($navigator.width(), 400, "Navigator changes to the correct width.");
+            assert.equal($navigator.height(), 500, "Navigator changes to the correct height.");
+
+            done();
+        });
+    });
+
 })();
