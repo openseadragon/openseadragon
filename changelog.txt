@@ -4,6 +4,8 @@ OPENSEADRAGON CHANGELOG
 2.4.2: (In Progress)
 
 * Improved support for using the Reference Strip in an OpenSeadragon Viewer inside a Web Component (#1676)
+* Added setWidth and setHeight methods to Navigator (#1686)
+* Fixed: Navigator was still resizing after you explicitly set its width and height with navigatorWidth and navigatorHeight (#1686)
 
 2.4.1:
 
