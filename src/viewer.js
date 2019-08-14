@@ -1911,10 +1911,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      all available options.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlaid. This is a viewport relative location.
-     * @param {OpenSeadragon.Placement} placement - The position of the
+     * @param {OpenSeadragon.Placement} [placement=OpenSeadragon.Placement.TOP_LEFT] - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
-     * @param {function} onDraw - If supplied the callback is called when the overlay
+     * @param {function} [onDraw] - If supplied the callback is called when the overlay
      *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
      * @return {OpenSeadragon.Viewer} Chainable.
@@ -1972,7 +1972,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      the element which is overlaid.
      * @param {OpenSeadragon.Point|OpenSeadragon.Rect} location - The point or
      *      rectangle which will be overlaid. This is a viewport relative location.
-     * @param {OpenSeadragon.Placement} placement - The position of the
+     * @param {OpenSeadragon.Placement} [placement=OpenSeadragon.Placement.TOP_LEFT] - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @return {OpenSeadragon.Viewer} Chainable.
