@@ -875,6 +875,7 @@ $.Viewport.prototype = {
     /**
      * Rotates this viewport to the angle specified.
      * @function
+     * @param {Number} degrees The degrees to set the rotation to.
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setRotation: function(degrees) {
