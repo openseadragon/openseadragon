@@ -78,6 +78,11 @@ $.Rect = function(x, y, width, height, degrees) {
      */
     this.height = typeof (height) === "number" ? height : 0;
 
+    /**
+     * The rotation of the rectangle, in degrees.
+     * @member {Number} degrees
+     * @memberof OpenSeadragon.Rect#
+     */
     this.degrees = typeof (degrees) === "number" ? degrees : 0;
 
     // Normalizes the rectangle.
