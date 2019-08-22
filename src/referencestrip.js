@@ -449,7 +449,9 @@ function loadPanels( strip, viewerSize, scroll ) {
                 showSequenceControl:    false,
                 immediateRender:        true,
                 blendTime:              0,
-                animationTime:          0
+                animationTime:          0,
+                loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
+                ajaxHeaders:            strip.viewer.ajaxHeaders
             } );
 
             miniViewer.displayRegion           = $.makeNeutralElement( "div" );
