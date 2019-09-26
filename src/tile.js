@@ -353,8 +353,15 @@ $.Tile.prototype = {
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
         if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
-            //clearing only the inside of the rectangle occupied
-            //by the png prevents edge flikering
+            if ($.Browser.vendor === $.BROWSERS.FIREFOX) {
+                // Round to the nearest whole pixel so we don't get seams from overlap. This is only
+                // an issue on Firefox, so we only do it there.
+                position.x = Math.round(position.x);
+                position.y = Math.round(position.y);
+                size.x = Math.round(size.x);
+                size.y = Math.round(size.y);
+            }
+
             context.clearRect(
                 position.x,
                 position.y,
