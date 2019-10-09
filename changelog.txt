@@ -6,7 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Improved support for using the Reference Strip in an OpenSeadragon Viewer inside a Web Component (#1676)
 * Added setWidth and setHeight methods to Navigator (#1686)
 * Fixed: Navigator was still resizing after you explicitly set its width and height with navigatorWidth and navigatorHeight (#1686)
-* Improvements to docs (#1696, #1698, #1716)
+* Improvements to docs (#1696, #1698, #1716, #1719)
 * Now passing Viewer AJAX configs down to ReferenceStrip thumbnails (#1701)
 
 2.4.1:
