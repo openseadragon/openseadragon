@@ -156,7 +156,7 @@ $.Viewer = function( options ) {
         drawer:             null,
         /**
          * Keeps track of all of the tiled images in the scene.
-         * @member {OpenSeadragon.Drawer} world
+         * @member {OpenSeadragon.World} world
          * @memberof OpenSeadragon.Viewer#
          */
         world:              null,
