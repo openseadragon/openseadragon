@@ -7,4 +7,4 @@ instrumented/
 .idea
 /nbproject/private/
 .directory
-test/demo/temp
+local-test
