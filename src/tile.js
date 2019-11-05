@@ -383,6 +383,24 @@ $.Tile.prototype = {
             sourceHeight = rendered.canvas.height;
         }
 
+        // If tiles have overlap, round position and size of tile to avoid
+        // incorrect color and/or alpha for pixels with overlap.
+        // If tiles don't have overlap, rounding may cause visible seams since
+        // the destination box may becomme extend outsinde of the source.
+        if (overlap > 0) {
+            sourceWidth = Math.round(sourceX + sourceWidth) - Math.round(sourceX);
+            sourceHeight = Math.round(sourceY + sourceHeight) - Math.round(sourceY);
+
+            sourceX = Math.round(sourceX);
+            sourceY = Math.round(sourceY);
+
+            size.x = Math.round(position.x + size.x) - Math.round(position.x);
+            size.y = Math.round(position.y + size.y) - Math.round(position.y);
+
+            position.x = Math.round(position.x);
+            position.y = Math.round(position.y);
+        }
+
         context.drawImage(
             rendered.canvas,
             sourceX,
