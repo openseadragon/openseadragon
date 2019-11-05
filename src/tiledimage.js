@@ -1624,14 +1624,6 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
         sizeC = sizeC.plus( new $.Point( 1, 1 ) );
     }
 
-    if (tile.isRightMost && tiledImage.wrapHorizontal) {
-        sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
-    }
-
-    if (tile.isBottomMost && tiledImage.wrapVertical) {
-        sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
-    }
-
     tile.position   = positionC;
     tile.size       = sizeC;
     tile.squaredDistance   = tileSquaredDistance;
