@@ -382,17 +382,19 @@ $.TileSource.prototype = {
         var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
             tileWidth = this.getTileWidth(level),
             tileHeight = this.getTileHeight(level),
-            px = ( x === 0 ) ? 0 : tileWidth * x - this.tileOverlap,
-            py = ( y === 0 ) ? 0 : tileHeight * y - this.tileOverlap,
-            sx = tileWidth + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
-            sy = tileHeight + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
+            px = tileWidth * x,
+            py = tileHeight * y,
+            sx = tileWidth,
+            sy = tileHeight,
             scale = 1.0 / dimensionsScaled.x;
 
         sx = Math.min( sx, dimensionsScaled.x - px );
         sy = Math.min( sy, dimensionsScaled.y - py );
 
         if (isSource) {
-            return new $.Rect(0, 0, sx, sy);
+            var pxSource = (x === 0) ? 0 : this.tileOverlap,
+                pySource = (y === 0) ? 0 : this.tileOverlap;
+            return new $.Rect(pxSource, pySource, sx, sy);
         }
 
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );

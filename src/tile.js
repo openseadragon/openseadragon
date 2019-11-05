@@ -308,8 +308,11 @@ $.Tile.prototype = {
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Number} [scale=1] - Apply a scale to position and size
      * @param {OpenSeadragon.Point} [translate] - A translation vector
+     * @param {Number} overlap - Overlap in pixels between tiles.
+     * If greater than 0, tile position and size will be rounded to avoid
+     * problems with sub-pixel rendering.
      */
-    drawCanvas: function( context, drawingHandler, scale, translate ) {
+    drawCanvas: function( context, drawingHandler, scale, translate, overlap) {
 
         var position = this.position.times($.pixelDensityRatio),
             size     = this.size.times($.pixelDensityRatio),
@@ -367,19 +370,23 @@ $.Tile.prototype = {
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
-        var sourceWidth, sourceHeight;
+        var sourceX, sourceY, sourceWidth, sourceHeight;
         if (this.sourceBounds) {
+            sourceX = this.sourceBounds.x;
+            sourceY = this.sourceBounds.y;
             sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);
             sourceHeight = Math.min(this.sourceBounds.height, rendered.canvas.height);
         } else {
+            sourceX = 0;
+            sourceY = 0;
             sourceWidth = rendered.canvas.width;
             sourceHeight = rendered.canvas.height;
         }
 
         context.drawImage(
             rendered.canvas,
-            0,
-            0,
+            sourceX,
+            sourceY,
             sourceWidth,
             sourceHeight,
             position.x,
