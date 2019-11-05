@@ -351,21 +351,6 @@ $.Tile.prototype = {
             position = position.plus(translate);
         }
 
-        //if we are supposed to be rendering fully opaque rectangle,
-        //ie its done fading or fading is turned off, and if we are drawing
-        //an image with an alpha channel, then the only way
-        //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
-            //clearing only the inside of the rectangle occupied
-            //by the png prevents edge flikering
-            context.clearRect(
-                position.x,
-                position.y,
-                size.x,
-                size.y
-            );
-        }
-
         // This gives the application a chance to make image manipulation
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
