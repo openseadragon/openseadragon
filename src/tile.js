@@ -337,6 +337,10 @@ $.Tile.prototype = {
 
         context.globalAlpha = this.opacity;
 
+        // Gives correct (additive) blending and composition
+        // for sub-pixel rendering.
+        context.globalCompositeOperation = 'lighter';
+
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
             position = position.times(scale);
