@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Navigator was still resizing after you explicitly set its width and height with navigatorWidth and navigatorHeight (#1686)
 * Improvements to docs (#1696, #1698, #1716, #1719)
 * Now passing Viewer AJAX configs down to ReferenceStrip thumbnails (#1701)
+* Removed use of deprecated imageSmoothingEnabled prefixes (#1740)
 
 2.4.1:
 
