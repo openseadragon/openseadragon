@@ -633,8 +633,6 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
-        context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.imageSmoothingEnabled = this._imageSmoothingEnabled;
     },
