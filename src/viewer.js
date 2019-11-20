@@ -2227,6 +2227,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width:       this.referenceStripWidth,
                     tileSources: this.tileSources,
                     prefixUrl:   this.prefixUrl,
+                    useCanvas:   this.useCanvas,
                     viewer:      this
                 });
 
