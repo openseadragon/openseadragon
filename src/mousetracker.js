@@ -2661,7 +2661,7 @@
                     {
                         eventSource:          tracker,
                         pointerType:          curGPoint.type,
-                        position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
+                        position:             curGPoint.currentPos && getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
                         buttons:              pointsList.buttons,
                         pointers:             tracker.getActivePointerCount(),
                         insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
@@ -2958,10 +2958,16 @@
             return false;
         }
 
+        // OS-specific gestures (e.g. swipe up with four fingers in iPadOS 13)
+        if (gPoints[ 0 ].type === "touch" && typeof gPoints[ 0 ].currentPos === "undefined") {
+            abortContacts(tracker, event, pointsList);
+
+            return false;
+        }
+
         for ( i = 0; i < gPointCount; i++ ) {
             curGPoint = gPoints[ i ];
             updateGPoint = pointsList.getById( curGPoint.id );
-
             if ( updateGPoint ) {
                 // Update the pointer, stop tracking it if not still in this element
                 if ( updateGPoint.captured ) {
