@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Now passing Viewer AJAX configs down to ReferenceStrip thumbnails (#1701)
 * Removed use of deprecated imageSmoothingEnabled prefixes (#1740)
 * The ReferenceStrip now honors the useCanvas option from the Viewer (#1742)
+* Fixed issue with touches on iOS 13 (#1754)
 
 2.4.1:
 
