@@ -397,10 +397,12 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default." + this.tileFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            if ( this.version === 1 || levelWidth !== this.width ) {
-                iiifSize = levelWidth + "," + ( this.version === 3 ? levelHeight : "" );
-            } else {
+            if ( levelWidth === this.width && this.version !== 1 ) {
                 iiifSize = "max";
+            } else if ( this.version === 3 ) {
+                iiifSize = levelWidth + "," + levelHeight;
+            } else {
+                iiifSize = levelWidth + ",";
             }
             iiifRegion = 'full';
         } else {
@@ -417,8 +419,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifSizeH = Math.ceil( iiifTileH * scale );
             if ( this.version !== 1 && iiifSizeW === this.width && ( this.version !== 3 || iiifSizeH === this.height ) ) {
                 iiifSize = "max";
+            } else if (this.version === 3) {
+                iiifSize = iiifSizeW + "," + iiifSizeH;
             } else {
-                iiifSize = iiifSizeW + "," + ( this.version === 3 ? iiifSizeH : "" );
+                iiifSize = iiifSizeW + ",";
             }
         }
         uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
