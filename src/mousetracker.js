@@ -2959,7 +2959,7 @@
         }
 
         // OS-specific gestures (e.g. swipe up with four fingers in iPadOS 13)
-        if (gPoints[ 0 ].type === "touch" && typeof gPoints[ 0 ].currentPos === "undefined") {
+        if (typeof gPoints[ 0 ].currentPos === "undefined") {
             abortContacts(tracker, event, pointsList);
 
             return false;
