@@ -397,7 +397,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "default." + this.tileFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
-            if ( levelWidth === this.width && this.version !== 1 ) {
+            if ( this.version === 2 && levelWidth === this.width ) {
+                iiifSize = "max";
+            } else if ( this.version === 3 && levelWidth === this.width && levelHeight === this.height ) {
                 iiifSize = "max";
             } else if ( this.version === 3 ) {
                 iiifSize = levelWidth + "," + levelHeight;
@@ -417,7 +419,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             }
             iiifSizeW = Math.ceil( iiifTileW * scale );
             iiifSizeH = Math.ceil( iiifTileH * scale );
-            if ( this.version !== 1 && iiifSizeW === this.width && ( this.version !== 3 || iiifSizeH === this.height ) ) {
+            if ( this.version === 2 && iiifSizeW === this.width ) {
+                iiifSize = "max";
+            } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {
                 iiifSize = "max";
             } else if (this.version === 3) {
                 iiifSize = iiifSizeW + "," + iiifSizeH;
