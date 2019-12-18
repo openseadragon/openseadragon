@@ -215,14 +215,14 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 if (Array.isArray(context)) {
                     for (var i = 0; i < context.length; i++) {
                         if (typeof context[i] === 'string' &&
-                            ( /^http:\/\/iiif\.io\/api\/image\/[0-2]\/context\.json$/.test(context[i]) ||
+                            ( /^http:\/\/iiif\.io\/api\/image\/[1-3]\/context\.json$/.test(context[i]) ||
                             context[i] === 'http://library.stanford.edu/iiif/image-api/1.1/context.json' ) ) {
                             context = context[i];
                             break;
                         }
                     }
                 }
-                switch (data['@context']) {
+                switch (context) {
                     case 'http://iiif.io/api/image/1/context.json':
                     case 'http://library.stanford.edu/iiif/image-api/1.1/context.json':
                         data.version = 1;
