@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * Removed use of deprecated imageSmoothingEnabled prefixes (#1740)
 * The ReferenceStrip now honors the useCanvas option from the Viewer (#1742)
 * Fixed issues with touches on iOS 13 and iPad (#1754, #1756)
+* No longer throwing an exception on pages that have malformed URL parameters (#1758)
 
 2.4.1:
 
