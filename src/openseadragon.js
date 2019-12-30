@@ -2491,6 +2491,31 @@ function OpenSeadragon( options ){
     });
 
 
+    //TODO: $.console is often used inside a try/catch block which generally
+    //      prevents allowings errors to occur with detection until a debugger
+    //      is attached.  Although I've been guilty of the same anti-pattern
+    //      I eventually was convinced that errors should naturally propagate in
+    //      all but the most special cases.
+    /**
+     * A convenient alias for console when available, and a simple null
+     * function when console is unavailable.
+     * @static
+     * @private
+     */
+    var nullfunction = function( msg ){
+        //document.location.hash = msg;
+    };
+
+    $.console = window.console || {
+        log:    nullfunction,
+        debug:  nullfunction,
+        info:   nullfunction,
+        warn:   nullfunction,
+        error:  nullfunction,
+        assert: nullfunction
+    };
+
+
     /**
      * The current browser vendor, version, and related information regarding detected features.
      * @member {Object} Browser
@@ -2586,8 +2611,13 @@ function OpenSeadragon( options ){
             sep  = part.indexOf( '=' );
 
             if ( sep > 0 ) {
-                URLPARAMS[ part.substring( 0, sep ) ] =
-                    decodeURIComponent( part.substring( sep + 1 ) );
+                var key = part.substring( 0, sep ),
+                    value = part.substring( sep + 1 );
+                try {
+                    URLPARAMS[ key ] = decodeURIComponent( value );
+                } catch (e) {
+                    $.console.error( "Ignoring malformed URL parameter: %s=%s", key, value );
+                }
             }
         }
 
@@ -2609,31 +2639,6 @@ function OpenSeadragon( options ){
         );
 
     })();
-
-
-    //TODO: $.console is often used inside a try/catch block which generally
-    //      prevents allowings errors to occur with detection until a debugger
-    //      is attached.  Although I've been guilty of the same anti-pattern
-    //      I eventually was convinced that errors should naturally propagate in
-    //      all but the most special cases.
-    /**
-     * A convenient alias for console when available, and a simple null
-     * function when console is unavailable.
-     * @static
-     * @private
-     */
-    var nullfunction = function( msg ){
-            //document.location.hash = msg;
-        };
-
-    $.console = window.console || {
-        log:    nullfunction,
-        debug:  nullfunction,
-        info:   nullfunction,
-        warn:   nullfunction,
-        error:  nullfunction,
-        assert: nullfunction
-    };
 
 
     // Adding support for HTML5's requestAnimationFrame as suggested by acdha.
