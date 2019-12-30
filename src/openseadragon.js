@@ -735,7 +735,7 @@
   *
   */
 
-
+/* eslint-disable no-redeclare */
 function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
 }
@@ -2256,7 +2256,7 @@ function OpenSeadragon( options ){
 
                 if (headers) {
                     for (var headerName in headers) {
-                        if (headers.hasOwnProperty(headerName) && headers[headerName]) {
+                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
                             request.setRequestHeader(headerName, headers[headerName]);
                         }
                     }
@@ -2291,7 +2291,7 @@ function OpenSeadragon( options ){
                 request.onreadystatechange = function(){};
 
                 if (window.XDomainRequest) { // IE9 or IE8 might as well try to use XDomainRequest
-                    var xdr = new XDomainRequest();
+                    var xdr = new window.XDomainRequest();
                     if (xdr) {
                         xdr.onload = function (e) {
                             if ( $.isFunction( onSuccess ) ) {

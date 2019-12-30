@@ -1714,10 +1714,10 @@ function providesCoverage( coverage, level, x, y ) {
     if ( x === undefined || y === undefined ) {
         rows = coverage[ level ];
         for ( i in rows ) {
-            if ( rows.hasOwnProperty( i ) ) {
+            if ( Object.prototype.hasOwnProperty.call( rows, i ) ) {
                 cols = rows[ i ];
                 for ( j in cols ) {
-                    if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
+                    if ( Object.prototype.hasOwnProperty.call( cols, j ) && !cols[ j ] ) {
                         return false;
                     }
                 }
