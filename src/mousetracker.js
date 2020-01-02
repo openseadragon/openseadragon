@@ -2499,7 +2499,7 @@
 
         // If isPrimary is not known for the pointer then set it according to our rules:
         //    true if the first pointer in the gesture, otherwise false
-        if ( !gPoint.hasOwnProperty( 'isPrimary' ) ) {
+        if ( !Object.prototype.hasOwnProperty.call( gPoint, 'isPrimary' ) ) {
             if ( pointsList.getLength() === 0 ) {
                 gPoint.isPrimary = true;
             } else {
@@ -2535,7 +2535,7 @@
             listLength = pointsList.removeById( gPoint.id );
 
             // If isPrimary is not known for the pointer and we just removed the primary pointer from the list then we need to set another pointer as primary
-            if ( !gPoint.hasOwnProperty( 'isPrimary' ) ) {
+            if ( !Object.prototype.hasOwnProperty.call( gPoint, 'isPrimary' ) ) {
                 primaryPoint = pointsList.getPrimary();
                 if ( !primaryPoint ) {
                     primaryPoint = pointsList.getByIndex( 0 );
@@ -3172,7 +3172,7 @@
 
             if ( updateGPoint ) {
                 // Already tracking the pointer...update it
-                if ( curGPoint.hasOwnProperty( 'isPrimary' ) ) {
+                if ( Object.prototype.hasOwnProperty.call( curGPoint, 'isPrimary' ) ) {
                     updateGPoint.isPrimary = curGPoint.isPrimary;
                 }
                 updateGPoint.lastPos = updateGPoint.currentPos;
