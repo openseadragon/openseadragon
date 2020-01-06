@@ -432,6 +432,11 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
         return uri;
+    },
+
+    __testonly__: {
+        canBeTiled: canBeTiled,
+        constructLevels: constructLevels
     }
 
   });
