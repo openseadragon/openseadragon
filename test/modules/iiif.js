@@ -8,6 +8,11 @@
         );
     };
 
+    var getSource = function( data ) {
+        var options = configure( data );
+        return new OpenSeadragon.IIIFTileSource( options );
+    };
+
     var infoXml10level0 = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>' +
             '<info xmlns="http://library.stanford.edu/iiif/image-api/ns/">' +
             '<identifier>http://example.com/identifier</identifier>' +
@@ -22,39 +27,84 @@
             '</info>',
             'text/xml'
         ),
-        infoXml10level0sizeByW,
-        infoXml10level1,
+        infoXml10level1 = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>' +
+            '<info xmlns="http://library.stanford.edu/iiif/image-api/ns/">' +
+            '<identifier>http://example.com/identifier</identifier>' +
+            '<width>6000</width>' +
+            '<height>4000</height>' +
+            '<profile>http://library.stanford.edu/iiif/image-api/compliance.html#level1</profile>' +
+            '</info>',
+            'text/xml'
+        ),
         infoJson10level0 = {
             "identifier": id,
-            "width": 200,
-            "height": 100,
+            "width": 2000,
+            "height": 1000,
             "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level0"
         },
-        infoJson10level0sizeByW,
-        infoJson10level1,
+        infoJson10level1 = {
+            "identifier": id,
+            "width": 2000,
+            "height": 1000,
+            "profile" : "http://library.stanford.edu/iiif/image-api/compliance.html#level1"
+        },
         infoJson11level0 = {
             "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
             "@id": id,
-            "width": 200,
-            "height": 100,
+            "width": 2000,
+            "height": 1000,
             "profile": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0"
         },
-        infoJson11level0sizeByW,
-        infoJson11level1,
+        infoJson11level1 = {
+            "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+            "@id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"
+        },
+        infoJson11level1WithTiles = {
+            "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+            "@id": id,
+            "width": 2000,
+            "height": 1000,
+            "tile_width": 512,
+            "tile_height": 256,
+            "profile": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"
+        },
         infoJson2level0 = {
             "@context": "http://iiif.io/api/image/2/context.json",
             "@id": id,
-            "width": 200,
-            "height": 100,
+            "width": 2000,
+            "height": 1000,
+            "sizes": [
+                { width: 2000, height: 1000 },
+                { width: 1000, height: 500 }
+            ],
             "profile": ["http://iiif.io/api/image/2/level0.json"]
         },
-        infoJson2level0sizeByW,
-        infoJson2level1,
+        infoJson2level0sizeByW = {
+            "@context": "http://iiif.io/api/image/2/context.json",
+            "@id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": ["http://iiif.io/api/image/2/level0.json", {"supports": "sizeByW"} ]
+        },
+        infoJson2level1 = {
+            "@context": "http://iiif.io/api/image/2/context.json",
+            "@id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": ["http://iiif.io/api/image/2/level1.json"]
+        },
         infoJson3level0 = {
             "@context": "http://iiif.io/api/image/3/context.json",
             "id": id,
-            "width": 200,
-            "height": 100,
+            "width": 2000,
+            "height": 1000,
+            "sizes": [
+                { width: 2000, height: 1000 },
+                { width: 1000, height: 500 }
+            ],
             "profile": "level0"
         },
         infoJson3level0ContextExtension = {
@@ -65,12 +115,33 @@
                 }
             ],
             "id": id,
-            "width": 200,
-            "height": 100,
+            "width": 2000,
+            "height": 1000,
             "profile": "level0"
         },
-        infoJson3level0sizeByW,
-        infoJson3level1;
+        infoJson3level0sizeByW = {
+            "@context": "http://iiif.io/api/image/3/context.json",
+            "id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": "level0",
+            "extraFeatures": "sizeByW"
+        },
+        infoJson3level0sizeByWh = {
+            "@context": "http://iiif.io/api/image/3/context.json",
+            "id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": "level0",
+            "extraFeatures": "sizeByWh"
+        },
+        infoJson3level1 = {
+            "@context": "http://iiif.io/api/image/3/context.json",
+            "id": id,
+            "width": 2000,
+            "height": 1000,
+            "profile": "level1"
+        };
 
     QUnit.test('IIIFTileSource.configure determins correct version', function(assert) {
         var options1_0xml = configure(infoXml10level0);
@@ -96,6 +167,83 @@
         var options3withContextExtension = configure(infoJson3level0ContextExtension);
         assert.ok(options3withContextExtension.version);
         assert.equal(options3withContextExtension.version, 3, 'Version is 3 for version 3 info.json');
+    });
+
+    QUnit.test('IIIFTileSource private function canBeTiled works as expected', function(assert) {
+        var canBeTiled = function( data ) {
+            var source = getSource( data );
+            return source.__testonly__.canBeTiled( source );
+        };
+
+        assert.notOk(canBeTiled(infoXml10level0));
+        assert.ok(canBeTiled(infoXml10level1));
+        assert.notOk(canBeTiled(infoJson10level0));
+        assert.ok(canBeTiled(infoJson10level1));
+        assert.notOk(canBeTiled(infoJson11level0));
+        assert.ok(canBeTiled(infoJson11level1));
+        assert.notOk(canBeTiled(infoJson2level0));
+        assert.ok(canBeTiled(infoJson2level0sizeByW));
+        assert.ok(canBeTiled(infoJson2level1));
+        assert.notOk(canBeTiled(infoJson3level0));
+        assert.notOk(canBeTiled(infoJson3level0sizeByW));
+        assert.ok(canBeTiled(infoJson3level0sizeByWh));
+        assert.ok(canBeTiled(infoJson3level1));
+    });
+
+    QUnit.test('IIIFTileSource private function constructLevels creates correct URLs for legacy pyramid', function( assert ) {
+        var constructLevels = function( data ) {
+            var source = getSource( data );
+            return source.__testonly__.constructLevels( source );
+        };
+        var levelsVersion2 = constructLevels(infoJson2level0);
+        assert.ok(Array.isArray(levelsVersion2));
+        assert.equal(levelsVersion2.length, 2, 'Constructed levels contain 2 entries');
+        assert.equal(levelsVersion2[0].url, 'http://example.com/identifier/full/1000,/0/default.jpg');
+        assert.equal(levelsVersion2[1].url, 'http://example.com/identifier/full/2000,/0/default.jpg');
+        // FIXME see below
+        // assert.equal(levelsVersion2[1].url, 'http://example.com/identifier/full/full/0/default.jpg');
+
+        var levelsVersion3 = constructLevels(infoJson3level0);
+        assert.ok(Array.isArray(levelsVersion3));
+        assert.equal(levelsVersion3.length, 2, 'Constructed levels contain 2 entries');
+        assert.equal(levelsVersion3[0].url, 'http://example.com/identifier/full/1000,500/0/default.jpg');
+        assert.equal(levelsVersion3[1].url, 'http://example.com/identifier/full/2000,1000/0/default.jpg');
+        /*
+         * FIXME: following https://iiif.io/api/image/3.0/#47-canonical-uri-syntax and
+         * https://iiif.io/api/image/2.1/#canonical-uri-syntax, I'd expect 'max' to be required to
+         * be served by a level 0 compliant service instead of 'w,h', 'full' instead of 'w,' respectivley.
+         */
+        //assert.equal(levelsVersion3[1].url, 'http://example.com/identifier/full/max/0/default.jpg');
+    });
+
+    QUnit.test('IIIFTileSource.getTileUrl returns the correct URLs', function( assert ) {
+        var source11Level1 = getSource(infoJson11level1);
+        assert.equal(source11Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,/0/native.jpg");
+
+        var source2Level1 = getSource(infoJson2level1);
+        assert.equal(source2Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,/0/default.jpg");
+
+        var source2Level0 = getSource(infoJson2level0);
+        assert.equal(source2Level0.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/default.jpg");
+        assert.equal(source2Level0.getTileUrl(1, 0, 0), "http://example.com/identifier/full/2000,/0/default.jpg");
+
+        var source3Level1 = getSource(infoJson3level1);
+        assert.equal(source3Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,512/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,488/0/default.jpg");
+        assert.equal(source3Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,488/0/default.jpg");
     });
 
 })();

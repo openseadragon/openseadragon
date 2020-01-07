@@ -455,7 +455,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             "level0",
             "https://iiif.io/api/image/3/level0.json"
         ];
-        var isLevel0 = (level0Profiles.indexOf(options.profile[0]) !== -1);
+        var profileLevel = Array.isArray(options.profile) ? options.profile[0] : options.profile;
+        var isLevel0 = (level0Profiles.indexOf(profileLevel) !== -1);
         var hasCanoncicalSizeFeature = false;
         if ( options.version === 2 && options.profile.length > 1 && options.profile[1].supports ) {
             hasCanoncicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
