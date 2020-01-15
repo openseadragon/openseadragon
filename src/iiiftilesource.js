@@ -234,7 +234,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                         data.version = 3;
                         break;
                     default:
-                        // unexpected context
+                        $.console.error('Data has a @context property which contains no known IIIF context URI.');
                 }
             }
             if ( !data['@id'] && data['id'] ) {
