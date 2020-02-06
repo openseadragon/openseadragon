@@ -675,6 +675,27 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Sets an array of polygons to crop the TiledImage during draw tiles.
+     * The render function will use the default non-zero winding rule.
+     * @param Polygons represented in an array of pair array in pixels.
+     * Example format: [
+     *  [[197,172],[226,172],[226,198],[197,198]], // First polygon
+     *  [[328,200],[330,199],[332,201],[329,202]]  // Second polygon
+     * ]
+     */
+    setCroppingPolygons: function( polygons ) {
+        this._croppingPolygons = polygons;
+    },
+
+    /**
+     * Resets the cropping polygons, thus next render will remove all cropping
+     * polygon effects.
+     */
+    resetCroppingPolygons: function() {
+        this._croppingPolygons = null;
+    },
+
+    /**
      * Positions and scales the TiledImage to fit in the specified bounds.
      * Note: this method fires OpenSeadragon.TiledImage.event:bounds-change
      * twice
@@ -1929,6 +1950,28 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         tiledImage._drawer.setClip(clipRect, useSketch);
 
+        usedClip = true;
+    }
+
+    if (tiledImage._croppingPolygons) {
+        tiledImage._drawer.saveContext(useSketch);
+        try {
+            var polygons = tiledImage._croppingPolygons.map(function (polygon) {
+                return polygon.map(function (pointPair) {
+                    var point = tiledImage
+                        .imageToViewportCoordinates(pointPair[0], pointPair[1], true)
+                        .rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
+                    var clipPoint = tiledImage._drawer.viewportCoordToDrawerCoord(point);
+                    if (sketchScale) {
+                        clipPoint = clipPoint.times(sketchScale);
+                    }
+                    return clipPoint;
+                });
+            });
+            tiledImage._drawer.clipWithPolygons(polygons, useSketch);
+        } catch (e) {
+            $.console.error(e);
+        }
         usedClip = true;
     }
 

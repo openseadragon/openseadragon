@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Cropping PolygonList Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+            background: lightgreen;
+        }
+
+        textarea {
+            width: 200px;
+            height: 200px;
+        }
+
+        .box-with-title {
+            padding-top: 1em;
+            display: inline-block;
+            text-align: center;
+        }
+        .box-with-title button{
+            display: block;
+        }
+
+        *:focus {
+            outline: none;
+        }
+
+    </style>
+</head>
+<body>
+    <h3>
+        Simple demo page to show cropping with polygonList in a OpenSeadragon viewer.
+    </h3>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <span>Click on Viewer to save polygon points</span>
+    <div>
+        <button id='resetBtn'>Reset</button>
+        <button id='exampleBtn'>Load Example</button>
+    </div>
+    <div class='box-with-title'>
+        <button id="addBtn">Add As Polygon</button>
+        <textarea id="polygonEl"></textarea>
+    </div>
+    <div class='box-with-title'>
+        <button id="cropBtn">Crop With Polygon</button>
+        <textarea id='previewEl'></textarea>
+    </div>
+
+    <!-- Setup Viewer -->
+    <script type="text/javascript">
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator: false,
+            gestureSettingsMouse: {
+                clickToZoom: false
+            }
+        });
+    </script>
+
+    <script>
+        // Global Variables
+        var previewEl = document.getElementById('previewEl');
+        var polygonEl = document.getElementById('polygonEl');
+        var examples =  [
+            [[480,300],[300,420],[600,420]],            // Triangle
+            [[300,550],[300,750],[600,750],[600,550]]   // Rectangle
+        ];
+        var polygon = [];
+        var polygonList = [];
+
+        // Load default examples
+        function loadExample(){
+            polygonList = JSON.parse(JSON.stringify(examples));
+            previewEl.innerHTML = JSON.stringify(polygonList);
+        }
+        loadExample();
+
+        // Add click handler to clicked point tracker
+        viewer.addHandler('canvas-click', function(event) {
+            var webPoint = event.position;
+            var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+            var p = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+            p.x = Math.round((p.x + Number.EPSILON) * 100) / 100
+            p.y = Math.round((p.y + Number.EPSILON) * 100) / 100
+            polygon.push([p.x, p.y]);
+            polygonEl.innerHTML += '['+p.x+','+ p.y+']';
+        });
+
+        // Add clicked points to polygon tracker variable
+        document.getElementById('addBtn').onclick = function(){
+            if (polygon.length == 0) { return; }
+            polygonList.push(polygon);
+            polygon = [];
+            polygonEl.innerHTML = '';
+            previewEl.innerHTML = JSON.stringify(polygonList);
+        };
+
+        document.getElementById('cropBtn').onclick = function(){
+            polygonList = JSON.parse(previewEl.innerHTML);
+            polygonEl.innerHTML = '';
+            var tiledImage = viewer.world.getItemAt(0);
+            tiledImage.setCroppingPolygons(polygonList);
+            viewer.forceRedraw();
+        };
+
+        document.getElementById('resetBtn').onclick = function(){
+            polygonList = []
+            polygon = []
+            polygonEl.innerHTML = '';
+            previewEl.innerHTML = '';
+            var tiledImage = viewer.world.getItemAt(0);
+            tiledImage.resetCroppingPolygons();
+            viewer.forceRedraw();
+        };
+
+        document.getElementById('exampleBtn').onclick = loadExample;
+    </script>
+
+</body>
+</html>

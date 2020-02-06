@@ -167,6 +167,38 @@ $.Drawer.prototype = {
     },
 
     /**
+     * This function gets the top left point from the viewport using the pixel point
+     * @param {OpenSeadragon.Point} point - the pixel points to convert
+     */
+    viewportCoordToDrawerCoord: function(point) {
+        var topLeft = this.viewport.pixelFromPointNoRotate(point, true);
+        return new $.Point(
+            topLeft.x * $.pixelDensityRatio,
+            topLeft.y * $.pixelDensityRatio
+        );
+    },
+
+    /**
+     * This function will create multiple polygon paths on the drawing context by provided polygons,
+     * then clip the context to the paths.
+     * @param {(OpenSeadragon.Point[])[]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
+     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
+     */
+    clipWithPolygons: function (polygons, useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+        var context = this._getContext(useSketch);
+        context.beginPath();
+        polygons.forEach(function (polygon) {
+            polygon.forEach(function (coord, i) {
+                context[i == 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+          });
+        });
+        context.clip();
+    },
+
+    /**
      * Set the opacity of the drawer.
      * @param {Number} opacity
      * @return {OpenSeadragon.Drawer} Chainable.
