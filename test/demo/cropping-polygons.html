@@ -79,7 +79,7 @@
         // Load default examples
         function loadExample(){
             polygonList = JSON.parse(JSON.stringify(examples));
-            previewEl.innerHTML = JSON.stringify(polygonList);
+            previewEl.value = JSON.stringify(polygonList);
         }
         loadExample();
 
@@ -91,7 +91,7 @@
             p.x = Math.round((p.x + Number.EPSILON) * 100) / 100
             p.y = Math.round((p.y + Number.EPSILON) * 100) / 100
             polygon.push([p.x, p.y]);
-            polygonEl.innerHTML += '['+p.x+','+ p.y+']';
+            polygonEl.value += '['+p.x+','+ p.y+']';
         });
 
         // Add clicked points to polygon tracker variable
@@ -99,13 +99,13 @@
             if (polygon.length == 0) { return; }
             polygonList.push(polygon);
             polygon = [];
-            polygonEl.innerHTML = '';
-            previewEl.innerHTML = JSON.stringify(polygonList);
+            polygonEl.value = '';
+            previewEl.value = JSON.stringify(polygonList);
         };
 
         document.getElementById('cropBtn').onclick = function(){
-            polygonList = JSON.parse(previewEl.innerHTML);
-            polygonEl.innerHTML = '';
+            polygonList = JSON.parse(previewEl.value);
+            polygonEl.value = '';
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.setCroppingPolygons(polygonList);
             viewer.forceRedraw();
@@ -114,8 +114,8 @@
         document.getElementById('resetBtn').onclick = function(){
             polygonList = []
             polygon = []
-            polygonEl.innerHTML = '';
-            previewEl.innerHTML = '';
+            polygonEl.value = '';
+            previewEl.value = '';
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.resetCroppingPolygons();
             viewer.forceRedraw();
