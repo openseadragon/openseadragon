@@ -167,14 +167,17 @@ $.Drawer.prototype = {
     },
 
     /**
-     * This function gets the top left point from the viewport using the pixel point
-     * @param {OpenSeadragon.Point} point - the pixel points to convert
+     * This function converts the given point from to the drawer coordinate by
+     * multiplying it with the pixel density.
+     * This function does not take rotation into account, thus assuming provided
+     * point is at 0 degree.
+     * @param {OpenSeadragon.Point} point - the pixel point to convert
      */
     viewportCoordToDrawerCoord: function(point) {
-        var topLeft = this.viewport.pixelFromPointNoRotate(point, true);
+        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
         return new $.Point(
-            topLeft.x * $.pixelDensityRatio,
-            topLeft.y * $.pixelDensityRatio
+            vpPoint.x * $.pixelDensityRatio,
+            vpPoint.y * $.pixelDensityRatio
         );
     },
 
