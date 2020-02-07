@@ -195,7 +195,7 @@ $.Drawer.prototype = {
         context.beginPath();
         polygons.forEach(function (polygon) {
             polygon.forEach(function (coord, i) {
-                context[i == 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+                context[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
           });
         });
         context.clip();
