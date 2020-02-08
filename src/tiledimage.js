@@ -677,14 +677,54 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Sets an array of polygons to crop the TiledImage during draw tiles.
      * The render function will use the default non-zero winding rule.
-     * @param Polygons represented in an array of pair array in pixels.
+     * @param Polygons represented in an array of pair array or point object in pixels.
      * Example format: [
      *  [[197,172],[226,172],[226,198],[197,198]], // First polygon
      *  [[328,200],[330,199],[332,201],[329,202]]  // Second polygon
+     *  [{x: 321, y:201}, {x: 356, y:205}, {x: 341, y:250}] // Third polygon
      * ]
+     * Argument may mix array and point objects.
+     * Point objects will be convert to array.
      */
     setCroppingPolygons: function( polygons ) {
-        this._croppingPolygons = polygons;
+
+        var isXYObject = function(obj) {
+            return obj instanceof $.Point || (typeof obj.x === 'number' && typeof obj.y === 'number');
+        };
+        var isArray = function(obj) {
+            return Object.prototype.toString.call(obj) === '[object Array]';
+        };
+        var isXYPair = function(obj) {
+            return obj && isArray(obj) && obj.length === 2;
+        };
+        var convertXYObjectsToArrayIfNeeded = function(objs) {
+            return objs.map(function(obj) {
+                try {
+                    if (isXYObject(obj)) {
+                        return [obj.x, obj.y];
+                    } else if (isXYPair(obj)) {
+                        return obj;
+                    } else {
+                        throw new Error();
+                    }
+                } catch(e) {
+                    throw new Error('A Provided cropping polygon point is not supported');
+                }
+            });
+        };
+
+        try {
+            if (!isArray(polygons)) {
+                throw new Error('Provided cropping polygon is not an array');
+            }
+            this._croppingPolygons = polygons.map(function(polygon){
+                return convertXYObjectsToArrayIfNeeded(polygon);
+            });
+        } catch (e) {
+            $.console.error('[TiledImage.setCroppingPolygons] Cropping polygon format not supported');
+            $.console.error(e);
+            this._croppingPolygons = null;
+        }
     },
 
     /**
