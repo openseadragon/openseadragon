@@ -13,7 +13,7 @@
         }
 
         textarea {
-            width: 200px;
+            width: 215px;
             height: 200px;
         }
 
@@ -22,8 +22,8 @@
             display: inline-block;
             text-align: center;
         }
-        .box-with-title button{
-            display: block;
+        .buttons {
+            width: 215px;
         }
 
         *:focus {
@@ -43,11 +43,24 @@
         <button id='exampleBtn'>Load Example</button>
     </div>
     <div class='box-with-title'>
-        <button id="addBtn">Add As Polygon</button>
-        <textarea id="polygonEl"></textarea>
+        <div class="buttons">
+            <button id="addArrayBtn">Add Array as Polygon</button>
+            <button onclick="emptyElement('polygonArrayEl')">Clear</button>
+        </div>
+        <textarea id="polygonArrayEl"></textarea>
     </div>
     <div class='box-with-title'>
-        <button id="cropBtn">Crop With Polygon</button>
+        <div class="buttons">
+            <button id="addPointBtn">Add Points as Polygon</button>
+            <button onclick="emptyElement('polygonPointEl')">Clear</button>
+        </div>
+        <textarea id="polygonPointEl"></textarea>
+    </div>
+    <div class='box-with-title'>
+        <div class="buttons">
+            <button id="cropBtn">Crop With Polygon</button>
+            <button onclick="emptyElement('previewEl')">Clear</button>
+        </div>
         <textarea id='previewEl'></textarea>
     </div>
 
@@ -68,54 +81,92 @@
     <script>
         // Global Variables
         var previewEl = document.getElementById('previewEl');
-        var polygonEl = document.getElementById('polygonEl');
+        var polygonArrayEl = document.getElementById('polygonArrayEl');
+        var polygonPointEl = document.getElementById('polygonPointEl');
+
         var examples =  [
             [[480,300],[300,420],[600,420]],            // Triangle
             [[300,550],[300,750],[600,750],[600,550]]   // Rectangle
         ];
-        var polygon = [];
-        var polygonList = [];
 
         // Load default examples
         function loadExample(){
-            polygonList = JSON.parse(JSON.stringify(examples));
-            previewEl.value = JSON.stringify(polygonList);
+            previewEl.value = JSON.stringify(examples);
         }
         loadExample();
 
+        // Set a given element's value to empty string
+        function emptyElement(elementId) {
+            document.getElementById(elementId).value = '';
+        }
+
+        // JSON parse a given object, then insert object assuming parsed value is array.
+        function insertObjectToElement(object, element) {
+            var parsed = []; // Default to empty array
+            try {
+                parsed = JSON.parse(element.value);
+            } catch(error) { }
+            parsed.push(object);
+            element.value = JSON.stringify(parsed)
+        }
+
         // Add click handler to clicked point tracker
         viewer.addHandler('canvas-click', function(event) {
-            var webPoint = event.position;
-            var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+            var viewportPoint = viewer.viewport.pointFromPixel(event.position);
             var p = viewer.viewport.viewportToImageCoordinates(viewportPoint);
             p.x = Math.round((p.x + Number.EPSILON) * 100) / 100
             p.y = Math.round((p.y + Number.EPSILON) * 100) / 100
-            polygon.push([p.x, p.y]);
-            polygonEl.value += '['+p.x+','+ p.y+']';
+            insertObjectToElement([p.x, p.y], polygonArrayEl);
+            insertObjectToElement({x:p.x, y:p.y}, polygonPointEl);
         });
 
+        // Evaluate give element in JavaScript variable, default to empty array.
+        function readElementValueDefaultToEmptyArray(elementId) {
+            try {
+                var val = document.getElementById(elementId).value;
+                if (val === '') { return []; }
+                return eval(val); // If using JSON.parse, user must put quotes [{"x": 123, "y":12}]
+            } catch (e) {
+                return [];
+            }
+        }
+
+        // Insert value from given element into preview element
+        function insertValueFromElementToPreviewElement(element) {
+            try {
+                if (element.value === '') { return; }
+                var polygon = eval(element.value);
+                var polygonList = readElementValueDefaultToEmptyArray('previewEl');
+                polygonList.push(polygon);
+                element.value = '';
+                previewEl.value = JSON.stringify(polygonList);
+            } catch(error) {
+                console.log(error);
+            }
+        }
         // Add clicked points to polygon tracker variable
-        document.getElementById('addBtn').onclick = function(){
-            if (polygon.length == 0) { return; }
-            polygonList.push(polygon);
-            polygon = [];
-            polygonEl.value = '';
-            previewEl.value = JSON.stringify(polygonList);
+        document.getElementById('addArrayBtn').onclick = function(){
+            insertValueFromElementToPreviewElement(polygonArrayEl);
         };
 
+        // Add clicked points to polygon tracker variable as point objects
+        document.getElementById('addPointBtn').onclick = function(){
+            insertValueFromElementToPreviewElement(polygonPointEl);
+        };
+
+        // Crop image with value in the preview element
         document.getElementById('cropBtn').onclick = function(){
-            polygonList = JSON.parse(previewEl.value);
-            polygonEl.value = '';
+            var polygonList = eval(previewEl.value);
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.setCroppingPolygons(polygonList);
             viewer.forceRedraw();
+            emptyElement('previewEl');
         };
 
         document.getElementById('resetBtn').onclick = function(){
-            polygonList = []
-            polygon = []
-            polygonEl.value = '';
-            previewEl.value = '';
+            emptyElement('polygonArrayEl');
+            emptyElement('polygonPointEl');
+            emptyElement('previewEl');
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.resetCroppingPolygons();
             viewer.forceRedraw();
