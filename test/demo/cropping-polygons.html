@@ -44,13 +44,6 @@
     </div>
     <div class='box-with-title'>
         <div class="buttons">
-            <button id="addArrayBtn">Add Array as Polygon</button>
-            <button onclick="emptyElement('polygonArrayEl')">Clear</button>
-        </div>
-        <textarea id="polygonArrayEl"></textarea>
-    </div>
-    <div class='box-with-title'>
-        <div class="buttons">
             <button id="addPointBtn">Add Points as Polygon</button>
             <button onclick="emptyElement('polygonPointEl')">Clear</button>
         </div>
@@ -81,12 +74,11 @@
     <script>
         // Global Variables
         var previewEl = document.getElementById('previewEl');
-        var polygonArrayEl = document.getElementById('polygonArrayEl');
         var polygonPointEl = document.getElementById('polygonPointEl');
 
         var examples =  [
-            [[480,300],[300,420],[600,420]],            // Triangle
-            [[300,550],[300,750],[600,750],[600,550]]   // Rectangle
+            [{x: 480, y: 300},{x: 300, y: 420},{x: 600, y: 420}],                   // Triangle
+            [{x: 300, y: 550},{x: 300, y: 750},{x: 600, y: 750},{x: 600, y: 550}]   // Rectangle
         ];
 
         // Load default examples
@@ -116,7 +108,6 @@
             var p = viewer.viewport.viewportToImageCoordinates(viewportPoint);
             p.x = Math.round((p.x + Number.EPSILON) * 100) / 100
             p.y = Math.round((p.y + Number.EPSILON) * 100) / 100
-            insertObjectToElement([p.x, p.y], polygonArrayEl);
             insertObjectToElement({x:p.x, y:p.y}, polygonPointEl);
         });
 
@@ -144,10 +135,6 @@
                 console.log(error);
             }
         }
-        // Add clicked points to polygon tracker variable
-        document.getElementById('addArrayBtn').onclick = function(){
-            insertValueFromElementToPreviewElement(polygonArrayEl);
-        };
 
         // Add clicked points to polygon tracker variable as point objects
         document.getElementById('addPointBtn').onclick = function(){
@@ -164,7 +151,6 @@
         };
 
         document.getElementById('resetBtn').onclick = function(){
-            emptyElement('polygonArrayEl');
             emptyElement('polygonPointEl');
             emptyElement('previewEl');
             var tiledImage = viewer.world.getItemAt(0);
