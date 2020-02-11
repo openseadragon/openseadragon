@@ -677,14 +677,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Sets an array of polygons to crop the TiledImage during draw tiles.
      * The render function will use the default non-zero winding rule.
-     * @param Polygons represented in an array of pair array or point object in pixels.
+     * @param Polygons represented in an array of point object in pixels.
      * Example format: [
-     *  [[197,172],[226,172],[226,198],[197,198]], // First polygon
-     *  [[328,200],[330,199],[332,201],[329,202]]  // Second polygon
+     *  [{x: 197, y:172}, {x: 226, y:172}, {x: 226, y:198}, {x: 197, y:198}], // First polygon
+     *  [{x: 328, y:200}, {x: 330, y:199}, {x: 332, y:201}, {x: 329, y:202}]  // Second polygon
      *  [{x: 321, y:201}, {x: 356, y:205}, {x: 341, y:250}] // Third polygon
      * ]
-     * Argument may mix array and point objects.
-     * Point objects will be convert to array.
      */
     setCroppingPolygons: function( polygons ) {
 
