@@ -694,16 +694,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var isArray = function(obj) {
             return Object.prototype.toString.call(obj) === '[object Array]';
         };
-        var isXYPair = function(obj) {
-            return obj && isArray(obj) && obj.length === 2;
-        };
-        var convertXYObjectsToArrayIfNeeded = function(objs) {
+        var objectToSimpleXYObject = function(objs) {
             return objs.map(function(obj) {
                 try {
                     if (isXYObject(obj)) {
-                        return [obj.x, obj.y];
-                    } else if (isXYPair(obj)) {
-                        return obj;
+                        return { x: obj.x, y: obj.y };
                     } else {
                         throw new Error();
                     }
@@ -718,7 +713,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 throw new Error('Provided cropping polygon is not an array');
             }
             this._croppingPolygons = polygons.map(function(polygon){
-                return convertXYObjectsToArrayIfNeeded(polygon);
+                return objectToSimpleXYObject(polygon);
             });
         } catch (e) {
             $.console.error('[TiledImage.setCroppingPolygons] Cropping polygon format not supported');
@@ -1997,9 +1992,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.saveContext(useSketch);
         try {
             var polygons = tiledImage._croppingPolygons.map(function (polygon) {
-                return polygon.map(function (pointPair) {
+                return polygon.map(function (coord) {
                     var point = tiledImage
-                        .imageToViewportCoordinates(pointPair[0], pointPair[1], true)
+                        .imageToViewportCoordinates(coord.x, coord.y, true)
                         .rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
                     var clipPoint = tiledImage._drawer.viewportCoordToDrawerCoord(point);
                     if (sketchScale) {
