@@ -689,9 +689,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var isXYObject = function(obj) {
             return obj instanceof $.Point || (typeof obj.x === 'number' && typeof obj.y === 'number');
         };
-        var isArray = function(obj) {
-            return Object.prototype.toString.call(obj) === '[object Array]';
-        };
+
         var objectToSimpleXYObject = function(objs) {
             return objs.map(function(obj) {
                 try {
@@ -707,7 +705,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
 
         try {
-            if (!isArray(polygons)) {
+            if ($.isArray(polygons)) {
                 throw new Error('Provided cropping polygon is not an array');
             }
             this._croppingPolygons = polygons.map(function(polygon){
