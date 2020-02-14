@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed issues with touches on iOS 13 and iPad (#1754, #1756)
 * No longer throwing an exception on pages that have malformed URL parameters (#1758)
 * Add support for IIIF Image API 3.0 beta (#1764)
+* You can now crop an image with arbitrary polygons (#1772)
 
 2.4.1:
 
