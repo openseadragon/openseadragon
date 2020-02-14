@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Cropping PolygonList Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+            background: lightgreen;
+        }
+
+        textarea {
+            width: 215px;
+            height: 200px;
+        }
+
+        .box-with-title {
+            padding-top: 1em;
+            display: inline-block;
+            text-align: center;
+        }
+        .buttons {
+            width: 215px;
+        }
+
+        *:focus {
+            outline: none;
+        }
+
+    </style>
+</head>
+<body>
+    <h3>
+        Simple demo page to show cropping with polygonList in a OpenSeadragon viewer.
+    </h3>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <span>Click on Viewer to save polygon points</span>
+    <div>
+        <button id='resetBtn'>Reset</button>
+        <button id='exampleBtn'>Load Example</button>
+    </div>
+    <div class='box-with-title'>
+        <div class="buttons">
+            <button id="addPointBtn">Add Points as Polygon</button>
+            <button onclick="emptyElement('polygonPointEl')">Clear</button>
+        </div>
+        <textarea id="polygonPointEl"></textarea>
+    </div>
+    <div class='box-with-title'>
+        <div class="buttons">
+            <button id="cropBtn">Crop With Polygon</button>
+            <button onclick="emptyElement('previewEl')">Clear</button>
+        </div>
+        <textarea id='previewEl'></textarea>
+    </div>
+
+    <!-- Setup Viewer -->
+    <script type="text/javascript">
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator: false,
+            gestureSettingsMouse: {
+                clickToZoom: false
+            }
+        });
+    </script>
+
+    <script>
+        // Global Variables
+        var previewEl = document.getElementById('previewEl');
+        var polygonPointEl = document.getElementById('polygonPointEl');
+
+        var examples =  [
+            [{x: 480, y: 300},{x: 300, y: 420},{x: 600, y: 420}],                   // Triangle
+            [{x: 300, y: 550},{x: 300, y: 750},{x: 600, y: 750},{x: 600, y: 550}]   // Rectangle
+        ];
+
+        // Load default examples
+        function loadExample(){
+            previewEl.value = JSON.stringify(examples);
+        }
+        loadExample();
+
+        // Set a given element's value to empty string
+        function emptyElement(elementId) {
+            document.getElementById(elementId).value = '';
+        }
+
+        // JSON parse a given object, then insert object assuming parsed value is array.
+        function insertObjectToElement(object, element) {
+            var parsed = []; // Default to empty array
+            try {
+                parsed = JSON.parse(element.value);
+            } catch(error) { }
+            parsed.push(object);
+            element.value = JSON.stringify(parsed)
+        }
+
+        // Add click handler to clicked point tracker
+        viewer.addHandler('canvas-click', function(event) {
+            var viewportPoint = viewer.viewport.pointFromPixel(event.position);
+            var p = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+            p.x = Math.round((p.x + Number.EPSILON) * 100) / 100
+            p.y = Math.round((p.y + Number.EPSILON) * 100) / 100
+            insertObjectToElement({x:p.x, y:p.y}, polygonPointEl);
+        });
+
+        // Evaluate give element in JavaScript variable, default to empty array.
+        function readElementValueDefaultToEmptyArray(elementId) {
+            try {
+                var val = document.getElementById(elementId).value;
+                if (val === '') { return []; }
+                return eval(val); // If using JSON.parse, user must put quotes [{"x": 123, "y":12}]
+            } catch (e) {
+                return [];
+            }
+        }
+
+        // Insert value from given element into preview element
+        function insertValueFromElementToPreviewElement(element) {
+            try {
+                if (element.value === '') { return; }
+                var polygon = eval(element.value);
+                var polygonList = readElementValueDefaultToEmptyArray('previewEl');
+                polygonList.push(polygon);
+                element.value = '';
+                previewEl.value = JSON.stringify(polygonList);
+            } catch(error) {
+                console.log(error);
+            }
+        }
+
+        // Add clicked points to polygon tracker variable as point objects
+        document.getElementById('addPointBtn').onclick = function(){
+            insertValueFromElementToPreviewElement(polygonPointEl);
+        };
+
+        // Crop image with value in the preview element
+        document.getElementById('cropBtn').onclick = function(){
+            var polygonList = eval(previewEl.value);
+            var tiledImage = viewer.world.getItemAt(0);
+            tiledImage.setCroppingPolygons(polygonList);
+            viewer.forceRedraw();
+            emptyElement('previewEl');
+        };
+
+        document.getElementById('resetBtn').onclick = function(){
+            emptyElement('polygonPointEl');
+            emptyElement('previewEl');
+            var tiledImage = viewer.world.getItemAt(0);
+            tiledImage.resetCroppingPolygons();
+            viewer.forceRedraw();
+        };
+
+        document.getElementById('exampleBtn').onclick = loadExample;
+    </script>
+
+</body>
+</html>
