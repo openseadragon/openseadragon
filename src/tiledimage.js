@@ -1929,14 +1929,15 @@ function drawTiles( tiledImage, lastDrawn ) {
             // sketch canvas we are going to use for performance reasons.
             bounds = tiledImage.viewport.viewportToViewerElementRectangle(
                 tiledImage.getClippedBounds(true))
-                .getIntegerBoundingBox()
-                .times($.pixelDensityRatio);
+                .getIntegerBoundingBox();
 
             if(tiledImage._drawer.viewer.viewport.getFlip()) {
               if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
                 bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
               }
             }
+
+            bounds = bounds.times($.pixelDensityRatio);
         }
         tiledImage._drawer._clear(true, bounds);
     }
