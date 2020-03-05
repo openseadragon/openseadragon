@@ -1,6 +1,9 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+2.4.3: (In progress)
+
+
 2.4.2:
 
 * Add support for IIIF Image API 3.0 beta (#1764)
