@@ -184,7 +184,7 @@ $.Drawer.prototype = {
     /**
      * This function will create multiple polygon paths on the drawing context by provided polygons,
      * then clip the context to the paths.
-     * @param {(OpenSeadragon.Point[])[]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
+     * @param {OpenSeadragon.Point[][]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      */
     clipWithPolygons: function (polygons, useSketch) {
