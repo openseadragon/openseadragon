@@ -1,20 +1,20 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.4.2: (In Progress)
+2.4.2:
 
-* Improved support for using the Reference Strip in an OpenSeadragon Viewer inside a Web Component (#1676)
-* Added setWidth and setHeight methods to Navigator (#1686)
-* Fixed: Navigator was still resizing after you explicitly set its width and height with navigatorWidth and navigatorHeight (#1686)
-* Improvements to docs (#1696, #1698, #1716, #1719)
-* Now passing Viewer AJAX configs down to ReferenceStrip thumbnails (#1701)
-* Removed use of deprecated imageSmoothingEnabled prefixes (#1740)
-* The ReferenceStrip now honors the useCanvas option from the Viewer (#1742)
-* Fixed issues with touches on iOS 13 and iPad (#1754, #1756)
-* No longer throwing an exception on pages that have malformed URL parameters (#1758)
 * Add support for IIIF Image API 3.0 beta (#1764)
 * You can now crop an image with arbitrary polygons (#1772)
+* Improved support for using the Reference Strip in an OpenSeadragon Viewer inside a Web Component (#1676)
+* Added setWidth and setHeight methods to Navigator (#1686)
+* Improvements to docs (#1696, #1698, #1716, #1719)
+* Now passing Viewer AJAX configs down to ReferenceStrip thumbnails (#1701)
+* The ReferenceStrip now honors the useCanvas option from the Viewer (#1742)
+* Fixed: Navigator was still resizing after you explicitly set its width and height with navigatorWidth and navigatorHeight (#1686)
+* Fixed issues with touches on iOS 13 and iPad (#1754, #1756)
+* No longer throwing an exception on pages that have malformed URL parameters (#1758)
 * Fixed an issue with flipping the viewport on high pixel density screens (#1779)
+* Removed use of deprecated imageSmoothingEnabled prefixes (#1740)
 
 2.4.1:
 
