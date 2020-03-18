@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Memory Check With Simple Image Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to monitor OpenSeadragon Memory Usage.
+    </div>
+    <button onclick="createViewer()">Create</button>
+    <button onclick="destroyViewer()">Destroy</button>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var _viewer;
+
+        var generateUniqueHash = (function() {
+            var counter = 0;
+            return function() {
+                return "openseadragon_" + (counter++);
+            };
+        })();
+
+        function createViewer() {
+            if ( _viewer ) {
+                destroyViewer();
+            }
+
+            _viewer = OpenSeadragon({
+                element: document.getElementById("contentDiv"),
+                showNavigationControl: false,
+                prefixUrl: "../../build/openseadragon/images/",
+                hash: generateUniqueHash(), //this is only needed if you want to instantiate more than one viewer at a time.
+                tileSources: {
+                    type: "image",
+                    url: "../data/CCyan.png"
+                }
+            });
+        }
+
+        function destroyViewer() {
+            if ( _viewer ) {
+                _viewer.destroy();
+            }
+            _viewer = null;
+        }
+
+    </script>
+</body>
+</html>
