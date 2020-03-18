@@ -742,6 +742,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
+        if (this.source.freeupCanvasMemory) {
+            this.source.freeupCanvasMemory();
+        }
+
         this.close();
 
         this.clearOverlays();
