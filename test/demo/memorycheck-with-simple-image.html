@@ -16,6 +16,9 @@
     <div>
         Simple demo page to monitor OpenSeadragon Memory Usage.
     </div>
+    <!-- To get "Total canvas memory use exceeds the maximum limit" warning and then "null is not an object (evaluating 'smallContext.drawImage')" error,
+    disable _freeupCanvasMemory method in ImageTileSource,
+    then click Create button below 12 times on "iPad Air (3rd generation) -- 13.3" Simulator on Mac with Web Inspector by Safari. -->
     <button onclick="createViewer()">Create</button>
     <button onclick="destroyViewer()">Destroy</button>
 
@@ -23,13 +26,6 @@
     <script type="text/javascript">
 
         var _viewer;
-
-        var generateUniqueHash = (function() {
-            var counter = 0;
-            return function() {
-                return "openseadragon_" + (counter++);
-            };
-        })();
 
         function createViewer() {
             if ( _viewer ) {
@@ -39,8 +35,6 @@
             _viewer = OpenSeadragon({
                 element: document.getElementById("contentDiv"),
                 showNavigationControl: false,
-                prefixUrl: "../../build/openseadragon/images/",
-                hash: generateUniqueHash(), //this is only needed if you want to instantiate more than one viewer at a time.
                 tileSources: {
                     type: "image",
                     url: "../data/CCyan.png"

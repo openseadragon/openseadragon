@@ -742,8 +742,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
-        if (this.source.freeupCanvasMemory) {
-            this.source.freeupCanvasMemory();
+        //TODO: implement destroy and _freeupCanvasMemory method for all child classes of TileSource, then remove if statement wrap below.
+        if (this.source.destroy) {
+            this.source.destroy();
         }
 
         this.close();
