@@ -615,17 +615,7 @@ $.TileSource.prototype = {
                y >= 0 &&
                x < numTiles.x &&
                y < numTiles.y;
-    },
-
-    /**
-     * Destroys TileSource
-     * @function
-     */
-    destroy: function () {
-        if ( this.freeupCanvasMemory ) {
-            this.freeupCanvasMemory();
-        }
-    },
+    }
 };
 
 
