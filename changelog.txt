@@ -3,6 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 2.4.3: (In progress)
 
+* Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
 
 2.4.2:
 
