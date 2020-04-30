@@ -195,6 +195,13 @@
             }
             return context;
         },
+        /**
+         * Destroys ImageTileSource
+         * @function
+         */
+        destroy: function () {
+            this._freeupCanvasMemory();
+        },
 
         // private
         //
@@ -258,7 +265,19 @@
                 bigContext = smallContext;
             }
             return levels;
-        }
+        },
+        /**
+         * Free up canvas memory
+         * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
+         * and Safari keeps canvas until its height and width will be set to 0).
+         * @function
+         */
+        _freeupCanvasMemory: function () {
+            for (var i = 0; i < this.levels.length; i++) {
+                this.levels[i].context2D.canvas.height = 0;
+                this.levels[i].context2D.canvas.width = 0;
+            }
+        },
     });
 
 }(OpenSeadragon));

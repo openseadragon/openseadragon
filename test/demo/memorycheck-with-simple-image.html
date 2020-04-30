@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Memory Check With Simple Image Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to monitor OpenSeadragon Memory Usage.
+    </div>
+    <!-- To get "Total canvas memory use exceeds the maximum limit" warning and then "null is not an object (evaluating 'smallContext.drawImage')" error,
+    disable _freeupCanvasMemory method in ImageTileSource,
+    then click Create button below 12 times on "iPad Air (3rd generation) -- 13.3" Simulator on Mac with Web Inspector by Safari. -->
+    <button onclick="createViewer()">Create</button>
+    <button onclick="destroyViewer()">Destroy</button>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var _viewer;
+
+        function createViewer() {
+            if ( _viewer ) {
+                destroyViewer();
+            }
+
+            _viewer = OpenSeadragon({
+                element: document.getElementById("contentDiv"),
+                showNavigationControl: false,
+                prefixUrl: "../../build/openseadragon/images/",
+                tileSources: {
+                    type: "image",
+                    url: "../data/CCyan.png"
+                }
+            });
+        }
+
+        function destroyViewer() {
+            if ( _viewer ) {
+                _viewer.destroy();
+            }
+            _viewer = null;
+        }
+
+    </script>
+</body>
+</html>
