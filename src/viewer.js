@@ -765,7 +765,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.drawer.destroy();
         }
 
+        if ( this.navigator ) {
+            this.navigator.destroy();
+            THIS[ this.navigator.hash ] = null;
+            delete THIS[ this.navigator.hash ];
+            this.navigator = null;
+        }
+
         this.removeAllHandlers();
+        this.buttons.destroy();
+        this.paging.destroy();
 
         // Go through top element (passed to us) and remove all children
         // Use removeChild to make sure it handles SVG or any non-html
@@ -775,6 +784,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.element.removeChild(this.element.firstChild);
             }
         }
+
+        this.container.onsubmit = null;
+        this.clearControls();
 
         // destroy the mouse trackers
         if (this.innerTracker){
@@ -3261,7 +3273,7 @@ function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
 
-    if (viewer._opening) {
+    if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
 

@@ -406,6 +406,15 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         return $.Viewer.prototype.addTiledImage.apply(this, [optionsClone]);
     },
 
+    destroy: function() {
+        this.element.getElementsByTagName('div')[0].removeChild(this.displayRegionContainer);
+        this.displayRegionContainer.removeChild(this.displayRegion);
+        this.viewer.removeControl(this.element);
+        this.innerTracker.destroy();
+        this.outerTracker.destroy();
+        this.element = null;
+    },
+
     // private
     _getMatchingItem: function(theirItem) {
         var count = this.world.getItemCount();
