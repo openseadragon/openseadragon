@@ -121,11 +121,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
-    if (this.ajaxHeaders) {
-        this.cacheKey = this.url + "+" + JSON.stringify(this.ajaxHeaders);
-    } else {
-        this.cacheKey = this.url;
-    }
+    this.cacheKey = this.url;
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded

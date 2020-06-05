@@ -1515,7 +1515,7 @@ function loadTile( tiledImage, tile, time ) {
     tiledImage._imageLoader.addJob({
         src: tile.url,
         loadWithAjax: tile.loadWithAjax,
-        ajaxHeaders: tile.ajaxHeaders,
+        ajaxHeaders: tiledImage.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
         callback: function( image, errorMsg, tileRequest ){
