@@ -129,6 +129,16 @@ $.ButtonGroup.prototype = {
      */
     emulateExit: function() {
         this.tracker.exitHandler( { eventSource: this.tracker } );
+    },
+
+    destroy: function() {
+        while (this.buttons.length) {
+            var button = this.buttons.pop();
+            this.element.removeChild(button.element);
+            button.destroy();
+        }
+        this.tracker.destroy();
+        this.element = null;
     }
 };
 
