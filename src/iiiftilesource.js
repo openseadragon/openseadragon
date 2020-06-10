@@ -395,6 +395,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "native." + this.tileFormat;
         } else {
             iiifQuality = "default." + this.tileFormat;
+        } else {
+            iiifQualuty = "gray." + this.fileFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
             if ( this.version === 2 && levelWidth === this.width ) {
