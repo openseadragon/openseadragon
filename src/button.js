@@ -396,6 +396,20 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
         this.element.disabled = false;
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
+    },
+
+    destroy: function() {
+        this.element.removeChild(this.imgRest);
+        this.imgRest = null;
+        this.element.removeChild(this.imgGroup);
+        this.imgGroup = null;
+        this.element.removeChild(this.imgHover);
+        this.imgHover = null;
+        this.element.removeChild(this.imgDown);
+        this.imgDown = null;
+        this.removeAllHandlers();
+        this.tracker.destroy();
+        this.element = null;
     }
 
 });
