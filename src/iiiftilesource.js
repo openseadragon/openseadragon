@@ -50,7 +50,6 @@ $.IIIFTileSource = function( options ){
     /* eslint-disable camelcase */
 
     $.extend( true, this, options );
-    console.log(this);
     if ( !( this.height && this.width && this['@id'] ) ) {
         throw new Error( 'IIIF required parameters not provided.' );
     }
