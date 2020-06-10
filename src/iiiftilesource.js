@@ -50,7 +50,7 @@ $.IIIFTileSource = function( options ){
     /* eslint-disable camelcase */
 
     $.extend( true, this, options );
-
+    console.log(this);
     if ( !( this.height && this.width && this['@id'] ) ) {
         throw new Error( 'IIIF required parameters not provided.' );
     }
@@ -58,6 +58,7 @@ $.IIIFTileSource = function( options ){
     options.tileSizePerScaleFactor = {};
 
     this.tileFormat = this.tileFormat || 'jpg';
+    this.tileQuality = this.tileQuality || 'default.';
 
     this.version = options.version;
 
@@ -393,10 +394,11 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         iiifTileSizeHeight = Math.ceil( tileHeight / scale );
         if (this.version === 1) {
             iiifQuality = "native." + this.tileFormat;
+        }
+        else if (this.tileQuality) {
+            iiifQuality = this.tileQuality + this.tileFormat;
         } else {
             iiifQuality = "default." + this.tileFormat;
-        } else {
-            iiifQualuty = "gray." + this.fileFormat;
         }
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
             if ( this.version === 2 && levelWidth === this.width ) {

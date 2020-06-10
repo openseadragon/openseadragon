@@ -88,6 +88,8 @@
  *      The minimum level to attempt to load.
  * @param {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
+ * @param {String} [options.tileQuality]
+ *      The quality of the image ['gray', 'default']
  */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
     var _this = this;
@@ -451,7 +453,7 @@ $.TileSource.prototype = {
             if (options.ajaxWithCredentials === undefined) {
                 options.ajaxWithCredentials = _this.ajaxWithCredentials;
             }
-
+            options.tileQuality = _this.tileQuality;
             readySource = new $TileSource( options );
             _this.ready = true;
             /**

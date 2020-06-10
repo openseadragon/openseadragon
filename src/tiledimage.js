@@ -52,6 +52,7 @@
  * @param {Number} [options.y=0] - Top position, in viewport coordinates.
  * @param {Number} [options.width=1] - Width, in viewport coordinates.
  * @param {Number} [options.height] - Height, in viewport coordinates.
+ * @param {String} [options.tileQuality="gray"]
  * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
  * to fit the image into. If specified, x, y, width and height get ignored.
  * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
@@ -145,6 +146,7 @@ $.TiledImage = function( options ) {
 
     var degrees = options.degrees || 0;
     delete options.degrees;
+    _this.tileQuality = options.tileQuality;
 
     $.extend( true, this, {
 
