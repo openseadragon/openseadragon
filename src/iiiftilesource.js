@@ -57,7 +57,7 @@ $.IIIFTileSource = function( options ){
     options.tileSizePerScaleFactor = {};
 
     this.tileFormat = this.tileFormat || 'jpg';
-    this.tileQuality = this.tileQuality || 'default.';
+    this.tileQuality = this.tileQuality || 'default';
 
     this.version = options.version;
 
@@ -395,7 +395,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifQuality = "native." + this.tileFormat;
         }
         else if (this.tileQuality) {
-            iiifQuality = this.tileQuality + this.tileFormat;
+            iiifQuality = this.tileQuality + "." + this.tileFormat;
         } else {
             iiifQuality = "default." + this.tileFormat;
         }
