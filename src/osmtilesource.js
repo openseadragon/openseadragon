@@ -113,7 +113,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
     supports: function( data, url ){
         return (
             data.type &&
-            "openstreetmaps" == data.type
+            "openstreetmaps" === data.type
         );
     },
 

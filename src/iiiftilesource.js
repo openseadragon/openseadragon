@@ -71,7 +71,7 @@ $.IIIFTileSource = function( options ){
         options.tileSize = this.tile_height;
     } else if ( this.tiles ) {
         // Version 2.0 forwards
-        if ( this.tiles.length == 1 ) {
+        if ( this.tiles.length === 1 ) {
             options.tileWidth  = this.tiles[0].width;
             // Use height if provided, otherwise assume square tiles and use width.
             options.tileHeight = this.tiles[0].height || this.tiles[0].width;
@@ -152,12 +152,12 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
     supports: function( data, url ) {
         // Version 2.0 and forwards
-        if (data.protocol && data.protocol == 'http://iiif.io/api/image') {
+        if (data.protocol && data.protocol === 'http://iiif.io/api/image') {
             return true;
         // Version 1.1
         } else if ( data['@context'] && (
-            data['@context'] == "http://library.stanford.edu/iiif/image-api/1.1/context.json" ||
-            data['@context'] == "http://iiif.io/api/image/1/context.json") ) {
+            data['@context'] === "http://library.stanford.edu/iiif/image-api/1.1/context.json" ||
+            data['@context'] === "http://iiif.io/api/image/1/context.json") ) {
             // N.B. the iiif.io context is wrong, but where the representation lives so likely to be used
             return true;
 
@@ -168,8 +168,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         } else if ( data.identifier && data.width && data.height ) {
             return true;
         } else if ( data.documentElement &&
-            "info" == data.documentElement.tagName &&
-            "http://library.stanford.edu/iiif/image-api/ns/" ==
+            "info" === data.documentElement.tagName &&
+            "http://library.stanford.edu/iiif/image-api/ns/" ===
                 data.documentElement.namespaceURI) {
             return true;
 
@@ -500,7 +500,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             rootName        = root.tagName,
             configuration   = null;
 
-        if ( rootName == "info" ) {
+        if ( rootName === "info" ) {
             try {
                 configuration = {};
                 parseXML10( root, configuration );
@@ -518,7 +518,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     function parseXML10( node, configuration, property ) {
         var i,
             value;
-        if ( node.nodeType == 3 && property ) {//text node
+        if ( node.nodeType === 3 && property ) {//text node
             value = node.nodeValue.trim();
             if( value.match(/^\d*$/)){
                 value = Number( value );
@@ -531,7 +531,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 }
                 configuration[ property ].push( value );
             }
-        } else if( node.nodeType == 1 ){
+        } else if( node.nodeType === 1 ){
             for( i = 0; i < node.childNodes.length; i++ ){
                 parseXML10( node.childNodes[ i ], configuration, node.nodeName );
             }

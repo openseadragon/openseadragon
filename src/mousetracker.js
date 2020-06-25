@@ -997,7 +997,7 @@
     /**
      * Detect available mouse wheel event name.
      */
-    $.MouseTracker.wheelEventName = ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version > 8 ) ||
+    $.MouseTracker.wheelEventName = ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version > 8 ) ||
                                                 ( 'onwheel' in document.createElement( 'div' ) ) ? 'wheel' : // Modern browsers support 'wheel'
                                     document.onmousewheel !== undefined ? 'mousewheel' :                     // Webkit and IE support at least 'mousewheel'
                                     'DOMMouseScroll';                                                        // Assume old Firefox
@@ -1015,7 +1015,7 @@
      */
     $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keydown", "keyup", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
-    if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+    if( $.MouseTracker.wheelEventName === "DOMMouseScroll" ) {
         // Older Firefox
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
@@ -1760,13 +1760,13 @@
             clientY:    event.clientY,
             pageX:      event.pageX ? event.pageX : event.clientX,
             pageY:      event.pageY ? event.pageY : event.clientY,
-            deltaMode:  event.type == "MozMousePixelScroll" ? 0 : 1, // 0=pixel, 1=line, 2=page
+            deltaMode:  event.type === "MozMousePixelScroll" ? 0 : 1, // 0=pixel, 1=line, 2=page
             deltaX:     0,
             deltaZ:     0
         };
 
         // Calculate deltaY
-        if ( $.MouseTracker.wheelEventName == "mousewheel" ) {
+        if ( $.MouseTracker.wheelEventName === "mousewheel" ) {
             simulatedEvent.deltaY = -event.wheelDelta / $.DEFAULT_SETTINGS.pixelsPerWheelLine;
         } else {
             simulatedEvent.deltaY = event.detail;
@@ -3284,7 +3284,7 @@
             // Pinch
             if ( tracker.pinchHandler && gPoints[ 0 ].type === 'touch' ) {
                 delta = delegate.pinchGPoints[ 0 ].currentPos.distanceTo( delegate.pinchGPoints[ 1 ].currentPos );
-                if ( delta != delegate.currentPinchDist ) {
+                if ( delta !== delegate.currentPinchDist ) {
                     delegate.lastPinchDist = delegate.currentPinchDist;
                     delegate.currentPinchDist = delta;
                     delegate.lastPinchCenter = delegate.currentPinchCenter;

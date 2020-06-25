@@ -284,10 +284,10 @@ $.Tile.prototype = {
             this.style                     = this.element.style;
             this.style.position            = "absolute";
         }
-        if ( this.element.parentNode != container ) {
+        if ( this.element.parentNode !== container ) {
             container.appendChild( this.element );
         }
-        if ( this.imgElement.parentNode != this.element ) {
+        if ( this.imgElement.parentNode !== this.element ) {
             this.element.appendChild( this.imgElement );
         }
 

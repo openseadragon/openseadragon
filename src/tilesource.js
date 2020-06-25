@@ -167,7 +167,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
 
-    if( 'string' == $.type( arguments[ 0 ] ) ){
+    if( 'string' === $.type( arguments[ 0 ] ) ){
         this.url = arguments[0];
     }
 
@@ -500,7 +500,7 @@ $.TileSource.prototype = {
                         msg = "HTTP " + xhr.status + " attempting to load TileSource";
                     } catch ( e ) {
                         var formattedExc;
-                        if ( typeof ( exc ) == "undefined" || !exc.toString ) {
+                        if ( typeof ( exc ) === "undefined" || !exc.toString ) {
                             formattedExc = "Unknown error";
                         } else {
                             formattedExc = exc.toString();
@@ -640,7 +640,7 @@ function processResponse( xhr ){
         throw new Error( $.getString( "Errors.Security" ) );
     } else if ( xhr.status !== 200 && xhr.status !== 0 ) {
         status     = xhr.status;
-        statusText = ( status == 404 ) ?
+        statusText = ( status === 404 ) ?
             "Not Found" :
             xhr.statusText;
         throw new Error( $.getString( "Errors.Status", status, statusText ) );
@@ -654,6 +654,7 @@ function processResponse( xhr ){
         } catch (e){
             data = xhr.responseText;
         }
+    /* eslint-disable no-useless-escape */
     }else if( responseText.match(/\s*[\{\[].*/) ){
         try{
           data = $.parseJSON(responseText);
@@ -690,6 +691,8 @@ $.TileSource.determineType = function( tileSource, data, url ){
     }
 
     $.console.error( "No TileSource was able to open %s %s", url, data );
+
+    return null;
 };
 
 

@@ -898,7 +898,7 @@ $.Viewport.prototype = {
          * @property {Number} degrees - The number of degrees the rotation was set to.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.viewer.raiseEvent('rotate', {"degrees": degrees});
+        this.viewer.raiseEvent('rotate', {degrees: degrees});
         return this;
     },
 
@@ -1567,7 +1567,7 @@ $.Viewport.prototype = {
        * @property {Number} flipped - The flip state after this change.
        * @property {?Object} userData - Arbitrary subscriber-defined object.
        */
-      this.viewer.raiseEvent('flip', {"flipped": state});
+      this.viewer.raiseEvent('flip', {flipped: state});
       return this;
     }
 

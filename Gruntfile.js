@@ -1,6 +1,8 @@
+/* eslint-disable no-redeclare */
 /* global module */
 
 module.exports = function(grunt) {
+    /* eslint-disable no-undef */
     var dateFormat = require('dateformat');
 
     // ----------
@@ -123,6 +125,7 @@ module.exports = function(grunt) {
                 banner: banner,
                 compress: {
                     sequences: false,
+                    /* eslint-disable camelcase */
                     join_vars: false
                 },
                 sourceMap: true,

@@ -108,7 +108,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         if ( data.Image ) {
             ns = data.Image.xmlns;
         } else if ( data.documentElement) {
-            if ("Image" == data.documentElement.localName || "Image" == data.documentElement.tagName) {
+            if ("Image" === data.documentElement.localName || "Image" === data.documentElement.tagName) {
                 ns = data.documentElement.namespaceURI;
             }
         }
@@ -142,9 +142,9 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
 
         if (url && !options.tilesUrl) {
             options.tilesUrl = url.replace(
-                    /([^\/]+?)(\.(dzi|xml|js)?(\?[^\/]*)?)?\/?$/, '$1_files/');
+                    /([^/]+?)(\.(dzi|xml|js)?(\?[^/]*)?)?\/?$/, '$1_files/');
 
-            if (url.search(/\.(dzi|xml|js)\?/) != -1) {
+            if (url.search(/\.(dzi|xml|js)\?/) !== -1) {
                 options.queryParams = url.match(/\?.*/);
             }else{
                 options.queryParams = '';
@@ -240,7 +240,7 @@ function configureFromXML( tileSource, xmlDoc ){
         sizeNode,
         i;
 
-    if ( rootName == "Image" ) {
+    if ( rootName === "Image" ) {
 
         try {
             sizeNode = root.getElementsByTagName("Size" )[ 0 ];
@@ -304,9 +304,9 @@ function configureFromXML( tileSource, xmlDoc ){
                 e :
                 new Error( $.getString("Errors.Dzi") );
         }
-    } else if ( rootName == "Collection" ) {
+    } else if ( rootName === "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
-    } else if ( rootName == "Error" ) {
+    } else if ( rootName === "Error" ) {
         var messageNode = root.getElementsByTagName("Message")[0];
         var message = messageNode.firstChild.nodeValue;
         throw new Error(message);

@@ -66,15 +66,15 @@ $.Navigator = function( options ){
         };
 
         if( options.position ){
-            if( 'BOTTOM_RIGHT' == options.position ){
+            if( 'BOTTOM_RIGHT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
-            } else if( 'BOTTOM_LEFT' == options.position ){
+            } else if( 'BOTTOM_LEFT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
-            } else if( 'TOP_RIGHT' == options.position ){
+            } else if( 'TOP_RIGHT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
-            } else if( 'TOP_LEFT' == options.position ){
+            } else if( 'TOP_LEFT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
-            } else if( 'ABSOLUTE' == options.position ){
+            } else if( 'ABSOLUTE' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
                options.controlOptions.top = options.top;
                options.controlOptions.left = options.left;
@@ -128,7 +128,7 @@ $.Navigator = function( options ){
     this.totalBorderWidths = new $.Point(this.borderWidth * 2, this.borderWidth * 2).minus(this.fudge);
 
 
-    if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
+    if ( options.controlOptions.anchor !== $.ControlAnchor.NONE ) {
         (function( style, borderWidth ){
             style.margin        = '0px';
             style.border        = borderWidth + 'px solid ' + options.borderColor;
@@ -179,8 +179,8 @@ $.Navigator = function( options ){
         options.controlOptions
     );
 
-    this._resizeWithViewer = options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE &&
-        options.controlOptions.anchor != $.ControlAnchor.NONE;
+    this._resizeWithViewer = options.controlOptions.anchor !== $.ControlAnchor.ABSOLUTE &&
+        options.controlOptions.anchor !== $.ControlAnchor.NONE;
 
     if (options.width && options.height) {
         this.setWidth(options.width);
@@ -282,7 +282,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     setWidth: function(width) {
         this.width = width;
-        this.element.style.width = typeof (width) == "number" ? (width + 'px') : width;
+        this.element.style.width = typeof (width) === "number" ? (width + 'px') : width;
         this._resizeWithViewer = false;
     },
 
@@ -292,7 +292,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     setHeight: function(height) {
         this.height = height;
-        this.element.style.height = typeof (height) == "number" ? (height + 'px') : height;
+        this.element.style.height = typeof (height) === "number" ? (height + 'px') : height;
         this._resizeWithViewer = false;
     },
 

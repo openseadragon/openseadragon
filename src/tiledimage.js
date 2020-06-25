@@ -1874,7 +1874,7 @@ function compareTiles( previousBest, tile ) {
 
     if ( tile.visibility > previousBest.visibility ) {
         return tile;
-    } else if ( tile.visibility == previousBest.visibility ) {
+    } else if ( tile.visibility === previousBest.visibility ) {
         if ( tile.squaredDistance < previousBest.squaredDistance ) {
             return tile;
         }
