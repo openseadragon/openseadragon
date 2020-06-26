@@ -172,6 +172,7 @@ $.Drawer.prototype = {
      * This function does not take rotation into account, thus assuming provided
      * point is at 0 degree.
      * @param {OpenSeadragon.Point} point - the pixel point to convert
+     * @return {OpenSeadragon.Point}
      */
     viewportCoordToDrawerCoord: function(point) {
         var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
