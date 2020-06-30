@@ -1333,7 +1333,7 @@ function OpenSeadragon( options ){
          * @returns {Element} The element with the given id, null, or the element itself.
          */
         getElement: function( element ) {
-            if ( typeof ( element ) == "string" ) {
+            if ( typeof ( element ) === "string" ) {
                 element = document.getElementById( element );
             }
             return element;
@@ -1352,7 +1352,7 @@ function OpenSeadragon( options ){
                 offsetParent;
 
             element      = $.getElement( element );
-            isFixed      = $.getElementStyle( element ).position == "fixed";
+            isFixed      = $.getElementStyle( element ).position === "fixed";
             offsetParent = getOffsetParent( element, isFixed );
 
             while ( offsetParent ) {
@@ -1365,7 +1365,7 @@ function OpenSeadragon( options ){
                 }
 
                 element = offsetParent;
-                isFixed = $.getElementStyle( element ).position == "fixed";
+                isFixed = $.getElementStyle( element ).position === "fixed";
                 offsetParent = getOffsetParent( element, isFixed );
             }
 
@@ -1397,7 +1397,7 @@ function OpenSeadragon( options ){
                 boundingRect = element.getBoundingClientRect();
             }
 
-            win = ( doc == doc.window ) ?
+            win = ( doc === doc.window ) ?
                 doc :
                 ( doc.nodeType === 9 ) ?
                     doc.defaultView || doc.parentWindow :
@@ -1548,7 +1548,7 @@ function OpenSeadragon( options ){
          */
         getMousePosition: function( event ) {
 
-            if ( typeof ( event.pageX ) == "number" ) {
+            if ( typeof ( event.pageX ) === "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1558,7 +1558,7 @@ function OpenSeadragon( options ){
 
                     return result;
                 };
-            } else if ( typeof ( event.clientX ) == "number" ) {
+            } else if ( typeof ( event.clientX ) === "number" ) {
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
@@ -1593,7 +1593,7 @@ function OpenSeadragon( options ){
             var docElement  = document.documentElement || {},
                 body        = document.body || {};
 
-            if ( typeof ( window.pageXOffset ) == "number" ) {
+            if ( typeof ( window.pageXOffset ) === "number" ) {
                 $.getPageScroll = function(){
                     return new $.Point(
                         window.pageXOffset,
@@ -1670,7 +1670,7 @@ function OpenSeadragon( options ){
                 };
             }
 
-            return $.setPageScroll( scroll );
+            $.setPageScroll( scroll );
         },
 
         /**
@@ -1682,7 +1682,7 @@ function OpenSeadragon( options ){
             var docElement = document.documentElement || {},
                 body    = document.body || {};
 
-            if ( typeof ( window.innerWidth ) == 'number' ) {
+            if ( typeof ( window.innerWidth ) === 'number' ) {
                 $.getWindowSize = function(){
                     return new $.Point(
                         window.innerWidth,
@@ -1814,7 +1814,7 @@ function OpenSeadragon( options ){
                 return img;
             };
 
-            if ( $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 7 ) {
+            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 7 ) {
 
                 $.makeTransparentImage = function( src ){
                     var img     = $.makeNeutralElement( "img" ),
@@ -2227,7 +2227,7 @@ function OpenSeadragon( options ){
 
             request.onreadystatechange = function() {
                 // 4 = DONE (https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Properties)
-                if ( request.readyState == 4 ) {
+                if ( request.readyState === 4 ) {
                     request.onreadystatechange = function(){};
 
                     // With protocols other than http/https, a successful request status is in
@@ -2281,8 +2281,8 @@ function OpenSeadragon( options ){
                     to point developers in the right direction. We test the exception number because IE's
                     error messages are localized.
                 */
-                var oldIE = $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 10;
-                if ( oldIE && typeof ( e.number ) != "undefined" && e.number == -2147024891 ) {
+                var oldIE = $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 10;
+                if ( oldIE && typeof ( e.number ) !== "undefined" && e.number === -2147024891 ) {
                     msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
                 }
 
@@ -2353,7 +2353,7 @@ function OpenSeadragon( options ){
                 callbackParam = options.param || 'callback',
                 callback      = options.callback;
 
-            url = url.replace( /(\=)\?(&|$)|\?\?/i, replace );
+            url = url.replace( /(=)\?(&|$)|\?\?/i, replace );
             // Add callback manually
             url += (/\?/.test( url ) ? "&" : "?") + callbackParam + "=" + jsonpCallback;
 
@@ -2534,12 +2534,12 @@ function OpenSeadragon( options ){
 
 
     var FILEFORMATS = {
-            "bmp":  false,
-            "jpeg": true,
-            "jpg":  true,
-            "png":  true,
-            "tif":  false,
-            "wdp":  false
+            bmp:  false,
+            jpeg: true,
+            jpg:  true,
+            png:  true,
+            tif:  false,
+            wdp:  false
         },
         URLPARAMS = {};
 
@@ -2624,17 +2624,17 @@ function OpenSeadragon( options ){
         //determine if this browser supports image alpha transparency
         $.Browser.alpha = !(
             (
-                $.Browser.vendor == $.BROWSERS.IE &&
+                $.Browser.vendor === $.BROWSERS.IE &&
                 $.Browser.version < 9
             ) || (
-                $.Browser.vendor == $.BROWSERS.CHROME &&
+                $.Browser.vendor === $.BROWSERS.CHROME &&
                 $.Browser.version < 2
             )
         );
 
         //determine if this browser supports element.style.opacity
         $.Browser.opacity = !(
-            $.Browser.vendor == $.BROWSERS.IE &&
+            $.Browser.vendor === $.BROWSERS.IE &&
             $.Browser.version < 9
         );
 
@@ -2736,7 +2736,7 @@ function OpenSeadragon( options ){
      * @returns {Element}
      */
     function getOffsetParent( element, isFixed ) {
-        if ( isFixed && element != document.body ) {
+        if ( isFixed && element !== document.body ) {
             return document.body;
         } else {
             return element.offsetParent;

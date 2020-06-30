@@ -98,7 +98,7 @@ $.ReferenceStrip = function ( options ) {
     $.extend( this, options );
     //Private state properties
     THIS[this.id] = {
-        "animating":           false
+        animating:           false
     };
 
     this.minPixelRatio = this.viewer.minPixelRatio;
@@ -139,7 +139,7 @@ $.ReferenceStrip = function ( options ) {
             { anchor: $.ControlAnchor.BOTTOM_LEFT }
         );
     } else {
-        if ( "horizontal" == options.scroll ) {
+        if ( "horizontal" === options.scroll ) {
             this.element.style.width = (
                 viewerSize.x *
                 options.sizeRatio *
@@ -225,7 +225,7 @@ $.ReferenceStrip = function ( options ) {
         this.panels.push( element );
 
     }
-    loadPanels( this, this.scroll == 'vertical' ? viewerSize.y : viewerSize.x, 0 );
+    loadPanels( this, this.scroll === 'vertical' ? viewerSize.y : viewerSize.x, 0 );
     this.setFocus( 0 );
 
 };
@@ -251,7 +251,7 @@ $.extend( $.ReferenceStrip.prototype, $.EventSource.prototype, $.Viewer.prototyp
             this.currentSelected = element;
             this.currentSelected.style.background = '#999';
 
-            if ( 'horizontal' == this.scroll ) {
+            if ( 'horizontal' === this.scroll ) {
                 //right left
                 offset = ( Number( page ) ) * ( this.panelWidth + 3 );
                 if ( offset > offsetLeft + viewerSize.x - this.panelWidth ) {
@@ -324,7 +324,7 @@ function onStripDrag( event ) {
         viewerSize   = $.getElementSize( this.viewer.canvas );
     this.dragging = true;
     if ( this.element ) {
-        if ( 'horizontal' == this.scroll ) {
+        if ( 'horizontal' === this.scroll ) {
             if ( -event.delta.x > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
@@ -372,7 +372,7 @@ function onStripScroll( event ) {
         scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
         viewerSize   = $.getElementSize( this.viewer.canvas );
     if ( this.element ) {
-        if ( 'horizontal' == this.scroll ) {
+        if ( 'horizontal' === this.scroll ) {
             if ( event.scroll > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
@@ -415,7 +415,7 @@ function loadPanels( strip, viewerSize, scroll ) {
         style,
         i,
         element;
-    if ( 'horizontal' == strip.scroll ) {
+    if ( 'horizontal' === strip.scroll ) {
         panelSize = strip.panelWidth;
     } else {
         panelSize = strip.panelHeight;
@@ -504,7 +504,7 @@ function onStripEnter( event ) {
     //element.style.border = '1px solid #555';
     //element.style.background = '#000';
 
-    if ( 'horizontal' == this.scroll ) {
+    if ( 'horizontal' === this.scroll ) {
 
         //element.style.paddingTop = "0px";
         element.style.marginBottom = "0px";
@@ -527,7 +527,7 @@ function onStripEnter( event ) {
 function onStripExit( event ) {
     var element = event.eventSource.element;
 
-    if ( 'horizontal' == this.scroll ) {
+    if ( 'horizontal' === this.scroll ) {
 
         //element.style.paddingTop = "10px";
         element.style.marginBottom = "-" + ( $.getElementSize( element ).y / 2 ) + "px";

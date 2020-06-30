@@ -107,7 +107,7 @@
          * @param {String} optional - url
          */
         supports: function(data, url) {
-            return (data.type && "zoomifytileservice" == data.type);
+            return (data.type && "zoomifytileservice" === data.type);
         },
 
         /**

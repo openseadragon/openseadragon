@@ -109,10 +109,10 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
     supports: function( data, url ){
         return (
             data.type &&
-            "legacy-image-pyramid" == data.type
+            "legacy-image-pyramid" === data.type
         ) || (
             data.documentElement &&
-            "legacy-image-pyramid" == data.documentElement.getAttribute('type')
+            "legacy-image-pyramid" === data.documentElement.getAttribute('type')
         );
     },
 
@@ -241,7 +241,7 @@ function configureFromXML( tileSource, xmlDoc ){
         level,
         i;
 
-    if ( rootName == "image" ) {
+    if ( rootName === "image" ) {
 
         try {
             conf = {
@@ -267,9 +267,9 @@ function configureFromXML( tileSource, xmlDoc ){
                 e :
                 new Error( 'Unknown error parsing Legacy Image Pyramid XML.' );
         }
-    } else if ( rootName == "collection" ) {
+    } else if ( rootName === "collection" ) {
         throw new Error( 'Legacy Image Pyramid Collections not yet supported.' );
-    } else if ( rootName == "error" ) {
+    } else if ( rootName === "error" ) {
         throw new Error( 'Error: ' + xmlDoc );
     }
 

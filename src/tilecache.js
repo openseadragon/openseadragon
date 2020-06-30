@@ -196,7 +196,7 @@ $.TileCache.prototype = {
                 worstLevel  = worstTile.level;
 
                 if ( prevTime < worstTime ||
-                   ( prevTime == worstTime && prevLevel > worstLevel ) ) {
+                   ( prevTime === worstTime && prevLevel > worstLevel ) ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
                     worstTileRecord = prevTileRecord;

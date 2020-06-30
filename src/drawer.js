@@ -284,8 +284,8 @@ $.Drawer.prototype = {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
             var viewportSize = this._calculateCanvasSize();
-            if( this.canvas.width != viewportSize.x ||
-                this.canvas.height != viewportSize.y ) {
+            if( this.canvas.width !== viewportSize.x ||
+                this.canvas.height !== viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
                 this._updateImageSmoothingEnabled(this.context);

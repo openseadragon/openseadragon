@@ -218,7 +218,7 @@
             i;
 
         for ( i = controls.length - 1; i >= 0; i-- ) {
-            if ( controls[ i ].element == element ) {
+            if ( controls[ i ].element === element ) {
                 return i;
             }
         }

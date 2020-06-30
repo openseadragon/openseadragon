@@ -103,7 +103,7 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        return ( data.type && "tiledmapservice" == data.type );
+        return ( data.type && "tiledmapservice" === data.type );
     },
 
     /**

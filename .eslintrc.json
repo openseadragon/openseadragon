@@ -1,9 +1,33 @@
 {
+    "root": true,
+    "extends": [
+        "eslint:recommended"
+    ],
     "env": {
+        "es6": false,
         "browser": true
     },
-    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 5,
+        "sourceType": "script",
+        "ecmaFeatures": {
+            "globalReturn": false,
+            "impliedStrict": false,
+            "jsx": false
+        }
+    },
+    "globals": {
+        "OpenSeadragon": true,
+        "define": false,
+        "module": false
+    },
     "rules": {
+        "no-unused-vars": [
+            "error",
+            {
+                "args": "none"
+            }
+        ],
         "indent": [
             "off",
             4
@@ -16,24 +40,18 @@
             "error",
             "always"
         ],
-        "no-unused-vars": [
-            "error",
-            {
-                "args": "none"
-            }
-        ],
         "block-scoped-var": [
             "error"
         ],
         "consistent-return": [
-            "off"
+            "error"
         ],
         "curly": [
             "error",
             "all"
         ],
         "eqeqeq": [
-            "off"
+            "error"
         ],
         "no-eval": [
             "error"
@@ -83,7 +101,7 @@
             "error"
         ],
         "no-useless-escape": [
-            "off"
+            "error"
         ],
         "no-useless-return": [
             "error"
@@ -103,7 +121,9 @@
         "no-use-before-define": [
             "error",
             {
-                "functions": false
+                "functions": false,
+                "classes": true,
+                "variables": true
             }
         ],
         "array-bracket-spacing": [
@@ -237,7 +257,7 @@
             "after"
         ],
         "quote-props": [
-            "off",
+            "error",
             "as-needed"
         ],
         "semi-spacing": [
@@ -273,10 +293,5 @@
         "no-loop-func": [
             "error"
         ]
-    },
-    "globals": {
-        "OpenSeadragon": true,
-        "define": false,
-        "module": false
     }
 }

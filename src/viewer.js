@@ -200,19 +200,19 @@ $.Viewer = function( options ) {
 
     //Private state properties
     THIS[ this.hash ] = {
-        "fsBoundsDelta":     new $.Point( 1, 1 ),
-        "prevContainerSize": null,
-        "animating":         false,
-        "forceRedraw":       false,
-        "mouseInside":       false,
-        "group":             null,
+        fsBoundsDelta:     new $.Point( 1, 1 ),
+        prevContainerSize: null,
+        animating:         false,
+        forceRedraw:       false,
+        mouseInside:       false,
+        group:             null,
         // whether we should be continuously zooming
-        "zooming":           false,
+        zooming:           false,
         // how much we should be continuously zooming by
-        "zoomFactor":        null,
-        "lastZoomTime":      null,
-        "fullPage":          false,
-        "onfullscreenchange": null
+        zoomFactor:        null,
+        lastZoomTime:      null,
+        fullPage:          false,
+        onfullscreenchange: null
     };
 
     this._sequenceIndex = 0;
@@ -521,7 +521,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.close();
 
         if (!tileSources) {
-            return;
+            return this;
         }
 
         if (this.sequenceMode && $.isArray(tileSources)) {
@@ -530,7 +530,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.referenceStrip = null;
             }
 
-            if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
+            if (typeof initialPage !== 'undefined' && !isNaN(initialPage)) {
               this.initialPage = initialPage;
             }
 
@@ -545,7 +545,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             this._updateSequenceButtons( this._sequenceIndex );
-            return;
+            return this;
         }
 
         if (!$.isArray(tileSources)) {
@@ -553,7 +553,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         if (!tileSources.length) {
-            return;
+            return this;
         }
 
         this._opening = true;
@@ -931,7 +931,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             i;
 
         //don't bother modifying the DOM if we are already in full page mode.
-        if ( fullPage == this.isFullPage() ) {
+        if ( fullPage === this.isFullPage() ) {
             return this;
         }
 
@@ -1225,7 +1225,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {Boolean}
      */
     isVisible: function () {
-        return this.container.style.visibility != "hidden";
+        return this.container.style.visibility !== "hidden";
     },
 
 
@@ -1429,7 +1429,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 if (queueItem.options.replace) {
                     var newIndex = _this.world.getIndexOfItem(queueItem.options.replaceItem);
-                    if (newIndex != -1) {
+                    if (newIndex !== -1) {
                         queueItem.options.index = newIndex;
                     }
                     _this.world.removeItem(queueItem.options.replaceItem);
@@ -2283,12 +2283,12 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
     var _this = viewer;
 
     //allow plain xml strings or json strings to be parsed here
-    if ( $.type( tileSource ) == 'string' ) {
+    if ( $.type( tileSource ) === 'string' ) {
         //xml should start with "<" and end with ">"
         if ( tileSource.match( /^\s*<.*>\s*$/ ) ) {
             tileSource = $.parseXml( tileSource );
         //json should start with "{" or "[" and end with "}" or "]"
-        } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
+        } else if ( tileSource.match(/^\s*[{[].*[}\]]\s*$/ ) ) {
             try {
               var tileSourceJ = $.parseJSON(tileSource);
               tileSource = tileSourceJ;
@@ -2315,7 +2315,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
     }
 
     setTimeout( function() {
-        if ( $.type( tileSource ) == 'string' ) {
+        if ( $.type( tileSource ) === 'string' ) {
             //If its still a string it means it must be a url at this point
             tileSource = new $.TileSource({
                 url: tileSource,
@@ -2690,7 +2690,7 @@ function onCanvasKeyPress( event ) {
 function onCanvasClick( event ) {
     var gestureSettings;
 
-    var haveKeyboardFocus = document.activeElement == this.canvas;
+    var haveKeyboardFocus = document.activeElement === this.canvas;
 
     // If we don't have keyboard focus, request it.
     if ( !haveKeyboardFocus ) {
@@ -2834,11 +2834,11 @@ function onCanvasDrag( event ) {
             this.viewport.centerSpringX.target.value -= delta.x;
             this.viewport.centerSpringY.target.value -= delta.y;
 
-            if (bounds.x != constrainedBounds.x) {
+            if (bounds.x !== constrainedBounds.x) {
                 event.delta.x = 0;
             }
 
-            if (bounds.y != constrainedBounds.y) {
+            if (bounds.y !== constrainedBounds.y) {
                 event.delta.y = 0;
             }
         }
@@ -2927,7 +2927,7 @@ function onCanvasEnter( event ) {
 
 function onCanvasExit( event ) {
 
-    if (window.location != window.parent.location){
+    if (window.location !== window.parent.location){
         $.MouseTracker.resetAllMouseTrackers();
     }
 
@@ -3193,6 +3193,8 @@ function onCanvasScroll( event ) {
             return false;   // We are swallowing this event
         }
     }
+
+    return undefined;
 }
 
 function onContainerEnter( event ) {
