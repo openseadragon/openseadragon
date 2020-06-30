@@ -654,8 +654,7 @@ function processResponse( xhr ){
         } catch (e){
             data = xhr.responseText;
         }
-    /* eslint-disable no-useless-escape */
-    }else if( responseText.match(/\s*[\{\[].*/) ){
+    }else if( responseText.match(/\s*[{[].*/) ){
         try{
           data = $.parseJSON(responseText);
         } catch(e){

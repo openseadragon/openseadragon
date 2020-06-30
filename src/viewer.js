@@ -2288,8 +2288,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
         if ( tileSource.match( /^\s*<.*>\s*$/ ) ) {
             tileSource = $.parseXml( tileSource );
         //json should start with "{" or "[" and end with "}" or "]"
-        /* eslint-disable no-useless-escape */
-        } else if ( tileSource.match(/^\s*[\{\[].*[\}\]]\s*$/ ) ) {
+        } else if ( tileSource.match(/^\s*[{[].*[}\]]\s*$/ ) ) {
             try {
               var tileSourceJ = $.parseJSON(tileSource);
               tileSource = tileSourceJ;
@@ -3195,7 +3194,7 @@ function onCanvasScroll( event ) {
         }
     }
 
-    return true;
+    return undefined;
 }
 
 function onContainerEnter( event ) {
