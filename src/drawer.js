@@ -551,7 +551,8 @@ $.Drawer.prototype = {
             });
         }
         if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+          var flipped = tiledImage._drawer.viewer.viewport.getFlip();
+          if(flipped.x || flipped.y) {
               tiledImage._drawer._flip();
           }
         }
@@ -696,9 +697,11 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        if(this.viewer.viewport.flipped){
+        if(this.viewer.viewport.flipped.x || this.viewer.viewport.flipped.y){
           context.rotate(Math.PI / 180 * -options.degrees);
-          context.scale(-1, 1);
+          context.scale(
+            this.viewer.viewport.flipped.x ? -1 : 1,
+            this.viewer.viewport.flipped.y ? -1 : 1);
         } else{
           context.rotate(Math.PI / 180 * options.degrees);
         }
@@ -713,9 +716,13 @@ $.Drawer.prototype = {
         this.getCanvasCenter();
       var context = this._getContext(options.useSketch);
 
-      context.translate(point.x, 0);
-      context.scale(-1, 1);
-      context.translate(-point.x, 0);
+      context.translate(this.viewer.viewport.flipped.x ? point.x : 0,
+        this.viewer.viewport.flipped.y ? point.y : 0);
+      context.scale(
+        this.viewer.viewport.flipped.x ? -1 : 1,
+        this.viewer.viewport.flipped.y ? -1 : 1);
+      context.translate(this.viewer.viewport.flipped.x ? -point.x : 0,
+        this.viewer.viewport.flipped.y ? -point.y : 0);
     },
 
     // private

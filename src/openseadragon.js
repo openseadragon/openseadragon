@@ -211,7 +211,7 @@
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
-  * @property {Boolean} [flipped=false]
+  * @property {Boolean} [flipped={x: false, y: false}]
   *     Initial flip state.
   *
   * @property {Number} [minZoomLevel=null]
@@ -1181,7 +1181,7 @@ function OpenSeadragon( options ){
             degrees:                    0,
 
             // INITIAL FLIP STATE
-            flipped:                    false,
+            flipped:                    { x: false, y: false },
 
             // APPEARANCE
             opacity:                    1,
