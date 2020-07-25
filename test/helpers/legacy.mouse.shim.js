@@ -12,12 +12,12 @@
     }
 
     $.MouseTracker.havePointerEvents = false;
-    if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
-        $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
-        $.MouseTracker.haveMouseEnter = true;
-    } else {
+    $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+    if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-        $.MouseTracker.haveMouseEnter = false;
+        $.MouseTracker.haveMouseOver = true;
+    } else {
+        $.MouseTracker.haveMouseOver = false;
     }
     $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
     if ( 'ontouchstart' in window ) {

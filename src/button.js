@@ -77,6 +77,7 @@ $.ButtonState = {
  * @param {OpenSeadragon.EventHandler} [options.onExit=null] Event handler callback for {@link OpenSeadragon.Button.event:exit}.
  * @param {OpenSeadragon.EventHandler} [options.onFocus=null] Event handler callback for {@link OpenSeadragon.Button.event:focus}.
  * @param {OpenSeadragon.EventHandler} [options.onBlur=null] Event handler callback for {@link OpenSeadragon.Button.event:blur}.
+ * @param {Object} [options.userData=null] Arbitrary object to be passed unchanged to any attached handler methods.
  */
 $.Button = function( options ) {
 
@@ -111,7 +112,8 @@ $.Button = function( options ) {
         onEnter:            null,
         onExit:             null,
         onFocus:            null,
-        onBlur:             null
+        onBlur:             null,
+        userData:           null
 
     }, options );
 
@@ -203,6 +205,7 @@ $.Button = function( options ) {
      */
     this.tracker = new $.MouseTracker({
 
+        userData:           'Button.tracker',
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
@@ -220,14 +223,18 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "enter", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                } );
             } else if ( !event.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
         },
 
         focusHandler: function ( event ) {
-            this.enterHandler( event );
+            _this.tracker.enterHandler( event );
             /**
              * Raised when the Button element receives focus.
              *
@@ -238,10 +245,14 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
+            _this.raiseEvent( "focus", {
+                eventSource: _this,
+                originalEvent: event.originalEvent,
+                userData: _this.userData
+            } );
         },
 
-        exitHandler: function( event ) {
+        leaveHandler: function( event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
@@ -254,12 +265,16 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "exit", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                } );
             }
         },
 
         blurHandler: function ( event ) {
-            this.exitHandler( event );
+            _this.tracker.leaveHandler( event );
             /**
              * Raised when the Button element loses focus.
              *
@@ -270,7 +285,11 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
+            _this.raiseEvent( "blur", {
+                eventSource: _this,
+                originalEvent: event.originalEvent,
+                userData: _this.userData
+            } );
         },
 
         pressHandler: function ( event ) {
@@ -285,7 +304,11 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
+            _this.raiseEvent( "press", {
+                eventSource: _this,
+                originalEvent: event.originalEvent,
+                userData: _this.userData
+            } );
         },
 
         releaseHandler: function( event ) {
@@ -301,7 +324,11 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "release", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                } );
             } else if ( event.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -321,7 +348,11 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent("click", { originalEvent: event.originalEvent });
+                _this.raiseEvent("click", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                });
             }
         },
 
@@ -338,7 +369,11 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "click", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                } );
                 /***
                  * Raised when the mouse button is released or touch ends in the Button element.
                  *
@@ -349,7 +384,11 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
+                _this.raiseEvent( "release", {
+                    eventSource: _this,
+                    originalEvent: event.originalEvent,
+                    userData: _this.userData
+                } );
                 return false;
             }
             return true;
@@ -363,8 +402,8 @@ $.Button = function( options ) {
 $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.Button.prototype */{
 
     /**
-     * TODO: Determine what this function is intended to do and if it's actually
-     * useful as an API point.
+     * Used by a button container element (e.g. a ButtonGroup) to transition the button state
+     * to ButtonState.GROUP.
      * @function
      */
     notifyGroupEnter: function() {
@@ -372,8 +411,8 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
-     * TODO: Determine what this function is intended to do and if it's actually
-     * useful as an API point.
+     * Used by a button container element (e.g. a ButtonGroup) to transition the button state
+     * to ButtonState.REST.
      * @function
      */
     notifyGroupExit: function() {

@@ -202,7 +202,7 @@ module.exports = function(grunt) {
             target: sources
         },
         "git-describe": {
-            "options": {
+            options: {
                 failOnError: false
             },
             build: {}

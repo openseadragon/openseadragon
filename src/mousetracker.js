@@ -74,8 +74,14 @@
      *      event is fired.
      * @param {OpenSeadragon.EventHandler} [options.enterHandler=null]
      *      An optional handler for pointer enter.
+     * @param {OpenSeadragon.EventHandler} [options.leaveHandler=null]
+     *      An optional handler for pointer leave.
      * @param {OpenSeadragon.EventHandler} [options.exitHandler=null]
-     *      An optional handler for pointer exit.
+     *      An optional handler for pointer leave. <span style="color:red;">Deprecated. Use leaveHandler instead.</span>
+     * @param {OpenSeadragon.EventHandler} [options.overHandler=null]
+     *      An optional handler for pointer over.
+     * @param {OpenSeadragon.EventHandler} [options.outHandler=null]
+     *      An optional handler for pointer out.
      * @param {OpenSeadragon.EventHandler} [options.pressHandler=null]
      *      An optional handler for pointer press.
      * @param {OpenSeadragon.EventHandler} [options.nonPrimaryPressHandler=null]
@@ -165,7 +171,10 @@
         this.stopDelay             = options.stopDelay         || 50;
 
         this.enterHandler             = options.enterHandler             || null;
+        this.leaveHandler             = options.leaveHandler             || null;
         this.exitHandler              = options.exitHandler              || null;
+        this.overHandler              = options.overHandler              || null;
+        this.outHandler               = options.outHandler               || null;
         this.pressHandler             = options.pressHandler             || null;
         this.nonPrimaryPressHandler   = options.nonPrimaryPressHandler   || null;
         this.releaseHandler           = options.releaseHandler           || null;
@@ -207,10 +216,10 @@
             DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
             MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
 
-            mouseenter:            function ( event ) { onMouseEnter( _this, event ); }, // Used on IE8 only
-            mouseleave:            function ( event ) { onMouseLeave( _this, event ); }, // Used on IE8 only
-            mouseover:             function ( event ) { onMouseOver( _this, event ); },
-            mouseout:              function ( event ) { onMouseOut( _this, event ); },
+            mouseover:             function ( event ) { onMouseOver( _this, event ); }, // IE9+ only
+            mouseout:              function ( event ) { onMouseOut( _this, event ); },  // IE9+ only
+            mouseenter:            function ( event ) { onMouseEnter( _this, event ); },
+            mouseleave:            function ( event ) { onMouseLeave( _this, event ); },
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
             mouseup:               function ( event ) { onMouseUp( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
@@ -231,6 +240,10 @@
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
+            pointerenter:          function ( event ) { onPointerEnter( _this, event ); },
+            MSPointerEnter:        function ( event ) { onPointerEnter( _this, event ); },
+            pointerleave:          function ( event ) { onPointerLeave( _this, event ); },
+            MSPointerLeave:        function ( event ) { onPointerLeave( _this, event ); },
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -403,12 +416,74 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        enterHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @deprecated Use leaveHandler instead
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} event.buttons
+         *      Current buttons pressed.
+         *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
+         * @param {Boolean} event.insideElementPressed
+         *      True if the left mouse button is currently being pressed and was
+         *      initiated inside the tracked element, otherwise false.
+         * @param {Boolean} event.buttonDownAny
+         *      Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        leaveHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @deprecated Use leaveHandler instead
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} event.buttons
+         *      Current buttons pressed.
+         *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
+         * @param {Boolean} event.insideElementPressed
+         *      True if the left mouse button is currently being pressed and was
+         *      initiated inside the tracked element, otherwise false.
+         * @param {Boolean} event.buttonDownAny
+         *      Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
          * @param {Boolean} event.preventDefaultAction
          *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
-        enterHandler: function () { },
+        exitHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -440,7 +515,39 @@
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
-        exitHandler: function () { },
+        overHandler: function () { },
+
+        /**
+         * Implement or assign implementation to these handlers during or after
+         * calling the constructor.
+         * @function
+         * @param {Object} event
+         * @param {OpenSeadragon.MouseTracker} event.eventSource
+         *      A reference to the tracker instance.
+         * @param {String} event.pointerType
+         *     "mouse", "touch", "pen", etc.
+         * @param {OpenSeadragon.Point} event.position
+         *      The position of the event relative to the tracked element.
+         * @param {Number} event.buttons
+         *      Current buttons pressed.
+         *      Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
+         * @param {Number} event.pointers
+         *      Number of pointers (all types) active in the tracked element.
+         * @param {Boolean} event.insideElementPressed
+         *      True if the left mouse button is currently being pressed and was
+         *      initiated inside the tracked element, otherwise false.
+         * @param {Boolean} event.buttonDownAny
+         *      Was the button down anywhere in the screen during the event. <span style="color:red;">Deprecated. Use buttons instead.</span>
+         * @param {Boolean} event.isTouchEvent
+         *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
+         * @param {Object} event.originalEvent
+         *      The original event object.
+         * @param {Boolean} event.preventDefaultAction
+         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
+         * @param {Object} event.userData
+         *      Arbitrary user-defined object.
+         */
+        outHandler: function () { },
 
         /**
          * Implement or assign implementation to these handlers during or after
@@ -1020,38 +1127,37 @@
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
-    // Note: window.navigator.pointerEnable is deprecated on IE 11 and not part of W3C spec.
-    if ( window.PointerEvent && ( window.navigator.pointerEnabled || $.Browser.vendor !== $.BROWSERS.IE ) ) {
+    if ( window.PointerEvent ) {
         // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
         $.MouseTracker.havePointerEvents = true;
-        $.MouseTracker.subscribeEvents.push( "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
+        $.MouseTracker.subscribeEvents.push( "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         $.MouseTracker.unprefixedPointerEvents = true;
         if( navigator.maxTouchPoints ) {
             $.MouseTracker.maxTouchPoints = navigator.maxTouchPoints;
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveMouseEnter = false;
+        $.MouseTracker.haveMouseOver = true;
     } else if ( window.MSPointerEvent && window.navigator.msPointerEnabled ) {
         // IE10
         $.MouseTracker.havePointerEvents = true;
-        $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
+        $.MouseTracker.subscribeEvents.push( "MSPointerEnter", "MSPointerLeave", "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
         $.MouseTracker.unprefixedPointerEvents = false;
         if( navigator.msMaxTouchPoints ) {
             $.MouseTracker.maxTouchPoints = navigator.msMaxTouchPoints;
         } else {
             $.MouseTracker.maxTouchPoints = 0;
         }
-        $.MouseTracker.haveMouseEnter = false;
+        $.MouseTracker.haveMouseOver = true;
     } else {
         // Legacy W3C mouse events
         $.MouseTracker.havePointerEvents = false;
-        if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
-            $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
-            $.MouseTracker.haveMouseEnter = true;
-        } else {
+        $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
+        if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
             $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-            $.MouseTracker.haveMouseEnter = false;
+            $.MouseTracker.haveMouseOver = true;
+        } else {
+            $.MouseTracker.haveMouseOver = false;
         }
         $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
         if ( 'ontouchstart' in window ) {
@@ -1832,38 +1938,12 @@
 
 
     /**
-     * Only used on IE 8
-     *
      * @private
      * @inner
      */
     function onMouseEnter( tracker, event ) {
         event = $.getEvent( event );
 
-        handleMouseEnter( tracker, event );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onMouseOver( tracker, event ) {
-        event = $.getEvent( event );
-
-        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-            return;
-        }
-
-        handleMouseEnter( tracker, event );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function handleMouseEnter( tracker, event ) {
         var gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
@@ -1873,42 +1953,21 @@
         };
 
         updatePointersEnter( tracker, event, [ gPoint ] );
+
+        //TODO simulate mouseover on IE < 9?
+        // if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+        //     handleMouseOver( tracker, event );
+        // }
     }
 
 
     /**
-     * Only used on IE 8
-     *
      * @private
      * @inner
      */
     function onMouseLeave( tracker, event ) {
         event = $.getEvent( event );
 
-        handleMouseExit( tracker, event );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function onMouseOut( tracker, event ) {
-        event = $.getEvent( event );
-
-        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-            return;
-        }
-
-        handleMouseExit( tracker, event );
-    }
-
-
-    /**
-     * @private
-     * @inner
-     */
-    function handleMouseExit( tracker, event ) {
         var gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse',
@@ -1917,7 +1976,76 @@
             currentTime: $.now()
         };
 
-        updatePointersExit( tracker, event, [ gPoint ] );
+        updatePointersLeave( tracker, event, [ gPoint ] );
+
+        //TODO simulate mouseoout on IE < 9?
+        // if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
+        //     handleMouseOut( tracker, event );
+        // }
+    }
+
+
+    /**
+     * IE9+ only
+     *
+     * @private
+     * @inner
+     */
+    function onMouseOver( tracker, event ) {
+        // if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        //     return;
+        // }
+
+        handleMouseOver( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleMouseOver( tracker, event ) {
+        var gPoint = {
+            id: $.MouseTracker.mousePointerId,
+            type: 'mouse',
+            isPrimary: true,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersOver( tracker, event, [ gPoint ] );
+    }
+
+
+    /**
+     * IE9+ only
+     *
+     * @private
+     * @inner
+     */
+    function onMouseOut( tracker, event ) {
+        // if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        //     return;
+        // }
+
+        handleMouseOut( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handleMouseOut( tracker, event ) {
+        var gPoint = {
+            id: $.MouseTracker.mousePointerId,
+            type: 'mouse',
+            isPrimary: true,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersOut( tracker, event, [ gPoint ] );
     }
 
 
@@ -2083,7 +2211,7 @@
                 pointsList.captureCount = 1;
                 releasePointer( tracker, pointsList.type );
                 // simulate touchleave/mouseout
-                updatePointersExit( tracker, event, abortGPoints );
+                updatePointersLeave( tracker, event, abortGPoints );
             }
         }
     }
@@ -2199,7 +2327,7 @@
         }
 
         // simulate touchleave on our tracked element
-        updatePointersExit( tracker, event, gPoints );
+        updatePointersLeave( tracker, event, gPoints );
 
         // simulate touchleave on our tracked element's tracked ancestor elements
         for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
@@ -2214,7 +2342,7 @@
                         currentTime: time
                     } );
                 }
-                updatePointersExit( MOUSETRACKERS[ i ], event, parentGPoints );
+                updatePointersLeave( MOUSETRACKERS[ i ], event, parentGPoints );
             }
         }
 
@@ -2306,12 +2434,10 @@
      * @private
      * @inner
      */
-    function onPointerOver( tracker, event ) {
+    function onPointerEnter( tracker, event ) {
         var gPoint;
 
-        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-            return;
-        }
+        //$.console.log('pointerenter ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         gPoint = {
             id: event.pointerId,
@@ -2322,6 +2448,52 @@
         };
 
         updatePointersEnter( tracker, event, [ gPoint ] );
+}
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onPointerLeave( tracker, event ) {
+        var gPoint;
+
+        //$.console.log('pointerleave ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+
+        gPoint = {
+            id: event.pointerId,
+            type: getPointerType( event ),
+            isPrimary: event.isPrimary,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersLeave( tracker, event, [ gPoint ] );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function onPointerOver( tracker, event ) {
+        var gPoint;
+
+        $.console.log('pointerover ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+
+        //if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        //    return;
+        //}
+
+        gPoint = {
+            id: event.pointerId,
+            type: getPointerType( event ),
+            isPrimary: event.isPrimary,
+            currentPos: getMouseAbsolute( event ),
+            currentTime: $.now()
+        };
+
+        updatePointersOver( tracker, event, [ gPoint ] );
     }
 
 
@@ -2332,9 +2504,11 @@
     function onPointerOut( tracker, event ) {
         var gPoint;
 
-        if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-            return;
-        }
+        $.console.log('pointerout ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+
+        //if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
+        //    return;
+        //}
 
         gPoint = {
             id: event.pointerId,
@@ -2344,7 +2518,7 @@
             currentTime: $.now()
         };
 
-        updatePointersExit( tracker, event, [ gPoint ] );
+        updatePointersOut( tracker, event, [ gPoint ] );
     }
 
 
@@ -2568,8 +2742,7 @@
             i,
             gPointCount = gPoints.length,
             curGPoint,
-            updateGPoint,
-            propagate;
+            updateGPoint;
 
         for ( i = 0; i < gPointCount; i++ ) {
             curGPoint = gPoints[ i ];
@@ -2592,9 +2765,129 @@
                 startTrackingPointer( pointsList, curGPoint );
             }
 
-            // Enter
+            // Enter (doesn't bubble and not cancelable)
             if ( tracker.enterHandler ) {
-                propagate = tracker.enterHandler(
+                tracker.enterHandler(
+                    {
+                        eventSource:          tracker,
+                        pointerType:          curGPoint.type,
+                        position:             getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
+                        buttons:              pointsList.buttons,
+                        pointers:             tracker.getActivePointerCount(),
+                        insideElementPressed: curGPoint.insideElementPressed,
+                        buttonDownAny:        pointsList.buttons !== 0,
+                        isTouchEvent:         curGPoint.type === 'touch',
+                        originalEvent:        event,
+                        userData:             tracker.userData
+                    }
+                );
+            }
+        }
+    }
+
+
+    /**
+     * @function
+     * @private
+     * @inner
+     * @param {OpenSeadragon.MouseTracker} tracker
+     *     A reference to the MouseTracker instance.
+     * @param {Object} event
+     *     A reference to the originating DOM event.
+     * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
+     *      Gesture points associated with the event.
+     */
+    function updatePointersLeave( tracker, event, gPoints ) {
+        var pointsList = tracker.getActivePointersListByType(gPoints[0].type),
+            i,
+            gPointCount = gPoints.length,
+            curGPoint,
+            updateGPoint,
+            dispatchEventObj;
+
+        for ( i = 0; i < gPointCount; i++ ) {
+            curGPoint = gPoints[ i ];
+            updateGPoint = pointsList.getById( curGPoint.id );
+
+            if ( updateGPoint ) {
+                // Already tracking the pointer. If captured then update it, else stop tracking it
+                if ( updateGPoint.captured ) {
+                    updateGPoint.insideElement = false;
+                    updateGPoint.lastPos = updateGPoint.currentPos;
+                    updateGPoint.lastTime = updateGPoint.currentTime;
+                    updateGPoint.currentPos = curGPoint.currentPos;
+                    updateGPoint.currentTime = curGPoint.currentTime;
+                } else {
+                    stopTrackingPointer( pointsList, updateGPoint );
+                }
+
+                curGPoint = updateGPoint;
+            }
+
+            // Leave (doesn't bubble and not cancelable)
+            //   Note: exitHandler is deprecated, replaced by leaveHandler
+            if ( tracker.leaveHandler || tracker.exitHandler ) {
+                dispatchEventObj = {
+                    eventSource:          tracker,
+                    pointerType:          curGPoint.type,
+                    position:             curGPoint.currentPos && getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
+                    buttons:              pointsList.buttons,
+                    pointers:             tracker.getActivePointerCount(),
+                    insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
+                    buttonDownAny:        pointsList.buttons !== 0,
+                    isTouchEvent:         curGPoint.type === 'touch',
+                    originalEvent:        event,
+                    userData:             tracker.userData
+                };
+
+                if ( tracker.leaveHandler ) {
+                    tracker.leaveHandler( dispatchEventObj );
+                }
+                if ( tracker.exitHandler ) {
+                    tracker.exitHandler( dispatchEventObj );
+                }
+            }
+        }
+    }
+
+
+    /**
+     * @function
+     * @private
+     * @inner
+     * @param {OpenSeadragon.MouseTracker} tracker
+     *     A reference to the MouseTracker instance.
+     * @param {Object} event
+     *     A reference to the originating DOM event.
+     * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
+     *      Gesture points associated with the event.
+     */
+    function updatePointersOver( tracker, event, gPoints ) {
+        var pointsList,
+            i,
+            gPointCount,
+            curGPoint,
+            updateGPoint,
+            propagate;
+
+        if ( tracker.overHandler ) {
+            pointsList = tracker.getActivePointersListByType( gPoints[ 0 ].type );
+            gPointCount = gPoints.length;
+
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
+                updateGPoint = pointsList.getById( curGPoint.id );
+
+                if ( updateGPoint ) {
+                    curGPoint = updateGPoint;
+                } else {
+                    //curGPoint.captured = false; // Tracked by updatePointersEnter
+                    curGPoint.insideElementPressed = false;
+                    //curGPoint.insideElement = true; // Tracked by updatePointersEnter
+                }
+
+                // Over
+                propagate = tracker.overHandler(
                     {
                         eventSource:          tracker,
                         pointerType:          curGPoint.type,
@@ -2616,7 +2909,6 @@
         }
     }
 
-
     /**
      * @function
      * @private
@@ -2628,51 +2920,40 @@
      * @param {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gPoints
      *      Gesture points associated with the event.
      */
-    function updatePointersExit( tracker, event, gPoints ) {
-        var pointsList = tracker.getActivePointersListByType(gPoints[0].type),
+    function updatePointersOut( tracker, event, gPoints ) {
+        var pointsList,
             i,
-            gPointCount = gPoints.length,
+            gPointCount,
             curGPoint,
             updateGPoint,
             propagate;
 
-        for ( i = 0; i < gPointCount; i++ ) {
-            curGPoint = gPoints[ i ];
-            updateGPoint = pointsList.getById( curGPoint.id );
+        if ( tracker.outHandler ) {
+            pointsList = tracker.getActivePointersListByType(gPoints[0].type);
+            gPointCount = gPoints.length;
 
-            if ( updateGPoint ) {
-                // Already tracking the pointer. If captured then update it, else stop tracking it
-                if ( updateGPoint.captured ) {
-                    updateGPoint.insideElement = false;
-                    updateGPoint.lastPos = updateGPoint.currentPos;
-                    updateGPoint.lastTime = updateGPoint.currentTime;
-                    updateGPoint.currentPos = curGPoint.currentPos;
-                    updateGPoint.currentTime = curGPoint.currentTime;
-                } else {
-                    stopTrackingPointer( pointsList, updateGPoint );
+            for ( i = 0; i < gPointCount; i++ ) {
+                curGPoint = gPoints[ i ];
+                updateGPoint = pointsList.getById( curGPoint.id );
+
+                if ( updateGPoint ) {
+                    curGPoint = updateGPoint;
                 }
 
-                curGPoint = updateGPoint;
-            }
-
-            // Exit
-            if ( tracker.exitHandler ) {
-                propagate = tracker.exitHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          curGPoint.type,
-                        position:             curGPoint.currentPos && getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
-                        buttons:              pointsList.buttons,
-                        pointers:             tracker.getActivePointerCount(),
-                        insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
-                        buttonDownAny:        pointsList.buttons !== 0,
-                        isTouchEvent:         curGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
-                    }
-                );
-
+                // Out
+                propagate = tracker.outHandler( {
+                    eventSource:          tracker,
+                    pointerType:          curGPoint.type,
+                    position:             curGPoint.currentPos && getPointRelativeToAbsolute( curGPoint.currentPos, tracker.element ),
+                    buttons:              pointsList.buttons,
+                    pointers:             tracker.getActivePointerCount(),
+                    insideElementPressed: updateGPoint ? updateGPoint.insideElementPressed : false,
+                    buttonDownAny:        pointsList.buttons !== 0,
+                    isTouchEvent:         curGPoint.type === 'touch',
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
+                } );
                 if ( propagate === false ) {
                     $.cancelEvent( event );
                 }
@@ -3326,7 +3607,7 @@
      */
     function updatePointersCancel( tracker, event, gPoints ) {
         updatePointersUp( tracker, event, gPoints, 0 );
-        updatePointersExit( tracker, event, gPoints );
+        updatePointersLeave( tracker, event, gPoints );
     }
 
 
@@ -3367,7 +3648,7 @@
      * @function
      * @private
      * @inner
-     * @returns {Boolean} True if the target has access rights to events, otherwise false.
+     * @returns {Boolean} True if the target supports DOM Level 2 event subscription methods, otherwise false.
      */
     function canAccessEvents (target) {
         try {

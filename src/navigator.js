@@ -221,6 +221,7 @@ $.Navigator = function( options ){
     // Remove the base class' (Viewer's) innerTracker and replace it with our own
     this.innerTracker.destroy();
     this.innerTracker = new $.MouseTracker({
+        userData:        'Navigator.innerTracker',
         element:         this.element,
         dragHandler:     $.delegate( this, onCanvasDrag ),
         clickHandler:    $.delegate( this, onCanvasClick ),

@@ -32,7 +32,7 @@
             offset = $canvas.offset(),
             tracker = viewer.innerTracker,
             origEnterHandler,
-            origExitHandler,
+            origLeaveHandler,
             origPressHandler,
             origReleaseHandler,
             origNonPrimaryPressHandler,
@@ -43,7 +43,7 @@
             origDragHandler,
             origDragEndHandler,
             enterCount,
-            exitCount,
+            leaveCount,
             pressCount,
             releaseCount,
             rightPressCount,
@@ -71,11 +71,11 @@
                     return true;
                 }
             };
-            origExitHandler = tracker.exitHandler;
-            tracker.exitHandler = function ( event ) {
-                exitCount++;
-                if (origExitHandler) {
-                    return origExitHandler( event );
+            origLeaveHandler = tracker.leaveHandler;
+            tracker.leaveHandler = function ( event ) {
+                leaveCount++;
+                if (origLeaveHandler) {
+                    return origLeaveHandler( event );
                 } else {
                     return true;
                 }
@@ -182,7 +182,7 @@
 
         var unhookViewerHandlers = function () {
             tracker.enterHandler = origEnterHandler;
-            tracker.exitHandler = origExitHandler;
+            tracker.leaveHandler = origLeaveHandler;
             tracker.pressHandler = origPressHandler;
             tracker.releaseHandler = origReleaseHandler;
             tracker.moveHandler = origMoveHandler;
@@ -195,21 +195,21 @@
         var simulateEnter = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
-            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseenter' : 'mouseover', simEvent );
+            $canvas.simulate( 'mouseenter', simEvent );
         };
 
         var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
             simEvent.clientY = offset.top  + y;
             simEvent.relatedTarget = document.body;
-            $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
+            $canvas.simulate( 'mouseleave', simEvent );
         };
 
         //var simulateLeaveFrame = function (x, y) {
         //    simEvent.clientX = offset.left + x;
         //    simEvent.clientY = offset.top  + y;
         //    simEvent.relatedTarget = document.getElementsByTagName("html")[0];
-        //    $canvas.simulate( OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseleave' : 'mouseout', simEvent );
+        //    $canvas.simulate( 'mouseleave', simEvent );
         //};
 
         var simulateDown = function (x, y) {
@@ -256,7 +256,7 @@
                 clientY: offset.top
             };
             enterCount = 0;
-            exitCount = 0;
+            leaveCount = 0;
             pressCount = 0;
             releaseCount = 0;
             rightPressCount = 0;
@@ -280,8 +280,8 @@
             if ('enterCount' in expected) {
                 assert.equal( enterCount, expected.enterCount, expected.description + 'enterHandler event count matches expected (' + expected.enterCount + ')' );
             }
-            if ('exitCount' in expected) {
-                assert.equal( exitCount, expected.exitCount, expected.description + 'exitHandler event count matches expected (' + expected.exitCount + ')' );
+            if ('leaveCount' in expected) {
+                assert.equal( leaveCount, expected.leaveCount, expected.description + 'leaveHandler event count matches expected (' + expected.leaveCount + ')' );
             }
             if ('pressCount' in expected) {
                 assert.equal( pressCount, expected.pressCount, expected.description + 'pressHandler event count matches expected (' + expected.pressCount + ')' );
@@ -355,7 +355,7 @@
             assessGestureExpectations({
                 description:           'enter-move-release (release in tracked element, press in unknown element):  ',
                 enterCount:            1,
-                exitCount:             0,
+                leaveCount:            0,
                 pressCount:            0,
                 releaseCount:          1,
                 rightPressCount:       0,
@@ -375,16 +375,16 @@
             });
             simulateLeave(-1, -1); // flush tracked pointer
 
-            // enter-move-exit (fly-over)
+            // enter-move-leave (fly-over)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateMove(1, 1, 10);
             simulateMove(-1, -1, 10);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-move-exit (fly-over):  ',
+                description:           'enter-move-leave (fly-over):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       0,
@@ -403,15 +403,15 @@
                 //quickClick:            false
             });
 
-            // move-exit (fly-over, no enter event)
+            // move-leave (fly-over, no enter event)
             resetForAssessment();
             simulateMove(1, 1, 10);
             simulateMove(-1, -1, 10);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'move-exit (fly-over, no enter event):  ',
+                description:           'move-leave (fly-over, no enter event):  ',
                 enterCount:            0,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       0,
@@ -430,7 +430,7 @@
                 //quickClick:            false
             });
 
-            // enter-press-release-press-release-exit (primary/left double click)
+            // enter-press-release-press-release-leave (primary/left double click)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
@@ -439,9 +439,9 @@
             simulateUp(0, 0);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-press-release-press-release-exit (primary/left double click):  ',
+                description:           'enter-press-release-press-release-leave (primary/left double click):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            2,
                 releaseCount:          2,
                 rightPressCount:       0,
@@ -460,16 +460,16 @@
                 //quickClick:            true
             });
 
-            // enter-press-release-exit (primary/left click)
+            // enter-press-release-leave (primary/left click)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
             simulateUp(0, 0);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-press-release-exit (primary/left click):  ',
+                description:           'enter-press-release-leave (primary/left click):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            1,
                 releaseCount:          1,
                 rightPressCount:       0,
@@ -488,16 +488,16 @@
                 quickClick:            true
             });
 
-            // enter-nonprimarypress-nonprimaryrelease-exit (secondary/right click)
+            // enter-nonprimarypress-nonprimaryrelease-leave (secondary/right click)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateNonPrimaryDown(0, 0, 2);
             simulateNonPrimaryUp(0, 0, 2);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-nonprimarypress-nonprimaryrelease-exit (secondary/right click):  ',
+                description:           'enter-nonprimarypress-nonprimaryrelease-leave (secondary/right click):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       1,
@@ -516,16 +516,16 @@
                 //quickClick:            true
             });
 
-            // enter-nonprimarypress-nonprimaryrelease-exit (aux/middle click)
+            // enter-nonprimarypress-nonprimaryrelease-leave (aux/middle click)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateNonPrimaryDown(0, 0, 1);
             simulateNonPrimaryUp(0, 0, 1);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-nonprimarypress-nonprimaryrelease-exit (aux/middle click):  ',
+                description:           'enter-nonprimarypress-nonprimaryrelease-leave (aux/middle click):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       0,
@@ -544,7 +544,7 @@
                 //quickClick:            true
             });
 
-            // enter-nonprimarypress-move-nonprimaryrelease-move-exit (secondary/right button drag, release in tracked element)
+            // enter-nonprimarypress-move-nonprimaryrelease-move-leave (secondary/right button drag, release in tracked element)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateNonPrimaryDown(0, 0, 2);
@@ -553,9 +553,9 @@
             simulateMove(-1, -1, 100);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-nonprimarypress-move-nonprimaryrelease-move-exit (secondary/right button drag, release in tracked element):  ',
+                description:           'enter-nonprimarypress-move-nonprimaryrelease-move-leave (secondary/right button drag, release in tracked element):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            0,
                 releaseCount:          0,
                 rightPressCount:       1,
@@ -574,7 +574,7 @@
                 //quickClick:            false
             });
 
-            // enter-press-move-release-move-exit (drag, release in tracked element)
+            // enter-press-move-release-move-leave (drag, release in tracked element)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
@@ -583,9 +583,9 @@
             simulateMove(-1, -1, 100);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'enter-press-move-release-move-exit (drag, release in tracked element):  ',
+                description:           'enter-press-move-release-move-leave (drag, release in tracked element):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            1,
                 releaseCount:          1,
                 rightPressCount:       0,
@@ -604,7 +604,7 @@
                 quickClick:            false
             });
 
-            // enter-press-move-exit-move-release (drag, release outside tracked element)
+            // enter-press-move-leave-move-release (drag, release outside tracked element)
             resetForAssessment();
             simulateEnter(0, 0);
             simulateDown(0, 0);
@@ -614,9 +614,9 @@
             simulateMove(-1, -1, 5);
             simulateUp(-5, -5);
             assessGestureExpectations({
-                description:           'enter-press-move-exit-move-release (drag, release outside tracked element):  ',
+                description:           'enter-press-move-leave-move-release (drag, release outside tracked element):  ',
                 enterCount:            1,
-                exitCount:             1,
+                leaveCount:            1,
                 pressCount:            1,
                 releaseCount:          1,
                 rightPressCount:       0,
@@ -635,7 +635,7 @@
                 quickClick:            false
             });
 
-            //// enter-press-move-exit-move-release-outside (drag, release outside iframe)
+            //// enter-press-move-leave-move-release-outside (drag, release outside iframe)
             //resetForAssessment();
             //simulateEnter(0, 0);
             //simulateDown(0, 0);
@@ -644,9 +644,9 @@
             //simulateLeaveFrame(-1, -1);
             //// you don't actually receive the mouseup if you mouseup outside of the document
             //assessGestureExpectations({
-            //    description:           'enter-press-move-exit-move-release-outside (drag, release outside iframe):  ',
-            //    enterCount:            1,
-            //    exitCount:             1,
+            //    description:           'enter-press-move-leave-move-release-outside (drag, release outside iframe):  ',
+            //    enterCount:             1,
+            //    leaveCount:              1,
             //    pressCount:            1,
             //    releaseCount:          1,
             //    rightPressCount:       0,
@@ -953,7 +953,7 @@
                 dragEndHandler: onMouseTrackerDragEnd,
                 releaseHandler: onMouseTrackerRelease,
                 clickHandler: onMouseTrackerClick,
-                exitHandler: onMouseTrackerExit
+                leaveHandler: onMouseTrackerLeave
             } );
 
             var event = {
@@ -1050,7 +1050,7 @@
             checkOriginalEventReceived( event );
         };
 
-        var onMouseTrackerExit = function ( event ) {
+        var onMouseTrackerLeave = function ( event ) {
             checkOriginalEventReceived( event );
 
             mouseTracker.destroy();

@@ -280,6 +280,7 @@ $.Viewer = function( options ) {
     this.docOverflow    = document.documentElement.style.overflow;
 
     this.innerTracker = new $.MouseTracker({
+        userData:                 'Viewer.innerTracker',
         element:                  this.canvas,
         startDisabled:            !this.mouseNavEnabled,
         clickTimeThreshold:       this.clickTimeThreshold,
@@ -293,7 +294,7 @@ $.Viewer = function( options ) {
         dragHandler:              $.delegate( this, onCanvasDrag ),
         dragEndHandler:           $.delegate( this, onCanvasDragEnd ),
         enterHandler:             $.delegate( this, onCanvasEnter ),
-        exitHandler:              $.delegate( this, onCanvasExit ),
+        leaveHandler:             $.delegate( this, onCanvasLeave ),
         pressHandler:             $.delegate( this, onCanvasPress ),
         releaseHandler:           $.delegate( this, onCanvasRelease ),
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
@@ -303,6 +304,7 @@ $.Viewer = function( options ) {
     });
 
     this.outerTracker = new $.MouseTracker({
+        userData:              'Viewer.outerTracker',
         element:               this.container,
         startDisabled:         !this.mouseNavEnabled,
         clickTimeThreshold:    this.clickTimeThreshold,
@@ -310,7 +312,7 @@ $.Viewer = function( options ) {
         dblClickTimeThreshold: this.dblClickTimeThreshold,
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
-        exitHandler:           $.delegate( this, onContainerExit )
+        leaveHandler:          $.delegate( this, onContainerLeave )
     });
 
     if( this.toolbar ){
@@ -1099,7 +1101,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )( { } );
+            $.delegate( this, onContainerLeave )( { } );
 
         }
 
@@ -2925,7 +2927,7 @@ function onCanvasEnter( event ) {
     });
 }
 
-function onCanvasExit( event ) {
+function onCanvasLeave( event ) {
 
     if (window.location !== window.parent.location){
         $.MouseTracker.resetAllMouseTrackers();
@@ -3227,7 +3229,7 @@ function onContainerEnter( event ) {
     });
 }
 
-function onContainerExit( event ) {
+function onContainerLeave( event ) {
     if ( event.pointers < 1 ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
@@ -3483,7 +3485,7 @@ function doSingleZoomOut() {
 
 function lightUp() {
     this.buttons.emulateEnter();
-    this.buttons.emulateExit();
+    this.buttons.emulateLeave();
 }
 
 
@@ -3503,7 +3505,7 @@ function onFullScreen() {
     }
     // correct for no mouseout event on change
     if ( this.buttons ) {
-        this.buttons.emulateExit();
+        this.buttons.emulateLeave();
     }
     this.fullPageButton.element.focus();
     if ( this.viewport ) {

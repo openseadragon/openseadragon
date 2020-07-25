@@ -120,11 +120,12 @@ $.ReferenceStrip = function ( options ) {
 
     this.viewer = viewer;
     this.innerTracker = new $.MouseTracker( {
+        userData:       'ReferenceStrip.innerTracker',
         element:        this.element,
         dragHandler:    $.delegate( this, onStripDrag ),
         scrollHandler:  $.delegate( this, onStripScroll ),
         enterHandler:   $.delegate( this, onStripEnter ),
-        exitHandler:    $.delegate( this, onStripExit ),
+        leaveHandler:   $.delegate( this, onStripLeave ),
         keyDownHandler: $.delegate( this, onKeyDown ),
         keyHandler:     $.delegate( this, onKeyPress )
     } );
@@ -196,6 +197,7 @@ $.ReferenceStrip = function ( options ) {
         $.setElementTouchActionNone( element );
 
         element.innerTracker = new $.MouseTracker( {
+            userData:           'ReferenceStrip.TileSource.innerTracker',
             element:            element,
             clickTimeThreshold: this.clickTimeThreshold,
             clickDistThreshold: this.clickDistThreshold,
@@ -475,7 +477,8 @@ function loadPanels( strip, viewerSize, scroll ) {
 
             // TODO: What is this for? Future keyboard navigation support?
             miniViewer.displayRegion.innerTracker = new $.MouseTracker( {
-                element: miniViewer.displayRegion,
+                userData:     'ReferenceStrip.miniViewer.innerTracker',
+                element:       miniViewer.displayRegion,
                 startDisabled: true
             } );
 
@@ -524,7 +527,7 @@ function onStripEnter( event ) {
  * @inner
  * @function
  */
-function onStripExit( event ) {
+function onStripLeave( event ) {
     var element = event.eventSource.element;
 
     if ( 'horizontal' === this.scroll ) {

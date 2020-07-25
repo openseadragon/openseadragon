@@ -7,6 +7,16 @@ OPENSEADRAGON CHANGELOG
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
 * Miscellaneous code cleanup (#1840 @msalsbery)
+* Improved browser sniffing - detect EDGE and CHROMEEDGE browsers
+* Improved DOM event model feature detection
+* Added support for options parameter on addEvent()/removeEvent (to support passive option)
+* Added OpenSeadragon.eventIsCanceled() function for defaultPrevented detection on DOM events
+* MouseTracker: better PointerEvent model detection - removed use of deprecated window.navigator.pointerEnabled
+* MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events
+* MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout
+* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names
+* Added missing Button event object properties (were listed in documentation but not implemented)
+* Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers
 
 2.4.2:
 
@@ -54,7 +64,7 @@ OPENSEADRAGON CHANGELOG
 * You can now prevent canvas-click events on the navigator (#1416)
 * The navigator can now be restricted to just horizontal or just vertical panning (#1416)
 * Fixed DziTileSource so it doesn't load levels above maxLevel or below minLevel, if set (#1492)
- 
+
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)
