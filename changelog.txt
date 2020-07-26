@@ -17,6 +17,8 @@ OPENSEADRAGON CHANGELOG
 * DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names
 * Added missing Button event object properties (were listed in documentation but not implemented)
 * Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers
+* MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut
+* MouseTracker: Simulate mouseover/mouseout on IE < 9
 
 2.4.2:
 

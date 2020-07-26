@@ -172,7 +172,7 @@
 
         this.enterHandler             = options.enterHandler             || null;
         this.leaveHandler             = options.leaveHandler             || null;
-        this.exitHandler              = options.exitHandler              || null;
+        this.exitHandler              = options.exitHandler              || null; // Deprecated v2.4.3
         this.overHandler              = options.overHandler              || null;
         this.outHandler               = options.outHandler               || null;
         this.pressHandler             = options.pressHandler             || null;
@@ -216,10 +216,10 @@
             DOMMouseScroll:        function ( event ) { onMouseWheel( _this, event ); },
             MozMousePixelScroll:   function ( event ) { onMouseWheel( _this, event ); },
 
-            mouseover:             function ( event ) { onMouseOver( _this, event ); }, // IE9+ only
-            mouseout:              function ( event ) { onMouseOut( _this, event ); },  // IE9+ only
             mouseenter:            function ( event ) { onMouseEnter( _this, event ); },
             mouseleave:            function ( event ) { onMouseLeave( _this, event ); },
+            mouseover:             function ( event ) { onMouseOver( _this, event ); }, // IE9+ only
+            mouseout:              function ( event ) { onMouseOut( _this, event ); },  // IE9+ only
             mousedown:             function ( event ) { onMouseDown( _this, event ); },
             mouseup:               function ( event ) { onMouseUp( _this, event ); },
             mouseupcaptured:       function ( event ) { onMouseUpCaptured( _this, event ); },
@@ -236,14 +236,12 @@
             gesturestart:          function ( event ) { onGestureStart( _this, event ); },
             gesturechange:         function ( event ) { onGestureChange( _this, event ); },
 
+            pointerenter:          function ( event ) { onPointerEnter( _this, event ); },
+            pointerleave:          function ( event ) { onPointerLeave( _this, event ); },
             pointerover:           function ( event ) { onPointerOver( _this, event ); },
             MSPointerOver:         function ( event ) { onPointerOver( _this, event ); },
             pointerout:            function ( event ) { onPointerOut( _this, event ); },
             MSPointerOut:          function ( event ) { onPointerOut( _this, event ); },
-            pointerenter:          function ( event ) { onPointerEnter( _this, event ); },
-            MSPointerEnter:        function ( event ) { onPointerEnter( _this, event ); },
-            pointerleave:          function ( event ) { onPointerLeave( _this, event ); },
-            MSPointerLeave:        function ( event ) { onPointerLeave( _this, event ); },
             pointerdown:           function ( event ) { onPointerDown( _this, event ); },
             MSPointerDown:         function ( event ) { onPointerDown( _this, event ); },
             pointerup:             function ( event ) { onPointerUp( _this, event ); },
@@ -425,7 +423,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @deprecated Use leaveHandler instead
+         * @since v2.4.3
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -456,7 +454,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @deprecated Use leaveHandler instead
+         * @deprecated v2.4.3 Use leaveHandler instead
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -489,6 +487,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
+         * @since v2.4.3
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -521,6 +520,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
+         * @since v2.4.3
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -1110,14 +1110,6 @@
                                     'DOMMouseScroll';                                                        // Assume old Firefox
 
     /**
-     * Detect legacy mouse capture support.
-     */
-    $.MouseTracker.supportsMouseCapture = (function () {
-        var divElement = document.createElement( 'div' );
-        return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
-    }());
-
-    /**
      * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
      */
     $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keydown", "keyup", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
@@ -1132,34 +1124,41 @@
         $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         $.MouseTracker.unprefixedPointerEvents = true;
-        if( navigator.maxTouchPoints ) {
-            $.MouseTracker.maxTouchPoints = navigator.maxTouchPoints;
-        } else {
-            $.MouseTracker.maxTouchPoints = 0;
-        }
-        $.MouseTracker.haveMouseOver = true;
+        $.MouseTracker.havePointerOverOut = true;
+        // Pointer events capture support
+        $.MouseTracker.havePointerCapture = (function () {
+            var divElement = document.createElement( 'div' );
+            return $.isFunction( divElement.setPointerCapture ) && $.isFunction( divElement.releasePointerCapture );
+        }());
     } else if ( window.MSPointerEvent && window.navigator.msPointerEnabled ) {
-        // IE10
+        // IE10 (MSPointerEnter/MSPointerLeave simulated with MSPointerOver/MSPointerOut)
         $.MouseTracker.havePointerEvents = true;
-        $.MouseTracker.subscribeEvents.push( "MSPointerEnter", "MSPointerLeave", "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
+        $.MouseTracker.subscribeEvents.push( "MSPointerOver", "MSPointerOut", "MSPointerDown", "MSPointerUp", "MSPointerMove", "MSPointerCancel" );
         $.MouseTracker.unprefixedPointerEvents = false;
-        if( navigator.msMaxTouchPoints ) {
-            $.MouseTracker.maxTouchPoints = navigator.msMaxTouchPoints;
-        } else {
-            $.MouseTracker.maxTouchPoints = 0;
-        }
-        $.MouseTracker.haveMouseOver = true;
+        $.MouseTracker.havePointerOverOut = true;
+        // Prefixed pointer events capture support
+        $.MouseTracker.havePointerCapture = (function () {
+            var divElement = document.createElement( 'div' );
+            return $.isFunction( divElement.msSetPointerCapture ) && $.isFunction( divElement.msReleasePointerCapture );
+        }());
     } else {
         // Legacy W3C mouse events
         $.MouseTracker.havePointerEvents = false;
         $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
         if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
             $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-            $.MouseTracker.haveMouseOver = true;
+            $.MouseTracker.havePointerOverOut = true;
         } else {
-            $.MouseTracker.haveMouseOver = false;
+            $.MouseTracker.havePointerOverOut = false;
         }
         $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+        $.MouseTracker.mousePointerId = "legacy-mouse";
+        // Legacy mouse events capture support
+        $.MouseTracker.havePointerCapture = (function () {
+            var divElement = document.createElement( 'div' );
+            return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
+        }());
+        // Legacy touch events
         if ( 'ontouchstart' in window ) {
             // iOS, Android, and other W3c Touch Event implementations
             //    (see http://www.w3.org/TR/touch-events/)
@@ -1172,8 +1171,6 @@
             //   Subscribe to these to prevent default gesture handling
             $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
         }
-        $.MouseTracker.mousePointerId = "legacy-mouse";
-        $.MouseTracker.maxTouchPoints = 10;
     }
 
 
@@ -1954,10 +1951,10 @@
 
         updatePointersEnter( tracker, event, [ gPoint ] );
 
-        //TODO simulate mouseover on IE < 9?
-        // if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
-        //     handleMouseOver( tracker, event );
-        // }
+        // Simulate mouseover on IE < 9
+        if ( !$.MouseTracker.havePointerOverOut ) {
+            handleMouseOver( tracker, event );
+        }
     }
 
 
@@ -1978,10 +1975,10 @@
 
         updatePointersLeave( tracker, event, [ gPoint ] );
 
-        //TODO simulate mouseoout on IE < 9?
-        // if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 9 ) {
-        //     handleMouseOut( tracker, event );
-        // }
+        // Simulate mouseoout on IE < 9
+        if ( !$.MouseTracker.havePointerOverOut ) {
+            handleMouseOut( tracker, event );
+        }
     }
 
 
@@ -1992,10 +1989,6 @@
      * @inner
      */
     function onMouseOver( tracker, event ) {
-        // if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-        //     return;
-        // }
-
         handleMouseOver( tracker, event );
     }
 
@@ -2024,10 +2017,6 @@
      * @inner
      */
     function onMouseOut( tracker, event ) {
-        // if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-        //     return;
-        // }
-
         handleMouseOut( tracker, event );
     }
 
@@ -2435,9 +2424,18 @@
      * @inner
      */
     function onPointerEnter( tracker, event ) {
+        handlePointerEnter( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handlePointerEnter( tracker, event ) {
         var gPoint;
 
-        //$.console.log('pointerenter ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointerenter ' + (tracker.userData ? tracker.userData.toString() : ''));
 
         gPoint = {
             id: event.pointerId,
@@ -2448,7 +2446,7 @@
         };
 
         updatePointersEnter( tracker, event, [ gPoint ] );
-}
+    }
 
 
     /**
@@ -2456,9 +2454,18 @@
      * @inner
      */
     function onPointerLeave( tracker, event ) {
+        handlePointerLeave( tracker, event );
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
+    function handlePointerLeave( tracker, event ) {
         var gPoint;
 
-        //$.console.log('pointerleave ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointerleave ' + (tracker.userData ? tracker.userData.toString() : ''));
 
         gPoint = {
             id: event.pointerId,
@@ -2479,11 +2486,14 @@
     function onPointerOver( tracker, event ) {
         var gPoint;
 
-        $.console.log('pointerover ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointerover ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        //if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-        //    return;
-        //}
+        // If on IE 10, simulate MSPointerEnter
+        if ( !$.MouseTracker.unprefixedPointerEvents &&
+                    event.currentTarget !== event.relatedTarget &&
+                    !isParentChild( event.currentTarget, event.relatedTarget ) ) {
+            handlePointerEnter( tracker, event );
+        }
 
         gPoint = {
             id: event.pointerId,
@@ -2504,11 +2514,14 @@
     function onPointerOut( tracker, event ) {
         var gPoint;
 
-        $.console.log('pointerout ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointerout ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        //if ( event.currentTarget === event.relatedTarget || isParentChild( event.currentTarget, event.relatedTarget ) ) {
-        //    return;
-        //}
+        // If on IE 10, simulate MSPointerLeave
+        if ( !$.MouseTracker.unprefixedPointerEvents &&
+                    event.currentTarget !== event.relatedTarget &&
+                    !isParentChild( event.currentTarget, event.relatedTarget ) ) {
+            handlePointerLeave( tracker, event );
+        }
 
         gPoint = {
             id: event.pointerId,

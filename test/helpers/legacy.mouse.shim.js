@@ -15,9 +15,9 @@
     $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
     if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-        $.MouseTracker.haveMouseOver = true;
+        $.MouseTracker.havePointerOverOut = true;
     } else {
-        $.MouseTracker.haveMouseOver = false;
+        $.MouseTracker.havePointerOverOut = false;
     }
     $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
     if ( 'ontouchstart' in window ) {
@@ -33,7 +33,5 @@
         $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
     }
     $.MouseTracker.mousePointerId = "legacy-mouse";
-    $.MouseTracker.maxTouchPoints = 10;
-
 
 }(OpenSeadragon));
