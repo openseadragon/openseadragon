@@ -2783,7 +2783,9 @@ function onCanvasDrag( event ) {
     var gestureSettings;
 
     var canvasDragEventArgs = {
+        eventSource: this,
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         delta: event.delta,
         speed: event.speed,
@@ -2801,6 +2803,7 @@ function onCanvasDrag( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
      * @property {Number} speed - Current computed speed, in pixels per second.
@@ -2880,6 +2883,7 @@ function onCanvasDragEnd( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
      * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
@@ -2888,7 +2892,9 @@ function onCanvasDragEnd( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent('canvas-drag-end', {
+        eventSource: this,
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         speed: event.speed,
         direction: event.direction,
@@ -2916,6 +2922,7 @@ function onCanvasEnter( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-enter', {
+        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -2951,6 +2958,7 @@ function onCanvasLeave( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-exit', {
+        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -3111,6 +3119,7 @@ function onCanvasPinch( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gesturePoints - Gesture points associated with the gesture. Velocity data can be found here.
      * @property {OpenSeadragon.Point} lastCenter - The previous center point of the two pinch contact points relative to the tracked element.
      * @property {OpenSeadragon.Point} center - The center point of the two pinch contact points relative to the tracked element.
@@ -3121,7 +3130,9 @@ function onCanvasPinch( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent('canvas-pinch', {
+        eventSource: this,
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         gesturePoints: event.gesturePoints,
         lastCenter: event.lastCenter,
         center: event.center,
@@ -3210,6 +3221,7 @@ function onContainerEnter( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
@@ -3219,7 +3231,9 @@ function onContainerEnter( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-enter', {
+        eventSource: this,
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         buttons: event.buttons,
         pointers: event.pointers,
@@ -3244,6 +3258,7 @@ function onContainerLeave( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
@@ -3253,7 +3268,9 @@ function onContainerLeave( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-exit', {
+        eventSource: this,
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         buttons: event.buttons,
         pointers: event.pointers,
