@@ -9,18 +9,16 @@ OPENSEADRAGON CHANGELOG
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * Improved browser sniffing - detect EDGE and CHROMEEDGE browsers
 * Improved DOM event model feature detection
-* Added support for options parameter on addEvent()/removeEvent (to support passive option)
+* Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1669)
 * Added OpenSeadragon.eventIsCanceled() function for defaultPrevented detection on DOM events
 * MouseTracker: better PointerEvent model detection - removed use of deprecated window.navigator.pointerEnabled
 * MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events
 * MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout
 * All internal uses of MouseTracker use pointerenter/pointerleave events instead of pointerover/pointerout events for more consistent pointer tracking
 * DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names
-* Added missing Button event object properties (were listed in documentation but not implemented)
 * Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers
 * MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut
 * MouseTracker: Simulate mouseover/mouseout on IE < 9
-* Pass missing eventSource property in Viewer canvas-enter, canvas-exit, container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events
 * Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events
 
 2.4.2:

@@ -2783,7 +2783,6 @@ function onCanvasDrag( event ) {
     var gestureSettings;
 
     var canvasDragEventArgs = {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -2892,7 +2891,6 @@ function onCanvasDragEnd( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent('canvas-drag-end', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -2922,7 +2920,6 @@ function onCanvasEnter( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-enter', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -2958,7 +2955,6 @@ function onCanvasLeave( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-exit', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -3130,7 +3126,6 @@ function onCanvasPinch( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent('canvas-pinch', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         gesturePoints: event.gesturePoints,
@@ -3231,7 +3226,6 @@ function onContainerEnter( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-enter', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -3268,7 +3262,6 @@ function onContainerLeave( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'container-exit', {
-        eventSource: this,
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,

@@ -223,11 +223,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "enter", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                } );
+                _this.raiseEvent( "enter", { originalEvent: event.originalEvent } );
             } else if ( !event.buttonDownAny ) {
                 inTo( _this, $.ButtonState.HOVER );
             }
@@ -245,11 +241,7 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "focus", {
-                eventSource: _this,
-                originalEvent: event.originalEvent,
-                userData: _this.userData
-            } );
+            _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
 
         leaveHandler: function( event ) {
@@ -265,11 +257,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "exit", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                } );
+                _this.raiseEvent( "exit", { originalEvent: event.originalEvent } );
             }
         },
 
@@ -285,11 +273,7 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "blur", {
-                eventSource: _this,
-                originalEvent: event.originalEvent,
-                userData: _this.userData
-            } );
+            _this.raiseEvent( "blur", { originalEvent: event.originalEvent } );
         },
 
         pressHandler: function ( event ) {
@@ -304,11 +288,7 @@ $.Button = function( options ) {
              * @property {Object} originalEvent - The original DOM event.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            _this.raiseEvent( "press", {
-                eventSource: _this,
-                originalEvent: event.originalEvent,
-                userData: _this.userData
-            } );
+            _this.raiseEvent( "press", { originalEvent: event.originalEvent } );
         },
 
         releaseHandler: function( event ) {
@@ -324,11 +304,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "release", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                } );
+                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
             } else if ( event.insideElementPressed ) {
                 outTo( _this, $.ButtonState.GROUP );
             } else {
@@ -348,11 +324,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent("click", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                });
+                _this.raiseEvent("click", { originalEvent: event.originalEvent });
             }
         },
 
@@ -369,11 +341,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "click", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                } );
+                _this.raiseEvent( "click", { originalEvent: event.originalEvent } );
                 /***
                  * Raised when the mouse button is released or touch ends in the Button element.
                  *
@@ -384,11 +352,7 @@ $.Button = function( options ) {
                  * @property {Object} originalEvent - The original DOM event.
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                _this.raiseEvent( "release", {
-                    eventSource: _this,
-                    originalEvent: event.originalEvent,
-                    userData: _this.userData
-                } );
+                _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
                 return false;
             }
             return true;
