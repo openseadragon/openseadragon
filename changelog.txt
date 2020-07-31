@@ -20,6 +20,8 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut
 * MouseTracker: Simulate mouseover/mouseout on IE < 9
 * Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events
+* MouseTracker: Fire dragEndHandler event even if release point same as initial contact point (#1459)
+* MouseTracker: Pointer capture implemented with capture APIs where available. Only fallback to emulated capture on extremely old browsers
 
 2.4.2:
 
