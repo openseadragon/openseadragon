@@ -678,6 +678,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._setScale(height / this.normHeight, immediately);
     },
 
+    setCroppingPaths: function( paths ) {
+        this._croppingPaths = paths;
+    },
+
     /**
      * Sets an array of polygons to crop the TiledImage during draw tiles.
      * The render function will use the default non-zero winding rule.
@@ -728,6 +732,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     resetCroppingPolygons: function() {
         this._croppingPolygons = null;
+    },
+
+    resetCroppingPaths: function() {
+        this._croppingPaths = null;
     },
 
     /**

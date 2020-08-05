@@ -112,6 +112,7 @@
         // Load default examples
         function loadExample(){
             previewEl.value = JSON.stringify(examples);
+            pathDEl.value = JSON.stringify([pathWithExclusion, heartShapePath], null, 2);
         }
         loadExample();
 
@@ -184,6 +185,7 @@
             emptyElement('pathDEl');
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.resetCroppingPolygons();
+            tiledImage.resetCroppingPaths();
             viewer.forceRedraw();
         };
 
@@ -197,6 +199,9 @@
                 return svg;
             });
             var tiledImage = viewer.world.getItemAt(0);
+            tiledImage.setCroppingPaths(paths);
+            viewer.forceRedraw();
+            emptyElement('pathDEl');
         }
 
     </script>
