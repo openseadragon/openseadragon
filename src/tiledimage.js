@@ -2019,6 +2019,15 @@ function drawTiles( tiledImage, lastDrawn ) {
         usedClip = true;
     }
 
+    if (tiledImage._croppingPaths) {
+        try {
+            tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
+        } catch (e) {
+            $.console.error(e);
+        }
+        usedClip = true;
+        context.setTransform(oldMatrix);
+    }
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
         if (sketchScale) {

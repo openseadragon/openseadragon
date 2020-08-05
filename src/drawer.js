@@ -202,6 +202,30 @@ $.Drawer.prototype = {
     },
 
     /**
+     * This function will create multiple polygon paths on the drawing context by provided polygons,
+     * then clip the context to the paths.
+     * @param {Path2D} - path objects to clip with.
+     * A path is a string represented in the Path Data notation.
+     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
+     * @see https://www.w3.org/TR/SVG/paths.html#PathData
+     */
+    clipWithPaths: function (paths, useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+        var context = this._getContext(useSketch);
+        context.beginPath();
+        var path2Ds = paths.map(function (path) {
+            return new Path2D(path.getAttribute('d'));
+        });
+        var combinedPath = new Path2D();
+        path2Ds.forEach(function(path2D) {
+            combinedPath.addPath(path2D);
+        });
+        context.clip(combinedPath, "evenodd");
+    },
+
+    /**
      * Set the opacity of the drawer.
      * @param {Number} opacity
      * @return {OpenSeadragon.Drawer} Chainable.
