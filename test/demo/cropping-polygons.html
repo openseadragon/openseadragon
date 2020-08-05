@@ -56,6 +56,13 @@
         </div>
         <textarea id='previewEl'></textarea>
     </div>
+    <div class='box-with-title'>
+        <div class="buttons">
+            <button id="pathBtn">Crop With Path</button>
+            <button onclick="emptyElement('pathDEl')">Clear</button>
+        </div>
+        <textarea id='pathDEl'></textarea>
+    </div>
 
     <!-- Setup Viewer -->
     <script type="text/javascript">
@@ -75,11 +82,32 @@
         // Global Variables
         var previewEl = document.getElementById('previewEl');
         var polygonPointEl = document.getElementById('polygonPointEl');
+        var pathDEl = document.getElementById('pathDEl');
 
         var examples =  [
             [{x: 480, y: 300},{x: 300, y: 420},{x: 600, y: 420}],                   // Triangle
             [{x: 300, y: 550},{x: 300, y: 750},{x: 600, y: 750},{x: 600, y: 550}]   // Rectangle
         ];
+        var pathWithExclusion = [
+            'M 300,300',  // Move to x: 500, y: 500
+            'h 200',      // Draw a box of size 100
+            'v 200',
+            'h -200',
+            'z',          // Close path
+            'M 350,350',  // Move to x: 600, y:600
+            'h 30',       // Draw a polygon as exclusion (evenodd rule)
+            'l 30,40',
+            'h -30',
+            'z'           // Close Path
+        ].join('');       // Join to make as a Path d string
+        var heartShapePath = [
+            'M 10,30',            // Move to x: 500, y: 500
+            'A 20,20 0,0,1 50,30',  // Draw a heart shape
+            'A 20,20 0,0,1 90,30',
+            'Q 90,60 50,90',
+            'Q 10,60 10,30',
+            'z'                     // Close Path
+        ].join('');                 // Join to make as a Path d string
 
         // Load default examples
         function loadExample(){
@@ -153,12 +181,24 @@
         document.getElementById('resetBtn').onclick = function(){
             emptyElement('polygonPointEl');
             emptyElement('previewEl');
+            emptyElement('pathDEl');
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.resetCroppingPolygons();
             viewer.forceRedraw();
         };
 
         document.getElementById('exampleBtn').onclick = loadExample;
+
+        document.getElementById('pathBtn').onclick = function() {
+            var pathList = eval(pathDEl.value);
+            var paths = pathList.map(function(path) {
+                var svg = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                svg.setAttribute('d', path);
+                return svg;
+            });
+            var tiledImage = viewer.world.getItemAt(0);
+        }
+
     </script>
 
 </body>
