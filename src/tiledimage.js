@@ -2020,6 +2020,13 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (tiledImage._croppingPaths) {
+        tiledImage._drawer.saveContext(useSketch);
+        var context = tiledImage._drawer._getContext(useSketch);
+        var oldMatrix = context.getTransform();
+        var viewport = tiledImage._drawer.viewport;
+        var scale = 1 / (viewport._contentSizeNoRotate.x * viewport._contentBoundsNoRotate.width);
+        context.scale(scale, scale);
+        context.translate(viewport._contentBoundsNoRotate.x, viewport._contentBoundsNoRotate.y);
         try {
             tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
         } catch (e) {
