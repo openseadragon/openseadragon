@@ -44,7 +44,7 @@
      * @param {String} tilesUrl
      */
     $.ZoomifyTileSource = function(options) {
-        if(options.tileSize === undefined){
+        if(typeof options.tileSize === 'undefined'){
             options.tileSize = 256;
         }
 
