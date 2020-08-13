@@ -167,12 +167,16 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
+    $.setElementPointerEventsNone( this.displayRegion );
+    $.setElementTouchActionNone( this.displayRegion );
 
     this.displayRegionContainer = $.makeNeutralElement("div");
     this.displayRegionContainer.id = this.element.id + '-displayregioncontainer';
     this.displayRegionContainer.className = "displayregioncontainer";
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
+    $.setElementPointerEventsNone( this.displayRegionContainer );
+    $.setElementTouchActionNone( this.displayRegionContainer );
 
     viewer.addControl(
         this.element,
@@ -222,12 +226,21 @@ $.Navigator = function( options ){
     this.innerTracker.destroy();
     this.innerTracker = new $.MouseTracker({
         userData:        'Navigator.innerTracker',
-        element:         this.element,
+        element:         this.element, //this.canvas,
         dragHandler:     $.delegate( this, onCanvasDrag ),
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll )
     });
+    this.outerTracker.userData = 'Navigator.outerTracker';
+
+    // this.innerTracker is attached to this.element...we need to allow pointer
+    //   events to pass through this Viewer's canvas/container elements so implicit
+    //   pointer capture works on touch devices
+    //TODO an alternative is to attach the new MouseTracker to this.canvas...not
+    //   sure why it isn't already (see MouseTracker constructor call above)
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementPointerEventsNone( this.container );
 
     this.addHandler("reset-size", function() {
         if (_this.viewport) {

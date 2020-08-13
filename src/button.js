@@ -138,6 +138,13 @@ $.Button = function( options ) {
         this.imgDown.alt  =
             this.tooltip;
 
+        // Allow pointer events to pass through the img elements so implicit
+        //   pointer capture works on touch devices
+        $.setElementPointerEventsNone( this.imgRest );
+        $.setElementPointerEventsNone( this.imgGroup );
+        $.setElementPointerEventsNone( this.imgHover );
+        $.setElementPointerEventsNone( this.imgDown );
+
         this.element.style.position = "relative";
         $.setElementTouchActionNone( this.element );
 

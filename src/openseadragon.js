@@ -1950,6 +1950,19 @@ function OpenSeadragon( options ){
 
 
         /**
+         * Sets the specified element's pointer-events style attribute to 'none'.
+         * @function
+         * @param {Element|String} element
+         */
+        setElementPointerEventsNone: function( element ) {
+            element = $.getElement( element );
+            if ( typeof element.style.pointerEvents !== 'undefined' ) {
+                element.style.pointerEvents = 'none';
+            }
+        },
+
+
+        /**
          * Add the specified CSS class to the element if not present.
          * @function
          * @param {Element|String} element
