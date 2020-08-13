@@ -4218,10 +4218,11 @@
 
         if ( updateGPoint ) {
             stopTrackingPointer( pointsList, updateGPoint );
-        } else {
-            // should never get here?
-            $.console.warn('updatePointerUp(): pointerup on untracked gPoint');
         }
+        //else {
+        //    // should never get here?
+        //    $.console.warn('updatePointerCancel(): pointercancel on untracked gPoint');
+        //}
     }
 
 

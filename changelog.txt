@@ -22,6 +22,9 @@ OPENSEADRAGON CHANGELOG
 * Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events
 * MouseTracker: Fire dragEndHandler event even if release point same as initial contact point (#1459)
 * MouseTracker: Pointer capture implemented with capture APIs where available. Only fallback to emulated capture on extremely old browsers
+* MouseTracker: Added preProcessEventHandler option to allow MouseTracker instances to control bubbling and default behavior of events on their associated element
+* Updated Viewer, Button, Drawer, Navigator, ReferenceStrip DOM for proper DOM event handling
+* Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements
 
 2.4.2:
 
