@@ -344,24 +344,26 @@
             return this;
         },
 
-        /**
-         * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for all but the given pointer device type.
-         * @function
-         * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
-         * @returns {Array.<OpenSeadragon.MouseTracker.GesturePointList>}
-         */
-        getActivePointersListsExceptType: function ( type ) {
-            var delegate = THIS[ this.hash ];
-            var listArray = [];
+        // //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
+        // //   like the issue this code attempts to fix.
+        // /**
+        //  * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for all but the given pointer device type.
+        //  * @function
+        //  * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
+        //  * @returns {Array.<OpenSeadragon.MouseTracker.GesturePointList>}
+        //  */
+        // getActivePointersListsExceptType: function ( type ) {
+        //     var delegate = THIS[ this.hash ];
+        //     var listArray = [];
 
-            for (var i = 0; i < delegate.activePointersLists.length; ++i) {
-                if (delegate.activePointersLists[i].type !== type) {
-                    listArray.push(delegate.activePointersLists[i]);
-                }
-            }
+        //     for (var i = 0; i < delegate.activePointersLists.length; ++i) {
+        //         if (delegate.activePointersLists[i].type !== type) {
+        //             listArray.push(delegate.activePointersLists[i]);
+        //         }
+        //     }
 
-            return listArray;
-        },
+        //     return listArray;
+        // },
 
         /**
          * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for the given pointer device type,
@@ -1012,6 +1014,7 @@
         blurHandler: function () { }
     };
 
+    // https://github.com/openseadragon/openseadragon/pull/790
     /**
      * True if inside an iframe, otherwise false.
      * @member {Boolean} isInIframe
@@ -1026,6 +1029,7 @@
         }
     })();
 
+    // https://github.com/openseadragon/openseadragon/pull/790
     /**
      * @function
      * @private
@@ -1451,7 +1455,7 @@
         },
 
         /**
-         * Increment this pointer's contact count.
+         * Increment this pointer list's contact count.
          * It will evaluate whether this pointer type is allowed to have multiple contacts.
          * @function
          */
@@ -1465,7 +1469,7 @@
         },
 
         /**
-         * Decrement this pointer's contact count.
+         * Decrement this pointer list's contact count.
          * It will make sure the count does not go below 0.
          * @function
          */
@@ -1491,49 +1495,28 @@
      */
     function clearTrackedPointers( tracker ) {
         var delegate = THIS[ tracker.hash ],
-            i,
+            i, j,
+            pointsList,
+            gPoints,
+            gPointsToRemove,
             pointerListCount = delegate.activePointersLists.length;
 
         for ( i = 0; i < pointerListCount; i++ ) {
-            if ( delegate.activePointersLists[ i ].captureCount > 0 ) {
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    'mousemove',
-                    delegate.mousemovecaptured,
-                    true
-                );
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    'mouseup',
-                    delegate.mouseupcaptured,
-                    true
-                );
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    $.MouseTracker.unprefixedPointerEvents ? 'pointermove' : 'MSPointerMove',
-                    delegate.pointermovecaptured,
-                    true
-                );
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    $.MouseTracker.unprefixedPointerEvents ? 'pointerup' : 'MSPointerUp',
-                    delegate.pointerupcaptured,
-                    true
-                );
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    'touchmove',
-                    delegate.touchmovecaptured,
-                    true
-                );
-                $.removeEvent(
-                    $.MouseTracker.captureElement,
-                    'touchend',
-                    delegate.touchendcaptured,
-                    true
-                );
+            pointsList = delegate.activePointersLists[ i ];
 
-                delegate.activePointersLists[ i ].captureCount = 0;
+            if ( pointsList.getLength() > 0 ) {
+                // Make an array containing references to the gPoints in the pointer list
+                //   (because calls to stopTrackingPointer() are going to modify the pointer list)
+                gPointsToRemove = [];
+                gPoints = pointsList.asArray();
+                for ( j = 0; j < gPoints.length; j++ ) {
+                    gPointsToRemove.push( gPoints[ j ] );
+                }
+
+                // Release and remove all gPoints from the pointer list
+                for ( j = 0; j < gPointsToRemove.length; j++ ) {
+                    stopTrackingPointer( tracker, pointsList, gPointsToRemove[ j ] );
+                }
             }
         }
 
@@ -1656,6 +1639,7 @@
             // eslint-disable-next-line no-use-before-define
             //$.console.log('Emulated mouse capture set');
             eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
+            // https://github.com/openseadragon/openseadragon/pull/790
             if (isInIframe && canAccessEvents(window.top)) {
                 $.addEvent(
                     window.top,
@@ -1708,6 +1692,7 @@
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             //$.console.log('Emulated mouse capture release');
             eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
+            // https://github.com/openseadragon/openseadragon/pull/790
             if (isInIframe && canAccessEvents(window.top)) {
                 $.removeEvent(
                     window.top,
@@ -3192,19 +3177,22 @@
      * @function
      * @private
      * @inner
+     * @param {OpenSeadragon.MouseTracker} tracker
+     *     A reference to the MouseTracker instance.
      * @param {OpenSeadragon.MouseTracker.GesturePointList} pointsList
      *     The GesturePointList to stop tracking the pointer on.
      * @param {OpenSeadragon.MouseTracker.GesturePoint} gPoint
      *      Gesture point to stop tracking.
      * @returns {Number} Number of gesture points in pointsList.
      */
-    function stopTrackingPointer( pointsList, gPoint ) {
+    function stopTrackingPointer( tracker, pointsList, gPoint ) {
         var listLength;
 
         var trackedGPoint = pointsList.getById( gPoint.id );
 
         if ( trackedGPoint ) {
             if ( trackedGPoint.captured ) {
+                releasePointer( tracker, trackedGPoint );
                 pointsList.removeContact();
             }
 
@@ -3451,7 +3439,7 @@
                 updateGPoint.currentPos = gPoint.currentPos;
                 updateGPoint.currentTime = gPoint.currentTime;
             } else {
-                stopTrackingPointer( pointsList, updateGPoint );
+                stopTrackingPointer( tracker, pointsList, updateGPoint );
             }
 
             gPoint = updateGPoint;
@@ -3883,7 +3871,7 @@
             updateGPoint.currentPos = gPoint.currentPos;
             updateGPoint.currentTime = gPoint.currentTime;
             if ( !updateGPoint.insideElement ) {
-                stopTrackingPointer( pointsList, updateGPoint );
+                stopTrackingPointer( tracker, pointsList, updateGPoint );
             }
 
             releasePoint = updateGPoint.currentPos;
@@ -4217,7 +4205,7 @@
         updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
-            stopTrackingPointer( pointsList, updateGPoint );
+            stopTrackingPointer( tracker, pointsList, updateGPoint );
         }
         //else {
         //    // should never get here?
