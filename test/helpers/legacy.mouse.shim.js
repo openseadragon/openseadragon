@@ -12,6 +12,7 @@
     }
 
     $.MouseTracker.havePointerEvents = false;
+    $.MouseTracker.unprefixedPointerEvents = true;
     $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
     if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
         $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
@@ -20,6 +21,15 @@
         $.MouseTracker.havePointerOverOut = false;
     }
     $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+    $.MouseTracker.mousePointerId = "legacy-mouse";
+    // Legacy mouse events capture support (IE/Firefox only?)
+    $.MouseTracker.havePointerCapture = (function () {
+        var divElement = document.createElement( 'div' );
+        return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
+    }());
+    if ( $.MouseTracker.havePointerCapture ) {
+        $.MouseTracker.subscribeEvents.push( "losecapture" );
+    }
     if ( 'ontouchstart' in window ) {
         // iOS, Android, and other W3c Touch Event implementations
         //    (see http://www.w3.org/TR/touch-events/)
@@ -32,6 +42,5 @@
         //   Subscribe to these to prevent default gesture handling
         $.MouseTracker.subscribeEvents.push( "gesturestart", "gesturechange" );
     }
-    $.MouseTracker.mousePointerId = "legacy-mouse";
 
 }(OpenSeadragon));

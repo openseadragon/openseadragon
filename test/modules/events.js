@@ -452,7 +452,7 @@
                 clickCount:            2,
                 dblClickCount:         1,
                 dragCount:             0,
-                dragEndCount:          0,
+                dragEndCount:          2, // v2.5.0+ drag-end event now fired even if pointer didn't move (#1459)
                 insideElementPressed:  true,
                 insideElementReleased: true,
                 contacts:              0,
@@ -480,7 +480,7 @@
                 clickCount:            1,
                 dblClickCount:         0,
                 dragCount:             0,
-                dragEndCount:          0,
+                dragEndCount:          1, // v2.5.0+ drag-end event now fired even if pointer didn't move (#1459)
                 insideElementPressed:  true,
                 insideElementReleased: true,
                 contacts:              0,

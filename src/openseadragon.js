@@ -2048,7 +2048,7 @@ function OpenSeadragon( options ){
         },
 
         /**
-         * COnvert passed addEventListener() options to boolean or options object,
+         * Convert passed addEventListener() options to boolean or options object,
          * depending on browser support.
          * @function
          * @param {Boolean|Object} [options] Boolean useCapture, or if [supportsEventListenerOptions]{@link OpenSeadragon.supportsEventListenerOptions}, can be an object
