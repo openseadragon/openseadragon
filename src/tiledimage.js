@@ -1911,6 +1911,23 @@ function isCroppingPathReady(tiledImage, usedClip) {
     return flag;
 }
 function cropContextWithCroppingPaths(tiledImage, tile, useSketch) {
+    try {
+        var context = tiledImage._drawer._getContext(useSketch);
+        var viewport  = tiledImage._drawer.viewport;
+        var oldMatrix = context.getTransform();
+        var zoomLevel = viewport.getZoom(true);
+        context.translate(
+            (tile.position.x ) * $.pixelDensityRatio,
+            (tile.position.y ) * $.pixelDensityRatio
+        );
+        context.scale(zoomLevel, zoomLevel);
+        context.rotate(Math.PI / 180 * -viewport.degrees);
+        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
+        context.setTransform(oldMatrix);
+    } catch (e) {
+        $.console.error("Cropping with Path failed: ");
+        $.console.error(e);
+    }
 }
 
 /**
