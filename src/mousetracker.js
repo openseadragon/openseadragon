@@ -175,7 +175,7 @@
         this.preProcessEventHandler   = options.preProcessEventHandler   || null;
         this.enterHandler             = options.enterHandler             || null;
         this.leaveHandler             = options.leaveHandler             || null;
-        this.exitHandler              = options.exitHandler              || null; // Deprecated v2.4.3
+        this.exitHandler              = options.exitHandler              || null; // Deprecated v2.5.0
         this.overHandler              = options.overHandler              || null;
         this.outHandler               = options.outHandler               || null;
         this.pressHandler             = options.pressHandler             || null;
@@ -449,7 +449,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @since v2.4.3
+         * @since v2.5.0
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -480,7 +480,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @deprecated v2.4.3 Use leaveHandler instead
+         * @deprecated v2.5.0 Use leaveHandler instead
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -513,7 +513,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @since v2.4.3
+         * @since v2.5.0
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -546,7 +546,7 @@
          * Implement or assign implementation to these handlers during or after
          * calling the constructor.
          * @function
-         * @since v2.4.3
+         * @since v2.5.0
          * @param {Object} event
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
@@ -1252,6 +1252,7 @@
      *
      * @typedef {Object} EventProcessInfo
      * @memberof OpenSeadragon.MouseTracker
+     * @since v2.5.0
      *
      * @property {OpenSeadragon.MouseTracker} eventSource
      *      A reference to the tracker instance.
