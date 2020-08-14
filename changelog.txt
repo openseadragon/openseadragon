@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
 * Miscellaneous code cleanup (#1840 @msalsbery)
+* You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
 * Improved browser sniffing - detect EDGE and CHROMEEDGE browsers
 * Improved DOM event model feature detection
 * Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1669)

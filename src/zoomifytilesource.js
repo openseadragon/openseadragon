@@ -18,7 +18,7 @@
      *      tilesUrl: "/test/data/zoomify/"
      * }
      *
-     * The tileSize is currently hardcoded to 256 (the usual Zoomify default). The tileUrl must the path to the image _directory_.
+     * The tileSize is set to 256 (the usual Zoomify default) when it is not defined. The tileUrl must the path to the image _directory_.
      *
      * 2) Loading image metadata from xml file: (CURRENTLY NOT SUPPORTED)
      *
@@ -44,7 +44,9 @@
      * @param {String} tilesUrl
      */
     $.ZoomifyTileSource = function(options) {
-        options.tileSize = 256;
+        if(typeof options.tileSize === 'undefined'){
+            options.tileSize = 256;
+        }
 
         var currentImageSize = {
             x: options.width,
