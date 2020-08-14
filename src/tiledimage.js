@@ -1891,6 +1891,28 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
+function isCroppingPathReady(tiledImage, usedClip) {
+    var flag = true;
+    // Skip checking if _croppingPath is falsely
+    if (!tiledImage._croppingPaths) {
+        return false;
+    }
+    if (usedClip) {
+        $.console.log('Unable to crop with path, canvas was clipped already.');
+        flag = false;
+    }
+    if (tiledImage._croppingPolygons && tiledImage._croppingPaths) {
+        $.console.log(
+            'TiledImage is unable crop polygons and paths at same time,' +
+            'call tileImage.resetCroppingPolygons() to crop with paths only.'
+        );
+        flag = false;
+    }
+    return flag;
+}
+function cropContextWithCroppingPaths(tiledImage, tile, useSketch) {
+}
+
 /**
  * @private
  * @inner
@@ -2019,21 +2041,10 @@ function drawTiles( tiledImage, lastDrawn ) {
         usedClip = true;
     }
 
-    if (tiledImage._croppingPaths) {
+    if (isCroppingPathReady(tiledImage, usedClip)) {
         tiledImage._drawer.saveContext(useSketch);
-        var context = tiledImage._drawer._getContext(useSketch);
-        var oldMatrix = context.getTransform();
-        var viewport = tiledImage._drawer.viewport;
-        var scale = 1 / (viewport._contentSizeNoRotate.x * viewport._contentBoundsNoRotate.width);
-        context.scale(scale, scale);
-        context.translate(viewport._contentBoundsNoRotate.x, viewport._contentBoundsNoRotate.y);
-        try {
-            tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
-        } catch (e) {
-            $.console.error(e);
-        }
-        usedClip = true;
-        context.setTransform(oldMatrix);
+        usedClip = true; // Marks context for restore later.
+        cropContextWithCroppingPaths(tiledImage, tile, useSketch);
     }
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
