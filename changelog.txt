@@ -3,6 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 2.5.0: (In progress)
 
+* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
@@ -16,7 +17,6 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events (#1872 @msalsbery)
 * MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout (#1872 @msalsbery)
 * All internal uses of MouseTracker use pointerenter/pointerleave events instead of pointerover/pointerout events for more consistent pointer tracking (#1872 @msalsbery)
-* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
 * Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers (#1872 @msalsbery)
 * MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut (#1872 @msalsbery)
 * MouseTracker: Simulate mouseover/mouseout on IE < 9 (#1872 @msalsbery)
