@@ -51,14 +51,14 @@
     </div>
     <div class='box-with-title'>
         <div class="buttons">
-            <button id="cropBtn">Crop With Polygon</button>
+            <button id="polygonCropBtn">Crop With Polygon</button>
             <button onclick="emptyElement('previewEl')">Clear</button>
         </div>
         <textarea id='previewEl'></textarea>
     </div>
     <div class='box-with-title'>
         <div class="buttons">
-            <button id="pathBtn">Crop With Path</button>
+            <button id="pathCropBtn">Crop With Path</button>
             <button onclick="emptyElement('pathDEl')">Clear</button>
         </div>
         <textarea id='pathDEl'></textarea>
@@ -171,7 +171,7 @@
         };
 
         // Crop image with value in the preview element
-        document.getElementById('cropBtn').onclick = function(){
+        document.getElementById('polygonCropBtn').onclick = function(){
             var polygonList = eval(previewEl.value);
             var tiledImage = viewer.world.getItemAt(0);
             tiledImage.setCroppingPolygons(polygonList);
@@ -191,7 +191,7 @@
 
         document.getElementById('exampleBtn').onclick = loadExample;
 
-        document.getElementById('pathBtn').onclick = function() {
+        document.getElementById('pathCropBtn').onclick = function() {
             var pathList = eval(pathDEl.value);
             var paths = pathList.map(function(path) {
                 var svg = document.createElementNS("http://www.w3.org/2000/svg", "path");
