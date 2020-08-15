@@ -1915,12 +1915,12 @@ function cropContextWithCroppingPaths(tiledImage, tile, useSketch) {
         var context = tiledImage._drawer._getContext(useSketch);
         var viewport  = tiledImage._drawer.viewport;
         var oldMatrix = context.getTransform();
-        var zoomLevel = viewport.getZoom(true);
+        var scale = viewport.viewportToImageZoom(viewport.getZoom()) * $.pixelDensityRatio;
         context.translate(
             (tile.position.x ) * $.pixelDensityRatio,
             (tile.position.y ) * $.pixelDensityRatio
         );
-        context.scale(zoomLevel, zoomLevel);
+        context.scale(scale, scale);
         context.rotate(Math.PI / 180 * -viewport.degrees);
         tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
         context.setTransform(oldMatrix);
