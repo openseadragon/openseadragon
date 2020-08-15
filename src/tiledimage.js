@@ -1941,7 +1941,6 @@ function cropContextWithCroppingPaths(tiledImage, useSketch) {
         var point = tiledImage.getOriginPixelCoordinate(true, true);
         context.translate(point.x, point.y);
         context.scale(scale, scale);
-        context.rotate(Math.PI / 180 * -viewport.degrees);
         tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
         context.setTransform(oldMatrix);
     } catch (e) {
