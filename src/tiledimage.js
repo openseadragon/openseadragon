@@ -1194,6 +1194,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             topLeft: topLeftTile,
             bottomRight: bottomRightTile,
         };
+    },
+
+    /**
+     * This function converts the {0, 0} viewport coordinates to pixels coordinates
+     * @param {Boolean} current Pass true for the current location; defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
+    getOriginPixelCoordinate: function(current, withPixelDensityRatio) {
+        var topLeft = this.viewport.pixelFromPointNoRotate(
+            new $.Point(0, 0),
+            current === true
+        );
+        var multiplier = withPixelDensityRatio ? $.pixelDensityRatio : 1;
+        topLeft = topLeft.times(multiplier);
+        return topLeft;
     }
 });
 
@@ -1910,16 +1925,21 @@ function isCroppingPathReady(tiledImage, usedClip) {
     }
     return flag;
 }
-function cropContextWithCroppingPaths(tiledImage, tile, useSketch) {
+
+/**
+ * This function crops the view with tiledImage._croppingPaths by transforming
+ * the canvas by the current viewport.
+ * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage with _croppingPaths.
+ * @see isCroppingPathReady
+ */
+function cropContextWithCroppingPaths(tiledImage, useSketch) {
     try {
         var context = tiledImage._drawer._getContext(useSketch);
         var viewport  = tiledImage._drawer.viewport;
         var oldMatrix = context.getTransform();
-        var scale = viewport.viewportToImageZoom(viewport.getZoom()) * $.pixelDensityRatio;
-        context.translate(
-            (tile.position.x ) * $.pixelDensityRatio,
-            (tile.position.y ) * $.pixelDensityRatio
-        );
+        var scale = viewport.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
+        var point = tiledImage.getOriginPixelCoordinate(true, true);
+        context.translate(point.x, point.y);
         context.scale(scale, scale);
         context.rotate(Math.PI / 180 * -viewport.degrees);
         tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
@@ -2061,8 +2081,9 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (isCroppingPathReady(tiledImage, usedClip)) {
         tiledImage._drawer.saveContext(useSketch);
         usedClip = true; // Marks context for restore later.
-        cropContextWithCroppingPaths(tiledImage, tile, useSketch);
+        cropContextWithCroppingPaths(tiledImage, useSketch);
     }
+
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
         if (sketchScale) {
