@@ -678,6 +678,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._setScale(height / this.normHeight, immediately);
     },
 
+    /**
+     * Sets an array of paths to crop the TiledImage during draw tiles.
+     * The render function will use the even-odd winding rule.
+     * @param paths - an array of path objects to crop the tileImage
+     * Example path object:
+     * var pathData = "M 500,500 h 200 v 200 h -200 z";
+     * var pathObj = document.createElementNS("http://www.w3.org/2000/svg", "path");
+     * pathObj.setAttribute('d', pathData);
+     * @see https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
+     */
     setCroppingPaths: function( paths ) {
         this._croppingPaths = paths;
     },
@@ -734,6 +744,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._croppingPolygons = null;
     },
 
+    /**
+     * Resets the cropping path, thus next render will remove all cropping
+     * path effects.
+     */
     resetCroppingPaths: function() {
         this._croppingPaths = null;
     },
@@ -1906,6 +1920,13 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 
+/**
+ * This function checks if the path cropping is ready.
+ * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage to check the cropping
+ * properties: _croppingPolygons, _croppingPaths.
+ * @param {boolean} usedClip - indicates that the canvas used clip already
+ * @return true if no condition failed, false otherwise.
+ */
 function isCroppingPathReady(tiledImage, usedClip) {
     var flag = true;
     // Skip checking if _croppingPath is falsely
