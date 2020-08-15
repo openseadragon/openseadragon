@@ -89,15 +89,15 @@
 
         var examples =  [
             [{x: 480, y: 300},{x: 300, y: 420},{x: 600, y: 420}],                   // Triangle
-            [{x: 300, y: 550},{x: 300, y: 750},{x: 600, y: 750},{x: 600, y: 550}]   // Rectangle
+            [{x: 500, y: 500},{x: 700, y: 500},{x: 700, y: 700},{x: 500, y: 700}]   // Rectangle
         ];
         var pathWithExclusion = [
-            'M 300,300',  // Move to x: 500, y: 500
+            'M 500,500',  // Move to x: 500, y: 500
             'h 200',      // Draw a box of size 100
             'v 200',
             'h -200',
             'z',          // Close path
-            'M 350,350',  // Move to x: 600, y:600
+            'M 600,600',  // Move to x: 600, y:600
             'h 30',       // Draw a polygon as exclusion (evenodd rule)
             'l 30,40',
             'h -30',
