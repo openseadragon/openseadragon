@@ -1,33 +1,33 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.4.3: (In progress)
+2.5.0: (In progress)
 
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
-* Improved browser sniffing - detect EDGE and CHROMEEDGE browsers
-* Improved DOM event model feature detection
-* Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1669)
-* Added OpenSeadragon.eventIsCanceled() function for defaultPrevented detection on DOM events
-* MouseTracker: better PointerEvent model detection - removed use of deprecated window.navigator.pointerEnabled
-* MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events
-* MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout
-* All internal uses of MouseTracker use pointerenter/pointerleave events instead of pointerover/pointerout events for more consistent pointer tracking
-* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names
-* Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers
-* MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut
-* MouseTracker: Simulate mouseover/mouseout on IE < 9
-* Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events
-* MouseTracker: Fire dragEndHandler event even if release point same as initial contact point (#1459)
-* MouseTracker: Pointer capture implemented with capture APIs where available. Only fallback to emulated capture on extremely old browsers
-* MouseTracker: Added preProcessEventHandler option to allow MouseTracker instances to control bubbling and default behavior of events on their associated element
-* MouseTracker: Improved handling of canceled events (#1728)
-* MouseTracker: Improved releasing of tracked pointers on destroy()/stopTracking() (#1346)
-* Updated Viewer, Button, Drawer, Navigator, ReferenceStrip DOM for proper DOM event handling
-* Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements
+* Improved browser sniffing - detect EDGE and CHROMEEDGE browsers (#1872 @msalsbery)
+* Improved DOM event model feature detection (#1872 @msalsbery)
+* Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1872 @msalsbery)
+* Added OpenSeadragon.eventIsCanceled() function for defaultPrevented detection on DOM events (#1872 @msalsbery)
+* MouseTracker: better PointerEvent model detection - removed use of deprecated window.navigator.pointerEnabled (#1872 @msalsbery)
+* MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events (#1872 @msalsbery)
+* MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout (#1872 @msalsbery)
+* All internal uses of MouseTracker use pointerenter/pointerleave events instead of pointerover/pointerout events for more consistent pointer tracking (#1872 @msalsbery)
+* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
+* Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers (#1872 @msalsbery)
+* MouseTracker: IE 10 - MSPointerEnter/MSPointerLeave didn't exist then, simulated with MSPointerOver/MSPointerOut (#1872 @msalsbery)
+* MouseTracker: Simulate mouseover/mouseout on IE < 9 (#1872 @msalsbery)
+* Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events (#1872 @msalsbery)
+* MouseTracker: Fire dragEndHandler event even if release point same as initial contact point (#1872 @msalsbery)
+* MouseTracker: Pointer capture implemented with capture APIs where available. Only fallback to emulated capture on extremely old browsers (#1872 @msalsbery)
+* MouseTracker: Added preProcessEventHandler option to allow MouseTracker instances to control bubbling and default behavior of events on their associated element (#1872 @msalsbery)
+* MouseTracker: Improved handling of canceled events (#1872 @msalsbery)
+* MouseTracker: Improved releasing of tracked pointers on destroy()/stopTracking() (#1872 @msalsbery)
+* Updated Viewer, Button, Drawer, Navigator, ReferenceStrip DOM for proper DOM event handling (#1872 @msalsbery)
+* Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements (#1872 @msalsbery)
 
 2.4.2:
 
