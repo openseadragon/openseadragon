@@ -918,7 +918,7 @@ function OpenSeadragon( options ){
     };
 
     /**
-     * True if the browser supports the EventTarget.removeEventListener() method
+     * True if the browser supports the EventTarget.addEventListener() method
      * @member {Boolean} supportsAddEventListener
      * @memberof OpenSeadragon
      */
@@ -2087,9 +2087,6 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.passive]
          * @param {Boolean} [options.once]
          */
-        // undefined - false or {capture: false}
-        // bool - bool or (capture: bool}
-        // obje - obje.capture or obje
         addEvent: (function () {
             if ( $.supportsAddEventListener ) {
                 return function ( element, eventName, handler, options ) {
