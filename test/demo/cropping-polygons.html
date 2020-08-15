@@ -41,6 +41,9 @@
     <div>
         <button id='resetBtn'>Reset</button>
         <button id='exampleBtn'>Load Example</button>
+        <button id="rotateLeft">Rotate - 10</button>
+        <button id="rotateRight">Rotate + 10</button>
+        <button id="rotateZero">Rotate to 0</button>
     </div>
     <div class='box-with-title'>
         <div class="buttons">
@@ -204,6 +207,17 @@
             emptyElement('pathDEl');
         }
 
+        document.getElementById('rotateRight').onclick = function() {
+            var degree = viewer.world.getItemAt(0).getRotation();
+            viewer.world.getItemAt(0).setRotation(degree + 10);
+        }
+        document.getElementById('rotateLeft').onclick = function() {
+            var degree = viewer.world.getItemAt(0).getRotation();
+            viewer.world.getItemAt(0).setRotation(degree - 10);
+        }
+        document.getElementById('rotateZero').onclick = function() {
+            viewer.world.getItemAt(0).setRotation(0);
+        }
     </script>
 
 </body>
