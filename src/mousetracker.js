@@ -1281,9 +1281,6 @@
      *      Valid on eventType "pointerdown".
      * @property {Boolean} stopPropagation
      *      Set to true prevent the event from propagating to ancestor/descendent elements on capture/bubble phase.
-     * @property {Boolean} stopImmediatePropagation
-     *      Same as stopPropagation, but also prevents any other handlers on the tracker's element for
-     *      this event from being called.
      * @property {Boolean} shouldCapture
      *      (Internal Use) Set to true if the pointer should be captured (events (re)targeted to tracker element).
      * @property {Boolean} shouldReleaseCapture
@@ -3231,7 +3228,6 @@
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'pointerover':
             case 'pointerout':
@@ -3240,7 +3236,6 @@
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'pointerdown':
                 eventInfo.isStopable = true;
@@ -3248,7 +3243,6 @@
                 eventInfo.preventDefault = false;//tracker.hasGestureHandlers;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'pointerup':
                 eventInfo.isStopable = true;
@@ -3256,7 +3250,6 @@
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'wheel':
                 eventInfo.isStopable = true;
@@ -3264,7 +3257,6 @@
                 eventInfo.preventDefault = false;//tracker.hasScrollHandler;
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'gotpointercapture':
             case 'lostpointercapture':
@@ -3274,7 +3266,6 @@
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
             case 'pointerenter':
             case 'pointerleave':
@@ -3284,7 +3275,6 @@
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
-                eventInfo.stopImmediatePropagation = false;
                 break;
         }
     }
