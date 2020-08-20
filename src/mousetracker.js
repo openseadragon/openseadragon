@@ -2069,7 +2069,7 @@
      * @inner
      */
     function onLoseCapture( tracker, event ) {
-        $.console.log('losecapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('losecapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
         event = $.getEvent( event );
 
         var gPoint = {
@@ -2518,7 +2518,8 @@
             gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
+                // Simulate isPrimary
+                isPrimary: pointsList.getLength() === 0,
                 currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
                 currentTime: time
             };
@@ -2566,7 +2567,6 @@
             gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
                 currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
                 currentTime: time
             };
@@ -2612,7 +2612,6 @@
             gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
-                // isPrimary not set - let the updatePointers functions determine it
                 currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
                 currentTime: time
             };
@@ -2705,8 +2704,6 @@
 
         if ( event.target === tracker.element ) {
             //$.console.log('gotpointercapture ' + (tracker.userData ? tracker.userData.toString() : ''));
-            ////$.cancelEvent( event ); not cancelable!
-            //$.stopEvent( event );
             updatePointerCaptured( tracker, {
                 id: event.pointerId,
                 type: getPointerType( event )
@@ -2736,8 +2733,6 @@
 
         if ( event.target === tracker.element ) {
             //$.console.log('lostpointercapture ' + (tracker.userData ? tracker.userData.toString() : ''));
-            ////$.cancelEvent( event ); not cancelable!
-            //$.stopEvent( event );
             updatePointerCaptured( tracker, {
                 id: event.pointerId,
                 type: getPointerType( event )
@@ -2923,7 +2918,6 @@
 
         //$.console.log('onPointerDown ' + (tracker.userData ? tracker.userData.toString() : ''));
         // $.console.log('onPointerDown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + event.target.tagName);
-        // event.target.style.background = '#F0F';
 
         // Most browsers implicitly capture touch pointer events
         // Note no IE versions have element.hasPointerCapture() so no implicit
@@ -2963,17 +2957,12 @@
             $.stopEvent( event );
         }
         if ( eventInfo.shouldCapture && !implicitlyCaptured ) {
-           //$.stopEvent( event );
            //$.console.log('pointerdown calling capturePointer() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
            capturePointer( tracker, gPoint );
         } else if ( !eventInfo.shouldCapture && implicitlyCaptured ) {
-           //$.stopEvent( event );
            //$.console.log('pointerdown calling releasePointer() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
            releasePointer( tracker, gPoint ); //TODO should we do this? Investigate when implementing bubble handling
         }
-        // else if ( eventInfo.shouldCapture && implicitlyCaptured ) {
-        //     //$.stopEvent( event );
-        // }
     }
 
 
@@ -3111,7 +3100,7 @@
      * @inner
      */
     function onPointerCancel( tracker, event ) {
-        //$.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.isPrimary ? 'isPrimary' : ''));
+        //$.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : ''));
 
         var gPoint = {
             id: event.pointerId,
@@ -3150,16 +3139,6 @@
      * @returns {Number} Number of gesture points in pointsList.
      */
     function startTrackingPointer( pointsList, gPoint ) {
-
-        // If isPrimary is not known for the pointer then set it according to our rules:
-        //    true if the first pointer in the gesture, otherwise false
-        if ( !Object.prototype.hasOwnProperty.call( gPoint, 'isPrimary' ) ) {
-            if ( pointsList.getLength() === 0 ) {
-                gPoint.isPrimary = true;
-            } else {
-                gPoint.isPrimary = false;
-            }
-        }
         gPoint.speed = 0;
         gPoint.direction = 0;
         gPoint.contactPos = gPoint.currentPos;
@@ -3195,18 +3174,6 @@
             }
 
             listLength = pointsList.removeById( gPoint.id );
-
-            //TODO Browsers don't re-assign primary pointers so this is probably incorrect
-            // // If isPrimary is not known for the pointer and we just removed the primary pointer from the list then we need to set another pointer as primary
-            // if ( !Object.prototype.hasOwnProperty.call( gPoint, 'isPrimary' ) ) {
-            //     primaryPoint = pointsList.getPrimary();
-            //     if ( !primaryPoint ) {
-            //         primaryPoint = pointsList.getByIndex( 0 );
-            //         if ( primaryPoint ) {
-            //             primaryPoint.isPrimary = true;
-            //         }
-            //     }
-            // }
         } else {
             listLength = pointsList.getLength();
         }
@@ -4047,9 +4014,6 @@
 
         if ( updateGPoint ) {
             // Already tracking the pointer...update it
-            if ( Object.prototype.hasOwnProperty.call( gPoint, 'isPrimary' ) ) {
-                updateGPoint.isPrimary = gPoint.isPrimary;
-            }
             updateGPoint.lastPos = updateGPoint.currentPos;
             updateGPoint.lastTime = updateGPoint.currentTime;
             updateGPoint.currentPos = gPoint.currentPos;
@@ -4198,10 +4162,6 @@
         if ( updateGPoint ) {
             stopTrackingPointer( tracker, pointsList, updateGPoint );
         }
-        //else {
-        //    // should never get here?
-        //    $.console.warn('updatePointerCancel(): pointercancel on untracked gPoint');
-        //}
     }
 
 
