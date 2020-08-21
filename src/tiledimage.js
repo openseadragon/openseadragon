@@ -1211,7 +1211,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * This function converts the {0, 0} viewport coordinates to pixels coordinates
+     * This function converts the top left viewport coordinates to pixels coordinates
      * @param {Boolean} current Pass true for the current location; defaults to false (target location).
      * @returns {OpenSeadragon.Point}
      */
