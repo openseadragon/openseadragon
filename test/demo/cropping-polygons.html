@@ -44,6 +44,10 @@
         <button id="rotateLeft">Rotate - 10</button>
         <button id="rotateRight">Rotate + 10</button>
         <button id="rotateZero">Rotate to 0</button>
+        <select id="selectedImage">
+            <option>Index 0</option>
+            <option>Index 1</option>
+        </select>
     </div>
     <div class='box-with-title'>
         <div class="buttons">
@@ -71,6 +75,7 @@
     <script type="text/javascript">
         var viewer = OpenSeadragon({
             // debugMode: true,
+            // animationTime: 0,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
@@ -78,6 +83,11 @@
             gestureSettingsMouse: {
                 clickToZoom: false
             }
+        });
+        viewer.addTiledImage({
+            tileSource: "../data/tall.dzi",
+            x: 2,
+            y: 0,
         });
     </script>
 
@@ -168,6 +178,11 @@
             }
         }
 
+        function getSelectedTiledImage() {
+            var index = document.getElementById('selectedImage').selectedIndex;
+            return viewer.world.getItemAt(index);
+        }
+
         // Add clicked points to polygon tracker variable as point objects
         document.getElementById('addPointBtn').onclick = function(){
             insertValueFromElementToPreviewElement(polygonPointEl);
@@ -176,7 +191,7 @@
         // Crop image with value in the preview element
         document.getElementById('polygonCropBtn').onclick = function(){
             var polygonList = eval(previewEl.value);
-            var tiledImage = viewer.world.getItemAt(0);
+            var tiledImage = getSelectedTiledImage();
             tiledImage.setCroppingPolygons(polygonList);
             viewer.forceRedraw();
             emptyElement('previewEl');
@@ -186,7 +201,7 @@
             emptyElement('polygonPointEl');
             emptyElement('previewEl');
             emptyElement('pathDEl');
-            var tiledImage = viewer.world.getItemAt(0);
+            var tiledImage = getSelectedTiledImage();
             tiledImage.resetCroppingPolygons();
             tiledImage.resetCroppingPaths();
             viewer.forceRedraw();
@@ -201,22 +216,22 @@
                 svg.setAttribute('d', path);
                 return svg;
             });
-            var tiledImage = viewer.world.getItemAt(0);
+            var tiledImage = getSelectedTiledImage();
             tiledImage.setCroppingPaths(paths);
             viewer.forceRedraw();
             emptyElement('pathDEl');
         }
 
         document.getElementById('rotateRight').onclick = function() {
-            var degree = viewer.world.getItemAt(0).getRotation();
-            viewer.world.getItemAt(0).setRotation(degree + 10);
+            var degree = getSelectedTiledImage().getRotation();
+            getSelectedTiledImage().setRotation(degree + 10);
         }
         document.getElementById('rotateLeft').onclick = function() {
-            var degree = viewer.world.getItemAt(0).getRotation();
-            viewer.world.getItemAt(0).setRotation(degree - 10);
+            var degree = getSelectedTiledImage().getRotation();
+            getSelectedTiledImage().setRotation(degree - 10);
         }
         document.getElementById('rotateZero').onclick = function() {
-            viewer.world.getItemAt(0).setRotation(0);
+            getSelectedTiledImage().setRotation(0);
         }
     </script>
 
