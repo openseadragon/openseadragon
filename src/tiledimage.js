@@ -1216,8 +1216,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point}
      */
     getOriginPixelCoordinate: function(current, withPixelDensityRatio) {
+        var bounds = this.getBoundsNoRotate();
         var topLeft = this.viewport.pixelFromPointNoRotate(
-            new $.Point(0, 0),
+            new $.Point(bounds.x, bounds.y),
             current === true
         );
         var multiplier = withPixelDensityRatio ? $.pixelDensityRatio : 1;
@@ -1958,7 +1959,7 @@ function cropContextWithCroppingPaths(tiledImage) {
         var context = tiledImage._drawer._getContext();
         var viewport  = tiledImage._drawer.viewport;
         var oldMatrix = context.getTransform();
-        var scale = viewport.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
+        var scale = tiledImage.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
         var point = tiledImage.getOriginPixelCoordinate(true, true);
         context.translate(point.x, point.y);
         context.scale(scale, scale);
