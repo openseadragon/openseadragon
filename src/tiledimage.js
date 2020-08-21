@@ -1953,16 +1953,16 @@ function isCroppingPathReady(tiledImage, usedClip) {
  * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage with _croppingPaths.
  * @see isCroppingPathReady
  */
-function cropContextWithCroppingPaths(tiledImage, useSketch) {
+function cropContextWithCroppingPaths(tiledImage) {
     try {
-        var context = tiledImage._drawer._getContext(useSketch);
+        var context = tiledImage._drawer._getContext();
         var viewport  = tiledImage._drawer.viewport;
         var oldMatrix = context.getTransform();
         var scale = viewport.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
         var point = tiledImage.getOriginPixelCoordinate(true, true);
         context.translate(point.x, point.y);
         context.scale(scale, scale);
-        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
+        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths);
         context.setTransform(oldMatrix);
     } catch (e) {
         $.console.error("Cropping with Path failed: ");
@@ -2001,11 +2001,13 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
+        !tiledImage._croppingPaths &&
         tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         // Note: Disabled on iOS devices per default as it causes a native crash
+        // Node: Disabled when _croppingPaths are provided because stacking translation
         useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
@@ -2101,7 +2103,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (isCroppingPathReady(tiledImage, usedClip)) {
         tiledImage._drawer.saveContext(useSketch);
         usedClip = true; // Marks context for restore later.
-        cropContextWithCroppingPaths(tiledImage, useSketch);
+        cropContextWithCroppingPaths(tiledImage);
     }
 
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
