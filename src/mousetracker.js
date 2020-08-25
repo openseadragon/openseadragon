@@ -1621,7 +1621,7 @@
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
                 // Can throw InvalidPointerId
-                //   (should never happen for setPointerCapture so we'll log a warning)
+                //   (should never happen so we'll log a warning)
                 try {
                     if ( $.MouseTracker.unprefixedPointerEvents ) {
                         tracker.element.setPointerCapture( gPoint.id );
@@ -1677,12 +1677,18 @@
      */
     function releasePointer( tracker, gPoint ) {
         var eventParams;
+        var pointsList;
+        var cachedGPoint;
 
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
+                pointsList = tracker.getActivePointersListByType( gPoint.type );
+                cachedGPoint = pointsList.getById( gPoint.id );
+                if ( !cachedGPoint || !cachedGPoint.captured ) {
+                    return;
+                }
                 // Can throw InvalidPointerId
-                //   (can happen depending on browser event timing (Firefox touch)
-                //   so we won't log a warning)
+                //   (should never happen so we'll log a warning)
                 try {
                     if ( $.MouseTracker.unprefixedPointerEvents ) {
                         tracker.element.releasePointerCapture( gPoint.id );
@@ -1692,7 +1698,7 @@
                         //$.console.log('element.msReleasePointerCapture() called');
                     }
                 } catch ( e ) {
-                    /* eslint-disable no-empty */
+                    $.console.warn('releasePointerCapture() called on invalid pointer ID');
                 }
             } else {
                 tracker.element.releaseCapture();
