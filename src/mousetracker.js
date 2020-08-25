@@ -1620,12 +1620,18 @@
 
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
-                if ( $.MouseTracker.unprefixedPointerEvents ) {
-                    tracker.element.setPointerCapture( gPoint.id );
-                    //$.console.log('element.setPointerCapture() called');
-                } else {
-                    tracker.element.msSetPointerCapture( gPoint.id );
-                    //$.console.log('element.msSetPointerCapture() called');
+                // Can throw InvalidPointerId
+                //   (should never happen for setPointerCapture so we'll log a warning)
+                try {
+                    if ( $.MouseTracker.unprefixedPointerEvents ) {
+                        tracker.element.setPointerCapture( gPoint.id );
+                        //$.console.log('element.setPointerCapture() called');
+                    } else {
+                        tracker.element.msSetPointerCapture( gPoint.id );
+                        //$.console.log('element.msSetPointerCapture() called');
+                    }
+                } catch ( e ) {
+                    $.console.warn('setPointerCapture() called on invalid pointer ID');
                 }
             } else {
                 tracker.element.setCapture( true );
@@ -1674,12 +1680,19 @@
 
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
-                if ( $.MouseTracker.unprefixedPointerEvents ) {
-                    tracker.element.releasePointerCapture( gPoint.id );
-                    //$.console.log('element.releasePointerCapture() called');
-                } else {
-                    tracker.element.msReleasePointerCapture( gPoint.id );
-                    //$.console.log('element.msReleasePointerCapture() called');
+                // Can throw InvalidPointerId
+                //   (can happen depending on browser event timing (Firefox touch)
+                //   so we won't log a warning)
+                try {
+                    if ( $.MouseTracker.unprefixedPointerEvents ) {
+                        tracker.element.releasePointerCapture( gPoint.id );
+                        //$.console.log('element.releasePointerCapture() called');
+                    } else {
+                        tracker.element.msReleasePointerCapture( gPoint.id );
+                        //$.console.log('element.msReleasePointerCapture() called');
+                    }
+                } catch ( e ) {
+                    /* eslint-disable no-empty */
                 }
             } else {
                 tracker.element.releaseCapture();
