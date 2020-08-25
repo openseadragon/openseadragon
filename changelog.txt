@@ -29,6 +29,8 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: Improved releasing of tracked pointers on destroy()/stopTracking() (#1872 @msalsbery)
 * Updated Viewer, Button, Drawer, Navigator, ReferenceStrip DOM for proper DOM event handling (#1872 @msalsbery)
 * Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements (#1872 @msalsbery)
+* MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
+* Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
 
 2.4.2:
 

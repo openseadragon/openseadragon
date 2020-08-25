@@ -288,6 +288,7 @@ $.Viewer = function( options ) {
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
+        contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
@@ -2536,6 +2537,26 @@ function onFocus(){
 function onBlur(){
     beginControlsAutoHide( this );
 
+}
+
+function onCanvasContextMenu( event ) {
+    /**
+     * Raised when a contextmenu event occurs in the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-contextmenu
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-contextmenu', {
+        tracker: event.eventSource,
+        position: event.position,
+        originalEvent: event.originalEvent
+    });
 }
 
 function onCanvasKeyDown( event ) {
