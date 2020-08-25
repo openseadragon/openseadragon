@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
+* Better use of IIIF "max" and "full" URL parameters (#1871 @MImranAsghar)
 
 2.4.2:
 
