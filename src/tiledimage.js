@@ -686,10 +686,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * var pathData = "M 500,500 h 200 v 200 h -200 z";
      * var pathObj = document.createElementNS("http://www.w3.org/2000/svg", "path");
      * pathObj.setAttribute('d', pathData);
+     * @param cropWithoutSketch - optional - indicate that cropping path should not
+     * use the sketch canvas default to true.
      * @see https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
      */
-    setCroppingPaths: function( paths ) {
+    setCroppingPaths: function( paths, cropWithoutSketch ) {
         this._croppingPaths = paths;
+        if (cropWithoutSketch === undefined || cropWithoutSketch === null) {
+            this._cropWithoutSketch = true;
+        } else {
+            this._cropWithoutSketch = cropWithoutSketch;
+        }
     },
 
     /**
@@ -1954,16 +1961,16 @@ function isCroppingPathReady(tiledImage, usedClip) {
  * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage with _croppingPaths.
  * @see isCroppingPathReady
  */
-function cropContextWithCroppingPaths(tiledImage) {
+function cropContextWithCroppingPaths(tiledImage, useSketch) {
     try {
-        var context = tiledImage._drawer._getContext();
+        var context = tiledImage._drawer._getContext(useSketch);
         var viewport  = tiledImage._drawer.viewport;
         var oldMatrix = context.getTransform();
         var scale = tiledImage.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
         var point = tiledImage.getOriginPixelCoordinate(true, true);
         context.translate(point.x, point.y);
         context.scale(scale, scale);
-        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths);
+        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
         context.setTransform(oldMatrix);
     } catch (e) {
         $.console.error("Cropping with Path failed: ");
@@ -2002,7 +2009,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
-        !tiledImage._croppingPaths &&
+        !tiledImage._cropWithoutSketch &&
         tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
@@ -2102,9 +2109,14 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
 
     if (isCroppingPathReady(tiledImage, usedClip)) {
-        tiledImage._drawer.saveContext(useSketch);
+        if (tiledImage._cropWithoutSketch) {
+            tiledImage._drawer.saveContext();
+            cropContextWithCroppingPaths(tiledImage);
+        } else {
+            tiledImage._drawer.saveContext(useSketch);
+            cropContextWithCroppingPaths(tiledImage, useSketch);
+        }
         usedClip = true; // Marks context for restore later.
-        cropContextWithCroppingPaths(tiledImage);
     }
 
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
@@ -2151,6 +2163,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
     }
 
+    if (usedClip && tiledImage._cropWithoutSketch) {
+        tiledImage._drawer.restoreContext();
+    }
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
