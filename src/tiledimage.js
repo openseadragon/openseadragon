@@ -688,14 +688,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * pathObj.setAttribute('d', pathData);
      * @param cropWithoutSketch - optional - indicate that cropping path should not
      * use the sketch canvas default to true.
+     * @param preventSketchTransform - optional - indicate that the cropping path
+     * transformation is applied thus sketch transform can be skip.
      * @see https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
      */
-    setCroppingPaths: function( paths, cropWithoutSketch ) {
+    setCroppingPaths: function( paths, cropWithoutSketch, preventSketchTransform) {
         this._croppingPaths = paths;
         if (cropWithoutSketch === undefined || cropWithoutSketch === null) {
             this._cropWithoutSketch = true;
+            this._preventSketchTransform = true;
         } else {
             this._cropWithoutSketch = cropWithoutSketch;
+            this._preventSketchTransform = preventSketchTransform;
         }
     },
 
@@ -2010,6 +2014,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
         !tiledImage._cropWithoutSketch &&
+        !tiledImage._preventSketchTransform &&
         tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
