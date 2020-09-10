@@ -399,14 +399,22 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     destroy: function() {
-        this.element.removeChild(this.imgRest);
-        this.imgRest = null;
-        this.element.removeChild(this.imgGroup);
-        this.imgGroup = null;
-        this.element.removeChild(this.imgHover);
-        this.imgHover = null;
-        this.element.removeChild(this.imgDown);
-        this.imgDown = null;
+        if (this.imgRest) {
+            this.element.removeChild(this.imgRest);
+            this.imgRest = null;
+        }
+        if (this.imgGroup) {
+            this.element.removeChild(this.imgGroup);
+            this.imgGroup = null;
+        }
+        if (this.imgHover) {
+            this.element.removeChild(this.imgHover);
+            this.imgHover = null;
+        }
+        if (this.imgDown) {
+            this.element.removeChild(this.imgDown);
+            this.imgDown = null;
+        }
         this.removeAllHandlers();
         this.tracker.destroy();
         this.element = null;

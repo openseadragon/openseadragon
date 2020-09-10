@@ -775,7 +775,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.removeAllHandlers();
 
         if (this.buttons) {
-            this.buttons.destroy();
+            if (this.buttons instanceof $.ButtonGroup) {
+                this.buttons.destroy();
+            } else {
+                while (this.buttons.length) {
+                    this.buttons.pop().destroy();
+                }
+            }
         }
 
         if (this.paging) {
@@ -1869,6 +1875,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
+            } else {
+                this.buttons = buttons;
             }
 
         }
