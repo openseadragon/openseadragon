@@ -1,6 +1,14 @@
 language: node_js
 sudo: false
 node_js:
-  - "stable"
+- "stable"
 before_install:
-  - npm install -g grunt-cli
+- npm install -g grunt-cli
+env:
+  global:
+  - secure: ftQXEOSeDFYGPhvfZaulnDKTa23z7eE3Aagm+3VE9GmbZnDL56fIIyMOsHFKBEInF/4kScn/HriqLpRilHH44sf6aXTuElj31SJcMhDg2SrNpgGKDTGHQq2YlmOeie9HkH1QzI4CGoF5B7G53IAgI4u21N5eEuA4cKHCFwJ6RPM=
+  - secure: iqFQBu5kjGpBVoNAvgu9zNjXcCBgPGwGIqAm+PEj2GU/y5tlBEjCF51VlP4khACLLnmW3sWqDy8esTjbkLEFoNcSxWy1hb5HC0u2h641JTNiIYHdhBKlswAkZ2YjsIYkPnkZdv9AWtDGtdf6N0hvVuriCvjz2VEJvxbjRnmMRe8=
+  - secure: k5epaN5oS+xk3bBG5Zeq/XeU2bf9NaBpzGrjEPnUBDnuslD2DzY6Oh8T+DyH6CXs5fdbvh4qV0SiNkziXVJ6aQ1ILo2dahNMkwjFidQ38DbjUh7I36ilTl77vtWUJI3YtrEZhnu69/Yl5Pq/w3MEuhXAWeCyyQV3VdGzu7YmDt8=
+  - secure: LyS7K5K0fTSrH5XXkoTTCtpyGK1rQXV78Nljy6UJhFbD/34c+4nJjlMScE7mfd9b2Z96G/AHKKGHrI8mHQuS8CKh3n+cGjQmcSkS7ZYoajUd9XjN2SWuNm4vp6WIpoPa6pBlN9M1cLe+3/34lHTM9OY3X4DPdl1En1L2RwiYQSY=
+script:
+- if [ "$TRAVIS_SECURE_ENV_VARS" = "true" ]; then grunt test-saucelabs; else grunt test; fi
