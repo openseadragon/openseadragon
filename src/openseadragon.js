@@ -263,6 +263,9 @@
   * @property {Boolean} [autoResize=true]
   *     Set to false to prevent polling for viewer size changes. Useful for providing custom resize behavior.
   *
+  * @property {Number} [autoResizeInterval=5000]
+  *     How often polling for viewer size should occur. This requires autoResize=true (default).
+  *
   * @property {Boolean} [preserveImageSizeOnResize=false]
   *     Set to true to have the image size preserved when the viewer is resized. This requires autoResize=true (default).
   *
@@ -1138,6 +1141,7 @@ function OpenSeadragon( options ){
             pixelsPerWheelLine:     40,
             pixelsPerArrowPress:    40,
             autoResize:             true,
+            autoResizeInterval:     5000,
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,

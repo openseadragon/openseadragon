@@ -319,7 +319,7 @@ $.Viewer = function( options ) {
 
     this.bindStandardControls();
 
-    THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
+    THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container, 0 );
 
     // Create the world
     this.world = new $.World({
@@ -2260,17 +2260,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
 /**
  * _getSafeElemSize is like getElementSize(), but refuses to return 0 for x or y,
- * which was causing some calling operations to return NaN. Function won't recalculate
- * element's size more than once every 5s
+ * which was causing some calling operations to return NaN. Function will recalculate
+ * element's size in [ms] interval.
  * @returns {Point}
  * @private
  */
-function _getSafeElemSize (oElement) {
+function _getSafeElemSize (oElement, interval) {
     if(oElement.oldClientWidth !== undefined && oElement.oldClientHeight !== undefined){
         var safeSize = new $.Point(oElement.oldClientWidth, oElement.oldClientHeight);
 
         var currentTime = new Date().getTime();
-        if(currentTime - oElement.recentCalculationTime > 10000){
+        if(currentTime - oElement.recentCalculationTime > interval){
             delete oElement.oldClientWidth;
             delete oElement.oldClientHeight;
         }
@@ -3304,7 +3304,7 @@ function updateOnce( viewer ) {
     }
 
     if (viewer.autoResize) {
-        var containerSize = _getSafeElemSize(viewer.container);
+        var containerSize = _getSafeElemSize(viewer.container, viewer.autoResizeInterval);
         var prevContainerSize = THIS[viewer.hash].prevContainerSize;
         if (!containerSize.equals(prevContainerSize)) {
             var viewport = viewer.viewport;
