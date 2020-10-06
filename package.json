@@ -14,9 +14,8 @@
     "osm",
     "tms"
   ],
-  "homepage": "http://openseadragon.github.io/",
   "bugs": {
-    "url": "https://github.com/openseadragon/openseadragon/issues"
+    "url": "https://github.com/innergy-dev/openseadragon/issues"
   },
   "license": "BSD-3-Clause",
   "files": [
@@ -25,7 +24,7 @@
   "main": "build/openseadragon/openseadragon.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openseadragon/openseadragon.git"
+    "url": "https://github.com/innergy-dev/openseadragon.git"
   },
   "devDependencies": {
     "grunt": "^1.1.0",
@@ -44,6 +43,6 @@
   },
   "scripts": {
     "test": "grunt test",
-    "prepare": "grunt build"
+    "build": "grunt build"
   }
 }
