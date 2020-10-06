@@ -240,6 +240,57 @@ $.Viewer = function( options ) {
     }
 
     this.element              = this.element || document.getElementById( this.id );
+
+    if(window.ResizeObserver !== undefined){
+        //when ResizeObserver is available
+        this._elementResizeObserver = new ResizeObserver( function ( entries ) {
+            var entry = entries.find(function(e) {
+                return e.target === _this.element;
+            });
+            if(entry){
+                _this.elementClientWidth = entry.contentRect.width;
+                _this.elementClientHeight = entry.contentRect.height;
+            }
+        });
+
+        this._elementResizeObserver.observe(this.element);
+
+        this._getSafeElemSize = function () {
+            var clientWidth = _this.elementClientWidth === 0 ? 1 : _this.elementClientWidth;
+            var clientHeight = _this.elementClientHeight === 0 ? 1 : _this.elementClientHeight;
+
+            return new $.Point(clientWidth, clientHeight);
+        };
+
+        this.elementClientWidth = this.element.clientWidth;
+        this.elementClientHeight = this.element.clientHeight;
+    } else {
+        //fallback with throttling for missing ResizeObserver
+        this._getSafeElemSize = function () {
+            if(_this.elementClientWidth !== undefined && _this.elementClientWidth !== undefined){
+                var safeSize = new $.Point(_this.elementClientWidth, _this.elementClientHeight);
+
+                var currentTime = new Date().getTime();
+                if(currentTime - _this.recentCalculationTime > _this.autoResizeInterval){
+                    delete _this.elementClientWidth;
+                    delete _this.elementClientHeight;
+                }
+
+                return safeSize;
+            } else {
+                var clientWidth = _this.element.clientWidth === 0 ? 1 : _this.element.clientWidth;
+                var clientHeight = _this.element.clientHeight === 0 ? 1 : _this.element.clientHeight;
+
+                var recentTime = new Date().getTime();
+                _this.recentCalculationTime = recentTime;
+                _this.elementClientWidth = clientWidth;
+                _this.elementClientHeight = clientHeight;
+
+                return new $.Point(clientWidth, clientHeight);
+            }
+        };
+    }
+
     this.canvas               = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
@@ -319,7 +370,7 @@ $.Viewer = function( options ) {
 
     this.bindStandardControls();
 
-    THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container, 0 );
+    THIS[ this.hash ].prevContainerSize = this._getSafeElemSize();
 
     // Create the world
     this.world = new $.World({
@@ -808,6 +859,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         // clear all our references to dom objects
         this.canvas = null;
         this.container = null;
+
+        if(this._elementResizeObserver){
+            this._elementResizeObserver.disconnect();
+            this._elementResizeObserver = null;
+        }
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
@@ -2259,40 +2315,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
 
 /**
- * _getSafeElemSize is like getElementSize(), but refuses to return 0 for x or y,
- * which was causing some calling operations to return NaN. Function will recalculate
- * element's size in [ms] interval.
- * @returns {Point}
- * @private
- */
-function _getSafeElemSize (oElement, interval) {
-    if(oElement.oldClientWidth !== undefined && oElement.oldClientHeight !== undefined){
-        var safeSize = new $.Point(oElement.oldClientWidth, oElement.oldClientHeight);
-
-        var currentTime = new Date().getTime();
-        if(currentTime - oElement.recentCalculationTime > interval){
-            delete oElement.oldClientWidth;
-            delete oElement.oldClientHeight;
-        }
-
-        return safeSize;
-    } else {
-        var joElement = $.getElement( oElement );
-
-        var clientWidth = joElement.clientWidth === 0 ? 1 : joElement.clientWidth;
-        var clientHeight = joElement.clientHeight === 0 ? 1 : joElement.clientHeight;
-
-        var recentTime = new Date().getTime();
-        oElement.recentCalculationTime = recentTime;
-        oElement.oldClientWidth = clientWidth;
-        oElement.oldClientHeight = clientHeight;
-
-        return new $.Point(clientWidth, clientHeight);
-    }
-}
-
-
-/**
  * @function
  * @private
  */
@@ -3304,7 +3326,7 @@ function updateOnce( viewer ) {
     }
 
     if (viewer.autoResize) {
-        var containerSize = _getSafeElemSize(viewer.container, viewer.autoResizeInterval);
+        var containerSize = viewer._getSafeElemSize();
         var prevContainerSize = THIS[viewer.hash].prevContainerSize;
         if (!containerSize.equals(prevContainerSize)) {
             var viewport = viewer.viewport;
