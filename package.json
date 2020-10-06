@@ -43,6 +43,6 @@
   },
   "scripts": {
     "test": "grunt test",
-    "build": "grunt build"
+    "prepare": "grunt build"
   }
 }
