@@ -850,6 +850,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * @returns {Boolean} Whether the TiledImage should be flipped before rendering.
+     */
+    getFlip: function() {
+        return !!this.flipped;
+    },
+
+    /**
      * @returns {Number} The TiledImage's current opacity.
      */
     getOpacity: function() {
@@ -1701,6 +1708,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     tile.size       = sizeC;
     tile.squaredDistance   = tileSquaredDistance;
     tile.visibility = levelVisibility;
+    tile.flipped = tiledImage.getFlip();
 }
 
 /**
