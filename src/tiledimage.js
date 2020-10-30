@@ -393,6 +393,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @returns {OpenSeadragon.Rect} Where this tile fits (in normalized coordinates).
+     */
+    getTileBounds: function( level, x, y ) {
+        var numTiles = this.source.getNumTiles(level);
+        var xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+        var yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+        var bounds = this.source.getTileBounds(level, xMod, yMod);
+        bounds.x += (x - xMod) / numTiles.x;
+        bounds.y += (this._worldHeightCurrent / this._worldWidthCurrent) * ((y - yMod) / numTiles.y);
+        return bounds;
+    },
+
+    /**
      * @returns {OpenSeadragon.Point} This TiledImage's content size, in original pixels.
      */
     getContentSize: function() {
@@ -1258,14 +1275,9 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
 
-            // Optimisation disabled with wrapping because getTileBounds does not
-            // work correctly with x and y outside of the number of tiles
-            if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
-                var tileBounds = tiledImage.source.getTileBounds(level, x, y);
-                if (drawArea.intersection(tileBounds) === null) {
-                    // This tile is outside of the viewport, no need to draw it
-                    continue;
-                }
+            if (drawArea.intersection(tiledImage.getTileBounds(level, x, y)) === null) {
+                // This tile is outside of the viewport, no need to draw it
+                continue;
             }
 
             best = updateTile(
@@ -1450,7 +1462,7 @@ function getTile(
     if ( !tilesMatrix[ level ][ x ][ y ] ) {
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
-        bounds  = tileSource.getTileBounds( level, xMod, yMod );
+        bounds  = tiledImage.getTileBounds( level, x, y );
         sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
@@ -1468,9 +1480,6 @@ function getTile(
 
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
-
-        bounds.x += ( x - xMod ) / numTiles.x;
-        bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
 
         tile = new $.Tile(
             level,
