@@ -404,6 +404,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         var yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         var bounds = this.source.getTileBounds(level, xMod, yMod);
+        if (this.getFlip()) {
+            bounds.x = 1 - bounds.x - bounds.width;
+        }
         bounds.x += (x - xMod) / numTiles.x;
         bounds.y += (this._worldHeightCurrent / this._worldWidthCurrent) * ((y - yMod) / numTiles.y);
         return bounds;
@@ -1279,10 +1282,32 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
 
     var viewportCenter = tiledImage.viewport.pixelFromPoint(
         tiledImage.viewport.getCenter());
+
+    if (tiledImage.getFlip()) {
+        // The right-most tile can be narrower than the others. When flipped,
+        // this tile is now on the left. Because it is narrower than the normal
+        // left-most tile, the subsequent tiles may not be wide enough to completely
+        // fill the viewport. Fix this by rendering an extra column of tiles. If we
+        // are not wrapping, make sure we never render more than the number of tiles
+        // in the image.
+        bottomRightTile.x += 1;
+        if (!tiledImage.wrapHorizontal) {
+            bottomRightTile.x  = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
+        }
+    }
+
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
 
-            if (drawArea.intersection(tiledImage.getTileBounds(level, x, y)) === null) {
+            var flippedX;
+            if (tiledImage.getFlip()) {
+                var xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
+                flippedX = x + numberOfTiles.x - xMod - xMod - 1;
+            } else {
+                flippedX = x;
+            }
+
+            if (drawArea.intersection(tiledImage.getTileBounds(level, flippedX, y)) === null) {
                 // This tile is outside of the viewport, no need to draw it
                 continue;
             }
@@ -1291,7 +1316,7 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
                 tiledImage,
                 drawLevel,
                 haveDrawn,
-                x, y,
+                flippedX, y,
                 level,
                 levelOpacity,
                 levelVisibility,
