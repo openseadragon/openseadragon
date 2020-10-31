@@ -1526,8 +1526,14 @@ function getTile(
             sourceBounds
         );
 
-        if (xMod === numTiles.x - 1) {
-            tile.isRightMost = true;
+        if (tiledImage.getFlip()) {
+            if (xMod === 0) {
+                tile.isRightMost = true;
+            }
+        } else {
+            if (xMod === numTiles.x - 1) {
+                tile.isRightMost = true;
+            }
         }
 
         if (yMod === numTiles.y - 1) {
