@@ -48,6 +48,11 @@
             options.tileSize = 256;
         }
 
+        if(typeof options.fileFormat === 'undefined'){
+            options.fileFormat = 'jpg';
+            this.fileFormat = options.fileFormat;
+        }
+
         var currentImageSize = {
             x: options.width,
             y: options.height
@@ -135,7 +140,7 @@
             var result = 0;
             var num = this._calculateAbsoluteTileNumber(level, x, y);
             result = Math.floor(num / 256);
-            return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.jpg';
+            return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.' + this.fileFormat;
 
         }
     });
