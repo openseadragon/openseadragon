@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
 * Better use of IIIF "max" and "full" URL parameters (#1871 @MImranAsghar)
+* You can now specify the file format of the tiles in the Zoomify tile source (#1889 @abrlam)
 
 2.4.2:
 
