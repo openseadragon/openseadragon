@@ -207,9 +207,11 @@ $.Drawer.prototype = {
      * @param {Path2D} - path objects to clip with.
      * A path is a string represented in the Path Data notation.
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
+     * @param {string} useRule - a string to determine the fill rule of the clipping. Available options
+     * are 'nonzero' and 'evenodd'. Default to 'evenodd'
      * @see https://www.w3.org/TR/SVG/paths.html#PathData
      */
-    clipWithPaths: function (paths, useSketch) {
+    clipWithPaths: function (paths, useSketch, useRule) {
         if (!this.useCanvas) {
             return;
         }
@@ -222,7 +224,12 @@ $.Drawer.prototype = {
         path2Ds.forEach(function(path2D) {
             combinedPath.addPath(path2D);
         });
-        context.clip(combinedPath, "evenodd");
+        if (useRule === "evenodd" || useRule === "nonzero") {
+            context.clip(combinedPath, useRule);
+        } else {
+            context.clip(combinedPath, "evenodd");
+        }
+
     },
 
     /**
