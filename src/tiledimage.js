@@ -690,9 +690,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * use the sketch canvas default to true.
      * @param preventSketchTransform - optional - indicate that the cropping path
      * transformation is applied thus sketch transform can be skip.
+     * @param fillRule - optional - indicate the rule used for filling. Options
+     * are 'nonzero' and 'evenodd'. Default to 'evenodd'
      * @see https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
      */
-    setCroppingPaths: function( paths, cropWithoutSketch, preventSketchTransform) {
+    setCroppingPaths: function( paths, cropWithoutSketch, preventSketchTransform, fillRule) {
         this._croppingPaths = paths;
         if (cropWithoutSketch === undefined || cropWithoutSketch === null) {
             this._cropWithoutSketch = true;
@@ -700,6 +702,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         } else {
             this._cropWithoutSketch = cropWithoutSketch;
             this._preventSketchTransform = preventSketchTransform;
+        }
+        if (fillRule === 'nonzero' || fillRule === 'evenodd') {
+            this._croppingFillRule = fillRule;
+        } else {
+            this._croppingFillRule = 'evenodd';
         }
     },
 
@@ -1974,7 +1981,7 @@ function cropContextWithCroppingPaths(tiledImage, useSketch) {
         var point = tiledImage.getOriginPixelCoordinate(true, true);
         context.translate(point.x, point.y);
         context.scale(scale, scale);
-        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch);
+        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch, tiledImage._croppingFillRule);
         context.setTransform(oldMatrix);
     } catch (e) {
         $.console.error("Cropping with Path failed: ");
