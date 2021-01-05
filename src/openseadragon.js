@@ -2238,7 +2238,7 @@ function OpenSeadragon( options ){
                           protocol !== "https:" )) {
                         onSuccess( request );
                     } else {
-                        $.console.log( "AJAX request returned %d: %s", request.status, url );
+                        $.console.info( "AJAX request returned %d: %s", request.status, url );
 
                         if ( $.isFunction( onError ) ) {
                             onError( request );
@@ -2286,7 +2286,7 @@ function OpenSeadragon( options ){
                     msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
                 }
 
-                $.console.log( "%s while making AJAX request: %s", e.name, msg );
+                $.console.error( "%s while making AJAX request: %s", e.name, msg );
 
                 request.onreadystatechange = function(){};
 

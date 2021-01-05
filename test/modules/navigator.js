@@ -178,7 +178,7 @@
             }
             catch (err) {
                 if(debug) {
-                    console.log(err);
+                    console.error(err);
                 }
                 //Ignore.  Subsequent code will try again shortly
             }
