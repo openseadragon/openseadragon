@@ -403,6 +403,21 @@ $.Viewer = function( options ) {
 
     function resize() {
       console.log("Windows is resized...");
+      $.pixelDensityRatio = (function () {
+        if ( $.supportsCanvas ) {
+            var context = document.createElement('canvas').getContext('2d');
+            var devicePixelRatio = window.devicePixelRatio || 1;
+            var backingStoreRatio = context.webkitBackingStorePixelRatio ||
+            context.mozBackingStorePixelRatio ||
+            context.msBackingStorePixelRatio ||
+            context.oBackingStorePixelRatio ||
+            context.backingStorePixelRatio || 1;
+            return Math.max(devicePixelRatio, 1) / backingStoreRatio;
+        } else {
+            return 1;
+        }
+      }());
+      console.log("$.pixelDensityRatio", $.pixelDensityRatio);
       _this.world.resetItems();
       _this.forceRedraw();
     }
