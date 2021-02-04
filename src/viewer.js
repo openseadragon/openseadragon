@@ -401,6 +401,13 @@ $.Viewer = function( options ) {
         debugGridColor:     this.debugGridColor
     });
 
+    function resize() {
+      console.log("Windows is resized...");
+      _this.world.resetItems();
+      _this.forceRedraw();
+    }
+    $.addEvent( window, 'resize', resize );
+
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
     this.canvas.appendChild( this.overlaysContainer );
