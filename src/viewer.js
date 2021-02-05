@@ -1601,7 +1601,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this.world.removeItem(drawer);
     },
 
-
     /**
      * Update pixel density ration, clears all tiles and triggers updates for
      * all items.
