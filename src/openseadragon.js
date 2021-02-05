@@ -919,7 +919,7 @@ function OpenSeadragon( options ){
 
     /**
      * @returns {Number} Return a ratio comparing the device screen's pixel
-     *  densityto the canvas's backing store pixel density, clamped to a
+     *  density to the canvas's backing store pixel density, clamped to a
      *  minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      */
     $.getCurrentPixelDensityRatio = function() {
