@@ -918,12 +918,11 @@ function OpenSeadragon( options ){
     };
 
     /**
-     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
-     * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
-     * @member {Number} pixelDensityRatio
-     * @memberof OpenSeadragon
+     * @returns {Number} Return a ratio comparing the device screen's pixel
+     *  densityto the canvas's backing store pixel density, clamped to a
+     *  minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      */
-    $.pixelDensityRatio = (function () {
+    $.getCurrentPixelDensityRatio = function() {
         if ( $.supportsCanvas ) {
             var context = document.createElement('canvas').getContext('2d');
             var devicePixelRatio = window.devicePixelRatio || 1;
@@ -936,7 +935,13 @@ function OpenSeadragon( options ){
         } else {
             return 1;
         }
-    }());
+    };
+
+    /**
+     * @member {Number} pixelDensityRatio
+     * @memberof OpenSeadragon
+     */
+    $.pixelDensityRatio = $.getCurrentPixelDensityRatio();
 
 }( OpenSeadragon ));
 

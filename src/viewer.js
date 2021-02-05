@@ -401,28 +401,6 @@ $.Viewer = function( options ) {
         debugGridColor:     this.debugGridColor
     });
 
-    function resize() {
-      console.log("Windows is resized...");
-      $.pixelDensityRatio = (function () {
-        if ( $.supportsCanvas ) {
-            var context = document.createElement('canvas').getContext('2d');
-            var devicePixelRatio = window.devicePixelRatio || 1;
-            var backingStoreRatio = context.webkitBackingStorePixelRatio ||
-            context.mozBackingStorePixelRatio ||
-            context.msBackingStorePixelRatio ||
-            context.oBackingStorePixelRatio ||
-            context.backingStorePixelRatio || 1;
-            return Math.max(devicePixelRatio, 1) / backingStoreRatio;
-        } else {
-            return 1;
-        }
-      }());
-      console.log("$.pixelDensityRatio", $.pixelDensityRatio);
-      _this.world.resetItems();
-      _this.forceRedraw();
-    }
-    $.addEvent( window, 'resize', resize );
-
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
     this.canvas.appendChild( this.overlaysContainer );
@@ -441,6 +419,9 @@ $.Viewer = function( options ) {
             this.buttons.element.removeChild(this.rotateRight.element);
         }
     }
+
+    // Add updatePixelDensityRatio to resize event
+    $.addEvent( window, 'resize', this.updatePixelDensityRatio.bind(this) );
 
     //Instantiate a navigator if configured
     if ( this.showNavigator){
@@ -1618,6 +1599,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     removeLayer: function( drawer ) {
         $.console.error( "[Viewer.removeLayer] this function is deprecated; use World.removeItem() instead." );
         return this.world.removeItem(drawer);
+    },
+
+
+    /**
+     * Update pixel density ration, clears all tiles and triggers updates for
+     * all items.
+     */
+    updatePixelDensityRatio: function() {
+        var previusPixelDensityRatio = $.pixelDensityRatio;
+        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        if (previusPixelDensityRatio !== currentPixelDensityRatio) {
+            $.pixelDensityRatio = currentPixelDensityRatio;
+            this.world.resetItems();
+            this.forceRedraw();
+        }
     },
 
     /**
