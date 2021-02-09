@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
 * Better use of IIIF "max" and "full" URL parameters (#1871 @MImranAsghar)
+* You can now specify the file format of the tiles in the Zoomify tile source (#1889 @abrlam)
 * Improved browser sniffing - detect EDGE and CHROMEEDGE browsers (#1872 @msalsbery)
 * Improved DOM event model feature detection (#1872 @msalsbery)
 * Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1872 @msalsbery)
