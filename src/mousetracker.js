@@ -3240,8 +3240,8 @@
             case 'contextmenu':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = tracker.hasContextMenuHandler;
-                eventInfo.preventGesture = !tracker.hasContextMenuHandler;
+                eventInfo.preventDefault = false;//tracker.hasContextMenuHandler;
+                eventInfo.preventGesture = true;//!tracker.hasContextMenuHandler;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerenter':
