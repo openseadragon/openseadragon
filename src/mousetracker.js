@@ -294,6 +294,10 @@
         this.hasScrollHandler = !!this.scrollHandler;
         this.hasContextMenuHandler = !!this.contextMenuHandler;
 
+        if (this.exitHandler) {
+            $.console.error("MouseTracker.exitHandler is deprecated. Use MouseTracker.leaveHandler instead.");
+        }
+
         if ( !options.startDisabled ) {
             this.setTracking( true );
         }
@@ -3417,7 +3421,7 @@
         }
 
         // Leave (doesn't bubble and not cancelable)
-        //   Note: exitHandler is deprecated, replaced by leaveHandler
+        //   Note: exitHandler is deprecated (v2.5.0), replaced by leaveHandler
         if ( tracker.leaveHandler || tracker.exitHandler ) {
             dispatchEventObj = {
                 eventSource:          tracker,
