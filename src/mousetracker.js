@@ -349,27 +349,6 @@
             return this;
         },
 
-        // //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-        // //   like the issue this code attempts to fix.
-        // /**
-        //  * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for all but the given pointer device type.
-        //  * @function
-        //  * @param {String} type - The pointer device type: "mouse", "touch", "pen", etc.
-        //  * @returns {Array.<OpenSeadragon.MouseTracker.GesturePointList>}
-        //  */
-        // getActivePointersListsExceptType: function ( type ) {
-        //     var delegate = THIS[ this.hash ];
-        //     var listArray = [];
-
-        //     for (var i = 0; i < delegate.activePointersLists.length; ++i) {
-        //         if (delegate.activePointersLists[i].type !== type) {
-        //             listArray.push(delegate.activePointersLists[i]);
-        //         }
-        //     }
-
-        //     return listArray;
-        // },
-
         /**
          * Returns the {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} for the given pointer device type,
          * creating and caching a new {@link OpenSeadragon.MouseTracker.GesturePointList|GesturePointList} if one doesn't already exist for the type.
@@ -1064,24 +1043,6 @@
             return false;
         }
     }
-
-    //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-    //   like the issue this code attempts to fix.
-    // /**
-    //  * Resets all active mousetrakers. (Added to patch issue #697 "Mouse up outside map will cause "canvas-drag" event to stick")
-    //  *
-    //  * @private
-    //  * @member resetAllMouseTrackers
-    //  * @memberof OpenSeadragon.MouseTracker
-    //  */
-    // $.MouseTracker.resetAllMouseTrackers = function(){
-    //     for(var i = 0; i < MOUSETRACKERS.length; i++){
-    //         if (MOUSETRACKERS[i].isTracking()){
-    //             MOUSETRACKERS[i].setTracking(false);
-    //             MOUSETRACKERS[i].setTracking(true);
-    //         }
-    //     }
-    // };
 
     /**
      * Provides continuous computation of velocity (speed and direction) of active pointers.
@@ -2529,36 +2490,6 @@
     }
 
 
-    //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-    //   like the issue this code attempts to fix.
-    // /**
-    //  * @private
-    //  * @inner
-    //  */
-    // function abortContacts( tracker, event, pointsList ) {
-    //     var i,
-    //         gPointCount = pointsList.getLength(),
-    //         abortGPoints = [];
-
-    //     // Check contact count for hoverable pointer types before aborting
-    //     if (pointsList.type === 'touch' || pointsList.contacts > 0) {
-    //         for ( i = 0; i < gPointCount; i++ ) {
-    //             abortGPoints.push( pointsList.getByIndex( i ) );
-    //         }
-
-    //         if ( abortGPoints.length > 0 ) {
-    //             // simulate touchend/mouseup
-    //             updatePointerUp( tracker, eventInfo, , 0 ); // 0 means primary button press/release or touch contact
-    //             // release pointer capture
-    //             pointsList.captureCount = 1;
-    //             //releasePointer( tracker, pointsList.type );
-    //             // simulate touchleave/mouseout
-    //             updatePointerLeave( tracker, eventInfo,  );
-    //         }
-    //     }
-    // }
-
-
     /**
      * @private
      * @inner
@@ -2574,12 +2505,6 @@
 
         //$.console.log('touchstart ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-        //   like the issue this code attempts to fix.
-        // if ( pointsList.getLength() > event.touches.length - touchCount ) {
-        //     $.console.warn('Tracked touch contact count doesn\'t match event.touches.length. Removing all tracked touch pointers.');
-        //     abortContacts( tracker, event, pointsList );
-        // }
         if ( pointsList.getLength() > event.touches.length - touchCount ) {
             $.console.warn('Tracked touch contact count doesn\'t match event.touches.length');
         }
@@ -3678,16 +3603,6 @@
             }
         }
 
-        //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-        //   like the issue this code attempts to fix.
-        // // Some pointers may steal control from another pointer without firing the appropriate release events
-        // // e.g. Touching a screen while click-dragging with certain mice.
-        // var otherPointsLists = tracker.getActivePointersListsExceptType(gPoint.type);
-        // for (i = 0; i < otherPointsLists.length; i++) {
-        //     //If another pointer has contact, simulate the release
-        //     abortContacts(tracker, event, otherPointsLists[i]); // No-op if no active pointer
-        // }
-
         // Only capture and track primary button, pen, and touch contacts
         if ( buttonChanged !== 0 ) {
             eventInfo.shouldCapture = false;
@@ -3880,26 +3795,8 @@
                 );
             }
 
-            //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-            //   like the issue this code attempts to fix.
-            // // A primary mouse button may have been released while the non-primary button was down
-            // var otherPointsList = tracker.getActivePointersListByType("mouse");
-            // // Stop tracking the mouse; see https://github.com/openseadragon/openseadragon/pull/1223
-            // abortContacts(tracker, event, otherPointsList); // No-op if no active pointer
-
             return;
         }
-
-        //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-        //   like the issue this code attempts to fix.
-        // GitHub PR: https://github.com/openseadragon/openseadragon/pull/1754
-        // // OS-specific gestures (e.g. swipe up with four fingers in iPadOS 13)
-        // if (typeof gPoint.currentPos === "undefined") {
-        //     $.console.log('typeof gPoint.currentPos === "undefined" ' + (tracker.userData ? tracker.userData.toString() : ''));
-        //     abortContacts(tracker, event, pointsList);
-
-        //     return false;
-        // }
 
         updateGPoint = pointsList.getById( gPoint.id );
 

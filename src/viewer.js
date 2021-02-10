@@ -2956,13 +2956,6 @@ function onCanvasEnter( event ) {
 }
 
 function onCanvasLeave( event ) {
-
-    //TODO Revisit this if there's still an issue. The PointerEvent model should have no problems
-    //   like the issue this code attempts to fix.
-    // if (window.location !== window.parent.location){
-    //     $.MouseTracker.resetAllMouseTrackers();
-    // }
-
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *
