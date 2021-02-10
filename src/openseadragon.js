@@ -381,7 +381,11 @@
   *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature (also see gestureSettings[Mouse|Touch|Pen].scrollToZoom}).</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
-  *     The number of seconds to animate a single zoom event over.
+  *     Sets the zoom amount per second when zoomIn/zoomOut buttons are pressed and held.
+  *     The value is a factor of the current zoom, so 1.0 (the default) disables zooming when the zoomIn/zoomOut buttons
+  *     are held. Higher values will increase the rate of zoom when the zoomIn/zoomOut buttons are held. Note that values
+  *     < 1.0 will reverse the operation of the zoomIn/zoomOut buttons (zoomIn button will decrease the zoom, zoomOut will
+  *     increase the zoom).
   *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.

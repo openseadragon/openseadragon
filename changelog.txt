@@ -32,6 +32,7 @@ OPENSEADRAGON CHANGELOG
 * Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements (#1872 @msalsbery)
 * MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
 * Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
+* Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
 
 2.4.2:
 
