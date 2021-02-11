@@ -1963,7 +1963,7 @@
             currentTime: $.now()
         };
 
-        if ( updatePointersDown( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ) ) {
+        if ( updatePointersDown( tracker, event, [ gPoint ], getStandardizedButton( event.button ) ).capture ) {
             $.stopEvent( event );
             capturePointer( tracker, 'mouse' );
         }
@@ -2139,12 +2139,15 @@
             }
         }
 
-        if ( updatePointersDown( tracker, event, gPoints, 0 ) ) { // 0 means primary button press/release or touch contact
+        var result = updatePointersDown( tracker, event, gPoints, 0 ); // 0 means primary button press/release or touch contact
+        if ( result.capture && result.cancel ) {
             $.stopEvent( event );
             capturePointer( tracker, 'touch', touchCount );
         }
 
-        $.cancelEvent( event );
+        if (result.cancel) {
+            $.cancelEvent( event );
+        }
     }
 
 
@@ -2263,9 +2266,11 @@
             } );
         }
 
-        updatePointersMove( tracker, event, gPoints );
+        var result = updatePointersMove( tracker, event, gPoints );
 
-        $.cancelEvent( event );
+        if (result.cancel) {
+            $.cancelEvent( event );
+        }
     }
 
 
@@ -2363,7 +2368,7 @@
             currentTime: $.now()
         };
 
-        if ( updatePointersDown( tracker, event, [ gPoint ], event.button ) ) {
+        if ( updatePointersDown( tracker, event, [ gPoint ], event.button ).capture ) {
             $.stopEvent( event );
             capturePointer( tracker, gPoint.type );
         }
@@ -2696,7 +2701,8 @@
      *      Note on chorded button presses (a button pressed when another button is already pressed): In the W3C Pointer Events model,
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      *
-     * @returns {Boolean} True if pointers should be captured to the tracked element, otherwise false.
+     * @returns {Object} Properties: capture: True if pointers should be captured to the tracked element, otherwise false.
+     * TODO: Document cancel
      */
     function updatePointersDown( tracker, event, gPoints, buttonChanged ) {
         var delegate = THIS[ tracker.hash ],
@@ -2706,6 +2712,11 @@
             gPointCount = gPoints.length,
             curGPoint,
             updateGPoint;
+
+        var output = {
+            capture: false,
+            cancel: true
+        };
 
         if ( typeof event.buttons !== 'undefined' ) {
             pointsList.buttons = event.buttons;
@@ -2783,7 +2794,7 @@
                 }
             }
 
-            return false;
+            return output;
         }
 
         for ( i = 0; i < gPointCount; i++ ) {
@@ -2821,20 +2832,24 @@
             if ( pointsList.contacts === 1 ) {
                 // Press
                 if ( tracker.pressHandler ) {
-                    propagate = tracker.pressHandler(
-                        {
-                            eventSource:          tracker,
-                            pointerType:          curGPoint.type,
-                            position:             getPointRelativeToAbsolute( curGPoint.contactPos, tracker.element ),
-                            buttons:              pointsList.buttons,
-                            isTouchEvent:         curGPoint.type === 'touch',
-                            originalEvent:        event,
-                            preventDefaultAction: false,
-                            userData:             tracker.userData
-                        }
-                    );
+                    var outgoingEvent = {
+                        eventSource:          tracker,
+                        pointerType:          curGPoint.type,
+                        position:             getPointRelativeToAbsolute( curGPoint.contactPos, tracker.element ),
+                        buttons:              pointsList.buttons,
+                        isTouchEvent:         curGPoint.type === 'touch',
+                        originalEvent:        event,
+                        preventDefaultAction: false,
+                        userData:             tracker.userData
+                    };
+
+                    propagate = tracker.pressHandler(outgoingEvent);
                     if ( propagate === false ) {
                         $.cancelEvent( event );
+                    }
+
+                    if (outgoingEvent.preventDefaultAction) {
+                        output.cancel = false;
                     }
                 }
             } else if ( pointsList.contacts === 2 ) {
@@ -2847,7 +2862,8 @@
             }
         }
 
-        return true;
+        output.capture = true;
+        return output;
     }
 
 
@@ -3162,6 +3178,10 @@
             delta,
             propagate;
 
+        var output = {
+            cancel: true
+        };
+
         if ( typeof event.buttons !== 'undefined' ) {
             pointsList.buttons = event.buttons;
         }
@@ -3240,24 +3260,26 @@
             if ( tracker.dragHandler ) {
                 updateGPoint = pointsList.asArray()[ 0 ];
                 delta = updateGPoint.currentPos.minus( updateGPoint.lastPos );
-                propagate = tracker.dragHandler(
-                    {
-                        eventSource:          tracker,
-                        pointerType:          updateGPoint.type,
-                        position:             getPointRelativeToAbsolute( updateGPoint.currentPos, tracker.element ),
-                        buttons:              pointsList.buttons,
-                        delta:                delta,
-                        speed:                updateGPoint.speed,
-                        direction:            updateGPoint.direction,
-                        shift:                event.shiftKey,
-                        isTouchEvent:         updateGPoint.type === 'touch',
-                        originalEvent:        event,
-                        preventDefaultAction: false,
-                        userData:             tracker.userData
-                    }
-                );
+                var outgoingEvent = {
+                    eventSource:          tracker,
+                    pointerType:          updateGPoint.type,
+                    position:             getPointRelativeToAbsolute( updateGPoint.currentPos, tracker.element ),
+                    buttons:              pointsList.buttons,
+                    delta:                delta,
+                    speed:                updateGPoint.speed,
+                    direction:            updateGPoint.direction,
+                    shift:                event.shiftKey,
+                    isTouchEvent:         updateGPoint.type === 'touch',
+                    originalEvent:        event,
+                    preventDefaultAction: false,
+                    userData:             tracker.userData
+                };
+                propagate = tracker.dragHandler(outgoingEvent);
                 if ( propagate === false ) {
                     $.cancelEvent( event );
+                }
+                if (outgoingEvent.preventDefaultAction) {
+                    output.cancel = false;
                 }
             }
         } else if ( pointsList.contacts === 2 ) {
@@ -3310,6 +3332,8 @@
                 }
             }
         }
+
+        return output;
     }
 
 
