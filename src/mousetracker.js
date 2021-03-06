@@ -1214,9 +1214,10 @@
      * @property {String} pointerType
      *     "mouse", "touch", "pen", etc.
      * @property {Boolean} isEmulated
-     *      True if this is an emulated event. If true, originalEvent is the event that caused
-     *      the emulated event or null if no DOM event applies. Emulated events
-     *      can occur on eventType "wheel".
+     *      True if this is an emulated event. If true, originalEvent is either the event that caused
+     *      the emulated event, a synthetic event object created with values from the actual DOM event,
+     *      or null if no DOM event applies. Emulated events can occur on eventType "wheel" on legacy mouse-scroll
+     *      event emitting user agents.
      * @property {Boolean} isStopable
      *      True if propagation of the event (e.g. bubbling) can be stopped with stopPropagation/stopImmediatePropagation.
      * @property {Boolean} isCancelable
