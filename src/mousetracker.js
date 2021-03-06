@@ -1677,6 +1677,8 @@
 
 
     /**
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      * @private
      * @inner
      */
@@ -1688,6 +1690,9 @@
     /**
      * Gets a W3C Pointer Events model compatible pointer type string from a DOM pointer event.
      * IE10 used a long integer value, but the W3C specification (and IE11+) use a string "mouse", "touch", "pen", etc.
+     *
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      * @private
      * @inner
      */
@@ -1704,6 +1709,8 @@
 
 
     /**
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      * @private
      * @inner
      */
