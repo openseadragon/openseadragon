@@ -2355,7 +2355,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2389,7 +2390,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2423,7 +2425,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2459,7 +2462,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2495,7 +2499,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2554,7 +2559,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2565,7 +2571,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
      * onPointerUp is still attached to the tracked element, so stop propagation to avoid processing twice.
@@ -2583,7 +2590,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2629,7 +2637,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
@@ -2640,7 +2649,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * This handler is attached to the window object (on the capture phase) to emulate mouse capture.
      * onPointerMove is still attached to the tracked element, so stop propagation to avoid processing twice.
@@ -2658,7 +2668,8 @@
 
 
     /**
-     * Note: Called for both pointer events and legacy mouse events!
+     * Note: Called for both pointer events and legacy mouse events
+     *         ($.MouseTracker.havePointerEvents determines which)
      *
      * @private
      * @inner
