@@ -2362,11 +2362,9 @@
      * @inner
      */
     function onPointerEnter( tracker, event ) {
-        var gPoint;
-
         //$.console.log('pointerenter ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        gPoint = {
+        var gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2397,11 +2395,9 @@
      * @inner
      */
     function onPointerLeave( tracker, event ) {
-        var gPoint;
-
         //$.console.log('pointerleave ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        gPoint = {
+        var gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2506,8 +2502,6 @@
      * @inner
      */
     function onPointerDown( tracker, event ) {
-        var gPoint;
-
         //$.console.log('onPointerDown ' + (tracker.userData ? tracker.userData.toString() : ''));
         // $.console.log('onPointerDown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + event.target.tagName);
 
@@ -2524,7 +2518,7 @@
         //     $.console.log('pointerdown not implicitlyCaptured ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
         // }
 
-        gPoint = {
+        var gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2676,9 +2670,8 @@
      */
     function handlePointerMove( tracker, event ) {
         // Pointer changed coordinates, button state, pressure, tilt, or contact geometry (e.g. width and height)
-        var gPoint;
 
-        gPoint = {
+        var gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
