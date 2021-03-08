@@ -415,14 +415,14 @@ $.Viewer = function( options ) {
     if (!this.drawer.canRotate()) {
         // Disable/remove the rotate left/right buttons since they aren't supported
         if (this.rotateLeft) {
-            i = this.buttons.buttons.indexOf(this.rotateLeft);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateLeft.element);
+            i = this.buttonGroup.buttons.indexOf(this.rotateLeft);
+            this.buttonGroup.buttons.splice(i, 1);
+            this.buttonGroup.element.removeChild(this.rotateLeft.element);
         }
         if (this.rotateRight) {
-            i = this.buttons.buttons.indexOf(this.rotateRight);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateRight.element);
+            i = this.buttonGroup.buttons.indexOf(this.rotateRight);
+            this.buttonGroup.buttons.splice(i, 1);
+            this.buttonGroup.element.removeChild(this.rotateRight.element);
         }
     }
 
@@ -780,8 +780,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.removeAllHandlers();
 
-        if (this.buttons) {
-            this.buttons.destroy();
+        if (this.buttonGroup) {
+            this.buttonGroup.destroy();
+        } else if (this.customButtons) {
+            while (this.customButtons.length) {
+                this.customButtons.pop().destroy();
+            }
         }
 
         if (this.paging) {
@@ -1855,13 +1859,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             if ( useGroup ) {
-                this.buttons = new $.ButtonGroup({
+                this.buttonGroup = new $.ButtonGroup({
                     buttons:            buttons,
                     clickTimeThreshold: this.clickTimeThreshold,
                     clickDistThreshold: this.clickDistThreshold
                 });
 
-                this.navControl  = this.buttons.element;
+                this.navControl  = this.buttonGroup.element;
                 this.addHandler( 'open', $.delegate( this, lightUp ) );
 
                 if( this.toolbar ){
@@ -1875,6 +1879,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
+            } else {
+                this.customButtons = buttons;
             }
 
         }
@@ -3513,8 +3519,10 @@ function doSingleZoomOut() {
 
 
 function lightUp() {
-    this.buttons.emulateEnter();
-    this.buttons.emulateLeave();
+    if (this.buttonGroup) {
+        this.buttonGroup.emulateEnter();
+        this.buttonGroup.emulateLeave();
+    }
 }
 
 
@@ -3533,8 +3541,8 @@ function onFullScreen() {
         this.setFullScreen( !this.isFullPage() );
     }
     // correct for no mouseout event on change
-    if ( this.buttons ) {
-        this.buttons.emulateLeave();
+    if ( this.buttonGroup ) {
+        this.buttonGroup.emulateLeave();
     }
     this.fullPageButton.element.focus();
     if ( this.viewport ) {

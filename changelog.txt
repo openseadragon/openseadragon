@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
+* Better handle destruction when navigator in custom location (#1884 @woodchuck)
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
 * Better use of IIIF "max" and "full" URL parameters (#1871 @MImranAsghar)
