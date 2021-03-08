@@ -33,6 +33,8 @@ OPENSEADRAGON CHANGELOG
 * Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
 * Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
 * MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery)
+* Dropped support for older browsers (IE < 11)
+* Removed deprecated OpenSeadragon.getEvent function
 
 2.4.2:
 
