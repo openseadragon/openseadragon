@@ -381,7 +381,11 @@
   *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature (also see gestureSettings[Mouse|Touch|Pen].scrollToZoom}).</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
-  *     The number of seconds to animate a single zoom event over.
+  *     Sets the zoom amount per second when zoomIn/zoomOut buttons are pressed and held.
+  *     The value is a factor of the current zoom, so 1.0 (the default) disables zooming when the zoomIn/zoomOut buttons
+  *     are held. Higher values will increase the rate of zoom when the zoomIn/zoomOut buttons are held. Note that values
+  *     < 1.0 will reverse the operation of the zoomIn/zoomOut buttons (zoomIn button will decrease the zoom, zoomOut will
+  *     increase the zoom).
   *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
@@ -918,6 +922,58 @@ function OpenSeadragon( options ){
     };
 
     /**
+     * True if the browser supports the EventTarget.addEventListener() method
+     * @member {Boolean} supportsAddEventListener
+     * @memberof OpenSeadragon
+     */
+    $.supportsAddEventListener = (function () {
+        return !!(document.documentElement.addEventListener && document.addEventListener);
+    }());
+
+    /**
+     * True if the browser supports the EventTarget.removeEventListener() method
+     * @member {Boolean} supportsRemoveEventListener
+     * @memberof OpenSeadragon
+     */
+    $.supportsRemoveEventListener = (function () {
+        return !!(document.documentElement.removeEventListener && document.removeEventListener);
+    }());
+
+    /**
+     * True if the browser supports the newer EventTarget.addEventListener options argument
+     * @member {Boolean} supportsEventListenerOptions
+     * @memberof OpenSeadragon
+     */
+    $.supportsEventListenerOptions = (function () {
+        var supported = 0;
+
+        if ( $.supportsAddEventListener ) {
+            try {
+                var options = {
+                    get capture() {
+                        supported++;
+                        return false;
+                    },
+                    get once() {
+                        supported++;
+                        return false;
+                    },
+                    get passive() {
+                        supported++;
+                        return false;
+                    }
+                };
+                window.addEventListener("test", null, options);
+                window.removeEventListener("test", null, options);
+            } catch ( e ) {
+                supported = 0;
+            }
+        }
+
+        return supported >= 3;
+    }());
+
+    /**
      * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
      * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      * @member {Number} pixelDensityRatio
@@ -942,7 +998,7 @@ function OpenSeadragon( options ){
 
 /**
  *  This closure defines all static methods available to the OpenSeadragon
- *  namespace.  Many, if not most, are taked directly from jQuery for use
+ *  namespace.  Many, if not most, are taken directly from jQuery for use
  *  to simplify and reduce common programming patterns.  More static methods
  *  from jQuery may eventually make their way into this though we are
  *  attempting to avoid an explicit dependency on jQuery only because
@@ -1315,6 +1371,8 @@ function OpenSeadragon( options ){
          * @property {Number} SAFARI
          * @property {Number} CHROME
          * @property {Number} OPERA
+         * @property {Number} EDGE
+         * @property {Number} CHROMEEDGE
          */
         BROWSERS: {
             UNKNOWN:    0,
@@ -1322,7 +1380,9 @@ function OpenSeadragon( options ){
             FIREFOX:    2,
             SAFARI:     3,
             CHROME:     4,
-            OPERA:      5
+            OPERA:      5,
+            EDGE:       6,
+            CHROMEEDGE: 7
         },
 
 
@@ -1894,6 +1954,19 @@ function OpenSeadragon( options ){
 
 
         /**
+         * Sets the specified element's pointer-events style attribute to 'none'.
+         * @function
+         * @param {Element|String} element
+         */
+        setElementPointerEventsNone: function( element ) {
+            element = $.getElement( element );
+            if ( typeof element.style.pointerEvents !== 'undefined' ) {
+                element.style.pointerEvents = 'none';
+            }
+        },
+
+
+        /**
          * Add the specified CSS class to the element if not present.
          * @function
          * @param {Element|String} element
@@ -1978,6 +2051,34 @@ function OpenSeadragon( options ){
             element.className = newClasses.join(' ');
         },
 
+        /**
+         * Convert passed addEventListener() options to boolean or options object,
+         * depending on browser support.
+         * @function
+         * @param {Boolean|Object} [options] Boolean useCapture, or if [supportsEventListenerOptions]{@link OpenSeadragon.supportsEventListenerOptions}, can be an object
+         * @param {Boolean} [options.capture]
+         * @param {Boolean} [options.passive]
+         * @param {Boolean} [options.once]
+         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         */
+        normalizeEventListenerOptions: function (options) {
+            var opts;
+            if ( typeof options !== 'undefined' ) {
+                if ( typeof options === 'boolean' ) {
+                    // Legacy Boolean useCapture
+                    opts = $.supportsEventListenerOptions ? { capture: options } : options;
+                } else {
+                    // Options object
+                    opts = $.supportsEventListenerOptions ? options :
+                        ( ( typeof options.capture !== 'undefined' ) ? options.capture : false );
+                }
+            } else {
+                // No options specified - Legacy optional useCapture argument
+                //   (for IE, first supported on version 9, so we'll pass a Boolean)
+                opts = $.supportsEventListenerOptions ? { capture: false } : false;
+            }
+            return opts;
+        },
 
         /**
          * Adds an event listener for the given element, eventName and handler.
@@ -1985,16 +2086,20 @@ function OpenSeadragon( options ){
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
-         * @param {Boolean} [useCapture]
+         * @param {Boolean|Object} [options] Boolean useCapture, or if [supportsEventListenerOptions]{@link OpenSeadragon.supportsEventListenerOptions}, can be an object
+         * @param {Boolean} [options.capture]
+         * @param {Boolean} [options.passive]
+         * @param {Boolean} [options.once]
          */
         addEvent: (function () {
-            if ( window.addEventListener ) {
-                return function ( element, eventName, handler, useCapture ) {
+            if ( $.supportsAddEventListener ) {
+                return function ( element, eventName, handler, options ) {
+                    options = $.normalizeEventListenerOptions(options);
                     element = $.getElement( element );
-                    element.addEventListener( eventName, handler, useCapture );
+                    element.addEventListener( eventName, handler, options );
                 };
-            } else if ( window.attachEvent ) {
-                return function ( element, eventName, handler, useCapture ) {
+            } else if ( document.documentElement.attachEvent && document.attachEvent ) {
+                return function ( element, eventName, handler ) {
                     element = $.getElement( element );
                     element.attachEvent( 'on' + eventName, handler );
                 };
@@ -2011,16 +2116,18 @@ function OpenSeadragon( options ){
          * @param {Element|String} element
          * @param {String} eventName
          * @param {Function} handler
-         * @param {Boolean} [useCapture]
+         * @param {Boolean|Object} [options] Boolean useCapture, or if [supportsEventListenerOptions]{@link OpenSeadragon.supportsEventListenerOptions}, can be an object
+         * @param {Boolean} [options.capture]
          */
         removeEvent: (function () {
-            if ( window.removeEventListener ) {
-                return function ( element, eventName, handler, useCapture ) {
+            if ( $.supportsRemoveEventListener ) {
+                return function ( element, eventName, handler, options ) {
+                    options = $.normalizeEventListenerOptions(options);
                     element = $.getElement( element );
-                    element.removeEventListener( eventName, handler, useCapture );
+                    element.removeEventListener( eventName, handler, options );
                 };
-            } else if ( window.detachEvent ) {
-                return function( element, eventName, handler, useCapture ) {
+            } else if ( document.documentElement.detachEvent && document.detachEvent ) {
+                return function( element, eventName, handler ) {
                     element = $.getElement( element );
                     element.detachEvent( 'on' + eventName, handler );
                 };
@@ -2049,7 +2156,7 @@ function OpenSeadragon( options ){
                     event = $.getEvent( event );
                     // legacy for preventing default
                     event.cancel = true;
-                    // IE for preventing default
+                    // IE < 9 for preventing default
                     event.returnValue = false;
                 };
             }
@@ -2058,7 +2165,39 @@ function OpenSeadragon( options ){
 
 
         /**
-         * Stops the propagation of the event up the DOM.
+         * Returns true if {@link OpenSeadragon.cancelEvent|cancelEvent} has been called on
+         * the event, otherwise returns false.
+         * @function
+         * @param {Event} [event]
+         */
+        eventIsCanceled: function( event ) {
+            event = $.getEvent( event );
+
+            if ( event.preventDefault ) {
+                $.eventIsCanceled = function( event ){
+                    // W3C
+                    return event.defaultPrevented;
+                };
+            } else {
+                $.eventIsCanceled = function( event ){
+                    event = $.getEvent( event );
+                    if ( typeof event.returnValue !== 'undefined' ) {
+                        // IE < 9
+                        return !event.returnValue;
+                    } else if ( typeof event.cancel !== 'undefined' ) {
+                        // legacy
+                        return event.cancel;
+                    } else {
+                        return false;
+                    }
+                };
+            }
+            return $.eventIsCanceled( event );
+        },
+
+
+        /**
+         * Stops the propagation of the event through the DOM in the capturing and bubbling phases.
          * @function
          * @param {Event} [event]
          */
@@ -2071,7 +2210,7 @@ function OpenSeadragon( options ){
                     event.stopPropagation();
                 };
             } else {
-                // IE for stopping propagation
+                // IE < 9 for stopping propagation
                 $.stopEvent = function( event ){
                     event = $.getEvent( event );
                     event.cancelBubble = true;
@@ -2569,7 +2708,17 @@ function OpenSeadragon( options ){
                 break;
             case "Netscape":
                 if (window.addEventListener) {
-                    if ( ua.indexOf( "Firefox" ) >= 0 ) {
+                    if ( ua.indexOf( "Edge" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.EDGE;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Edge" ) + 5 )
+                        );
+                    } else if ( ua.indexOf( "Edg" ) >= 0 ) {
+                        $.Browser.vendor = $.BROWSERS.CHROMEEDGE;
+                        $.Browser.version = parseFloat(
+                            ua.substring( ua.indexOf( "Edg" ) + 4 )
+                        );
+                    } else if ( ua.indexOf( "Firefox" ) >= 0 ) {
                         $.Browser.vendor = $.BROWSERS.FIREFOX;
                         $.Browser.version = parseFloat(
                             ua.substring( ua.indexOf( "Firefox" ) + 8 )

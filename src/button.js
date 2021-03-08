@@ -77,6 +77,7 @@ $.ButtonState = {
  * @param {OpenSeadragon.EventHandler} [options.onExit=null] Event handler callback for {@link OpenSeadragon.Button.event:exit}.
  * @param {OpenSeadragon.EventHandler} [options.onFocus=null] Event handler callback for {@link OpenSeadragon.Button.event:focus}.
  * @param {OpenSeadragon.EventHandler} [options.onBlur=null] Event handler callback for {@link OpenSeadragon.Button.event:blur}.
+ * @param {Object} [options.userData=null] Arbitrary object to be passed unchanged to any attached handler methods.
  */
 $.Button = function( options ) {
 
@@ -111,7 +112,8 @@ $.Button = function( options ) {
         onEnter:            null,
         onExit:             null,
         onFocus:            null,
-        onBlur:             null
+        onBlur:             null,
+        userData:           null
 
     }, options );
 
@@ -135,6 +137,13 @@ $.Button = function( options ) {
         this.imgHover.alt =
         this.imgDown.alt  =
             this.tooltip;
+
+        // Allow pointer events to pass through the img elements so implicit
+        //   pointer capture works on touch devices
+        $.setElementPointerEventsNone( this.imgRest );
+        $.setElementPointerEventsNone( this.imgGroup );
+        $.setElementPointerEventsNone( this.imgHover );
+        $.setElementPointerEventsNone( this.imgDown );
 
         this.element.style.position = "relative";
         $.setElementTouchActionNone( this.element );
@@ -203,6 +212,7 @@ $.Button = function( options ) {
      */
     this.tracker = new $.MouseTracker({
 
+        userData:           'Button.tracker',
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
@@ -227,7 +237,7 @@ $.Button = function( options ) {
         },
 
         focusHandler: function ( event ) {
-            this.enterHandler( event );
+            _this.tracker.enterHandler( event );
             /**
              * Raised when the Button element receives focus.
              *
@@ -241,7 +251,7 @@ $.Button = function( options ) {
             _this.raiseEvent( "focus", { originalEvent: event.originalEvent } );
         },
 
-        exitHandler: function( event ) {
+        leaveHandler: function( event ) {
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
@@ -259,7 +269,7 @@ $.Button = function( options ) {
         },
 
         blurHandler: function ( event ) {
-            this.exitHandler( event );
+            _this.tracker.leaveHandler( event );
             /**
              * Raised when the Button element loses focus.
              *
@@ -363,8 +373,8 @@ $.Button = function( options ) {
 $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.Button.prototype */{
 
     /**
-     * TODO: Determine what this function is intended to do and if it's actually
-     * useful as an API point.
+     * Used by a button container element (e.g. a ButtonGroup) to transition the button state
+     * to ButtonState.GROUP.
      * @function
      */
     notifyGroupEnter: function() {
@@ -372,8 +382,8 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
-     * TODO: Determine what this function is intended to do and if it's actually
-     * useful as an API point.
+     * Used by a button container element (e.g. a ButtonGroup) to transition the button state
+     * to ButtonState.REST.
      * @function
      */
     notifyGroupExit: function() {

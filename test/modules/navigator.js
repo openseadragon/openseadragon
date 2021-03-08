@@ -216,7 +216,7 @@
                 clientY: offset.top + locationY
             };
         $canvas
-            .simulate(OpenSeadragon.MouseTracker.haveMouseEnter ? 'mouseenter' : 'mouseover', event)
+            .simulate('mouseenter', event)
             .simulate('mousedown', event)
             .simulate('mouseup', event);
     };
