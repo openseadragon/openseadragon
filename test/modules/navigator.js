@@ -240,6 +240,8 @@
         event.button = 0;
         $canvas.simulate( 'mouseup', event );
 
+        event.clientX = offset.left - 1;
+        event.clientY = offset.top - 1;
         event.relatedTarget = document.body;
         $canvas.simulate( 'mouseleave', event );
     };
