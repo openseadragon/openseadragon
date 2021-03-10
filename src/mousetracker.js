@@ -280,7 +280,6 @@
                                 this.dragHandler || this.dragEndHandler ||
                                 this.pinchHandler );
         this.hasScrollHandler = !!this.scrollHandler;
-        this.hasContextMenuHandler = !!this.contextMenuHandler;
 
         if (this.exitHandler) {
             $.console.error("MouseTracker.exitHandler is deprecated. Use MouseTracker.leaveHandler instead.");
@@ -402,6 +401,8 @@
          *      The position of the event relative to the tracked element.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the contextmenu event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1942,6 +1943,8 @@
     function onContextMenu( tracker, event ) {
         //$.console.log('contextmenu ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
+        var eventArgs = null;
+
         var eventInfo = {
             originalEvent: event,
             eventType: 'contextmenu',
@@ -1952,17 +1955,18 @@
 
         // ContextMenu
         if ( tracker.contextMenuHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            tracker.contextMenuHandler(
-                {
-                    eventSource:          tracker,
-                    position:             getPointRelativeToAbsolute( getMouseAbsolute( event ), tracker.element ),
-                    originalEvent:        eventInfo.originalEvent,
-                    userData:             tracker.userData
-                }
-            );
+            eventArgs = {
+                eventSource:          tracker,
+                position:             getPointRelativeToAbsolute( getMouseAbsolute( event ), tracker.element ),
+                originalEvent:        eventInfo.originalEvent,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
+
+            tracker.contextMenuHandler( eventArgs );
         }
 
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
         if ( eventInfo.stopPropagation ) {
@@ -2810,7 +2814,7 @@
             case 'pointerdown':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasGestureHandlers;
+                eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2824,7 +2828,7 @@
             case 'wheel':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasScrollHandler;
+                eventInfo.preventDefault = false; // handleWheelEvent() may set true (tracker.hasScrollHandler)
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2854,8 +2858,8 @@
             case 'contextmenu':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasContextMenuHandler;
-                eventInfo.preventGesture = true;//!tracker.hasContextMenuHandler;
+                eventInfo.preventDefault = false;
+                eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerenter':
