@@ -6,21 +6,13 @@
 
     $.MouseTracker.subscribeEvents = [ "click", "dblclick", "keypress", "focus", "blur", $.MouseTracker.wheelEventName ];
 
-    if( $.MouseTracker.wheelEventName == "DOMMouseScroll" ) {
+    if( $.MouseTracker.wheelEventName === "DOMMouseScroll" ) {
         // Older Firefox
         $.MouseTracker.subscribeEvents.push( "MozMousePixelScroll" );
     }
 
     $.MouseTracker.havePointerEvents = false;
-    $.MouseTracker.unprefixedPointerEvents = true;
-    $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave" );
-    if ( $.Browser.vendor !== $.BROWSERS.IE || $.Browser.version > 8 ) {
-        $.MouseTracker.subscribeEvents.push( "mouseover", "mouseout" );
-        $.MouseTracker.havePointerOverOut = true;
-    } else {
-        $.MouseTracker.havePointerOverOut = false;
-    }
-    $.MouseTracker.subscribeEvents.push( "mousedown", "mouseup", "mousemove" );
+    $.MouseTracker.subscribeEvents.push( "mouseenter", "mouseleave", "mouseover", "mouseout", "mousedown", "mouseup", "mousemove" );
     $.MouseTracker.mousePointerId = "legacy-mouse";
     // Legacy mouse events capture support (IE/Firefox only?)
     $.MouseTracker.havePointerCapture = (function () {

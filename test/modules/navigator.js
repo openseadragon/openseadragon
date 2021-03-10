@@ -222,13 +222,28 @@
     };
 
     var simulateNavigatorDrag = function (viewer, distanceX, distanceY) {
-        var $canvas = $(viewer.element).find('.displayregion'),
-            event = {
-                dx: Math.floor(distanceX),
-                dy: Math.floor(distanceY)
-            };
-        $canvas
-            .simulate('drag', event);
+        var $canvas = $(viewer.element).find('.openseadragon-canvas'),
+            offset = $canvas.offset(),
+            event = {};
+
+        event.clientX = offset.left + 1;
+        event.clientY = offset.top + 1;
+        $canvas.simulate( 'mouseenter', event );
+
+        event.button = 0;
+        $canvas.simulate( 'mousedown', event );
+
+        event.clientX += distanceX;
+        event.clientY += distanceY;
+        $canvas.simulate( 'mousemove', event );
+
+        event.button = 0;
+        $canvas.simulate( 'mouseup', event );
+
+        event.clientX = offset.left - 1;
+        event.clientY = offset.top - 1;
+        event.relatedTarget = document.body;
+        $canvas.simulate( 'mouseleave', event );
     };
 
     var dragNavigatorBackToCenter = function () {

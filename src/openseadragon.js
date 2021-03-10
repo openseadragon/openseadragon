@@ -1578,29 +1578,6 @@ function OpenSeadragon( options ){
 
 
         /**
-         * Gets the latest event, really only useful internally since its
-         * specific to IE behavior.
-         * @function
-         * @param {Event} [event]
-         * @returns {Event}
-         * @deprecated For internal use only
-         * @private
-         */
-        getEvent: function( event ) {
-            if( event ){
-                $.getEvent = function( event ) {
-                    return event;
-                };
-            } else {
-                $.getEvent = function() {
-                    return window.event;
-                };
-            }
-            return $.getEvent( event );
-        },
-
-
-        /**
          * Gets the position of the mouse on the screen for a given event.
          * @function
          * @param {Event} [event]
@@ -1612,7 +1589,6 @@ function OpenSeadragon( options ){
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
-                    event = $.getEvent( event );
                     result.x = event.pageX;
                     result.y = event.pageY;
 
@@ -1622,7 +1598,6 @@ function OpenSeadragon( options ){
                 $.getMousePosition = function( event ){
                     var result = new $.Point();
 
-                    event = $.getEvent( event );
                     result.x =
                         event.clientX +
                         document.body.scrollLeft +
@@ -1858,51 +1833,16 @@ function OpenSeadragon( options ){
 
         /**
          * Ensures an image is loaded correctly to support alpha transparency.
-         * Generally only IE has issues doing this correctly for formats like
-         * png.
          * @function
          * @param {String} src
          * @returns {Element}
          */
         makeTransparentImage: function( src ) {
+            var img = $.makeNeutralElement( "img" );
 
-            $.makeTransparentImage = function( src ){
-                var img = $.makeNeutralElement( "img" );
+            img.src = src;
 
-                img.src = src;
-
-                return img;
-            };
-
-            if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 7 ) {
-
-                $.makeTransparentImage = function( src ){
-                    var img     = $.makeNeutralElement( "img" ),
-                        element = null;
-
-                    element = $.makeNeutralElement("span");
-                    element.style.display = "inline-block";
-
-                    img.onload = function() {
-                        element.style.width  = element.style.width || img.width + "px";
-                        element.style.height = element.style.height || img.height + "px";
-
-                        img.onload = null;
-                        img = null;     // to prevent memory leaks in IE
-                    };
-
-                    img.src = src;
-                    element.style.filter =
-                        "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" +
-                        src +
-                        "', sizingMethod='scale')";
-
-                    return element;
-                };
-
-            }
-
-            return $.makeTransparentImage( src );
+            return img;
         },
 
 
@@ -2144,23 +2084,7 @@ function OpenSeadragon( options ){
          * @param {Event} [event]
          */
         cancelEvent: function( event ) {
-            event = $.getEvent( event );
-
-            if ( event.preventDefault ) {
-                $.cancelEvent = function( event ){
-                    // W3C for preventing default
-                    event.preventDefault();
-                };
-            } else {
-                $.cancelEvent = function( event ){
-                    event = $.getEvent( event );
-                    // legacy for preventing default
-                    event.cancel = true;
-                    // IE < 9 for preventing default
-                    event.returnValue = false;
-                };
-            }
-            $.cancelEvent( event );
+            event.preventDefault();
         },
 
 
@@ -2171,28 +2095,7 @@ function OpenSeadragon( options ){
          * @param {Event} [event]
          */
         eventIsCanceled: function( event ) {
-            event = $.getEvent( event );
-
-            if ( event.preventDefault ) {
-                $.eventIsCanceled = function( event ){
-                    // W3C
-                    return event.defaultPrevented;
-                };
-            } else {
-                $.eventIsCanceled = function( event ){
-                    event = $.getEvent( event );
-                    if ( typeof event.returnValue !== 'undefined' ) {
-                        // IE < 9
-                        return !event.returnValue;
-                    } else if ( typeof event.cancel !== 'undefined' ) {
-                        // legacy
-                        return event.cancel;
-                    } else {
-                        return false;
-                    }
-                };
-            }
-            return $.eventIsCanceled( event );
+            return event.defaultPrevented;
         },
 
 
@@ -2202,23 +2105,7 @@ function OpenSeadragon( options ){
          * @param {Event} [event]
          */
         stopEvent: function( event ) {
-            event = $.getEvent( event );
-
-            if ( event.stopPropagation ) {
-                // W3C for stopping propagation
-                $.stopEvent = function( event ){
-                    event.stopPropagation();
-                };
-            } else {
-                // IE < 9 for stopping propagation
-                $.stopEvent = function( event ){
-                    event = $.getEvent( event );
-                    event.cancelBubble = true;
-                };
-
-            }
-
-            $.stopEvent( event );
+            event.stopPropagation();
         },
 
 
@@ -2407,25 +2294,7 @@ function OpenSeadragon( options ){
 
                 request.send(null);
             } catch (e) {
-                var msg = e.message;
-
-                /*
-                    IE < 10 does not support CORS and an XHR request to a different origin will fail as soon
-                    as send() is called. This is particularly easy to miss during development and appear in
-                    production if you use a CDN or domain sharding and the security policy is likely to break
-                    exception handlers since any attempt to access a property of the request object will
-                    raise an access denied TypeError inside the catch block.
-
-                    To be friendlier, we'll check for this specific error and add a documentation pointer
-                    to point developers in the right direction. We test the exception number because IE's
-                    error messages are localized.
-                */
-                var oldIE = $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 10;
-                if ( oldIE && typeof ( e.number ) !== "undefined" && e.number === -2147024891 ) {
-                    msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
-                }
-
-                $.console.log( "%s while making AJAX request: %s", e.name, msg );
+                $.console.log( "%s while making AJAX request: %s", e.name, e.message );
 
                 request.onreadystatechange = function(){};
 
@@ -2772,21 +2641,15 @@ function OpenSeadragon( options ){
 
         //determine if this browser supports image alpha transparency
         $.Browser.alpha = !(
-            (
-                $.Browser.vendor === $.BROWSERS.IE &&
-                $.Browser.version < 9
-            ) || (
-                $.Browser.vendor === $.BROWSERS.CHROME &&
-                $.Browser.version < 2
-            )
+            $.Browser.vendor === $.BROWSERS.CHROME && $.Browser.version < 2
         );
 
         //determine if this browser supports element.style.opacity
-        $.Browser.opacity = !(
-            $.Browser.vendor === $.BROWSERS.IE &&
-            $.Browser.version < 9
-        );
+        $.Browser.opacity = true;
 
+        if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 11 ) {
+            $.console.error('Internet Explorer versions < 11 are not supported by OpenSeadragon');
+        }
     })();
 
 
