@@ -1211,7 +1211,7 @@
      * @property {Number} eventPhase
      *      0 == NONE, 1 == CAPTURING_PHASE, 2 == AT_TARGET, 3 == BUBBLING_PHASE.
      * @property {String} eventType
-     *     "contextmenu", "gotpointercapture", "lostpointercapture", "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel", "wheel", "click", "dblclick".
+     *     "keydown", "keyup", "keypress", "focus", "blur", "contextmenu", "gotpointercapture", "lostpointercapture", "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel", "wheel", "click", "dblclick".
      * @property {String} pointerType
      *     "mouse", "touch", "pen", etc.
      * @property {Boolean} isEmulated
@@ -1812,9 +1812,16 @@
      */
     function onKeyDown( tracker, event ) {
         //$.console.log( "keydown %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyDownHandler ) {
-            propagate = tracker.keyDownHandler(
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keydown',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyDownHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyDownHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1827,9 +1834,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1840,9 +1851,17 @@
      */
     function onKeyUp( tracker, event ) {
         //$.console.log( "keyup %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyUpHandler ) {
-            propagate = tracker.keyUpHandler(
+
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keyup',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyUpHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyUpHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1855,9 +1874,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1868,9 +1891,17 @@
      */
     function onKeyPress( tracker, event ) {
         //$.console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyHandler ) {
-            propagate = tracker.keyHandler(
+
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keypress',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1883,9 +1914,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1896,9 +1931,20 @@
      */
     function onFocus( tracker, event ) {
         //console.log( "focus %s", event );
-        var propagate;
-        if ( tracker.focusHandler ) {
-            propagate = tracker.focusHandler(
+
+        // focus doesn't bubble and is not cancelable, but we call
+        //   preProcessEvent() so it's dispatched to preProcessEventHandler
+        //   if necessary
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'focus',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.focusHandler && !eventInfo.preventGesture ) {
+            tracker.focusHandler(
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
@@ -1906,9 +1952,6 @@
                     userData:             tracker.userData
                 }
             );
-            if ( propagate === false ) {
-                $.cancelEvent( event );
-            }
         }
     }
 
@@ -1919,9 +1962,20 @@
      */
     function onBlur( tracker, event ) {
         //console.log( "blur %s", event );
-        var propagate;
-        if ( tracker.blurHandler ) {
-            propagate = tracker.blurHandler(
+
+        // blur doesn't bubble and is not cancelable, but we call
+        //   preProcessEvent() so it's dispatched to preProcessEventHandler
+        //   if necessary
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'blur',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.blurHandler && !eventInfo.preventGesture ) {
+            tracker.blurHandler(
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
@@ -1929,9 +1983,6 @@
                     userData:             tracker.userData
                 }
             );
-            if ( propagate === false ) {
-                $.cancelEvent( event );
-            }
         }
     }
 
@@ -2862,6 +2913,29 @@
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
+            case 'keydown':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyDownHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'keyup':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyUpHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'keypress':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'focus':
+            case 'blur':
             case 'pointerenter':
             case 'pointerleave':
             default:
