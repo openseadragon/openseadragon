@@ -1910,6 +1910,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
+    var flipped = tiledImage._drawer.viewer.viewport.getFlip();
 
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
@@ -1935,9 +1936,14 @@ function drawTiles( tiledImage, lastDrawn ) {
                 tiledImage.getClippedBounds(true))
                 .getIntegerBoundingBox();
 
-            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+            if(flipped.x || flipped.y) {
               if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
-                bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
+                if (flipped.x) {
+                  bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
+                }
+                if (flipped.y) {
+                  bounds.y = tiledImage._drawer.viewer.container.clientHeight - (bounds.y + bounds.height);
+                }
               }
             }
 
@@ -1965,7 +1971,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
 
         if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
+          if(flipped.x || flipped.y) {
               tiledImage._drawer._flip();
           }
         }
@@ -2104,7 +2110,7 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     if (!sketchScale) {
       if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-        if(tiledImage._drawer.viewer.viewport.getFlip()) {
+        if(flipped.x || flipped.y) {
             tiledImage._drawer._flip();
         }
       }

@@ -1526,8 +1526,13 @@ $.Viewport.prototype = {
      * @function
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    toggleFlip: function() {
-      this.setFlip(!this.getFlip());
+    toggleFlip: function( dir ) {
+      if (!dir) {
+        dir = { x: true, y: false };
+      }
+
+      var flip = this.getFlip();
+      this.setFlip({ x: dir.x ? !flip.x : flip.x, y: dir.y ? !flip.y : flip.y });
       return this;
     },
 
@@ -1537,6 +1542,10 @@ $.Viewport.prototype = {
      * @return {Boolean} Flip state.
      */
     getFlip: function() {
+      if (this.flipped === true) {
+        return { x: true, y: false };
+      }
+
       return this.flipped;
     },
 
@@ -1547,7 +1556,11 @@ $.Viewport.prototype = {
      * @return {OpenSeadragon.Viewport} Chainable.
      */
     setFlip: function( state ) {
-      if ( this.flipped === state ) {
+      if ( state === true ) {
+        state = { x: true, y: false };
+      }
+
+      if ( this.flipped === state || (this.flipped.x === state.x && this.flipped.y === state.y) ) {
         return this;
       }
 
