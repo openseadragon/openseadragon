@@ -2914,16 +2914,10 @@
                 eventInfo.stopPropagation = false;
                 break;
             case 'keydown':
-                eventInfo.isStopable = true;
-                eventInfo.isCancelable = true;
-                eventInfo.preventDefault = !!tracker.keyDownHandler;
-                eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
-                break;
             case 'keyup':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = !!tracker.keyUpHandler;
+                eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
