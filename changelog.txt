@@ -34,7 +34,7 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
 * Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
 * Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
-* MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery) (#1950 @rmontroy)
+* MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery) (#1950 @rmontroy) (#1951 @msalsbery)
 * Fixed simulated drag events in navigator tests (#1949 @msalsbery)
 * Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
 * MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
