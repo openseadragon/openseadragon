@@ -2298,40 +2298,8 @@ function OpenSeadragon( options ){
 
                 request.onreadystatechange = function(){};
 
-                if (window.XDomainRequest) { // IE9 or IE8 might as well try to use XDomainRequest
-                    var xdr = new window.XDomainRequest();
-                    if (xdr) {
-                        xdr.onload = function (e) {
-                            if ( $.isFunction( onSuccess ) ) {
-                                onSuccess({ // Faking an xhr object
-                                    responseText: xdr.responseText,
-                                    status: 200, // XDomainRequest doesn't support status codes, so we just fake one! :/
-                                    statusText: 'OK'
-                                });
-                            }
-                        };
-                        xdr.onerror = function (e) {
-                            if ($.isFunction(onError)) {
-                                onError({ // Faking an xhr object
-                                    responseText: xdr.responseText,
-                                    status: 444, // 444 No Response
-                                    statusText: 'An error happened. Due to an XDomainRequest deficiency we can not extract any information about this error. Upgrade your browser.'
-                                });
-                            }
-                        };
-                        try {
-                            xdr.open('GET', url);
-                            xdr.send();
-                        } catch (e2) {
-                            if ( $.isFunction( onError ) ) {
-                                onError( request, e );
-                            }
-                        }
-                    }
-                } else {
-                    if ( $.isFunction( onError ) ) {
-                        onError( request, e );
-                    }
+                if ( $.isFunction( onError ) ) {
+                    onError( request, e );
                 }
             }
 
@@ -2470,16 +2438,7 @@ function OpenSeadragon( options ){
          * @returns {Object}
          */
         parseJSON: function(string) {
-            if (window.JSON && window.JSON.parse) {
-                $.parseJSON = window.JSON.parse;
-            } else {
-                // Should only be used by IE8 in non standards mode
-                $.parseJSON = function(string) {
-                    /*jshint evil:true*/
-                    //eslint-disable-next-line no-eval
-                    return eval('(' + string + ')');
-                };
-            }
+            $.parseJSON = window.JSON.parse;
             return $.parseJSON(string);
         },
 
