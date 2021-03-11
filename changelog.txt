@@ -36,7 +36,8 @@ OPENSEADRAGON CHANGELOG
 * Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
 * MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery)
 * Fixed simulated drag events in navigator tests (#1949 @msalsbery)
-* Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (# @msalsbery)
+* Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
+* MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
 
 2.4.2:
 
