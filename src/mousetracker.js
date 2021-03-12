@@ -494,8 +494,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -527,8 +525,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -560,8 +556,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -585,8 +579,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -613,8 +605,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -643,8 +633,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -671,8 +659,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -696,8 +682,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -722,8 +706,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead. Touch devices no longer generate scroll event.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -748,8 +730,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -772,8 +752,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -805,8 +783,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -833,8 +809,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -863,8 +837,6 @@
          *      True if the shift key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -888,8 +860,6 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -914,8 +884,6 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -940,8 +908,6 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -966,8 +932,6 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -982,8 +946,6 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -998,8 +960,6 @@
          *      A reference to the tracker instance.
          * @param {Object} event.originalEvent
          *      The original event object.
-         * @param {Boolean} event.preventDefaultAction
-         *      Set to true to prevent the tracker subscriber from performing its default action (subscriber implementation dependent). Default: false.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1822,7 +1782,6 @@
                     alt:                  event.altKey,
                     meta:                 event.metaKey,
                     originalEvent:        event,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -1850,7 +1809,6 @@
                     alt:                  event.altKey,
                     meta:                 event.metaKey,
                     originalEvent:        event,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -1878,7 +1836,6 @@
                     alt:                  event.altKey,
                     meta:                 event.metaKey,
                     originalEvent:        event,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -1901,7 +1858,6 @@
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -1924,7 +1880,6 @@
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -2052,7 +2007,6 @@
                     shift:                event.shiftKey,
                     isTouchEvent:         false,
                     originalEvent:        originalEvent,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -3098,7 +3052,6 @@
                     buttonDownAny:        pointsList.buttons !== 0,
                     isTouchEvent:         gPoint.type === 'touch',
                     originalEvent:        eventInfo.originalEvent,
-                    preventDefaultAction: false,
                     userData:             tracker.userData
                 }
             );
@@ -3144,7 +3097,6 @@
                 buttonDownAny:        pointsList.buttons !== 0,
                 isTouchEvent:         gPoint.type === 'touch',
                 originalEvent:        eventInfo.originalEvent,
-                preventDefaultAction: false,
                 userData:             tracker.userData
             } );
         }
@@ -3215,7 +3167,6 @@
                         buttons:              pointsList.buttons,
                         isTouchEvent:         gPoint.type === 'touch',
                         originalEvent:        eventInfo.originalEvent,
-                        preventDefaultAction: false,
                         userData:             tracker.userData
                     }
                 );
@@ -3270,7 +3221,6 @@
                             buttons:              pointsList.buttons,
                             isTouchEvent:         gPoint.type === 'touch',
                             originalEvent:        eventInfo.originalEvent,
-                            preventDefaultAction: false,
                             userData:             tracker.userData
                         }
                     );
@@ -3359,7 +3309,6 @@
                         buttons:               pointsList.buttons,
                         isTouchEvent:          gPoint.type === 'touch',
                         originalEvent:         eventInfo.originalEvent,
-                        preventDefaultAction:  false,
                         userData:              tracker.userData
                     }
                 );
@@ -3425,7 +3374,6 @@
                                 insideElementReleased: updateGPoint.insideElement,
                                 isTouchEvent:          updateGPoint.type === 'touch',
                                 originalEvent:         eventInfo.originalEvent,
-                                preventDefaultAction:  false,
                                 userData:              tracker.userData
                             }
                         );
@@ -3443,7 +3391,6 @@
                                 shift:                eventInfo.originalEvent.shiftKey,
                                 isTouchEvent:         updateGPoint.type === 'touch',
                                 originalEvent:        eventInfo.originalEvent,
-                                preventDefaultAction: false,
                                 userData:             tracker.userData
                             }
                         );
@@ -3465,7 +3412,6 @@
                                     shift:                eventInfo.originalEvent.shiftKey,
                                     isTouchEvent:         updateGPoint.type === 'touch',
                                     originalEvent:        eventInfo.originalEvent,
-                                    preventDefaultAction: false,
                                     userData:             tracker.userData
                                 }
                             );
@@ -3493,7 +3439,6 @@
                                             shift:                eventInfo.originalEvent.shiftKey,
                                             isTouchEvent:         updateGPoint.type === 'touch',
                                             originalEvent:        eventInfo.originalEvent,
-                                            preventDefaultAction: false,
                                             userData:             tracker.userData
                                         }
                                     );
@@ -3527,7 +3472,6 @@
                             insideElementReleased: updateGPoint.insideElement,
                             isTouchEvent:          updateGPoint.type === 'touch',
                             originalEvent:         eventInfo.originalEvent,
-                            preventDefaultAction:  false,
                             userData:              tracker.userData
                         }
                     );
@@ -3600,7 +3544,6 @@
                         buttons:              pointsList.buttons,
                         isTouchEvent:         gPoint.type === 'touch',
                         originalEvent:        eventInfo.originalEvent,
-                        preventDefaultAction: false,
                         userData:             tracker.userData
                     }
                 );
@@ -3617,7 +3560,6 @@
                         buttons:              pointsList.buttons,
                         isTouchEvent:         updateGPoint.type === 'touch',
                         originalEvent:        eventInfo.originalEvent,
-                        preventDefaultAction: false,
                         userData:             tracker.userData
                     }
                 );
@@ -3639,7 +3581,6 @@
                         shift:                eventInfo.originalEvent.shiftKey,
                         isTouchEvent:         updateGPoint.type === 'touch',
                         originalEvent:        eventInfo.originalEvent,
-                        preventDefaultAction: false,
                         userData:             tracker.userData
                     }
                 );
@@ -3657,7 +3598,6 @@
                         buttons:              pointsList.buttons,
                         isTouchEvent:         gPointArray[ 0 ].type === 'touch',
                         originalEvent:        eventInfo.originalEvent,
-                        preventDefaultAction: false,
                         userData:             tracker.userData
                     }
                 );
@@ -3683,7 +3623,6 @@
                             distance:             delegate.currentPinchDist,
                             shift:                eventInfo.originalEvent.shiftKey,
                             originalEvent:        eventInfo.originalEvent,
-                            preventDefaultAction: false,
                             userData:             tracker.userData
                         }
                     );
@@ -3730,7 +3669,6 @@
                 buttons:              tracker.getActivePointersListByType( pointerType ).buttons,
                 isTouchEvent:         pointerType === 'touch',
                 originalEvent:        originalMoveEvent,
-                preventDefaultAction: false,
                 userData:             tracker.userData
             } );
         }

@@ -3105,33 +3105,21 @@ function onCanvasPinch( event ) {
         lastCenterPt,
         panByPt;
 
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.pinchToZoom ) {
-            centerPt = this.viewport.pointFromPixel( event.center, true );
-            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-            panByPt = lastCenterPt.minus( centerPt );
-            if( !this.panHorizontal ) {
-                panByPt.x = 0;
-            }
-            if( !this.panVertical ) {
-                panByPt.y = 0;
-            }
-            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-            if ( gestureSettings.zoomToRefPoint ) {
-                this.viewport.panBy(panByPt, true);
-            }
-            this.viewport.applyConstraints();
-        }
-        if ( gestureSettings.pinchRotate ) {
-            // Pinch rotate
-            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
-                event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
-            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
-                event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
-        }
-    }
+    var canvasPinchEventArgs = {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        gesturePoints: event.gesturePoints,
+        lastCenter: event.lastCenter,
+        center: event.center,
+        lastDistance: event.lastDistance,
+        distance: event.distance,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultPanAction: false,
+        preventDefaultZoomAction: false,
+        preventDefaultRotateAction: false
+    };
+
     /**
      * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3148,25 +3136,48 @@ function onCanvasPinch( event ) {
      * @property {Number} distance - The distance between the two pinch contact points in CSS pixels.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultPanAction - Set to true to prevent default pinch to pan behaviour. Default: false.
+     * @property {Boolean} preventDefaultZoomAction - Set to true to prevent default pinch to zoom behaviour. Default: false.
+     * @property {Boolean} preventDefaultRotateAction - Set to true to prevent default pinch to rotate behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent('canvas-pinch', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        gesturePoints: event.gesturePoints,
-        lastCenter: event.lastCenter,
-        center: event.center,
-        lastDistance: event.lastDistance,
-        distance: event.distance,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-    //cancels event
-    return false;
+     this.raiseEvent('canvas-pinch', canvasPinchEventArgs);
+
+    if ( this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.pinchToZoom &&
+                    (!canvasPinchEventArgs.preventDefaultPanAction || !canvasPinchEventArgs.preventDefaultZoomAction) ) {
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            if ( !canvasPinchEventArgs.preventDefaultZoomAction ) {
+                this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+            }
+            if ( gestureSettings.zoomToRefPoint && !canvasPinchEventArgs.preventDefaultPanAction ) {
+                lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+                panByPt = lastCenterPt.minus( centerPt );
+                if( !this.panHorizontal ) {
+                    panByPt.x = 0;
+                }
+                if( !this.panVertical ) {
+                    panByPt.y = 0;
+                }
+                this.viewport.panBy(panByPt, true);
+            }
+            this.viewport.applyConstraints();
+        }
+        if ( gestureSettings.pinchRotate && !canvasPinchEventArgs.preventDefaultRotateAction ) {
+            // Pinch rotate
+            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
+                event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
+            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
+                event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
+            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
+        }
+    }
 }
 
 function onCanvasScroll( event ) {
-    var gestureSettings,
+    var canvasScrollEventArgs,
+        gestureSettings,
         factor,
         thisScrollTime,
         deltaScrollTime;
@@ -3179,21 +3190,15 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.viewport.flipped){
-          event.position.x = this.viewport.getContainerSize().x - event.position.x;
-        }
+        canvasScrollEventArgs = {
+            tracker: event.eventSource,
+            position: event.position,
+            scroll: event.scroll,
+            shift: event.shift,
+            originalEvent: event.originalEvent,
+            preventDefaultAction: false
+        };
 
-        if ( !event.preventDefaultAction && this.viewport ) {
-            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-            if ( gestureSettings.scrollToZoom ) {
-                factor = Math.pow( this.zoomPerScroll, event.scroll );
-                this.viewport.zoomBy(
-                    factor,
-                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-                );
-                this.viewport.applyConstraints();
-            }
-        }
         /**
          * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
          *
@@ -3206,28 +3211,27 @@ function onCanvasScroll( event ) {
          * @property {Number} scroll - The scroll delta for the event.
          * @property {Boolean} shift - True if the shift key was pressed during this event.
          * @property {Object} originalEvent - The original DOM event.
+         * @property {Boolean} preventDefaultAction - Set to true to prevent default scroll to zoom behaviour. Default: false.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.raiseEvent( 'canvas-scroll', {
-            tracker: event.eventSource,
-            position: event.position,
-            scroll: event.scroll,
-            shift: event.shift,
-            originalEvent: event.originalEvent
-        });
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            //cancels event
-            return false;
-        }
-    }
-    else {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            return false;   // We are swallowing this event
-        }
-    }
+         this.raiseEvent('canvas-scroll', canvasScrollEventArgs );
 
-    return undefined;
+        if ( !canvasScrollEventArgs.preventDefaultAction && this.viewport ) {
+            if(this.viewport.flipped){
+                event.position.x = this.viewport.getContainerSize().x - event.position.x;
+            }
+
+            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+            if ( gestureSettings.scrollToZoom ) {
+                factor = Math.pow( this.zoomPerScroll, event.scroll );
+                this.viewport.zoomBy(
+                    factor,
+                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
+                );
+                this.viewport.applyConstraints();
+            }
+        }
+    }
 }
 
 function onContainerEnter( event ) {
