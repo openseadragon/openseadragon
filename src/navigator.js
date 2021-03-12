@@ -471,7 +471,7 @@ function onCanvasClick( event ) {
     quick: event.quick,
     shift: event.shift,
     originalEvent: event.originalEvent,
-    preventDefaultAction: event.preventDefaultAction
+    preventDefaultAction: false
   };
   /**
    * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
@@ -523,7 +523,7 @@ function onCanvasDrag( event ) {
       direction: event.direction,
       shift: event.shift,
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction
+      preventDefaultAction: false
     };
     /**
      * Raised when a drag event occurs on the {@link OpenSeadragon.Viewer#navigator} element.

@@ -2574,7 +2574,7 @@ function onCanvasContextMenu( event ) {
 function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
+      preventDefaultAction: false,
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
@@ -2606,7 +2606,7 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 40://down arrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
@@ -2616,31 +2616,29 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 37://left arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 39://right arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
-                return true;
+                break;
         }
-    } else {
-        return true;
     }
 }
 function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
+      preventDefaultAction: false,
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
@@ -2654,15 +2652,15 @@ function onCanvasKeyPress( event ) {
             case 61://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 45://-|_
                 this.viewport.zoomBy(0.9);
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 48://0|)
                 this.viewport.goHome();
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 119://w
             case 87://W
                 if (!canvasKeyPressEventArgs.preventVerticalPan) {
@@ -2673,7 +2671,7 @@ function onCanvasKeyPress( event ) {
                     }
                     this.viewport.applyConstraints();
                   }
-                  return false;
+                  break;
             case 115://s
             case 83://S
                 if (!canvasKeyPressEventArgs.preventVerticalPan) {
@@ -2684,19 +2682,19 @@ function onCanvasKeyPress( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 97://a
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 100://d
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 114: //r - clockwise rotation
               if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
@@ -2704,7 +2702,7 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
-              return false;
+              break;
             case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
@@ -2712,16 +2710,14 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
-              return false;
+              break;
             case 102: //f
               this.viewport.toggleFlip();
-              return false;
+              break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
-                return true;
+                break;
         }
-    } else {
-        return true;
     }
 }
 
@@ -2744,7 +2740,7 @@ function onCanvasClick( event ) {
         quick: event.quick,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2784,7 +2780,7 @@ function onCanvasDblClick( event ) {
         position: event.position,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2827,7 +2823,7 @@ function onCanvasDrag( event ) {
         direction: event.direction,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2888,7 +2884,37 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
-    if (!event.preventDefaultAction && this.viewport) {
+    var canvasDragEndEventArgs = {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        speed: event.speed,
+        direction: event.direction,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: false
+    };
+
+    /**
+     * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-drag-end
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
+     * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag-end flick behaviour. Default: false.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+     this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
+
+    if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
         var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
         if (gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
@@ -2910,31 +2936,6 @@ function onCanvasDragEnd( event ) {
         }
         this.viewport.applyConstraints();
     }
-    /**
-     * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-drag-end
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {String} pointerType - "mouse", "touch", "pen", etc.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
-     * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
-     * @property {Boolean} shift - True if the shift key was pressed during this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent('canvas-drag-end', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
 }
 
 function onCanvasEnter( event ) {
@@ -3111,33 +3112,21 @@ function onCanvasPinch( event ) {
         lastCenterPt,
         panByPt;
 
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.pinchToZoom ) {
-            centerPt = this.viewport.pointFromPixel( event.center, true );
-            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-            panByPt = lastCenterPt.minus( centerPt );
-            if( !this.panHorizontal ) {
-                panByPt.x = 0;
-            }
-            if( !this.panVertical ) {
-                panByPt.y = 0;
-            }
-            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-            if ( gestureSettings.zoomToRefPoint ) {
-                this.viewport.panBy(panByPt, true);
-            }
-            this.viewport.applyConstraints();
-        }
-        if ( gestureSettings.pinchRotate ) {
-            // Pinch rotate
-            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
-                event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
-            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
-                event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
-        }
-    }
+    var canvasPinchEventArgs = {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        gesturePoints: event.gesturePoints,
+        lastCenter: event.lastCenter,
+        center: event.center,
+        lastDistance: event.lastDistance,
+        distance: event.distance,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultPanAction: false,
+        preventDefaultZoomAction: false,
+        preventDefaultRotateAction: false
+    };
+
     /**
      * Raised when a pinch event occurs on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3154,25 +3143,48 @@ function onCanvasPinch( event ) {
      * @property {Number} distance - The distance between the two pinch contact points in CSS pixels.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultPanAction - Set to true to prevent default pinch to pan behaviour. Default: false.
+     * @property {Boolean} preventDefaultZoomAction - Set to true to prevent default pinch to zoom behaviour. Default: false.
+     * @property {Boolean} preventDefaultRotateAction - Set to true to prevent default pinch to rotate behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent('canvas-pinch', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        gesturePoints: event.gesturePoints,
-        lastCenter: event.lastCenter,
-        center: event.center,
-        lastDistance: event.lastDistance,
-        distance: event.distance,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-    //cancels event
-    return false;
+     this.raiseEvent('canvas-pinch', canvasPinchEventArgs);
+
+    if ( this.viewport ) {
+        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        if ( gestureSettings.pinchToZoom &&
+                    (!canvasPinchEventArgs.preventDefaultPanAction || !canvasPinchEventArgs.preventDefaultZoomAction) ) {
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            if ( !canvasPinchEventArgs.preventDefaultZoomAction ) {
+                this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
+            }
+            if ( gestureSettings.zoomToRefPoint && !canvasPinchEventArgs.preventDefaultPanAction ) {
+                lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
+                panByPt = lastCenterPt.minus( centerPt );
+                if( !this.panHorizontal ) {
+                    panByPt.x = 0;
+                }
+                if( !this.panVertical ) {
+                    panByPt.y = 0;
+                }
+                this.viewport.panBy(panByPt, true);
+            }
+            this.viewport.applyConstraints();
+        }
+        if ( gestureSettings.pinchRotate && !canvasPinchEventArgs.preventDefaultRotateAction ) {
+            // Pinch rotate
+            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
+                event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
+            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
+                event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
+            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
+        }
+    }
 }
 
 function onCanvasScroll( event ) {
-    var gestureSettings,
+    var canvasScrollEventArgs,
+        gestureSettings,
         factor,
         thisScrollTime,
         deltaScrollTime;
@@ -3185,21 +3197,15 @@ function onCanvasScroll( event ) {
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
-        if(this.viewport.flipped){
-          event.position.x = this.viewport.getContainerSize().x - event.position.x;
-        }
+        canvasScrollEventArgs = {
+            tracker: event.eventSource,
+            position: event.position,
+            scroll: event.scroll,
+            shift: event.shift,
+            originalEvent: event.originalEvent,
+            preventDefaultAction: false
+        };
 
-        if ( !event.preventDefaultAction && this.viewport ) {
-            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-            if ( gestureSettings.scrollToZoom ) {
-                factor = Math.pow( this.zoomPerScroll, event.scroll );
-                this.viewport.zoomBy(
-                    factor,
-                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-                );
-                this.viewport.applyConstraints();
-            }
-        }
         /**
          * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#canvas} element (mouse wheel).
          *
@@ -3212,28 +3218,27 @@ function onCanvasScroll( event ) {
          * @property {Number} scroll - The scroll delta for the event.
          * @property {Boolean} shift - True if the shift key was pressed during this event.
          * @property {Object} originalEvent - The original DOM event.
+         * @property {Boolean} preventDefaultAction - Set to true to prevent default scroll to zoom behaviour. Default: false.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.raiseEvent( 'canvas-scroll', {
-            tracker: event.eventSource,
-            position: event.position,
-            scroll: event.scroll,
-            shift: event.shift,
-            originalEvent: event.originalEvent
-        });
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            //cancels event
-            return false;
-        }
-    }
-    else {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            return false;   // We are swallowing this event
-        }
-    }
+         this.raiseEvent('canvas-scroll', canvasScrollEventArgs );
 
-    return undefined;
+        if ( !canvasScrollEventArgs.preventDefaultAction && this.viewport ) {
+            if(this.viewport.flipped){
+                event.position.x = this.viewport.getContainerSize().x - event.position.x;
+            }
+
+            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+            if ( gestureSettings.scrollToZoom ) {
+                factor = Math.pow( this.zoomPerScroll, event.scroll );
+                this.viewport.zoomBy(
+                    factor,
+                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
+                );
+                this.viewport.applyConstraints();
+            }
+        }
+    }
 }
 
 function onContainerEnter( event ) {

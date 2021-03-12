@@ -679,8 +679,7 @@
     if ('TouchEvent' in window) {
         QUnit.test( 'MouseTracker: touch events', function (assert) {
             var done = assert.async();
-            var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
-                tracker = viewer.innerTracker,
+            var tracker = viewer.innerTracker,
                 touches;
 
             var reset = function () {
@@ -757,7 +756,6 @@
         var done = assert.async();
         var $canvas = $(viewer.element).find('.openseadragon-canvas')
             .not('.navigator .openseadragon-canvas');
-        var tracker = viewer.innerTracker;
         var epsilon = 0.0000001;
 
         function simulateClickAndDrag() {
@@ -787,16 +785,14 @@
             viewer.removeHandler('open', onOpen);
 
             // Hook viewer events to set preventDefaultAction
-            var origClickHandler = tracker.clickHandler;
-            tracker.clickHandler = function(event) {
+            var onCanvasClick = function (event) {
                 event.preventDefaultAction = true;
-                return origClickHandler(event);
             };
-            var origDragHandler = tracker.dragHandler;
-            tracker.dragHandler = function(event) {
+            var onCanvasDrag = function (event) {
                 event.preventDefaultAction = true;
-                return origDragHandler(event);
             };
+            viewer.addHandler("canvas-click", onCanvasClick);
+            viewer.addHandler("canvas-drag", onCanvasDrag);
 
             var originalZoom = viewer.viewport.getZoom();
             var originalBounds = viewer.viewport.getBounds();
@@ -810,8 +806,8 @@
             Util.assertRectangleEquals(assert, bounds, originalBounds, epsilon,
                 'Pan should be prevented');
 
-            tracker.clickHandler = origClickHandler;
-            tracker.dragHandler = origDragHandler;
+            viewer.removeHandler("canvas-click", onCanvasClick);
+            viewer.removeHandler("canvas-drag", onCanvasDrag);
 
             simulateClickAndDrag();
 
@@ -855,11 +851,11 @@
 
             var originalZoom = viewer.viewport.getZoom();
 
-            var origDblClickHandler = tracker.dblClickHandler;
-            tracker.dblClickHandler = function(event) {
+            var onCanvasDblClick = function (event) {
                 event.preventDefaultAction = true;
-                return origDblClickHandler(event);
             };
+
+            viewer.addHandler('canvas-double-click', onCanvasDblClick);
 
             TouchUtil.initTracker(tracker);
             simulateDblTap();
@@ -869,35 +865,15 @@
                 "Zoom on double tap should be prevented");
 
             // Reset event handler to original
-            tracker.dblClickHandler = origDblClickHandler;
+            viewer.removeHandler("canvas-double-click", onCanvasDblClick);
 
             simulateDblTap();
-            originalZoom = originalZoom * viewer.zoomPerClick;
+            originalZoom *= viewer.zoomPerClick;
 
             zoom = viewer.viewport.getZoom();
             Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
                 "Zoom on double tap should not be prevented");
 
-
-            var dblClickHandler = function(event) {
-                event.preventDefaultAction = true;
-            };
-
-            viewer.addHandler('canvas-double-click', dblClickHandler);
-
-            zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
-                "Zoom on double tap should be prevented");
-
-            // Remove custom event handler
-            viewer.removeHandler('canvas-double-click', dblClickHandler);
-
-            simulateDblTap();
-            originalZoom = originalZoom * viewer.zoomPerClick;
-
-            zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
-                "Zoom on double tap should not be prevented");
 
             TouchUtil.resetTracker(tracker);
             viewer.close();
@@ -926,10 +902,9 @@
             eventsHandledViewer = 0,
             originalEventsPassedViewer = 0,
             dragEndsExpected = 1,
-            releasesExpected = 1,
-            clicksExpected = 1;
+            releasesExpected = 1;
 
-        var onOpen = function ( event ) {
+        var onOpen = function ( ) {
             viewer.removeHandler( 'open', onOpen );
 
             viewer.addHandler( 'canvas-drag', onEventSourceDrag );
