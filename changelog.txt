@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 2.5.0: (In progress)
 
-* BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1949 @msalsbery)
+* BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1872 #1949 @msalsbery, #1950 @rmontroy)
 * BREAKING CHANGE: Removed deprecated OpenSeadragon.getEvent function (#1949 @msalsbery)
 * DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
@@ -34,7 +34,6 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
 * Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
 * Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
-* MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery) (#1950 @rmontroy)
 * Fixed simulated drag events in navigator tests (#1949 @msalsbery)
 
 2.4.2:
