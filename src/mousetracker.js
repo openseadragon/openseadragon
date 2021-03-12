@@ -2857,8 +2857,6 @@
             case 'pointerover':
             case 'pointerout':
             case 'contextmenu':
-            case 'keydown':
-            case 'keyup':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
@@ -2906,6 +2904,20 @@
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.dblClickHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'keydown':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyDownHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'keyup':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyUpHandler;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
