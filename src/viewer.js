@@ -2568,7 +2568,7 @@ function onCanvasContextMenu( event ) {
 function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
+      preventDefaultAction: false,
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
@@ -2600,7 +2600,7 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 40://down arrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
@@ -2610,31 +2610,29 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 37://left arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 39://right arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
-                return true;
+                break;
         }
-    } else {
-        return true;
     }
 }
 function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
+      preventDefaultAction: false,
       preventVerticalPan: event.preventVerticalPan,
       preventHorizontalPan: event.preventHorizontalPan
     };
@@ -2648,15 +2646,15 @@ function onCanvasKeyPress( event ) {
             case 61://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 45://-|_
                 this.viewport.zoomBy(0.9);
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 48://0|)
                 this.viewport.goHome();
                 this.viewport.applyConstraints();
-                return false;
+                break;
             case 119://w
             case 87://W
                 if (!canvasKeyPressEventArgs.preventVerticalPan) {
@@ -2667,7 +2665,7 @@ function onCanvasKeyPress( event ) {
                     }
                     this.viewport.applyConstraints();
                   }
-                  return false;
+                  break;
             case 115://s
             case 83://S
                 if (!canvasKeyPressEventArgs.preventVerticalPan) {
@@ -2678,19 +2676,19 @@ function onCanvasKeyPress( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 97://a
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 100://d
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                   this.viewport.applyConstraints();
                 }
-                return false;
+                break;
             case 114: //r - clockwise rotation
               if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
@@ -2698,7 +2696,7 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
-              return false;
+              break;
             case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
@@ -2706,16 +2704,14 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
-              return false;
+              break;
             case 102: //f
               this.viewport.toggleFlip();
-              return false;
+              break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
-                return true;
+                break;
         }
-    } else {
-        return true;
     }
 }
 
@@ -2738,7 +2734,7 @@ function onCanvasClick( event ) {
         quick: event.quick,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2778,7 +2774,7 @@ function onCanvasDblClick( event ) {
         position: event.position,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2821,7 +2817,7 @@ function onCanvasDrag( event ) {
         direction: event.direction,
         shift: event.shift,
         originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
+        preventDefaultAction: false
     };
 
     /**
@@ -2882,7 +2878,37 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
-    if (!event.preventDefaultAction && this.viewport) {
+    var canvasDragEndEventArgs = {
+        tracker: event.eventSource,
+        pointerType: event.pointerType,
+        position: event.position,
+        speed: event.speed,
+        direction: event.direction,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefaultAction: false
+    };
+
+    /**
+     * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-drag-end
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
+     * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
+     * @property {Boolean} shift - True if the shift key was pressed during this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag-end flick behaviour. Default: false.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+     this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
+
+    if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
         var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
         if (gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
@@ -2904,31 +2930,6 @@ function onCanvasDragEnd( event ) {
         }
         this.viewport.applyConstraints();
     }
-    /**
-     * Raised when a mouse or touch drag operation ends on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-drag-end
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
-     * @property {String} pointerType - "mouse", "touch", "pen", etc.
-     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
-     * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
-     * @property {Boolean} shift - True if the shift key was pressed during this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent('canvas-drag-end', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
 }
 
 function onCanvasEnter( event ) {

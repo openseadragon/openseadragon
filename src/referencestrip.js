@@ -524,7 +524,7 @@ function onStripLeave( event ) {
 function onKeyDown( event ) {
     //console.log( event.keyCode );
 
-    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+    if ( !event.ctrl && !event.alt && !event.meta ) {
         switch ( event.keyCode ) {
             case 38: //up arrow
                 onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
@@ -556,7 +556,7 @@ function onKeyDown( event ) {
 function onKeyPress( event ) {
     //console.log( event.keyCode );
 
-    if ( !event.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+    if ( !event.ctrl && !event.alt && !event.meta ) {
         switch ( event.keyCode ) {
             case 61: //=|+
                 onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
