@@ -2546,6 +2546,13 @@ function onBlur(){
 }
 
 function onCanvasContextMenu( event ) {
+    var eventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        originalEvent: event.originalEvent,
+        preventDefault: event.preventDefault
+    };
+
     /**
      * Raised when a contextmenu event occurs in the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -2556,13 +2563,12 @@ function onCanvasContextMenu( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the contextmenu event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.raiseEvent( 'canvas-contextmenu', {
-        tracker: event.eventSource,
-        position: event.position,
-        originalEvent: event.originalEvent
-    });
+    this.raiseEvent( 'canvas-contextmenu', eventArgs );
+
+    event.preventDefault = eventArgs.preventDefault;
 }
 
 function onCanvasKeyDown( event ) {
