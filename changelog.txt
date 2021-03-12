@@ -36,7 +36,7 @@ OPENSEADRAGON CHANGELOG
 * Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
 * MouseTracker: Per #1863, dropped support for Internet Explorer < 11 (#1872 @msalsbery) (#1950 @rmontroy)
 * Fixed simulated drag events in navigator tests (#1949 @msalsbery)
-* Fixed preventDefaultAction functionality in viewer events (# @msalsbery)
+* Fixed preventDefaultAction functionality in viewer events (#1953 @msalsbery)
 
 2.4.2:
 
