@@ -280,7 +280,6 @@
                                 this.dragHandler || this.dragEndHandler ||
                                 this.pinchHandler );
         this.hasScrollHandler = !!this.scrollHandler;
-        this.hasContextMenuHandler = !!this.contextMenuHandler;
 
         if (this.exitHandler) {
             $.console.error("MouseTracker.exitHandler is deprecated. Use MouseTracker.leaveHandler instead.");
@@ -402,6 +401,8 @@
          *      The position of the event relative to the tracked element.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the contextmenu event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1210,7 +1211,7 @@
      * @property {Number} eventPhase
      *      0 == NONE, 1 == CAPTURING_PHASE, 2 == AT_TARGET, 3 == BUBBLING_PHASE.
      * @property {String} eventType
-     *     "contextmenu", "gotpointercapture", "lostpointercapture", "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel", "wheel", "click", "dblclick".
+     *     "keydown", "keyup", "keypress", "focus", "blur", "contextmenu", "gotpointercapture", "lostpointercapture", "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel", "wheel", "click", "dblclick".
      * @property {String} pointerType
      *     "mouse", "touch", "pen", etc.
      * @property {Boolean} isEmulated
@@ -1811,9 +1812,16 @@
      */
     function onKeyDown( tracker, event ) {
         //$.console.log( "keydown %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyDownHandler ) {
-            propagate = tracker.keyDownHandler(
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keydown',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyDownHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyDownHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1826,9 +1834,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1839,9 +1851,17 @@
      */
     function onKeyUp( tracker, event ) {
         //$.console.log( "keyup %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyUpHandler ) {
-            propagate = tracker.keyUpHandler(
+
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keyup',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyUpHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyUpHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1854,9 +1874,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1867,9 +1891,17 @@
      */
     function onKeyPress( tracker, event ) {
         //$.console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var propagate;
-        if ( tracker.keyHandler ) {
-            propagate = tracker.keyHandler(
+
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'keypress',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.keyHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
+            tracker.keyHandler(
                 {
                     eventSource:          tracker,
                     keyCode:              event.keyCode ? event.keyCode : event.charCode,
@@ -1882,9 +1914,13 @@
                     userData:             tracker.userData
                 }
             );
-            if ( !propagate ) {
-                $.cancelEvent( event );
-            }
+        }
+
+        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+            $.cancelEvent( event );
+        }
+        if ( eventInfo.stopPropagation ) {
+            $.stopEvent( event );
         }
     }
 
@@ -1895,9 +1931,20 @@
      */
     function onFocus( tracker, event ) {
         //console.log( "focus %s", event );
-        var propagate;
-        if ( tracker.focusHandler ) {
-            propagate = tracker.focusHandler(
+
+        // focus doesn't bubble and is not cancelable, but we call
+        //   preProcessEvent() so it's dispatched to preProcessEventHandler
+        //   if necessary
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'focus',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.focusHandler && !eventInfo.preventGesture ) {
+            tracker.focusHandler(
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
@@ -1905,9 +1952,6 @@
                     userData:             tracker.userData
                 }
             );
-            if ( propagate === false ) {
-                $.cancelEvent( event );
-            }
         }
     }
 
@@ -1918,9 +1962,20 @@
      */
     function onBlur( tracker, event ) {
         //console.log( "blur %s", event );
-        var propagate;
-        if ( tracker.blurHandler ) {
-            propagate = tracker.blurHandler(
+
+        // blur doesn't bubble and is not cancelable, but we call
+        //   preProcessEvent() so it's dispatched to preProcessEventHandler
+        //   if necessary
+        var eventInfo = {
+            originalEvent: event,
+            eventType: 'blur',
+            pointerType: '',
+            isEmulated: false
+        };
+        preProcessEvent( tracker, eventInfo );
+
+        if ( tracker.blurHandler && !eventInfo.preventGesture ) {
+            tracker.blurHandler(
                 {
                     eventSource:          tracker,
                     originalEvent:        event,
@@ -1928,9 +1983,6 @@
                     userData:             tracker.userData
                 }
             );
-            if ( propagate === false ) {
-                $.cancelEvent( event );
-            }
         }
     }
 
@@ -1942,6 +1994,8 @@
     function onContextMenu( tracker, event ) {
         //$.console.log('contextmenu ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
+        var eventArgs = null;
+
         var eventInfo = {
             originalEvent: event,
             eventType: 'contextmenu',
@@ -1952,17 +2006,18 @@
 
         // ContextMenu
         if ( tracker.contextMenuHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            tracker.contextMenuHandler(
-                {
-                    eventSource:          tracker,
-                    position:             getPointRelativeToAbsolute( getMouseAbsolute( event ), tracker.element ),
-                    originalEvent:        eventInfo.originalEvent,
-                    userData:             tracker.userData
-                }
-            );
+            eventArgs = {
+                eventSource:          tracker,
+                position:             getPointRelativeToAbsolute( getMouseAbsolute( event ), tracker.element ),
+                originalEvent:        eventInfo.originalEvent,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
+
+            tracker.contextMenuHandler( eventArgs );
         }
 
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
         if ( eventInfo.stopPropagation ) {
@@ -2801,6 +2856,7 @@
                 break;
             case 'pointerover':
             case 'pointerout':
+            case 'contextmenu':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
@@ -2810,7 +2866,7 @@
             case 'pointerdown':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasGestureHandlers;
+                eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2824,7 +2880,7 @@
             case 'wheel':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasScrollHandler;
+                eventInfo.preventDefault = false; // handleWheelEvent() may set true (tracker.hasScrollHandler)
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2851,13 +2907,29 @@
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
-            case 'contextmenu':
+            case 'keydown':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;//tracker.hasContextMenuHandler;
-                eventInfo.preventGesture = true;//!tracker.hasContextMenuHandler;
+                eventInfo.preventDefault = !!tracker.keyDownHandler;
+                eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
+            case 'keyup':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyUpHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'keypress':
+                eventInfo.isStopable = true;
+                eventInfo.isCancelable = true;
+                eventInfo.preventDefault = !!tracker.keyHandler;
+                eventInfo.preventGesture = false;
+                eventInfo.stopPropagation = false;
+                break;
+            case 'focus':
+            case 'blur':
             case 'pointerenter':
             case 'pointerleave':
             default:
