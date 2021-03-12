@@ -126,6 +126,10 @@ $.Drawer = function( options ) {
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
     $.setElementOpacity( this.canvas, this.opacity, true );
+    // Allow pointer events to pass through the canvas element so implicit
+    //   pointer capture works on touch devices
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementTouchActionNone( this.canvas );
 
     // explicit left-align
     this.container.style.textAlign = "left";

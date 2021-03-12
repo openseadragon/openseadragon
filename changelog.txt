@@ -1,15 +1,43 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.4.3: (In progress)
+2.5.0: (In progress)
 
+* BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1872 #1949 #1951 @msalsbery, #1950 @rmontroy)
+* BREAKING CHANGE: Removed deprecated OpenSeadragon.getEvent function (#1949 @msalsbery)
+* DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
 * Documentation fix (#1814 @kenanchristian)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
+* Better handle destruction when navigator in custom location (#1884 @woodchuck)
 * Miscellaneous code cleanup (#1840 @msalsbery)
 * You can now specify tileSize for the Zoomify Tile Source (#1868 @abrlam)
 * Better use of IIIF "max" and "full" URL parameters (#1871 @MImranAsghar)
 * You can now specify the file format of the tiles in the Zoomify tile source (#1889 @abrlam)
+* Improved browser sniffing - detect EDGE and CHROMEEDGE browsers (#1872 @msalsbery)
+* Improved DOM event model feature detection (#1872 @msalsbery)
+* Added support for options parameter on addEvent()/removeEvent (to support passive option) (#1872 @msalsbery)
+* Added OpenSeadragon.eventIsCanceled() function for defaultPrevented detection on DOM events (#1872 @msalsbery)
+* MouseTracker: better PointerEvent model detection - removed use of deprecated window.navigator.pointerEnabled (#1872 @msalsbery)
+* MouseTracker: added overHandler/outHandler options for handling corresponding pointerover/pointerout events (#1872 @msalsbery)
+* MouseTracker: changed enterHandler/leaveHandler to use DOM pointerenter/pointerleave events instead of simulating using pointerover/pointerout (#1872 @msalsbery)
+* All internal uses of MouseTracker use pointerenter/pointerleave events instead of pointerover/pointerout events for more consistent pointer tracking (#1872 @msalsbery)
+* Fixed bug in Button class where two MouseTracker event handlers used an invalid "this" causing issues in some browsers (#1872 @msalsbery)
+* Added pointerType property to Viewer container-enter, container-exit, canvas-drag, canvas-drag-end, canvas-pinch events (#1872 @msalsbery)
+* MouseTracker: Fire dragEndHandler event even if release point same as initial contact point (#1872 @msalsbery)
+* MouseTracker: Pointer capture implemented with capture APIs where available. Only fallback to emulated capture on extremely old browsers (#1872 @msalsbery)
+* MouseTracker: Added preProcessEventHandler option to allow MouseTracker instances to control bubbling and default behavior of events on their associated element (#1872 @msalsbery)
+* MouseTracker: Improved handling of canceled events (#1872 @msalsbery)
+* MouseTracker: Improved releasing of tracked pointers on destroy()/stopTracking() (#1872 @msalsbery)
+* Updated Viewer, Button, Drawer, Navigator, ReferenceStrip DOM for proper DOM event handling (#1872 @msalsbery)
+* Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements (#1872 @msalsbery)
+* MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
+* Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
+* Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
+* Fixed simulated drag events in navigator tests (#1949 @msalsbery)
+* Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
+* MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
+* Fixed preventDefaultAction functionality in viewer events (#1953 @msalsbery)
 
 2.4.2:
 
@@ -57,7 +85,7 @@ OPENSEADRAGON CHANGELOG
 * You can now prevent canvas-click events on the navigator (#1416)
 * The navigator can now be restricted to just horizontal or just vertical panning (#1416)
 * Fixed DziTileSource so it doesn't load levels above maxLevel or below minLevel, if set (#1492)
- 
+
 2.3.1:
 
 * Debug mode now uses different colors for different tiled images (customizable via debugGridColor) (#1271)

@@ -88,6 +88,7 @@ $.ButtonGroup = function( options ) {
      * @memberof OpenSeadragon.ButtonGroup#
      */
     this.tracker = new $.MouseTracker({
+        userData:           'ButtonGroup.tracker',
         element:            this.element,
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
@@ -97,7 +98,7 @@ $.ButtonGroup = function( options ) {
                 _this.buttons[ i ].notifyGroupEnter();
             }
         },
-        exitHandler: function ( event ) {
+        leaveHandler: function ( event ) {
             var i;
             if ( !event.insideElementPressed ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
@@ -127,8 +128,8 @@ $.ButtonGroup.prototype = {
      * @function
      * @private
      */
-    emulateExit: function() {
-        this.tracker.exitHandler( { eventSource: this.tracker } );
+    emulateLeave: function() {
+        this.tracker.leaveHandler( { eventSource: this.tracker } );
     },
 
     destroy: function() {

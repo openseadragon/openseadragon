@@ -167,12 +167,16 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
+    $.setElementPointerEventsNone( this.displayRegion );
+    $.setElementTouchActionNone( this.displayRegion );
 
     this.displayRegionContainer = $.makeNeutralElement("div");
     this.displayRegionContainer.id = this.element.id + '-displayregioncontainer';
     this.displayRegionContainer.className = "displayregioncontainer";
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
+    $.setElementPointerEventsNone( this.displayRegionContainer );
+    $.setElementTouchActionNone( this.displayRegionContainer );
 
     viewer.addControl(
         this.element,
@@ -221,12 +225,22 @@ $.Navigator = function( options ){
     // Remove the base class' (Viewer's) innerTracker and replace it with our own
     this.innerTracker.destroy();
     this.innerTracker = new $.MouseTracker({
-        element:         this.element,
+        userData:        'Navigator.innerTracker',
+        element:         this.element, //this.canvas,
         dragHandler:     $.delegate( this, onCanvasDrag ),
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll )
     });
+    this.outerTracker.userData = 'Navigator.outerTracker';
+
+    // this.innerTracker is attached to this.element...we need to allow pointer
+    //   events to pass through this Viewer's canvas/container elements so implicit
+    //   pointer capture works on touch devices
+    //TODO an alternative is to attach the new MouseTracker to this.canvas...not
+    //   sure why it isn't already (see MouseTracker constructor call above)
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementPointerEventsNone( this.container );
 
     this.addHandler("reset-size", function() {
         if (_this.viewport) {
@@ -457,7 +471,7 @@ function onCanvasClick( event ) {
     quick: event.quick,
     shift: event.shift,
     originalEvent: event.originalEvent,
-    preventDefaultAction: event.preventDefaultAction
+    preventDefaultAction: false
   };
   /**
    * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
@@ -509,7 +523,7 @@ function onCanvasDrag( event ) {
       direction: event.direction,
       shift: event.shift,
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction
+      preventDefaultAction: false
     };
     /**
      * Raised when a drag event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
@@ -526,7 +540,7 @@ function onCanvasDrag( event ) {
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag to pan behaviour. Default: false.
      */
      this.viewer.raiseEvent('navigator-drag', canvasDragEventArgs);
 
