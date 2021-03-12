@@ -267,6 +267,7 @@ $.Viewer = function( options ) {
         style.top       = "0px";
         style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
+    $.setElementTouchActionNone( this.container );
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
@@ -280,12 +281,14 @@ $.Viewer = function( options ) {
     this.docOverflow    = document.documentElement.style.overflow;
 
     this.innerTracker = new $.MouseTracker({
+        userData:                 'Viewer.innerTracker',
         element:                  this.canvas,
         startDisabled:            !this.mouseNavEnabled,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
+        contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
@@ -293,7 +296,7 @@ $.Viewer = function( options ) {
         dragHandler:              $.delegate( this, onCanvasDrag ),
         dragEndHandler:           $.delegate( this, onCanvasDragEnd ),
         enterHandler:             $.delegate( this, onCanvasEnter ),
-        exitHandler:              $.delegate( this, onCanvasExit ),
+        leaveHandler:             $.delegate( this, onCanvasLeave ),
         pressHandler:             $.delegate( this, onCanvasPress ),
         releaseHandler:           $.delegate( this, onCanvasRelease ),
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
@@ -303,6 +306,7 @@ $.Viewer = function( options ) {
     });
 
     this.outerTracker = new $.MouseTracker({
+        userData:              'Viewer.outerTracker',
         element:               this.container,
         startDisabled:         !this.mouseNavEnabled,
         clickTimeThreshold:    this.clickTimeThreshold,
@@ -310,7 +314,7 @@ $.Viewer = function( options ) {
         dblClickTimeThreshold: this.dblClickTimeThreshold,
         dblClickDistThreshold: this.dblClickDistThreshold,
         enterHandler:          $.delegate( this, onContainerEnter ),
-        exitHandler:           $.delegate( this, onContainerExit )
+        leaveHandler:          $.delegate( this, onContainerLeave )
     });
 
     if( this.toolbar ){
@@ -403,20 +407,22 @@ $.Viewer = function( options ) {
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
+    $.setElementPointerEventsNone( this.overlaysContainer );
+    $.setElementTouchActionNone( this.overlaysContainer );
     this.canvas.appendChild( this.overlaysContainer );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
     if (!this.drawer.canRotate()) {
         // Disable/remove the rotate left/right buttons since they aren't supported
         if (this.rotateLeft) {
-            i = this.buttons.buttons.indexOf(this.rotateLeft);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateLeft.element);
+            i = this.buttonGroup.buttons.indexOf(this.rotateLeft);
+            this.buttonGroup.buttons.splice(i, 1);
+            this.buttonGroup.element.removeChild(this.rotateLeft.element);
         }
         if (this.rotateRight) {
-            i = this.buttons.buttons.indexOf(this.rotateRight);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateRight.element);
+            i = this.buttonGroup.buttons.indexOf(this.rotateRight);
+            this.buttonGroup.buttons.splice(i, 1);
+            this.buttonGroup.element.removeChild(this.rotateRight.element);
         }
     }
 
@@ -777,8 +783,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.removeAllHandlers();
 
-        if (this.buttons) {
-            this.buttons.destroy();
+        if (this.buttonGroup) {
+            this.buttonGroup.destroy();
+        } else if (this.customButtons) {
+            while (this.customButtons.length) {
+                this.customButtons.pop().destroy();
+            }
         }
 
         if (this.paging) {
@@ -1102,7 +1112,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             THIS[ this.hash ].fullPage = false;
 
             // mouse will likely be outside now
-            $.delegate( this, onContainerExit )( { } );
+            $.delegate( this, onContainerLeave )( { } );
 
         }
 
@@ -1866,13 +1876,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             if ( useGroup ) {
-                this.buttons = new $.ButtonGroup({
+                this.buttonGroup = new $.ButtonGroup({
                     buttons:            buttons,
                     clickTimeThreshold: this.clickTimeThreshold,
                     clickDistThreshold: this.clickDistThreshold
                 });
 
-                this.navControl  = this.buttons.element;
+                this.navControl  = this.buttonGroup.element;
                 this.addHandler( 'open', $.delegate( this, lightUp ) );
 
                 if( this.toolbar ){
@@ -1886,6 +1896,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
                     );
                 }
+            } else {
+                this.customButtons = buttons;
             }
 
         }
@@ -2550,6 +2562,26 @@ function onBlur(){
 
 }
 
+function onCanvasContextMenu( event ) {
+    /**
+     * Raised when a contextmenu event occurs in the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-contextmenu
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-contextmenu', {
+        tracker: event.eventSource,
+        position: event.position,
+        originalEvent: event.originalEvent
+    });
+}
+
 function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
@@ -2799,6 +2831,7 @@ function onCanvasDrag( event ) {
 
     var canvasDragEventArgs = {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         delta: event.delta,
         speed: event.speed,
@@ -2816,13 +2849,14 @@ function onCanvasDrag( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {OpenSeadragon.Point} delta - The x,y components of the difference between start drag and end drag.
      * @property {Number} speed - Current computed speed, in pixels per second.
      * @property {Number} direction - Current computed direction, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag behaviour. Default: false.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag to pan behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
@@ -2895,6 +2929,7 @@ function onCanvasDragEnd( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} speed - Speed at the end of a drag gesture, in pixels per second.
      * @property {Number} direction - Direction at the end of a drag gesture, expressed as an angle counterclockwise relative to the positive X axis (-pi to pi, in radians). Only valid if speed > 0.
@@ -2904,6 +2939,7 @@ function onCanvasDragEnd( event ) {
      */
     this.raiseEvent('canvas-drag-end', {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         speed: event.speed,
         direction: event.direction,
@@ -2942,12 +2978,7 @@ function onCanvasEnter( event ) {
     });
 }
 
-function onCanvasExit( event ) {
-
-    if (window.location !== window.parent.location){
-        $.MouseTracker.resetAllMouseTrackers();
-    }
-
+function onCanvasLeave( event ) {
     /**
      * Raised when a pointer leaves the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3126,6 +3157,7 @@ function onCanvasPinch( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {Array.<OpenSeadragon.MouseTracker.GesturePoint>} gesturePoints - Gesture points associated with the gesture. Velocity data can be found here.
      * @property {OpenSeadragon.Point} lastCenter - The previous center point of the two pinch contact points relative to the tracked element.
      * @property {OpenSeadragon.Point} center - The center point of the two pinch contact points relative to the tracked element.
@@ -3137,6 +3169,7 @@ function onCanvasPinch( event ) {
      */
     this.raiseEvent('canvas-pinch', {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         gesturePoints: event.gesturePoints,
         lastCenter: event.lastCenter,
         center: event.center,
@@ -3225,6 +3258,7 @@ function onContainerEnter( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
@@ -3235,6 +3269,7 @@ function onContainerEnter( event ) {
      */
     this.raiseEvent( 'container-enter', {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         buttons: event.buttons,
         pointers: event.pointers,
@@ -3244,7 +3279,7 @@ function onContainerEnter( event ) {
     });
 }
 
-function onContainerExit( event ) {
+function onContainerLeave( event ) {
     if ( event.pointers < 1 ) {
         THIS[ this.hash ].mouseInside = false;
         if ( !THIS[ this.hash ].animating ) {
@@ -3259,6 +3294,7 @@ function onContainerExit( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
      * @property {Number} buttons - Current buttons pressed. A combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser.
      * @property {Number} pointers - Number of pointers (all types) active in the tracked element.
@@ -3269,6 +3305,7 @@ function onContainerExit( event ) {
      */
     this.raiseEvent( 'container-exit', {
         tracker: event.eventSource,
+        pointerType: event.pointerType,
         position: event.position,
         buttons: event.buttons,
         pointers: event.pointers,
@@ -3499,8 +3536,10 @@ function doSingleZoomOut() {
 
 
 function lightUp() {
-    this.buttons.emulateEnter();
-    this.buttons.emulateExit();
+    if (this.buttonGroup) {
+        this.buttonGroup.emulateEnter();
+        this.buttonGroup.emulateLeave();
+    }
 }
 
 
@@ -3519,8 +3558,8 @@ function onFullScreen() {
         this.setFullScreen( !this.isFullPage() );
     }
     // correct for no mouseout event on change
-    if ( this.buttons ) {
-        this.buttons.emulateExit();
+    if ( this.buttonGroup ) {
+        this.buttonGroup.emulateLeave();
     }
     this.fullPageButton.element.focus();
     if ( this.viewport ) {

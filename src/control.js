@@ -161,7 +161,9 @@ $.Control.prototype = {
      */
     destroy: function() {
         this.wrapper.removeChild( this.element );
-        this.container.removeChild( this.wrapper );
+        if (this.anchor !== $.ControlAnchor.NONE) {
+            this.container.removeChild(this.wrapper);
+        }
     },
 
     /**
