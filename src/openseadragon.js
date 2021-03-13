@@ -2453,6 +2453,20 @@ function OpenSeadragon( options ){
             extension = extension ? extension : "";
             // eslint-disable-next-line no-use-before-define
             return !!FILEFORMATS[ extension.toLowerCase() ];
+        },
+
+        /**
+         * Updates supported image formats with user-specified values.
+         * @function
+         * @example
+         * // sets webp as supported and png as unsupported
+         * setImageFormatsSupported({webp: true, png: false});
+         * @param {Object} formats An object containing format extensions as
+         * keys and booleans as values.
+         */
+        setImageFormatsSupported: function(formats) {
+            // eslint-disable-next-line no-use-before-define
+            Object.assign(FILEFORMATS, formats);
         }
 
     });
