@@ -2457,6 +2457,17 @@ function OpenSeadragon( options ){
 
         /**
          * Updates supported image formats with user-specified values.
+         * Preexisting formats that are not being updated are left unchanged.
+         * By default, the defined formats are
+         * <pre><code>{
+         *      bmp:  false,
+         *      jpeg: true,
+         *      jpg:  true,
+         *      png:  true,
+         *      tif:  false,
+         *      wdp:  false
+         * }
+         * </code></pre>
          * @function
          * @example
          * // sets webp as supported and png as unsupported
@@ -2466,7 +2477,7 @@ function OpenSeadragon( options ){
          */
         setImageFormatsSupported: function(formats) {
             // eslint-disable-next-line no-use-before-define
-            Object.assign(FILEFORMATS, formats);
+            $.extend(FILEFORMATS, formats);
         }
 
     });
