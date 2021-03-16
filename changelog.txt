@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-2.5.0: (In progress)
+3.0.0: (In progress)
 
 * BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1872 #1949 #1951 @msalsbery, #1950 @rmontroy)
 * BREAKING CHANGE: Removed deprecated OpenSeadragon.getEvent function (#1949 @msalsbery)
@@ -38,6 +38,7 @@ OPENSEADRAGON CHANGELOG
 * Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
 * MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
 * Fixed preventDefaultAction functionality in viewer events (#1953 @msalsbery)
+* Added setImageFormatsSupported function (#1954 @pandaxtc)
 * Added dragToPan to the GestureSettings class, implemented in Viewer (#1956 @msalsbery)
 
 2.4.2:
