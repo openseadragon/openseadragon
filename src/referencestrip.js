@@ -123,12 +123,8 @@ $.ReferenceStrip = function ( options ) {
         keyDownHandler: $.delegate( this, onKeyDown ),
         keyHandler:     $.delegate( this, onKeyPress ),
         preProcessEventHandler: function (eventInfo) {
-            switch (eventInfo.eventType) {
-                case 'wheel':
-                    eventInfo.preventDefault = true;
-                    break;
-                default:
-                    break;
+            if (eventInfo.eventType === 'wheel') {
+                eventInfo.preventDefault = true;
             }
         }
     } );
