@@ -230,7 +230,18 @@ $.Navigator = function( options ){
         dragHandler:     $.delegate( this, onCanvasDrag ),
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
-        scrollHandler:   $.delegate( this, onCanvasScroll )
+        scrollHandler:   $.delegate( this, onCanvasScroll ),
+        preProcessEventHandler: function (eventInfo) {
+            switch (eventInfo.eventType) {
+                case 'wheel':
+                    //don't scroll the page up and down if the user is scrolling
+                    //in the navigator
+                    eventInfo.preventDefault = true;
+                    break;
+                default:
+                    break;
+            }
+        }
     });
     this.outerTracker.userData = 'Navigator.outerTracker';
 
@@ -607,10 +618,6 @@ function onCanvasScroll( event ) {
         shift: event.shift,
         originalEvent: event.originalEvent
     });
-
-    //don't scroll the page up and down if the user is scrolling
-    //in the navigator
-    return false;
 }
 
 /**

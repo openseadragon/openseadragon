@@ -38,6 +38,7 @@ OPENSEADRAGON CHANGELOG
 * Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
 * MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
 * Fixed preventDefaultAction functionality in viewer events (#1953 @msalsbery)
+* Added dragToPan to the GestureSettings class, implemented in Viewer (# @msalsbery)
 
 2.4.2:
 
