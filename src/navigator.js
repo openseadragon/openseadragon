@@ -232,14 +232,10 @@ $.Navigator = function( options ){
         releaseHandler:  $.delegate( this, onCanvasRelease ),
         scrollHandler:   $.delegate( this, onCanvasScroll ),
         preProcessEventHandler: function (eventInfo) {
-            switch (eventInfo.eventType) {
-                case 'wheel':
-                    //don't scroll the page up and down if the user is scrolling
-                    //in the navigator
-                    eventInfo.preventDefault = true;
-                    break;
-                default:
-                    break;
+            if (eventInfo.eventType === 'wheel') {
+                //don't scroll the page up and down if the user is scrolling
+                //in the navigator
+                eventInfo.preventDefault = true;
             }
         }
     });

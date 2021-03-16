@@ -1144,6 +1144,7 @@ function OpenSeadragon( options ){
             springStiffness:        6.5,
             animationTime:          1.2,
             gestureSettingsMouse:   {
+                dragToPan: true,
                 scrollToZoom: true,
                 clickToZoom: true,
                 dblClickToZoom: false,
@@ -1155,6 +1156,7 @@ function OpenSeadragon( options ){
                 pinchRotate: false
             },
             gestureSettingsTouch:   {
+                dragToPan: true,
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
@@ -1166,6 +1168,7 @@ function OpenSeadragon( options ){
                 pinchRotate: false
             },
             gestureSettingsPen:     {
+                dragToPan: true,
                 scrollToZoom: false,
                 clickToZoom: true,
                 dblClickToZoom: false,
@@ -1177,6 +1180,7 @@ function OpenSeadragon( options ){
                 pinchRotate: false
             },
             gestureSettingsUnknown: {
+                dragToPan: true,
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
