@@ -121,7 +121,12 @@ $.ReferenceStrip = function ( options ) {
         enterHandler:   $.delegate( this, onStripEnter ),
         leaveHandler:   $.delegate( this, onStripLeave ),
         keyDownHandler: $.delegate( this, onKeyDown ),
-        keyHandler:     $.delegate( this, onKeyPress )
+        keyHandler:     $.delegate( this, onKeyPress ),
+        preProcessEventHandler: function (eventInfo) {
+            if (eventInfo.eventType === 'wheel') {
+                eventInfo.preventDefault = true;
+            }
+        }
     } );
 
     //Controls the position and orientation of the reference strip and sets the
@@ -348,7 +353,6 @@ function onStripDrag( event ) {
             }
         }
     }
-    return false;
 
 }
 
@@ -397,8 +401,6 @@ function onStripScroll( event ) {
             }
         }
     }
-    //cancels event
-    return false;
 }
 
 
@@ -489,7 +491,6 @@ function onStripEnter( event ) {
         element.style.marginLeft = "0px";
 
     }
-    return false;
 }
 
 
@@ -512,7 +513,6 @@ function onStripLeave( event ) {
         element.style.marginLeft = "-" + ( $.getElementSize( element ).x / 2 ) + "px";
 
     }
-    return false;
 }
 
 

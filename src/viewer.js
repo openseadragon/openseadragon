@@ -2846,8 +2846,9 @@ function onCanvasDrag( event ) {
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
 
-    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
+    if ( gestureSettings.dragToPan && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }
