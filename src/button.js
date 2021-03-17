@@ -360,9 +360,11 @@ $.Button = function( options ) {
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
                 _this.raiseEvent( "release", { originalEvent: event.originalEvent } );
-                return false;
+
+                event.preventDefault = true;
+            } else{
+                event.preventDefault = false;
             }
-            return true;
         }
 
     });

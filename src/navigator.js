@@ -593,6 +593,15 @@ function onCanvasRelease( event ) {
  * @function
  */
 function onCanvasScroll( event ) {
+    var eventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        scroll: event.scroll,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefault: event.preventDefault
+    };
+
     /**
      * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#navigator} element (mouse wheel, touch pinch, etc.).
      *
@@ -605,15 +614,12 @@ function onCanvasScroll( event ) {
      * @property {Number} scroll - The scroll delta for the event.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.viewer.raiseEvent( 'navigator-scroll', {
-        tracker: event.eventSource,
-        position: event.position,
-        scroll: event.scroll,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.viewer.raiseEvent( 'navigator-scroll', eventArgs );
+
+    event.preventDefault = eventArgs.preventDefault;
 }
 
 /**

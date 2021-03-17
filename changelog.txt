@@ -40,6 +40,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed preventDefaultAction functionality in viewer events (#1953 @msalsbery)
 * Added setImageFormatsSupported function (#1954 @pandaxtc)
 * Added dragToPan to the GestureSettings class, implemented in Viewer (#1956 @msalsbery)
+* Added preventDefault option to MouseTracker handlers: scrollHandler, keyDownHandler, keyUpHandler, keyHandler (# @msalsbery)
 
 2.4.2:
 
