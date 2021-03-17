@@ -707,6 +707,8 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead. Touch devices no longer generate scroll event.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the wheel event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -885,6 +887,8 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the keydown event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -909,6 +913,8 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the keyup event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -933,6 +939,8 @@
          *      True if the meta key was pressed during this event.
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Boolean} event.preventDefault
+         *      Set to true to prevent the default user-agent's handling of the keypress event.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1772,6 +1780,8 @@
      */
     function onKeyDown( tracker, event ) {
         //$.console.log( "keydown %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
+        var eventArgs = null;
+
         var eventInfo = {
             originalEvent: event,
             eventType: 'keydown',
@@ -1781,22 +1791,23 @@
         preProcessEvent( tracker, eventInfo );
 
         if ( tracker.keyDownHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            tracker.keyDownHandler(
-                {
-                    eventSource:          tracker,
-                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
-                    ctrl:                 event.ctrlKey,
-                    shift:                event.shiftKey,
-                    alt:                  event.altKey,
-                    meta:                 event.metaKey,
-                    originalEvent:        event,
-                    userData:             tracker.userData
-                }
-            );
+            eventArgs = {
+                eventSource:          tracker,
+                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                ctrl:                 event.ctrlKey,
+                shift:                event.shiftKey,
+                alt:                  event.altKey,
+                meta:                 event.metaKey,
+                originalEvent:        event,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
+
+            tracker.keyDownHandler( eventArgs );
         }
 
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
-            $.cancelEvent( event );
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
+                $.cancelEvent( event );
         }
         if ( eventInfo.stopPropagation ) {
             $.stopEvent( event );
@@ -1811,6 +1822,8 @@
     function onKeyUp( tracker, event ) {
         //$.console.log( "keyup %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
 
+        var eventArgs = null;
+
         var eventInfo = {
             originalEvent: event,
             eventType: 'keyup',
@@ -1820,21 +1833,22 @@
         preProcessEvent( tracker, eventInfo );
 
         if ( tracker.keyUpHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            tracker.keyUpHandler(
-                {
-                    eventSource:          tracker,
-                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
-                    ctrl:                 event.ctrlKey,
-                    shift:                event.shiftKey,
-                    alt:                  event.altKey,
-                    meta:                 event.metaKey,
-                    originalEvent:        event,
-                    userData:             tracker.userData
-                }
-            );
+            eventArgs = {
+                eventSource:          tracker,
+                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                ctrl:                 event.ctrlKey,
+                shift:                event.shiftKey,
+                alt:                  event.altKey,
+                meta:                 event.metaKey,
+                originalEvent:        event,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
+
+            tracker.keyUpHandler( eventArgs );
         }
 
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
         if ( eventInfo.stopPropagation ) {
@@ -1850,6 +1864,8 @@
     function onKeyPress( tracker, event ) {
         //$.console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
 
+        var eventArgs = null;
+
         var eventInfo = {
             originalEvent: event,
             eventType: 'keypress',
@@ -1859,21 +1875,22 @@
         preProcessEvent( tracker, eventInfo );
 
         if ( tracker.keyHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            tracker.keyHandler(
-                {
-                    eventSource:          tracker,
-                    keyCode:              event.keyCode ? event.keyCode : event.charCode,
-                    ctrl:                 event.ctrlKey,
-                    shift:                event.shiftKey,
-                    alt:                  event.altKey,
-                    meta:                 event.metaKey,
-                    originalEvent:        event,
-                    userData:             tracker.userData
-                }
-            );
+            eventArgs = {
+                eventSource:          tracker,
+                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                ctrl:                 event.ctrlKey,
+                shift:                event.shiftKey,
+                alt:                  event.altKey,
+                meta:                 event.metaKey,
+                originalEvent:        event,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
+
+            tracker.keyHandler( eventArgs );
         }
 
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
         if ( eventInfo.stopPropagation ) {
@@ -2035,6 +2052,8 @@
         var nDelta = 0,
             eventInfo;
 
+        var eventArgs = null;
+
         // The nDelta variable is gated to provide smooth z-index scrolling
         //   since the mouse wheel allows for substantial deltas meant for rapid
         //   y-index scrolling.
@@ -2051,27 +2070,27 @@
         preProcessEvent( tracker, eventInfo );
 
         if ( tracker.scrollHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
-            eventInfo.preventDefault = true;
+            eventArgs = {
+                eventSource:          tracker,
+                pointerType:          'mouse',
+                position:             getMouseRelative( event, tracker.element ),
+                scroll:               nDelta,
+                shift:                event.shiftKey,
+                isTouchEvent:         false,
+                originalEvent:        originalEvent,
+                preventDefault:       eventInfo.preventDefault || eventInfo.defaultPrevented,
+                userData:             tracker.userData
+            };
 
-            tracker.scrollHandler(
-                {
-                    eventSource:          tracker,
-                    pointerType:          'mouse',
-                    position:             getMouseRelative( event, tracker.element ),
-                    scroll:               nDelta,
-                    shift:                event.shiftKey,
-                    isTouchEvent:         false,
-                    originalEvent:        originalEvent,
-                    userData:             tracker.userData
-                }
-            );
+
+            tracker.scrollHandler( eventArgs );
         }
 
         if ( eventInfo.stopPropagation ) {
             $.stopEvent( originalEvent );
         }
-        if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
-            $.cancelEvent( originalEvent );
+        if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
+                $.cancelEvent( originalEvent );
         }
 }
 
@@ -2811,9 +2830,12 @@
             case 'pointerover':
             case 'pointerout':
             case 'contextmenu':
+            case 'keydown':
+            case 'keyup':
+            case 'keypress':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false;
+                eventInfo.preventDefault = false; // onContextMenu(), onKeyDown(), onKeyUp(), onKeyPress() may set true
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2834,7 +2856,7 @@
             case 'wheel':
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false; // handleWheelEvent() may set true (tracker.hasScrollHandler)
+                eventInfo.preventDefault = false; // handleWheelEvent() may set true
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
                 eventInfo.stopPropagation = false;
                 break;
@@ -2858,27 +2880,6 @@
                 eventInfo.isStopable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.dblClickHandler;
-                eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
-                break;
-            case 'keydown':
-                eventInfo.isStopable = true;
-                eventInfo.isCancelable = true;
-                eventInfo.preventDefault = !!tracker.keyDownHandler;
-                eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
-                break;
-            case 'keyup':
-                eventInfo.isStopable = true;
-                eventInfo.isCancelable = true;
-                eventInfo.preventDefault = !!tracker.keyUpHandler;
-                eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
-                break;
-            case 'keypress':
-                eventInfo.isStopable = true;
-                eventInfo.isCancelable = true;
-                eventInfo.preventDefault = !!tracker.keyHandler;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;

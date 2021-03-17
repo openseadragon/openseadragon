@@ -2606,6 +2606,7 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 40://down arrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
@@ -2616,23 +2617,29 @@ function onCanvasKeyDown( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 37://left arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 39://right arrow
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
+                event.preventDefault = false;
                 break;
         }
+    } else {
+        event.preventDefault = false;
     }
 }
 function onCanvasKeyPress( event ) {
@@ -2652,14 +2659,17 @@ function onCanvasKeyPress( event ) {
             case 61://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
+                event.preventDefault = true;
                 break;
             case 45://-|_
                 this.viewport.zoomBy(0.9);
                 this.viewport.applyConstraints();
+                event.preventDefault = true;
                 break;
             case 48://0|)
                 this.viewport.goHome();
                 this.viewport.applyConstraints();
+                event.preventDefault = true;
                 break;
             case 119://w
             case 87://W
@@ -2671,6 +2681,7 @@ function onCanvasKeyPress( event ) {
                     }
                     this.viewport.applyConstraints();
                   }
+                  event.preventDefault = true;
                   break;
             case 115://s
             case 83://S
@@ -2682,18 +2693,21 @@ function onCanvasKeyPress( event ) {
                   }
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 97://a
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 100://d
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                   this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                   this.viewport.applyConstraints();
                 }
+                event.preventDefault = true;
                 break;
             case 114: //r - clockwise rotation
               if(this.viewport.flipped){
@@ -2702,6 +2716,7 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
+              event.preventDefault = true;
               break;
             case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
@@ -2710,14 +2725,19 @@ function onCanvasKeyPress( event ) {
                 this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
+              event.preventDefault = true;
               break;
             case 102: //f
               this.viewport.toggleFlip();
+              event.preventDefault = true;
               break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
+                event.preventDefault = false;
                 break;
         }
+    } else {
+        event.preventDefault = false;
     }
 }
 
@@ -3204,7 +3224,8 @@ function onCanvasScroll( event ) {
             scroll: event.scroll,
             shift: event.shift,
             originalEvent: event.originalEvent,
-            preventDefaultAction: false
+            preventDefaultAction: false,
+            preventDefault: true
         };
 
         /**
@@ -3220,6 +3241,7 @@ function onCanvasScroll( event ) {
          * @property {Boolean} shift - True if the shift key was pressed during this event.
          * @property {Object} originalEvent - The original DOM event.
          * @property {Boolean} preventDefaultAction - Set to true to prevent default scroll to zoom behaviour. Default: false.
+         * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event. Default: true.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
          this.raiseEvent('canvas-scroll', canvasScrollEventArgs );
@@ -3239,6 +3261,10 @@ function onCanvasScroll( event ) {
                 this.viewport.applyConstraints();
             }
         }
+
+        event.preventDefault = canvasScrollEventArgs.preventDefault;
+    } else {
+        event.preventDefault = true;
     }
 }
 
