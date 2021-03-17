@@ -96,6 +96,8 @@ $.ReferenceStrip = function ( options ) {
 
     this.minPixelRatio = this.viewer.minPixelRatio;
 
+    this.element.tabIndex = 0;
+
     style = this.element.style;
     style.marginTop     = '0px';
     style.marginRight   = '0px';
@@ -281,7 +283,7 @@ $.ReferenceStrip.prototype = {
         this.tracker.destroy();
 
         if (this.element) {
-            this.element.parentNode.removeChild(this.element);
+            this.viewer.removeControl( this.element );
         }
     }
 
@@ -305,6 +307,8 @@ function onStripClick( event ) {
 
         this.viewer.goToPage( page );
     }
+
+    this.element.focus();
 }
 
 
