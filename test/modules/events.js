@@ -835,19 +835,66 @@
         var done = assert.async();
         var tracker = viewer.innerTracker;
         var epsilon = 0.0000001;
+        var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
+            simEvent = {},
+            offset = $canvas.offset();
 
+        var simulateEnter = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            $canvas.simulate( 'mouseenter', simEvent );
+        };
+
+        var simulateLeave = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            simEvent.relatedTarget = document.body;
+            $canvas.simulate( 'mouseleave', simEvent );
+        };
+
+        var simulateDown = function (x, y) {
+            simEvent.button = 0;
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            $canvas.simulate( 'mousedown', simEvent );
+        };
+
+        var simulateUp = function (x, y) {
+            simEvent.button = 0;
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top  + y;
+            $canvas.simulate( 'mouseup', simEvent );
+        };
+
+        // function simulateDblTap() {
+        //     var touches = [];
+        //     TouchUtil.reset();
+
+        //     touches.push(TouchUtil.start([0,0]));
+        //     TouchUtil.end( touches[0] );
+        //     touches.push(TouchUtil.start([0,0]));
+        //     TouchUtil.end( touches[1] );
+        // }
         function simulateDblTap() {
-            var touches = [];
-            TouchUtil.reset();
-
-            touches.push(TouchUtil.start([0,0]));
-            TouchUtil.end( touches[0] );
-            touches.push(TouchUtil.start([0,0]));
-            TouchUtil.end( touches[1] );
+            simulateEnter(2, 2);
+            simulateDown(2, 2);
+            simulateUp(2, 2);
+            simulateDown(2, 2);
+            simulateUp(2, 2);
+            simulateLeave(-1, -1);
         }
 
         var onOpen = function() {
+            var origClickSetting,
+                origDblClickSetting;
+
             viewer.removeHandler('open', onOpen);
+
+            origClickSetting = viewer.gestureSettingsMouse.clickToZoom;
+            origDblClickSetting = viewer.gestureSettingsMouse.dblClickToZoom;
+
+            viewer.gestureSettingsMouse.clickToZoom = false;
+            viewer.gestureSettingsMouse.dblClickToZoom = true;
 
             var originalZoom = viewer.viewport.getZoom();
 
@@ -857,7 +904,6 @@
 
             viewer.addHandler('canvas-double-click', onCanvasDblClick);
 
-            TouchUtil.initTracker(tracker);
             simulateDblTap();
 
             var zoom = viewer.viewport.getZoom();
@@ -875,7 +921,9 @@
                 "Zoom on double tap should not be prevented");
 
 
-            TouchUtil.resetTracker(tracker);
+            viewer.gestureSettingsMouse.clickToZoom = origClickSetting;
+            viewer.gestureSettingsMouse.dblClickToZoom = origDblClickSetting;
+
             viewer.close();
             done();
         };
