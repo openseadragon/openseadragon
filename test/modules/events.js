@@ -875,13 +875,10 @@
         }
 
         var onOpen = function() {
-            var origClickSetting,
-                origDblClickSetting;
-
             viewer.removeHandler('open', onOpen);
 
-            origClickSetting = viewer.gestureSettingsMouse.clickToZoom;
-            origDblClickSetting = viewer.gestureSettingsMouse.dblClickToZoom;
+            var origClickSetting = viewer.gestureSettingsMouse.clickToZoom;
+            var origDblClickSetting = viewer.gestureSettingsMouse.dblClickToZoom;
 
             viewer.gestureSettingsMouse.clickToZoom = false;
             viewer.gestureSettingsMouse.dblClickToZoom = true;
