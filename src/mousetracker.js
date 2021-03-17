@@ -2089,7 +2089,6 @@
         if ( eventInfo.stopPropagation ) {
             $.stopEvent( originalEvent );
         }
-        //if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
                 $.cancelEvent( originalEvent );
         }

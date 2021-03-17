@@ -3224,7 +3224,8 @@ function onCanvasScroll( event ) {
             scroll: event.scroll,
             shift: event.shift,
             originalEvent: event.originalEvent,
-            preventDefaultAction: false
+            preventDefaultAction: false,
+            preventDefault: true
         };
 
         /**
@@ -3240,6 +3241,7 @@ function onCanvasScroll( event ) {
          * @property {Boolean} shift - True if the shift key was pressed during this event.
          * @property {Object} originalEvent - The original DOM event.
          * @property {Boolean} preventDefaultAction - Set to true to prevent default scroll to zoom behaviour. Default: false.
+         * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event. Default: true.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
          this.raiseEvent('canvas-scroll', canvasScrollEventArgs );
@@ -3259,9 +3261,11 @@ function onCanvasScroll( event ) {
                 this.viewport.applyConstraints();
             }
         }
-    }
 
-    event.preventDefault = true;
+        event.preventDefault = canvasScrollEventArgs.preventDefault;
+    } else {
+        event.preventDefault = true;
+    }
 }
 
 function onContainerEnter( event ) {
