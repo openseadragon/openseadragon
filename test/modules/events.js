@@ -833,7 +833,6 @@
     // ----------
     QUnit.test('Viewer: preventDefaultAction in dblClickHandler', function(assert) {
         var done = assert.async();
-        var tracker = viewer.innerTracker;
         var epsilon = 0.0000001;
         var $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' ),
             simEvent = {},
@@ -866,15 +865,6 @@
             $canvas.simulate( 'mouseup', simEvent );
         };
 
-        // function simulateDblTap() {
-        //     var touches = [];
-        //     TouchUtil.reset();
-
-        //     touches.push(TouchUtil.start([0,0]));
-        //     TouchUtil.end( touches[0] );
-        //     touches.push(TouchUtil.start([0,0]));
-        //     TouchUtil.end( touches[1] );
-        // }
         function simulateDblTap() {
             simulateEnter(2, 2);
             simulateDown(2, 2);
