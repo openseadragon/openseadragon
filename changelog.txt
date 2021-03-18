@@ -41,6 +41,8 @@ OPENSEADRAGON CHANGELOG
 * Added setImageFormatsSupported function (#1954 @pandaxtc)
 * Added dragToPan to the GestureSettings class, implemented in Viewer (#1956 @msalsbery)
 * Added preventDefault option to MouseTracker handlers: scrollHandler, keyDownHandler, keyUpHandler, keyHandler (#1957 @msalsbery)
+* ReferenceStrip: Fixed issue where its element was being removed from its parent element twice on destroy, causing an exception (#1958 @msalsbery)
+* ReferenceStrip: Made its element focusable for keyboard navigation (#1958 @msalsbery)
 
 2.4.2:
 
