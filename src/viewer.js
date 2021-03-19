@@ -2249,7 +2249,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (this.tileSources.length && this.tileSources.length > 1) {
                 this.referenceStrip = new $.ReferenceStrip({
-                    id:          this.referenceStripElement,
+                    id:          this.referenceStripId,
                     position:    this.referenceStripPosition,
                     sizeRatio:   this.referenceStripSizeRatio,
                     scroll:      this.referenceStripScroll,

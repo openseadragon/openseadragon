@@ -601,7 +601,7 @@
   *
   * @property {String} [referenceStripScroll='horizontal']
   *
-  * @property {Element} [referenceStripElement=null]
+  * @property {Element} [referenceStripId=null]
   *
   * @property {Number} [referenceStripHeight=null]
   *
@@ -1260,7 +1260,7 @@ function OpenSeadragon( options ){
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
             referenceStripScroll:       'horizontal',
-            referenceStripElement:       null,
+            referenceStripId:            null,
             referenceStripHeight:        null,
             referenceStripWidth:         null,
             referenceStripPosition:      'BOTTOM_LEFT',

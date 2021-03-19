@@ -62,6 +62,27 @@ var THIS = {};
  * @param {Object} options
  */
 $.ReferenceStrip = function ( options ) {
+    // //REFERENCE STRIP SETTINGS ($.DEFAULT_SETTINGS)
+    // showReferenceStrip:          false,
+    // referenceStripScroll:        'horizontal',
+    // referenceStripId:            null,
+    // referenceStripHeight:        null,
+    // referenceStripWidth:         null,
+    // referenceStripPosition:      'BOTTOM_LEFT',
+    // referenceStripSizeRatio:     0.2,
+
+    // this.referenceStrip = new $.ReferenceStrip({
+    //     id:          this.referenceStripId,
+    //     position:    this.referenceStripPosition,
+    //     sizeRatio:   this.referenceStripSizeRatio,
+    //     scroll:      this.referenceStripScroll,
+    //     height:      this.referenceStripHeight,
+    //     width:       this.referenceStripWidth,
+    //     tileSources: this.tileSources,
+    //     prefixUrl:   this.prefixUrl,
+    //     useCanvas:   this.useCanvas,
+    //     viewer:      this
+    // });
 
     var _this       = this,
         viewer      = options.viewer,
