@@ -860,6 +860,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * @param {Boolean} flip Whether the TiledImage should be flipped before rendering.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    setFlip: function(flip) {
+        this.flipped = !!flip;
+        this._needsDraw = true;
+        this._raiseBoundsChange();
+    },
+
+    /**
      * @returns {Number} The TiledImage's current opacity.
      */
     getOpacity: function() {
