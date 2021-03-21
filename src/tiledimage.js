@@ -1451,7 +1451,8 @@ function getTile(
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         bounds  = tileSource.getTileBounds( level, xMod, yMod );
-        sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
+        sourceBounds = tileSource.ignoreSourceBounds === true ?
+            null : tileSource.getTileBounds( level, xMod, yMod, true );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
 

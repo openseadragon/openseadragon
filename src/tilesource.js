@@ -88,8 +88,12 @@
  *      The minimum level to attempt to load.
  * @param {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
+ * @param {Boolean} [options.ignoreSourceBounds]
+ *      By setting this to true, sourceBounds creation will be ignored in $.TiledImage.
+ *      By ignoring sourceBounds, tile will render with rendered canvas instead of
+ *      the sourceBounds. See $.Tiles.sourceBounds for more detail.
  */
-$.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
+$.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel, ignoreSourceBounds) {
     var _this = this;
 
     var args = arguments,
@@ -105,7 +109,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
             tileSize: args[2],
             tileOverlap: args[3],
             minLevel: args[4],
-            maxLevel: args[5]
+            maxLevel: args[5],
+            ignoreSourceBounds: args[6]
         };
     }
 
@@ -226,6 +231,7 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
                     Math.log( 2 )
                 ) : 0
             );
+        this.ignoreSourceBounds = options.ignoreSourceBounds;
         if( this.success && $.isFunction( this.success ) ){
             this.success( this );
         }
