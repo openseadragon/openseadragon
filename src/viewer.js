@@ -674,7 +674,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 checkCompletion();
             };
-
             _this.addTiledImage(options);
         };
 
@@ -1286,6 +1285,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * removed and the new item is added in its place. options.tileSource will be
      * interpreted and fetched if necessary before the old item is removed to avoid leaving
      * a gap in the world.
+     * @param {String} [options.tileQuality='gray'] The image quality to be applied
      * @param {Number} [options.x=0] The X position for the image in viewport coordinates.
      * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
      * @param {Number} [options.width=1] The width for the image in viewport coordinates.
@@ -1330,8 +1330,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
         $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
             "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
-
         var _this = this;
+
+
+        _this.tileQuality = options.tileQuality;
 
         if (options.replace) {
             options.replaceItem = _this.world.getItemAt(options.index);
@@ -1463,6 +1465,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     opacity: queueItem.options.opacity,
                     preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
+                    tileQuality: queueItem.options.tileQuality,
                     compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
@@ -2332,13 +2335,15 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             tileSource = new $.TileSource({
                 url: tileSource,
                 crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
-                    imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
+                    imgOptions.crossOriginPolicy :
+                    viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 ajaxHeaders: viewer.ajaxHeaders,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
-                }
+                },
+                tileQuality: _this.tileQuality,
             });
             tileSource.addHandler( 'open-failed', function( event ) {
                 failCallback( event );
