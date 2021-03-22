@@ -866,7 +866,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     setFlip: function(flip) {
         this.flipped = !!flip;
         this._needsDraw = true;
-        this._raiseBoundsChange();
     },
 
     /**
@@ -1501,7 +1500,7 @@ function getTile(
         tilesMatrix[ level ][ x ] = {};
     }
 
-    if ( !tilesMatrix[ level ][ x ][ y ] ) {
+    if ( !tilesMatrix[ level ][ x ][ y ] || ((!!tilesMatrix[ level ][ x ][ y ].flipped) !== (!!tiledImage.flipped)) ) {
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         bounds  = tiledImage.getTileBounds( level, x, y );
@@ -1549,6 +1548,8 @@ function getTile(
         if (yMod === numTiles.y - 1) {
             tile.isBottomMost = true;
         }
+
+        tile.flipped = tiledImage.flipped;
 
         tilesMatrix[ level ][ x ][ y ] = tile;
     }
@@ -1749,7 +1750,6 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     tile.size       = sizeC;
     tile.squaredDistance   = tileSquaredDistance;
     tile.visibility = levelVisibility;
-    tile.flipped = tiledImage.getFlip();
 }
 
 /**
