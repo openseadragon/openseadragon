@@ -20,8 +20,6 @@
                 margin: 0.3em;
             }
 
-
-
         </style>
     </head>
     <body>
@@ -57,6 +55,7 @@
     </div>
 
     <div class="options">
+        Viewport
         <div class="button">
             <input type="checkbox" id="fview" onchange="flipViewport(this.checked)">
             <label for="fview">Flip Viewport</label>
@@ -73,21 +72,25 @@
             // debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
-            showNavigator:true
+            showNavigator:true,
+            tileSources: [
+                {
+                    tileSource: "../data/testpattern.dzi",
+                    x: 0,
+                    y: 0,
+                    flipped: document.getElementById("ffirst").checked,
+                    degrees: document.getElementById("rfirst").checked * 45,
+                }, {
+                    tileSource: "../data/testpattern.dzi",
+                    x: 1,
+                    y: 0,
+                    flipped: document.getElementById("fsecond").checked,
+                    degrees: document.getElementById("rsecond").checked * 45,
+                }
+            ]
         });
 
-        var first = viewer.addTiledImage({
-            tileSource: "../data/testpattern.dzi",
-            x: 0,
-            y: 0,
-        });
-
-        var second = viewer.addTiledImage({
-            tileSource: "../data/testpattern.dzi",
-            x: 1,
-            y: 0,
-            flipped: true,
-        });
+        viewer.viewport.setFlip(document.getElementById("fview").checked);
 
         function debug(v) {
             viewer.setDebugMode(v);
