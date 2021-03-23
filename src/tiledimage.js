@@ -1500,7 +1500,7 @@ function getTile(
         tilesMatrix[ level ][ x ] = {};
     }
 
-    if ( !tilesMatrix[ level ][ x ][ y ] || ((!!tilesMatrix[ level ][ x ][ y ].flipped) !== (!!tiledImage.flipped)) ) {
+    if ( !tilesMatrix[ level ][ x ][ y ] || !tilesMatrix[ level ][ x ][ y ].flipped !== !tiledImage.flipped ) {
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         bounds  = tiledImage.getTileBounds( level, x, y );
