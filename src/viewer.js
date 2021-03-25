@@ -427,7 +427,7 @@ $.Viewer = function( options ) {
     }
 
     // Add updatePixelDensityRatio to resize event
-    $.addEvent( window, 'resize', this.updatePixelDensityRatio.bind(this) );
+    $.addEvent( window, 'resize', this._updatePixelDensityRatio.bind(this) );
 
     //Instantiate a navigator if configured
     if ( this.showNavigator){
@@ -1614,8 +1614,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Update pixel density ration, clears all tiles and triggers updates for
      * all items.
+     * @private
      */
-    updatePixelDensityRatio: function() {
+    _updatePixelDensityRatio: function() {
         var previusPixelDensityRatio = $.pixelDensityRatio;
         var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
         if (previusPixelDensityRatio !== currentPixelDensityRatio) {
