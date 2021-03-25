@@ -1612,8 +1612,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Update pixel density ration, clears all tiles and triggers updates for
-     * all items.
+     * Update pixel density ratio, clears all tiles and triggers updates for
+     * all items if the ratio has changed.
      * @private
      */
     _updatePixelDensityRatio: function() {
