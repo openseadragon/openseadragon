@@ -1018,7 +1018,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         );
         var currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
             this.source.getPixelRatio(0), true).x *
-            this._scaleSpring.current.value * $.pixelDensityRatio;
+            this._scaleSpring.current.value;
         var highestLevel = Math.min(
             Math.abs(this.source.maxLevel),
             Math.abs(Math.floor(
@@ -1082,7 +1082,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             var currentRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
                 true
-            ).x * this._scaleSpring.current.value * $.pixelDensityRatio;
+            ).x * this._scaleSpring.current.value;
 
             if (level === lowestLevel ||
                 (!haveDrawn && currentRenderPixelRatio >= this.minPixelRatio)) {

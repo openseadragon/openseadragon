@@ -313,8 +313,8 @@ $.TileSource.prototype = {
      */
     getPixelRatio: function( level ) {
         var imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            rx = 1.0 / imageSizeScaled.x,
-            ry = 1.0 / imageSizeScaled.y;
+            rx = 1.0 / imageSizeScaled.x * $.pixelDensityRatio,
+            ry = 1.0 / imageSizeScaled.y * $.pixelDensityRatio;
 
         return new $.Point(rx, ry);
     },
