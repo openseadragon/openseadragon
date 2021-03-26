@@ -866,6 +866,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     setFlip: function(flip) {
         this.flipped = !!flip;
         this._needsDraw = true;
+        this._raiseBoundsChange();
     },
 
     /**
