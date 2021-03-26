@@ -220,6 +220,7 @@ $.Viewer = function( options ) {
     this._updateRequestId = null;
     this._loadQueue = [];
     this.currentOverlays = [];
+    this._updatePixelDensityRatioBind = null;
 
     this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
@@ -425,6 +426,8 @@ $.Viewer = function( options ) {
             this.buttonGroup.element.removeChild(this.rotateRight.element);
         }
     }
+
+    this._addUpdatePixelDensityRatioEvent();
 
     //Instantiate a navigator if configured
     if ( this.showNavigator){
@@ -747,6 +750,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             //this viewer has already been destroyed: returning immediately
             return;
         }
+
+        this._removeUpdatePixelDensityRatioEvent();
 
         this.close();
 
@@ -2267,6 +2272,38 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         } else {
             $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
+        }
+    },
+
+    /**
+     * Adds _updatePixelDensityRatio to the window resize event.
+     * @private
+     */
+    _addUpdatePixelDensityRatioEvent: function() {
+        this._updatePixelDensityRatioBind = this._updatePixelDensityRatio.bind(this);
+        $.addEvent( window, 'resize', this._updatePixelDensityRatioBind );
+    },
+
+    /**
+     * Removes _updatePixelDensityRatio from the window resize event.
+     * @private
+     */
+    _removeUpdatePixelDensityRatioEvent: function() {
+        $.removeEvent( window, 'resize', this._updatePixelDensityRatioBind );
+    },
+
+    /**
+     * Update pixel density ratio, clears all tiles and triggers updates for
+     * all items if the ratio has changed.
+     * @private
+     */
+     _updatePixelDensityRatio: function() {
+        var previusPixelDensityRatio = $.pixelDensityRatio;
+        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        if (previusPixelDensityRatio !== currentPixelDensityRatio) {
+            $.pixelDensityRatio = currentPixelDensityRatio;
+            this.world.resetItems();
+            this.forceRedraw();
         }
     }
 });
