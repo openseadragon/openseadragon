@@ -220,6 +220,7 @@ $.Viewer = function( options ) {
     this._updateRequestId = null;
     this._loadQueue = [];
     this.currentOverlays = [];
+    this._updatePixelDensityRatioBind = null;
 
     this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
@@ -426,8 +427,7 @@ $.Viewer = function( options ) {
         }
     }
 
-    // Add updatePixelDensityRatio to resize event
-    $.addEvent( window, 'resize', this._updatePixelDensityRatio.bind(this) );
+    this._addUpdatePixelDensityRatioEvent();
 
     //Instantiate a navigator if configured
     if ( this.showNavigator){
@@ -750,6 +750,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             //this viewer has already been destroyed: returning immediately
             return;
         }
+
+        this._removeUpdatePixelDensityRatioEvent();
 
         this.close();
 
@@ -2284,6 +2286,23 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } else {
             $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
         }
+    },
+
+    /**
+     * Adds _updatePixelDensityRatio to the window resize event.
+     * @private
+     */
+    _addUpdatePixelDensityRatioEvent: function() {
+        this._updatePixelDensityRatioBind = this._updatePixelDensityRatio.bind(this);
+        $.addEvent( window, 'resize', this._updatePixelDensityRatioBind );
+    },
+
+    /**
+     * Removes _updatePixelDensityRatio from the window resize event.
+     * @private
+     */
+    _removeUpdatePixelDensityRatioEvent: function() {
+        $.removeEvent( window, 'resize', this._updatePixelDensityRatioBind );
     }
 });
 
