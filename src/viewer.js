@@ -1614,21 +1614,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Update pixel density ratio, clears all tiles and triggers updates for
-     * all items if the ratio has changed.
-     * @private
-     */
-    _updatePixelDensityRatio: function() {
-        var previusPixelDensityRatio = $.pixelDensityRatio;
-        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
-        if (previusPixelDensityRatio !== currentPixelDensityRatio) {
-            $.pixelDensityRatio = currentPixelDensityRatio;
-            this.world.resetItems();
-            this.forceRedraw();
-        }
-    },
-
-    /**
      * Force the viewer to redraw its contents.
      * @returns {OpenSeadragon.Viewer} Chainable.
      */
@@ -2303,6 +2288,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     _removeUpdatePixelDensityRatioEvent: function() {
         $.removeEvent( window, 'resize', this._updatePixelDensityRatioBind );
+    },
+
+    /**
+     * Update pixel density ratio, clears all tiles and triggers updates for
+     * all items if the ratio has changed.
+     * @private
+     */
+     _updatePixelDensityRatio: function() {
+        var previusPixelDensityRatio = $.pixelDensityRatio;
+        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        if (previusPixelDensityRatio !== currentPixelDensityRatio) {
+            $.pixelDensityRatio = currentPixelDensityRatio;
+            this.world.resetItems();
+            this.forceRedraw();
+        }
     }
 });
 
