@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OpenSeadragon Flipping Demo</title>
+        <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+        <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+        <style type="text/css">
+
+            .openseadragon1 {
+                width: 800px;
+                height: 600px;
+                float: left;
+            }
+
+            .options {
+                margin: 0.5em;
+            }
+
+            .button {
+                margin: 0.3em;
+            }
+
+        </style>
+    </head>
+    <body>
+    <div>
+        Simple demo page to show image flipping.
+    </div>
+    <div id="contentDiv" class="openseadragon1">
+
+
+    </div>
+    <div class="options">
+        First
+        <div class="button">
+            <input type="checkbox" id="ffirst" onchange="flip(0, this.checked)">
+            <label for="ffirst">Flip</label>
+        </div>
+        <div class="button">
+            <input type="checkbox" id="rfirst" onchange="rotate(0, this.checked * 45)">
+            <label for="rfirst">Rotate</label>
+        </div>
+    </div>
+
+    <div class="options">
+        Second
+        <div class="button">
+            <input type="checkbox" id="fsecond" onchange="flip(1, this.checked)" checked>
+            <label for="fsecond">Flip</label>
+        </div>
+        <div class="button">
+            <input type="checkbox" id="rsecond" onchange="rotate(1, this.checked * 45)">
+            <label for="rsecond">Rotate</label>
+        </div>
+    </div>
+
+    <div class="options">
+        Viewport
+        <div class="button">
+            <input type="checkbox" id="fview" onchange="flipViewport(this.checked)">
+            <label for="fview">Flip Viewport</label>
+        </div>
+
+        <div class="button">
+            <input type="checkbox" id="debug" onchange="debug(this.checked)">
+            <label for="debug">Debug Mode</label>
+        </div>
+    </div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            showNavigator:true,
+            tileSources: [
+                {
+                    tileSource: "../data/testpattern.dzi",
+                    x: 0,
+                    y: 0,
+                    flipped: document.getElementById("ffirst").checked,
+                    degrees: document.getElementById("rfirst").checked * 45,
+                }, {
+                    tileSource: "../data/testpattern.dzi",
+                    x: 1,
+                    y: 0,
+                    flipped: document.getElementById("fsecond").checked,
+                    degrees: document.getElementById("rsecond").checked * 45,
+                }
+            ]
+        });
+
+        viewer.viewport.setFlip(document.getElementById("fview").checked);
+
+        function debug(v) {
+            viewer.setDebugMode(v);
+        }
+
+        function flip(n, v) {
+            viewer.world.getItemAt(n).setFlip(v);
+        }
+
+        function rotate(n, v) {
+            viewer.world.getItemAt(n).setRotation(v);
+        }
+
+        function flipViewport(v) {
+            viewer.viewport.setFlip(v);
+        }
+
+    </script>
+    </body>
+</html>

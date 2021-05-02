@@ -44,6 +44,10 @@ OPENSEADRAGON CHANGELOG
 * Fixed test "Events: Viewer: preventDefaultAction in dblClickHandler". Fixes #1372 (#1960 @msalsbery)
 * ReferenceStrip: Fixed issue where its element was being removed from its parent element twice on destroy, causing an exception (#1958 @msalsbery)
 * ReferenceStrip: Made its element focusable for keyboard navigation (#1958 @msalsbery)
+* You can now flip individual images (not just the whole viewport) (#1903 @ali1234)
+* Accessibility: we now take the browser's zoom into account when choosing what detail level to draw (#1937 @ronnymikalsen)
+* Fixed a bug causing overlays to disappear in Sequence Mode (#1865 @gunmiosb)
+* Fixed a bug where the ajaxHeaders provided per-image were not being used for image requests (#1968 @maxshuty)
 
 2.4.2:
 

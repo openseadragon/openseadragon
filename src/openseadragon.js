@@ -986,7 +986,7 @@ function OpenSeadragon( options ){
      * @member {Number} pixelDensityRatio
      * @memberof OpenSeadragon
      */
-    $.pixelDensityRatio = (function () {
+    $.getCurrentPixelDensityRatio = function() {
         if ( $.supportsCanvas ) {
             var context = document.createElement('canvas').getContext('2d');
             var devicePixelRatio = window.devicePixelRatio || 1;
@@ -999,7 +999,13 @@ function OpenSeadragon( options ){
         } else {
             return 1;
         }
-    }());
+    };
+
+    /**
+     * @member {Number} pixelDensityRatio
+     * @memberof OpenSeadragon
+     */
+    $.pixelDensityRatio = $.getCurrentPixelDensityRatio();
 
 }( OpenSeadragon ));
 
