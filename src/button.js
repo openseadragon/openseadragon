@@ -140,10 +140,10 @@ $.Button = function( options ) {
 
         // Allow pointer events to pass through the img elements so implicit
         //   pointer capture works on touch devices
-        $.setElementPointerEventsNone( this.imgRest );
-        $.setElementPointerEventsNone( this.imgGroup );
-        $.setElementPointerEventsNone( this.imgHover );
-        $.setElementPointerEventsNone( this.imgDown );
+        $.setElementPointerEvents( this.imgRest, 'none' );
+        $.setElementPointerEvents( this.imgGroup, 'none' );
+        $.setElementPointerEvents( this.imgHover, 'none' );
+        $.setElementPointerEvents( this.imgDown, 'none' );
 
         this.element.style.position = "relative";
         $.setElementTouchActionNone( this.element );

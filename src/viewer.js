@@ -408,7 +408,7 @@ $.Viewer = function( options ) {
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
-    $.setElementPointerEventsNone( this.overlaysContainer );
+    $.setElementPointerEvents( this.overlaysContainer, 'none' );
     $.setElementTouchActionNone( this.overlaysContainer );
     this.canvas.appendChild( this.overlaysContainer );
 
