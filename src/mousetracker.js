@@ -1436,7 +1436,6 @@
 
                 // Release and remove all gPoints from the pointer list
                 for ( j = 0; j < gPointsToRemove.length; j++ ) {
-                    $.console.log('stopTrackingPointer called from clerTrackedPointers ');
                     stopTrackingPointer( tracker, pointsList, gPointsToRemove[ j ] );
                 }
             }
