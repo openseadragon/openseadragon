@@ -49,6 +49,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed a bug causing overlays to disappear in Sequence Mode (#1865 @gunmiosb)
 * Fixed a bug where the ajaxHeaders provided per-image were not being used for image requests (#1968 @maxshuty)
 * MouseTracker: Added workaround for WebKit Pointer Event Implicit Capture Bug (#1972 @msalsbery)
+* Removed test for move-leave (fly-over, no enter event)...not a valid, handleable event state, no longer supported (#1972 @msalsbery)
 
 2.4.2:
 
