@@ -1436,6 +1436,7 @@
 
                 // Release and remove all gPoints from the pointer list
                 for ( j = 0; j < gPointsToRemove.length; j++ ) {
+                    $.console.log('stopTrackingPointer called from clerTrackedPointers ');
                     stopTrackingPointer( tracker, pointsList, gPointsToRemove[ j ] );
                 }
             }
@@ -2144,7 +2145,7 @@
 
         time = $.now();
 
-        $.console.log('touchstart ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('touchstart ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         if ( pointsList.getLength() > event.touches.length - touchCount ) {
             $.console.warn('Tracked touch contact count doesn\'t match event.touches.length');
@@ -2197,7 +2198,7 @@
 
         time = $.now();
 
-        $.console.log('touchend ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('touchend ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         var eventInfo = {
             originalEvent: event,
@@ -2336,7 +2337,7 @@
      * @inner
      */
     function onGotPointerCapture( tracker, event ) {
-        $.console.log('gotpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('gotpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         var eventInfo = {
             originalEvent: event,
@@ -2365,7 +2366,7 @@
      * @inner
      */
     function onLostPointerCapture( tracker, event ) {
-        $.console.log('lostpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('lostpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         var eventInfo = {
             originalEvent: event,
@@ -2545,8 +2546,6 @@
             currentTime: $.now()
         };
 
-        var ourElement = event.target === tracker.element;
-
         // Most browsers implicitly capture touch pointer events
         // Note no IE versions have element.hasPointerCapture() so no implicit
         //    pointer capture possible
@@ -2558,17 +2557,7 @@
                                 gPoint.type === 'touch' &&
                                 $.Browser.vendor !== $.BROWSERS.IE;
 
-        //$.console.log('pointerdown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (ourElement ? 'tracker.element' : ''));
-
-        if (implicitlyCaptured) {
-            $.console.log('pointerdown implicitlyCaptured ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (ourElement ? 'tracker.element' : ''));
-        } else {
-            $.console.log('pointerdown not implicitlyCaptured ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (ourElement ? 'tracker.element' : ''));
-        }
-
-        // if ( implicitlyCaptured && ourElement ) {
-        //     updatePointerCaptured( tracker, gPoint, true );
-        // }
+        //$.console.log('pointerdown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         var eventInfo = {
             originalEvent: event,
@@ -2588,18 +2577,11 @@
         }
         if ( eventInfo.shouldCapture ) {
             if ( implicitlyCaptured ) {
-                $.console.log('pointerdown calling updatePointerCaptured() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
                 updatePointerCaptured( tracker, gPoint, true );
             } else {
-                $.console.log('pointerdown calling capturePointer() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
                 capturePointer( tracker, gPoint );
             }
-        }// else if ( implicitlyCaptured && ourElement ) {
-        //    //$.console.log('pointerdown calling releasePointer() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
-        //    //releasePointer( tracker, gPoint ); //TODO should we do this? Investigate when implementing bubble handling
-        //    $.console.log('pointerdown calling updatePointerCaptured(false) ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
-        //    updatePointerCaptured( tracker, gPoint, false );
-        // }
+        }
     }
 
 
@@ -2644,8 +2626,7 @@
     function handlePointerUp( tracker, event ) {
         var gPoint;
 
-        //$.console.log('onPointerUp ' + (tracker.userData ? tracker.userData.toString() : ''));
-        $.console.log('pointerup ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointerup ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         gPoint = {
             id: getPointerId( event ),
@@ -2677,10 +2658,8 @@
         //   explicitly
         if ( eventInfo.shouldReleaseCapture ) {
             if ( event.target === tracker.element ) {
-                $.console.log('pointerup calling releasePointer() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
                 releasePointer( tracker, gPoint );
             } else {
-                $.console.log('pointerup calling updatePointerCaptured() ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
                 updatePointerCaptured( tracker, gPoint, false );
             }
         }
@@ -2760,8 +2739,7 @@
      * @inner
      */
     function onPointerCancel( tracker, event ) {
-        //$.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : ''));
-        $.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
+        //$.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
         var gPoint = {
             id: event.pointerId,
@@ -2832,7 +2810,15 @@
 
         if ( trackedGPoint ) {
             if ( trackedGPoint.captured ) {
+                $.console.warn('stopTrackingPointer() called on captured pointer');
                 releasePointer( tracker, trackedGPoint );
+            }
+
+            // If child element relinquishes capture to a parent we may get here
+            //   from a pointerleave event while a pointerup event will never be received.
+            //   In that case, we'll clean up the contact count
+            if ( (pointsList.type === 'mouse' || pointsList.type === 'pen') &&
+                                                        pointsList.contacts > 0 ) {
                 pointsList.removeContact();
             }
 
