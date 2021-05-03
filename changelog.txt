@@ -48,7 +48,7 @@ OPENSEADRAGON CHANGELOG
 * Accessibility: we now take the browser's zoom into account when choosing what detail level to draw (#1937 @ronnymikalsen)
 * Fixed a bug causing overlays to disappear in Sequence Mode (#1865 @gunmiosb)
 * Fixed a bug where the ajaxHeaders provided per-image were not being used for image requests (#1968 @maxshuty)
-* MouseTracker: Added workaround for WebKit Pointer Event Implicit Capture Bug
+* MouseTracker: Added workaround for WebKit Pointer Event Implicit Capture Bug (#1972 @msalsbery)
 
 2.4.2:
 
