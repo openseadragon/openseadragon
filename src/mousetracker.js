@@ -3281,11 +3281,13 @@
 
             gPoint = updateGPoint;
         } else {
-            // Initialize for tracking and add to the tracking list (no pointerover or pointermove event occurred before this)
+            // Initialize for tracking and add to the tracking list (no pointerenter event occurred before this)
+            $.console.warn('pointerdown event on untracked pointer');
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = true;
             gPoint.insideElement = true;
             startTrackingPointer( pointsList, gPoint );
+            return;
         }
 
         pointsList.addContact();
@@ -3410,6 +3412,9 @@
         updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
+            pointsList.removeContact();
+            //$.console.log('contacts-- ', pointsList.contacts);
+
             // Update the pointer, stop tracking it if not still in this element
             if ( updateGPoint.captured ) {
                 //updateGPoint.captured = false; // Handled by updatePointerCaptured()
@@ -3435,9 +3440,6 @@
 
             updateGPoint = gPoint;
         }
-
-        pointsList.removeContact();
-        //$.console.log('contacts-- ', pointsList.contacts);
 
         if ( !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
             if ( wasCaptured ) {
