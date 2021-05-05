@@ -167,7 +167,7 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
-    $.setElementPointerEvents( this.displayRegion, 'none' );
+    $.setElementPointerEventsNone( this.displayRegion );
     $.setElementTouchActionNone( this.displayRegion );
 
     this.displayRegionContainer = $.makeNeutralElement("div");
@@ -175,7 +175,7 @@ $.Navigator = function( options ){
     this.displayRegionContainer.className = "displayregioncontainer";
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
-    $.setElementPointerEvents( this.displayRegionContainer, 'none' );
+    $.setElementPointerEventsNone( this.displayRegionContainer );
     $.setElementTouchActionNone( this.displayRegionContainer );
 
     viewer.addControl(
@@ -246,8 +246,8 @@ $.Navigator = function( options ){
     //   pointer capture works on touch devices
     //TODO an alternative is to attach the new MouseTracker to this.canvas...not
     //   sure why it isn't already (see MouseTracker constructor call above)
-    $.setElementPointerEvents( this.canvas, 'none' );
-    $.setElementPointerEvents( this.container, 'none' );
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementPointerEventsNone( this.container );
 
     this.addHandler("reset-size", function() {
         if (_this.viewport) {

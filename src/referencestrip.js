@@ -196,7 +196,7 @@ $.ReferenceStrip = function ( options ) {
         element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
         $.setElementTouchActionNone( element );
-        $.setElementPointerEvents( element, 'none' );
+        $.setElementPointerEventsNone( element );
 
         this.element.appendChild( element );
 
@@ -458,8 +458,8 @@ function loadPanels( strip, viewerSize, scroll ) {
             } );
             // Allow pointer events to pass through miniViewer's canvas/container
             //   elements so implicit pointer capture works on touch devices
-            $.setElementPointerEvents( miniViewer.canvas, 'none' );
-            $.setElementPointerEvents( miniViewer.container, 'none' );
+            $.setElementPointerEventsNone( miniViewer.canvas );
+            $.setElementPointerEventsNone( miniViewer.container );
             // We'll use event delegation from the reference strip element instead of
             //   handling events on every miniViewer
             miniViewer.innerTracker.setTracking( false );

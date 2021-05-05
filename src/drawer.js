@@ -128,7 +128,7 @@ $.Drawer = function( options ) {
     $.setElementOpacity( this.canvas, this.opacity, true );
     // Allow pointer events to pass through the canvas element so implicit
     //   pointer capture works on touch devices
-    $.setElementPointerEvents( this.canvas, 'none' );
+    $.setElementPointerEventsNone( this.canvas );
     $.setElementTouchActionNone( this.canvas );
 
     // explicit left-align

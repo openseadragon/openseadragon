@@ -50,6 +50,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed a bug where the ajaxHeaders provided per-image were not being used for image requests (#1968 @maxshuty)
 * MouseTracker: Added workaround for WebKit Pointer Event Implicit Capture Bug (#1972 @msalsbery)
 * Removed test for move-leave (fly-over, no enter event)...not a valid, handleable event state, no longer supported (#1972 @msalsbery)
+* Added OpenSeadragon.setElementPointerEvents() for setting pointer-events to other values besides 'none' on DOM elements (#1972 @msalsbery)
 
 2.4.2:
 
