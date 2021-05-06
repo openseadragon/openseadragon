@@ -403,33 +403,6 @@
                 //quickClick:            false
             });
 
-            // move-leave (fly-over, no enter event)
-            resetForAssessment();
-            simulateMove(1, 1, 10);
-            simulateMove(-1, -1, 10);
-            simulateLeave(-1, -1);
-            assessGestureExpectations({
-                description:           'move-leave (fly-over, no enter event):  ',
-                enterCount:            0,
-                leaveCount:            1,
-                pressCount:            0,
-                releaseCount:          0,
-                rightPressCount:       0,
-                rightReleaseCount:     0,
-                middlePressCount:      0,
-                middleReleaseCount:    0,
-                moveCount:             20,
-                clickCount:            0,
-                dblClickCount:         0,
-                dragCount:             0,
-                dragEndCount:          0,
-                //insideElementPressed:  false,
-                //insideElementReleased: false,
-                contacts:              0,
-                trackedPointers:       0
-                //quickClick:            false
-            });
-
             // enter-press-release-press-release-leave (primary/left double click)
             resetForAssessment();
             simulateEnter(0, 0);
