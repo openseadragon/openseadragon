@@ -1,9 +1,9 @@
 # These are supported funding model platforms
 
-github: iangilman
-patreon: iangilman
+github: # iangilman
+patreon: # iangilman
 open_collective: openseadragon
-ko_fi: iangilman
+ko_fi: # iangilman
 tidelift: # Replace with a single Tidelift platform-name/package-name e.g., npm/babel
 community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
 liberapay: # Replace with a single Liberapay username
