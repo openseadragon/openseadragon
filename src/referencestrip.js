@@ -155,6 +155,10 @@ $.ReferenceStrip = function ( options ) {
     //Controls the position and orientation of the reference strip and sets the
     //appropriate width and height
     if ( options.width && options.height ) {
+        //TODO fix this - isn't correct
+        this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 12;
+        this.panelHeight = ( viewerSize.y * this.sizeRatio );
+
         this.element.style.width  = options.width + 'px';
         this.element.style.height = options.height + 'px';
         viewer.addControl(
@@ -163,32 +167,30 @@ $.ReferenceStrip = function ( options ) {
         );
     } else {
         if ( "horizontal" === options.scroll ) {
-            this.element.style.width = (
-                viewerSize.x *
-                options.sizeRatio *
-                viewer.tileSources.length
-            ) + ( 12 * viewer.tileSources.length ) + 'px';
+            this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 12;
+            this.panelHeight = ( viewerSize.y * this.sizeRatio );
 
-            this.element.style.height = (
-                viewerSize.y *
-                options.sizeRatio
+            this.element.style.width = (
+                this.panelWidth *
+                viewer.tileSources.length
             ) + 'px';
+
+            this.element.style.height = this.panelHeight + 'px';
 
             viewer.addControl(
                 this.element,
                 { anchor: $.ControlAnchor.BOTTOM_LEFT }
             );
         } else {
-            this.element.style.height = (
-                viewerSize.y *
-                options.sizeRatio *
-                viewer.tileSources.length
-            ) + ( 12 * viewer.tileSources.length ) + 'px';
+            this.panelWidth = ( viewerSize.x * this.sizeRatio );
+            this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 12;
 
-            this.element.style.width = (
-                viewerSize.x *
-                options.sizeRatio
+            this.element.style.height = (
+                this.panelHeight *
+                viewer.tileSources.length
             ) + 'px';
+
+            this.element.style.width = this.panelWidth + 'px';
 
             viewer.addControl(
                 this.element,
@@ -198,8 +200,6 @@ $.ReferenceStrip = function ( options ) {
         }
     }
 
-    this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 8;
-    this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 8;
     this.panels = [];
     this.miniViewers = {};
 
