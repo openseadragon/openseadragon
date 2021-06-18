@@ -1000,6 +1000,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle.height = "100%";
             docStyle.height = "100%";
 
+            this.bodyDisplay = bodyStyle.display;
+            bodyStyle.display = "block";
+
             //when entering full screen on the ipad it wasn't sufficient to leave
             //the body intact as only only the top half of the screen would
             //respond to touch events on the canvas, while the bottom half treated
@@ -1063,6 +1066,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             bodyStyle.height = this.bodyHeight;
             docStyle.height = this.docHeight;
+
+            bodyStyle.display = this.bodyDisplay;
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
