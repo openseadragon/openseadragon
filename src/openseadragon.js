@@ -196,7 +196,7 @@
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
   *     'destination-over', 'destination-atop', 'destination-in', 'destination-out',
-  *     'lighter', 'destination', 'copy', 'xor', etc.
+  *     'lighter', 'difference', 'copy', 'xor', etc.
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
