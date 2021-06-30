@@ -749,7 +749,9 @@
 
 /* eslint-disable no-redeclare */
 function OpenSeadragon( options ){
-    return new OpenSeadragon.Viewer( options );
+    var viewer = new OpenSeadragon.Viewer( options );
+    OpenSeadragon._viewers.set(viewer.element, viewer);
+    return viewer;
 }
 
 (function( $ ){
@@ -1403,6 +1405,26 @@ function OpenSeadragon( options ){
             CHROMEEDGE: 7
         },
 
+        /**
+         * Keep track of which {@link Viewer}s have been created.
+         * - Key: {@link Element} to which a Viewer is attached.
+         * - Value: {@link Viewer} of the element defined by the key.
+         * @static
+         * @type {Object}
+         */
+        // eslint-disable-next-line no-undef
+        _viewers: new Map(),
+
+       /**
+         * Returns the {@link Viewer} attached to a given DOM element. If there is
+         * no viewer attached to the provided element, undefined is returned.
+         * @function
+         * @param {String|Element} element Accepts an id or element.
+         * @returns {Viewer} The viewer attached to the given element, or undefined.
+         */
+        getViewer: function(element) {
+            return $._viewers.get(this.getElement(element));
+        },
 
         /**
          * Returns a DOM Element for the given id or element.
