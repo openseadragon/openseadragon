@@ -481,6 +481,8 @@ $.Viewer = function( options ) {
         this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
     }
 
+    // Register the viewer
+    $._viewers.set(this.element, this);
 };
 
 $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, /** @lends OpenSeadragon.Viewer.prototype */{
@@ -823,6 +825,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         // clear all our references to dom objects
         this.canvas = null;
         this.container = null;
+
+        // Unregister the viewer
+        $._viewers.delete(this.element);
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;

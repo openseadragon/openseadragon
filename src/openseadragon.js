@@ -749,9 +749,7 @@
 
 /* eslint-disable no-redeclare */
 function OpenSeadragon( options ){
-    var viewer = new OpenSeadragon.Viewer( options );
-    OpenSeadragon._viewers.set(viewer.element, viewer);
-    return viewer;
+    return new OpenSeadragon.Viewer( options );
 }
 
 (function( $ ){
@@ -1409,10 +1407,10 @@ function OpenSeadragon( options ){
          * Keep track of which {@link Viewer}s have been created.
          * - Key: {@link Element} to which a Viewer is attached.
          * - Value: {@link Viewer} of the element defined by the key.
+         * @private
          * @static
          * @type {Object}
          */
-        // eslint-disable-next-line no-undef
         _viewers: new Map(),
 
        /**
