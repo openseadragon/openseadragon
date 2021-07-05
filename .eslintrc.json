@@ -17,9 +17,10 @@
         }
     },
     "globals": {
-        "OpenSeadragon": true,
-        "define": false,
-        "module": false
+        "OpenSeadragon": "writable",
+        "define": "readonly",
+        "module": "readonly",
+        "Map": "readonly"
     },
     "rules": {
         "no-unused-vars": [
