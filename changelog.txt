@@ -51,6 +51,7 @@ OPENSEADRAGON CHANGELOG
 * Removed test for move-leave (fly-over, no enter event)...not a valid, handleable event state, no longer supported (#1972 @msalsbery)
 * Added OpenSeadragon.setElementPointerEvents() for setting pointer-events to other values besides 'none' on DOM elements (#1972 @msalsbery)
 * Now ensuring the page body is display:block when in fullscreen (#1995 @thewilkybarkid)
+* Added a static method in OpenSeadragon to get an existing viewer (#2000 @HerCerM)
 
 2.4.2:
 
