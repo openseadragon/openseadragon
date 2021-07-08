@@ -1502,6 +1502,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 if (_this.collectionMode) {
                     _this.world.setAutoRefigureSizes(false);
                 }
+
+                if (_this.navigator) {
+                    optionsClone = $.extend({}, queueItem.options, {
+                        replace: false, // navigator already removed the layer, nothing to replace
+                        originalTiledImage: tiledImage,
+                        tileSource: queueItem.tileSource
+                    });
+
+                    _this.navigator.addTiledImage(optionsClone);
+                }
+
                 _this.world.addItem( tiledImage, {
                     index: queueItem.options.index
                 });
@@ -1513,16 +1524,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
                     _this.viewport.goHome(true);
-                }
-
-                if (_this.navigator) {
-                    optionsClone = $.extend({}, queueItem.options, {
-                        replace: false, // navigator already removed the layer, nothing to replace
-                        originalTiledImage: tiledImage,
-                        tileSource: queueItem.tileSource
-                    });
-
-                    _this.navigator.addTiledImage(optionsClone);
                 }
 
                 if (queueItem.options.success) {
