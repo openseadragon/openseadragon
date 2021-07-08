@@ -52,6 +52,7 @@ OPENSEADRAGON CHANGELOG
 * Added OpenSeadragon.setElementPointerEvents() for setting pointer-events to other values besides 'none' on DOM elements (#1972 @msalsbery)
 * Now ensuring the page body is display:block when in fullscreen (#1995 @thewilkybarkid)
 * Added a static method in OpenSeadragon to get an existing viewer (#2000 @HerCerM)
+* Now ensuring that the new item is already in the navigator when the "add-item" event fires (#2005 @RammasEchor)
 
 2.4.2:
 
