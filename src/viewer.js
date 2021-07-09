@@ -1646,8 +1646,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         var onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
-            onNextHandler           = $.delegate( this, onNext ),
-            onPreviousHandler       = $.delegate( this, onPrevious ),
+            onNextHandler           = $.delegate( this, this['goToNextPage'] ),
+            onPreviousHandler       = $.delegate( this, this['goToPreviousPage'] ),
             navImages               = this.navImages,
             useGroup                = true;
 
@@ -2316,7 +2316,40 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.world.resetItems();
             this.forceRedraw();
         }
-    }
+    },
+
+    /**
+     * Sets the image source to the source with index equal to
+     * currentIndex - 1. Changes current image in sequence mode.
+     * If specified, wraps around (see navPrevNextWrap in
+     * {@link OpenSeadragon.Options})
+     *
+     * @method
+     */
+
+    goToPreviousPage: function () {
+        var previous = this._sequenceIndex - 1;
+        if(this.navPrevNextWrap && previous < 0){
+            previous += this.tileSources.length;
+        }
+        this.goToPage( previous );
+    },
+
+    /**
+     * Sets the image source to the source with index equal to
+     * currentIndex + 1. Changes current image in sequence mode.
+     * If specified, wraps around (see navPrevNextWrap in
+     * {@link OpenSeadragon.Options})
+     *
+     * @method
+     */
+    goToNextPage: function () {
+        var next = this._sequenceIndex + 1;
+        if(this.navPrevNextWrap && next >= this.tileSources.length){
+            next = 0;
+        }
+        this.goToPage( next );
+    },
 });
 
 
@@ -2783,10 +2816,10 @@ function onCanvasKeyPress( event ) {
               event.preventDefault = true;
               break;
             case 106: //j - previous image source
-              onPrevious.bind(this)();
+              this.goToPreviousPage();
               break;
             case 107: //k - next image source
-              onNext.bind(this)();
+              this.goToNextPage();
               break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
@@ -3676,23 +3709,5 @@ function onRotateRight() {
 function onFlip() {
    this.viewport.toggleFlip();
 }
-
-function onPrevious(){
-    var previous = this._sequenceIndex - 1;
-    if(this.navPrevNextWrap && previous < 0){
-        previous += this.tileSources.length;
-    }
-    this.goToPage( previous );
-}
-
-
-function onNext(){
-    var next = this._sequenceIndex + 1;
-    if(this.navPrevNextWrap && next >= this.tileSources.length){
-        next = 0;
-    }
-    this.goToPage( next );
-}
-
 
 }( OpenSeadragon ));
