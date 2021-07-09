@@ -2782,6 +2782,12 @@ function onCanvasKeyPress( event ) {
               this.viewport.toggleFlip();
               event.preventDefault = true;
               break;
+            case 106: //j - previous image source
+              onPrevious.bind(this)();
+              break;
+            case 107: //k - next image source
+              onNext.bind(this)();
+              break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
                 event.preventDefault = false;
