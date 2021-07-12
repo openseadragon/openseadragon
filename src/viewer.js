@@ -1646,8 +1646,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         var onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
-            onNextHandler           = $.delegate( this, this['goToNextPage'] ),
-            onPreviousHandler       = $.delegate( this, this['goToPreviousPage'] ),
+            onNextHandler           = $.delegate( this, this.goToNextPage ),
+            onPreviousHandler       = $.delegate( this, this.goToPreviousPage ),
             navImages               = this.navImages,
             useGroup                = true;
 
