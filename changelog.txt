@@ -53,6 +53,7 @@ OPENSEADRAGON CHANGELOG
 * Now ensuring the page body is display:block when in fullscreen (#1995 @thewilkybarkid)
 * Added a static method in OpenSeadragon to get an existing viewer (#2000 @HerCerM)
 * Now ensuring that the new item is already in the navigator when the "add-item" event fires (#2005 @RammasEchor)
+* Added keys to change image in sequence mode (j: previous, k: next) (#2007 @RammasEchor)
 
 2.4.2:
 
