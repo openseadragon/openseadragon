@@ -3272,6 +3272,7 @@
             //updateGPoint.captured = true; // Handled by updatePointerCaptured()
             updateGPoint.insideElementPressed = true;
             updateGPoint.insideElement = true;
+            updateGPoint.originalTarget = eventInfo.originalEvent.target;
             updateGPoint.contactPos = gPoint.currentPos;
             updateGPoint.contactTime = gPoint.currentTime;
             updateGPoint.lastPos = updateGPoint.currentPos;
@@ -3286,6 +3287,7 @@
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = true;
             gPoint.insideElement = true;
+            gPoint.originalTarget = eventInfo.originalEvent.target;
             startTrackingPointer( pointsList, gPoint );
             return;
         }
@@ -3504,6 +3506,7 @@
                                     shift:                eventInfo.originalEvent.shiftKey,
                                     isTouchEvent:         updateGPoint.type === 'touch',
                                     originalEvent:        eventInfo.originalEvent,
+                                    originalTarget:       updateGPoint.originalTarget,
                                     userData:             tracker.userData
                                 }
                             );

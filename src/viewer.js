@@ -2850,6 +2850,7 @@ function onCanvasClick( event ) {
         quick: event.quick,
         shift: event.shift,
         originalEvent: event.originalEvent,
+        originalTarget: event.originalTarget,
         preventDefaultAction: false
     };
 
