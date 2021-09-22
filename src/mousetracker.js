@@ -737,6 +737,8 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Element} event.originalTarget
+         *      The DOM element clicked on.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
