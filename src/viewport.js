@@ -575,7 +575,7 @@ $.Viewport.prototype = {
             this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
         }
 
-        var bounds = this.getBoundsNoRotate();
+        var bounds = this.getBounds();
         var constrainedBounds = this._applyBoundaryConstraints(bounds);
         this._raiseConstraintsEvent(immediately);
 
@@ -583,7 +583,7 @@ $.Viewport.prototype = {
             bounds.y !== constrainedBounds.y ||
             immediately) {
             this.fitBounds(
-                constrainedBounds.rotate(-this.getRotation()),
+                constrainedBounds,
                 immediately);
         }
         return this;
