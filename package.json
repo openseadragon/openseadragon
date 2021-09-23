@@ -14,7 +14,8 @@
     "osm",
     "tms"
   ],
-  "homepage": "http://openseadragon.github.io/",
+  "homepage": "https://openseadragon.github.io/",
+  "funding": "https://opencollective.com/openseadragon",
   "bugs": {
     "url": "https://github.com/openseadragon/openseadragon/issues"
   },

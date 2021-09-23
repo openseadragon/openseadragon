@@ -195,8 +195,9 @@
   *
   * @property {String} [compositeOperation=null]
   *     Valid values are 'source-over', 'source-atop', 'source-in', 'source-out',
-  *     'destination-over', 'destination-atop', 'destination-in',
-  *     'destination-out', 'lighter', 'copy' or 'xor'
+  *     'destination-over', 'destination-atop', 'destination-in', 'destination-out',
+  *     'lighter', 'difference', 'copy', 'xor', etc.
+  *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
   *     Image smoothing for canvas rendering (only if canvas is used). Note: Ignored
@@ -1402,6 +1403,26 @@ function OpenSeadragon( options ){
             CHROMEEDGE: 7
         },
 
+        /**
+         * Keep track of which {@link Viewer}s have been created.
+         * - Key: {@link Element} to which a Viewer is attached.
+         * - Value: {@link Viewer} of the element defined by the key.
+         * @private
+         * @static
+         * @type {Object}
+         */
+        _viewers: new Map(),
+
+       /**
+         * Returns the {@link Viewer} attached to a given DOM element. If there is
+         * no viewer attached to the provided element, undefined is returned.
+         * @function
+         * @param {String|Element} element Accepts an id or element.
+         * @returns {Viewer} The viewer attached to the given element, or undefined.
+         */
+        getViewer: function(element) {
+            return $._viewers.get(this.getElement(element));
+        },
 
         /**
          * Returns a DOM Element for the given id or element.

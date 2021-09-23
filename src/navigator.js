@@ -404,6 +404,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 var myItem = event.item;
                 myItem._originalForNavigator = original;
                 _this._matchBounds(myItem, original, true);
+                _this._matchOpacity(myItem, original);
+                _this._matchCompositeOperation(myItem, original);
 
                 function matchBounds() {
                     _this._matchBounds(myItem, original);

@@ -7,7 +7,7 @@ OPENSEADRAGON CHANGELOG
 * BREAKING CHANGE: Removed deprecated OpenSeadragon.getEvent function (#1949 @msalsbery)
 * DEPRECATION: MouseTracker exitHandler deprecated for name change to leaveHandler for consistency with DOM event names (#1872 @msalsbery)
 * Now when "simple image" tile sources are removed from the viewer, they free the memory used by the pyramid they create (#1789 @TakumaKira)
-* Documentation fix (#1814 @kenanchristian)
+* Improvements to docs (#1814 @kenanchristian, #1872 @msalsbery, #1996 @tdiprima)
 * Better cleanup on destruction, to avoid memory leaks (#1832 @JoFrMueller)
 * Better handle destruction when navigator in custom location (#1884 @woodchuck)
 * Miscellaneous code cleanup (#1840 @msalsbery)
@@ -33,7 +33,6 @@ OPENSEADRAGON CHANGELOG
 * Added OpenSeadragon.setElementPointerEventsNone() for setting pointer-events:'none' on DOM elements (#1872 @msalsbery)
 * MouseTracker: added contextMenuHandler option for handling contextmenu events (#1872 @msalsbery)
 * Viewer: added a canvas-contextmenu event (#1872 @msalsbery)
-* Added additional documentation for the zoomPerSecond viewer option (#1872 @msalsbery)
 * Fixed simulated drag events in navigator tests (#1949 @msalsbery)
 * Added preventDefault option to MouseTracker.contextMenuHandler and Viewer 'canvas-contextmenu' event args (#1951 @msalsbery)
 * MouseTracker: Added preProcessEventHandler for keydown, keyup, keypress, focus, blur Events (#1951 @msalsbery)
@@ -51,6 +50,11 @@ OPENSEADRAGON CHANGELOG
 * MouseTracker: Added workaround for WebKit Pointer Event Implicit Capture Bug (#1972 @msalsbery)
 * Removed test for move-leave (fly-over, no enter event)...not a valid, handleable event state, no longer supported (#1972 @msalsbery)
 * Added OpenSeadragon.setElementPointerEvents() for setting pointer-events to other values besides 'none' on DOM elements (#1972 @msalsbery)
+* Now ensuring the page body is display:block when in fullscreen (#1995 @thewilkybarkid)
+* Added a static method in OpenSeadragon to get an existing viewer (#2000 @HerCerM)
+* Now ensuring that the new item is already in the navigator when the "add-item" event fires (#2005 @RammasEchor)
+* Added keys to change image in sequence mode (j: previous, k: next) (#2007 @RammasEchor)
+* Fixed a bug where the navigator wouldn't pick up opacity/composite changes made while it is loading (#2018 @crydell) 
 
 2.4.2:
 

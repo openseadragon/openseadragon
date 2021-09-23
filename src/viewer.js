@@ -481,6 +481,8 @@ $.Viewer = function( options ) {
         this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
     }
 
+    // Register the viewer
+    $._viewers.set(this.element, this);
 };
 
 $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, /** @lends OpenSeadragon.Viewer.prototype */{
@@ -824,6 +826,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.canvas = null;
         this.container = null;
 
+        // Unregister the viewer
+        $._viewers.delete(this.element);
+
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
     },
@@ -1000,6 +1005,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle.height = "100%";
             docStyle.height = "100%";
 
+            this.bodyDisplay = bodyStyle.display;
+            bodyStyle.display = "block";
+
             //when entering full screen on the ipad it wasn't sufficient to leave
             //the body intact as only only the top half of the screen would
             //respond to touch events on the canvas, while the bottom half treated
@@ -1063,6 +1071,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             bodyStyle.height = this.bodyHeight;
             docStyle.height = this.docHeight;
+
+            bodyStyle.display = this.bodyDisplay;
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
@@ -1492,6 +1502,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 if (_this.collectionMode) {
                     _this.world.setAutoRefigureSizes(false);
                 }
+
+                if (_this.navigator) {
+                    optionsClone = $.extend({}, queueItem.options, {
+                        replace: false, // navigator already removed the layer, nothing to replace
+                        originalTiledImage: tiledImage,
+                        tileSource: queueItem.tileSource
+                    });
+
+                    _this.navigator.addTiledImage(optionsClone);
+                }
+
                 _this.world.addItem( tiledImage, {
                     index: queueItem.options.index
                 });
@@ -1503,16 +1524,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                 if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
                     _this.viewport.goHome(true);
-                }
-
-                if (_this.navigator) {
-                    optionsClone = $.extend({}, queueItem.options, {
-                        replace: false, // navigator already removed the layer, nothing to replace
-                        originalTiledImage: tiledImage,
-                        tileSource: queueItem.tileSource
-                    });
-
-                    _this.navigator.addTiledImage(optionsClone);
                 }
 
                 if (queueItem.options.success) {
@@ -1635,8 +1646,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         var onFocusHandler          = $.delegate( this, onFocus ),
             onBlurHandler           = $.delegate( this, onBlur ),
-            onNextHandler           = $.delegate( this, onNext ),
-            onPreviousHandler       = $.delegate( this, onPrevious ),
+            onNextHandler           = $.delegate( this, this.goToNextPage ),
+            onPreviousHandler       = $.delegate( this, this.goToPreviousPage ),
             navImages               = this.navImages,
             useGroup                = true;
 
@@ -2305,7 +2316,40 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.world.resetItems();
             this.forceRedraw();
         }
-    }
+    },
+
+    /**
+     * Sets the image source to the source with index equal to
+     * currentIndex - 1. Changes current image in sequence mode.
+     * If specified, wraps around (see navPrevNextWrap in
+     * {@link OpenSeadragon.Options})
+     *
+     * @method
+     */
+
+    goToPreviousPage: function () {
+        var previous = this._sequenceIndex - 1;
+        if(this.navPrevNextWrap && previous < 0){
+            previous += this.tileSources.length;
+        }
+        this.goToPage( previous );
+    },
+
+    /**
+     * Sets the image source to the source with index equal to
+     * currentIndex + 1. Changes current image in sequence mode.
+     * If specified, wraps around (see navPrevNextWrap in
+     * {@link OpenSeadragon.Options})
+     *
+     * @method
+     */
+    goToNextPage: function () {
+        var next = this._sequenceIndex + 1;
+        if(this.navPrevNextWrap && next >= this.tileSources.length){
+            next = 0;
+        }
+        this.goToPage( next );
+    },
 });
 
 
@@ -2770,6 +2814,12 @@ function onCanvasKeyPress( event ) {
             case 102: //f
               this.viewport.toggleFlip();
               event.preventDefault = true;
+              break;
+            case 106: //j - previous image source
+              this.goToPreviousPage();
+              break;
+            case 107: //k - next image source
+              this.goToNextPage();
               break;
             default:
                 // console.log( 'navigator keycode %s', event.keyCode );
@@ -3659,23 +3709,5 @@ function onRotateRight() {
 function onFlip() {
    this.viewport.toggleFlip();
 }
-
-function onPrevious(){
-    var previous = this._sequenceIndex - 1;
-    if(this.navPrevNextWrap && previous < 0){
-        previous += this.tileSources.length;
-    }
-    this.goToPage( previous );
-}
-
-
-function onNext(){
-    var next = this._sequenceIndex + 1;
-    if(this.navPrevNextWrap && next >= this.tileSources.length){
-        next = 0;
-    }
-    this.goToPage( next );
-}
-
 
 }( OpenSeadragon ));
