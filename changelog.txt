@@ -54,7 +54,8 @@ OPENSEADRAGON CHANGELOG
 * Added a static method in OpenSeadragon to get an existing viewer (#2000 @HerCerM)
 * Now ensuring that the new item is already in the navigator when the "add-item" event fires (#2005 @RammasEchor)
 * Added keys to change image in sequence mode (j: previous, k: next) (#2007 @RammasEchor)
-* Fixed a bug where the navigator wouldn't pick up opacity/composite changes made while it is loading (#2018 @crydell) 
+* Fixed a bug where the navigator wouldn't pick up opacity/composite changes made while it is loading (#2018 @crydell)
+* Explicitly set passive:false for wheel event handlers to supress console warnings. Fixes #1669 (#2043 @msalsbery)
 
 2.4.2:
 
