@@ -1463,7 +1463,7 @@
                     tracker.element,
                     event,
                     delegate[ event ],
-                    false
+                    event === $.MouseTracker.wheelEventName ? { passive: false, capture: false } : false
                 );
             }
 
