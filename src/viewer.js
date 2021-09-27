@@ -2850,6 +2850,7 @@ function onCanvasClick( event ) {
         quick: event.quick,
         shift: event.shift,
         originalEvent: event.originalEvent,
+        originalTarget: event.originalTarget,
         preventDefaultAction: false
     };
 
@@ -2865,6 +2866,7 @@ function onCanvasClick( event ) {
      * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Element} originalTarget - The DOM element clicked on.
      * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
