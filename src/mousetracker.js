@@ -737,6 +737,8 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Element} event.originalTarget
+         *      The DOM element clicked on.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1191,7 +1193,7 @@
      *      the emulated event, a synthetic event object created with values from the actual DOM event,
      *      or null if no DOM event applies. Emulated events can occur on eventType "wheel" on legacy mouse-scroll
      *      event emitting user agents.
-     * @property {Boolean} isStopable
+     * @property {Boolean} isStoppable
      *      True if propagation of the event (e.g. bubbling) can be stopped with stopPropagation/stopImmediatePropagation.
      * @property {Boolean} isCancelable
      *      True if the event's default handling by the browser can be prevented with preventDefault.
@@ -2838,7 +2840,7 @@
     function getEventProcessDefaults( tracker, eventInfo ) {
         switch ( eventInfo.eventType ) {
             case 'pointermove':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
@@ -2850,28 +2852,28 @@
             case 'keydown':
             case 'keyup':
             case 'keypress':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // onContextMenu(), onKeyDown(), onKeyUp(), onKeyPress() may set true
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerdown':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerup':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'wheel':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // handleWheelEvent() may set true
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
@@ -2880,21 +2882,21 @@
             case 'gotpointercapture':
             case 'lostpointercapture':
             case 'pointercancel':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'click':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.clickHandler;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'dblclick':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.dblClickHandler;
                 eventInfo.preventGesture = false;
@@ -2905,7 +2907,7 @@
             case 'pointerenter':
             case 'pointerleave':
             default:
-                eventInfo.isStopable = false;
+                eventInfo.isStoppable = false;
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
@@ -3272,6 +3274,7 @@
             //updateGPoint.captured = true; // Handled by updatePointerCaptured()
             updateGPoint.insideElementPressed = true;
             updateGPoint.insideElement = true;
+            updateGPoint.originalTarget = eventInfo.originalEvent.target;
             updateGPoint.contactPos = gPoint.currentPos;
             updateGPoint.contactTime = gPoint.currentTime;
             updateGPoint.lastPos = updateGPoint.currentPos;
@@ -3286,6 +3289,7 @@
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = true;
             gPoint.insideElement = true;
+            gPoint.originalTarget = eventInfo.originalEvent.target;
             startTrackingPointer( pointsList, gPoint );
             return;
         }
@@ -3504,6 +3508,7 @@
                                     shift:                eventInfo.originalEvent.shiftKey,
                                     isTouchEvent:         updateGPoint.type === 'touch',
                                     originalEvent:        eventInfo.originalEvent,
+                                    originalTarget:       updateGPoint.originalTarget,
                                     userData:             tracker.userData
                                 }
                             );

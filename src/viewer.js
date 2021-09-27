@@ -408,8 +408,6 @@ $.Viewer = function( options ) {
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
-    $.setElementPointerEventsNone( this.overlaysContainer );
-    $.setElementTouchActionNone( this.overlaysContainer );
     this.canvas.appendChild( this.overlaysContainer );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
@@ -2850,6 +2848,7 @@ function onCanvasClick( event ) {
         quick: event.quick,
         shift: event.shift,
         originalEvent: event.originalEvent,
+        originalTarget: event.originalTarget,
         preventDefaultAction: false
     };
 
@@ -2865,6 +2864,7 @@ function onCanvasClick( event ) {
      * @property {Boolean} quick - True only if the clickDistThreshold and clickTimeThreshold are both passed. Useful for differentiating between clicks and drags.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Element} originalTarget - The DOM element clicked on.
      * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
