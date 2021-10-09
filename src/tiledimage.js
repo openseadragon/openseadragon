@@ -419,6 +419,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     },
 
+    /**
+     * @returns {OpenSeadragon.Point} The dimensions of the image as it would be currently rendered in the viewport
+     */
+     getRelativeSize: function() {
+        return this.getContentSize().times(this.viewport.getZoom());
+    },
+
     // private
     _viewportToImageDelta: function( viewerX, viewerY, current ) {
         var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
