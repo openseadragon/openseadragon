@@ -1735,10 +1735,6 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
         tileCenter = positionT.plus( sizeT.divide( 2 ) ),
         tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-    if ( !overlap ) {
-        sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-    }
-
     if (tile.isRightMost && tiledImage.wrapHorizontal) {
         sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
     }
