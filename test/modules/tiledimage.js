@@ -41,11 +41,11 @@
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
             var contentSize = image.getContentSize();
-            var relativeSize = image.getRelativeSize();
+            var sizeInWindowCoords = image.getSizeInWindowCoordinates();
             assert.equal(contentSize.x, 500, 'contentSize.x');
             assert.equal(contentSize.y, 2000, 'contentSize.y');
-            assert.equal(relativeSize.x, 12.5, 'relativeSize.x');
-            assert.equal(relativeSize.y, 50, 'relativeSize.y');
+            assert.equal(sizeInWindowCoords.x, 125, 'sizeInWindowCoords.x');
+            assert.equal(sizeInWindowCoords.y, 500, 'sizeInWindowCoords.y');
 
             checkBounds(assert, image, new OpenSeadragon.Rect(5, 6, 10, 40), 'initial bounds');
 
@@ -78,14 +78,14 @@
             checkBounds(assert, image, new OpenSeadragon.Rect(7, 8, 1, 4), 'bounds after width');
 
             viewer.addHandler('zoom', function zoomHandler(event) {
-                var relativeSize = image.getRelativeSize();
+                var sizeInWindowCoords = image.getSizeInWindowCoordinates();
                 viewer.removeHandler('zoom', zoomHandler);
                 handlerCount++;
-                assert.equal(relativeSize.x, 4000, 'relativeSize.x after zoom');
-                assert.equal(relativeSize.y, 16000, 'relativeSize.y after zoom');
+                assert.equal(sizeInWindowCoords.x, 4000, 'sizeInWindowCoords.x after zoom');
+                assert.equal(sizeInWindowCoords.y, 16000, 'sizeInWindowCoords.y after zoom');
             });
 
-            viewer.viewport.zoomTo(8);
+            viewer.viewport.zoomTo(8, null, true);
 
             assert.equal(handlerCount, 2, 'correct number of handlers called');
 
