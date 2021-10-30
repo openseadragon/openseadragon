@@ -420,10 +420,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @returns {OpenSeadragon.Point} The dimensions of the image as it would be currently rendered in the viewport
+     * @returns {OpenSeadragon.Point} The TiledImage's content size, in window coordinates.
      */
-     getRelativeSize: function() {
-        return this.getContentSize().times(this.viewport.getZoom());
+     getSizeInWindowCoordinates: function() {
+        var topLeft = this.viewport.imageToWindowCoordinates(new $.Point(0, 0));
+        var bottomRight = this.viewport.imageToWindowCoordinates(this.getContentSize());
+        return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
     },
 
     // private
