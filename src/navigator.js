@@ -66,15 +66,15 @@ $.Navigator = function( options ){
         };
 
         if( options.position ){
-            if( 'BOTTOM_RIGHT' == options.position ){
+            if( 'BOTTOM_RIGHT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
-            } else if( 'BOTTOM_LEFT' == options.position ){
+            } else if( 'BOTTOM_LEFT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
-            } else if( 'TOP_RIGHT' == options.position ){
+            } else if( 'TOP_RIGHT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
-            } else if( 'TOP_LEFT' == options.position ){
+            } else if( 'TOP_LEFT' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
-            } else if( 'ABSOLUTE' == options.position ){
+            } else if( 'ABSOLUTE' === options.position ){
                options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
                options.controlOptions.top = options.top;
                options.controlOptions.left = options.left;
@@ -128,7 +128,7 @@ $.Navigator = function( options ){
     this.totalBorderWidths = new $.Point(this.borderWidth * 2, this.borderWidth * 2).minus(this.fudge);
 
 
-    if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
+    if ( options.controlOptions.anchor !== $.ControlAnchor.NONE ) {
         (function( style, borderWidth ){
             style.margin        = '0px';
             style.border        = borderWidth + 'px solid ' + options.borderColor;
@@ -167,20 +167,24 @@ $.Navigator = function( options ){
         style.zIndex        = 999999999;
         style.cursor        = 'default';
     }( this.displayRegion.style, this.borderWidth ));
+    $.setElementPointerEventsNone( this.displayRegion );
+    $.setElementTouchActionNone( this.displayRegion );
 
     this.displayRegionContainer = $.makeNeutralElement("div");
     this.displayRegionContainer.id = this.element.id + '-displayregioncontainer';
     this.displayRegionContainer.className = "displayregioncontainer";
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
+    $.setElementPointerEventsNone( this.displayRegionContainer );
+    $.setElementTouchActionNone( this.displayRegionContainer );
 
     viewer.addControl(
         this.element,
         options.controlOptions
     );
 
-    this._resizeWithViewer = options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE &&
-        options.controlOptions.anchor != $.ControlAnchor.NONE;
+    this._resizeWithViewer = options.controlOptions.anchor !== $.ControlAnchor.ABSOLUTE &&
+        options.controlOptions.anchor !== $.ControlAnchor.NONE;
 
     if (options.width && options.height) {
         this.setWidth(options.width);
@@ -221,12 +225,29 @@ $.Navigator = function( options ){
     // Remove the base class' (Viewer's) innerTracker and replace it with our own
     this.innerTracker.destroy();
     this.innerTracker = new $.MouseTracker({
-        element:         this.element,
+        userData:        'Navigator.innerTracker',
+        element:         this.element, //this.canvas,
         dragHandler:     $.delegate( this, onCanvasDrag ),
         clickHandler:    $.delegate( this, onCanvasClick ),
         releaseHandler:  $.delegate( this, onCanvasRelease ),
-        scrollHandler:   $.delegate( this, onCanvasScroll )
+        scrollHandler:   $.delegate( this, onCanvasScroll ),
+        preProcessEventHandler: function (eventInfo) {
+            if (eventInfo.eventType === 'wheel') {
+                //don't scroll the page up and down if the user is scrolling
+                //in the navigator
+                eventInfo.preventDefault = true;
+            }
+        }
     });
+    this.outerTracker.userData = 'Navigator.outerTracker';
+
+    // this.innerTracker is attached to this.element...we need to allow pointer
+    //   events to pass through this Viewer's canvas/container elements so implicit
+    //   pointer capture works on touch devices
+    //TODO an alternative is to attach the new MouseTracker to this.canvas...not
+    //   sure why it isn't already (see MouseTracker constructor call above)
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementPointerEventsNone( this.container );
 
     this.addHandler("reset-size", function() {
         if (_this.viewport) {
@@ -282,7 +303,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     setWidth: function(width) {
         this.width = width;
-        this.element.style.width = typeof (width) == "number" ? (width + 'px') : width;
+        this.element.style.width = typeof (width) === "number" ? (width + 'px') : width;
         this._resizeWithViewer = false;
     },
 
@@ -292,7 +313,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     setHeight: function(height) {
         this.height = height;
-        this.element.style.height = typeof (height) == "number" ? (height + 'px') : height;
+        this.element.style.height = typeof (height) === "number" ? (height + 'px') : height;
         this._resizeWithViewer = false;
     },
 
@@ -383,6 +404,8 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 var myItem = event.item;
                 myItem._originalForNavigator = original;
                 _this._matchBounds(myItem, original, true);
+                _this._matchOpacity(myItem, original);
+                _this._matchCompositeOperation(myItem, original);
 
                 function matchBounds() {
                     _this._matchBounds(myItem, original);
@@ -406,6 +429,10 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         return $.Viewer.prototype.addTiledImage.apply(this, [optionsClone]);
     },
 
+    destroy: function() {
+        return $.Viewer.prototype.destroy.apply(this);
+    },
+
     // private
     _getMatchingItem: function(theirItem) {
         var count = this.world.getItemCount();
@@ -427,6 +454,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         myItem.setWidth(bounds.width, immediately);
         myItem.setRotation(theirItem.getRotation(), immediately);
         myItem.setClip(theirItem.getClip());
+        myItem.setFlip(theirItem.getFlip());
     },
 
     // private
@@ -453,7 +481,7 @@ function onCanvasClick( event ) {
     quick: event.quick,
     shift: event.shift,
     originalEvent: event.originalEvent,
-    preventDefaultAction: event.preventDefaultAction
+    preventDefaultAction: false
   };
   /**
    * Raised when a click event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
@@ -505,7 +533,7 @@ function onCanvasDrag( event ) {
       direction: event.direction,
       shift: event.shift,
       originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction
+      preventDefaultAction: false
     };
     /**
      * Raised when a drag event occurs on the {@link OpenSeadragon.Viewer#navigator} element.
@@ -522,7 +550,7 @@ function onCanvasDrag( event ) {
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
+     * @property {Boolean} preventDefaultAction - Set to true to prevent default drag to pan behaviour. Default: false.
      */
      this.viewer.raiseEvent('navigator-drag', canvasDragEventArgs);
 
@@ -568,6 +596,15 @@ function onCanvasRelease( event ) {
  * @function
  */
 function onCanvasScroll( event ) {
+    var eventArgs = {
+        tracker: event.eventSource,
+        position: event.position,
+        scroll: event.scroll,
+        shift: event.shift,
+        originalEvent: event.originalEvent,
+        preventDefault: event.preventDefault
+    };
+
     /**
      * Raised when a scroll event occurs on the {@link OpenSeadragon.Viewer#navigator} element (mouse wheel, touch pinch, etc.).
      *
@@ -580,19 +617,12 @@ function onCanvasScroll( event ) {
      * @property {Number} scroll - The scroll delta for the event.
      * @property {Boolean} shift - True if the shift key was pressed during this event.
      * @property {Object} originalEvent - The original DOM event.
+     * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
-    this.viewer.raiseEvent( 'navigator-scroll', {
-        tracker: event.eventSource,
-        position: event.position,
-        scroll: event.scroll,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
+    this.viewer.raiseEvent( 'navigator-scroll', eventArgs );
 
-    //don't scroll the page up and down if the user is scrolling
-    //in the navigator
-    return false;
+    event.preventDefault = eventArgs.preventDefault;
 }
 
 /**

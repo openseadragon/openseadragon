@@ -50,11 +50,11 @@
 $.Spring = function( options ) {
     var args = arguments;
 
-    if( typeof ( options ) != 'object' ){
+    if( typeof ( options ) !== 'object' ){
         //allows backward compatible use of ( initialValue, config ) as
         //constructor parameters
         options = {
-            initial: args.length && typeof ( args[ 0 ] ) == "number" ?
+            initial: args.length && typeof ( args[ 0 ] ) === "number" ?
                 args[ 0 ] :
                 undefined,
             /**
@@ -96,7 +96,7 @@ $.Spring = function( options ) {
      * @property {Number} time
      */
     this.current = {
-        value: typeof ( this.initial ) == "number" ?
+        value: typeof ( this.initial ) === "number" ?
             this.initial :
             (this._exponential ? 0 : 1),
         time:  $.now() // always work in milliseconds
@@ -237,7 +237,7 @@ $.Spring.prototype = {
             this.current.value = currentValue;
         }
 
-        return oldValue != this.current.value;
+        return oldValue !== this.current.value;
     },
 
     /**

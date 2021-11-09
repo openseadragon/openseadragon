@@ -177,6 +177,12 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this.size       = null;
     /**
+     * Whether to flip the tile when rendering.
+     * @member {Boolean} flipped
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.flipped    = false;
+    /**
      * The start time of this tile's blending.
      * @member {Number} blendStart
      * @memberof OpenSeadragon.Tile#
@@ -284,10 +290,10 @@ $.Tile.prototype = {
             this.style                     = this.element.style;
             this.style.position            = "absolute";
         }
-        if ( this.element.parentNode != container ) {
+        if ( this.element.parentNode !== container ) {
             container.appendChild( this.element );
         }
-        if ( this.imgElement.parentNode != this.element ) {
+        if ( this.imgElement.parentNode !== this.element ) {
             this.element.appendChild( this.imgElement );
         }
 
@@ -295,6 +301,10 @@ $.Tile.prototype = {
         this.style.left    = this.position.x + "px";
         this.style.height  = this.size.y + "px";
         this.style.width   = this.size.x + "px";
+
+        if (this.flipped) {
+            this.style.transform = "scaleX(-1)";
+        }
 
         $.setElementOpacity( this.element, this.opacity );
     },
@@ -383,13 +393,17 @@ $.Tile.prototype = {
             sourceHeight = rendered.canvas.height;
         }
 
+        context.translate(position.x + size.x / 2, 0);
+        if (this.flipped) {
+            context.scale(-1, 1);
+        }
         context.drawImage(
             rendered.canvas,
             0,
             0,
             sourceWidth,
             sourceHeight,
-            position.x,
+            -size.x / 2,
             position.y,
             size.x,
             size.y

@@ -50,13 +50,13 @@ $.Point = function( x, y ) {
      * @member {Number} x
      * @memberof OpenSeadragon.Point#
      */
-    this.x = typeof ( x ) == "number" ? x : 0;
+    this.x = typeof ( x ) === "number" ? x : 0;
     /**
      * The vector component 'y'.
      * @member {Number} y
      * @memberof OpenSeadragon.Point#
      */
-    this.y = typeof ( y ) == "number" ? y : 0;
+    this.y = typeof ( y ) === "number" ? y : 0;
 };
 
 /** @lends OpenSeadragon.Point.prototype */

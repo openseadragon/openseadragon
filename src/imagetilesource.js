@@ -114,9 +114,8 @@
             }
 
             $.addEvent(image, 'load', function () {
-                /* IE8 fix since it has no naturalWidth and naturalHeight */
-                _this.width = Object.prototype.hasOwnProperty.call(image, 'naturalWidth') ? image.naturalWidth : image.width;
-                _this.height = Object.prototype.hasOwnProperty.call(image, 'naturalHeight') ? image.naturalHeight : image.height;
+                _this.width = image.naturalWidth;
+                _this.height = image.naturalHeight;
                 _this.aspectRatio = _this.width / _this.height;
                 _this.dimensions = new $.Point(_this.width, _this.height);
                 _this._tileWidth = _this.width;
@@ -195,6 +194,13 @@
             }
             return context;
         },
+        /**
+         * Destroys ImageTileSource
+         * @function
+         */
+        destroy: function () {
+            this._freeupCanvasMemory();
+        },
 
         // private
         //
@@ -203,9 +209,8 @@
         _buildLevels: function () {
             var levels = [{
                     url: this._image.src,
-                    /* IE8 fix since it has no naturalWidth and naturalHeight */
-                    width: Object.prototype.hasOwnProperty.call(this._image, 'naturalWidth') ? this._image.naturalWidth : this._image.width,
-                    height:  Object.prototype.hasOwnProperty.call(this._image, 'naturalHeight') ? this._image.naturalHeight : this._image.height
+                    width: this._image.naturalWidth,
+                    height:  this._image.naturalHeight
                 }];
 
             if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
@@ -214,9 +219,8 @@
                 return levels;
             }
 
-            /* IE8 fix since it has no naturalWidth and naturalHeight */
-            var currentWidth = Object.prototype.hasOwnProperty.call(this._image, 'naturalWidth') ? this._image.naturalWidth : this._image.width;
-            var currentHeight = Object.prototype.hasOwnProperty.call(this._image, 'naturalHeight') ? this._image.naturalHeight : this._image.height;
+            var currentWidth = this._image.naturalWidth;
+            var currentHeight = this._image.naturalHeight;
 
 
             var bigCanvas = document.createElement("canvas");
@@ -258,7 +262,19 @@
                 bigContext = smallContext;
             }
             return levels;
-        }
+        },
+        /**
+         * Free up canvas memory
+         * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
+         * and Safari keeps canvas until its height and width will be set to 0).
+         * @function
+         */
+        _freeupCanvasMemory: function () {
+            for (var i = 0; i < this.levels.length; i++) {
+                this.levels[i].context2D.canvas.height = 0;
+                this.levels[i].context2D.canvas.width = 0;
+            }
+        },
     });
 
 }(OpenSeadragon));

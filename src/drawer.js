@@ -126,6 +126,10 @@ $.Drawer = function( options ) {
     this.canvas.style.height    = "100%";
     this.canvas.style.position  = "absolute";
     $.setElementOpacity( this.canvas, this.opacity, true );
+    // Allow pointer events to pass through the canvas element so implicit
+    //   pointer capture works on touch devices
+    $.setElementPointerEventsNone( this.canvas );
+    $.setElementTouchActionNone( this.canvas );
 
     // explicit left-align
     this.container.style.textAlign = "left";
@@ -164,6 +168,41 @@ $.Drawer.prototype = {
         $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
         this.viewer.clearOverlays();
         return this;
+    },
+
+    /**
+     * This function converts the given point from to the drawer coordinate by
+     * multiplying it with the pixel density.
+     * This function does not take rotation into account, thus assuming provided
+     * point is at 0 degree.
+     * @param {OpenSeadragon.Point} point - the pixel point to convert
+     */
+    viewportCoordToDrawerCoord: function(point) {
+        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        return new $.Point(
+            vpPoint.x * $.pixelDensityRatio,
+            vpPoint.y * $.pixelDensityRatio
+        );
+    },
+
+    /**
+     * This function will create multiple polygon paths on the drawing context by provided polygons,
+     * then clip the context to the paths.
+     * @param {OpenSeadragon.Point[][]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
+     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
+     */
+    clipWithPolygons: function (polygons, useSketch) {
+        if (!this.useCanvas) {
+            return;
+        }
+        var context = this._getContext(useSketch);
+        context.beginPath();
+        polygons.forEach(function (polygon) {
+            polygon.forEach(function (coord, i) {
+                context[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+          });
+        });
+        context.clip();
     },
 
     /**
@@ -249,8 +288,8 @@ $.Drawer.prototype = {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
             var viewportSize = this._calculateCanvasSize();
-            if( this.canvas.width != viewportSize.x ||
-                this.canvas.height != viewportSize.y ) {
+            if( this.canvas.width !== viewportSize.x ||
+                this.canvas.height !== viewportSize.y ) {
                 this.canvas.width = viewportSize.x;
                 this.canvas.height = viewportSize.y;
                 this._updateImageSmoothingEnabled(this.context);
@@ -633,8 +672,6 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
-        context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.imageSmoothingEnabled = this._imageSmoothingEnabled;
     },

@@ -326,6 +326,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     destroy: function() {
         this.reset();
+
+        if (this.source.destroy) {
+            this.source.destroy();
+        }
     },
 
     /**
@@ -389,10 +393,39 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @returns {OpenSeadragon.Rect} Where this tile fits (in normalized coordinates).
+     */
+    getTileBounds: function( level, x, y ) {
+        var numTiles = this.source.getNumTiles(level);
+        var xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+        var yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+        var bounds = this.source.getTileBounds(level, xMod, yMod);
+        if (this.getFlip()) {
+            bounds.x = 1 - bounds.x - bounds.width;
+        }
+        bounds.x += (x - xMod) / numTiles.x;
+        bounds.y += (this._worldHeightCurrent / this._worldWidthCurrent) * ((y - yMod) / numTiles.y);
+        return bounds;
+    },
+
+    /**
      * @returns {OpenSeadragon.Point} This TiledImage's content size, in original pixels.
      */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
+    },
+
+    /**
+     * @returns {OpenSeadragon.Point} The TiledImage's content size, in window coordinates.
+     */
+     getSizeInWindowCoordinates: function() {
+        var topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
+        var bottomRight = this.imageToWindowCoordinates(this.getContentSize());
+        return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
     },
 
     // private
@@ -675,6 +708,58 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Sets an array of polygons to crop the TiledImage during draw tiles.
+     * The render function will use the default non-zero winding rule.
+     * @param {OpenSeadragon.Point[][]} polygons - represented in an array of point object in image coordinates.
+     * Example format: [
+     *  [{x: 197, y:172}, {x: 226, y:172}, {x: 226, y:198}, {x: 197, y:198}], // First polygon
+     *  [{x: 328, y:200}, {x: 330, y:199}, {x: 332, y:201}, {x: 329, y:202}]  // Second polygon
+     *  [{x: 321, y:201}, {x: 356, y:205}, {x: 341, y:250}] // Third polygon
+     * ]
+     */
+    setCroppingPolygons: function( polygons ) {
+
+        var isXYObject = function(obj) {
+            return obj instanceof $.Point || (typeof obj.x === 'number' && typeof obj.y === 'number');
+        };
+
+        var objectToSimpleXYObject = function(objs) {
+            return objs.map(function(obj) {
+                try {
+                    if (isXYObject(obj)) {
+                        return { x: obj.x, y: obj.y };
+                    } else {
+                        throw new Error();
+                    }
+                } catch(e) {
+                    throw new Error('A Provided cropping polygon point is not supported');
+                }
+            });
+        };
+
+        try {
+            if (!$.isArray(polygons)) {
+                throw new Error('Provided cropping polygon is not an array');
+            }
+            this._croppingPolygons = polygons.map(function(polygon){
+                return objectToSimpleXYObject(polygon);
+            });
+        } catch (e) {
+            $.console.error('[TiledImage.setCroppingPolygons] Cropping polygon format not supported');
+            $.console.error(e);
+            this._croppingPolygons = null;
+        }
+    },
+
+    /**
+     * Resets the cropping polygons, thus next render will remove all cropping
+     * polygon effects.
+     */
+    resetCroppingPolygons: function() {
+        this._croppingPolygons = null;
+    },
+
+    /**
      * Positions and scales the TiledImage to fit in the specified bounds.
      * Note: this method fires OpenSeadragon.TiledImage.event:bounds-change
      * twice
@@ -774,6 +859,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
         this.raiseEvent('clip-change');
+    },
+
+    /**
+     * @returns {Boolean} Whether the TiledImage should be flipped before rendering.
+     */
+    getFlip: function() {
+        return !!this.flipped;
+    },
+
+    /**
+     * @param {Boolean} flip Whether the TiledImage should be flipped before rendering.
+     * @fires OpenSeadragon.TiledImage.event:bounds-change
+     */
+    setFlip: function(flip) {
+        this.flipped = !!flip;
+        this._needsDraw = true;
+        this._raiseBoundsChange();
     },
 
     /**
@@ -1199,24 +1301,41 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
 
     var viewportCenter = tiledImage.viewport.pixelFromPoint(
         tiledImage.viewport.getCenter());
+
+    if (tiledImage.getFlip()) {
+        // The right-most tile can be narrower than the others. When flipped,
+        // this tile is now on the left. Because it is narrower than the normal
+        // left-most tile, the subsequent tiles may not be wide enough to completely
+        // fill the viewport. Fix this by rendering an extra column of tiles. If we
+        // are not wrapping, make sure we never render more than the number of tiles
+        // in the image.
+        bottomRightTile.x += 1;
+        if (!tiledImage.wrapHorizontal) {
+            bottomRightTile.x  = Math.min(bottomRightTile.x, numberOfTiles.x - 1);
+        }
+    }
+
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
 
-            // Optimisation disabled with wrapping because getTileBounds does not
-            // work correctly with x and y outside of the number of tiles
-            if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
-                var tileBounds = tiledImage.source.getTileBounds(level, x, y);
-                if (drawArea.intersection(tileBounds) === null) {
-                    // This tile is outside of the viewport, no need to draw it
-                    continue;
-                }
+            var flippedX;
+            if (tiledImage.getFlip()) {
+                var xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
+                flippedX = x + numberOfTiles.x - xMod - xMod - 1;
+            } else {
+                flippedX = x;
+            }
+
+            if (drawArea.intersection(tiledImage.getTileBounds(level, flippedX, y)) === null) {
+                // This tile is outside of the viewport, no need to draw it
+                continue;
             }
 
             best = updateTile(
                 tiledImage,
                 drawLevel,
                 haveDrawn,
-                x, y,
+                flippedX, y,
                 level,
                 levelOpacity,
                 levelVisibility,
@@ -1391,10 +1510,10 @@ function getTile(
         tilesMatrix[ level ][ x ] = {};
     }
 
-    if ( !tilesMatrix[ level ][ x ][ y ] ) {
+    if ( !tilesMatrix[ level ][ x ][ y ] || !tilesMatrix[ level ][ x ][ y ].flipped !== !tiledImage.flipped ) {
         xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
         yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
-        bounds  = tileSource.getTileBounds( level, xMod, yMod );
+        bounds  = tiledImage.getTileBounds( level, x, y );
         sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
@@ -1413,9 +1532,6 @@ function getTile(
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
 
-        bounds.x += ( x - xMod ) / numTiles.x;
-        bounds.y += (worldHeight / worldWidth) * (( y - yMod ) / numTiles.y);
-
         tile = new $.Tile(
             level,
             x,
@@ -1429,13 +1545,21 @@ function getTile(
             sourceBounds
         );
 
-        if (xMod === numTiles.x - 1) {
-            tile.isRightMost = true;
+        if (tiledImage.getFlip()) {
+            if (xMod === 0) {
+                tile.isRightMost = true;
+            }
+        } else {
+            if (xMod === numTiles.x - 1) {
+                tile.isRightMost = true;
+            }
         }
 
         if (yMod === numTiles.y - 1) {
             tile.isBottomMost = true;
         }
+
+        tile.flipped = tiledImage.flipped;
 
         tilesMatrix[ level ][ x ][ y ] = tile;
     }
@@ -1573,7 +1697,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
      * @property {Image} image - The image of the tile.
      * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
      * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
-     * @property {XMLHttpRequest} tiledImage - The AJAX request that loaded this tile (if applicable).
+     * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
      * @property {function} getCompletionCallback - A function giving a callback to call
      * when the asynchronous processing of the image is done. The image will be
      * marked as entirely loaded when the callback has been called once for each
@@ -1714,10 +1838,10 @@ function providesCoverage( coverage, level, x, y ) {
     if ( x === undefined || y === undefined ) {
         rows = coverage[ level ];
         for ( i in rows ) {
-            if ( rows.hasOwnProperty( i ) ) {
+            if ( Object.prototype.hasOwnProperty.call( rows, i ) ) {
                 cols = rows[ i ];
                 for ( j in cols ) {
-                    if ( cols.hasOwnProperty( j ) && !cols[ j ] ) {
+                    if ( Object.prototype.hasOwnProperty.call( cols, j ) && !cols[ j ] ) {
                         return false;
                     }
                 }
@@ -1818,7 +1942,7 @@ function compareTiles( previousBest, tile ) {
 
     if ( tile.visibility > previousBest.visibility ) {
         return tile;
-    } else if ( tile.visibility == previousBest.visibility ) {
+    } else if ( tile.visibility === previousBest.visibility ) {
         if ( tile.squaredDistance < previousBest.squaredDistance ) {
             return tile;
         }
@@ -1877,14 +2001,15 @@ function drawTiles( tiledImage, lastDrawn ) {
             // sketch canvas we are going to use for performance reasons.
             bounds = tiledImage.viewport.viewportToViewerElementRectangle(
                 tiledImage.getClippedBounds(true))
-                .getIntegerBoundingBox()
-                .times($.pixelDensityRatio);
+                .getIntegerBoundingBox();
 
             if(tiledImage._drawer.viewer.viewport.getFlip()) {
               if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
                 bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
               }
             }
+
+            bounds = bounds.times($.pixelDensityRatio);
         }
         tiledImage._drawer._clear(true, bounds);
     }
@@ -1929,6 +2054,28 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         tiledImage._drawer.setClip(clipRect, useSketch);
 
+        usedClip = true;
+    }
+
+    if (tiledImage._croppingPolygons) {
+        tiledImage._drawer.saveContext(useSketch);
+        try {
+            var polygons = tiledImage._croppingPolygons.map(function (polygon) {
+                return polygon.map(function (coord) {
+                    var point = tiledImage
+                        .imageToViewportCoordinates(coord.x, coord.y, true)
+                        .rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
+                    var clipPoint = tiledImage._drawer.viewportCoordToDrawerCoord(point);
+                    if (sketchScale) {
+                        clipPoint = clipPoint.times(sketchScale);
+                    }
+                    return clipPoint;
+                });
+            });
+            tiledImage._drawer.clipWithPolygons(polygons, useSketch);
+        } catch (e) {
+            $.console.error(e);
+        }
         usedClip = true;
     }
 
