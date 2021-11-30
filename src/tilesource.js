@@ -276,6 +276,10 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Set the maxLevel to the given level, and perform the memoization of
+     * getLevelScale with the new maxLevel. This function can be useful if the
+     * memoization is required before the first call of getLevelScale, or both
+     * memoized getLevelScale and maxLevel should be changed accordingly.
      * @function
      * @param {Number} level
      */
