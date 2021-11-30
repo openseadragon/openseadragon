@@ -219,14 +219,13 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 
         this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
         this.minLevel    = options.minLevel ? options.minLevel : 0;
-        this.setMaxLevel( ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
+        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
             options.maxLevel : (
                 ( options.width && options.height ) ? Math.ceil(
                     Math.log( Math.max( options.width, options.height ) ) /
                     Math.log( 2 )
                 ) : 0
-            )
-        );
+            );
         if( this.success && $.isFunction( this.success ) ){
             this.success( this );
         }
@@ -279,12 +278,10 @@ $.TileSource.prototype = {
     /**
      * @function
      * @param {Number} level
-     * @return {OpenSeadragon.TileSource} Chainable.
      */
     setMaxLevel: function( level ) {
         this.maxLevel = level;
-        this._memoizeLevelScale( level );
-        return this;
+        this._memoizeLevelScale();
     },
 
     /**
@@ -292,19 +289,21 @@ $.TileSource.prototype = {
      * @param {Number} level
      */
     getLevelScale: function( level ) {
-        this._memoizeLevelScale( this.maxLevel );
+        // if getLevelScale is not memoized, we generate the memoized version
+        // at the first call and return the result
+        this._memoizeLevelScale();
         return this.getLevelScale( level );
     },
 
     // private
-    _memoizeLevelScale: function( level ) {
+    _memoizeLevelScale: function() {
         // see https://github.com/openseadragon/openseadragon/issues/22
         // we use the tilesources implementation of getLevelScale to generate
         // a memoized re-implementation
         var levelScaleCache = {},
             i;
-        for( i = 0; i <= level; i++ ){
-            levelScaleCache[ i ] = 1 / Math.pow(2, level - i);
+        for( i = 0; i <= this.maxlevel; i++ ){
+            levelScaleCache[ i ] = 1 / Math.pow(2, this.maxlevel - i);
         }
         this.getLevelScale = function( _level ){
             return levelScaleCache[ _level ];
