@@ -2657,8 +2657,8 @@ function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan,
-      preventHorizontalPan: event.preventHorizontalPan
+      preventVerticalPan: !this.panVertical,
+      preventHorizontalPan: !this.panHorizontal
     };
 
     /**

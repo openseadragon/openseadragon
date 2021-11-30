@@ -21,12 +21,13 @@
     <script type="text/javascript">
 
         var viewer = OpenSeadragon({
-            // debugMode: true,
+            debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
             showNavigator:true,
-            panHorizontal: false
+            panVertical: false,
+            panHorizontal: true
         });
     </script>
 </body>
