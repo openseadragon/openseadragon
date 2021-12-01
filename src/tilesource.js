@@ -306,8 +306,8 @@ $.TileSource.prototype = {
         // a memoized re-implementation
         var levelScaleCache = {},
             i;
-        for( i = 0; i <= this.maxlevel; i++ ){
-            levelScaleCache[ i ] = 1 / Math.pow(2, this.maxlevel - i);
+        for( i = 0; i <= this.maxLevel; i++ ){
+            levelScaleCache[ i ] = 1 / Math.pow(2, this.maxLevel - i);
         }
         this.getLevelScale = function( _level ){
             return levelScaleCache[ _level ];
