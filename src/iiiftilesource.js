@@ -444,10 +444,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     /**
      * Determine whether arbitrary tile requests can be made against a service with the given profile
      * @function
-     * @param {Object} options - IIIF option
-     * @param {String} options.profile
+     * @param {Object} options
+     * @param {Array|String} options.profile
      * @param {Number} options.version
-     * @param {Number} options.extraFeatures
+     * @param {String} options.extraFeatures
      * @returns {Boolean}
      */
     function canBeTiled ( options ) {
