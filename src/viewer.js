@@ -2657,8 +2657,8 @@ function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
-      preventVerticalPan: !this.panVertical,
-      preventHorizontalPan: !this.panHorizontal
+      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
+      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     /**
@@ -2728,8 +2728,8 @@ function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
-      preventVerticalPan: !this.panVertical,
-      preventHorizontalPan: !this.panHorizontal
+      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
+      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     // This event is documented in onCanvasKeyDown
