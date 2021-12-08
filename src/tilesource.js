@@ -276,11 +276,31 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Set the maxLevel to the given level, and perform the memoization of
+     * getLevelScale with the new maxLevel. This function can be useful if the
+     * memoization is required before the first call of getLevelScale, or both
+     * memoized getLevelScale and maxLevel should be changed accordingly.
+     * @function
+     * @param {Number} level
+     */
+    setMaxLevel: function( level ) {
+        this.maxLevel = level;
+        this._memoizeLevelScale();
+    },
+
+    /**
      * @function
      * @param {Number} level
      */
     getLevelScale: function( level ) {
+        // if getLevelScale is not memoized, we generate the memoized version
+        // at the first call and return the result
+        this._memoizeLevelScale();
+        return this.getLevelScale( level );
+    },
 
+    // private
+    _memoizeLevelScale: function() {
         // see https://github.com/openseadragon/openseadragon/issues/22
         // we use the tilesources implementation of getLevelScale to generate
         // a memoized re-implementation
@@ -292,7 +312,6 @@ $.TileSource.prototype = {
         this.getLevelScale = function( _level ){
             return levelScaleCache[ _level ];
         };
-        return this.getLevelScale( level );
     },
 
     /**

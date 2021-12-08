@@ -271,7 +271,10 @@
             lastPinchDist:         0,
             currentPinchDist:      0,
             lastPinchCenter:       null,
-            currentPinchCenter:    null
+            currentPinchCenter:    null,
+
+            // Tracking for drag
+            sentDragEvent:         false
         };
 
         this.hasGestureHandlers = !!( this.pressHandler || this.nonPrimaryPressHandler ||
@@ -1446,6 +1449,8 @@
         for ( i = 0; i < pointerListCount; i++ ) {
             delegate.activePointersLists.pop();
         }
+
+        delegate.sentDragEvent = false;
     }
 
     /**
@@ -3476,7 +3481,7 @@
                     }
 
                     // Drag End
-                    if ( tracker.dragEndHandler ) {
+                    if ( tracker.dragEndHandler && delegate.sentDragEvent ) {
                         tracker.dragEndHandler(
                             {
                                 eventSource:          tracker,
@@ -3491,6 +3496,9 @@
                             }
                         );
                     }
+
+                    // We want to clear this flag regardless of whether we fired the dragEndHandler
+                    delegate.sentDragEvent = false;
 
                     // Click / Double-Click
                     if ( ( tracker.clickHandler || tracker.dblClickHandler ) && updateGPoint.insideElement ) {
@@ -3679,6 +3687,7 @@
                     }
                 );
                 eventInfo.preventDefault = true;
+                delegate.sentDragEvent = true;
             }
         } else if ( pointsList.contacts === 2 ) {
             // Move (2 contacts, use center)

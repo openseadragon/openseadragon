@@ -57,6 +57,8 @@ OPENSEADRAGON CHANGELOG
 * Fixed a bug where the navigator wouldn't pick up opacity/composite changes made while it is loading (#2018 @crydell)
 * Explicitly set passive:false for wheel event handlers to suppress console warnings. Fixes #1669 (#2043 @msalsbery)
 * Viewer's canvas-click events now include an originalTarget property so you can know which element received the click (#2037 @iangilman)
+* Added method for getting the size of an image in window coordinates (#2049 @superbland)
+* Added a setMaxLevel function to TileSource so you can change its maxLevel if needed (#2059, #2066 @kim-sanghoon)
 
 2.4.2:
 

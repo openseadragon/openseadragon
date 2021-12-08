@@ -419,6 +419,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     },
 
+    /**
+     * @returns {OpenSeadragon.Point} The TiledImage's content size, in window coordinates.
+     */
+     getSizeInWindowCoordinates: function() {
+        var topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
+        var bottomRight = this.imageToWindowCoordinates(this.getContentSize());
+        return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    },
+
     // private
     _viewportToImageDelta: function( viewerX, viewerY, current ) {
         var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
