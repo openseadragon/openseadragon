@@ -426,6 +426,13 @@ $.TileSource.prototype = {
             }
         }
 
+        var postData = null;
+        var hashIdx = url.indexOf("#");
+        if (hashIdx !== -1) {
+            postData = url.substring(hashIdx + 1);
+            url = url.substr(0, hashIdx - 1);
+        }
+
         callback = function( data ){
             if( typeof (data) === "string" ) {
                 data = $.parseXml( data );
@@ -447,7 +454,7 @@ $.TileSource.prototype = {
                 return;
             }
 
-            options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
+            options = $TileSource.prototype.configure.apply( _this, [ data, url, postData ]);
             if (options.ajaxWithCredentials === undefined) {
                 options.ajaxWithCredentials = _this.ajaxWithCredentials;
             }
@@ -482,6 +489,7 @@ $.TileSource.prototype = {
             // request info via xhr asynchronously.
             $.makeAjaxRequest( {
                 url: url,
+                postData: postData,
                 withCredentials: this.ajaxWithCredentials,
                 headers: this.ajaxHeaders,
                 success: function( xhr ) {
@@ -559,11 +567,12 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded
      *      from if any.
+     * @param {String} postData value obtained from the url after '#' sign or null
      * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      * @throws {Error}
      */
-    configure: function( data, url ) {
+    configure: function( data, url, postData ) {
         throw new Error( "Method not implemented." );
     },
 
@@ -582,6 +591,20 @@ $.TileSource.prototype = {
      */
     getTileUrl: function( level, x, y ) {
         throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Must use AJAX in order to work, i.e. loadTilesWithAjax = true is set.
+     * It should return url-encoded string with the following structure:
+     *   key=value&key2=value2...
+     * or null in case GET is used instead.
+     * @param level
+     * @param x
+     * @param y
+     * @return {string || null} post data to send with tile configuration request
+     */
+    getTilePostData: function( level, x, y ) {
+        return null;
     },
 
     /**

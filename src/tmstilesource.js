@@ -111,10 +111,11 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * @function
      * @param {Object} data - the raw configuration
      * @param {String} url - the url the data was retrieved from if any.
+     * @param {String} postData - data for the post request or null
      * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
-    configure: function( data, url ){
+    configure: function( data, url, postData ){
         return data;
     },
 

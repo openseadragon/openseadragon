@@ -45,6 +45,7 @@
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String} url The URL of this tile's image.
+ * @param {String} postData post parameters or null
  * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
  * is provided directly by the tile source.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
@@ -53,7 +54,7 @@
  * drawing operation, in pixels. Note that this only works when drawing with canvas; when drawing
  * with HTML the entire tile is always used.
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds) {
+$.Tile = function(level, x, y, bounds, exists, url, postData, context2D, loadWithAjax, ajaxHeaders, sourceBounds) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -97,6 +98,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.url     = url;
+    /**
+     * Post parameters for this tile. Either it is an URL-encoded string
+     * in k1=v1&k2=v2... format or null
+     * @member {String} postData
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.postData  = postData;
     /**
      * The context2D of this tile if it is provided directly by the tile source.
      * @member {CanvasRenderingContext2D} context2D

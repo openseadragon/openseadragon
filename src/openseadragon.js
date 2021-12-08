@@ -2273,6 +2273,7 @@ function OpenSeadragon( options ){
          * @param {Function} options.error - a function to call on when an error occurs
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the the AJAX request
+         * @param {String} options.postData - HTTP POST data in k=v&k2=v2... form, GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
@@ -2281,6 +2282,7 @@ function OpenSeadragon( options ){
             var withCredentials;
             var headers;
             var responseType;
+            var postData;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2290,6 +2292,7 @@ function OpenSeadragon( options ){
                 withCredentials = url.withCredentials;
                 headers = url.headers;
                 responseType = url.responseType || null;
+                postData = url.postData || null;
                 url = url.url;
             }
 
@@ -2322,8 +2325,9 @@ function OpenSeadragon( options ){
                 }
             };
 
+            var method = postData ? "POST" : "GET";
             try {
-                request.open( "GET", url, true );
+                request.open( method, url, true );
 
                 if (responseType) {
                     request.responseType = responseType;
@@ -2341,7 +2345,7 @@ function OpenSeadragon( options ){
                     request.withCredentials = true;
                 }
 
-                request.send(null);
+                request.send(postData);
             } catch (e) {
                 $.console.log( "%s while making AJAX request: %s", e.name, e.message );
 
