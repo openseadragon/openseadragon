@@ -1494,7 +1494,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
-                    debugMode: _this.debugMode
+                    debugMode: _this.debugMode,
+                    subPixelRounding: _this.subPixelRounding
                 });
 
                 if (_this.collectionMode) {
@@ -2347,6 +2348,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             next = 0;
         }
         this.goToPage( next );
+    },
+
+    isAnimating: function () {
+        return THIS[ this.hash ].animating;
     },
 });
 
@@ -3494,7 +3499,9 @@ function updateOnce( viewer ) {
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
     }
 
-    if ( !THIS[ viewer.hash ].animating && animated ) {
+    var currentAnimating = THIS[ viewer.hash ].animating;
+
+    if ( !currentAnimating && animated ) {
         /**
          * Raised when any spring animation starts (zoom, pan, etc.).
          *
@@ -3532,7 +3539,7 @@ function updateOnce( viewer ) {
         }
     }
 
-    if ( THIS[ viewer.hash ].animating && !animated ) {
+    if ( currentAnimating && !animated ) {
         /**
          * Raised when any spring animation ends (zoom, pan, etc.).
          *
@@ -3550,6 +3557,13 @@ function updateOnce( viewer ) {
     }
 
     THIS[ viewer.hash ].animating = animated;
+
+    // Intentionally use currentAnimating as the value at the current frame,
+    // regardless of THIS[ viewer.hash ].animating being updated.
+    if (currentAnimating && !animated) {
+        // Ensure a draw occurs once animation is over.
+        drawWorld( viewer );
+    }
 
     //viewer.profiler.endUpdate();
 }

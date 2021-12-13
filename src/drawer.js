@@ -352,7 +352,7 @@ $.Drawer.prototype = {
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
             scale = scale || 1;
-            tile.drawCanvas(context, drawingHandler, scale, translate);
+            tile.drawCanvas(context, drawingHandler, scale, translate, this._shouldRoundPositionAndSize);
         } else {
             tile.drawHTML( this.canvas );
         }

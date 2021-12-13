@@ -209,6 +209,13 @@
   *     You can pass a CSS color value like "#FF8800".
   *     When passing a function the tiledImage and canvas context are available as argument which is useful when you draw a gradient or pattern.
   *
+  * @property {Object} [subPixelRounding=null]
+  *     Determines when subpixel rounding should be applied for tiles rendering.
+  *     This property is a subpixel rounding enum values dictionary [number] --> string.
+  *     The key is a $.BROWSERS value, and the value is one of 'ALWAYS', 'ONLY_AT_REST' or 'NEVER',
+  *     indicating, for a given browser, when to apply subpixel rounding.
+  *     Key '' is the fallback value for any browser not specified in the dictionary.
+  *
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
@@ -1263,6 +1270,7 @@ function OpenSeadragon( options ){
             compositeOperation:         null,
             imageSmoothingEnabled:      true,
             placeholderFillStyle:       null,
+            subPixelRounding:           null,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
