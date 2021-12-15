@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-3.0.0: (In progress)
+3.0.0: 
 
 * BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1872 #1949 #1951 @msalsbery, #1950 @rmontroy)
 * BREAKING CHANGE: Removed deprecated OpenSeadragon.getEvent function (#1949 @msalsbery)
