@@ -267,7 +267,7 @@ $.ReferenceStrip.prototype = {
      */
     update: function () {
         if ( THIS[this.id].animating ) {
-            $.console.log( 'image reference strip update' );
+            $.console.info( 'image reference strip update' );
             return true;
         }
         return false;

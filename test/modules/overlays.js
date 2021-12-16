@@ -47,7 +47,7 @@
                 waitForViewer(handler, count);
             }, 100);
         } else {
-            console.log("waitForViewer:" + viewer.isOpen( ) + ":" + viewer.drawer +
+            console.info("waitForViewer:" + viewer.isOpen( ) + ":" + viewer.drawer +
                 ":" + viewer.world.needsDraw());
             handler();
         }
