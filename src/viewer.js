@@ -1252,6 +1252,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
 
+    //
+    /**
+     * @function
+     * @returns {Boolean} returns true if the viewer is in fullscreen
+     */
+     isFullScreen: function () {
+        return $.isFullScreen() && this.isFullPage();
+    },
+
     /**
      * @function
      * @param {Boolean} visible
