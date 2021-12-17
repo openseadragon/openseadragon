@@ -2666,8 +2666,8 @@ function onCanvasKeyDown( event ) {
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan,
-      preventHorizontalPan: event.preventHorizontalPan
+      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
+      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     /**
@@ -2737,8 +2737,8 @@ function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan,
-      preventHorizontalPan: event.preventHorizontalPan
+      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
+      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     // This event is documented in onCanvasKeyDown
@@ -2788,8 +2788,8 @@ function onCanvasKeyPress( event ) {
                 break;
             case 97://a
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                  this.viewport.applyConstraints();
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
+                    this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
