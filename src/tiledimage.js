@@ -1608,7 +1608,7 @@ function loadTile( tiledImage, tile, time ) {
  */
 function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
+        $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         /**
          * Triggered when a tile fails to load.
          *
@@ -1634,7 +1634,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     }
 
     if ( time < tiledImage.lastResetTime ) {
-        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        $.console.warn( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         tile.loading = false;
         return;
     }
