@@ -3,6 +3,11 @@ OPENSEADRAGON CHANGELOG
 
 3.0.1: (in progress)
 
+* Added isFullScreen method to Viewer (#2067 @JachiOnuoha)
+* Fixed an issue where turning off panVertical or panHorizontal would not affect the panning keyboard combos (#2069 @JachiOnuoha)
+* Cleaned up console.logs so that errors and warnings use console.error and console.warn as appropriate (#2073 @Abhishek-90)
+* Improved documentation (#2067 @JachiOnuoha)
+
 3.0.0:
 
 * BREAKING CHANGE: Dropped support for older browsers (IE < 11) (#1872 #1949 #1951 @msalsbery, #1950 @rmontroy)
