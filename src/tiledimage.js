@@ -160,25 +160,25 @@ $.TiledImage = function( options ) {
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
         //configurable settings
-        springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:          $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:      $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:         $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:           $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:        $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:              $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
-        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
-        iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
-        debugMode:              $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
-        ajaxWithCredentials:    $.DEFAULT_SETTINGS.ajaxWithCredentials,
-        placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:                $.DEFAULT_SETTINGS.opacity,
-        preload:                $.DEFAULT_SETTINGS.preload,
-        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation,
-        subPixelRounding:       $.DEFAULT_SETTINGS.subPixelRounding
+        springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:                     $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:                 $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:                    $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:                      $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:                   $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:                         $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
+        smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
+        debugMode:                         $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:                 $.DEFAULT_SETTINGS.crossOriginPolicy,
+        ajaxWithCredentials:               $.DEFAULT_SETTINGS.ajaxWithCredentials,
+        placeholderFillStyle:              $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:                           $.DEFAULT_SETTINGS.opacity,
+        preload:                           $.DEFAULT_SETTINGS.preload,
+        compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
+        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency
     }, options );
 
     this._preload = this.preload;
@@ -1958,39 +1958,39 @@ function compareTiles( previousBest, tile ) {
  * Defines the value for subpixel rounding to fallback to in case of missing or
  * invalid value.
  */
-var DEFAULT_SUBPIXEL_ROUNDING_RULE = 'NEVER';
+var DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
 
 /**
  * @private
  * @inner
- * Determines whether the subpixel rounding enum value is 'ALWAYS' or not.
+ * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS} or not.
  *
- * @param {string} value - The subpixel rounding enum value to check, case sensitive.
- * @returns {Boolean} True if input value is 'ALWAYS', false otherwise.
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
+ * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}, false otherwise.
  */
 function isSubPixelRoundingRuleAlways(value) {
-    return value === 'ALWAYS';
+    return value === $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS;
 }
 
 /**
  * @private
  * @inner
- * Determines whether the subpixel rounding enum value is 'ONLY_AT_REST' or not.
+ * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or not.
  *
- * @param {string} value - The subpixel rounding enum value to check, case sensitive.
- * @returns {Boolean} True if input value is 'ONLY_AT_REST', false otherwise.
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
+ * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST}, false otherwise.
  */
  function isSubPixelRoundingRuleOnlyAtRest(value) {
-    return value === 'ONLY_AT_REST';
+    return value === $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST;
 }
 
 /**
  * @private
  * @inner
- * Determines whether the subpixel rounding enum value is 'NEVER' or not.
+ * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} or not.
  *
- * @param {string} value - The subpixel rounding enum value to check, case sensitive.
- * @returns {Boolean} True if input value is 'NEVER', false otherwise.
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
+ * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER}, false otherwise.
  */
  function isSubPixelRoundingRuleNever(value) {
     return value === DEFAULT_SUBPIXEL_ROUNDING_RULE;
@@ -2001,12 +2001,9 @@ function isSubPixelRoundingRuleAlways(value) {
  * @inner
  * Checks whether the input value is an invalid subpixel rounding enum value.
  *
- * @param {string} value - The subpixel rounding enum value to check, case sensitive.
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
  * @returns {Boolean} Returns true if the input value is none of the expected
- * 'ALWAYS', 'ONLY_AT_REST' or 'NEVER' value.
- * Note that if passed a valid value but with the incorrect casing, the return
- * value will be true. If input is 'always', then true is returned, indicating
- * it is an unknown value.
+ * {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}, {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} value.
  */
  function isSubPixelRoundingRuleUnknown(value) {
     return !isSubPixelRoundingRuleAlways(value) &&
@@ -2018,13 +2015,10 @@ function isSubPixelRoundingRuleAlways(value) {
  * @private
  * @inner
  * Ensures the returned value is always a valid subpixel rounding enum value,
- * defaulting to 'NEVER' if input is missing or invalid.
+ * defaulting to {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} if input is missing or invalid.
  *
- * @param {string} value - The subpixel rounding enum value to normalize, case sensitive.
- * @returns {string} Returns a valid subpixel rounding enum value.
- * Note that if passed a valid value but with the incorrect casing, the return
- * value will be the default 'NEVER'. If input is 'always', then 'NEVER' is
- * returned.
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to normalize.
+ * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns a valid subpixel rounding enum value.
  */
  function normalizeSubPixelRoundingRule(value) {
     if (isSubPixelRoundingRuleUnknown(value)) {
@@ -2039,19 +2033,23 @@ function isSubPixelRoundingRuleAlways(value) {
  * Ensures the returned value is always a valid subpixel rounding enum value,
  * defaulting to 'NEVER' if input is missing or invalid.
  *
- * @param {Object} subPixelRoundingRules - A subpixel rounding enum values dictionary [number] --> string.
- * @returns {string} Returns the determined subpixel rounding enum value for the
+ * @param {Object} subPixelRoundingRules - A subpixel rounding enum values dictionary [{@link BROWSERS}] --> {@link SUBPIXEL_ROUNDING_OCCURRENCES}.
+ * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns the determined subpixel rounding enum value for the
  * current browser.
  */
 function determineSubPixelRoundingRule(subPixelRoundingRules) {
+    if (typeof subPixelRoundingRules === 'number') {
+        return normalizeSubPixelRoundingRule(subPixelRoundingRules);
+    }
+
     if (!subPixelRoundingRules || !$.Browser) {
         return DEFAULT_SUBPIXEL_ROUNDING_RULE;
     }
 
     var subPixelRoundingRule = subPixelRoundingRules[$.Browser.vendor];
 
-    if (!subPixelRoundingRule || isSubPixelRoundingRuleUnknown(subPixelRoundingRule)) {
-        subPixelRoundingRule = subPixelRoundingRules[''];
+    if (isSubPixelRoundingRuleUnknown(subPixelRoundingRule)) {
+        subPixelRoundingRule = subPixelRoundingRules['*'];
     }
 
     return normalizeSubPixelRoundingRule(subPixelRoundingRule);
@@ -2205,7 +2203,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
-    var subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRounding);
+    var subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRoundingForTransparency);
 
     var shouldRoundPositionAndSize = false;
 

@@ -1495,7 +1495,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode,
-                    subPixelRounding: _this.subPixelRounding
+                    subPixelRoundingForTransparency: _this.subPixelRoundingForTransparency
                 });
 
                 if (_this.collectionMode) {
