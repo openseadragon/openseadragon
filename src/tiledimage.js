@@ -2214,11 +2214,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         shouldRoundPositionAndSize = !isAnimating;
     }
 
-    tiledImage._drawer._shouldRoundPositionAndSize = shouldRoundPositionAndSize;
-
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate, shouldRoundPositionAndSize );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){

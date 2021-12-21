@@ -344,15 +344,18 @@ $.Drawer.prototype = {
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
+     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
+     * position and size of tiles supporting alpha channel in non-transparency
+     * context.
      */
-    drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
+    drawTile: function(tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
             scale = scale || 1;
-            tile.drawCanvas(context, drawingHandler, scale, translate, this._shouldRoundPositionAndSize);
+            tile.drawCanvas(context, drawingHandler, scale, translate, shouldRoundPositionAndSize);
         } else {
             tile.drawHTML( this.canvas );
         }
