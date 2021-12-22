@@ -2210,8 +2210,10 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (isSubPixelRoundingRuleAlways(subPixelRoundingRule)) {
         shouldRoundPositionAndSize = true;
     } else if (isSubPixelRoundingRuleOnlyAtRest(subPixelRoundingRule)) {
-        var isAnimating = tiledImage.viewer && tiledImage.viewer.isAnimating();
-        shouldRoundPositionAndSize = !isAnimating;
+        shouldRoundPositionAndSize = tiledImage.viewer && (
+            tiledImage.viewer.getAnimationState() === $.ANIMATION_STATES.ANIMATION_FINISHED ||
+            tiledImage.viewer.getAnimationState() === $.ANIMATION_STATES.AT_REST // Testing AT_REST here is for the very first render after loading.
+        );
     }
 
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
