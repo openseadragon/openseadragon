@@ -1416,7 +1416,7 @@ function OpenSeadragon( options ){
         },
 
         /**
-         * An enumeration of Browser vendors.
+         * An enumeration of when subpixel rounding should occur.
          * @static
          * @type {Object}
          * @property {Number} NEVER Never apply subpixel rounding for transparency.
