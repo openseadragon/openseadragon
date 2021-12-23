@@ -318,8 +318,11 @@ $.Tile.prototype = {
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Number} [scale=1] - Apply a scale to position and size
      * @param {OpenSeadragon.Point} [translate] - A translation vector
+     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
+     * position and size of tiles supporting alpha channel in non-transparency
+     * context.
      */
-    drawCanvas: function( context, drawingHandler, scale, translate ) {
+    drawCanvas: function( context, drawingHandler, scale, translate, shouldRoundPositionAndSize ) {
 
         var position = this.position.times($.pixelDensityRatio),
             size     = this.size.times($.pixelDensityRatio),
@@ -363,6 +366,14 @@ $.Tile.prototype = {
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
         if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
+            if (shouldRoundPositionAndSize) {
+                // Round to the nearest whole pixel so we don't get seams from overlap.
+                position.x = Math.round(position.x);
+                position.y = Math.round(position.y);
+                size.x = Math.round(size.x);
+                size.y = Math.round(size.y);
+            }
+
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(

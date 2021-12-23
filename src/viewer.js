@@ -713,6 +713,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         THIS[ this.hash ].animating = false;
+
         this.world.removeAll();
         this.imageLoader.clear();
 
@@ -1503,7 +1504,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
-                    debugMode: _this.debugMode
+                    debugMode: _this.debugMode,
+                    subPixelRoundingForTransparency: _this.subPixelRoundingForTransparency
                 });
 
                 if (_this.collectionMode) {
@@ -2356,6 +2358,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             next = 0;
         }
         this.goToPage( next );
+    },
+
+    isAnimating: function () {
+        return THIS[ this.hash ].animating;
     },
 });
 
@@ -3503,7 +3509,9 @@ function updateOnce( viewer ) {
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
     }
 
-    if ( !THIS[ viewer.hash ].animating && animated ) {
+    var currentAnimating = THIS[ viewer.hash ].animating;
+
+    if ( !currentAnimating && animated ) {
         /**
          * Raised when any spring animation starts (zoom, pan, etc.).
          *
@@ -3517,7 +3525,13 @@ function updateOnce( viewer ) {
         abortControlsAutoHide( viewer );
     }
 
-    if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
+    var isAnimationFinished = currentAnimating && !animated;
+
+    if ( isAnimationFinished ) {
+        THIS[ viewer.hash ].animating = false;
+    }
+
+    if ( animated || isAnimationFinished || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
         viewer._drawOverlays();
         if( viewer.navigator ){
@@ -3541,7 +3555,7 @@ function updateOnce( viewer ) {
         }
     }
 
-    if ( THIS[ viewer.hash ].animating && !animated ) {
+    if ( isAnimationFinished ) {
         /**
          * Raised when any spring animation ends (zoom, pan, etc.).
          *
