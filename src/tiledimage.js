@@ -1963,42 +1963,6 @@ var DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
 /**
  * @private
  * @inner
- * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS} or not.
- *
- * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
- * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}, false otherwise.
- */
-function isSubPixelRoundingRuleAlways(value) {
-    return value === $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS;
-}
-
-/**
- * @private
- * @inner
- * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or not.
- *
- * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
- * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST}, false otherwise.
- */
- function isSubPixelRoundingRuleOnlyAtRest(value) {
-    return value === $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST;
-}
-
-/**
- * @private
- * @inner
- * Determines whether the subpixel rounding enum value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} or not.
- *
- * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
- * @returns {Boolean} True if input value is {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER}, false otherwise.
- */
- function isSubPixelRoundingRuleNever(value) {
-    return value === DEFAULT_SUBPIXEL_ROUNDING_RULE;
-}
-
-/**
- * @private
- * @inner
  * Checks whether the input value is an invalid subpixel rounding enum value.
  *
  * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
@@ -2006,9 +1970,9 @@ function isSubPixelRoundingRuleAlways(value) {
  * {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}, {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} value.
  */
  function isSubPixelRoundingRuleUnknown(value) {
-    return !isSubPixelRoundingRuleAlways(value) &&
-        !isSubPixelRoundingRuleOnlyAtRest(value) &&
-        !isSubPixelRoundingRuleNever(value);
+    return value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS &&
+        value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST &&
+        value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
 }
 
 /**
@@ -2207,13 +2171,11 @@ function drawTiles( tiledImage, lastDrawn ) {
 
     var shouldRoundPositionAndSize = false;
 
-    if (isSubPixelRoundingRuleAlways(subPixelRoundingRule)) {
+    if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS) {
         shouldRoundPositionAndSize = true;
-    } else if (isSubPixelRoundingRuleOnlyAtRest(subPixelRoundingRule)) {
-        shouldRoundPositionAndSize = tiledImage.viewer && (
-            tiledImage.viewer.getAnimationState() === $.ANIMATION_STATES.ANIMATION_FINISHED ||
-            tiledImage.viewer.getAnimationState() === $.ANIMATION_STATES.AT_REST // Testing AT_REST here is for the very first render after loading.
-        );
+    } else if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST) {
+        var isAnimating = tiledImage.viewer && tiledImage.viewer.isAnimating();
+        shouldRoundPositionAndSize = !isAnimating;
     }
 
     for (var i = lastDrawn.length - 1; i >= 0; i--) {

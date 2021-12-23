@@ -203,7 +203,6 @@ $.Viewer = function( options ) {
         fsBoundsDelta:     new $.Point( 1, 1 ),
         prevContainerSize: null,
         animating:         false,
-        animationState:    $.ANIMATION_STATES.AT_REST,
         forceRedraw:       false,
         mouseInside:       false,
         group:             null,
@@ -714,7 +713,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         THIS[ this.hash ].animating = false;
-        THIS[ this.hash ].animationState = $.ANIMATION_STATES.AT_REST;
 
         this.world.removeAll();
         this.imageLoader.clear();
@@ -2356,10 +2354,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     isAnimating: function () {
         return THIS[ this.hash ].animating;
     },
-
-    getAnimationState: function () {
-        return THIS[ this.hash ].animationState;
-    },
 });
 
 
@@ -3509,8 +3503,6 @@ function updateOnce( viewer ) {
     var currentAnimating = THIS[ viewer.hash ].animating;
 
     if ( !currentAnimating && animated ) {
-        THIS[ viewer.hash ].animationState = $.ANIMATION_STATES.ANIMATION_STARTED;
-
         /**
          * Raised when any spring animation starts (zoom, pan, etc.).
          *
@@ -3524,18 +3516,13 @@ function updateOnce( viewer ) {
         abortControlsAutoHide( viewer );
     }
 
-    var lastAnimation = false;
+    var isAnimationFinished = currentAnimating && !animated;
 
-    if (currentAnimating) {
-        if (animated) {
-            THIS[ viewer.hash ].animationState = $.ANIMATION_STATES.ANIMATING;
-        } else {
-            THIS[ viewer.hash ].animationState = $.ANIMATION_STATES.ANIMATION_FINISHED;
-            lastAnimation = true;
-        }
+    if ( isAnimationFinished ) {
+        THIS[ viewer.hash ].animating = false;
     }
 
-    if ( animated || lastAnimation || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
+    if ( animated || isAnimationFinished || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
         viewer._drawOverlays();
         if( viewer.navigator ){
@@ -3559,9 +3546,7 @@ function updateOnce( viewer ) {
         }
     }
 
-    if ( currentAnimating && !animated ) {
-        THIS[ viewer.hash ].animationState = $.ANIMATION_STATES.AT_REST;
-
+    if ( isAnimationFinished ) {
         /**
          * Raised when any spring animation ends (zoom, pan, etc.).
          *

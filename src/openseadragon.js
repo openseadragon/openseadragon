@@ -1430,22 +1430,6 @@ function OpenSeadragon( options ){
         },
 
         /**
-         * An enumeration of animation states.
-         * @static
-         * @type {Object}
-         * @property {Number} AT_REST Indicates there are no more animations running and the image is at rest.
-         * @property {Number} ANIMATION_STARTED Indicates the image is in motion and it just started.
-         * @property {Number} ANIMATING Indicates the image was in motion and is still in motion.
-         * @property {Number} ANIMATION_FINISHED Indicates the image was in motion and is not in motion anymore.
-         */
-         ANIMATION_STATES: {
-            AT_REST:            0,
-            ANIMATION_STARTED:  1,
-            ANIMATING:          2,
-            ANIMATION_FINISHED: 3
-        },
-
-        /**
          * Keep track of which {@link Viewer}s have been created.
          * - Key: {@link Element} to which a Viewer is attached.
          * - Value: {@link Viewer} of the element defined by the key.
