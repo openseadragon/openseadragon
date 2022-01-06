@@ -209,6 +209,17 @@
   *     You can pass a CSS color value like "#FF8800".
   *     When passing a function the tiledImage and canvas context are available as argument which is useful when you draw a gradient or pattern.
   *
+  * @property {Object} [subPixelRoundingForTransparency=null]
+  *     Determines when subpixel rounding should be applied for tiles when rendering images that support transparency.
+  *     This property is a subpixel rounding enum values dictionary [{@link BROWSERS}] --> {@link SUBPIXEL_ROUNDING_OCCURRENCES}.
+  *     The key is a {@link BROWSERS} value, and the value is one of {@link SUBPIXEL_ROUNDING_OCCURRENCES},
+  *     indicating, for a given browser, when to apply subpixel rounding.
+  *     Key '*' is the fallback value for any browser not specified in the dictionary.
+  *     This property has a simple mode, and one can set it directly to
+  *     {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER}, {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}
+  *     in order to apply this rule for all browser. The values {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS} would be equivalent to { '*', SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS }.
+  *     The default is {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} for all browsers, for backward compatibility reason.
+  *
   * @property {Number} [degrees=0]
   *     Initial rotation.
   *
@@ -1258,11 +1269,12 @@ function OpenSeadragon( options ){
             flipped:                    false,
 
             // APPEARANCE
-            opacity:                    1,
-            preload:                    false,
-            compositeOperation:         null,
-            imageSmoothingEnabled:      true,
-            placeholderFillStyle:       null,
+            opacity:                           1,
+            preload:                           false,
+            compositeOperation:                null,
+            imageSmoothingEnabled:             true,
+            placeholderFillStyle:              null,
+            subPixelRoundingForTransparency:   null,
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
@@ -1401,6 +1413,20 @@ function OpenSeadragon( options ){
             OPERA:      5,
             EDGE:       6,
             CHROMEEDGE: 7
+        },
+
+        /**
+         * An enumeration of when subpixel rounding should occur.
+         * @static
+         * @type {Object}
+         * @property {Number} NEVER Never apply subpixel rounding for transparency.
+         * @property {Number} ONLY_AT_REST Do not apply subpixel rounding for transparency during animation (panning, zoom, rotation) and apply it once animation is over.
+         * @property {Number} ALWAYS Apply subpixel rounding for transparency during animation and when animation is over.
+         */
+        SUBPIXEL_ROUNDING_OCCURRENCES: {
+            NEVER:        0,
+            ONLY_AT_REST: 1,
+            ALWAYS:       2
         },
 
         /**
@@ -2316,7 +2342,7 @@ function OpenSeadragon( options ){
                           protocol !== "https:" )) {
                         onSuccess( request );
                     } else {
-                        $.console.log( "AJAX request returned %d: %s", request.status, url );
+                        $.console.error( "AJAX request returned %d: %s", request.status, url );
 
                         if ( $.isFunction( onError ) ) {
                             onError( request );
@@ -2347,7 +2373,7 @@ function OpenSeadragon( options ){
 
                 request.send(postData);
             } catch (e) {
-                $.console.log( "%s while making AJAX request: %s", e.name, e.message );
+                $.console.error( "%s while making AJAX request: %s", e.name, e.message );
 
                 request.onreadystatechange = function(){};
 

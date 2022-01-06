@@ -160,24 +160,25 @@ $.TiledImage = function( options ) {
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
         //configurable settings
-        springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:          $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:      $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal:         $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:           $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender:        $.DEFAULT_SETTINGS.immediateRender,
-        blendTime:              $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend:            $.DEFAULT_SETTINGS.alwaysBlend,
-        minPixelRatio:          $.DEFAULT_SETTINGS.minPixelRatio,
-        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
-        iOSDevice:              $.DEFAULT_SETTINGS.iOSDevice,
-        debugMode:              $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:      $.DEFAULT_SETTINGS.crossOriginPolicy,
-        ajaxWithCredentials:    $.DEFAULT_SETTINGS.ajaxWithCredentials,
-        placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity:                $.DEFAULT_SETTINGS.opacity,
-        preload:                $.DEFAULT_SETTINGS.preload,
-        compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
+        springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:                     $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:                 $.DEFAULT_SETTINGS.minZoomImageRatio,
+        wrapHorizontal:                    $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:                      $.DEFAULT_SETTINGS.wrapVertical,
+        immediateRender:                   $.DEFAULT_SETTINGS.immediateRender,
+        blendTime:                         $.DEFAULT_SETTINGS.blendTime,
+        alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
+        minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
+        smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
+        iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
+        debugMode:                         $.DEFAULT_SETTINGS.debugMode,
+        crossOriginPolicy:                 $.DEFAULT_SETTINGS.crossOriginPolicy,
+        ajaxWithCredentials:               $.DEFAULT_SETTINGS.ajaxWithCredentials,
+        placeholderFillStyle:              $.DEFAULT_SETTINGS.placeholderFillStyle,
+        opacity:                           $.DEFAULT_SETTINGS.opacity,
+        preload:                           $.DEFAULT_SETTINGS.preload,
+        compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
+        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency
     }, options );
 
     this._preload = this.preload;
@@ -1612,7 +1613,7 @@ function loadTile( tiledImage, tile, time ) {
  */
 function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
+        $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
         /**
          * Triggered when a tile fails to load.
          *
@@ -1638,7 +1639,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     }
 
     if ( time < tiledImage.lastResetTime ) {
-        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+        $.console.warn( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         tile.loading = false;
         return;
     }
@@ -1958,6 +1959,73 @@ function compareTiles( previousBest, tile ) {
 /**
  * @private
  * @inner
+ * Defines the value for subpixel rounding to fallback to in case of missing or
+ * invalid value.
+ */
+var DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
+
+/**
+ * @private
+ * @inner
+ * Checks whether the input value is an invalid subpixel rounding enum value.
+ *
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
+ * @returns {Boolean} Returns true if the input value is none of the expected
+ * {@link SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS}, {@link SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST} or {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} value.
+ */
+ function isSubPixelRoundingRuleUnknown(value) {
+    return value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS &&
+        value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST &&
+        value !== $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
+}
+
+/**
+ * @private
+ * @inner
+ * Ensures the returned value is always a valid subpixel rounding enum value,
+ * defaulting to {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} if input is missing or invalid.
+ *
+ * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to normalize.
+ * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns a valid subpixel rounding enum value.
+ */
+ function normalizeSubPixelRoundingRule(value) {
+    if (isSubPixelRoundingRuleUnknown(value)) {
+        return DEFAULT_SUBPIXEL_ROUNDING_RULE;
+    }
+    return value;
+}
+
+/**
+ * @private
+ * @inner
+ * Ensures the returned value is always a valid subpixel rounding enum value,
+ * defaulting to 'NEVER' if input is missing or invalid.
+ *
+ * @param {Object} subPixelRoundingRules - A subpixel rounding enum values dictionary [{@link BROWSERS}] --> {@link SUBPIXEL_ROUNDING_OCCURRENCES}.
+ * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns the determined subpixel rounding enum value for the
+ * current browser.
+ */
+function determineSubPixelRoundingRule(subPixelRoundingRules) {
+    if (typeof subPixelRoundingRules === 'number') {
+        return normalizeSubPixelRoundingRule(subPixelRoundingRules);
+    }
+
+    if (!subPixelRoundingRules || !$.Browser) {
+        return DEFAULT_SUBPIXEL_ROUNDING_RULE;
+    }
+
+    var subPixelRoundingRule = subPixelRoundingRules[$.Browser.vendor];
+
+    if (isSubPixelRoundingRuleUnknown(subPixelRoundingRule)) {
+        subPixelRoundingRule = subPixelRoundingRules['*'];
+    }
+
+    return normalizeSubPixelRoundingRule(subPixelRoundingRule);
+}
+
+/**
+ * @private
+ * @inner
  * Draws a TiledImage.
  * @param {OpenSeadragon.TiledImage} tiledImage
  * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
@@ -2103,9 +2171,20 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
+    var subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRoundingForTransparency);
+
+    var shouldRoundPositionAndSize = false;
+
+    if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS) {
+        shouldRoundPositionAndSize = true;
+    } else if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST) {
+        var isAnimating = tiledImage.viewer && tiledImage.viewer.isAnimating();
+        shouldRoundPositionAndSize = !isAnimating;
+    }
+
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
+        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate, shouldRoundPositionAndSize );
         tile.beingDrawn = true;
 
         if( tiledImage.viewer ){
