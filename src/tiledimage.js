@@ -1542,11 +1542,11 @@ function getTile(
             bounds,
             exists,
             url,
-            post,
             context2D,
             tiledImage.loadTilesWithAjax,
             ajaxHeaders,
-            sourceBounds
+            sourceBounds,
+            post
         );
 
         if (tiledImage.getFlip()) {

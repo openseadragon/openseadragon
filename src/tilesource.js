@@ -69,6 +69,9 @@
  *      the XHR's withCredentials (for accessing secure data).
  * @param {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
+ * @param {Boolean} [options.splitHashDataForPost]
+ *      First occurrence of '#' in the options.url is used to split URL
+ *      and the latter part is treated as POST data (applies to getImageInfo(...))
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -446,10 +449,16 @@ $.TileSource.prototype = {
         }
 
         var postData = null;
-        var hashIdx = url.indexOf("#");
-        if (hashIdx !== -1) {
-            postData = url.substring(hashIdx + 1);
-            url = url.substr(0, hashIdx - 1);
+        if (this.allowPost) {
+            if (!this.loadTilesWithAjax) {
+                console.warn("Ajax is not enabled, but post data are used. Post data is ignored " +
+                    "without ajax in subsequent tile requests.");
+            }
+            var hashIdx = url.indexOf("#");
+            if (hashIdx !== -1) {
+                postData = url.substring(hashIdx + 1);
+                url = url.substr(0, hashIdx);
+            }
         }
 
         callback = function( data ){
@@ -545,11 +554,13 @@ $.TileSource.prototype = {
                      * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                      * @property {String} message
                      * @property {String} source
+                     * @property {String} postData or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
                         message: msg,
-                        source: url
+                        source: url,
+                        postData: postData
                     });
                 }
             });
@@ -588,7 +599,8 @@ $.TileSource.prototype = {
      *      from if any.
      * @param {String} postData value obtained from the url after '#' sign or null
      * @return {Object} options - A dictionary of keyword arguments sufficient
-     *      to configure this tile sources constructor.
+     *      to configure the tile source constructor (include all values you want to
+     *      instantiate the TileSource subclass with - what _options_ object should contain).
      * @throws {Error}
      */
     configure: function( data, url, postData ) {

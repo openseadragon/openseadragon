@@ -2432,6 +2432,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 ajaxHeaders: imgOptions.ajaxHeaders ?
                     imgOptions.ajaxHeaders : viewer.ajaxHeaders,
+                splitHashDataForPost: viewer.splitHashDataForPost,
                 useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );

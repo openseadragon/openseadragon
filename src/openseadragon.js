@@ -659,6 +659,15 @@
   * @property {Object} [ajaxHeaders={}]
   *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
+  * @property {Boolean} [splitHashDataForPost=false]
+  *     Allows to treat _first_ hash ('#') symbol as a separator for POST data:
+  *     URL to be opened by a {@link OpenSeadragon.TileSource} can thus look like: http://some.url#postdata=here .
+  *     The URL is split to 'http://some.url' and 'postdata=here'; post data is given to the
+  *     {@link OpenSeadragon.TileSource} of the choice and can be further used within tile requests
+  *     (see TileSource methods). {@link OpenSeadragon.TileSource.prototype.configure} return value
+  *     should contain the post data so that it is given to its subclass in the constructor.
+  *     NOTE: post data is expected to be ampersand-separated (just like GET parameters), and is not used
+  *     to fetch tile image data if loadTilesWithAjax=false (but it is still used for the initial request).
   */
 
  /**
@@ -1140,6 +1149,7 @@ function OpenSeadragon( options ){
             ajaxWithCredentials:    false,
             loadTilesWithAjax:      false,
             ajaxHeaders:            {},
+            splitHashDataForPost:   false,
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
