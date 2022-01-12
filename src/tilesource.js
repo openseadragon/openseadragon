@@ -449,7 +449,7 @@ $.TileSource.prototype = {
         }
 
         var postData = null;
-        if (this.allowPost) {
+        if (this.splitHashDataForPost) {
             if (!this.loadTilesWithAjax) {
                 console.warn("Ajax is not enabled, but post data are used. Post data is ignored " +
                     "without ajax in subsequent tile requests.");
