@@ -550,7 +550,7 @@ $.TileSource.prototype = {
                      * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                      * @property {String} message
                      * @property {String} source
-                     * @property {String} postData or null
+                     * @property {String} postData - HTTP POST data in k=v&k2=v2... form; or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -593,7 +593,8 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded
      *      from if any.
-     * @param {String} postData value obtained from the url after '#' sign or null
+     * @param {String} postData - HTTP POST data in k=v&k2=v2... form; or null; value obtained from
+     *      the protocol URL after '#' sign if flag splitHashDataForPost set to 'true'
      * @return {Object} options - A dictionary of keyword arguments sufficient
      *      to configure the tile source constructor (include all values you want to
      *      instantiate the TileSource subclass with - what _options_ object should contain).

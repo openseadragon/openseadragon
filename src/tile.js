@@ -50,7 +50,7 @@
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
  * @param {Object} ajaxHeaders The headers to send with this tile's AJAX request (if applicable).
  * @param {OpenSeadragon.Rect} sourceBounds The portion of the tile to use as the source of the
- * @param {String} postData post parameters or null
+ * @param {String} postData HTTP POST data in k=v&k2=v2... form; or null
  * drawing operation, in pixels. Note that this only works when drawing with canvas; when drawing
  * with HTML the entire tile is always used.
  */
@@ -101,7 +101,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     /**
      * Post parameters for this tile. Either it is an URL-encoded string
      * in k1=v1&k2=v2... format or null
-     * @member {String} postData
+     * @member {String} postData HTTP POST data in k=v&k2=v2... form; or null
      * @memberof OpenSeadragon.Tile#
      */
     this.postData  = postData;
