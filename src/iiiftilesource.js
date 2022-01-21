@@ -184,7 +184,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @function
      * @param {Object} data - the raw configuration
      * @param {String} url - the url configuration was retrieved from
-     * @param {String} postData - HTTP POST data in k=v&k2=v2... form; or null;
+     * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
      * @example <caption>IIIF 1.1 Info Looks like this</caption>
      * {
      *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",

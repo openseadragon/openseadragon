@@ -89,7 +89,7 @@
          * @function
          * @param {Object} options - the options
          * @param {String} dataUrl - the url the image was retrieved from, if any.
-         * @param {String} postData - HTTP POST data in k=v&k2=v2... form; or null
+         * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
          * @return {Object} options - A dictionary of keyword arguments sufficient
          *      to configure this tile sources constructor.
          */
