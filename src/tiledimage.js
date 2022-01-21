@@ -1500,6 +1500,7 @@ function getTile(
         sourceBounds,
         exists,
         url,
+        post,
         ajaxHeaders,
         context2D,
         tile;
@@ -1518,6 +1519,7 @@ function getTile(
         sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
         exists  = tileSource.tileExists( level, xMod, yMod );
         url     = tileSource.getTileUrl( level, xMod, yMod );
+        post    = tileSource.getTilePostData( level, xMod, yMod );
 
         // Headers are only applicable if loadTilesWithAjax is set
         if (tiledImage.loadTilesWithAjax) {
@@ -1543,7 +1545,8 @@ function getTile(
             context2D,
             tiledImage.loadTilesWithAjax,
             ajaxHeaders,
-            sourceBounds
+            sourceBounds,
+            post
         );
 
         if (tiledImage.getFlip()) {
@@ -1583,6 +1586,7 @@ function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        postData: tile.postData,
         loadWithAjax: tile.loadWithAjax,
         ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,

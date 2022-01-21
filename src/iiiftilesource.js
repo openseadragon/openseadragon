@@ -183,6 +183,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      *
      * @function
      * @param {Object} data - the raw configuration
+     * @param {String} url - the url configuration was retrieved from
+     * @param {String} postData - HTTP POST data in k=v&k2=v2... form; or null;
      * @example <caption>IIIF 1.1 Info Looks like this</caption>
      * {
      *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
@@ -197,7 +199,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0"
      * }
      */
-    configure: function( data, url ){
+    configure: function( data, url, postData ){
         // Try to deduce our version and fake it upwards if needed
         if ( !$.isPlainObject(data) ) {
             var options = configureFromXml10( data );

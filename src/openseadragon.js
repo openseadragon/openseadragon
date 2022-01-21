@@ -659,6 +659,15 @@
   * @property {Object} [ajaxHeaders={}]
   *     A set of headers to include when making AJAX requests for tile sources or tiles.
   *
+  * @property {Boolean} [splitHashDataForPost=false]
+  *     Allows to treat _first_ hash ('#') symbol as a separator for POST data:
+  *     URL to be opened by a {@link OpenSeadragon.TileSource} can thus look like: http://some.url#postdata=here .
+  *     The URL is split to 'http://some.url' and 'postdata=here'; post data is given to the
+  *     {@link OpenSeadragon.TileSource} of the choice and can be further used within tile requests
+  *     (see TileSource methods). {@link OpenSeadragon.TileSource.prototype.configure} return value
+  *     should contain the post data so that it is given to its subclass in the constructor.
+  *     NOTE: post data is expected to be ampersand-separated (just like GET parameters), and is not used
+  *     to fetch tile image data if loadTilesWithAjax=false (but it is still used for the initial request).
   */
 
  /**
@@ -1140,6 +1149,7 @@ function OpenSeadragon( options ){
             ajaxWithCredentials:    false,
             loadTilesWithAjax:      false,
             ajaxHeaders:            {},
+            splitHashDataForPost:   false,
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -2299,6 +2309,7 @@ function OpenSeadragon( options ){
          * @param {Function} options.error - a function to call on when an error occurs
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the the AJAX request
+         * @param {String} options.postData - HTTP POST data in k=v&k2=v2... form, GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
@@ -2307,6 +2318,7 @@ function OpenSeadragon( options ){
             var withCredentials;
             var headers;
             var responseType;
+            var postData;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2316,6 +2328,7 @@ function OpenSeadragon( options ){
                 withCredentials = url.withCredentials;
                 headers = url.headers;
                 responseType = url.responseType || null;
+                postData = url.postData || null;
                 url = url.url;
             }
 
@@ -2348,8 +2361,9 @@ function OpenSeadragon( options ){
                 }
             };
 
+            var method = postData ? "POST" : "GET";
             try {
-                request.open( "GET", url, true );
+                request.open( method, url, true );
 
                 if (responseType) {
                     request.responseType = responseType;
@@ -2367,7 +2381,7 @@ function OpenSeadragon( options ){
                     request.withCredentials = true;
                 }
 
-                request.send(null);
+                request.send(postData);
             } catch (e) {
                 $.console.error( "%s while making AJAX request: %s", e.name, e.message );
 

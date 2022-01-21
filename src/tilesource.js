@@ -69,6 +69,9 @@
  *      the XHR's withCredentials (for accessing secure data).
  * @param {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
+ * @param {Boolean} [options.splitHashDataForPost]
+ *      First occurrence of '#' in the options.url is used to split URL
+ *      and the latter part is treated as POST data (applies to getImageInfo(...))
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -445,6 +448,15 @@ $.TileSource.prototype = {
             }
         }
 
+        var postData = null;
+        if (this.splitHashDataForPost) {
+            var hashIdx = url.indexOf("#");
+            if (hashIdx !== -1) {
+                postData = url.substring(hashIdx + 1);
+                url = url.substr(0, hashIdx);
+            }
+        }
+
         callback = function( data ){
             if( typeof (data) === "string" ) {
                 data = $.parseXml( data );
@@ -466,7 +478,7 @@ $.TileSource.prototype = {
                 return;
             }
 
-            options = $TileSource.prototype.configure.apply( _this, [ data, url ]);
+            options = $TileSource.prototype.configure.apply( _this, [ data, url, postData ]);
             if (options.ajaxWithCredentials === undefined) {
                 options.ajaxWithCredentials = _this.ajaxWithCredentials;
             }
@@ -501,6 +513,7 @@ $.TileSource.prototype = {
             // request info via xhr asynchronously.
             $.makeAjaxRequest( {
                 url: url,
+                postData: postData,
                 withCredentials: this.ajaxWithCredentials,
                 headers: this.ajaxHeaders,
                 success: function( xhr ) {
@@ -537,11 +550,13 @@ $.TileSource.prototype = {
                      * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                      * @property {String} message
                      * @property {String} source
+                     * @property {String} postData - HTTP POST data in k=v&k2=v2... form; or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
                         message: msg,
-                        source: url
+                        source: url,
+                        postData: postData
                     });
                 }
             });
@@ -578,11 +593,14 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded
      *      from if any.
+     * @param {String} postData - HTTP POST data in k=v&k2=v2... form; or null; value obtained from
+     *      the protocol URL after '#' sign if flag splitHashDataForPost set to 'true'
      * @return {Object} options - A dictionary of keyword arguments sufficient
-     *      to configure this tile sources constructor.
+     *      to configure the tile source constructor (include all values you want to
+     *      instantiate the TileSource subclass with - what _options_ object should contain).
      * @throws {Error}
      */
-    configure: function( data, url ) {
+    configure: function( data, url, postData ) {
         throw new Error( "Method not implemented." );
     },
 
@@ -601,6 +619,20 @@ $.TileSource.prototype = {
      */
     getTileUrl: function( level, x, y ) {
         throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Must use AJAX in order to work, i.e. loadTilesWithAjax = true is set.
+     * It should return url-encoded string with the following structure:
+     *   key=value&key2=value2...
+     * or null in case GET is used instead.
+     * @param level
+     * @param x
+     * @param y
+     * @return {string || null} post data to send with tile configuration request
+     */
+    getTilePostData: function( level, x, y ) {
+        return null;
     },
 
     /**
