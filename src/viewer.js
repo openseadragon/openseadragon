@@ -1041,8 +1041,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.addClass( this.element, 'fullpage' );
             body.appendChild( this.element );
 
-            this.element.style.height = $.getWindowSize().y + 'px';
-            this.element.style.width = $.getWindowSize().x + 'px';
+            this.element.style.height = '100vh';
+            this.element.style.width = '100vw';
 
             if ( this.toolbar && this.toolbar.element ) {
                 this.element.style.height = (
