@@ -165,7 +165,7 @@
         this.dblClickTimeThreshold = options.dblClickTimeThreshold || $.DEFAULT_SETTINGS.dblClickTimeThreshold;
         /**
          * The maximum distance allowed between two pointer click events
-         * to be treated as a click gesture.
+         * to be treated as a double-click gesture.
          * @member {Number} dblClickDistThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
