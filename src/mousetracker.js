@@ -1400,11 +1400,20 @@
          * @function
          */
         removeContact: function() {
-            --this.contacts;
+            if (
+                (this.type === "mouse" ||
+                    this.type === "pen" ||
+                    this.type === "touch") &&
+                this.contacts > 0
+            ) {
+                --this.contacts;
 
-            if (this.contacts < 0) {
-                $.console.warn('GesturePointList.removeContact() Implausible contacts value');
-                this.contacts = 0;
+                if (this.contacts < 0) {
+                    $.console.warn(
+                        "GesturePointList.removeContact() Implausible contacts value"
+                    );
+                    this.contacts = 0;
+                }
             }
         }
     };
@@ -2823,10 +2832,7 @@
             // If child element relinquishes capture to a parent we may get here
             //   from a pointerleave event while a pointerup event will never be received.
             //   In that case, we'll clean up the contact count
-            if ( (pointsList.type === 'mouse' || pointsList.type === 'pen') &&
-                                                        pointsList.contacts > 0 ) {
-                pointsList.removeContact();
-            }
+            pointsList.removeContact();
 
             listLength = pointsList.removeById( gPoint.id );
         } else {
