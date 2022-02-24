@@ -1588,7 +1588,7 @@ function loadTile( tiledImage, tile, time ) {
         src: tile.url,
         postData: tile.postData,
         loadWithAjax: tile.loadWithAjax,
-        ajaxHeaders: tile.ajaxHeaders,
+        ajaxHeaders: tiledImage.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
         callback: function( image, errorMsg, tileRequest ){
