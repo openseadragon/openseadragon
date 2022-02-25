@@ -54,6 +54,7 @@
  * @param {Number} [options.maxZoomLevel] - See maxZoomLevel in {@link OpenSeadragon.Options}.
  * @param {Number} [options.degrees] - See degrees in {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.homeFillsViewer] - See homeFillsViewer in {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.silenceMultiImageWarnings] - See silenceMultiImageWarnings in {@link OpenSeadragon.Options}.
  */
 $.Viewport = function( options ) {
 
@@ -96,19 +97,20 @@ $.Viewport = function( options ) {
         viewer:           null,
 
         //configurable options
-        springStiffness:    $.DEFAULT_SETTINGS.springStiffness,
-        animationTime:      $.DEFAULT_SETTINGS.animationTime,
-        minZoomImageRatio:  $.DEFAULT_SETTINGS.minZoomImageRatio,
-        maxZoomPixelRatio:  $.DEFAULT_SETTINGS.maxZoomPixelRatio,
-        visibilityRatio:    $.DEFAULT_SETTINGS.visibilityRatio,
-        wrapHorizontal:     $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical:       $.DEFAULT_SETTINGS.wrapVertical,
-        defaultZoomLevel:   $.DEFAULT_SETTINGS.defaultZoomLevel,
-        minZoomLevel:       $.DEFAULT_SETTINGS.minZoomLevel,
-        maxZoomLevel:       $.DEFAULT_SETTINGS.maxZoomLevel,
-        degrees:            $.DEFAULT_SETTINGS.degrees,
-        flipped:            $.DEFAULT_SETTINGS.flipped,
-        homeFillsViewer:    $.DEFAULT_SETTINGS.homeFillsViewer
+        springStiffness:            $.DEFAULT_SETTINGS.springStiffness,
+        animationTime:              $.DEFAULT_SETTINGS.animationTime,
+        minZoomImageRatio:          $.DEFAULT_SETTINGS.minZoomImageRatio,
+        maxZoomPixelRatio:          $.DEFAULT_SETTINGS.maxZoomPixelRatio,
+        visibilityRatio:            $.DEFAULT_SETTINGS.visibilityRatio,
+        wrapHorizontal:             $.DEFAULT_SETTINGS.wrapHorizontal,
+        wrapVertical:               $.DEFAULT_SETTINGS.wrapVertical,
+        defaultZoomLevel:           $.DEFAULT_SETTINGS.defaultZoomLevel,
+        minZoomLevel:               $.DEFAULT_SETTINGS.minZoomLevel,
+        maxZoomLevel:               $.DEFAULT_SETTINGS.maxZoomLevel,
+        degrees:                    $.DEFAULT_SETTINGS.degrees,
+        flipped:                    $.DEFAULT_SETTINGS.flipped,
+        homeFillsViewer:            $.DEFAULT_SETTINGS.homeFillsViewer,
+        silenceMultiImageWarnings:  $.DEFAULT_SETTINGS.silenceMultiImageWarnings
 
     }, options );
 
@@ -1170,8 +1172,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.viewportToImageCoordinates] is not accurate ' +
-                    'with multi-image; use TiledImage.viewportToImageCoordinates instead.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.viewportToImageCoordinates] is not accurate ' +
+                        'with multi-image; use TiledImage.viewportToImageCoordinates instead.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
@@ -1214,8 +1218,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.imageToViewportCoordinates] is not accurate ' +
-                    'with multi-image; use TiledImage.imageToViewportCoordinates instead.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.imageToViewportCoordinates] is not accurate ' +
+                        'with multi-image; use TiledImage.imageToViewportCoordinates instead.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
@@ -1256,8 +1262,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.imageToViewportRectangle] is not accurate ' +
-                    'with multi-image; use TiledImage.imageToViewportRectangle instead.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.imageToViewportRectangle] is not accurate ' +
+                       'with multi-image; use TiledImage.imageToViewportRectangle instead.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.imageToViewportRectangle
                 // because this._contentBoundsNoRotate can not be relied on
@@ -1304,8 +1312,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.viewportToImageRectangle] is not accurate ' +
-                    'with multi-image; use TiledImage.viewportToImageRectangle instead.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.viewportToImageRectangle] is not accurate ' +
+                        'with multi-image; use TiledImage.viewportToImageRectangle instead.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
@@ -1469,8 +1479,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.viewportToImageZoom] is not ' +
-                    'accurate with multi-image.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.viewportToImageZoom] is not ' +
+                        'accurate with multi-image.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.viewportToImageZoom
                 // because this._contentBoundsNoRotate can not be relied on
@@ -1503,8 +1515,10 @@ $.Viewport.prototype = {
         if (this.viewer) {
             var count = this.viewer.world.getItemCount();
             if (count > 1) {
-                $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
-                    'with multi-image.');
+                if (!this.silenceMultiImageWarnings) {
+                    $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
+                        'with multi-image.');
+                }
             } else if (count === 1) {
                 // It is better to use TiledImage.imageToViewportZoom
                 // because this._contentBoundsNoRotate can not be relied on
