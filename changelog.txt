@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Cleaned up console.logs so that errors and warnings use console.error and console.warn as appropriate (#2073 @Abhishek-90)
 * Improved documentation (#2067 @JachiOnuoha, #2112 @shyamkumaryadav)
 * Added option to include POST data when loading files via Ajax (#2072 @Aiosa)
+* Fixed: Setting useCanvas to false would break the viewer (#2116 @rvv-bouvet)
 
 3.0.0:
 
