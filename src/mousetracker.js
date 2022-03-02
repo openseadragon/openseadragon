@@ -1400,20 +1400,8 @@
          * @function
          */
         removeContact: function() {
-            if (
-                (this.type === "mouse" ||
-                    this.type === "pen" ||
-                    this.type === "touch") &&
-                this.contacts > 0
-            ) {
+            if ( this.contacts > 0 ) {
                 --this.contacts;
-
-                if (this.contacts < 0) {
-                    $.console.warn(
-                        "GesturePointList.removeContact() Implausible contacts value"
-                    );
-                    this.contacts = 0;
-                }
             }
         }
     };
