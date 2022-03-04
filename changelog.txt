@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * Improved documentation (#2067 @JachiOnuoha, #2112 @shyamkumaryadav)
 * Added option to include POST data when loading files via Ajax (#2072 @Aiosa)
 * Fixed: Setting useCanvas to false would break the viewer (#2116 @rvv-bouvet)
+* Allow silencing multi-image warnings on viewport coordinate conversion functions (#2120 @claycoleman)
 
 3.0.0:
 
