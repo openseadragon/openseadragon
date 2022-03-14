@@ -1400,8 +1400,10 @@
          * @function
          */
         removeContact: function() {
-            if ( this.contacts > 0 ) {
-                --this.contacts;
+            --this.contacts;
+
+            if (this.contacts < 0) {
+                this.contacts = 0;
             }
         }
     };
