@@ -1176,7 +1176,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             // Stop the loop if lower-res tiles would all be covered by
             // already drawn tiles
-            if ($.TileSource._providesCoverage(this.coverage, level)) {
+            if ($.TiledImage._providesCoverage(this.coverage, level)) {
                 break;
             }
         }
@@ -1287,8 +1287,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             });
         }
 
-        $.TileSource._resetCoverage(this.coverage, level);
-        $.TileSource._resetCoverage(this.loadingCoverage, level);
+        $.TiledImage._resetCoverage(this.coverage, level);
+        $.TiledImage._resetCoverage(this.loadingCoverage, level);
 
         //OK, a new drawing so do your calculations
         var cornerTiles = this._getCornerTiles(level, topLeftBound, bottomRightBound);
@@ -1392,18 +1392,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             });
         }
 
-        $.TileSource._setCoverage( this.coverage, level, x, y, false );
+        $.TiledImage._setCoverage( this.coverage, level, x, y, false );
 
-        var loadingCoverage = tile.loaded || tile.loading || $.TileSource._isCovered(this.loadingCoverage, level, x, y);
-        $.TileSource._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
+        var loadingCoverage = tile.loaded || tile.loading || $.TiledImage._isCovered(this.loadingCoverage, level, x, y);
+        $.TiledImage._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
 
         if ( !tile.exists ) {
             return best;
         }
 
         if ( haveDrawn && !drawTile ) {
-            if ( $.TileSource._isCovered( this.coverage, level, x, y ) ) {
-                $.TileSource._setCoverage( this.coverage, level, x, y, true );
+            if ( $.TiledImage._isCovered( this.coverage, level, x, y ) ) {
+                $.TiledImage._setCoverage( this.coverage, level, x, y, true );
             } else {
                 drawTile = true;
             }
@@ -1789,7 +1789,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.lastDrawn.push( tile );
 
         if ( opacity === 1 ) {
-            $.TileSource._setCoverage( this.coverage, level, x, y, true );
+            $.TiledImage._setCoverage( this.coverage, level, x, y, true );
             this._hasOpaqueTile = true;
         } else if ( deltaTime < blendTimeMillis ) {
             return true;
@@ -2100,7 +2100,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
  * @param {Number} y - The Y position of the tile.
  * @returns {Boolean}
  */
-$.TileSource._providesCoverage = function( coverage, level, x, y ) {
+$.TiledImage._providesCoverage = function( coverage, level, x, y ) {
     var rows,
         cols,
         i, j;
@@ -2145,7 +2145,7 @@ $.TileSource._providesCoverage = function( coverage, level, x, y ) {
  * @param {Number} y - The Y position of the tile.
  * @returns {Boolean}
  */
-$.TileSource._isCovered = function( coverage, level, x, y ) {
+$.TiledImage._isCovered = function( coverage, level, x, y ) {
     if ( x === undefined || y === undefined ) {
         return this._providesCoverage( coverage, level + 1 );
     } else {
@@ -2169,7 +2169,7 @@ $.TileSource._isCovered = function( coverage, level, x, y ) {
  * @param {Number} y - The Y position of the tile.
  * @param {Boolean} covers - Whether the tile provides coverage.
  */
-$.TileSource._setCoverage = function( coverage, level, x, y, covers ) {
+$.TiledImage._setCoverage = function( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
         $.console.warn(
             "Setting coverage for a tile before its level's coverage has been reset: %s",
@@ -2195,7 +2195,7 @@ $.TileSource._setCoverage = function( coverage, level, x, y, covers ) {
  * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
  * @param {Number} level - The resolution level of tiles to completely reset.
  */
-$.TileSource._resetCoverage = function( coverage, level ) {
+$.TiledImage._resetCoverage = function( coverage, level ) {
     coverage[ level ] = {};
 };
 
