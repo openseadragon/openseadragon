@@ -2810,18 +2810,18 @@ function onCanvasKeyPress( event ) {
                 break;
             case 114: //r - clockwise rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
+                this.viewport.setRotation($.positiveModulo(this.viewport.getRotation() - this.rotationIncrement, 360));
               } else{
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
+                this.viewport.setRotation($.positiveModulo(this.viewport.getRotation() + this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
               event.preventDefault = true;
               break;
             case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
+                this.viewport.setRotation($.positiveModulo(this.viewport.getRotation() + this.rotationIncrement, 360));
               } else{
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
+                this.viewport.setRotation($.positiveModulo(this.viewport.getRotation() - this.rotationIncrement, 360));
               }
               this.viewport.applyConstraints();
               event.preventDefault = true;

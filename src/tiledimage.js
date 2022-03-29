@@ -2076,9 +2076,10 @@ function drawTiles( tiledImage, lastDrawn ) {
                 .getIntegerBoundingBox();
 
             if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              if (tiledImage.viewport.degrees !== 0 || tiledImage.getRotation(true) % 360 !== 0){
-                bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
-              }
+                if (tiledImage.viewport.getRotation(true) % 360 !== 0 ||
+                    tiledImage.getRotation(true) % 360 !== 0) {
+                        bounds.x = tiledImage._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
+                }
             }
 
             bounds = bounds.times($.pixelDensityRatio);
@@ -2089,9 +2090,9 @@ function drawTiles( tiledImage, lastDrawn ) {
     // When scaling, we must rotate only when blending the sketch canvas to
     // avoid interpolation
     if (!sketchScale) {
-        if (tiledImage.viewport.degrees !== 0) {
+        if (tiledImage.viewport.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._offsetForRotation({
-                degrees: tiledImage.viewport.degrees,
+                degrees: tiledImage.viewport.getRotation(true),
                 useSketch: useSketch
             });
         }
@@ -2104,10 +2105,11 @@ function drawTiles( tiledImage, lastDrawn ) {
             });
         }
 
-        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              tiledImage._drawer._flip();
-          }
+        if (tiledImage.viewport.getRotation(true) === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
     }
 
@@ -2214,16 +2216,16 @@ function drawTiles( tiledImage, lastDrawn ) {
         if (tiledImage.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
-        if (tiledImage.viewport.degrees !== 0) {
+        if (tiledImage.viewport.getRotation(true) % 360 !== 0) {
             tiledImage._drawer._restoreRotationChanges(useSketch);
         }
     }
 
     if (useSketch) {
         if (sketchScale) {
-            if (tiledImage.viewport.degrees !== 0) {
+            if (tiledImage.viewport.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._offsetForRotation({
-                    degrees: tiledImage.viewport.degrees,
+                    degrees: tiledImage.viewport.getRotation(true),
                     useSketch: false
                 });
             }
@@ -2247,18 +2249,19 @@ function drawTiles( tiledImage, lastDrawn ) {
             if (tiledImage.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
-            if (tiledImage.viewport.degrees !== 0) {
+            if (tiledImage.viewport.getRotation(true) % 360 !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
         }
     }
 
     if (!sketchScale) {
-      if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-        if(tiledImage._drawer.viewer.viewport.getFlip()) {
-            tiledImage._drawer._flip();
+        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
-      }
     }
 
     drawDebugInfo( tiledImage, lastDrawn );

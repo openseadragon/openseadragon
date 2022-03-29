@@ -133,9 +133,16 @@ $.Viewport = function( options ) {
         animationTime:   this.animationTime
     });
 
+    this.degreesSpring = new $.Spring({
+        initial: 0,
+        springStiffness: this.springStiffness,
+        animationTime: this.animationTime
+    });
+
     this._oldCenterX = this.centerSpringX.current.value;
     this._oldCenterY = this.centerSpringY.current.value;
     this._oldZoom    = this.zoomSpring.current.value;
+    this._oldDegree  = this.degreesSpring.current.value;
 
     this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
 
@@ -184,7 +191,7 @@ $.Viewport.prototype = {
         this._contentSizeNoRotate = this._contentBoundsNoRotate.getSize().times(
             contentFactor);
 
-        this._contentBounds = bounds.rotate(this.degrees).getBoundingBox();
+        this._contentBounds = bounds.rotate(this.getRotation(true)).getBoundingBox();
         this._contentSize = this._contentBounds.getSize().times(contentFactor);
         this._contentAspectRatio = this._contentSize.x / this._contentSize.y;
 
@@ -367,7 +374,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in viewport coordinates.
      */
     getBounds: function(current) {
-        return this.getBoundsNoRotate(current).rotate(-this.getRotation());
+        return this.getBoundsNoRotate(current).rotate(-this.getRotation(current));
     },
 
     /**
@@ -399,7 +406,7 @@ $.Viewport.prototype = {
      */
     getBoundsWithMargins: function(current) {
         return this.getBoundsNoRotateWithMargins(current).rotate(
-            -this.getRotation(), this.getCenter(current));
+            -this.getRotation(current), this.getCenter(current));
     },
 
     /**
@@ -585,7 +592,7 @@ $.Viewport.prototype = {
             bounds.y !== constrainedBounds.y ||
             immediately) {
             this.fitBounds(
-                constrainedBounds.rotate(-this.getRotation()),
+                constrainedBounds.rotate(-this.getRotation(true)),
                 immediately);
         }
         return this;
@@ -878,13 +885,27 @@ $.Viewport.prototype = {
      * Rotates this viewport to the angle specified.
      * @function
      * @param {Number} degrees The degrees to set the rotation to.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
      * @return {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function(degrees) {
+    setRotation: function(degrees, immediately) {
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
-        this.degrees = $.positiveModulo(degrees, 360);
+
+        if (this.degreesSpring.target.value === degrees &&
+            this.degreesSpring.isAtTargetValue()) {
+            return this;
+        }
+        if (immediately) {
+            this.degreesSpring.resetTo(degrees);
+        } else {
+            this.degreesSpring.springTo(degrees);
+        }
+
+        this.degrees = $.positiveModulo(this.degreesSpring.target.value, 360);
+
         this._setContentBounds(
             this.viewer.world.getHomeBounds(),
             this.viewer.world.getContentFactor());
@@ -907,10 +928,13 @@ $.Viewport.prototype = {
     /**
      * Gets the current rotation in degrees.
      * @function
+     * @param {Boolean} [current=false] True for current rotation, false for target.
      * @return {Number} The current rotation in degrees.
      */
-    getRotation: function() {
-        return this.degrees;
+    getRotation: function(current) {
+        return current ?
+            this.degreesSpring.current.value :
+            this.degreesSpring.target.value;
     },
 
     /**
@@ -978,13 +1002,18 @@ $.Viewport.prototype = {
         this.centerSpringX.update();
         this.centerSpringY.update();
 
+        this.degreesSpring.update();
+
         var changed = this.centerSpringX.current.value !== this._oldCenterX ||
             this.centerSpringY.current.value !== this._oldCenterY ||
-            this.zoomSpring.current.value !== this._oldZoom;
+            this.zoomSpring.current.value !== this._oldZoom ||
+            this.degreesSpring.current.value !== this._oldDegree;
+
 
         this._oldCenterX = this.centerSpringX.current.value;
         this._oldCenterY = this.centerSpringY.current.value;
         this._oldZoom    = this.zoomSpring.current.value;
+        this._oldDegree  = this.degreesSpring.current.value;
 
         return changed;
     },
@@ -1035,7 +1064,7 @@ $.Viewport.prototype = {
      */
     deltaPixelsFromPoints: function(deltaPoints, current) {
         return this.deltaPixelsFromPointsNoRotate(
-            deltaPoints.rotate(this.getRotation()),
+            deltaPoints.rotate(this.getRotation(current)),
             current);
     },
 
@@ -1064,7 +1093,7 @@ $.Viewport.prototype = {
      */
     deltaPointsFromPixels: function(deltaPixels, current) {
         return this.deltaPointsFromPixelsNoRotate(deltaPixels, current)
-            .rotate(-this.getRotation());
+            .rotate(-this.getRotation(current));
     },
 
     /**
@@ -1106,7 +1135,7 @@ $.Viewport.prototype = {
     // private
     _pixelFromPoint: function(point, bounds) {
         return this._pixelFromPointNoRotate(
-            point.rotate(this.getRotation(), this.getCenter(true)),
+            point.rotate(this.getRotation(true), this.getCenter(true)),
             bounds);
     },
 
@@ -1139,8 +1168,8 @@ $.Viewport.prototype = {
      */
     pointFromPixel: function(pixel, current) {
         return this.pointFromPixelNoRotate(pixel, current).rotate(
-            -this.getRotation(),
-            this.getCenter(true)
+            -this.getRotation(current),
+            this.getCenter(current)
         );
     },
 
