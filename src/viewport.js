@@ -134,7 +134,7 @@ $.Viewport = function( options ) {
     });
 
     this.degreesSpring = new $.Spring({
-        initial: 0,
+        initial: options.degrees,
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
