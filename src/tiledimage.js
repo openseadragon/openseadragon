@@ -709,6 +709,38 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Sets an array of paths to crop the TiledImage during draw tiles.
+     * The render function will use the even-odd winding rule.
+     * @param paths - an array of path objects to crop the tileImage
+     * Example path object:
+     * var pathData = "M 500,500 h 200 v 200 h -200 z";
+     * var pathObj = document.createElementNS("http://www.w3.org/2000/svg", "path");
+     * pathObj.setAttribute('d', pathData);
+     * @param cropWithoutSketch - optional - indicate that cropping path should not
+     * use the sketch canvas default to true.
+     * @param preventSketchTransform - optional - indicate that the cropping path
+     * transformation is applied thus sketch transform can be skip.
+     * @param fillRule - optional - indicate the rule used for filling. Options
+     * are 'nonzero' and 'evenodd'. Default to 'evenodd'
+     * @see https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
+     */
+    setCroppingPaths: function( paths, cropWithoutSketch, preventSketchTransform, fillRule) {
+        this._croppingPaths = paths;
+        if (cropWithoutSketch === undefined || cropWithoutSketch === null) {
+            this._cropWithoutSketch = true;
+            this._preventSketchTransform = true;
+        } else {
+            this._cropWithoutSketch = cropWithoutSketch;
+            this._preventSketchTransform = preventSketchTransform;
+        }
+        if (fillRule === 'nonzero' || fillRule === 'evenodd') {
+            this._croppingFillRule = fillRule;
+        } else {
+            this._croppingFillRule = 'evenodd';
+        }
+    },
+
+    /**
      * Sets an array of polygons to crop the TiledImage during draw tiles.
      * The render function will use the default non-zero winding rule.
      * @param {OpenSeadragon.Point[][]} polygons - represented in an array of point object in image coordinates.
@@ -758,6 +790,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     resetCroppingPolygons: function() {
         this._croppingPolygons = null;
+    },
+
+    /**
+     * Resets the cropping path, thus next render will remove all cropping
+     * path effects.
+     */
+    resetCroppingPaths: function() {
+        this._croppingPaths = null;
     },
 
     /**
@@ -1233,6 +1273,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             topLeft: topLeftTile,
             bottomRight: bottomRightTile,
         };
+    },
+
+    /**
+     * This function converts the top left viewport coordinates to pixels coordinates
+     * @param {Boolean} current Pass true for the current location; defaults to false (target location).
+     * @returns {OpenSeadragon.Point}
+     */
+    getOriginPixelCoordinate: function(current, withPixelDensityRatio) {
+        var bounds = this.getBoundsNoRotate();
+        var topLeft = this.viewport.pixelFromPointNoRotate(
+            new $.Point(bounds.x, bounds.y),
+            current === true
+        );
+        var multiplier = withPixelDensityRatio ? $.pixelDensityRatio : 1;
+        topLeft = topLeft.times(multiplier);
+        return topLeft;
     }
 });
 
@@ -1957,6 +2013,56 @@ function compareTiles( previousBest, tile ) {
 }
 
 /**
+ * This function checks if the path cropping is ready.
+ * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage to check the cropping
+ * properties: _croppingPolygons, _croppingPaths.
+ * @param {boolean} usedClip - indicates that the canvas used clip already
+ * @return true if no condition failed, false otherwise.
+ */
+function isCroppingPathReady(tiledImage, usedClip) {
+    var flag = true;
+    // Skip checking if _croppingPath is falsely
+    if (!tiledImage._croppingPaths) {
+        return false;
+    }
+    if (usedClip) {
+        $.console.log('Unable to crop with path, canvas was clipped already.');
+        flag = false;
+    }
+    if (tiledImage._croppingPolygons && tiledImage._croppingPaths) {
+        $.console.log(
+            'TiledImage is unable crop polygons and paths at same time,' +
+            'call tileImage.resetCroppingPolygons() to crop with paths only.'
+        );
+        flag = false;
+    }
+    return flag;
+}
+
+/**
+ * This function crops the view with tiledImage._croppingPaths by transforming
+ * the canvas by the current viewport.
+ * @param {OpenSeadragon.TiledImage} tiledImage - tiledImage with _croppingPaths.
+ * @see isCroppingPathReady
+ */
+function cropContextWithCroppingPaths(tiledImage, useSketch) {
+    try {
+        var context = tiledImage._drawer._getContext(useSketch);
+        var viewport  = tiledImage._drawer.viewport;
+        var oldMatrix = context.getTransform();
+        var scale = tiledImage.viewportToImageZoom(viewport.getZoom(true)) * $.pixelDensityRatio;
+        var point = tiledImage.getOriginPixelCoordinate(true, true);
+        context.translate(point.x, point.y);
+        context.scale(scale, scale);
+        tiledImage._drawer.clipWithPaths(tiledImage._croppingPaths, useSketch, tiledImage._croppingFillRule);
+        context.setTransform(oldMatrix);
+    } catch (e) {
+        $.console.error("Cropping with Path failed: ");
+        $.console.error(e);
+    }
+}
+
+/**
  * @private
  * @inner
  * Defines the value for subpixel rounding to fallback to in case of missing or
@@ -2054,11 +2160,14 @@ function drawTiles( tiledImage, lastDrawn ) {
     if (lastDrawn.length > 1 &&
         imageZoom > tiledImage.smoothTileEdgesMinZoom &&
         !tiledImage.iOSDevice &&
+        !tiledImage._cropWithoutSketch &&
+        !tiledImage._preventSketchTransform &&
         tiledImage.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
         $.supportsCanvas && tiledImage.viewer.useCanvas) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
         // Note: Disabled on iOS devices per default as it causes a native crash
+        // Node: Disabled when _croppingPaths are provided because stacking translation
         useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
@@ -2151,6 +2260,17 @@ function drawTiles( tiledImage, lastDrawn ) {
         usedClip = true;
     }
 
+    if (isCroppingPathReady(tiledImage, usedClip)) {
+        if (tiledImage._cropWithoutSketch) {
+            tiledImage._drawer.saveContext();
+            cropContextWithCroppingPaths(tiledImage);
+        } else {
+            tiledImage._drawer.saveContext(useSketch);
+            cropContextWithCroppingPaths(tiledImage, useSketch);
+        }
+        usedClip = true; // Marks context for restore later.
+    }
+
     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
         var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
         if (sketchScale) {
@@ -2206,6 +2326,9 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
     }
 
+    if (usedClip && tiledImage._cropWithoutSketch) {
+        tiledImage._drawer.restoreContext();
+    }
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
