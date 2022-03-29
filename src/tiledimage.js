@@ -1530,7 +1530,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 this.loadTilesWithAjax,
                 ajaxHeaders,
                 sourceBounds,
-                post
+                post,
+                tileSource.getTileHashKey(level, xMod, yMod, url, ajaxHeaders, post)
             );
 
             if (this.getFlip()) {

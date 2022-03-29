@@ -54,8 +54,9 @@
  *      with HTML the entire tile is always used.
  * @param {String} postData HTTP POST data  (usually but not necessarily in k=v&k2=v2... form,
  *      see TileSrouce::getPostData) or null
+ * @param {String} cacheKey key to act as a tile cache, must be unique for tiles with unique image data
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds, postData) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds, postData, cacheKey) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -131,11 +132,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
-    if (this.ajaxHeaders) {
-        this.cacheKey = this.url + "+" + JSON.stringify(this.ajaxHeaders);
-    } else {
-        this.cacheKey = this.url;
-    }
+    this.cacheKey = cacheKey;
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded
