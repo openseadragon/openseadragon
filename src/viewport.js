@@ -191,7 +191,7 @@ $.Viewport.prototype = {
         this._contentSizeNoRotate = this._contentBoundsNoRotate.getSize().times(
             contentFactor);
 
-        this._contentBounds = bounds.rotate(this.getRotation(true)).getBoundingBox();
+        this._contentBounds = bounds.rotate(this.getRotation()).getBoundingBox();
         this._contentSize = this._contentBounds.getSize().times(contentFactor);
         this._contentAspectRatio = this._contentSize.x / this._contentSize.y;
 
