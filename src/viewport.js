@@ -138,6 +138,7 @@ $.Viewport = function( options ) {
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
+    delete options.degrees;
 
     this._oldCenterX = this.centerSpringX.current.value;
     this._oldCenterY = this.centerSpringY.current.value;
@@ -903,8 +904,6 @@ $.Viewport.prototype = {
         } else {
             this.degreesSpring.springTo(degrees);
         }
-
-        this.degrees = $.positiveModulo(this.degreesSpring.target.value, 360);
 
         this._setContentBounds(
             this.viewer.world.getHomeBounds(),
