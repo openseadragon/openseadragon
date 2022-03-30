@@ -230,11 +230,11 @@
 
             // Now simulate the left/right button clicks.
             // TODO: re-factor simulateViewerClickWithDrag so it'll accept any element, and use that.
-            assert.equal(viewer.viewport.degrees, 0, "Image should start at 0 degrees rotation");
+            assert.equal(viewer.viewport.getRotation(), 0, "Image should start at 0 degrees rotation");
             viewer.rotateLeftButton.onRelease();
-            assert.equal(viewer.viewport.degrees, 270, "Image should be 270 degrees rotation (left)");
+            assert.equal(viewer.viewport.getRotation(), -90, "Image should be -90 degrees rotation (left)");
             viewer.rotateRightButton.onRelease();
-            assert.equal(viewer.viewport.degrees, 0, "Image should be 270 degrees rotation (right)");
+            assert.equal(viewer.viewport.getRotation(), 0, "Image should be 0 degrees rotation (right)");
 
             viewer.close();
             done();
