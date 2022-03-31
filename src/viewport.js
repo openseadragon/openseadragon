@@ -143,7 +143,7 @@ $.Viewport = function( options ) {
     this._oldCenterX = this.centerSpringX.current.value;
     this._oldCenterY = this.centerSpringY.current.value;
     this._oldZoom    = this.zoomSpring.current.value;
-    this._oldDegrees  = this.degreesSpring.current.value;
+    this._oldDegrees = this.degreesSpring.current.value;
 
     this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
 
@@ -1012,7 +1012,7 @@ $.Viewport.prototype = {
         this._oldCenterX = this.centerSpringX.current.value;
         this._oldCenterY = this.centerSpringY.current.value;
         this._oldZoom    = this.zoomSpring.current.value;
-        this._oldDegrees  = this.degreesSpring.current.value;
+        this._oldDegrees = this.degreesSpring.current.value;
 
         return changed;
     },
