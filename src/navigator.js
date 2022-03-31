@@ -107,7 +107,7 @@ $.Navigator = function( options ){
         showSequenceControl:    false,
         immediateRender:        true,
         blendTime:              0,
-        animationTime:          0,
+        animationTime:          options.animationTime,
         autoResize:             options.autoResize,
         // prevent resizing the navigator from adding unwanted space around the image
         minZoomImageRatio:      1.0,

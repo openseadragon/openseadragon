@@ -448,7 +448,8 @@ $.Viewer = function( options ) {
             opacity:           this.navigatorOpacity,
             borderColor:       this.navigatorBorderColor,
             displayRegionColor: this.navigatorDisplayRegionColor,
-            crossOriginPolicy: this.crossOriginPolicy
+            crossOriginPolicy: this.crossOriginPolicy,
+            animationTime:     this.animationTime,
         });
     }
 
