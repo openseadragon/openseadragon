@@ -665,13 +665,18 @@
   *
   * @property {Boolean} [splitHashDataForPost=false]
   *     Allows to treat _first_ hash ('#') symbol as a separator for POST data:
-  *     URL to be opened by a {@link OpenSeadragon.TileSource} can thus look like: http://some.url#postdata=here .
-  *     The URL is split to 'http://some.url' and 'postdata=here'; post data is given to the
-  *     {@link OpenSeadragon.TileSource} of the choice and can be further used within tile requests
-  *     (see TileSource methods). {@link OpenSeadragon.TileSource.prototype.configure} return value
-  *     should contain the post data so that it is given to its subclass in the constructor.
-  *     NOTE: post data is expected to be ampersand-separated (just like GET parameters), and is not used
-  *     to fetch tile image data if loadTilesWithAjax=false (but it is still used for the initial request).
+  *     URL to be opened by a {@link OpenSeadragon.TileSource} can thus look like: http://some.url#postdata=here.
+  *     The whole URL is used to fetch image info metadata and it is then split to 'http://some.url' and
+  *     'postdata=here'; post data is given to the {@link OpenSeadragon.TileSource} of the choice and can be further
+  *     used within tile requests (see TileSource methods).
+  *     NOTE: {@link OpenSeadragon.TileSource.prototype.configure} return value should contain the post data
+  *     if you want to use it later - so that it is given to your constructor later.
+  *     NOTE: usually, post data is expected to be ampersand-separated (just like GET parameters), and is NOT USED
+  *     to fetch tile image data unless explicitly programmed, or if loadTilesWithAjax=false 4
+  *     (but it is still used for the initial image info request).
+  *     NOTE: passing POST data from URL by this feature only supports string values, however,
+  *     TileSource can send any data using POST as long as the header is correct
+  *     (@see OpenSeadragon.TileSource.prototype.getTilePostData)
   */
 
  /**
@@ -2315,7 +2320,8 @@ function OpenSeadragon( options ){
          * @param {Function} options.error - a function to call on when an error occurs
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the the AJAX request
-         * @param {String} options.postData - HTTP POST data in k=v&k2=v2... form, GET method used if null
+         * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
+         *      see TileSrouce::getPostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}

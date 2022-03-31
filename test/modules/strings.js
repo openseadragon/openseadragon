@@ -22,11 +22,11 @@
 
     QUnit.test("getInvalidString", function(assert) {
         assert.equal(OpenSeadragon.getString("Greeting"), "", "Handled unset string key");
-        assert.ok(testLog.log.contains('["Untranslated source string:","Greeting"]'),
+        assert.ok(testLog.error.contains('["Untranslated source string:","Greeting"]'),
                                   'Invalid string keys are logged');
 
         assert.equal(OpenSeadragon.getString("Errors"), "", "Handled requesting parent key");
-        assert.ok(testLog.log.contains('["Untranslated source string:","Errors"]'),
+        assert.ok(testLog.error.contains('["Untranslated source string:","Errors"]'),
                                   'Invalid string parent keys are logged');
     });
 

@@ -550,7 +550,8 @@ $.TileSource.prototype = {
                      * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
                      * @property {String} message
                      * @property {String} source
-                     * @property {String} postData - HTTP POST data in k=v&k2=v2... form or null
+                     * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
+                     *      see TileSrouce::getPostData) or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -623,13 +624,26 @@ $.TileSource.prototype = {
 
     /**
      * Must use AJAX in order to work, i.e. loadTilesWithAjax = true is set.
-     * It should return url-encoded string with the following structure:
-     *   key=value&key2=value2...
-     * or null in case GET is used instead.
+     * If a value is returned, ajax issues POST request to the tile url.
+     * If null is returned, ajax issues GET request.
+     * The return value must comply to the header 'content type'.
+     *
+     * Examples (USED HEADER --> getTilePostData CODE):
+     * 'Content-type': 'application/x-www-form-urlencoded' -->
+     *   return "key1=value=1&key2=value2";
+     *
+     * 'Content-type': 'application/x-www-form-urlencoded' -->
+     *   return JSON.stringify({key: "value", number: 5});
+     *
+     * 'Content-type': 'multipart/form-data' -->
+     *   let result = new FormData();
+     *   result.append("data", myData);
+     *   return result;
+
      * @param level
      * @param x
      * @param y
-     * @return {string || null} post data to send with tile configuration request
+     * @return {* || null} post data to send with tile configuration request
      */
     getTilePostData: function( level, x, y ) {
         return null;

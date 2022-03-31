@@ -3286,13 +3286,12 @@
             gPoint = updateGPoint;
         } else {
             // Initialize for tracking and add to the tracking list (no pointerenter event occurred before this)
-            $.console.warn('pointerdown event on untracked pointer');
+            // NOTE: pointerdown event on untracked pointer
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = true;
             gPoint.insideElement = true;
             gPoint.originalTarget = eventInfo.originalEvent.target;
             startTrackingPointer( pointsList, gPoint );
-            return;
         }
 
         pointsList.addContact();
@@ -3436,8 +3435,8 @@
             releasePoint = updateGPoint.currentPos;
             releaseTime = updateGPoint.currentTime;
         } else {
-            // should never get here...we'll start to track pointer anyway
-            $.console.warn('updatePointerUp(): pointerup on untracked gPoint');
+            // NOTE: updatePointerUp(): pointerup on untracked gPoint
+            // ...we'll start to track pointer again
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = false;
             gPoint.insideElement = true;
@@ -3460,7 +3459,7 @@
                 if ( pointsList.contacts === 0 ) {
 
                     // Release (pressed in our element)
-                    if ( tracker.releaseHandler ) {
+                    if ( tracker.releaseHandler && releasePoint ) {
                         tracker.releaseHandler(
                             {
                                 eventSource:           tracker,
