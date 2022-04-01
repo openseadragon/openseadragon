@@ -107,7 +107,7 @@ $.Viewport = function( options ) {
         defaultZoomLevel:           $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel:               $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel:               $.DEFAULT_SETTINGS.maxZoomLevel,
-        degrees:                    $.DEFAULT_SETTINGS.degrees,
+        initialDegrees:             $.DEFAULT_SETTINGS.degrees,
         flipped:                    $.DEFAULT_SETTINGS.flipped,
         homeFillsViewer:            $.DEFAULT_SETTINGS.homeFillsViewer,
         silenceMultiImageWarnings:  $.DEFAULT_SETTINGS.silenceMultiImageWarnings
@@ -134,11 +134,10 @@ $.Viewport = function( options ) {
     });
 
     this.degreesSpring = new $.Spring({
-        initial: options.degrees,
+        initial: options.initialDegrees,
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
-    delete options.degrees;
 
     this._oldCenterX = this.centerSpringX.current.value;
     this._oldCenterY = this.centerSpringY.current.value;
@@ -153,6 +152,19 @@ $.Viewport = function( options ) {
 
 /** @lends OpenSeadragon.Viewport.prototype */
 $.Viewport.prototype = {
+
+    // deprecated
+    get degrees () {
+        $.console.warn('Accessing [Viewport.degrees] is deprecated. Use viewport.getRotation instead.');
+        return this.getRotation();
+    },
+
+    // deprecated
+    set degrees (degrees) {
+        $.console.warn('Setting [Viewport.degrees] is deprecated. Use viewport.setRotation instead.');
+        this.setRotation(degrees);
+    },
+
     /**
      * Updates the viewport's home bounds and constraints for the given content size.
      * @function
