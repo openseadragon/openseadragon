@@ -132,7 +132,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
+    if (cacheKey === undefined) {
+        $.console.error("Tile constructor needs 'cacheKey' variable: creation tile cache" +
+            " in Tile class is deprecated. TileSource.prototype.getTileHashKey will be used.");
+        cacheKey = $.TileSource.prototype.getTileHashKey(level, x, y, url, ajaxHeaders, postData);
+    }
     this.cacheKey = cacheKey;
+
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded

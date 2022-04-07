@@ -671,21 +671,19 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Most tiles are cached because their 'context2D' property is null (otherwise no caching occurs).
-     * Then, their cache is uniquely determined by this key: this key should be different if images
-     * are different! Note: default behaviour does not take into account post data.
-     *
      * A tile can have either context2D defined (TileSource.prototype.getContext2D)
-     * or it's context2D is set manually. In those cases cache is not used and this function
-     * is irrelevant.
+     * or its context2D is set manually. In those cases cache is not used and this function
+     * is irrelevant. Otherwise, the tile cache object is uniquely determined by this key:
+     * keys should be different if images are different!
+     * Note: default behaviour does not take into account post data.
      * @param level tile level it was fetched with
      * @param x x-coordinate in the pyramid level
      * @param y y-coordinate in the pyramid level
      * @param url the tile was fetched with
      * @param ajaxHeaders the tile was fetched with
-     * @param post data the tile was fetched with
+     * @param postData data the tile was fetched with
      */
-    getTileHashKey: function(level, x, y, url, ajaxHeaders, post) {
+    getTileHashKey: function(level, x, y, url, ajaxHeaders, postData) {
         if (ajaxHeaders) {
             return url + "+" + JSON.stringify(ajaxHeaders);
         } else {
