@@ -1176,7 +1176,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             // Stop the loop if lower-res tiles would all be covered by
             // already drawn tiles
-            if ($.TiledImage._providesCoverage(this.coverage, level)) {
+            if (this._providesCoverage(this.coverage, level)) {
                 break;
             }
         }
@@ -1287,8 +1287,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             });
         }
 
-        $.TiledImage._resetCoverage(this.coverage, level);
-        $.TiledImage._resetCoverage(this.loadingCoverage, level);
+        this._resetCoverage(this.coverage, level);
+        this._resetCoverage(this.loadingCoverage, level);
 
         //OK, a new drawing so do your calculations
         var cornerTiles = this._getCornerTiles(level, topLeftBound, bottomRightBound);
@@ -1392,18 +1392,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             });
         }
 
-        $.TiledImage._setCoverage( this.coverage, level, x, y, false );
+        this._setCoverage( this.coverage, level, x, y, false );
 
-        var loadingCoverage = tile.loaded || tile.loading || $.TiledImage._isCovered(this.loadingCoverage, level, x, y);
-        $.TiledImage._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
+        var loadingCoverage = tile.loaded || tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
+        this._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
 
         if ( !tile.exists ) {
             return best;
         }
 
         if ( haveDrawn && !drawTile ) {
-            if ( $.TiledImage._isCovered( this.coverage, level, x, y ) ) {
-                $.TiledImage._setCoverage( this.coverage, level, x, y, true );
+            if ( this._isCovered( this.coverage, level, x, y ) ) {
+                this._setCoverage( this.coverage, level, x, y, true );
             } else {
                 drawTile = true;
             }
@@ -1790,7 +1790,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.lastDrawn.push( tile );
 
         if ( opacity === 1 ) {
-            $.TiledImage._setCoverage( this.coverage, level, x, y, true );
+            this._setCoverage( this.coverage, level, x, y, true );
             this._hasOpaqueTile = true;
         } else if ( deltaTime < blendTimeMillis ) {
             return true;
@@ -2081,124 +2081,125 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
             }
         }
-    }
-});
+    },
 
-/**
- * @private
- * @inner
- * Returns true if the given tile provides coverage to lower-level tiles of
- * lower resolution representing the same content. If neither x nor y is
- * given, returns true if the entire visible level provides coverage.
- *
- * Note that out-of-bounds tiles provide coverage in this sense, since
- * there's no content that they would need to cover. Tiles at non-existent
- * levels that are within the image bounds, however, do not.
- *
- * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
- * @param {Number} level - The resolution level of the tile.
- * @param {Number} x - The X position of the tile.
- * @param {Number} y - The Y position of the tile.
- * @returns {Boolean}
- */
-$.TiledImage._providesCoverage = function( coverage, level, x, y ) {
-    var rows,
-        cols,
-        i, j;
+    /**
+     * @private
+     * @inner
+     * Returns true if the given tile provides coverage to lower-level tiles of
+     * lower resolution representing the same content. If neither x nor y is
+     * given, returns true if the entire visible level provides coverage.
+     *
+     * Note that out-of-bounds tiles provide coverage in this sense, since
+     * there's no content that they would need to cover. Tiles at non-existent
+     * levels that are within the image bounds, however, do not.
+     *
+     * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+     * @param {Number} level - The resolution level of the tile.
+     * @param {Number} x - The X position of the tile.
+     * @param {Number} y - The Y position of the tile.
+     * @returns {Boolean}
+     */
+    _providesCoverage: function( coverage, level, x, y ) {
+        var rows,
+            cols,
+            i, j;
 
-    if ( !coverage[ level ] ) {
-        return false;
-    }
+        if ( !coverage[ level ] ) {
+            return false;
+        }
 
-    if ( x === undefined || y === undefined ) {
-        rows = coverage[ level ];
-        for ( i in rows ) {
-            if ( Object.prototype.hasOwnProperty.call( rows, i ) ) {
-                cols = rows[ i ];
-                for ( j in cols ) {
-                    if ( Object.prototype.hasOwnProperty.call( cols, j ) && !cols[ j ] ) {
-                        return false;
+        if ( x === undefined || y === undefined ) {
+            rows = coverage[ level ];
+            for ( i in rows ) {
+                if ( Object.prototype.hasOwnProperty.call( rows, i ) ) {
+                    cols = rows[ i ];
+                    for ( j in cols ) {
+                        if ( Object.prototype.hasOwnProperty.call( cols, j ) && !cols[ j ] ) {
+                            return false;
+                        }
                     }
                 }
             }
+
+            return true;
         }
 
-        return true;
-    }
-
-    return (
-        coverage[ level ][ x] === undefined ||
-        coverage[ level ][ x ][ y ] === undefined ||
-        coverage[ level ][ x ][ y ] === true
-    );
-};
-
-/**
- * @private
- * @inner
- * Returns true if the given tile is completely covered by higher-level
- * tiles of higher resolution representing the same content. If neither x
- * nor y is given, returns true if the entire visible level is covered.
- *
- * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
- * @param {Number} level - The resolution level of the tile.
- * @param {Number} x - The X position of the tile.
- * @param {Number} y - The Y position of the tile.
- * @returns {Boolean}
- */
-$.TiledImage._isCovered = function( coverage, level, x, y ) {
-    if ( x === undefined || y === undefined ) {
-        return this._providesCoverage( coverage, level + 1 );
-    } else {
         return (
-            this._providesCoverage( coverage, level + 1, 2 * x, 2 * y ) &&
-            this._providesCoverage( coverage, level + 1, 2 * x, 2 * y + 1 ) &&
-            this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y ) &&
-            this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
+            coverage[ level ][ x] === undefined ||
+            coverage[ level ][ x ][ y ] === undefined ||
+            coverage[ level ][ x ][ y ] === true
         );
+    },
+
+    /**
+     * @private
+     * @inner
+     * Returns true if the given tile is completely covered by higher-level
+     * tiles of higher resolution representing the same content. If neither x
+     * nor y is given, returns true if the entire visible level is covered.
+     *
+     * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+     * @param {Number} level - The resolution level of the tile.
+     * @param {Number} x - The X position of the tile.
+     * @param {Number} y - The Y position of the tile.
+     * @returns {Boolean}
+     */
+    _isCovered: function( coverage, level, x, y ) {
+        if ( x === undefined || y === undefined ) {
+            return this._providesCoverage( coverage, level + 1 );
+        } else {
+            return (
+                this._providesCoverage( coverage, level + 1, 2 * x, 2 * y ) &&
+                this._providesCoverage( coverage, level + 1, 2 * x, 2 * y + 1 ) &&
+                this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y ) &&
+                this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
+            );
+        }
+    },
+
+    /**
+     * @private
+     * @inner
+     * Sets whether the given tile provides coverage or not.
+     *
+     * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+     * @param {Number} level - The resolution level of the tile.
+     * @param {Number} x - The X position of the tile.
+     * @param {Number} y - The Y position of the tile.
+     * @param {Boolean} covers - Whether the tile provides coverage.
+     */
+    _setCoverage: function( coverage, level, x, y, covers ) {
+        if ( !coverage[ level ] ) {
+            $.console.warn(
+                "Setting coverage for a tile before its level's coverage has been reset: %s",
+                level
+            );
+            return;
+        }
+
+        if ( !coverage[ level ][ x ] ) {
+            coverage[ level ][ x ] = {};
+        }
+
+        coverage[ level ][ x ][ y ] = covers;
+    },
+
+    /**
+     * @private
+     * @inner
+     * Resets coverage information for the given level. This should be called
+     * after every draw routine. Note that at the beginning of the next draw
+     * routine, coverage for every visible tile should be explicitly set.
+     *
+     * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
+     * @param {Number} level - The resolution level of tiles to completely reset.
+     */
+    _resetCoverage: function( coverage, level ) {
+        coverage[ level ] = {};
     }
-};
+});
 
-/**
- * @private
- * @inner
- * Sets whether the given tile provides coverage or not.
- *
- * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
- * @param {Number} level - The resolution level of the tile.
- * @param {Number} x - The X position of the tile.
- * @param {Number} y - The Y position of the tile.
- * @param {Boolean} covers - Whether the tile provides coverage.
- */
-$.TiledImage._setCoverage = function( coverage, level, x, y, covers ) {
-    if ( !coverage[ level ] ) {
-        $.console.warn(
-            "Setting coverage for a tile before its level's coverage has been reset: %s",
-            level
-        );
-        return;
-    }
-
-    if ( !coverage[ level ][ x ] ) {
-        coverage[ level ][ x ] = {};
-    }
-
-    coverage[ level ][ x ][ y ] = covers;
-};
-
-/**
- * @private
- * @inner
- * Resets coverage information for the given level. This should be called
- * after every draw routine. Note that at the beginning of the next draw
- * routine, coverage for every visible tile should be explicitly set.
- *
- * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
- * @param {Number} level - The resolution level of tiles to completely reset.
- */
-$.TiledImage._resetCoverage = function( coverage, level ) {
-    coverage[ level ] = {};
-};
 
 /**
  * @private
