@@ -2364,10 +2364,10 @@ function OpenSeadragon( options ){
                           protocol !== "https:" )) {
                         onSuccess( request );
                     } else {
-                        $.console.error( "AJAX request returned %d: %s", request.status, url );
-
                         if ( $.isFunction( onError ) ) {
                             onError( request );
+                        } else {
+                            $.console.error( "AJAX request returned %d: %s", request.status, url );
                         }
                     }
                 }

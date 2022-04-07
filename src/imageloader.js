@@ -130,7 +130,7 @@ ImageJob.prototype = {
                     self.image.src = url;
                 },
                 error: function(request) {
-                    self.errorMsg = "Image load aborted - XHR error";
+                    self.errorMsg = "Image load aborted - XHR error: Ajax returned " + request.status;
                     self.finish(false);
                 }
             });
