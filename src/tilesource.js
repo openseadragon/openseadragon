@@ -644,9 +644,9 @@ $.TileSource.prototype = {
      * to post data, you must re-define 'getTileHashKey(...)' to
      * stay unique for different tile images.
      *
-     * @param level
-     * @param x
-     * @param y
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
      * @return {* || null} post data to send with tile configuration request
      */
     getTilePostData: function( level, x, y ) {
@@ -671,17 +671,19 @@ $.TileSource.prototype = {
     },
 
     /**
-     * A tile can have either context2D defined (TileSource.prototype.getContext2D)
-     * or its context2D is set manually. In those cases cache is not used and this function
-     * is irrelevant. Otherwise, the tile cache object is uniquely determined by this key:
-     * keys should be different if images are different!
+     * The tile cache object is uniquely determined by this key and used to lookup
+     * the image data in cache: keys should be different if images are different.
+     *
+     * In case a tile has context2D property defined (TileSource.prototype.getContext2D)
+     * or its context2D is set manually; the cache is not used and this function
+     * is irrelevant.
      * Note: default behaviour does not take into account post data.
-     * @param level tile level it was fetched with
-     * @param x x-coordinate in the pyramid level
-     * @param y y-coordinate in the pyramid level
-     * @param url the tile was fetched with
-     * @param ajaxHeaders the tile was fetched with
-     * @param postData data the tile was fetched with
+     * @param {Number} level tile level it was fetched with
+     * @param {Number} x x-coordinate in the pyramid level
+     * @param {Number} y y-coordinate in the pyramid level
+     * @param {String} url the tile was fetched with
+     * @param {Object} ajaxHeaders the tile was fetched with
+     * @param {*} postData data the tile was fetched with (type depends on getTilePostData(..) return type)
      */
     getTileHashKey: function(level, x, y, url, ajaxHeaders, postData) {
         if (ajaxHeaders) {
