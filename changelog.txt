@@ -15,6 +15,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Swiping fast multiple times made contact points in MouseTracker out of sync for touch events (#2121 @ronnymikalsen)
 * Made MouseTracker more robust in certain scenarios (#2134 @Aiosa)
 * Exposed TiledImage's private functions for better maintainability (#2134 @Aiosa)
+* Fixed an issue where full page mode wouldn't grow properly if you resized the window (#2100 @TanukiSharp)
 
 3.0.0:
 
