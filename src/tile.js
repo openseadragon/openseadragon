@@ -52,10 +52,11 @@
  * @param {OpenSeadragon.Rect} sourceBounds The portion of the tile to use as the source of the
  *      drawing operation, in pixels. Note that this only works when drawing with canvas; when drawing
  *      with HTML the entire tile is always used.
- * @param {String} postData HTTP POST data  (usually but not necessarily in k=v&k2=v2... form,
+ * @param {String} postData HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
  *      see TileSrouce::getPostData) or null
+ * @param {String} cacheKey key to act as a tile cache, must be unique for tiles with unique image data
  */
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds, postData) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds, postData, cacheKey) {
     /**
      * The zoom level this tile belongs to.
      * @member {Number} level
@@ -100,8 +101,8 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this.url     = url;
     /**
-     * Post parameters for this tile. Either it is an URL-encoded string
-     * in k1=v1&k2=v2... format or null
+     * Post parameters for this tile. For example, it can be an URL-encoded string
+     * in k1=v1&k2=v2... format, or a JSON, or a FormData instance... or null if no POST request used
      * @member {String} postData HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
      *      see TileSrouce::getPostData) or null
      * @memberof OpenSeadragon.Tile#
@@ -131,11 +132,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
-    if (this.ajaxHeaders) {
-        this.cacheKey = this.url + "+" + JSON.stringify(this.ajaxHeaders);
-    } else {
-        this.cacheKey = this.url;
+    if (cacheKey === undefined) {
+        $.console.error("Tile constructor needs 'cacheKey' variable: creation tile cache" +
+            " in Tile class is deprecated. TileSource.prototype.getTileHashKey will be used.");
+        cacheKey = $.TileSource.prototype.getTileHashKey(level, x, y, url, ajaxHeaders, postData);
     }
+    this.cacheKey = cacheKey;
+
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded
