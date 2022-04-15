@@ -529,7 +529,7 @@ $.TileSource.prototype = {
                         exception rather than the second one raised when we try to access xhr.status
                      */
                     try {
-                        msg = "HTTP " + xhr.status + " attempting to load TileSource";
+                        msg = "HTTP " + xhr.status + " attempting to load TileSource: " + url;
                     } catch ( e ) {
                         var formattedExc;
                         if ( typeof ( exc ) === "undefined" || !exc.toString ) {
@@ -538,8 +538,10 @@ $.TileSource.prototype = {
                             formattedExc = exc.toString();
                         }
 
-                        msg = formattedExc + " attempting to load TileSource";
+                        msg = formattedExc + " attempting to load TileSource: " + url;
                     }
+
+                    $.console.error(msg);
 
                     /***
                      * Raised when an error occurs loading a TileSource.

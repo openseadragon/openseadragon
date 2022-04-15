@@ -1152,6 +1152,36 @@
     });
 
     // ----------
+    QUnit.test( 'Viewer: event count test with \'tile-drawing\'', function (assert) {
+        var done = assert.async();
+        assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
+            "'tile-drawing' event is empty by default.");
+
+        var tileDrawing = function ( event ) {
+            viewer.removeHandler( 'tile-drawing', tileDrawing );
+            assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
+                "'tile-drawing' deleted: count is 0.");
+            viewer.close();
+            done();
+        };
+
+        var tileDrawingDummy = function ( event ) {};
+
+        viewer.addHandler( 'tile-drawing', tileDrawing );
+        assert.ok(viewer.numberOfHandlers('tile-drawing') === 1,
+            "'tile-drawing' event set to 1.");
+
+        viewer.addHandler( 'tile-drawing', tileDrawingDummy );
+        assert.ok(viewer.numberOfHandlers('tile-drawing') === 2,
+            "'tile-drawing' event set to 2.");
+
+        viewer.removeHandler( 'tile-drawing', tileDrawingDummy );
+        assert.ok(viewer.numberOfHandlers('tile-drawing') === 1,
+            "'tile-drawing' deleted once: count is 1.");
+
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
     QUnit.test( 'Viewer: tile-drawing event', function (assert) {
         var done = assert.async();
         var tileDrawing = function ( event ) {
