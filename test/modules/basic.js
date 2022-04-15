@@ -58,8 +58,8 @@
 
             assert.equal($(".openseadragon-message").length, 1, "Open failures should display a message");
 
-            assert.ok(testLog.error.contains('["AJAX request returned %d: %s",404,"/test/data/not-a-real-file"]'),
-               "AJAX failures should be logged to the console");
+            assert.ok(testLog.error.contains('["HTTP 404 attempting to load TileSource: /test/data/not-a-real-file"]'),
+                "'open-failed' fired after AJAX error handler prints error to the console.'");
 
             done();
         });
