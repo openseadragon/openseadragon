@@ -2,6 +2,35 @@
 
 (function() {
 
+    var tileSourceCacheAPI = {
+        createTileCache: function(cacheObject, data, tile) {
+            cacheObject._data = data;
+        },
+        destroyTileCache: function (cacheObject) {
+            cacheObject._data = null;
+            cacheObject._renderedContext = null;
+        },
+        getTileCacheData: function(cacheObject) {
+            return cacheObject._data;
+        },
+        getTileCacheDataAsImage: function(cacheObject) {
+            return cacheObject._data; //the data itself by default is Image
+        },
+        getTileCacheDataAsContext2D: function(cacheObject) {
+            if (!cacheObject._renderedContext) {
+                var canvas = document.createElement( 'canvas' );
+                canvas.width = cacheObject._data.width;
+                canvas.height = cacheObject._data.height;
+                cacheObject._renderedContext = canvas.getContext('2d');
+                cacheObject._renderedContext.drawImage( cacheObject._data, 0, 0 );
+                //since we are caching the prerendered image on a canvas
+                //allow the image to not be held in memory
+                cacheObject._data = null;
+            }
+            return cacheObject._renderedContext;
+        }
+    };
+
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
@@ -19,10 +48,12 @@
             raiseEvent: function() {}
         };
         var fakeTiledImage0 = {
-            viewer: fakeViewer
+            viewer: fakeViewer,
+            source: tileSourceCacheAPI
         };
         var fakeTiledImage1 = {
-            viewer: fakeViewer
+            viewer: fakeViewer,
+            source: tileSourceCacheAPI
         };
 
         var fakeTile0 = {
@@ -74,7 +105,8 @@
             raiseEvent: function() {}
         };
         var fakeTiledImage0 = {
-            viewer: fakeViewer
+            viewer: fakeViewer,
+            source: tileSourceCacheAPI
         };
 
         var fakeTile0 = {

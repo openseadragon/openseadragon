@@ -1427,8 +1427,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             } else {
                 var imageRecord = this._tileCache.getImageRecord(tile.cacheKey);
                 if (imageRecord) {
-                    var image = imageRecord.getImage();
-                    this._setTileLoaded(tile, image);
+                    this._setTileLoaded(tile, imageRecord.getData());
                 }
             }
         }
@@ -1571,6 +1570,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         tile.loading = true;
         this._imageLoader.addJob({
             src: tile.url,
+            source: this.source,
             postData: tile.postData,
             loadWithAjax: tile.loadWithAjax,
             ajaxHeaders: tile.ajaxHeaders,
@@ -1649,7 +1649,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {Image || undefined} image
+     * @param {Image|* || undefined} image
      * @param {Number || undefined} cutoff
      * @param {XMLHttpRequest || undefined} tileRequest
      */
@@ -1686,7 +1686,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {Image} image - The image of the tile.
+         * @property {Image|*} image - The image (data) of the tile.
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
@@ -1842,7 +1842,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (tile) {
             useSketch = this.opacity < 1 ||
                 (this.compositeOperation && this.compositeOperation !== 'source-over') ||
-                (!this._isBottomItem() && tile._hasTransparencyChannel());
+                (!this._isBottomItem() &&
+                    this.source.hasTransparency(tile.context2D, tile.url, tile.ajaxHeaders, tile.postData));
         }
 
         var sketchScale;
@@ -1984,7 +1985,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         for (var i = lastDrawn.length - 1; i >= 0; i--) {
             tile = lastDrawn[ i ];
-            this._drawer.drawTile( tile, this._drawingHandler, useSketch, sketchScale, sketchTranslate, shouldRoundPositionAndSize );
+            this._drawer.drawTile( tile, this._drawingHandler, useSketch, sketchScale,
+                sketchTranslate, shouldRoundPositionAndSize, this.source );
             tile.beingDrawn = true;
 
             if( this.viewer ){

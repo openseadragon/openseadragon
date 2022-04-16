@@ -45,43 +45,31 @@ var TileRecord = function( options ) {
 
 // private class
 var ImageRecord = function(options) {
+    //private scope: changed image -> data
     $.console.assert( options, "[ImageRecord] options is required" );
-    $.console.assert( options.image, "[ImageRecord] options.image is required" );
-    this._image = options.image;
+    $.console.assert( options.data, "[ImageRecord] options.data is required" );
     this._tiles = [];
+
+    options.create.apply(null, [this, options.data, options.ownerTile]);
+    this._destroyImplementation = options.destroy.bind(null, this);
+    this.getImage = options.getImage.bind(null, this);
+    this.getData = options.getData.bind(null, this);
+    this.getRenderedContext = options.getRenderedContext.bind(null, this);
 };
 
 ImageRecord.prototype = {
     destroy: function() {
-        this._image = null;
-        this._renderedContext = null;
+        this._destroyImplementation();
         this._tiles = null;
     },
 
-    getImage: function() {
-        return this._image;
-    },
-
-    getRenderedContext: function() {
-        if (!this._renderedContext) {
-            var canvas = document.createElement( 'canvas' );
-            canvas.width = this._image.width;
-            canvas.height = this._image.height;
-            this._renderedContext = canvas.getContext('2d');
-            this._renderedContext.drawImage( this._image, 0, 0 );
-            //since we are caching the prerendered image on a canvas
-            //allow the image to not be held in memory
-            this._image = null;
-        }
-        return this._renderedContext;
-    },
-
-    setRenderedContext: function(renderedContext) {
-        $.console.error("ImageRecord.setRenderedContext is deprecated. " +
-                "The rendered context should be created by the ImageRecord " +
-                "itself when calling ImageRecord.getRenderedContext.");
-        this._renderedContext = renderedContext;
-    },
+    // Removed (left as a comment so that it stands out)
+    // setRenderedContext: function(renderedContext) {
+    //     $.console.error("ImageRecord.setRenderedContext is deprecated. " +
+    //             "The rendered context should be created by the ImageRecord " +
+    //             "itself when calling ImageRecord.getRenderedContext.");
+    //     this._renderedContext = renderedContext;
+    // },
 
     addTile: function(tile) {
         $.console.assert(tile, '[ImageRecord.addTile] tile is required');
@@ -160,7 +148,13 @@ $.TileCache.prototype = {
         if (!imageRecord) {
             $.console.assert( options.image, "[TileCache.cacheTile] options.image is required to create an ImageRecord" );
             imageRecord = this._imagesLoaded[options.tile.cacheKey] = new ImageRecord({
-                image: options.image
+                data: options.image,
+                ownerTile: options.tile,
+                create: options.tiledImage.source.createTileCache,
+                destroy: options.tiledImage.source.destroyTileCache,
+                getImage: options.tiledImage.source.getTileCacheDataAsImage,
+                getData: options.tiledImage.source.getTileCacheData,
+                getRenderedContext: options.tiledImage.source.getTileCacheDataAsContext2D,
             });
 
             this._imagesLoadedCount++;
@@ -196,7 +190,7 @@ $.TileCache.prototype = {
                 worstLevel  = worstTile.level;
 
                 if ( prevTime < worstTime ||
-                   ( prevTime === worstTime && prevLevel > worstLevel ) ) {
+                    ( prevTime === worstTime && prevLevel > worstLevel ) ) {
                     worstTile       = prevTile;
                     worstTileIndex  = i;
                     worstTileRecord = prevTileRecord;

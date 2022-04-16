@@ -709,6 +709,166 @@ $.TileSource.prototype = {
                y >= 0 &&
                x < numTiles.x &&
                y < numTiles.y;
+    },
+
+    /**
+     * Decide whether tiles have transparency: this is crucial for
+     * @return {boolean} true if the image has transparency
+     */
+    hasTransparency: function(context2D, url, ajaxHeaders, post) {
+        return !!context2D || url.match('.png');
+    },
+
+    /**
+     * Download tile data
+     * @param {object} context job context that you have to call finish(...) on. It also contains abort(...) function
+     *   that can be called to abort the job.
+     * @param {String} [context.src] - URL of image to download.
+     * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
+     * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
+     * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
+     * @param {String} [context.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
+     *      see TileSrouce::getPostData) or null
+     * @param {Function} [context.callback] - Called once image has been downloaded.
+     * @param {Function} [context.abort] - Called when this image job is aborted.
+     * @param {Number} [context.timeout] - The max number of milliseconds that this image job may take to complete.
+     */
+    downloadTileStart: function (context) {
+        context.image = new Image();
+
+        context.image.onload = function(){
+            context.finish(true);
+        };
+        context.image.onabort = context.image.onerror = function() {
+            context.finish(false, "Image load aborted");
+        };
+
+        // Load the tile with an AJAX request if the loadWithAjax option is
+        // set. Otherwise load the image by setting the source proprety of the image object.
+        if (context.loadWithAjax) {
+            context.request = $.makeAjaxRequest({
+                url: context.src,
+                withCredentials: context.ajaxWithCredentials,
+                headers: context.ajaxHeaders,
+                responseType: "arraybuffer",
+                postData: context.postData,
+                success: function(request) {
+                    var blb;
+                    // Make the raw data into a blob.
+                    // BlobBuilder fallback adapted from
+                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
+                    try {
+                        blb = new window.Blob([request.response]);
+                    } catch (e) {
+                        var BlobBuilder = (
+                            window.BlobBuilder ||
+                            window.WebKitBlobBuilder ||
+                            window.MozBlobBuilder ||
+                            window.MSBlobBuilder
+                        );
+                        if (e.name === 'TypeError' && BlobBuilder) {
+                            var bb = new BlobBuilder();
+                            bb.append(request.response);
+                            blb = bb.getBlob();
+                        }
+                    }
+                    // If the blob is empty for some reason consider the image load a failure.
+                    if (blb.size === 0) {
+                        context.finish(false, "Empty image response.");
+                    } else {
+                        // Create a URL for the blob data and make it the source of the image object.
+                        // This will still trigger Image.onload to indicate a successful tile load.
+                        context.image.src = (window.URL || window.webkitURL).createObjectURL(blb);
+                    }
+                },
+                error: function(request) {
+                    context.finish(false, "Image load aborted - XHR error");
+                }
+            });
+        } else {
+            if (context.crossOriginPolicy !== false) {
+                context.image.crossOrigin = context.crossOriginPolicy;
+            }
+
+            context.image.src = context.src;
+        }
+    },
+
+    /**
+     * @param {object} context job, the same object as with downloadTileStart(..)
+     * @param successful true if successful
+     * @return {null|*} null to indicate missing data or data object
+     *  for example, can return default value if the request was unsuccessful such as default error image
+     */
+    downloadTileFinish: function (context, successful) {
+        if (!context.image) {
+            return null;
+        }
+        context.image.onload = context.image.onerror = context.image.onabort = null;
+        if (!successful) {
+            return null;
+        }
+        return context.image;
+    },
+
+    /**
+     * Create cache object from the result of the download process
+     * @param {Tile} tile instance the cache was created with
+     * @param {object} cacheObject context cache object
+     * @param {*} data the result of downloadTileFinish() function
+     */
+    createTileCache: function(cacheObject, data, tile) {
+        cacheObject._data = data;
+    },
+
+    /**
+     * Cache object destructor, unset all properties to allow GC collection.
+     * @param {object} cacheObject context cache object
+     */
+    destroyTileCache: function (cacheObject) {
+        cacheObject._data = null;
+        cacheObject._renderedContext = null;
+    },
+
+    /**
+     * Raw data getter
+     * @param {object} cacheObject context cache object
+     * @return {*} cache data
+     */
+    getTileCacheData: function(cacheObject) {
+        return cacheObject._data;
+    },
+
+    /**
+     * Compatibility image element getter
+     *  - plugins might need image representation of the data
+     *  - div HTML rendering relies on image element presence
+     *  @param {object} cacheObject context cache object
+     *  @return {Image} cache data as an Image
+     */
+    getTileCacheDataAsImage: function(cacheObject) {
+        return cacheObject._data; //the data itself by default is Image
+    },
+
+    /**
+     * Compatibility context 2D getter
+     *  - most heavily used rendering method is a canvas-based approach,
+     *    convert the data to a canvas and return it's 2D context
+     * @param {object} cacheObject context cache object
+     * @return {CanvasRenderingContext2D} context of the canvas representation of the cache data
+     */
+    getTileCacheDataAsContext2D: function(cacheObject) {
+        if (!cacheObject._renderedContext) {
+            var canvas = document.createElement( 'canvas' );
+            canvas.width = cacheObject._data.width;
+            canvas.height = cacheObject._data.height;
+            cacheObject._renderedContext = canvas.getContext('2d');
+            cacheObject._renderedContext.drawImage( cacheObject._data, 0, 0 );
+            //since we are caching the prerendered image on a canvas
+            //allow the image to not be held in memory
+            cacheObject._data = null;
+        }
+        return cacheObject._renderedContext;
     }
 };
 
