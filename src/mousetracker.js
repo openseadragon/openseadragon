@@ -3561,7 +3561,7 @@
                 eventInfo.shouldReleaseCapture = false;
 
                 // Release (pressed in another element)
-                if ( tracker.releaseHandler ) {
+                if ( tracker.releaseHandler && releasePoint ) {
                     tracker.releaseHandler(
                         {
                             eventSource:           tracker,
