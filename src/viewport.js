@@ -86,6 +86,9 @@ $.Viewport = function( options ) {
 
     delete options.margins;
 
+    options.initialDegrees = options.degrees;
+    delete options.degrees;
+
     $.extend( true, this, {
 
         //required settings

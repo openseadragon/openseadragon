@@ -378,7 +378,7 @@ $.Viewer = function( options ) {
         minZoomLevel:               this.minZoomLevel,
         maxZoomLevel:               this.maxZoomLevel,
         viewer:                     this,
-        initialDegrees:             this.degrees,
+        degrees:                    this.degrees,
         flipped:                    this.flipped,
         navigatorRotate:            this.navigatorRotate,
         homeFillsViewer:            this.homeFillsViewer,
