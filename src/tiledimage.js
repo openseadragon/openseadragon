@@ -1649,7 +1649,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {*} data image data
+     * @param {*} data image data, the output of TileSource.prototype.downloadTileFinish(), by default Image object
      * @param {Number || undefined} cutoff
      * @param {XMLHttpRequest || undefined} tileRequest
      */
@@ -1667,7 +1667,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (increment === 0) {
                 tile.loading = false;
                 tile.loaded = true;
-                tile.hasTransparency = this.source.hasTransparency(
+                tile.hasTransparency = _this.source.hasTransparency(
                     tile.context2D, tile.url, tile.ajaxHeaders, tile.postData
                 );
                 if (!tile.context2D) {
@@ -1689,8 +1689,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {Image|*} image - The image (data) of the tile.
-         * @property {*} data - image data
+         * @property {Image || *} image - The image (data) of the tile. Deprecated.
+         * @property {*} data - image data, the output of TileSource.prototype.downloadTileFinish(),
+         *   by default Image object
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
@@ -1704,7 +1705,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tiledImage: this,
             tileRequest: tileRequest,
             get image() {
-                $.console.error("[tile-loaded] event property 'image' has been deprecated and will be removed in the future");
+                $.console.error("[tile-loaded] event property 'image' has been deprecated and will be removed.");
                 return data;
             },
             data: data,

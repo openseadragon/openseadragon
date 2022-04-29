@@ -298,7 +298,9 @@ $.Tile.prototype = {
 
         if ( !this.element ) {
             var image = this.image;
-            if (!this.image) return;
+            if (!this.image) {
+                return;
+            }
 
             this.element                              = $.makeNeutralElement( "div" );
             this.imgElement                           = image.cloneNode();
@@ -335,7 +337,7 @@ $.Tile.prototype = {
      * @return {Image}
      */
     get image() {
-        this.cacheImageRecord.getImage();
+        return this.cacheImageRecord.getImage();
     },
 
     /**
@@ -367,8 +369,7 @@ $.Tile.prototype = {
 
         var position = this.position.times($.pixelDensityRatio),
             size     = this.size.times($.pixelDensityRatio),
-            rendered,
-            hasTransparency;
+            rendered;
 
         if (!this.context2D && !this.cacheImageRecord) {
             $.console.warn(

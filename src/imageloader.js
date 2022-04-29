@@ -35,7 +35,6 @@
 (function($){
 
 /**
- * @private
  * @class ImageJob
  * @classdesc Handles downloading of a single image.
  * @param {Object} options - Options for this ImageJob.
@@ -50,7 +49,7 @@
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
  */
-function ImageJob (options) {
+$.ImageJob = function(options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
@@ -63,9 +62,16 @@ function ImageJob (options) {
      * @memberof OpenSeadragon.ImageJob#
      */
     this.data = null;
-}
 
-ImageJob.prototype = {
+    /**
+     * User workspace to populate with helper variables
+     * @member {*} user data, for people to append their data
+     * @memberof OpenSeadragon.ImageJob#
+     */
+    this.userData = {};
+};
+
+$.ImageJob.prototype = {
     errorMsg: null,
 
     /**
@@ -100,7 +106,6 @@ ImageJob.prototype = {
 
         this.callback(this);
     }
-
 };
 
 /**
@@ -146,7 +151,7 @@ $.ImageLoader.prototype = {
         if (!options.source) {
             $.console.error('ImageLoader.prototype.addJob() requires [options.source]. ' +
                 'TileSource since new API defines how images are fetched. Creating a dummy TileSource.');
-            let implementation = $.TileSource.prototype;
+            var implementation = $.TileSource.prototype;
             options.source = {
                 downloadTileStart: implementation.downloadTileStart,
                 downloadTileAbort: implementation.downloadTileAbort,
@@ -170,7 +175,7 @@ $.ImageLoader.prototype = {
                 abort: options.abort,
                 timeout: this.timeout
             },
-            newJob = new ImageJob(jobOptions);
+            newJob = new $.ImageJob(jobOptions);
 
         if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
             newJob.start();

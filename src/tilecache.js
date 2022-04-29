@@ -139,8 +139,8 @@ $.TileCache.prototype = {
         if (!imageRecord) {
 
             if (!options.data) {
-                $.console.error("[TileCache.cacheTile] options.image was renamed to options.data. '.image' attribute "
-                 + "has been deprecated and will be removed in the future.");
+                $.console.error("[TileCache.cacheTile] options.image was renamed to options.data. '.image' attribute " +
+                    "has been deprecated and will be removed in the future.");
                 options.data = options.image;
             }
 
