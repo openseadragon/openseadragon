@@ -712,7 +712,7 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Decide whether tiles have transparency: this is crucial for
+     * Decide whether tiles have transparency: this is crucial for correct images blending.
      * @return {boolean} true if the image has transparency
      */
     hasTransparency: function(context2D, url, ajaxHeaders, post) {
@@ -792,6 +792,14 @@ $.TileSource.prototype = {
 
             context.image.src = context.src;
         }
+    },
+
+    /**
+     * Provide means of aborting the execution.
+     * @param {object} context job, the same object as with downloadTileStart(..)
+     */
+    downloadTileAbort: function (context) {
+        context.request.abort();
     },
 
     /**

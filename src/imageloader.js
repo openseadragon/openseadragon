@@ -58,11 +58,11 @@ function ImageJob (options) {
     }, options);
 
     /**
-     * Image object which will contain downloaded image.
-     * @member {Image|*} image element (default) or other form of image data (depends on TileSource)
+     * Data object which will contain downloaded image data.
+     * @member {Image|*} image data object, by default an Image object (depends on TileSource)
      * @memberof OpenSeadragon.ImageJob#
      */
-    this.image = null;
+    this.data = null;
 }
 
 ImageJob.prototype = {
@@ -77,12 +77,11 @@ ImageJob.prototype = {
         var selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
-            self.errorMsg = "Image load exceeded timeout (" + self.timeout + " ms)";
-            self.finish(false);
+            self.finish(false, "Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
         this.abort = function() {
-            self.request.abort();
+            self.source.downloadTileAbort(self);
             if (typeof selfAbort === "function") {
                 selfAbort();
             }
@@ -93,8 +92,7 @@ ImageJob.prototype = {
 
     finish: function(successful, errorMessage) {
         this.errorMsg = errorMessage;
-        //consider deprecation of .image attribute
-        this.image = this.source.downloadTileFinish(this, successful);
+        this.data = this.source.downloadTileFinish(this, successful);
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
@@ -145,6 +143,17 @@ $.ImageLoader.prototype = {
      * @param {Function} [options.abort] - Called when this image job is aborted.
      */
     addJob: function(options) {
+        if (!options.source) {
+            $.console.error('ImageLoader.prototype.addJob() requires [options.source]. ' +
+                'TileSource since new API defines how images are fetched. Creating a dummy TileSource.');
+            let implementation = $.TileSource.prototype;
+            options.source = {
+                downloadTileStart: implementation.downloadTileStart,
+                downloadTileAbort: implementation.downloadTileAbort,
+                downloadTileFinish: implementation.downloadTileFinish
+            };
+        }
+
         var _this = this,
             complete = function(job) {
                 completeJob(_this, job, options.callback);
@@ -207,7 +216,7 @@ function completeJob(loader, job, callback) {
         loader.jobsInProgress++;
     }
 
-    callback(job.image, job.errorMsg, job.request);
+    callback(job.data, job.errorMsg, job.request); //todo job.request might not exist
 }
 
 }(OpenSeadragon));

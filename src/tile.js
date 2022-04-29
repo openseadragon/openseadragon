@@ -164,12 +164,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.imgElement = null;
-    /**
-     * The Image object for this tile.
-     * @member {Object} image
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.image      = null;
 
     /**
      * The alias of this.element.style.
@@ -223,6 +217,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.visibility = null;
 
     /**
+     * The transparency indicator of this tile.
+     * @member {Boolean} true if tile contains transparency for correct rendering
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.hasTransparency = false;
+
+    /**
      * Whether this tile is currently being drawn.
      * @member {Boolean} beingDrawn
      * @memberof OpenSeadragon.Tile#
@@ -266,8 +267,8 @@ $.Tile.prototype = {
 
     // private
     _hasTransparencyChannel: function() {
-        console.warn("Tile.prototype._hasTransparencyChannel has been " +
-            "deprecated and will be removed in the future.");
+        console.warn("Tile.prototype._hasTransparencyChannel() has been " +
+            "deprecated and will be removed in the future. Use TileSource.prototype.hasTransparency() instead.");
         return !!this.context2D || this.url.match('.png');
     },
 
@@ -296,8 +297,11 @@ $.Tile.prototype = {
         //               content during animation of the container size.
 
         if ( !this.element ) {
+            var image = this.image;
+            if (!this.image) return;
+
             this.element                              = $.makeNeutralElement( "div" );
-            this.imgElement                           = this.imageData();
+            this.imgElement                           = image.cloneNode();
             this.imgElement.style.msInterpolationMode = "nearest-neighbor";
             this.imgElement.style.width               = "100%";
             this.imgElement.style.height              = "100%";
@@ -325,22 +329,23 @@ $.Tile.prototype = {
     },
 
     /**
-     * Get the tile image data as <img> element if
-     * supported
-     *
-     * @return {Image || undefined}
+     * The Image object for this tile.
+     * @member {Object} image
+     * @memberof OpenSeadragon.Tile#
+     * @return {Image}
      */
-    imageData: function() {
-        return this.image || this.cacheImageRecord.getImage();
+    get image() {
+        this.cacheImageRecord.getImage();
     },
 
     /**
-     * Get the CanvasRenderingContext2D instance for tile image data drawn
-     * onto Canvas if supported
-     *
-     * @return {CanvasRenderingContext2D || undefined}
+     * The CanvasRenderingContext2D instance for tile image data drawn
+     * onto Canvas if enabled and available
+     * @member {CanvasRenderingContext2D} canvasContext
+     * @memberof OpenSeadragon.Tile#
+     * @return {CanvasRenderingContext2D}
      */
-    canvasContext: function() {
+    get canvasContext() {
         return this.context2D || this.cacheImageRecord.getRenderedContext();
     },
 
@@ -372,7 +377,7 @@ $.Tile.prototype = {
             return;
         }
 
-        rendered = this.canvasContext();
+        rendered = this.canvasContext;
 
         if ( !this.loaded || !rendered ){
             $.console.warn(
@@ -384,7 +389,6 @@ $.Tile.prototype = {
         }
 
         context.save();
-
         context.globalAlpha = this.opacity;
 
         if (typeof scale === 'number' && scale !== 1) {
@@ -398,19 +402,11 @@ $.Tile.prototype = {
             position = position.plus(translate);
         }
 
-        if (source === undefined) {
-            $.console.warn('[Tile.drawCanvas] deprecated call without argument \'hasTransparency\'.');
-            hasTransparency = context.globalAlpha === 1 && this._hasTransparencyChannel();
-        } else {
-            hasTransparency = context.globalAlpha === 1 &&
-                source.hasTransparency(this.context2D, this.url, this.ajaxHeaders, this.postData);
-        }
-
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if (hasTransparency) {
+        if (context.globalAlpha === 1 && this.hasTransparency) {
             if (shouldRoundPositionAndSize) {
                 // Round to the nearest whole pixel so we don't get seams from overlap.
                 position.x = Math.round(position.x);

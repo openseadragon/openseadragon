@@ -45,7 +45,6 @@ var TileRecord = function( options ) {
 
 // private class
 var ImageRecord = function(options) {
-    //private scope: changed image -> data
     $.console.assert( options, "[ImageRecord] options is required" );
     $.console.assert( options.data, "[ImageRecord] options.data is required" );
     this._tiles = [];
@@ -62,14 +61,6 @@ ImageRecord.prototype = {
         this._destroyImplementation();
         this._tiles = null;
     },
-
-    // Removed (left as a comment so that it stands out)
-    // setRenderedContext: function(renderedContext) {
-    //     $.console.error("ImageRecord.setRenderedContext is deprecated. " +
-    //             "The rendered context should be created by the ImageRecord " +
-    //             "itself when calling ImageRecord.getRenderedContext.");
-    //     this._renderedContext = renderedContext;
-    // },
 
     addTile: function(tile) {
         $.console.assert(tile, '[ImageRecord.addTile] tile is required');
@@ -146,9 +137,16 @@ $.TileCache.prototype = {
 
         var imageRecord = this._imagesLoaded[options.tile.cacheKey];
         if (!imageRecord) {
-            $.console.assert( options.image, "[TileCache.cacheTile] options.image is required to create an ImageRecord" );
+
+            if (!options.data) {
+                $.console.error("[TileCache.cacheTile] options.image was renamed to options.data. '.image' attribute "
+                 + "has been deprecated and will be removed in the future.");
+                options.data = options.image;
+            }
+
+            $.console.assert( options.data, "[TileCache.cacheTile] options.data is required to create an ImageRecord" );
             imageRecord = this._imagesLoaded[options.tile.cacheKey] = new ImageRecord({
-                data: options.image,
+                data: options.data,
                 ownerTile: options.tile,
                 create: options.tiledImage.source.createTileCache,
                 destroy: options.tiledImage.source.destroyTileCache,
