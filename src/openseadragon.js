@@ -1986,7 +1986,7 @@ function OpenSeadragon( options ){
          */
         setElementPointerEvents: function( element, value ) {
             element = $.getElement( element );
-            if ( typeof element.style.pointerEvents !== 'undefined' ) {
+            if (typeof element.style !== 'undefined' && typeof element.style.pointerEvents !== 'undefined' ) {
                 element.style.pointerEvents = value;
             }
         },
