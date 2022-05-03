@@ -507,6 +507,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return this.open( tileSource );
     },
 
+    //deprecated
+    get buttons () {
+        $.console.warn('Viewer.buttons is deprecated; Please use Viewer.buttonGroup');
+        return this.buttonGroup;
+    },
+
     /**
      * Open tiled images into the viewer, closing any others.
      * To get the TiledImage instance created by open, add an event listener for
