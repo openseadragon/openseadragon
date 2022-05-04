@@ -44,7 +44,7 @@
  * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSrouce::getPostData) or null
+ *      see TileSource::getPostData) or null
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
@@ -65,15 +65,21 @@ $.ImageJob = function(options) {
 
     /**
      * User workspace to populate with helper variables
-     * @member {*} user data, for people to append their data
+     * @member {*} userData to append custom data and avoid namespace collision
      * @memberof OpenSeadragon.ImageJob#
      */
     this.userData = {};
+
+    /**
+     * Error message holder
+     * @member {string} error message
+     * @memberof OpenSeadragon.ImageJob#
+     * @private
+     */
+    this.errorMsg = null;
 };
 
 $.ImageJob.prototype = {
-    errorMsg: null,
-
     /**
      * Starts the image job.
      * @method
@@ -83,7 +89,7 @@ $.ImageJob.prototype = {
         var selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
-            self.finish(false, "Image load exceeded timeout (" + self.timeout + " ms)");
+            self.finish(null, "Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
         this.abort = function() {
@@ -96,9 +102,16 @@ $.ImageJob.prototype = {
         this.source.downloadTileStart(this);
     },
 
-    finish: function(successful, errorMessage) {
+    /**
+     * Finish this job.
+     * @param {*} data data that has been downloaded
+     * @param {XMLHttpRequest} request reference to the request if used
+     * @param {string} errorMessage description upon failure
+     */
+    finish: function(data, request, errorMessage ) {
+        this.data = data;
+        this.request = request;
         this.errorMsg = errorMessage;
-        this.data = this.source.downloadTileFinish(this, successful);
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
@@ -141,7 +154,7 @@ $.ImageLoader.prototype = {
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSrouce::getPostData) or null
+     *      see TileSource::getPostData) or null
      * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
      *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.
@@ -154,8 +167,7 @@ $.ImageLoader.prototype = {
             var implementation = $.TileSource.prototype;
             options.source = {
                 downloadTileStart: implementation.downloadTileStart,
-                downloadTileAbort: implementation.downloadTileAbort,
-                downloadTileFinish: implementation.downloadTileFinish
+                downloadTileAbort: implementation.downloadTileAbort
             };
         }
 

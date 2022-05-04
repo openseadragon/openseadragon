@@ -1649,7 +1649,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {*} data image data, the output of TileSource.prototype.downloadTileFinish(), by default Image object
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
      * @param {Number || undefined} cutoff
      * @param {XMLHttpRequest || undefined} tileRequest
      */
@@ -1690,8 +1690,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {Image || *} image - The image (data) of the tile. Deprecated.
-         * @property {*} data - image data, the output of TileSource.prototype.downloadTileFinish(),
-         *   by default Image object
+         * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
@@ -1705,7 +1704,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tiledImage: this,
             tileRequest: tileRequest,
             get image() {
-                $.console.error("[tile-loaded] event property 'image' has been deprecated and will be removed.");
+                $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'data' property instead.");
                 return data;
             },
             data: data,

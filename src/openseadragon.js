@@ -2321,7 +2321,7 @@ function OpenSeadragon( options ){
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the the AJAX request
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-         *      see TileSrouce::getPostData), GET method used if null
+         *      see TileSource::getPostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}

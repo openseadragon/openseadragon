@@ -553,7 +553,7 @@ $.TileSource.prototype = {
                      * @property {String} message
                      * @property {String} source
                      * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-                     *      see TileSrouce::getPostData) or null
+                     *      see TileSource::getPostData) or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -721,31 +721,47 @@ $.TileSource.prototype = {
 
     /**
      * Download tile data.
-     * Note that if you override any of downloadTile*() functions, you should override all of them.
+     * Note that if you override this function, you should override also downloadTileAbort().
      * @param {ImageJob} context job context that you have to call finish(...) on.
      * @param {String} [context.src] - URL of image to download.
      * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [context.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSrouce::getPostData) or null
-     *
+     *   see TileSource::getPostData) or null
      * @param {*} [context.userData] - Empty object to attach your own data and helper variables to.
-     * @param {Function} [context.callback] - Called automatically once image has been downloaded (triggered by finish).
      * @param {Function} [context.finish] - Should be called unless abort() was executed, e.g. on all occasions,
-     *      be it successful or unsuccessful request.
-     * @param {Function} [context.abort] - Called when this image job is aborted.
-     * @param {Number} [context.timeout] - The max number of milliseconds that this image job may take to complete.
+     *   be it successful or unsuccessful request.
+     *   Usage: context.finish(data, request, errMessage). Pass the downloaded data object or null upon failure.
+     *   Add also reference to an ajax request if used. Provide error message in case of failure.
+     * @param {Function} [context.abort] - Called automatically when the job times out.
+     *   Usage: context.abort().
+     * @param {Function} [context.callback] @private - Called automatically once image has been downloaded
+     *   (triggered by finish).
+     * @param {Number} [context.timeout] @private - The max number of milliseconds that
+     *   this image job may take to complete.
+     * @param {string} [context.errorMsg] @private - The final error message, default null (set by finish).
      */
     downloadTileStart: function (context) {
-        var dataStore = context.userData;
-        dataStore.image = new Image();
+        var dataStore = context.userData,
+            image = new Image();
 
-        dataStore.image.onload = function(){
-            context.finish(true);
+        dataStore.image = image;
+        dataStore.request = null;
+
+        var finish = function(error) {
+            if (!image) {
+                context.finish(null, dataStore.request, "Image load failed: undefined Image instance.");
+                return;
+            }
+            image.onload = image.onerror = image.onabort = null;
+            context.finish(error ? null : image, dataStore.request, error);
         };
-        dataStore.image.onabort = dataStore.image.onerror = function() {
-            context.finish(false, "Image load aborted");
+        image.onload = function () {
+            finish();
+        };
+        image.onabort = image.onerror = function() {
+            finish("Image load aborted.");
         };
 
         // Load the tile with an AJAX request if the loadWithAjax option is
@@ -779,53 +795,39 @@ $.TileSource.prototype = {
                     }
                     // If the blob is empty for some reason consider the image load a failure.
                     if (blb.size === 0) {
-                        context.finish(false, "Empty image response.");
+                        finish("Empty image response.");
                     } else {
                         // Create a URL for the blob data and make it the source of the image object.
                         // This will still trigger Image.onload to indicate a successful tile load.
-                        dataStore.image.src = (window.URL || window.webkitURL).createObjectURL(blb);
+                        image.src = (window.URL || window.webkitURL).createObjectURL(blb);
                     }
                 },
                 error: function(request) {
-                    context.finish(false, "Image load aborted - XHR error");
+                    finish("Image load aborted - XHR error");
                 }
             });
         } else {
             if (context.crossOriginPolicy !== false) {
-                dataStore.image.crossOrigin = context.crossOriginPolicy;
+                image.crossOrigin = context.crossOriginPolicy;
             }
-            dataStore.image.src = context.src;
+            image.src = context.src;
         }
     },
 
     /**
      * Provide means of aborting the execution.
-     * Note that if you override any of downloadTile*() functions, you should override all of them.
+     * Note that if you override this function, you should override also downloadTileStart().
      * @param {ImageJob} context job, the same object as with downloadTileStart(..)
      * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
      */
     downloadTileAbort: function (context) {
-        context.userData.request.abort();
-    },
-
-    /**
-     * Note that if you override any of downloadTile*() functions, you should override all of them,
-     *  unless you just want to for example here change the format of the data.
-     * Note that unless this function returns Image object, you should also override *TileCache() functions
-     *  to re-define how the data is being cached.
-     * @param {ImageJob} context job, the same object as with downloadTileStart(..)
-     * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
-     * @param successful true if successful
-     * @return {* || null} tile data in a format you want to have in the system, or null to indicate missing data
-     *  also for example, a default value (white image? error image?) can be returned if the request was unsuccessful
-     */
-    downloadTileFinish: function (context, successful) {
-        var image = context.userData.image;
-        if (!image) {
-            return null;
+        if (context.userData.request) {
+            context.userData.request.abort();
         }
-        image.onload = image.onerror = image.onabort = null;
-        return successful ? image : null;
+        var image = context.userData.image;
+        if (context.userData.image) {
+            image.onload = image.onerror = image.onabort = null;
+        }
     },
 
     /**
@@ -835,7 +837,7 @@ $.TileSource.prototype = {
      *
      * Note that if you override any of *TileCache() functions, you should override all of them.
      * @param {object} cacheObject context cache object
-     * @param {*} data the result of downloadTileFinish() function
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
      * @param {Tile} tile instance the cache was created with
      */
     createTileCache: function(cacheObject, data, tile) {

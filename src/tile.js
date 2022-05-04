@@ -53,7 +53,7 @@
  *      drawing operation, in pixels. Note that this only works when drawing with canvas; when drawing
  *      with HTML the entire tile is always used.
  * @param {String} postData HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSrouce::getPostData) or null
+ *      see TileSource::getPostData) or null
  * @param {String} cacheKey key to act as a tile cache, must be unique for tiles with unique image data
  */
 $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds, postData, cacheKey) {
@@ -104,7 +104,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * Post parameters for this tile. For example, it can be an URL-encoded string
      * in k1=v1&k2=v2... format, or a JSON, or a FormData instance... or null if no POST request used
      * @member {String} postData HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSrouce::getPostData) or null
+     *      see TileSource::getPostData) or null
      * @memberof OpenSeadragon.Tile#
      */
     this.postData  = postData;
@@ -218,7 +218,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
 
     /**
      * The transparency indicator of this tile.
-     * @member {Boolean} true if tile contains transparency for correct rendering
+     * @member {Boolean} hasTransparency true if tile contains transparency for correct rendering
      * @memberof OpenSeadragon.Tile#
      */
     this.hasTransparency = false;
@@ -297,8 +297,8 @@ $.Tile.prototype = {
         //               content during animation of the container size.
 
         if ( !this.element ) {
-            var image = this.image;
-            if (!this.image) {
+            var image = this.getImage();
+            if (!image) {
                 return;
             }
 
@@ -334,20 +334,28 @@ $.Tile.prototype = {
      * The Image object for this tile.
      * @member {Object} image
      * @memberof OpenSeadragon.Tile#
+     * @deprecated
      * @return {Image}
      */
     get image() {
+        $.console.error("[Tile.image] property has been deprecated. Use [Tile.prototype.getImage] instead.");
+        return this.getImage();
+    },
+
+    /**
+     * Get the Image object for this tile.
+     * @return {Image}
+     */
+    getImage: function() {
         return this.cacheImageRecord.getImage();
     },
 
     /**
-     * The CanvasRenderingContext2D instance for tile image data drawn
+     * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
-     * @member {CanvasRenderingContext2D} canvasContext
-     * @memberof OpenSeadragon.Tile#
      * @return {CanvasRenderingContext2D}
      */
-    get canvasContext() {
+    getCanvasContext: function() {
         return this.context2D || this.cacheImageRecord.getRenderedContext();
     },
 
@@ -378,7 +386,7 @@ $.Tile.prototype = {
             return;
         }
 
-        rendered = this.canvasContext;
+        rendered = this.getCanvasContext();
 
         if ( !this.loaded || !rendered ){
             $.console.warn(
