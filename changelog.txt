@@ -8,7 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Added isFullScreen method to Viewer (#2067 @JachiOnuoha)
 * Fixed an issue where turning off panVertical or panHorizontal would not affect the panning keyboard combos (#2069 @JachiOnuoha)
 * Cleaned up console.logs so that errors and warnings use console.error and console.warn as appropriate (#2073 @Abhishek-90)
-* Improved documentation (#2067 @JachiOnuoha, #2112 @shyamkumaryadav, #2152 @joedf)
+* Improved documentation (#2067 @JachiOnuoha, #2112 @shyamkumaryadav, #2152 @joedf, #2155 @samwilson)
 * Added option to include POST data when loading files via Ajax (#2072 @Aiosa)
 * Fixed: Setting useCanvas to false would break the viewer (#2116 @rvv-bouvet)
 * Allow silencing multi-image warnings on viewport coordinate conversion functions (#2120 @claycoleman)
