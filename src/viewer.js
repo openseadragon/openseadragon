@@ -3289,9 +3289,6 @@ function onCanvasPinch( event ) {
         if ( gestureSettings.pinchToZoom &&
                     (!canvasPinchEventArgs.preventDefaultPanAction || !canvasPinchEventArgs.preventDefaultZoomAction) ) {
             centerPt = this.viewport.pointFromPixel( event.center, true );
-            if ( !canvasPinchEventArgs.preventDefaultZoomAction ) {
-                this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-            }
             if ( gestureSettings.zoomToRefPoint && !canvasPinchEventArgs.preventDefaultPanAction ) {
                 lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
                 panByPt = lastCenterPt.minus( centerPt );
@@ -3302,6 +3299,9 @@ function onCanvasPinch( event ) {
                     panByPt.y = 0;
                 }
                 this.viewport.panBy(panByPt, true);
+            }
+            if ( !canvasPinchEventArgs.preventDefaultZoomAction ) {
+                this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
             }
             this.viewport.applyConstraints();
         }
