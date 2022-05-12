@@ -3371,7 +3371,7 @@ function onCanvasScroll( event ) {
                     factor,
                     gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
                 );
-                this.viewport.applyConstraints();
+                this.viewport.applyZoomConstraints();
             }
         }
 

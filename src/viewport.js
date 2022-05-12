@@ -592,6 +592,25 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Enforces the minZoom, maxZoom constraints by zooming to the closest acceptable zoom.
+     * @function
+     * @param {Boolean} [immediately=false]
+     * @return {OpenSeadragon.Viewport} Chainable.
+     * @fires OpenSeadragon.Viewer.event:constrain
+     */
+    applyZoomConstraints: function(immediately) {
+        var actualZoom = this.getZoom();
+        var constrainedZoom = this._applyZoomConstraints(actualZoom);
+
+        if (actualZoom !== constrainedZoom) {
+            this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
+        }
+
+        this._raiseConstraintsEvent(immediately);
+        return this;
+    },
+
+    /**
      * Equivalent to {@link OpenSeadragon.Viewport#applyConstraints}
      * @function
      * @param {Boolean} [immediately=false]
