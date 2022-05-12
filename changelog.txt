@@ -20,6 +20,7 @@ OPENSEADRAGON CHANGELOG
 * Now if you pass an error handler into makeAjaxRequest, it doesn't report errors into the console (#2142 @Aiosa)
 * Fixed error caused by attaching MouseTracker to the page's document element (#2145 @tdiprima)
 * Added fallback and deprecation warning for Viewer.buttons (which got changed to buttonGroup in 3.0.0) (#2153 @devbyjonah)
+* Pinch to zoom now zooms around the center of the pinch, rather than the center of the viewer (#2158 @cavenel)
 
 3.0.0:
 
