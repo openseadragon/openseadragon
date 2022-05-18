@@ -506,7 +506,7 @@ $.Viewport.prototype = {
             var leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
             var rightDx = contentRight - newBounds.x - horizontalThreshold;
 
-            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+            if (horizontalThreshold > this._contentBoundsNoRotate.width && horizontalThreshold <= 1) {
                 newBounds.x += (leftDx + rightDx) / 2;
             } else if (rightDx < 0) {
                 newBounds.x += rightDx;
@@ -524,7 +524,7 @@ $.Viewport.prototype = {
             var topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
             var bottomDy = contentBottom - newBounds.y - verticalThreshold;
 
-            if (verticalThreshold > this._contentBoundsNoRotate.height) {
+            if (verticalThreshold > this._contentBoundsNoRotate.height && verticalThreshold <= 1) {
                 newBounds.y += (topDy + bottomDy) / 2;
             } else if (bottomDy < 0) {
                 newBounds.y += bottomDy;
