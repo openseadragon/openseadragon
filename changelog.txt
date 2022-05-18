@@ -21,6 +21,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed error caused by attaching MouseTracker to the page's document element (#2145 @tdiprima)
 * Added fallback and deprecation warning for Viewer.buttons (which got changed to buttonGroup in 3.0.0) (#2153 @devbyjonah)
 * Pinch to zoom now zooms around the center of the pinch, rather than the center of the viewer (#2158 @cavenel)
+* Fixed an issue that would sometimes cause problems with freeing up ImageTileSource memory (#2162 @pearcetm)
 
 3.0.0:
 
