@@ -272,8 +272,10 @@
          */
         _freeupCanvasMemory: function () {
             for (var i = 0; i < this.levels.length; i++) {
-                this.levels[i].context2D.canvas.height = 0;
-                this.levels[i].context2D.canvas.width = 0;
+                if(this.levels[i].context2D){
+                    this.levels[i].context2D.canvas.height = 0;
+                    this.levels[i].context2D.canvas.width = 0;
+                }
             }
         },
     });
