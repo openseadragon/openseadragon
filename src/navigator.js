@@ -32,6 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+const { option } = require("grunt");
+
 (function( $ ){
 
 /**
@@ -56,11 +58,25 @@ $.Navigator = function( options ){
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element or the element itself
-    if( !options.element ){
-        if (!options.id) {
+    if( options.element || options.id ){
+        if ( options.element ) {
+            if ( options.id ){
+                $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
+            }
+
             options.id = 'navigator-' + $.now();
+            this.element = options.element;
+        } else {
+            this.element = document.getElementById( options.id );
         }
 
+        options.controlOptions  = {
+            anchor:           $.ControlAnchor.NONE,
+            attachToViewer:   false,
+            autoFade:         false
+        };
+    } else {
+        options.id              = 'navigator-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
         options.controlOptions  = {
             anchor:           $.ControlAnchor.TOP_RIGHT,
@@ -84,26 +100,9 @@ $.Navigator = function( options ){
                options.controlOptions.height = options.height;
                options.controlOptions.width = options.width;
             }
-
-        } else {
-            this.element            = document.getElementById( options.id );
-            options.controlOptions  = {
-                anchor:           $.ControlAnchor.NONE,
-                attachToViewer:   false,
-                autoFade:         false
-            };
         }
-        this.element.id         = options.id;
-    } else {
-        this.element            = options.element;
-        $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
-
-        options.controlOptions  = {
-            anchor:           $.ControlAnchor.NONE,
-            attachToViewer:   false,
-            autoFade:         false
-        };
     }
+    this.element.id         = options.id;
     this.element.className  += ' navigator';
 
     options = $.extend( true, {
