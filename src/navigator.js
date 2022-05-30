@@ -32,8 +32,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const { option } = require("grunt");
-
 (function( $ ){
 
 /**
