@@ -57,14 +57,16 @@ $.Navigator = function( options ){
     //We may need to create a new element and id if they did not
     //provide the id for the existing element or the element itself
     if( !options.element ){
-        if( !options.id ){
-            options.id              = 'navigator-' + $.now();
-            this.element            = $.makeNeutralElement( "div" );
-            options.controlOptions  = {
-                anchor:           $.ControlAnchor.TOP_RIGHT,
-                attachToViewer:   true,
-                autoFade:         options.autoFade
-            };
+        if (!options.id) {
+            options.id = 'navigator-' + $.now();
+        }
+
+        this.element            = $.makeNeutralElement( "div" );
+        options.controlOptions  = {
+            anchor:           $.ControlAnchor.TOP_RIGHT,
+            attachToViewer:   true,
+            autoFade:         options.autoFade
+        };
 
         if( options.position ){
             if( 'BOTTOM_RIGHT' === options.position ){
@@ -94,6 +96,8 @@ $.Navigator = function( options ){
         this.element.id         = options.id;
     } else {
         this.element            = options.element;
+        $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
+
         options.controlOptions  = {
             anchor:           $.ControlAnchor.NONE,
             attachToViewer:   false,
