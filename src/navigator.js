@@ -32,6 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+const { option } = require("grunt");
+
 (function( $ ){
 
 /**
@@ -60,9 +62,15 @@ $.Navigator = function( options ){
         if ( options.element ) {
             if ( options.id ){
                 $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
+            } else {
+                // Don't overwrite the element's id if it has one already
+                if ( option.element.id ) {
+                    options.id = option.element.id;
+                } else {
+                    options.id = 'navigator-' + $.now();
+                }
             }
 
-            options.id = 'navigator-' + $.now();
             this.element = options.element;
         } else {
             this.element = document.getElementById( options.id );
