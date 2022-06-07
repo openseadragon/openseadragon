@@ -39,9 +39,11 @@
  * @classdesc Handles downloading of a single image.
  * @param {Object} options - Options for this ImageJob.
  * @param {String} [options.src] - URL of image to download.
+ * @param {Tile} [options.tile] - Tile that belongs the data to.
  * @param {TileSource} [options.source] - Image loading strategy
  * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
  * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
+ * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
  *      see TileSource::getPostData) or null
@@ -89,7 +91,7 @@ $.ImageJob.prototype = {
         var selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
-            self.finish(null, "Image load exceeded timeout (" + self.timeout + " ms)");
+            self.finish(null, null, "Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
         this.abort = function() {
@@ -149,6 +151,8 @@ $.ImageLoader.prototype = {
      * @method
      * @param {Object} options - Options for this job.
      * @param {String} [options.src] - URL of image to download.
+     * @param {Tile} [options.tile] - Tile that belongs the data to. The tile instance
+     *      is not internally used and serves for custom TileSources implementations.
      * @param {TileSource} [options.source] - Image loading strategy
      * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
@@ -177,6 +181,7 @@ $.ImageLoader.prototype = {
             },
             jobOptions = {
                 src: options.src,
+                tile: options.tile || {},
                 source: options.source,
                 loadWithAjax: options.loadWithAjax,
                 ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
@@ -233,7 +238,7 @@ function completeJob(loader, job, callback) {
         loader.jobsInProgress++;
     }
 
-    callback(job.data, job.errorMsg, job.request); //todo job.request might not exist
+    callback(job.data, job.errorMsg, job.request);
 }
 
 }(OpenSeadragon));

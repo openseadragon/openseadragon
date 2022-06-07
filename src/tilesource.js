@@ -726,6 +726,7 @@ $.TileSource.prototype = {
      * @param {String} [context.src] - URL of image to download.
      * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
+     * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
      * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [context.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
      *   see TileSource::getPostData) or null

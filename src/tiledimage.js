@@ -1570,6 +1570,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         tile.loading = true;
         this._imageLoader.addJob({
             src: tile.url,
+            tile: tile,
             source: this.source,
             postData: tile.postData,
             loadWithAjax: tile.loadWithAjax,
