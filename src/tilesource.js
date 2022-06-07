@@ -649,7 +649,7 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
-     * @return {* || null} post data to send with tile configuration request
+     * @return {*|null} post data to send with tile configuration request
      */
     getTilePostData: function( level, x, y ) {
         return null;

@@ -1236,8 +1236,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @private
      * Updates all tiles at a given resolution level.
+     * @private
      * @param {Boolean} haveDrawn
      * @param {Boolean} drawLevel
      * @param {Number} level
@@ -1649,9 +1649,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {Image || undefined} image
-     * @param {Number || undefined} cutoff
-     * @param {XMLHttpRequest || undefined} tileRequest
+     * @param {Image|undefined} image
+     * @param {Number|undefined} cutoff
+     * @param {XMLHttpRequest|undefined} tileRequest
      */
     _setTileLoaded: function(tile, image, cutoff, tileRequest) {
         var increment = 0,
