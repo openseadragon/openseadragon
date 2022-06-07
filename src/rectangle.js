@@ -230,7 +230,7 @@ $.Rect.prototype = {
      * Returns the width and height component as a vector OpenSeadragon.Point
      * @function
      * @returns {OpenSeadragon.Point} The 2 dimensional vector representing the
-     *  the width and height of the rectangle.
+     *  width and height of the rectangle.
      */
     getSize: function() {
         return new $.Point(this.width, this.height);
