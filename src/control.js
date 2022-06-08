@@ -2,7 +2,7 @@
  * OpenSeadragon - Control
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -79,7 +79,7 @@ $.Control = function ( element, options, container ) {
     {
         $.console.error("Passing an anchor directly into the OpenSeadragon.Control constructor is deprecated; " +
                         "please use an options object instead.  " +
-                        "Support for this deprecated variant is scheduled for removal in December 2013");
+                        "Support for this deprecated variant is scheduled for removal in December 2022");
          options = {anchor: options};
     }
     options.attachToViewer = (typeof options.attachToViewer === 'undefined') ? true : options.attachToViewer;
