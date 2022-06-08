@@ -79,7 +79,7 @@ $.Control = function ( element, options, container ) {
     {
         $.console.error("Passing an anchor directly into the OpenSeadragon.Control constructor is deprecated; " +
                         "please use an options object instead.  " +
-                        "Support for this deprecated variant is scheduled for removal in December 2022");
+                        "Support for this deprecated variant is scheduled for removal in December 2013");
          options = {anchor: options};
     }
     options.attachToViewer = (typeof options.attachToViewer === 'undefined') ? true : options.attachToViewer;
