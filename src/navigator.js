@@ -45,7 +45,9 @@
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.Viewer
  * @extends OpenSeadragon.EventSource
- * @param {Object} options
+ * @param {Object} options - Navigator options
+ * @param {Element} [options.element] - An element to use for the navigator
+ * @param {String} [options.id] - Id of the element to use for the navigator. However, this is ignored if {@link options.element} is provided.
  */
 $.Navigator = function( options ){
 
