@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 3.2.0: (in progress)
 
+* Improved the constraints that keep the image in the viewer, specifically when zoomed out a lot (#2160 @joedf)
+
 3.1.0:
 
 * Added subPixelRoundingForTransparency Viewer option to address seams that can appear in semi-transparent images (#2075 @TanukiSharp)
