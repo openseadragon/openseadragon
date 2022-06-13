@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 3.2.0: (in progress)
 
 * Improved the constraints that keep the image in the viewer, specifically when zoomed out a lot (#2160 @joedf)
+* You can now provide an element for the navigator (as an alternative to an ID); currently only works when you create the navigator yourself (#2166 @cameronbaney @joedf)
 
 3.1.0:
 
