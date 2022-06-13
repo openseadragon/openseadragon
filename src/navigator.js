@@ -45,7 +45,9 @@
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.Viewer
  * @extends OpenSeadragon.EventSource
- * @param {Object} options
+ * @param {Object} options - Navigator options
+ * @param {Element} [options.element] - An element to use for the navigator.
+ * @param {String} [options.id] - Id of the element to use for the navigator. However, this is ignored if {@link options.element} is provided.
  */
 $.Navigator = function( options ){
 
@@ -55,8 +57,31 @@ $.Navigator = function( options ){
         navigatorSize;
 
     //We may need to create a new element and id if they did not
-    //provide the id for the existing element
-    if( !options.id ){
+    //provide the id for the existing element or the element itself
+    if( options.element || options.id ){
+        if ( options.element ) {
+            if ( options.id ){
+                $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
+            } else {
+                // Don't overwrite the element's id if it has one already
+                if ( options.element.id ) {
+                    options.id = options.element.id;
+                } else {
+                    options.id = 'navigator-' + $.now();
+                }
+            }
+
+            this.element = options.element;
+        } else {
+            this.element = document.getElementById( options.id );
+        }
+
+        options.controlOptions  = {
+            anchor:           $.ControlAnchor.NONE,
+            attachToViewer:   false,
+            autoFade:         false
+        };
+    } else {
         options.id              = 'navigator-' + $.now();
         this.element            = $.makeNeutralElement( "div" );
         options.controlOptions  = {
@@ -82,14 +107,6 @@ $.Navigator = function( options ){
                options.controlOptions.width = options.width;
             }
         }
-
-    } else {
-        this.element            = document.getElementById( options.id );
-        options.controlOptions  = {
-            anchor:           $.ControlAnchor.NONE,
-            attachToViewer:   false,
-            autoFade:         false
-        };
     }
     this.element.id         = options.id;
     this.element.className  += ' navigator';
