@@ -51,7 +51,7 @@ $.IIIFTileSource = function( options ){
 
     $.extend( true, this, options );
 
-    if ( !( this.height && this.width && this['@id'] ) ) {
+    if ( !( this.height && this.width && (this['@id'] || this['id']) ) ) {
         throw new Error( 'IIIF required parameters not provided.' );
     }
 
