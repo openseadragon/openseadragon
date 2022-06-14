@@ -62,13 +62,13 @@ $.Navigator = function( options ){
         if ( options.element ) {
             if ( options.id ){
                 $.console.warn("Given option.id for Navigator was ignored since option.element was provided and is being used instead.");
+            }
+
+            // Don't overwrite the element's id if it has one already
+            if ( options.element.id ) {
+                options.id = options.element.id;
             } else {
-                // Don't overwrite the element's id if it has one already
-                if ( options.element.id ) {
-                    options.id = options.element.id;
-                } else {
-                    options.id = 'navigator-' + $.now();
-                }
+                options.id = 'navigator-' + $.now();
             }
 
             this.element = options.element;
