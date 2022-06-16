@@ -51,8 +51,11 @@ $.IIIFTileSource = function( options ){
 
     $.extend( true, this, options );
 
-    if ( !( this.height && this.width && (this['@id'] || this['id']) ) ) {
-        throw new Error( 'IIIF required parameters not provided.' );
+    /* Normalizes v3-style 'id' keys to an "_id" internal property */
+    this._id = this["@id"] || this["id"] || this['identifier'] || null;
+
+    if ( !( this.height && this.width && this._id) ) {
+        throw new Error( 'IIIF required parameters (width, height, or id) not provided.' );
     }
 
     options.tileSizePerScaleFactor = {};
@@ -204,13 +207,15 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         if ( !$.isPlainObject(data) ) {
             var options = configureFromXml10( data );
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
-            options['@id'] = url.replace('/info.xml', '');
+            options._id = url.replace('/info.xml', '');
             options.version = 1;
             return options;
         } else {
             if ( !data['@context'] ) {
                 data['@context'] = 'http://iiif.io/api/image/1.0/context.json';
-                data['@id'] = url.replace('/info.json', '');
+                data["@id"] = url.replace('/info.json', '');
+                // ensure the '@id' property is aliased to the internal "_id" property.
+                data._id = data["@id"];
                 data.version = 1;
             } else {
                 var context = data['@context'];
@@ -239,10 +244,15 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                         $.console.error('Data has a @context property which contains no known IIIF context URI.');
                 }
             }
-            if ( !data['@id'] && data['id'] ) {
-                data['@id'] = data['id'];
+
+            // normalize the various possible id properties to an internal one
+            data._id = data["@id"] || data["id"] || data['identifier'] || null;
+
+            if (!data._id) {
+                throw new Error( 'Could not determine a property for the tile source ID.' );
             }
-            if(data.preferredFormats) {
+
+            if (data.preferredFormats) {
                 for (var f = 0; f < data.preferredFormats.length; f++ ) {
                     if ( OpenSeadragon.imageFormatSupported(data.preferredFormats[f]) ) {
                         data.tileFormat = data.preferredFormats[f];
@@ -431,7 +441,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = iiifSizeW + ",";
             }
         }
-        uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
+        uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
         return uri;
     },
@@ -482,7 +492,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var levels = [];
         for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
-                url: options['@id'] + '/full/' + options.sizes[i].width + ',' +
+                url: options._id + '/full/' + options.sizes[i].width + ',' +
                     (options.version === 3 ? options.sizes[i].height : '') +
                     '/0/default.' + options.tileFormat,
                 width: options.sizes[i].width,
