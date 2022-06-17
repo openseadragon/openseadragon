@@ -183,23 +183,29 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     },
 
     /**
+     * A static function used to prepare an incoming IIIF Image API info.json
+     * response for processing by the tile handler. Normalizes data for all
+     * versions of IIIF (1.0, 1.1, 2.x, 3.x) and returns a data object that
+     * may be passed to the IIIFTileSource.
      *
      * @function
+     * @static
      * @param {Object} data - the raw configuration
      * @param {String} url - the url configuration was retrieved from
      * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
-     * @example <caption>IIIF 1.1 Info Looks like this</caption>
+     * @return {Object} A normalized IIIF data object
+     * @example <caption>IIIF 2.x Info Looks like this</caption>
      * {
-     *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
-     *   "@id" : "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
-     *   "width" : 6000,
-     *   "height" : 4000,
-     *   "scale_factors" : [ 1, 2, 4 ],
-     *   "tile_width" : 1024,
-     *   "tile_height" : 1024,
-     *   "formats" : [ "jpg", "png" ],
-     *   "qualities" : [ "native", "grey" ],
-     *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0"
+     * "@context": "http://iiif.io/api/image/2/context.json",
+     * "@id": "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
+     * "protocol": "http://iiif.io/api/image",
+     * "height": 1024,
+     * "width": 775,
+     * "tiles" : [{"width":256, "scaleFactors":[1,2,4,8]}],
+     *  "profile": ["http://iiif.io/api/image/2/level1.json", {
+     *    "qualities": [ "native", "bitonal", "grey", "color" ],
+     *    "formats": [ "jpg", "png", "gif" ]
+     *   }]
      * }
      */
     configure: function( data, url, postData ){
