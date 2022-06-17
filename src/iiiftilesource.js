@@ -207,15 +207,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         if ( !$.isPlainObject(data) ) {
             var options = configureFromXml10( data );
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
-            options._id = url.replace('/info.xml', '');
+            options["@id"] = url.replace('/info.xml', '');
             options.version = 1;
             return options;
         } else {
             if ( !data['@context'] ) {
                 data['@context'] = 'http://iiif.io/api/image/1.0/context.json';
                 data["@id"] = url.replace('/info.json', '');
-                // ensure the '@id' property is aliased to the internal "_id" property.
-                data._id = data["@id"];
                 data.version = 1;
             } else {
                 var context = data['@context'];
