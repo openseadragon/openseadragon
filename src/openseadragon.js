@@ -410,6 +410,11 @@
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
   *
+  * @property {Element} [navigatorElement=null]
+  *     The element to hold the navigator minimap.
+  *     If an element is specified, the Id option (see navigatorId) is ignored.
+  *     If no element nor ID is specified, a div element will be generated accordingly.
+  *
   * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
   *     If an ID is specified, the navigatorPosition, navigatorSizeRatio, navigatorMaintainSizeRatio, navigator[Top|Left|Height|Width] and navigatorAutoFade options will be ignored.
@@ -1265,6 +1270,7 @@ function OpenSeadragon( options ){
 
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:              false,
+            navigatorElement:           null,
             navigatorId:                null,
             navigatorPosition:          null,
             navigatorSizeRatio:         0.2,
