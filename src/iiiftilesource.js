@@ -150,7 +150,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url] - url
      */
 
     supports: function( data, url ) {
@@ -247,13 +247,6 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                     default:
                         $.console.error('Data has a @context property which contains no known IIIF context URI.');
                 }
-            }
-
-            // normalize the various possible id properties to an internal one
-            data._id = data["@id"] || data["id"] || data['identifier'] || null;
-
-            if (!data._id) {
-                throw new Error( 'Could not determine a property for the tile source ID.' );
             }
 
             if (data.preferredFormats) {
