@@ -51,8 +51,11 @@ $.IIIFTileSource = function( options ){
 
     $.extend( true, this, options );
 
-    if ( !( this.height && this.width && this['@id'] ) ) {
-        throw new Error( 'IIIF required parameters not provided.' );
+    /* Normalizes v3-style 'id' keys to an "_id" internal property */
+    this._id = this["@id"] || this["id"] || this['identifier'] || null;
+
+    if ( !( this.height && this.width && this._id) ) {
+        throw new Error( 'IIIF required parameters (width, height, or id) not provided.' );
     }
 
     options.tileSizePerScaleFactor = {};
@@ -147,7 +150,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url] - url
      */
 
     supports: function( data, url ) {
@@ -180,23 +183,29 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     },
 
     /**
+     * A static function used to prepare an incoming IIIF Image API info.json
+     * response for processing by the tile handler. Normalizes data for all
+     * versions of IIIF (1.0, 1.1, 2.x, 3.x) and returns a data object that
+     * may be passed to the IIIFTileSource.
      *
      * @function
+     * @static
      * @param {Object} data - the raw configuration
      * @param {String} url - the url configuration was retrieved from
      * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
-     * @example <caption>IIIF 1.1 Info Looks like this</caption>
+     * @return {Object} A normalized IIIF data object
+     * @example <caption>IIIF 2.x Info Looks like this</caption>
      * {
-     *   "@context" : "http://library.stanford.edu/iiif/image-api/1.1/context.json",
-     *   "@id" : "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
-     *   "width" : 6000,
-     *   "height" : 4000,
-     *   "scale_factors" : [ 1, 2, 4 ],
-     *   "tile_width" : 1024,
-     *   "tile_height" : 1024,
-     *   "formats" : [ "jpg", "png" ],
-     *   "qualities" : [ "native", "grey" ],
-     *   "profile" : "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0"
+     * "@context": "http://iiif.io/api/image/2/context.json",
+     * "@id": "http://iiif.example.com/prefix/1E34750D-38DB-4825-A38A-B60A345E591C",
+     * "protocol": "http://iiif.io/api/image",
+     * "height": 1024,
+     * "width": 775,
+     * "tiles" : [{"width":256, "scaleFactors":[1,2,4,8]}],
+     *  "profile": ["http://iiif.io/api/image/2/level1.json", {
+     *    "qualities": [ "native", "bitonal", "grey", "color" ],
+     *    "formats": [ "jpg", "png", "gif" ]
+     *   }]
      * }
      */
     configure: function( data, url, postData ){
@@ -204,13 +213,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         if ( !$.isPlainObject(data) ) {
             var options = configureFromXml10( data );
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
-            options['@id'] = url.replace('/info.xml', '');
+            options["@id"] = url.replace('/info.xml', '');
             options.version = 1;
             return options;
         } else {
             if ( !data['@context'] ) {
                 data['@context'] = 'http://iiif.io/api/image/1.0/context.json';
-                data['@id'] = url.replace('/info.json', '');
+                data["@id"] = url.replace('/info.json', '');
                 data.version = 1;
             } else {
                 var context = data['@context'];
@@ -239,10 +248,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                         $.console.error('Data has a @context property which contains no known IIIF context URI.');
                 }
             }
-            if ( !data['@id'] && data['id'] ) {
-                data['@id'] = data['id'];
-            }
-            if(data.preferredFormats) {
+
+            if (data.preferredFormats) {
                 for (var f = 0; f < data.preferredFormats.length; f++ ) {
                     if ( OpenSeadragon.imageFormatSupported(data.preferredFormats[f]) ) {
                         data.tileFormat = data.preferredFormats[f];
@@ -431,7 +438,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = iiifSizeW + ",";
             }
         }
-        uri = [ this['@id'], iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
+        uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
         return uri;
     },
@@ -482,7 +489,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var levels = [];
         for(var i = 0; i < options.sizes.length; i++) {
             levels.push({
-                url: options['@id'] + '/full/' + options.sizes[i].width + ',' +
+                url: options._id + '/full/' + options.sizes[i].width + ',' +
                     (options.version === 3 ? options.sizes[i].height : '') +
                     '/0/default.' + options.tileFormat,
                 width: options.sizes[i].width,
