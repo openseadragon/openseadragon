@@ -347,15 +347,16 @@ $.Drawer.prototype = {
      * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
      * position and size of tiles supporting alpha channel in non-transparency
      * context.
+     * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    drawTile: function(tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize) {
+    drawTile: function( tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
             scale = scale || 1;
-            tile.drawCanvas(context, drawingHandler, scale, translate, shouldRoundPositionAndSize);
+            tile.drawCanvas(context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
         } else {
             tile.drawHTML( this.canvas );
         }

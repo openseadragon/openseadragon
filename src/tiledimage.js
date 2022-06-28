@@ -1427,8 +1427,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             } else {
                 var imageRecord = this._tileCache.getImageRecord(tile.cacheKey);
                 if (imageRecord) {
-                    var image = imageRecord.getImage();
-                    this._setTileLoaded(tile, image);
+                    this._setTileLoaded(tile, imageRecord.getData());
                 }
             }
         }
@@ -1571,13 +1570,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         tile.loading = true;
         this._imageLoader.addJob({
             src: tile.url,
+            tile: tile,
+            source: this.source,
             postData: tile.postData,
             loadWithAjax: tile.loadWithAjax,
             ajaxHeaders: tile.ajaxHeaders,
             crossOriginPolicy: this.crossOriginPolicy,
             ajaxWithCredentials: this.ajaxWithCredentials,
-            callback: function( image, errorMsg, tileRequest ){
-                _this._onTileLoad( tile, time, image, errorMsg, tileRequest );
+            callback: function( data, errorMsg, tileRequest ){
+                _this._onTileLoad( tile, time, data, errorMsg, tileRequest );
             },
             abort: function() {
                 tile.loading = false;
@@ -1591,12 +1592,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Callback fired when a Tile's Image finished downloading.
      * @param {OpenSeadragon.Tile} tile
      * @param {Number} time
-     * @param {Image} image
+     * @param {*} data image data
      * @param {String} errorMsg
      * @param {XMLHttpRequest} tileRequest
      */
-    _onTileLoad: function( tile, time, image, errorMsg, tileRequest ) {
-        if ( !image ) {
+    _onTileLoad: function( tile, time, data, errorMsg, tileRequest ) {
+        if ( !data ) {
             $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
             /**
              * Triggered when a tile fails to load.
@@ -1632,7 +1633,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             finish = function() {
                 var ccc = _this.source;
                 var cutoff = ccc.getClosestLevel();
-                _this._setTileLoaded(tile, image, cutoff, tileRequest);
+                _this._setTileLoaded(tile, data, cutoff, tileRequest);
         };
 
         // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -1649,11 +1650,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {Image|undefined} image
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
      * @param {Number|undefined} cutoff
      * @param {XMLHttpRequest|undefined} tileRequest
      */
-    _setTileLoaded: function(tile, image, cutoff, tileRequest) {
+    _setTileLoaded: function(tile, data, cutoff, tileRequest) {
         var increment = 0,
             _this = this;
 
@@ -1667,9 +1668,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (increment === 0) {
                 tile.loading = false;
                 tile.loaded = true;
+                tile.hasTransparency = _this.source.hasTransparency(
+                    tile.context2D, tile.url, tile.ajaxHeaders, tile.postData
+                );
                 if (!tile.context2D) {
                     _this._tileCache.cacheTile({
-                        image: image,
+                        data: data,
                         tile: tile,
                         cutoff: cutoff,
                         tiledImage: _this
@@ -1686,7 +1690,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {Image} image - The image of the tile.
+         * @property {Image || *} image - The image (data) of the tile. Deprecated.
+         * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
@@ -1699,7 +1704,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile: tile,
             tiledImage: this,
             tileRequest: tileRequest,
-            image: image,
+            get image() {
+                $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'data' property instead.");
+                return data;
+            },
+            data: data,
             getCompletionCallback: getCompletionCallback
         });
         // In case the completion callback is never called, we at least force it once.
@@ -1842,7 +1851,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (tile) {
             useSketch = this.opacity < 1 ||
                 (this.compositeOperation && this.compositeOperation !== 'source-over') ||
-                (!this._isBottomItem() && tile._hasTransparencyChannel());
+                (!this._isBottomItem() &&
+                    this.source.hasTransparency(tile.context2D, tile.url, tile.ajaxHeaders, tile.postData));
         }
 
         var sketchScale;
@@ -1984,7 +1994,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         for (var i = lastDrawn.length - 1; i >= 0; i--) {
             tile = lastDrawn[ i ];
-            this._drawer.drawTile( tile, this._drawingHandler, useSketch, sketchScale, sketchTranslate, shouldRoundPositionAndSize );
+            this._drawer.drawTile( tile, this._drawingHandler, useSketch, sketchScale,
+                sketchTranslate, shouldRoundPositionAndSize, this.source );
             tile.beingDrawn = true;
 
             if( this.viewer ){

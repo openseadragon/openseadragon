@@ -305,7 +305,7 @@
 
 
     // The Wikipedia logo has CORS enabled
-    var corsImg = 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
+    var corsImg = 'https://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
 
     QUnit.test( 'CrossOriginPolicyMissing', function (assert) {
         var done = assert.async();
