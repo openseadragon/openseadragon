@@ -35,21 +35,23 @@
 (function($){
 
 /**
- * @private
  * @class ImageJob
  * @classdesc Handles downloading of a single image.
  * @param {Object} options - Options for this ImageJob.
  * @param {String} [options.src] - URL of image to download.
+ * @param {Tile} [options.tile] - Tile that belongs the data to.
+ * @param {TileSource} [options.source] - Image loading strategy
  * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
  * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
+ * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSrouce::getPostData) or null
+ *      see TileSource::getPostData) or null
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
  */
-function ImageJob (options) {
+$.ImageJob = function(options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
@@ -57,107 +59,61 @@ function ImageJob (options) {
     }, options);
 
     /**
-     * Image object which will contain downloaded image.
-     * @member {Image} image
+     * Data object which will contain downloaded image data.
+     * @member {Image|*} image data object, by default an Image object (depends on TileSource)
      * @memberof OpenSeadragon.ImageJob#
      */
-    this.image = null;
-}
+    this.data = null;
 
-ImageJob.prototype = {
-    errorMsg: null,
+    /**
+     * User workspace to populate with helper variables
+     * @member {*} userData to append custom data and avoid namespace collision
+     * @memberof OpenSeadragon.ImageJob#
+     */
+    this.userData = {};
 
+    /**
+     * Error message holder
+     * @member {string} error message
+     * @memberof OpenSeadragon.ImageJob#
+     * @private
+     */
+    this.errorMsg = null;
+};
+
+$.ImageJob.prototype = {
     /**
      * Starts the image job.
      * @method
      */
-    start: function(){
+    start: function() {
         var self = this;
         var selfAbort = this.abort;
 
-        this.image = new Image();
-
-        this.image.onload = function(){
-            self.finish(true);
-        };
-        this.image.onabort = this.image.onerror = function() {
-            self.errorMsg = "Image load aborted";
-            self.finish(false);
-        };
-
-        this.jobId = window.setTimeout(function(){
-            self.errorMsg = "Image load exceeded timeout (" + self.timeout + " ms)";
-            self.finish(false);
+        this.jobId = window.setTimeout(function () {
+            self.finish(null, null, "Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
-        // Load the tile with an AJAX request if the loadWithAjax option is
-        // set. Otherwise load the image by setting the source proprety of the image object.
-        if (this.loadWithAjax) {
-            this.request = $.makeAjaxRequest({
-                url: this.src,
-                withCredentials: this.ajaxWithCredentials,
-                headers: this.ajaxHeaders,
-                responseType: "arraybuffer",
-                postData: this.postData,
-                success: function(request) {
-                    var blb;
-                    // Make the raw data into a blob.
-                    // BlobBuilder fallback adapted from
-                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
-                    try {
-                        blb = new window.Blob([request.response]);
-                    } catch (e) {
-                        var BlobBuilder = (
-                            window.BlobBuilder ||
-                            window.WebKitBlobBuilder ||
-                            window.MozBlobBuilder ||
-                            window.MSBlobBuilder
-                        );
-                        if (e.name === 'TypeError' && BlobBuilder) {
-                            var bb = new BlobBuilder();
-                            bb.append(request.response);
-                            blb = bb.getBlob();
-                        }
-                    }
-                    // If the blob is empty for some reason consider the image load a failure.
-                    if (blb.size === 0) {
-                        self.errorMsg = "Empty image response.";
-                        self.finish(false);
-                    }
-                    // Create a URL for the blob data and make it the source of the image object.
-                    // This will still trigger Image.onload to indicate a successful tile load.
-                    var url = (window.URL || window.webkitURL).createObjectURL(blb);
-                    self.image.src = url;
-                },
-                error: function(request) {
-                    self.errorMsg = "Image load aborted - XHR error: Ajax returned " + request.status;
-                    self.finish(false);
-                }
-            });
-
-            // Provide a function to properly abort the request.
-            this.abort = function() {
-                self.request.abort();
-
-                // Call the existing abort function if available
-                if (typeof selfAbort === "function") {
-                    selfAbort();
-                }
-            };
-        } else {
-            if (this.crossOriginPolicy !== false) {
-                this.image.crossOrigin = this.crossOriginPolicy;
+        this.abort = function() {
+            self.source.downloadTileAbort(self);
+            if (typeof selfAbort === "function") {
+                selfAbort();
             }
+        };
 
-            this.image.src = this.src;
-        }
+        this.source.downloadTileStart(this);
     },
 
-    finish: function(successful) {
-        this.image.onload = this.image.onerror = this.image.onabort = null;
-        if (!successful) {
-            this.image = null;
-        }
+    /**
+     * Finish this job.
+     * @param {*} data data that has been downloaded
+     * @param {XMLHttpRequest} request reference to the request if used
+     * @param {string} errorMessage description upon failure
+     */
+    finish: function(data, request, errorMessage ) {
+        this.data = data;
+        this.request = request;
+        this.errorMsg = errorMessage;
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
@@ -165,7 +121,6 @@ ImageJob.prototype = {
 
         this.callback(this);
     }
-
 };
 
 /**
@@ -196,23 +151,38 @@ $.ImageLoader.prototype = {
      * @method
      * @param {Object} options - Options for this job.
      * @param {String} [options.src] - URL of image to download.
+     * @param {Tile} [options.tile] - Tile that belongs the data to. The tile instance
+     *      is not internally used and serves for custom TileSources implementations.
+     * @param {TileSource} [options.source] - Image loading strategy
      * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSrouce::getPostData) or null
+     *      see TileSource::getPostData) or null
      * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
      *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.
      * @param {Function} [options.abort] - Called when this image job is aborted.
      */
     addJob: function(options) {
+        if (!options.source) {
+            $.console.error('ImageLoader.prototype.addJob() requires [options.source]. ' +
+                'TileSource since new API defines how images are fetched. Creating a dummy TileSource.');
+            var implementation = $.TileSource.prototype;
+            options.source = {
+                downloadTileStart: implementation.downloadTileStart,
+                downloadTileAbort: implementation.downloadTileAbort
+            };
+        }
+
         var _this = this,
             complete = function(job) {
                 completeJob(_this, job, options.callback);
             },
             jobOptions = {
                 src: options.src,
+                tile: options.tile || {},
+                source: options.source,
                 loadWithAjax: options.loadWithAjax,
                 ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
@@ -222,7 +192,7 @@ $.ImageLoader.prototype = {
                 abort: options.abort,
                 timeout: this.timeout
             },
-            newJob = new ImageJob(jobOptions);
+            newJob = new $.ImageJob(jobOptions);
 
         if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
             newJob.start();
@@ -268,7 +238,7 @@ function completeJob(loader, job, callback) {
         loader.jobsInProgress++;
     }
 
-    callback(job.image, job.errorMsg, job.request);
+    callback(job.data, job.errorMsg, job.request);
 }
 
 }(OpenSeadragon));

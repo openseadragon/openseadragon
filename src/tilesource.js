@@ -553,7 +553,7 @@ $.TileSource.prototype = {
                      * @property {String} message
                      * @property {String} source
                      * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-                     *      see TileSrouce::getPostData) or null
+                     *      see TileSource::getPostData) or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -709,6 +709,194 @@ $.TileSource.prototype = {
                y >= 0 &&
                x < numTiles.x &&
                y < numTiles.y;
+    },
+
+    /**
+     * Decide whether tiles have transparency: this is crucial for correct images blending.
+     * @return {boolean} true if the image has transparency
+     */
+    hasTransparency: function(context2D, url, ajaxHeaders, post) {
+        return !!context2D || url.match('.png');
+    },
+
+    /**
+     * Download tile data.
+     * Note that if you override this function, you should override also downloadTileAbort().
+     * @param {ImageJob} context job context that you have to call finish(...) on.
+     * @param {String} [context.src] - URL of image to download.
+     * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
+     * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
+     * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
+     * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
+     * @param {String} [context.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
+     *   see TileSource::getPostData) or null
+     * @param {*} [context.userData] - Empty object to attach your own data and helper variables to.
+     * @param {Function} [context.finish] - Should be called unless abort() was executed, e.g. on all occasions,
+     *   be it successful or unsuccessful request.
+     *   Usage: context.finish(data, request, errMessage). Pass the downloaded data object or null upon failure.
+     *   Add also reference to an ajax request if used. Provide error message in case of failure.
+     * @param {Function} [context.abort] - Called automatically when the job times out.
+     *   Usage: context.abort().
+     * @param {Function} [context.callback] @private - Called automatically once image has been downloaded
+     *   (triggered by finish).
+     * @param {Number} [context.timeout] @private - The max number of milliseconds that
+     *   this image job may take to complete.
+     * @param {string} [context.errorMsg] @private - The final error message, default null (set by finish).
+     */
+    downloadTileStart: function (context) {
+        var dataStore = context.userData,
+            image = new Image();
+
+        dataStore.image = image;
+        dataStore.request = null;
+
+        var finish = function(error) {
+            if (!image) {
+                context.finish(null, dataStore.request, "Image load failed: undefined Image instance.");
+                return;
+            }
+            image.onload = image.onerror = image.onabort = null;
+            context.finish(error ? null : image, dataStore.request, error);
+        };
+        image.onload = function () {
+            finish();
+        };
+        image.onabort = image.onerror = function() {
+            finish("Image load aborted.");
+        };
+
+        // Load the tile with an AJAX request if the loadWithAjax option is
+        // set. Otherwise load the image by setting the source proprety of the image object.
+        if (context.loadWithAjax) {
+            dataStore.request = $.makeAjaxRequest({
+                url: context.src,
+                withCredentials: context.ajaxWithCredentials,
+                headers: context.ajaxHeaders,
+                responseType: "arraybuffer",
+                postData: context.postData,
+                success: function(request) {
+                    var blb;
+                    // Make the raw data into a blob.
+                    // BlobBuilder fallback adapted from
+                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
+                    try {
+                        blb = new window.Blob([request.response]);
+                    } catch (e) {
+                        var BlobBuilder = (
+                            window.BlobBuilder ||
+                            window.WebKitBlobBuilder ||
+                            window.MozBlobBuilder ||
+                            window.MSBlobBuilder
+                        );
+                        if (e.name === 'TypeError' && BlobBuilder) {
+                            var bb = new BlobBuilder();
+                            bb.append(request.response);
+                            blb = bb.getBlob();
+                        }
+                    }
+                    // If the blob is empty for some reason consider the image load a failure.
+                    if (blb.size === 0) {
+                        finish("Empty image response.");
+                    } else {
+                        // Create a URL for the blob data and make it the source of the image object.
+                        // This will still trigger Image.onload to indicate a successful tile load.
+                        image.src = (window.URL || window.webkitURL).createObjectURL(blb);
+                    }
+                },
+                error: function(request) {
+                    finish("Image load aborted - XHR error");
+                }
+            });
+        } else {
+            if (context.crossOriginPolicy !== false) {
+                image.crossOrigin = context.crossOriginPolicy;
+            }
+            image.src = context.src;
+        }
+    },
+
+    /**
+     * Provide means of aborting the execution.
+     * Note that if you override this function, you should override also downloadTileStart().
+     * @param {ImageJob} context job, the same object as with downloadTileStart(..)
+     * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
+     */
+    downloadTileAbort: function (context) {
+        if (context.userData.request) {
+            context.userData.request.abort();
+        }
+        var image = context.userData.image;
+        if (context.userData.image) {
+            image.onload = image.onerror = image.onabort = null;
+        }
+    },
+
+    /**
+     * Create cache object from the result of the download process. The
+     * cacheObject parameter should be used to attach the data to, there are no
+     * conventions on how it should be stored - all the logic is implemented within *TileCache() functions.
+     *
+     * Note that if you override any of *TileCache() functions, you should override all of them.
+     * @param {object} cacheObject context cache object
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
+     * @param {Tile} tile instance the cache was created with
+     */
+    createTileCache: function(cacheObject, data, tile) {
+        cacheObject._data = data;
+    },
+
+    /**
+     * Cache object destructor, unset all properties you created to allow GC collection.
+     * Note that if you override any of *TileCache() functions, you should override all of them.
+     * @param {object} cacheObject context cache object
+     */
+    destroyTileCache: function (cacheObject) {
+        cacheObject._data = null;
+        cacheObject._renderedContext = null;
+    },
+
+    /**
+     * Raw data getter
+     * Note that if you override any of *TileCache() functions, you should override all of them.
+     * @param {object} cacheObject context cache object
+     * @return {*} cache data
+     */
+    getTileCacheData: function(cacheObject) {
+        return cacheObject._data;
+    },
+
+    /**
+     * Compatibility image element getter
+     *  - plugins might need image representation of the data
+     *  - div HTML rendering relies on image element presence
+     * Note that if you override any of *TileCache() functions, you should override all of them.
+     *  @param {object} cacheObject context cache object
+     *  @return {Image} cache data as an Image
+     */
+    getTileCacheDataAsImage: function(cacheObject) {
+        return cacheObject._data; //the data itself by default is Image
+    },
+
+    /**
+     * Compatibility context 2D getter
+     *  - most heavily used rendering method is a canvas-based approach,
+     *    convert the data to a canvas and return it's 2D context
+     * Note that if you override any of *TileCache() functions, you should override all of them.
+     * @param {object} cacheObject context cache object
+     * @return {CanvasRenderingContext2D} context of the canvas representation of the cache data
+     */
+    getTileCacheDataAsContext2D: function(cacheObject) {
+        if (!cacheObject._renderedContext) {
+            var canvas = document.createElement( 'canvas' );
+            canvas.width = cacheObject._data.width;
+            canvas.height = cacheObject._data.height;
+            cacheObject._renderedContext = canvas.getContext('2d');
+            cacheObject._renderedContext.drawImage( cacheObject._data, 0, 0 );
+            //since we are caching the prerendered image on a canvas
+            //allow the image to not be held in memory
+            cacheObject._data = null;
+        }
+        return cacheObject._renderedContext;
     }
 };
 
