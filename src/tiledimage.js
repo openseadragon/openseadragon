@@ -2,7 +2,7 @@
  * OpenSeadragon - TiledImage
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1236,8 +1236,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * @private
      * Updates all tiles at a given resolution level.
+     * @private
      * @param {Boolean} haveDrawn
      * @param {Boolean} drawLevel
      * @param {Number} level
@@ -1651,8 +1651,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @inner
      * @param {OpenSeadragon.Tile} tile
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
-     * @param {Number || undefined} cutoff
-     * @param {XMLHttpRequest || undefined} tileRequest
+     * @param {Number|undefined} cutoff
+     * @param {XMLHttpRequest|undefined} tileRequest
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
         var increment = 0,

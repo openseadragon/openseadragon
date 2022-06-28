@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -431,6 +431,7 @@ $.Viewer = function( options ) {
     //Instantiate a navigator if configured
     if ( this.showNavigator){
         this.navigator = new $.Navigator({
+            element:           this.navigatorElement,
             id:                this.navigatorId,
             position:          this.navigatorPosition,
             sizeRatio:         this.navigatorSizeRatio,

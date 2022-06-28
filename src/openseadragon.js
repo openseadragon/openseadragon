@@ -2,7 +2,7 @@
  * OpenSeadragon
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -60,7 +60,7 @@
 /*
  * Portions of this source file taken from mattsnider.com:
  *
- * Copyright (c) 2006-2013 Matt Snider
+ * Copyright (c) 2006-2022 Matt Snider
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -409,6 +409,11 @@
   *
   * @property {Boolean} [showNavigator=false]
   *     Set to true to make the navigator minimap appear.
+  *
+  * @property {Element} [navigatorElement=null]
+  *     The element to hold the navigator minimap.
+  *     If an element is specified, the Id option (see navigatorId) is ignored.
+  *     If no element nor ID is specified, a div element will be generated accordingly.
   *
   * @property {String} [navigatorId=navigator-GENERATED DATE]
   *     The ID of a div to hold the navigator minimap.
@@ -1265,6 +1270,7 @@ function OpenSeadragon( options ){
 
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:              false,
+            navigatorElement:           null,
             navigatorId:                null,
             navigatorPosition:          null,
             navigatorSizeRatio:         0.2,
