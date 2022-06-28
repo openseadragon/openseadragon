@@ -151,6 +151,20 @@
             '}', assert);
     });
 
+    QUnit.test('IIIF 3.0 JSON', function(assert) {
+        testOpenUrl('iiif_3_0_tiled/info.json', assert);
+    });
+
+    // ----------
+    QUnit.test('IIIF 3.0 JSON scaleFactors [1]', function(assert) {
+        testOpenUrl('iiif_3_0_tiled_sf1/info.json', assert);
+    });
+
+    // ----------
+    QUnit.test('IIIF 3.0 JSON, sizes array only', function(assert) {
+        testOpenUrl('iiif_3_0_sizes/info.json', assert);
+    });
+
     // ----------
     QUnit.test('ImageTileSource', function(assert) {
         testOpen({

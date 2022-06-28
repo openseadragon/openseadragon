@@ -2,7 +2,7 @@
  * OpenSeadragon - TileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -649,7 +649,7 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
-     * @return {* || null} post data to send with tile configuration request
+     * @return {*|null} post data to send with tile configuration request
      */
     getTilePostData: function( level, x, y ) {
         return null;

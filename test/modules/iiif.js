@@ -143,7 +143,9 @@
             "profile": "level1"
         };
 
-    QUnit.test('IIIFTileSource.configure determins correct version', function(assert) {
+    QUnit.module('IIIF');
+
+    QUnit.test('IIIFTileSource.configure determines correct version', function(assert) {
         var options1_0xml = configure(infoXml10level0);
         assert.ok(options1_0xml.version);
         assert.equal(options1_0xml.version, 1, 'Version is 1 for version 1.0 info.xml');

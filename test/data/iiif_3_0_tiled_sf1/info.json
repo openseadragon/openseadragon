@@ -1,0 +1,11 @@
+{
+  "@context": "http://iiif.io/api/image/3/context.json",
+  "id": "http://localhost:8000/test/data/iiif_3_0_tiled_sf1",
+  "protocol": "http://iiif.io/api/image",
+  "height": 1024,
+  "width": 775,
+  "tiles" : [{"width": 256, "scaleFactors": [1]}],
+  "profile": "level2",
+  "extraQualities": ["bitonal", "grey", "color"],
+  "extraFormats": ["jpg", "png", "gif" ]
+}
