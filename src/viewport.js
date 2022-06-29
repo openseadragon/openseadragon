@@ -917,7 +917,16 @@ $.Viewport.prototype = {
         if (immediately) {
             this.degreesSpring.resetTo(degrees);
         } else {
-            this.degreesSpring.springTo(degrees);
+            var from = $.euclideanModulo(this.degreesSpring.current.value, 360);
+            this.degreesSpring.resetTo(from);
+            var to = $.euclideanModulo(degrees, 360);
+            var diff = to - from;
+            if (diff > 180) {
+                to -= 360;
+            } else if (diff < -180) {
+                to += 360;
+            }
+            this.degreesSpring.springTo(to);
         }
 
         this._setContentBounds(
