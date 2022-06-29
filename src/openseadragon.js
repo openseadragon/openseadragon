@@ -1635,7 +1635,7 @@ function OpenSeadragon( options ){
         /**
          * Compute the modulo of a number but makes sure to always return
          * a positive value.
-         * @param {Number} number the number to computes the modulo of
+         * @param {Number} number the number to compute the modulo of
          * @param {Number} modulo the modulo
          * @returns {Number} the result of the modulo of number
          */
@@ -1645,6 +1645,16 @@ function OpenSeadragon( options ){
                 result += modulo;
             }
             return result;
+        },
+
+        /**
+         * Computes Euclidean modulo of m % n.
+         * @param {Number} number the number to compute the modulo of
+         * @param {Number} modulo the modulo
+         * @returns {Number} the result of the modulo of number
+         */
+         euclideanModulo: function(number, modulo) {
+            return ( ( number % modulo ) + modulo ) % modulo;
         },
 
         /**
