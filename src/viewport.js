@@ -956,8 +956,8 @@ $.Viewport.prototype = {
      */
     getRotation: function(current) {
         return current ?
-            $.euclideanModulo(this.degreesSpring.current.value, 360) :
-            $.euclideanModulo(this.degreesSpring.target.value, 360);
+            this.degreesSpring.current.value :
+            this.degreesSpring.target.value;
     },
 
     /**
