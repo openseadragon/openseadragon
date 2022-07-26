@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * You can now provide an element for the navigator (as an alternative to an ID) (#1303 @cameronbaney, #2166 #2175 @joedf)
 * Now supporting IIIF "id" and "identifier" in addition to "@id" (#2173 @ahankinson)
 * We now delegate tile fetching and caching to the TileSource, to allow for custom tile formats (#2148 @Aiosa)
+* Fixed: Cropping tiled images with polygons was broken (#2183 @altert)
 
 3.1.0:
 
