@@ -1940,14 +1940,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         if (this._croppingPolygons) {
+            var self = this;
             this._drawer.saveContext(useSketch);
             try {
                 var polygons = this._croppingPolygons.map(function (polygon) {
                     return polygon.map(function (coord) {
-                        var point = this
+                        var point = self
                             .imageToViewportCoordinates(coord.x, coord.y, true)
-                            .rotate(-this.getRotation(true), this._getRotationPoint(true));
-                        var clipPoint = this._drawer.viewportCoordToDrawerCoord(point);
+                            .rotate(-self.getRotation(true), self._getRotationPoint(true));
+                        var clipPoint = self._drawer.viewportCoordToDrawerCoord(point);
                         if (sketchScale) {
                             clipPoint = clipPoint.times(sketchScale);
                         }
