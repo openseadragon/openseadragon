@@ -398,6 +398,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     disable: function(){
         this.notifyGroupExit();
         this.element.disabled = true;
+        this.tracker.setTracking(false);
         $.setElementOpacity( this.element, 0.2, true );
     },
 
@@ -406,6 +407,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      */
     enable: function(){
         this.element.disabled = false;
+        this.element.setTracking(true);
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
     },
