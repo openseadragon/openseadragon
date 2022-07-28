@@ -407,7 +407,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      */
     enable: function(){
         this.element.disabled = false;
-        this.element.setTracking(true);
+        this.tracker.setTracking(true);
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
     },
