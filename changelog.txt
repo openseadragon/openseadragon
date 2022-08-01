@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Now supporting IIIF "id" and "identifier" in addition to "@id" (#2173 @ahankinson)
 * We now delegate tile fetching and caching to the TileSource, to allow for custom tile formats (#2148 @Aiosa)
 * Fixed: Cropping tiled images with polygons was broken (#2183 @altert)
+* Fixed: Disabling buttons only changed their appearance, but they were still clickable (#2187 @pearcetm)
 
 3.1.0:
 
