@@ -1398,11 +1398,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
         }
 
-        if (!$.isFunction(options.tileSource.getTileHashKey)) {
-            //silently add custom implementation
-            options.tileSource.getTileHashKey = $.TileSource.prototype.getTileHashKey;
-        }
-
         var myQueueItem = {
             options: options
         };

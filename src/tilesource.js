@@ -688,11 +688,14 @@ $.TileSource.prototype = {
      * @param {*} postData data the tile was fetched with (type depends on getTilePostData(..) return type)
      */
     getTileHashKey: function(level, x, y, url, ajaxHeaders, postData) {
-        if (ajaxHeaders) {
-            return url + "+" + JSON.stringify(ajaxHeaders);
-        } else {
-            return url;
+        function withHeaders(hash) {
+            return ajaxHeaders ? hash + "+" + JSON.stringify(ajaxHeaders) : hash;
         }
+
+        if (typeof url !== "string") {
+            return withHeaders(level + "/" + x + "_" + y);
+        }
+        return withHeaders(url);
     },
 
     /**
