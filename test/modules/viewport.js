@@ -1075,7 +1075,7 @@
 
             viewport.setRotation(400);
             assert.strictEqual(viewport.getRotation(true), 0, 'current rotation is not changed');
-            assert.strictEqual(viewport.getRotation(false), 40, 'target rotation is set correctly');
+            assert.strictEqual(viewport.getRotation(false), 400, 'target rotation is set correctly');
 
             viewport.setRotation(200, true);
             assert.strictEqual(viewport.getRotation(true), 200, 'current rotation is set correctly');
