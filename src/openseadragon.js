@@ -1634,7 +1634,7 @@ function OpenSeadragon( options ){
 
         /**
          * Compute the modulo of a number but makes sure to always return
-         * a positive value.
+         * a positive value (also known as Euclidean modulo).
          * @param {Number} number the number to compute the modulo of
          * @param {Number} modulo the modulo
          * @returns {Number} the result of the modulo of number
@@ -1647,15 +1647,6 @@ function OpenSeadragon( options ){
             return result;
         },
 
-        /**
-         * Computes Euclidean modulo of m % n.
-         * @param {Number} number the number to compute the modulo of
-         * @param {Number} modulo the modulo
-         * @returns {Number} the result of the modulo of number
-         */
-         euclideanModulo: function(number, modulo) {
-            return ( ( number % modulo ) + modulo ) % modulo;
-        },
 
         /**
          * Determines if a point is within the bounding rectangle of the given element (hit-test).
