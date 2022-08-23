@@ -45,7 +45,7 @@
         });
 
         viewer.addHandler('open', function handler(event) {
-            viewer.viewport.setRotation(30);
+            viewer.viewport.setRotation(30, true);
             Util.spyOnce(viewer.drawer.context, 'rotate', function() {
                 assert.ok(true, 'drawing with new rotation');
                 done();

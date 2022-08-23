@@ -548,8 +548,8 @@ $.Drawer.prototype = {
         context.strokeStyle = this.debugGridColor[colorIndex];
         context.fillStyle = this.debugGridColor[colorIndex];
 
-        if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation({degrees: this.viewport.degrees});
+        if (this.viewport.getRotation(true) % 360 !== 0 ) {
+            this._offsetForRotation({degrees: this.viewport.getRotation(true)});
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
@@ -558,10 +558,11 @@ $.Drawer.prototype = {
                     tiledImage._getRotationPoint(true), true)
             });
         }
-        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              tiledImage._drawer._flip();
-          }
+        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
 
         context.strokeRect(
@@ -576,7 +577,7 @@ $.Drawer.prototype = {
 
         // Rotate the text the right way around.
         context.translate( tileCenterX, tileCenterY );
-        context.rotate( Math.PI / 180 * -this.viewport.degrees );
+        context.rotate( Math.PI / 180 * -this.viewport.getRotation(true) );
         context.translate( -tileCenterX, -tileCenterY );
 
         if( tile.x === 0 && tile.y === 0 ){
@@ -622,17 +623,18 @@ $.Drawer.prototype = {
             (tile.position.y + 70) * $.pixelDensityRatio
         );
 
-        if ( this.viewport.degrees !== 0 ) {
+        if (this.viewport.getRotation(true) % 360 !== 0 ) {
             this._restoreRotationChanges();
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._restoreRotationChanges();
         }
 
-        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              tiledImage._drawer._flip();
-          }
+        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
 
         context.restore();

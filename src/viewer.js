@@ -449,7 +449,8 @@ $.Viewer = function( options ) {
             opacity:           this.navigatorOpacity,
             borderColor:       this.navigatorBorderColor,
             displayRegionColor: this.navigatorDisplayRegionColor,
-            crossOriginPolicy: this.crossOriginPolicy
+            crossOriginPolicy: this.crossOriginPolicy,
+            animationTime:     this.animationTime,
         });
     }
 
@@ -2817,18 +2818,18 @@ function onCanvasKeyPress( event ) {
                 break;
             case 114: //r - clockwise rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
+                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
               } else{
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
+                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
               }
               this.viewport.applyConstraints();
               event.preventDefault = true;
               break;
             case 82: //R - counterclockwise  rotation
               if(this.viewport.flipped){
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees + this.rotationIncrement, 360));
+                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
               } else{
-                this.viewport.setRotation($.positiveModulo(this.viewport.degrees - this.rotationIncrement, 360));
+                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
               }
               this.viewport.applyConstraints();
               event.preventDefault = true;
@@ -3715,9 +3716,9 @@ function onRotateLeft() {
         var currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
-          currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
+          currRotation += this.rotationIncrement;
         } else {
-          currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
+          currRotation -= this.rotationIncrement;
         }
         this.viewport.setRotation(currRotation);
     }
@@ -3728,9 +3729,9 @@ function onRotateRight() {
         var currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
-          currRotation = $.positiveModulo(currRotation - this.rotationIncrement, 360);
+          currRotation -= this.rotationIncrement;
         } else {
-          currRotation = $.positiveModulo(currRotation + this.rotationIncrement, 360);
+          currRotation += this.rotationIncrement;
         }
         this.viewport.setRotation(currRotation);
     }

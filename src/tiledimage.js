@@ -1886,7 +1886,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     .getIntegerBoundingBox();
 
                 if(this._drawer.viewer.viewport.getFlip()) {
-                    if (this.viewport.degrees !== 0 || this.getRotation(true) % 360 !== 0) {
+                    if (this.viewport.getRotation(true) % 360 !== 0 ||
+                        this.getRotation(true) % 360 !== 0) {
                         bounds.x = this._drawer.viewer.container.clientWidth - (bounds.x + bounds.width);
                     }
                 }
@@ -1899,9 +1900,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // When scaling, we must rotate only when blending the sketch canvas to
         // avoid interpolation
         if (!sketchScale) {
-            if (this.viewport.degrees !== 0) {
+            if (this.viewport.getRotation(true) % 360 !== 0) {
                 this._drawer._offsetForRotation({
-                    degrees: this.viewport.degrees,
+                    degrees: this.viewport.getRotation(true),
                     useSketch: useSketch
                 });
             }
@@ -1914,7 +1915,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 });
             }
 
-            if (this.viewport.degrees === 0 && this.getRotation(true) % 360 === 0){
+            if (this.viewport.getRotation(true) % 360 === 0 &&
+                this.getRotation(true) % 360 === 0) {
                 if(this._drawer.viewer.viewport.getFlip()) {
                     this._drawer._flip();
                 }
@@ -2026,16 +2028,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (this.getRotation(true) % 360 !== 0) {
                 this._drawer._restoreRotationChanges(useSketch);
             }
-            if (this.viewport.degrees !== 0) {
+            if (this.viewport.getRotation(true) % 360 !== 0) {
                 this._drawer._restoreRotationChanges(useSketch);
             }
         }
 
         if (useSketch) {
             if (sketchScale) {
-                if (this.viewport.degrees !== 0) {
+                if (this.viewport.getRotation(true) % 360 !== 0) {
                     this._drawer._offsetForRotation({
-                        degrees: this.viewport.degrees,
+                        degrees: this.viewport.getRotation(true),
                         useSketch: false
                     });
                 }
@@ -2059,14 +2061,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 if (this.getRotation(true) % 360 !== 0) {
                     this._drawer._restoreRotationChanges(false);
                 }
-                if (this.viewport.degrees !== 0) {
+                if (this.viewport.getRotation(true) % 360 !== 0) {
                     this._drawer._restoreRotationChanges(false);
                 }
             }
         }
 
         if (!sketchScale) {
-            if (this.viewport.degrees === 0 && this.getRotation(true) % 360 === 0){
+            if (this.viewport.getRotation(true) % 360 === 0 &&
+                this.getRotation(true) % 360 === 0) {
                 if(this._drawer.viewer.viewport.getFlip()) {
                     this._drawer._flip();
                 }

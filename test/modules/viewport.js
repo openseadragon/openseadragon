@@ -245,7 +245,7 @@
         function openHandler() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.setRotation(-675);
+            viewport.setRotation(-675, true);
             Util.assertRectangleEquals(
                 assert,
                 viewport.getHomeBoundsNoRotate(),
@@ -267,7 +267,7 @@
         function openHandler() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.setRotation(-675);
+            viewport.setRotation(-675, true);
             Util.assertRectangleEquals(
                 assert,
                 viewport.getHomeBounds(),
@@ -531,7 +531,7 @@
         var openHandler = function() {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.setRotation(45);
+            viewport.setRotation(45, true);
             viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
             viewport.applyConstraints(true);
             var bounds = viewport.getBounds();
@@ -555,7 +555,7 @@
             var viewport = viewer.viewport;
 
             viewport.setFlip(true);
-            viewport.setRotation(45);
+            viewport.setRotation(45, true);
 
             viewport.fitBounds(new OpenSeadragon.Rect(1, 1, 1, 1), true);
             viewport.applyConstraints(true);
@@ -657,7 +657,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             var viewport = viewer.viewport;
-            viewport.setRotation(45);
+            viewport.setRotation(45, true);
 
             for(var i = 0; i < testRectsFitBounds.length; i++){
                 var rect = testRectsFitBounds[i];
@@ -1064,10 +1064,22 @@
             var viewport = viewer.viewport;
 
             assert.propEqual(viewport.getRotation, 0, "Original rotation should be 0 degrees");
-            viewport.setRotation(90);
+            viewport.setRotation(90, true);
             assert.propEqual(viewport.getRotation, 90, "Rotation should be 90 degrees");
-            viewport.setRotation(-75);
+            viewport.setRotation(-75, true);
             assert.propEqual(viewport.getRotation, -75, "Rotation should be -75 degrees");
+
+            viewport.setRotation(0, true);
+            assert.strictEqual(viewport.getRotation(true), 0, 'viewport has default current rotation');
+            assert.strictEqual(viewport.getRotation(false), 0, 'viewport has default target rotation');
+
+            viewport.setRotation(400);
+            assert.strictEqual(viewport.getRotation(true), 0, 'current rotation is not changed');
+            assert.strictEqual(viewport.getRotation(false), 400, 'target rotation is set correctly');
+
+            viewport.setRotation(200, true);
+            assert.strictEqual(viewport.getRotation(true), 200, 'current rotation is set correctly');
+            assert.strictEqual(viewport.getRotation(false), 200, 'target rotation is set correctly');
 
             done();
         };
@@ -1085,9 +1097,9 @@
             viewport.setFlip(true);
 
             assert.propEqual(viewport.getRotation, 0, "Original flipped rotation should be 0 degrees");
-            viewport.setRotation(90);
+            viewport.setRotation(90, true);
             assert.propEqual(viewport.getRotation, 90, "Flipped rotation should be 90 degrees");
-            viewport.setRotation(-75);
+            viewport.setRotation(-75, true);
             assert.propEqual(viewport.getRotation, -75, "Flipped rotation should be -75 degrees");
 
             done();
