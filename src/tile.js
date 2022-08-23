@@ -129,7 +129,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.ajaxHeaders = ajaxHeaders;
 
     if (cacheKey === undefined) {
-        $.console.error("Tile constructor needs 'cacheKey' variable: creation tile cache" +
+        $.console.warn("Tile constructor needs 'cacheKey' variable: creation tile cache" +
             " in Tile class is deprecated. TileSource.prototype.getTileHashKey will be used.");
         cacheKey = $.TileSource.prototype.getTileHashKey(level, x, y, url, ajaxHeaders, postData);
     }
