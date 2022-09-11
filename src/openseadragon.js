@@ -1102,7 +1102,7 @@ function OpenSeadragon( options ){
                 // Extend the base object
                 for ( name in options ) {
                     src = target[ name ];
-                    copy = options[ name ];
+                    copy = Object.getOwnPropertyDescriptor(options, name).value;
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
