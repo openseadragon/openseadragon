@@ -1101,8 +1101,13 @@ function OpenSeadragon( options ){
             if ( options !== null || options !== undefined ) {
                 // Extend the base object
                 for ( name in options ) {
-                    src = target[ name ];
-                    copy = options[ name ];
+                    var descriptor = Object.getOwnPropertyDescriptor(options, name);
+                    if (descriptor.get || descriptor.set) {
+                        Object.defineProperty(target, name, descriptor);
+                        continue;
+                    }
+
+                    copy = descriptor.value;
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
@@ -1111,6 +1116,8 @@ function OpenSeadragon( options ){
 
                     // Recurse if we're merging plain objects or arrays
                     if ( deep && copy && ( OpenSeadragon.isPlainObject( copy ) || ( copyIsArray = OpenSeadragon.isArray( copy ) ) ) ) {
+                        src = target[ name ];
+
                         if ( copyIsArray ) {
                             copyIsArray = false;
                             clone = src && OpenSeadragon.isArray( src ) ? src : [];
