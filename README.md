@@ -1,7 +1,7 @@
 # OpenSeadragon
 
-[![Gitter][gitter-badge]][gitter]
-[![Build Status][build-badge]][build]
+<!-- [![Gitter][gitter-badge]][gitter]
+[![Build Status][build-badge]][build] -->
 
 An open-source, web-based viewer for zoomable images, implemented in pure JavaScript.
 
@@ -20,10 +20,10 @@ If you want to use OpenSeadragon in your own projects, you can find the latest s
 OpenSeadragon is released under the New BSD license. For details, see the [LICENSE.txt file][github-license].
 
 [openseadragon]: https://openseadragon.github.io/
-[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
+<!-- [gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
 [gitter]: https://gitter.im/openseadragon/openseadragon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 [build-badge]: https://secure.travis-ci.org/openseadragon/openseadragon.png?branch=master
-[build]: https://travis-ci.org/openseadragon/openseadragon
+[build]: https://travis-ci.org/openseadragon/openseadragon -->
 [github-releases]: https://github.com/openseadragon/openseadragon/releases
 [github-contributing]: https://github.com/openseadragon/openseadragon/blob/master/CONTRIBUTING.md
 [github-license]: https://github.com/openseadragon/openseadragon/blob/master/LICENSE.txt
