@@ -443,7 +443,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number|OpenSeadragon.Point} viewerX - The X coordinate or point in viewport coordinate system.
      * @param {Number} [viewerY] - The Y coordinate in viewport coordinate system.
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
-     * @return {OpenSeadragon.Point} A point representing the coordinates in the image.
+     * @returns {OpenSeadragon.Point} A point representing the coordinates in the image.
      */
     viewportToImageCoordinates: function(viewerX, viewerY, current) {
         var point;
@@ -478,7 +478,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number|OpenSeadragon.Point} imageX - The X coordinate or point in image coordinate system.
      * @param {Number} [imageY] - The Y coordinate in image coordinate system.
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
-     * @return {OpenSeadragon.Point} A point representing the coordinates in the viewport.
+     * @returns {OpenSeadragon.Point} A point representing the coordinates in the viewport.
      */
     imageToViewportCoordinates: function(imageX, imageY, current) {
         if (imageX instanceof $.Point) {
@@ -509,7 +509,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} [pixelWidth] - The width in pixel of the rectangle.
      * @param {Number} [pixelHeight] - The height in pixel of the rectangle.
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
-     * @return {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
+     * @returns {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight, current) {
         var rect = imageX;
@@ -541,7 +541,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} [pointWidth] - The width in viewport coordinate system.
      * @param {Number} [pointHeight] - The height in viewport coordinate system.
      * @param {Boolean} [current=false] - Pass true to use the current location; false for target location.
-     * @return {OpenSeadragon.Rect} A rect representing the coordinates in the image.
+     * @returns {OpenSeadragon.Rect} A rect representing the coordinates in the image.
      */
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
         var rect = viewerX;

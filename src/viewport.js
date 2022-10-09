@@ -172,7 +172,7 @@ $.Viewport.prototype = {
      * Updates the viewport's home bounds and constraints for the given content size.
      * @function
      * @param {OpenSeadragon.Point} contentSize - size of the content in content units
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:reset-size
      */
     resetContentSize: function(contentSize) {
@@ -511,7 +511,7 @@ $.Viewport.prototype = {
      * @function
      * @private
      * @param {OpenSeadragon.Rect} bounds
-     * @return {OpenSeadragon.Rect} constrained bounds.
+     * @returns {OpenSeadragon.Rect} constrained bounds.
      */
     _applyBoundaryConstraints: function(bounds) {
         var newBounds = new $.Rect(
@@ -615,7 +615,7 @@ $.Viewport.prototype = {
      * zooming and panning to the closest acceptable zoom and location.
      * @function
      * @param {Boolean} [immediately=false]
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:constrain
      */
     applyConstraints: function(immediately) {
@@ -644,7 +644,7 @@ $.Viewport.prototype = {
      * Equivalent to {@link OpenSeadragon.Viewport#applyConstraints}
      * @function
      * @param {Boolean} [immediately=false]
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:constrain
      */
     ensureVisible: function(immediately) {
@@ -656,7 +656,7 @@ $.Viewport.prototype = {
      * @private
      * @param {OpenSeadragon.Rect} bounds
      * @param {Object} options (immediately=false, constraints=false)
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     _fitBounds: function(bounds, options) {
         options = options || {};
@@ -737,7 +737,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} [immediately=false]
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitBounds: function(bounds, immediately) {
         return this._fitBounds(bounds, {
@@ -756,7 +756,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Rect} bounds
      * @param {Boolean} [immediately=false]
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitBoundsWithConstraints: function(bounds, immediately) {
         return this._fitBounds(bounds, {
@@ -768,7 +768,7 @@ $.Viewport.prototype = {
     /**
      * Zooms so the image just fills the viewer vertically.
      * @param {Boolean} immediately
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function(immediately) {
         var box = new $.Rect(
@@ -782,7 +782,7 @@ $.Viewport.prototype = {
     /**
      * Zooms so the image just fills the viewer horizontally.
      * @param {Boolean} immediately
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function(immediately) {
         var box = new $.Rect(
@@ -798,7 +798,7 @@ $.Viewport.prototype = {
      * Returns bounds taking constraints into account
      * Added to improve constrained panning
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     getConstrainedBounds: function(current) {
         var bounds,
@@ -815,7 +815,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} delta
      * @param {Boolean} immediately
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:pan
      */
     panBy: function( delta, immediately ) {
@@ -830,7 +830,7 @@ $.Viewport.prototype = {
      * @function
      * @param {OpenSeadragon.Point} center
      * @param {Boolean} immediately
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:pan
      */
     panTo: function( center, immediately ) {
@@ -865,7 +865,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomBy: function(factor, refPoint, immediately) {
@@ -880,7 +880,7 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} [refPoint] The point which will stay at
      * the same screen location. Defaults to the viewport center.
      * @param {Boolean} [immediately=false]
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomTo: function(zoom, refPoint, immediately) {
@@ -929,7 +929,7 @@ $.Viewport.prototype = {
      * @param {Number} degrees The degrees to set the rotation to.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     setRotation: function(degrees, immediately) {
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
@@ -980,7 +980,7 @@ $.Viewport.prototype = {
      * Gets the current rotation in degrees.
      * @function
      * @param {Boolean} [current=false] True for current rotation, false for target.
-     * @return {Number} The current rotation in degrees.
+     * @returns {Number} The current rotation in degrees.
      */
     getRotation: function(current) {
         return current ?
@@ -990,7 +990,7 @@ $.Viewport.prototype = {
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:resize
      */
     resize: function( newContainerSize, maintain ) {
@@ -1241,7 +1241,7 @@ $.Viewport.prototype = {
      * @param {(OpenSeadragon.Point|Number)} viewerX either a point or the X
      * coordinate in viewport coordinate system.
      * @param {Number} [viewerY] Y coordinate in viewport coordinate system.
-     * @return {OpenSeadragon.Point} a point representing the coordinates in the image.
+     * @returns {OpenSeadragon.Point} a point representing the coordinates in the image.
      */
     viewportToImageCoordinates: function(viewerX, viewerY) {
         if (viewerX instanceof $.Point) {
@@ -1287,7 +1287,7 @@ $.Viewport.prototype = {
      * @param {(OpenSeadragon.Point | Number)} imageX the point or the
      * X coordinate in image coordinate system.
      * @param {Number} [imageY] Y coordinate in image coordinate system.
-     * @return {OpenSeadragon.Point} a point representing the coordinates in the viewport.
+     * @returns {OpenSeadragon.Point} a point representing the coordinates in the viewport.
      */
     imageToViewportCoordinates: function(imageX, imageY) {
         if (imageX instanceof $.Point) {
@@ -1618,7 +1618,7 @@ $.Viewport.prototype = {
     /**
      * Toggles flip state and demands a new drawing on navigator and viewer objects.
      * @function
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     toggleFlip: function() {
       this.setFlip(!this.getFlip());
@@ -1628,7 +1628,7 @@ $.Viewport.prototype = {
     /**
      * Get flip state stored on viewport.
      * @function
-     * @return {Boolean} Flip state.
+     * @returns {Boolean} Flip state.
      */
     getFlip: function() {
       return this.flipped;
@@ -1638,7 +1638,7 @@ $.Viewport.prototype = {
      * Sets flip state according to the state input argument.
      * @function
      * @param {Boolean} state - Flip state to set.
-     * @return {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
     setFlip: function( state ) {
       if ( this.flipped === state ) {

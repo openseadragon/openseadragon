@@ -335,7 +335,7 @@ $.Tile.prototype = {
      * @member {Object} image
      * @memberof OpenSeadragon.Tile#
      * @deprecated
-     * @return {Image}
+     * @returns {Image}
      */
     get image() {
         $.console.error("[Tile.image] property has been deprecated. Use [Tile.prototype.getImage] instead.");
@@ -344,7 +344,7 @@ $.Tile.prototype = {
 
     /**
      * Get the Image object for this tile.
-     * @return {Image}
+     * @returns {Image}
      */
     getImage: function() {
         return this.cacheImageRecord.getImage();
@@ -353,7 +353,7 @@ $.Tile.prototype = {
     /**
      * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
-     * @return {CanvasRenderingContext2D}
+     * @returns {CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
         return this.context2D || this.cacheImageRecord.getRenderedContext();
@@ -469,7 +469,7 @@ $.Tile.prototype = {
     /**
      * Get the ratio between current and original size.
      * @function
-     * @return {Float}
+     * @returns {Float}
      */
     getScaleForEdgeSmoothing: function() {
         var context;
@@ -491,7 +491,7 @@ $.Tile.prototype = {
      * Needed to avoid swimming and twitching.
      * @function
      * @param {Number} [scale=1] - Scale to be applied to position.
-     * @return {OpenSeadragon.Point}
+     * @returns {OpenSeadragon.Point}
      */
     getTranslationForEdgeSmoothing: function(scale, canvasSize, sketchCanvasSize) {
         // The translation vector must have positive values, otherwise the image goes a bit off

@@ -125,7 +125,7 @@ $.EventSource.prototype = {
     /**
      * Get the amount of handlers registered for a given event.
      * @param {String} eventName - Name of event to inspect.
-     * @return {number} amount of events
+     * @returns {number} amount of events
      */
     numberOfHandlers: function (eventName) {
         var events = this.events[ eventName ];
