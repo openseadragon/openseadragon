@@ -1102,12 +1102,17 @@ function OpenSeadragon( options ){
                 // Extend the base object
                 for ( name in options ) {
                     var descriptor = Object.getOwnPropertyDescriptor(options, name);
-                    if (descriptor.get || descriptor.set) {
-                        Object.defineProperty(target, name, descriptor);
-                        continue;
-                    }
 
-                    copy = descriptor.value;
+                    if (descriptor !== undefined) {
+                        if (descriptor.get || descriptor.set) {
+                            Object.defineProperty(target, name, descriptor);
+                            continue;
+                        }
+
+                        copy = descriptor.value;
+                    } else {
+                        $.console.warn('Undefined descriptior obtained for the "' + name + '" property in extended object.');
+                    }
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
