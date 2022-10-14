@@ -181,9 +181,6 @@ $.Viewer = function( options ) {
         //TODO: rename navImages to uiImages
         navImages:      null,
 
-        //interface button controls
-        buttons:        null,
-
         //TODO: this is defunct so safely remove it
         profiler:       null
 
