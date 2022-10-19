@@ -180,7 +180,7 @@ $.Viewer = function( options ) {
         //UI image resources
         //TODO: rename navImages to uiImages
         navImages:      null,
-        
+
         //interface button controls
         buttonGroup:        null,
 
