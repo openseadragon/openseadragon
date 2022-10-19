@@ -456,7 +456,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object} options
      * @param {Array|String} options.profile
      * @param {Number} options.version
-     * @param {String} options.extraFeatures
+     * @param {String[]} options.extraFeatures
      * @returns {Boolean}
      */
     function canBeTiled ( options ) {
