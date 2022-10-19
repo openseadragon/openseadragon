@@ -1111,7 +1111,8 @@ function OpenSeadragon( options ){
 
                         copy = descriptor.value;
                     } else {
-                        $.console.warn('Undefined descriptior obtained for the "' + name + '" property in extended object.');
+                        $.console.warn('Could not copy inherited property "' + name + '".');
+                        continue;
                     }
 
                     // Prevent never-ending loop
