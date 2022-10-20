@@ -182,7 +182,7 @@ $.Viewer = function( options ) {
         navImages:      null,
 
         //interface button controls
-        buttons:        null,
+        buttonGroup:        null,
 
         //TODO: this is defunct so safely remove it
         profiler:       null
