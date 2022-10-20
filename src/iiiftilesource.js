@@ -193,7 +193,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object} data - the raw configuration
      * @param {String} url - the url configuration was retrieved from
      * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
-     * @return {Object} A normalized IIIF data object
+     * @returns {Object} A normalized IIIF data object
      * @example <caption>IIIF 2.x Info Looks like this</caption>
      * {
      * "@context": "http://iiif.io/api/image/2/context.json",
@@ -456,7 +456,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @param {Object} options
      * @param {Array|String} options.profile
      * @param {Number} options.version
-     * @param {String} options.extraFeatures
+     * @param {String[]} options.extraFeatures
      * @returns {Boolean}
      */
     function canBeTiled ( options ) {

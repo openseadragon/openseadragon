@@ -169,7 +169,7 @@ $.Control.prototype = {
     /**
      * Determines if the control is currently visible.
      * @function
-     * @return {Boolean} true if currently visible, false otherwise.
+     * @returns {Boolean} true if currently visible, false otherwise.
      */
     isVisible: function() {
         return this.wrapper.style.display !== "none";

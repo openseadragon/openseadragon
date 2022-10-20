@@ -922,7 +922,7 @@ function OpenSeadragon( options ){
     /**
      * Shim around Object.freeze. Does nothing if Object.freeze is not supported.
      * @param {Object} obj The object to freeze.
-     * @return {Object} obj The frozen object.
+     * @returns {Object} obj The frozen object.
      */
     $.freezeObject = function(obj) {
         if (Object.freeze) {
@@ -2109,7 +2109,7 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.capture]
          * @param {Boolean} [options.passive]
          * @param {Boolean} [options.once]
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         normalizeEventListenerOptions: function (options) {
             var opts;
@@ -2273,7 +2273,7 @@ function OpenSeadragon( options ){
          * @function
          * @private
          * @param {String} url The url to retrieve the protocol from.
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         getUrlProtocol: function( url ) {
             var match = url.match(/^([a-z]+:)\/\//i);

@@ -149,7 +149,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
             element = $.getElement( element );
@@ -165,7 +165,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         clearControls: function () {
             while ( this.controls.length > 0 ) {
@@ -178,7 +178,7 @@
 
         /**
          * @function
-         * @return {Boolean}
+         * @returns {Boolean}
          */
         areControlsEnabled: function () {
             var i;
@@ -195,7 +195,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         setControlsEnabled: function( enabled ) {
             var i;
