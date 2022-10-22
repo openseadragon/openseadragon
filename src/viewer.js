@@ -212,7 +212,9 @@ $.Viewer = function( options ) {
         zoomFactor:        null,
         lastZoomTime:      null,
         fullPage:          false,
-        onfullscreenchange: null
+        onfullscreenchange: null,
+        lastClickInfo: { time: null, position: null },
+        draggingToZoom: false
     };
 
     this._sequenceIndex = 0;
@@ -2854,6 +2856,8 @@ function onCanvasKeyPress( event ) {
     }
 }
 
+
+
 function onCanvasClick( event ) {
     var gestureSettings;
 
@@ -2893,6 +2897,7 @@ function onCanvasClick( event ) {
      * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
+
     this.raiseEvent( 'canvas-click', canvasClickEventArgs);
 
     if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
@@ -2903,6 +2908,10 @@ function onCanvasClick( event ) {
                 gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
             );
             this.viewport.applyConstraints();
+        }
+        else if( gestureSettings.dblClickToZoom ) {
+            THIS[ this.hash ].lastClickInfo.time = (new Date()).getTime();
+            THIS[ this.hash ].lastClickInfo.position = event.position;
         }
     }
 }
@@ -2983,7 +2992,13 @@ function onCanvasDrag( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-    if ( gestureSettings.dragToPan && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
+    if (gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom){
+        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y );
+        this.viewport.zoomBy(factor);
+        this.viewport.applyConstraints();
+    }
+
+    if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
         if( !this.panHorizontal ){
             event.delta.x = 0;
         }
@@ -3017,6 +3032,10 @@ function onCanvasDrag( event ) {
 
         this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
     }
+
+
+
+
 }
 
 function onCanvasDragEnd( event ) {
@@ -3135,6 +3154,9 @@ function onCanvasLeave( event ) {
 }
 
 function onCanvasPress( event ) {
+
+    var gestureSettings;
+
     /**
      * Raised when the primary mouse button is pressed or touch starts on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3158,9 +3180,33 @@ function onCanvasPress( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
+
+
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
+    if ( gestureSettings.dblClickToZoom ){
+        var lastClickTime = THIS[ this.hash ].lastClickInfo.time;
+        var lastClickPos = THIS[ this.hash ].lastClickInfo.position;
+        var currClickTime = (new Date()).getTime();
+        var currClickPos = event.position;
+
+        if ( lastClickTime === null || lastClickPos === null ) {
+            return;
+        }
+
+        if (lastClickPos.distanceTo(currClickPos) < 10 && ((currClickTime - lastClickTime) < 2000)) {
+            THIS[ this.hash ].draggingToZoom = true;
+        }
+
+        THIS[ this.hash ].lastClickInfo.position = null;
+        THIS[ this.hash ].lastClickInfo.time = null;
+    }
+
 }
 
 function onCanvasRelease( event ) {
+    var gestureSettings;
+
     /**
      * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3184,6 +3230,13 @@ function onCanvasRelease( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
+
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
+    if( gestureSettings.dblClickToZoom ){
+        THIS[ this.hash ].draggingToZoom = false;
+    }
+
 }
 
 function onCanvasNonPrimaryPress( event ) {
