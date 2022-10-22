@@ -3039,6 +3039,7 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
+    var gestureSettings;
     var canvasDragEndEventArgs = {
         tracker: event.eventSource,
         pointerType: event.pointerType,
@@ -3069,9 +3070,11 @@ function onCanvasDragEnd( event ) {
      */
      this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
 
+     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
     if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
-        var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
-        if (gestureSettings.flickEnabled &&
+        if ( !THIS[ this.hash ].draggingToZoom &&
+            gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
             var amplitudeX = 0;
             if (this.panHorizontal) {
@@ -3091,6 +3094,13 @@ function onCanvasDragEnd( event ) {
         }
         this.viewport.applyConstraints();
     }
+
+
+    if( gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom === true ){
+        THIS[ this.hash ].draggingToZoom = false;
+    }
+
+
 }
 
 function onCanvasEnter( event ) {
@@ -3205,8 +3215,6 @@ function onCanvasPress( event ) {
 }
 
 function onCanvasRelease( event ) {
-    var gestureSettings;
-
     /**
      * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3230,13 +3238,6 @@ function onCanvasRelease( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
-
-    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-
-    if( gestureSettings.dblClickToZoom ){
-        THIS[ this.hash ].draggingToZoom = false;
-    }
-
 }
 
 function onCanvasNonPrimaryPress( event ) {
