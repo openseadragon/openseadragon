@@ -1195,8 +1195,8 @@ function OpenSeadragon( options ){
             gestureSettingsMouse:   {
                 dragToPan: true,
                 scrollToZoom: true,
-                clickToZoom: false,
-                dblClickToZoom: true,
+                clickToZoom: true,
+                dblClickToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
@@ -1219,8 +1219,8 @@ function OpenSeadragon( options ){
             gestureSettingsPen:     {
                 dragToPan: true,
                 scrollToZoom: false,
-                clickToZoom: false,
-                dblClickToZoom: true,
+                clickToZoom: true,
+                dblClickToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
