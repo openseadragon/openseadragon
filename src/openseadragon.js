@@ -1242,7 +1242,7 @@ function OpenSeadragon( options ){
             },
             zoomPerClick:           2,
             zoomPerScroll:          1.2,
-            zoomPerDblTapDrag:      10000000000000000000000,
+            zoomPerDblTapDrag:      1.2,
             zoomPerSecond:          1.0,
             blendTime:              0,
             alwaysBlend:            false,
