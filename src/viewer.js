@@ -2993,7 +2993,7 @@ function onCanvasDrag( event ) {
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if (gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom){
-        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y / 100 );
+        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y );
         this.viewport.zoomBy(factor);
         this.viewport.applyConstraints();
     }
