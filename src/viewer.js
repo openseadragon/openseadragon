@@ -2993,9 +2993,9 @@ function onCanvasDrag( event ) {
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if (gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom){
-        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y );
+        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y / 50 );
         this.viewport.zoomBy(factor);
-        this.viewport.applyConstraints();
+        // this.viewport.applyConstraints();
     }
 
     if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
