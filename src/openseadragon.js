@@ -1102,12 +1102,18 @@ function OpenSeadragon( options ){
                 // Extend the base object
                 for ( name in options ) {
                     var descriptor = Object.getOwnPropertyDescriptor(options, name);
-                    if (descriptor.get || descriptor.set) {
-                        Object.defineProperty(target, name, descriptor);
+
+                    if (descriptor !== undefined) {
+                        if (descriptor.get || descriptor.set) {
+                            Object.defineProperty(target, name, descriptor);
+                            continue;
+                        }
+
+                        copy = descriptor.value;
+                    } else {
+                        $.console.warn('Could not copy inherited property "' + name + '".');
                         continue;
                     }
-
-                    copy = descriptor.value;
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
