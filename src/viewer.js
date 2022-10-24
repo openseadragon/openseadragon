@@ -2909,7 +2909,7 @@ function onCanvasClick( event ) {
             );
             this.viewport.applyConstraints();
         }
-        else if( gestureSettings.dblClickToZoom ) {
+        else if( gestureSettings.dblTapDragToZoom ) {
             THIS[ this.hash ].lastClickInfo.time = (new Date()).getTime();
             THIS[ this.hash ].lastClickInfo.position = event.position;
         }
@@ -2992,8 +2992,9 @@ function onCanvasDrag( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-    if (gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom){
-        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y / 50 );
+    if (gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom){
+        var userSpeedForZoom = this.dblTapDragToZoomSpeed;
+        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y / (200 * (1 - userSpeedForZoom)));
         this.viewport.zoomBy(factor);
         // this.viewport.applyConstraints();
     }
@@ -3096,7 +3097,7 @@ function onCanvasDragEnd( event ) {
     }
 
 
-    if( gestureSettings.dblClickToZoom && THIS[ this.hash ].draggingToZoom === true ){
+    if( gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
         THIS[ this.hash ].draggingToZoom = false;
     }
 
@@ -3194,9 +3195,10 @@ function onCanvasPress( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-    if ( gestureSettings.dblClickToZoom ){
+    if ( gestureSettings.dblTapDragToZoom ){
         var lastClickTime = THIS[ this.hash ].lastClickInfo.time;
         var lastClickPos = THIS[ this.hash ].lastClickInfo.position;
+
         var currClickTime = (new Date()).getTime();
         var currClickPos = event.position;
 
@@ -3215,6 +3217,9 @@ function onCanvasPress( event ) {
 }
 
 function onCanvasRelease( event ) {
+
+    var gestureSettings;
+
     /**
      * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3238,6 +3243,12 @@ function onCanvasRelease( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
+
+
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    if( gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
+        THIS[ this.hash ].draggingToZoom = false;
+    }
 }
 
 function onCanvasNonPrimaryPress( event ) {
