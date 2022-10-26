@@ -922,7 +922,7 @@ function OpenSeadragon( options ){
     /**
      * Shim around Object.freeze. Does nothing if Object.freeze is not supported.
      * @param {Object} obj The object to freeze.
-     * @return {Object} obj The frozen object.
+     * @returns {Object} obj The frozen object.
      */
     $.freezeObject = function(obj) {
         if (Object.freeze) {
@@ -1102,12 +1102,18 @@ function OpenSeadragon( options ){
                 // Extend the base object
                 for ( name in options ) {
                     var descriptor = Object.getOwnPropertyDescriptor(options, name);
-                    if (descriptor.get || descriptor.set) {
-                        Object.defineProperty(target, name, descriptor);
+
+                    if (descriptor !== undefined) {
+                        if (descriptor.get || descriptor.set) {
+                            Object.defineProperty(target, name, descriptor);
+                            continue;
+                        }
+
+                        copy = descriptor.value;
+                    } else {
+                        $.console.warn('Could not copy inherited property "' + name + '".');
                         continue;
                     }
-
-                    copy = descriptor.value;
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
@@ -2110,7 +2116,7 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.capture]
          * @param {Boolean} [options.passive]
          * @param {Boolean} [options.once]
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         normalizeEventListenerOptions: function (options) {
             var opts;
@@ -2274,7 +2280,7 @@ function OpenSeadragon( options ){
          * @function
          * @private
          * @param {String} url The url to retrieve the protocol from.
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         getUrlProtocol: function( url ) {
             var match = url.match(/^([a-z]+:)\/\//i);

@@ -579,7 +579,7 @@ $.TileSource.prototype = {
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded
      *      from if any.
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     supports: function( data, url ) {
         return false;
@@ -598,7 +598,7 @@ $.TileSource.prototype = {
      *      from if any.
      * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null value obtained from
      *      the protocol URL after '#' sign if flag splitHashDataForPost set to 'true'
-     * @return {Object} options - A dictionary of keyword arguments sufficient
+     * @returns {Object} options - A dictionary of keyword arguments sufficient
      *      to configure the tile source constructor (include all values you want to
      *      instantiate the TileSource subclass with - what _options_ object should contain).
      * @throws {Error}
@@ -649,7 +649,7 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
-     * @return {*|null} post data to send with tile configuration request
+     * @returns {*|null} post data to send with tile configuration request
      */
     getTilePostData: function( level, x, y ) {
         return null;
@@ -716,7 +716,7 @@ $.TileSource.prototype = {
 
     /**
      * Decide whether tiles have transparency: this is crucial for correct images blending.
-     * @return {boolean} true if the image has transparency
+     * @returns {boolean} true if the image has transparency
      */
     hasTransparency: function(context2D, url, ajaxHeaders, post) {
         return !!context2D || url.match('.png');
@@ -862,7 +862,7 @@ $.TileSource.prototype = {
      * Raw data getter
      * Note that if you override any of *TileCache() functions, you should override all of them.
      * @param {object} cacheObject context cache object
-     * @return {*} cache data
+     * @returns {*} cache data
      */
     getTileCacheData: function(cacheObject) {
         return cacheObject._data;
@@ -874,7 +874,7 @@ $.TileSource.prototype = {
      *  - div HTML rendering relies on image element presence
      * Note that if you override any of *TileCache() functions, you should override all of them.
      *  @param {object} cacheObject context cache object
-     *  @return {Image} cache data as an Image
+     *  @returns {Image} cache data as an Image
      */
     getTileCacheDataAsImage: function(cacheObject) {
         return cacheObject._data; //the data itself by default is Image
@@ -886,7 +886,7 @@ $.TileSource.prototype = {
      *    convert the data to a canvas and return it's 2D context
      * Note that if you override any of *TileCache() functions, you should override all of them.
      * @param {object} cacheObject context cache object
-     * @return {CanvasRenderingContext2D} context of the canvas representation of the cache data
+     * @returns {CanvasRenderingContext2D} context of the canvas representation of the cache data
      */
     getTileCacheDataAsContext2D: function(cacheObject) {
         if (!cacheObject._renderedContext) {

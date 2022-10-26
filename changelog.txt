@@ -9,10 +9,11 @@ OPENSEADRAGON CHANGELOG
 * You can now provide an element for the navigator (as an alternative to an ID) (#1303 @cameronbaney, #2166 #2175 @joedf)
 * Now supporting IIIF "id" and "identifier" in addition to "@id" (#2173 @ahankinson)
 * We now delegate tile fetching and caching to the TileSource, to allow for custom tile formats (#2148 @Aiosa)
+* Improved documentation (#2211 @shyamkumaryadav)
 * Fixed: Cropping tiled images with polygons was broken (#2183 @altert)
 * Fixed: Disabling buttons only changed their appearance, but they were still clickable (#2187 @pearcetm)
 * Fixed: ImageTileSource produced an error having to do with getTileHashKey (#2190 @Aiosa)
-* Fixed: On startup you would get an unnecessary "Viewer.buttons is deprecated" warning (#2201 @joedf)
+* Fixed: On startup you would get an unnecessary "Viewer.buttons is deprecated" warning (#2201 @joedf, #2219 @jssullivan, #2212 @joedf)
 
 3.1.0:
 
