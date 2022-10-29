@@ -176,6 +176,7 @@ $.Drawer.prototype = {
      * This function does not take rotation into account, thus assuming provided
      * point is at 0 degree.
      * @param {OpenSeadragon.Point} point - the pixel point to convert
+     * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
     viewportCoordToDrawerCoord: function(point) {
         var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
@@ -208,7 +209,7 @@ $.Drawer.prototype = {
     /**
      * Set the opacity of the drawer.
      * @param {Number} opacity
-     * @return {OpenSeadragon.Drawer} Chainable.
+     * @returns {OpenSeadragon.Drawer} Chainable.
      */
     setOpacity: function( opacity ) {
         $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
@@ -264,7 +265,7 @@ $.Drawer.prototype = {
     },
 
     /**
-     * @return {Boolean} True if rotation is supported.
+     * @returns {Boolean} True if rotation is supported.
      */
     canRotate: function() {
         return this.useCanvas;
@@ -321,7 +322,7 @@ $.Drawer.prototype = {
      * Scale from OpenSeadragon viewer rectangle to drawer rectangle
      * (ignoring rotation)
      * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
-     * @return {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
+     * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle: function(rectangle) {
         var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);

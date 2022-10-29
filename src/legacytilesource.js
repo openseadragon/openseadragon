@@ -123,7 +123,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * @param {Object|XMLDocument} configuration - the raw configuration
      * @param {String} dataUrl - the url the data was retrieved from if any.
      * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
-     * @return {Object} options - A dictionary of keyword arguments sufficient
+     * @returns {Object} options - A dictionary of keyword arguments sufficient
      *      to configure this tile sources constructor.
      */
     configure: function( configuration, dataUrl, postData ){
