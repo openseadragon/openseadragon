@@ -2912,9 +2912,16 @@ function onCanvasClick( event ) {
             this.viewport.applyConstraints();
         }
 
-        if( gestureSettings.dblClickDragToZoom ) {
-            THIS[ this.hash ].lastClickTime = $.now();
+        if( gestureSettings.dblClickDragToZoom){
+            if(THIS[ this.hash ].draggingToZoom === true){
+                THIS[ this.hash ].lastClickTime = null;
+                THIS[ this.hash ].draggingToZoom = false;
+            }
+            else{
+                THIS[ this.hash ].lastClickTime = $.now();
+            }
         }
+
     }
 }
 
@@ -3211,9 +3218,6 @@ function onCanvasPress( event ) {
 }
 
 function onCanvasRelease( event ) {
-
-    var gestureSettings;
-
     /**
      * Raised when the primary mouse button is released or touch ends on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3237,12 +3241,6 @@ function onCanvasRelease( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
-
-
-    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-    if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
-        THIS[ this.hash ].draggingToZoom = false;
-    }
 }
 
 function onCanvasNonPrimaryPress( event ) {
