@@ -2902,6 +2902,7 @@ function onCanvasClick( event ) {
 
     if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
         if ( gestureSettings.clickToZoom ) {
             this.viewport.zoomBy(
                 event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
@@ -2909,8 +2910,9 @@ function onCanvasClick( event ) {
             );
             this.viewport.applyConstraints();
         }
-        else if( gestureSettings.dblTapDragToZoom ) {
-            THIS[ this.hash ].lastClickInfo.time = (new Date()).getTime();
+
+        if( gestureSettings.dblClickDragToZoom ) {
+            THIS[ this.hash ].lastClickInfo.time = $.now();
             THIS[ this.hash ].lastClickInfo.position = event.position;
         }
     }
@@ -2992,50 +2994,48 @@ function onCanvasDrag( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-    if (gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom){
-        var userSpeedForZoom = this.dblTapDragToZoomSpeed;
-        var factor = Math.pow( this.zoomPerDblTapDrag, event.delta.y / (200 * (1 - userSpeedForZoom)));
-        this.viewport.zoomBy(factor);
-        // this.viewport.applyConstraints();
-    }
+    if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
 
-    if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
-        if( !this.panHorizontal ){
-            event.delta.x = 0;
+        if (gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom){
+            var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y);
+            this.viewport.zoomBy(factor);
         }
-        if( !this.panVertical ){
-            event.delta.y = 0;
-        }
-        if(this.viewport.flipped){
-            event.delta.x = -event.delta.x;
-        }
-
-        if( this.constrainDuringPan ){
-            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
-
-            this.viewport.centerSpringX.target.value += delta.x;
-            this.viewport.centerSpringY.target.value += delta.y;
-
-            var bounds = this.viewport.getBounds();
-            var constrainedBounds = this.viewport.getConstrainedBounds();
-
-            this.viewport.centerSpringX.target.value -= delta.x;
-            this.viewport.centerSpringY.target.value -= delta.y;
-
-            if (bounds.x !== constrainedBounds.x) {
+        else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom) {
+            if( !this.panHorizontal ){
                 event.delta.x = 0;
             }
-
-            if (bounds.y !== constrainedBounds.y) {
+            if( !this.panVertical ){
                 event.delta.y = 0;
             }
+            if(this.viewport.flipped){
+                event.delta.x = -event.delta.x;
+            }
+
+            if( this.constrainDuringPan ){
+                var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+
+                this.viewport.centerSpringX.target.value += delta.x;
+                this.viewport.centerSpringY.target.value += delta.y;
+
+                var bounds = this.viewport.getBounds();
+                var constrainedBounds = this.viewport.getConstrainedBounds();
+
+                this.viewport.centerSpringX.target.value -= delta.x;
+                this.viewport.centerSpringY.target.value -= delta.y;
+
+                if (bounds.x !== constrainedBounds.x) {
+                    event.delta.x = 0;
+                }
+
+                if (bounds.y !== constrainedBounds.y) {
+                    event.delta.y = 0;
+                }
+            }
+
+            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
         }
 
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
     }
-
-
-
 
 }
 
@@ -3199,7 +3199,7 @@ function onCanvasPress( event ) {
         var lastClickTime = THIS[ this.hash ].lastClickInfo.time;
         var lastClickPos = THIS[ this.hash ].lastClickInfo.position;
 
-        var currClickTime = (new Date()).getTime();
+        var currClickTime = $.now();
         var currClickPos = event.position;
 
         if ( lastClickTime === null || lastClickPos === null ) {

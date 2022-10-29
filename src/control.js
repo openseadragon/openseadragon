@@ -152,7 +152,6 @@ $.Control = function ( element, options, container ) {
         parent.appendChild( this.wrapper );
     }
 
-    this.wrapper.style.display = "none";
 };
 
 /** @lends OpenSeadragon.Control.prototype */
