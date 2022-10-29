@@ -213,7 +213,7 @@ $.Viewer = function( options ) {
         lastZoomTime:      null,
         fullPage:          false,
         onfullscreenchange: null,
-        lastClickInfo: { time: null, position: null },
+        lastClickTime: null,
         draggingToZoom: false
     };
 
@@ -2900,6 +2900,7 @@ function onCanvasClick( event ) {
 
     this.raiseEvent( 'canvas-click', canvasClickEventArgs);
 
+
     if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
@@ -2912,8 +2913,7 @@ function onCanvasClick( event ) {
         }
 
         if( gestureSettings.dblClickDragToZoom ) {
-            THIS[ this.hash ].lastClickInfo.time = $.now();
-            THIS[ this.hash ].lastClickInfo.position = event.position;
+            THIS[ this.hash ].lastClickTime = $.now();
         }
     }
 }
@@ -2996,7 +2996,8 @@ function onCanvasDrag( event ) {
 
     if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
 
-        if (gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom){
+
+        if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
             var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y);
             this.viewport.zoomBy(factor);
         }
@@ -3097,7 +3098,7 @@ function onCanvasDragEnd( event ) {
     }
 
 
-    if( gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
+    if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
         THIS[ this.hash ].draggingToZoom = false;
     }
 
@@ -3165,7 +3166,6 @@ function onCanvasLeave( event ) {
 }
 
 function onCanvasPress( event ) {
-
     var gestureSettings;
 
     /**
@@ -3194,24 +3194,19 @@ function onCanvasPress( event ) {
 
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-
-    if ( gestureSettings.dblTapDragToZoom ){
-        var lastClickTime = THIS[ this.hash ].lastClickInfo.time;
-        var lastClickPos = THIS[ this.hash ].lastClickInfo.position;
-
+    if ( gestureSettings.dblClickDragToZoom ){
+        var lastClickTime = THIS[ this.hash ].lastClickTime;
         var currClickTime = $.now();
-        var currClickPos = event.position;
 
-        if ( lastClickTime === null || lastClickPos === null ) {
+        if ( lastClickTime === null) {
             return;
         }
 
-        if (lastClickPos.distanceTo(currClickPos) < 10 && ((currClickTime - lastClickTime) < 2000)) {
+        if ((currClickTime - lastClickTime) < 2000) {
             THIS[ this.hash ].draggingToZoom = true;
         }
 
-        THIS[ this.hash ].lastClickInfo.position = null;
-        THIS[ this.hash ].lastClickInfo.time = null;
+        THIS[ this.hash ].lastClickTime = null;
     }
 
 }
@@ -3246,7 +3241,7 @@ function onCanvasRelease( event ) {
 
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-    if( gestureSettings.dblTapDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
+    if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
         THIS[ this.hash ].draggingToZoom = false;
     }
 }
