@@ -3032,7 +3032,6 @@ function onCanvasDrag( event ) {
                     event.delta.y = 0;
                 }
             }
-
             this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
         }
 
