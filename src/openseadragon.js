@@ -411,7 +411,7 @@
   *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature (also see gestureSettings[Mouse|Touch|Pen].scrollToZoom}).</em>
   *
   * @property {Number} [zoomPerDblClickDrag=1.2]
-  *     The "zoom distance" per mouse drag.
+  *     The "zoom distance" per mouse drag. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the double-click-drag-to-Zoom feature (also see gestureSettings[Mouse|Touch|Pen].dblClickDragToZoom).</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
   *     Sets the zoom amount per second when zoomIn/zoomOut buttons are pressed and held.

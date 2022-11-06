@@ -215,7 +215,6 @@ $.Viewer = function( options ) {
         onfullscreenchange: null,
         lastClickTime: null,
         draggingToZoom: false,
-        onClickActionTimeoutId: null,
     };
 
     this._sequenceIndex = 0;
@@ -2905,23 +2904,12 @@ function onCanvasClick( event ) {
     if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-
-        if(gestureSettings.clickToZoom === true && gestureSettings.dblClickDragToZoom === true){
-            var root = this;
-            var zoomImage = function() {
-                root.viewport.zoomBy(
-                    event.shift ? 1.0 / root.zoomPerClick : root.zoomPerClick,
-                    gestureSettings.zoomToRefPoint ? root.viewport.pointFromPixel( event.position, true ) : null
-                );
-            };
-
-            THIS[ this.hash ].onClickActionTimeoutId = setTimeout(zoomImage, 300);
-        }
-        else if (gestureSettings.clickToZoom === true){
+        if (gestureSettings.clickToZoom === true){
             this.viewport.zoomBy(
                 event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
                 gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
             );
+            this.viewport.applyConstraints();
         }
 
         if( gestureSettings.dblClickDragToZoom){
@@ -2967,10 +2955,6 @@ function onCanvasDblClick( event ) {
     if ( !canvasDblClickEventArgs.preventDefaultAction && this.viewport ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if ( gestureSettings.dblClickToZoom ) {
-
-
-
-
             this.viewport.zoomBy(
                 event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
                 gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
@@ -3018,7 +3002,6 @@ function onCanvasDrag( event ) {
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
-
 
         if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
             var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
@@ -3224,9 +3207,7 @@ function onCanvasPress( event ) {
             return;
         }
 
-        if ((currClickTime - lastClickTime) < 290) {
-            clearTimeout(THIS[ this.hash ].onClickActionTimeoutId);
-            THIS[ this.hash ].onClickActionTimeoutId = null;
+        if ((currClickTime - lastClickTime) < 2000) {
             THIS[ this.hash ].draggingToZoom = true;
         }
 
