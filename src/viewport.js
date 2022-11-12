@@ -1008,6 +1008,34 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Rotates this viewport to the angle specified. Alias for setRotation to be consistent with with pan and zoom API
+     * @function
+     * @param {Number} degrees The degrees to set the rotation to.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * @param {OpenSeadragon.Point} [pivot=false] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * @returns {OpenSeadragon.Viewport} Chainable.
+     */
+    rotateTo: function(degrees, immediately, pivot){
+        return this.setRotation(degrees, immediately, pivot);
+    },
+
+    /**
+     * Rotates this viewport by the angle specified. Alias for setRotation to be consistent with with pan and zoom API
+     * @function
+     * @param {Number} degrees The degrees by which to rotate the viewport.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * @param {OpenSeadragon.Point} [pivot=false] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * @returns {OpenSeadragon.Viewport} Chainable.
+     */
+    rotateBy: function(degrees, immediately, pivot){
+        return this.setRotation(this.degreesSpring.target.value + degrees, immediately, pivot);
+    },
+
+    /**
      * @function
      * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:resize
