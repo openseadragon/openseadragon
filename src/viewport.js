@@ -1022,7 +1022,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Rotates this viewport by the angle specified. Alias for setRotation to be consistent with with pan and zoom API
+     * Rotates this viewport by the angle specified.
      * @function
      * @param {Number} degrees The degrees by which to rotate the viewport.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
