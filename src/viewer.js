@@ -215,6 +215,7 @@ $.Viewer = function( options ) {
         onfullscreenchange: null,
         lastClickTime: null,
         draggingToZoom: false,
+        dblClickTimeThreshold: 1000
     };
 
     this._sequenceIndex = 0;
@@ -3200,6 +3201,7 @@ function onCanvasPress( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
     if ( gestureSettings.dblClickDragToZoom ){
+        var dblClickTimeThreshold = THIS[ this.hash ].dblClickTimeThreshold;
         var lastClickTime = THIS[ this.hash ].lastClickTime;
         var currClickTime = $.now();
 
@@ -3207,7 +3209,7 @@ function onCanvasPress( event ) {
             return;
         }
 
-        if ((currClickTime - lastClickTime) < 2000) {
+        if ((currClickTime - lastClickTime) < dblClickTimeThreshold) {
             THIS[ this.hash ].draggingToZoom = true;
         }
 
