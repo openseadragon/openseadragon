@@ -165,8 +165,8 @@ $.Viewport.prototype = {
 
     // deprecated
     set degrees (degrees) {
-        $.console.warn('Setting [Viewport.degrees] is deprecated. Use viewport.setRotation instead.');
-        this.setRotation(degrees);
+        $.console.warn('Setting [Viewport.degrees] is deprecated. Use viewport.rotateTo, viewport.rotateBy, or viewport.setRotation instead.');
+        this.rotateTo(degrees);
     },
 
     /**
@@ -925,17 +925,16 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Rotates this viewport to the angle specified. Almost an alias for rotateTo,
-     * but with a different order of arguments to maintain backwards compatibility.
+     * Rotates this viewport to the angle specified. Alias for rotateTo.
      * @function
      * @param {Number} degrees The degrees to set the rotation to.
-     * @param {Boolean} [immediately=false] Whether to animate to the new angle
-     * or rotate immediately.
      * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
      * around which the rotation should be performed. Defaults to the center of the viewport.
-     * @returns {OpenSeadragon.Viewport} Chainable.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * * @returns {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function(degrees, immediately, pivot) {
+    setRotation: function(degrees, pivot, immediately) {
         return this.rotateTo(degrees, pivot, immediately);
     },
 
@@ -982,7 +981,7 @@ $.Viewport.prototype = {
                     this.rotationPivot = null;
                     return this;
                 }
-                this._rotateAboutPivot(true, degrees);
+                this._rotateAboutPivot(degrees);
             } else{
                 this.degreesSpring.resetTo(degrees);
             }
@@ -1104,7 +1103,7 @@ $.Viewport.prototype = {
         this.centerSpringY.update();
 
         if(this.rotationPivot){
-            this._rotateAboutPivot();
+            this._rotateAboutPivot(true);
         }
         else{
             this.degreesSpring.update();
@@ -1125,17 +1124,18 @@ $.Viewport.prototype = {
         return changed;
     },
 
-    // private
-    _rotateAboutPivot: function(immediately, degrees){
-        //immediately defaults to false; degrees are ignored for immediately==false
+    // private - pass true to use spring, or a number for degrees for immediate rotation
+    _rotateAboutPivot: function(degreesOrUseSpring){
+        var useSpring = degreesOrUseSpring === true;
+
         var delta = this.rotationPivot.minus(this.getCenter());
         this.centerSpringX.shiftBy(delta.x);
         this.centerSpringY.shiftBy(delta.y);
 
-        if(immediately){
-            this.degreesSpring.resetTo(degrees);
-        } else {
+        if(useSpring){
             this.degreesSpring.update();
+        } else {
+            this.degreesSpring.resetTo(degreesOrUseSpring);
         }
 
         var changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
