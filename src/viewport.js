@@ -97,7 +97,8 @@ $.Viewport = function( options ) {
 
         //internal state properties
         zoomPoint:          null,
-        viewer:           null,
+        rotationPivot:      null,
+        viewer:             null,
 
         //configurable options
         springStiffness:            $.DEFAULT_SETTINGS.springStiffness,
@@ -924,16 +925,43 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Rotates this viewport to the angle specified.
+     * Rotates this viewport to the angle specified. Almost an alias for rotateTo,
+     * but with a different order of arguments to maintain backwards compatibility.
      * @function
      * @param {Number} degrees The degrees to set the rotation to.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
-     * @param {OpenSeadragon.Point} [pivot=false] (Optional) point in viewport coordinates
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
      * around which the rotation should be performed. Defaults to the center of the viewport.
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
     setRotation: function(degrees, immediately, pivot) {
+        return this.rotateTo(degrees, pivot, immediately);
+    },
+
+    /**
+     * Gets the current rotation in degrees.
+     * @function
+     * @param {Boolean} [current=false] True for current rotation, false for target.
+     * @returns {Number} The current rotation in degrees.
+     */
+    getRotation: function(current) {
+        return current ?
+            this.degreesSpring.current.value :
+            this.degreesSpring.target.value;
+    },
+
+    /**
+     * Rotates this viewport to the angle specified.
+     * @function
+     * @param {Number} degrees The degrees to set the rotation to.
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * @returns {OpenSeadragon.Viewport} Chainable.
+     */
+    rotateTo: function(degrees, pivot, immediately){
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
@@ -942,20 +970,19 @@ $.Viewport.prototype = {
             this.degreesSpring.isAtTargetValue()) {
             return this;
         }
-       this.rotationPivot = pivot;
+        this.rotationPivot = pivot instanceof $.Point &&
+            !isNaN(pivot.x) &&
+            !isNaN(pivot.y) ?
+            pivot :
+            null;
         if (immediately) {
-            if(pivot){
+            if(this.rotationPivot){
                 var changeInDegrees = degrees - this._oldDegrees;
                 if(!changeInDegrees){
+                    this.rotationPivot = null;
                     return this;
                 }
-                var delta = pivot.minus(this.getCenter());
-                this.centerSpringX.shiftBy(delta.x);
-                this.centerSpringY.shiftBy(delta.y);
-                this.degreesSpring.resetTo(degrees);
-                var rdelta = delta.rotate(changeInDegrees * -1).times(-1);
-                this.centerSpringX.shiftBy(rdelta.x);
-                this.centerSpringY.shiftBy(rdelta.y);
+                this._rotateAboutPivot(true, degrees);
             } else{
                 this.degreesSpring.resetTo(degrees);
             }
@@ -991,34 +1018,8 @@ $.Viewport.prototype = {
          * @property {OpenSeadragon.Point} pivot - The point in viewport coordinates around which the rotation (if any) happened
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.viewer.raiseEvent('rotate', {degrees: degrees, immediately: !!immediately, pivot: pivot || this.getCenter()});
+        this.viewer.raiseEvent('rotate', {degrees: degrees, immediately: !!immediately, pivot: this.rotationPivot || this.getCenter()});
         return this;
-    },
-
-    /**
-     * Gets the current rotation in degrees.
-     * @function
-     * @param {Boolean} [current=false] True for current rotation, false for target.
-     * @returns {Number} The current rotation in degrees.
-     */
-    getRotation: function(current) {
-        return current ?
-            this.degreesSpring.current.value :
-            this.degreesSpring.target.value;
-    },
-
-    /**
-     * Rotates this viewport to the angle specified. Alias for setRotation to be consistent with with pan and zoom API
-     * @function
-     * @param {Number} degrees The degrees to set the rotation to.
-     * @param {Boolean} [immediately=false] Whether to animate to the new angle
-     * or rotate immediately.
-     * @param {OpenSeadragon.Point} [pivot=false] (Optional) point in viewport coordinates
-     * around which the rotation should be performed. Defaults to the center of the viewport.
-     * @returns {OpenSeadragon.Viewport} Chainable.
-     */
-    rotateTo: function(degrees, immediately, pivot){
-        return this.setRotation(degrees, immediately, pivot);
     },
 
     /**
@@ -1027,11 +1028,11 @@ $.Viewport.prototype = {
      * @param {Number} degrees The degrees by which to rotate the viewport.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
-     * @param {OpenSeadragon.Point} [pivot=false] (Optional) point in viewport coordinates
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
      * around which the rotation should be performed. Defaults to the center of the viewport.
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
-    rotateBy: function(degrees, immediately, pivot){
+    rotateBy: function(degrees, pivot, immediately){
         return this.setRotation(this.degreesSpring.target.value + degrees, immediately, pivot);
     },
 
@@ -1096,23 +1097,19 @@ $.Viewport.prototype = {
         this._adjustCenterSpringsForZoomPoint(function() {
             _this.zoomSpring.update();
         });
-
+        if(this.degreesSpring.isAtTargetValue()){
+            this.rotationPivot = null;
+        }
         this.centerSpringX.update();
         this.centerSpringY.update();
 
-        if(this.rotationPivot && this.degreesSpring.current.value !== this.degreesSpring.target.value){
-            var delta = this.rotationPivot.minus(this.getCenter());
-            this.centerSpringX.shiftBy(delta.x);
-            this.centerSpringY.shiftBy(delta.y);
-            this.degreesSpring.update();
-            var changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
-            var rdelta = delta.rotate(changeInDegrees * -1).times(-1);
-            this.centerSpringX.shiftBy(rdelta.x);
-            this.centerSpringY.shiftBy(rdelta.y);
+        if(this.rotationPivot){
+            this._rotateAboutPivot();
         }
         else{
             this.degreesSpring.update();
         }
+
 
         var changed = this.centerSpringX.current.value !== this._oldCenterX ||
             this.centerSpringY.current.value !== this._oldCenterY ||
@@ -1128,6 +1125,26 @@ $.Viewport.prototype = {
         return changed;
     },
 
+    // private
+    _rotateAboutPivot: function(immediately, degrees){
+        //immediately defaults to false; degrees are ignored for immediately==false
+        var delta = this.rotationPivot.minus(this.getCenter());
+        this.centerSpringX.shiftBy(delta.x);
+        this.centerSpringY.shiftBy(delta.y);
+
+        if(immediately){
+            this.degreesSpring.resetTo(degrees);
+        } else {
+            this.degreesSpring.update();
+        }
+
+        var changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
+        var rdelta = delta.rotate(changeInDegrees * -1).times(-1);
+        this.centerSpringX.shiftBy(rdelta.x);
+        this.centerSpringY.shiftBy(rdelta.y);
+    },
+
+    // private
     _adjustCenterSpringsForZoomPoint: function(zoomSpringHandler) {
         if (this.zoomPoint) {
             var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
