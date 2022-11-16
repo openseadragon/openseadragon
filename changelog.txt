@@ -14,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Disabling buttons only changed their appearance, but they were still clickable (#2187 @pearcetm)
 * Fixed: ImageTileSource produced an error having to do with getTileHashKey (#2190 @Aiosa)
 * Fixed: On startup you would get an unnecessary "Viewer.buttons is deprecated" warning (#2201 @joedf, #2219 @jssullivan, #2212 @joedf)
+* New gesture: Double-click and drag to zoom (on by default for touch) (#2225 @HamzaTatheer)
 
 3.1.0:
 
