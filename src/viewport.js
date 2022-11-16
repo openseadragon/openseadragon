@@ -1026,14 +1026,14 @@ $.Viewport.prototype = {
      * Rotates this viewport by the angle specified.
      * @function
      * @param {Number} degrees The degrees by which to rotate the viewport.
-     * @param {Boolean} [immediately=false] Whether to animate to the new angle
-     * or rotate immediately.
      * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
      * around which the rotation should be performed. Defaults to the center of the viewport.
+     * * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
     rotateBy: function(degrees, pivot, immediately){
-        return this.setRotation(this.degreesSpring.target.value + degrees, immediately, pivot);
+        return this.rotateTo(this.degreesSpring.target.value + degrees, pivot, immediately);
     },
 
     /**
