@@ -50,12 +50,14 @@
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
+ * @param {Number} [options.tries] - Actual number of the current try.
  */
 $.ImageJob = function(options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
-        jobId: null
+        jobId: null,
+        tries: 0
     }, options);
 
     /**
@@ -87,6 +89,8 @@ $.ImageJob.prototype = {
      * @method
      */
     start: function() {
+        this.tries++;
+
         var self = this;
         var selfAbort = this.abort;
 
@@ -138,6 +142,7 @@ $.ImageLoader = function(options) {
         jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
         timeout:        $.DEFAULT_SETTINGS.timeout,
         jobQueue:       [],
+        failedTiles:    [],
         jobsInProgress: 0
     }, options);
 
@@ -220,7 +225,8 @@ $.ImageLoader.prototype = {
 };
 
 /**
- * Cleans up ImageJob once completed.
+ * Cleans up ImageJob once completed. Restarts job after tileRetryDelay seconds if failed
+ * but max tileRetryMax times
  * @method
  * @private
  * @param loader - ImageLoader used to start job.
@@ -228,6 +234,9 @@ $.ImageLoader.prototype = {
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
+    if (job.errorMsg != '' && job.image === null && job.tries < 1 + loader.tileRetryMax) {
+        loader.failedTiles.push(job);
+    }
     var nextJob;
 
     loader.jobsInProgress--;
@@ -237,6 +246,16 @@ function completeJob(loader, job, callback) {
         nextJob.start();
         loader.jobsInProgress++;
     }
+
+    if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
+        if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
+             nextJob = loader.failedTiles.shift();
+             setTimeout(function () {
+                 nextJob.start();
+             }, loader.tileRetryDelay);
+             loader.jobsInProgress++;
+         }
+     }
 
     callback(job.data, job.errorMsg, job.request);
 }
