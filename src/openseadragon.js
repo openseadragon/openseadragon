@@ -341,6 +341,9 @@
   * @property {Boolean} [gestureSettingsMouse.clickToZoom=true] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsMouse.dblClickToZoom=false] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+  * @property {Boolean} [gestureSettingsMouse.dblClickDragToZoom=false] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsMouse.pinchToZoom=false] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsMouse.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -356,6 +359,10 @@
   * @property {Boolean} [gestureSettingsTouch.clickToZoom=false] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsTouch.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+    * @property {Boolean} [gestureSettingsTouch.dblClickDragToZoom=true] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
+
   * @property {Boolean} [gestureSettingsTouch.pinchToZoom=true] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsTouch.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -386,6 +393,9 @@
   * @property {Boolean} [gestureSettingsUnknown.clickToZoom=false] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsUnknown.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+  * @property {Boolean} [gestureSettingsUnknown.dblClickDragToZoom=false] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsUnknown.pinchToZoom=true] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsUnknown.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -399,6 +409,9 @@
   *
   * @property {Number} [zoomPerScroll=1.2]
   *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature (also see gestureSettings[Mouse|Touch|Pen].scrollToZoom}).</em>
+  *
+  * @property {Number} [zoomPerDblClickDrag=1.2]
+  *     The "zoom distance" per double-click mouse drag. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the double-click-drag-to-Zoom feature (also see gestureSettings[Mouse|Touch|Pen].dblClickDragToZoom).</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
   *     Sets the zoom amount per second when zoomIn/zoomOut buttons are pressed and held.
@@ -922,7 +935,7 @@ function OpenSeadragon( options ){
     /**
      * Shim around Object.freeze. Does nothing if Object.freeze is not supported.
      * @param {Object} obj The object to freeze.
-     * @return {Object} obj The frozen object.
+     * @returns {Object} obj The frozen object.
      */
     $.freezeObject = function(obj) {
         if (Object.freeze) {
@@ -1101,8 +1114,19 @@ function OpenSeadragon( options ){
             if ( options !== null || options !== undefined ) {
                 // Extend the base object
                 for ( name in options ) {
-                    src = target[ name ];
-                    copy = options[ name ];
+                    var descriptor = Object.getOwnPropertyDescriptor(options, name);
+
+                    if (descriptor !== undefined) {
+                        if (descriptor.get || descriptor.set) {
+                            Object.defineProperty(target, name, descriptor);
+                            continue;
+                        }
+
+                        copy = descriptor.value;
+                    } else {
+                        $.console.warn('Could not copy inherited property "' + name + '".');
+                        continue;
+                    }
 
                     // Prevent never-ending loop
                     if ( target === copy ) {
@@ -1111,6 +1135,8 @@ function OpenSeadragon( options ){
 
                     // Recurse if we're merging plain objects or arrays
                     if ( deep && copy && ( OpenSeadragon.isPlainObject( copy ) || ( copyIsArray = OpenSeadragon.isArray( copy ) ) ) ) {
+                        src = target[ name ];
+
                         if ( copyIsArray ) {
                             copyIsArray = false;
                             clone = src && OpenSeadragon.isArray( src ) ? src : [];
@@ -1190,6 +1216,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: true,
                 clickToZoom: true,
                 dblClickToZoom: false,
+                dblClickDragToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
@@ -1202,6 +1229,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
+                dblClickDragToZoom: true,
                 pinchToZoom: true,
                 zoomToRefPoint: true,
                 flickEnabled: true,
@@ -1214,6 +1242,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: true,
                 dblClickToZoom: false,
+                dblClickDragToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
@@ -1226,6 +1255,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
+                dblClickDragToZoom: false,
                 pinchToZoom: true,
                 zoomToRefPoint: true,
                 flickEnabled: true,
@@ -1235,6 +1265,7 @@ function OpenSeadragon( options ){
             },
             zoomPerClick:           2,
             zoomPerScroll:          1.2,
+            zoomPerDblClickDrag:    1.2,
             zoomPerSecond:          1.0,
             blendTime:              0,
             alwaysBlend:            false,
@@ -2102,7 +2133,7 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.capture]
          * @param {Boolean} [options.passive]
          * @param {Boolean} [options.once]
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         normalizeEventListenerOptions: function (options) {
             var opts;
@@ -2266,7 +2297,7 @@ function OpenSeadragon( options ){
          * @function
          * @private
          * @param {String} url The url to retrieve the protocol from.
-         * @return {String} The protocol (http:, https:, file:, ftp: ...)
+         * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         getUrlProtocol: function( url ) {
             var match = url.match(/^([a-z]+:)\/\//i);

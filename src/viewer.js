@@ -182,7 +182,7 @@ $.Viewer = function( options ) {
         navImages:      null,
 
         //interface button controls
-        buttons:        null,
+        buttonGroup:        null,
 
         //TODO: this is defunct so safely remove it
         profiler:       null
@@ -212,7 +212,9 @@ $.Viewer = function( options ) {
         zoomFactor:        null,
         lastZoomTime:      null,
         fullPage:          false,
-        onfullscreenchange: null
+        onfullscreenchange: null,
+        lastClickTime: null,
+        draggingToZoom: false,
     };
 
     this._sequenceIndex = 0;
@@ -491,7 +493,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     isOpen: function () {
         return !!this.world.getItemCount();
@@ -529,7 +531,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
      * @param {Number} initialPage - If sequenceMode is true, display this page initially
      * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
@@ -701,7 +703,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:close
      */
     close: function ( ) {
@@ -843,7 +845,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     isMouseNavEnabled: function () {
         return this.innerTracker.isTracking();
@@ -852,7 +854,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * @function
      * @param {Boolean} enabled - true to enable, false to disable
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:mouse-enabled
      */
     setMouseNavEnabled: function( enabled ){
@@ -875,7 +877,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     areControlsEnabled: function () {
         var enabled = this.controls.length,
@@ -892,7 +894,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *
      * @function
      * @param {Boolean} true to show, false to hide.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:controls-enabled
      */
     setControlsEnabled: function( enabled ) {
@@ -933,7 +935,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     isFullPage: function () {
         return THIS[ this.hash ].fullPage;
@@ -945,7 +947,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @param {Boolean} fullPage
      *      If true, enter full page mode.  If false, exit full page mode.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:pre-full-page
      * @fires OpenSeadragon.Viewer.event:full-page
      */
@@ -1160,7 +1162,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @param {Boolean} fullScreen
      *      If true, enter full screen mode.  If false, exit full screen mode.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:pre-full-screen
      * @fires OpenSeadragon.Viewer.event:full-screen
      */
@@ -1255,7 +1257,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {Boolean}
+     * @returns {Boolean}
      */
     isVisible: function () {
         return this.container.style.visibility !== "hidden";
@@ -1274,7 +1276,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * @function
      * @param {Boolean} visible
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:visible
      */
     setVisible: function( visible ){
@@ -1655,7 +1657,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      */
     bindSequenceControls: function(){
 
@@ -1744,7 +1746,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      */
     bindStandardControls: function(){
         //////////////////////////////////////////////////////////////////////////
@@ -1926,7 +1928,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Gets the active page of a sequence
      * @function
-     * @return {Number}
+     * @returns {Number}
      */
     currentPage: function() {
         return this._sequenceIndex;
@@ -1934,7 +1936,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     /**
      * @function
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:page
      */
     goToPage: function( page ){
@@ -1983,7 +1985,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {function} [onDraw] - If supplied the callback is called when the overlay
      *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-overlay
      */
     addOverlay: function( element, location, placement, onDraw ) {
@@ -2041,7 +2043,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {OpenSeadragon.Placement} [placement=OpenSeadragon.Placement.TOP_LEFT] - The position of the
      *      viewport which the location coordinates will be treated as relative
      *      to.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:update-overlay
      */
     updateOverlay: function( element, location, placement ) {
@@ -2082,7 +2084,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @method
      * @param {Element|String} element - A reference to the element or an
      *      element id which represent the ovelay content to be removed.
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:remove-overlay
      */
     removeOverlay: function( element ) {
@@ -2118,7 +2120,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Removes all currently configured Overlays from this Viewer and schedules
      * an update.
      * @method
-     * @return {OpenSeadragon.Viewer} Chainable.
+     * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:clear-overlay
      */
     clearOverlays: function() {
@@ -2145,7 +2147,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @method
      * @param {Element|String} element - A reference to the element or an
      *      element id which represents the overlay content.
-     * @return {OpenSeadragon.Overlay} the matching overlay or null if none found.
+     * @returns {OpenSeadragon.Overlay} the matching overlay or null if none found.
      */
     getOverlayById: function( element ) {
         var i;
@@ -2226,7 +2228,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Gets this viewer's gesture settings for the given pointer device type.
      * @method
      * @param {String} type - The pointer device type to get the gesture settings for ("mouse", "touch", "pen", etc.).
-     * @return {OpenSeadragon.GestureSettings}
+     * @returns {OpenSeadragon.GestureSettings}
      */
     gestureSettingsByDeviceType: function ( type ) {
         switch ( type ) {
@@ -2854,6 +2856,8 @@ function onCanvasKeyPress( event ) {
     }
 }
 
+
+
 function onCanvasClick( event ) {
     var gestureSettings;
 
@@ -2893,17 +2897,31 @@ function onCanvasClick( event ) {
      * @property {Boolean} preventDefaultAction - Set to true to prevent default click to zoom behaviour. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
+
     this.raiseEvent( 'canvas-click', canvasClickEventArgs);
+
 
     if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
         gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.clickToZoom ) {
+
+        if (gestureSettings.clickToZoom === true){
             this.viewport.zoomBy(
                 event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
                 gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
             );
             this.viewport.applyConstraints();
         }
+
+        if( gestureSettings.dblClickDragToZoom){
+            if(THIS[ this.hash ].draggingToZoom === true){
+                THIS[ this.hash ].lastClickTime = null;
+                THIS[ this.hash ].draggingToZoom = false;
+            }
+            else{
+                THIS[ this.hash ].lastClickTime = $.now();
+            }
+        }
+
     }
 }
 
@@ -2983,43 +3001,52 @@ function onCanvasDrag( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
-    if ( gestureSettings.dragToPan && !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
-        if( !this.panHorizontal ){
-            event.delta.x = 0;
+    if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
+
+        if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
+            var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
+            this.viewport.zoomBy(factor);
         }
-        if( !this.panVertical ){
-            event.delta.y = 0;
-        }
-        if(this.viewport.flipped){
-            event.delta.x = -event.delta.x;
-        }
-
-        if( this.constrainDuringPan ){
-            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
-
-            this.viewport.centerSpringX.target.value += delta.x;
-            this.viewport.centerSpringY.target.value += delta.y;
-
-            var bounds = this.viewport.getBounds();
-            var constrainedBounds = this.viewport.getConstrainedBounds();
-
-            this.viewport.centerSpringX.target.value -= delta.x;
-            this.viewport.centerSpringY.target.value -= delta.y;
-
-            if (bounds.x !== constrainedBounds.x) {
+        else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom) {
+            if( !this.panHorizontal ){
                 event.delta.x = 0;
             }
-
-            if (bounds.y !== constrainedBounds.y) {
+            if( !this.panVertical ){
                 event.delta.y = 0;
             }
+            if(this.viewport.flipped){
+                event.delta.x = -event.delta.x;
+            }
+
+            if( this.constrainDuringPan ){
+                var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+
+                this.viewport.centerSpringX.target.value += delta.x;
+                this.viewport.centerSpringY.target.value += delta.y;
+
+                var bounds = this.viewport.getBounds();
+                var constrainedBounds = this.viewport.getConstrainedBounds();
+
+                this.viewport.centerSpringX.target.value -= delta.x;
+                this.viewport.centerSpringY.target.value -= delta.y;
+
+                if (bounds.x !== constrainedBounds.x) {
+                    event.delta.x = 0;
+                }
+
+                if (bounds.y !== constrainedBounds.y) {
+                    event.delta.y = 0;
+                }
+            }
+            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
         }
 
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
     }
+
 }
 
 function onCanvasDragEnd( event ) {
+    var gestureSettings;
     var canvasDragEndEventArgs = {
         tracker: event.eventSource,
         pointerType: event.pointerType,
@@ -3050,9 +3077,11 @@ function onCanvasDragEnd( event ) {
      */
      this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
 
+     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+
     if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
-        var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
-        if (gestureSettings.flickEnabled &&
+        if ( !THIS[ this.hash ].draggingToZoom &&
+            gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
             var amplitudeX = 0;
             if (this.panHorizontal) {
@@ -3072,6 +3101,13 @@ function onCanvasDragEnd( event ) {
         }
         this.viewport.applyConstraints();
     }
+
+
+    if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
+        THIS[ this.hash ].draggingToZoom = false;
+    }
+
+
 }
 
 function onCanvasEnter( event ) {
@@ -3135,6 +3171,8 @@ function onCanvasLeave( event ) {
 }
 
 function onCanvasPress( event ) {
+    var gestureSettings;
+
     /**
      * Raised when the primary mouse button is pressed or touch starts on the {@link OpenSeadragon.Viewer#canvas} element.
      *
@@ -3158,6 +3196,24 @@ function onCanvasPress( event ) {
         insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
+
+
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    if ( gestureSettings.dblClickDragToZoom ){
+        var lastClickTime = THIS[ this.hash ].lastClickTime;
+        var currClickTime = $.now();
+
+        if ( lastClickTime === null) {
+            return;
+        }
+
+        if ((currClickTime - lastClickTime) < this.dblClickTimeThreshold) {
+            THIS[ this.hash ].draggingToZoom = true;
+        }
+
+        THIS[ this.hash ].lastClickTime = null;
+    }
+
 }
 
 function onCanvasRelease( event ) {
