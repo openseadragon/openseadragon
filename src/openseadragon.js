@@ -788,6 +788,12 @@ function OpenSeadragon( options ){
 
 (function( $ ){
 
+    $.ajaxQueue = {
+        requestFuncs: [],
+        numRequests: 0,
+        numActiveRequests: 0,
+        maxConcurrency: 50,
+    };
 
     /**
      * The OpenSeadragon version.
@@ -2332,6 +2338,70 @@ function OpenSeadragon( options ){
             return $.createAjaxRequest( local );
         },
 
+        queueAjaxRequest: function (
+            request,
+            method,
+            url,
+            headers,
+            withCredentials,
+            responseType,
+            postData
+        ) {
+            var oldOnStateChange = request.onreadystatechange;
+
+            var sendRequest = function () {
+                request.open( method, url, true );
+
+                if (responseType) {
+                    request.responseType = responseType;
+                }
+
+                if (headers) {
+                    for (var headerName in headers) {
+                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
+                            request.setRequestHeader(headerName, headers[headerName]);
+                        }
+                    }
+                }
+
+                if (withCredentials) {
+                    request.withCredentials = true;
+                }
+
+                request.send(postData);
+            };
+
+            var callback = function() {
+
+                $.ajaxQueue.numRequests--;
+
+                if (
+                    $.ajaxQueue.numActiveRequests === $.ajaxQueue.maxConcurrency &&
+                    $.ajaxQueue.requestFuncs.length > 0
+                ) {
+                    $.ajaxQueue.requestFuncs.shift()();
+                } else {
+                    $.ajaxQueue.numActiveRequests--;
+                }
+            };
+
+            request.onreadystatechange = function() {
+                if ( request.readyState === 4 ) {
+                    callback();
+                    oldOnStateChange();
+                }
+            };
+
+            $.ajaxQueue.numRequests++;
+
+            if ($.ajaxQueue.numActiveRequests === $.ajaxQueue.maxConcurrency) {
+                $.ajaxQueue.requestFuncs.push(sendRequest);
+            } else {
+                $.ajaxQueue.numActiveRequests++;
+                sendRequest();
+            }
+        },
+
         /**
          * Makes an AJAX request.
          * @param {Object} options
@@ -2395,25 +2465,15 @@ function OpenSeadragon( options ){
 
             var method = postData ? "POST" : "GET";
             try {
-                request.open( method, url, true );
-
-                if (responseType) {
-                    request.responseType = responseType;
-                }
-
-                if (headers) {
-                    for (var headerName in headers) {
-                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
-                            request.setRequestHeader(headerName, headers[headerName]);
-                        }
-                    }
-                }
-
-                if (withCredentials) {
-                    request.withCredentials = true;
-                }
-
-                request.send(postData);
+                $.queueAjaxRequest(
+                    request,
+                    method,
+                    url,
+                    headers,
+                    withCredentials,
+                    responseType,
+                    postData
+                );
             } catch (e) {
                 $.console.error( "%s while making AJAX request: %s", e.name, e.message );
 
