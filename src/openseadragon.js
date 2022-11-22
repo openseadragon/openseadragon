@@ -341,6 +341,9 @@
   * @property {Boolean} [gestureSettingsMouse.clickToZoom=true] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsMouse.dblClickToZoom=false] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+  * @property {Boolean} [gestureSettingsMouse.dblClickDragToZoom=false] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsMouse.pinchToZoom=false] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsMouse.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -356,6 +359,10 @@
   * @property {Boolean} [gestureSettingsTouch.clickToZoom=false] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsTouch.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+    * @property {Boolean} [gestureSettingsTouch.dblClickDragToZoom=true] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
+
   * @property {Boolean} [gestureSettingsTouch.pinchToZoom=true] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsTouch.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -386,6 +393,9 @@
   * @property {Boolean} [gestureSettingsUnknown.clickToZoom=false] - Zoom on click gesture
   * @property {Boolean} [gestureSettingsUnknown.dblClickToZoom=true] - Zoom on double-click gesture. Note: If set to true
   *     then clickToZoom should be set to false to prevent multiple zooms.
+  * @property {Boolean} [gestureSettingsUnknown.dblClickDragToZoom=false] - Zoom on dragging through
+  * double-click gesture ( single click and next click to drag).  Note: If set to true
+  *     then clickToZoom should be set to false to prevent multiple zooms.
   * @property {Boolean} [gestureSettingsUnknown.pinchToZoom=true] - Zoom on pinch gesture
   * @property {Boolean} [gestureSettingsUnknown.zoomToRefPoint=true] - If zoomToRefPoint is true, the zoom is centered at the pointer position. Otherwise,
   *     the zoom is centered at the canvas center.
@@ -399,6 +409,9 @@
   *
   * @property {Number} [zoomPerScroll=1.2]
   *     The "zoom distance" per mouse scroll or touch pinch. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the mouse-wheel zoom feature (also see gestureSettings[Mouse|Touch|Pen].scrollToZoom}).</em>
+  *
+  * @property {Number} [zoomPerDblClickDrag=1.2]
+  *     The "zoom distance" per double-click mouse drag. <em><strong>Note:</strong> Setting this to 1.0 effectively disables the double-click-drag-to-Zoom feature (also see gestureSettings[Mouse|Touch|Pen].dblClickDragToZoom).</em>
   *
   * @property {Number} [zoomPerSecond=1.0]
   *     Sets the zoom amount per second when zoomIn/zoomOut buttons are pressed and held.
@@ -1203,6 +1216,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: true,
                 clickToZoom: true,
                 dblClickToZoom: false,
+                dblClickDragToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
@@ -1215,6 +1229,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
+                dblClickDragToZoom: true,
                 pinchToZoom: true,
                 zoomToRefPoint: true,
                 flickEnabled: true,
@@ -1227,6 +1242,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: true,
                 dblClickToZoom: false,
+                dblClickDragToZoom: false,
                 pinchToZoom: false,
                 zoomToRefPoint: true,
                 flickEnabled: false,
@@ -1239,6 +1255,7 @@ function OpenSeadragon( options ){
                 scrollToZoom: false,
                 clickToZoom: false,
                 dblClickToZoom: true,
+                dblClickDragToZoom: false,
                 pinchToZoom: true,
                 zoomToRefPoint: true,
                 flickEnabled: true,
@@ -1248,6 +1265,7 @@ function OpenSeadragon( options ){
             },
             zoomPerClick:           2,
             zoomPerScroll:          1.2,
+            zoomPerDblClickDrag:    1.2,
             zoomPerSecond:          1.0,
             blendTime:              0,
             alwaysBlend:            false,

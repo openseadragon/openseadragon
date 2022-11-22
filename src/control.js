@@ -74,6 +74,7 @@ $.ControlAnchor = {
  * @param {Element} container - the element to control will be anchored too.
  */
 $.Control = function ( element, options, container ) {
+
     var parent = element.parentNode;
     if (typeof options === 'number')
     {
@@ -150,6 +151,7 @@ $.Control = function ( element, options, container ) {
     } else {
         parent.appendChild( this.wrapper );
     }
+
 };
 
 /** @lends OpenSeadragon.Control.prototype */
