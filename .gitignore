@@ -8,3 +8,4 @@ instrumented/
 /nbproject/private/
 .directory
 local-test
+.DS_Store
