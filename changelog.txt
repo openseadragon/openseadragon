@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-3.2.0: (in progress)
+3.2.0: (in progress...)
 
 * NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass false for the new immediately parameter to disable) (#2136 @jonasengelmann)
 * DEPRECATION: Don't access the viewport's degrees property directly anymore; instead use setRotation and getRotation (#2136 @jonasengelmann)
