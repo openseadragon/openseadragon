@@ -34,7 +34,7 @@
         "grunt-contrib-compress": "^2.0.0",
         "grunt-contrib-concat": "^2.0.0",
         "grunt-contrib-connect": "^3.0.0",
-        "grunt-contrib-qunit": "^5.1.1",
+        "grunt-contrib-qunit": "^6.2.0",
         "grunt-contrib-uglify": "^5.0.1",
         "grunt-contrib-watch": "^1.1.0",
         "grunt-eslint": "^24.0.0",
