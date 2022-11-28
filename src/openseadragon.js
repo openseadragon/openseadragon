@@ -2444,41 +2444,10 @@ function OpenSeadragon( options ){
             }
         },
 
-        queueAjaxRequest: function (
-            request,
-            method,
-            url,
-            headers,
-            withCredentials,
-            responseType,
-            postData
-        ) {
+        queueAjaxRequest: function (request, sendRequestFunc) {
             var oldOnStateChange = request.onreadystatechange;
 
-            var sendRequest = function () {
-                request.open( method, url, true );
-
-                if (responseType) {
-                    request.responseType = responseType;
-                }
-
-                if (headers) {
-                    for (const headerName in headers) {
-                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
-                            request.setRequestHeader(headerName, headers[headerName]);
-                        }
-                    }
-                }
-
-                if (withCredentials) {
-                    request.withCredentials = true;
-                }
-
-                request.send(postData);
-            };
-
-            var callback = function() {
-
+            var onCompleteRequest = function() {
                 $.ajaxQueue.numRequests--;
 
                 if (
@@ -2493,7 +2462,7 @@ function OpenSeadragon( options ){
 
             request.onreadystatechange = function() {
                 if ( request.readyState === 4 ) {
-                    callback();
+                    onCompleteRequest();
                     oldOnStateChange();
                 }
             };
@@ -2501,10 +2470,10 @@ function OpenSeadragon( options ){
             $.ajaxQueue.numRequests++;
 
             if ($.ajaxQueue.numActiveRequests === $.ajaxQueue.maxConcurrency) {
-                $.ajaxQueue.requestFuncs.push(sendRequest);
+                $.ajaxQueue.requestFuncs.push(sendRequestFunc);
             } else {
                 $.ajaxQueue.numActiveRequests++;
-                sendRequest();
+                sendRequestFunc();
             }
         },
 
@@ -2580,16 +2549,31 @@ function OpenSeadragon( options ){
             };
 
             const method = postData ? "POST" : "GET";
+
+            var sendRequest = function () {
+                request.open( method, url, true );
+
+                if (responseType) {
+                    request.responseType = responseType;
+                }
+
+                if (headers) {
+                    for (const headerName in headers) {
+                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
+                            request.setRequestHeader(headerName, headers[headerName]);
+                        }
+                    }
+                }
+
+                if (withCredentials) {
+                    request.withCredentials = true;
+                }
+
+                request.send(postData);
+            };
+
             try {
-                $.queueAjaxRequest(
-                    request,
-                    method,
-                    url,
-                    headers,
-                    withCredentials,
-                    responseType,
-                    postData
-                );
+                $.queueAjaxRequest(request, sendRequest);
             } catch (e) {
                 $.console.error( "%s while making AJAX request: %s", e.name, e.message );
 
