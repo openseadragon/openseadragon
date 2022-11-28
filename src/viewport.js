@@ -513,7 +513,7 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Rect} bounds
      * @returns {OpenSeadragon.Rect} constrained bounds.
      */
-    _applyBoundaryConstraints: function(bounds) {
+     _applyBoundaryConstraints: function(bounds) {
         var newBounds = new $.Rect(
                 bounds.x,
                 bounds.y,
@@ -529,19 +529,26 @@ $.Viewport.prototype = {
             var horizontalThreshold, leftDx, rightDx;
             if (newBounds.width > this._contentBoundsNoRotate.width) {
                 horizontalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.width;
+                leftDx = this._contentBoundsNoRotate.x - newBounds.x + horizontalThreshold;
+                rightDx = contentRight - boundsRight - horizontalThreshold;
+
+                if (rightDx > 0) {
+                    newBounds.x += rightDx;
+                } else if (leftDx < 0) {
+                    newBounds.x += leftDx;
+                }
             } else {
                 horizontalThreshold = this.visibilityRatio * newBounds.width;
+                leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
+                rightDx = contentRight - newBounds.x - horizontalThreshold;
+                if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+                    newBounds.x += (leftDx + rightDx) / 2;
+                } else if (rightDx < 0) {
+                    newBounds.x += rightDx;
+                } else if (leftDx > 0) {
+                    newBounds.x += leftDx;
+                }
             }
-            leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
-            rightDx = contentRight - newBounds.x - horizontalThreshold;
-            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
-                newBounds.x += (leftDx + rightDx) / 2;
-            } else if (rightDx < 0) {
-                newBounds.x += rightDx;
-            } else if (leftDx > 0) {
-                newBounds.x += leftDx;
-            }
-
         }
 
         if (this.wrapVertical) {
@@ -553,20 +560,26 @@ $.Viewport.prototype = {
             var verticalThreshold, topDy, bottomDy;
             if (newBounds.height > this._contentBoundsNoRotate.height) {
                 verticalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.height;
-            } else{
+                topDy = this._contentBoundsNoRotate.y - newBounds.y + verticalThreshold;
+                bottomDy = contentBottom - boundsBottom - verticalThreshold;
+
+                if (bottomDy > 0) {
+                    newBounds.y += bottomDy;
+                } else if (topDy < 0) {
+                    newBounds.y += topDy;
+                }
+            } else {
                 verticalThreshold = this.visibilityRatio * newBounds.height;
+                topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
+                bottomDy = contentBottom - newBounds.y - verticalThreshold;
+                if (verticalThreshold > this._contentBoundsNoRotate.height) {
+                    newBounds.y += (topDy + bottomDy) / 2;
+                } else if (bottomDy < 0) {
+                    newBounds.y += bottomDy;
+                } else if (topDy > 0) {
+                    newBounds.y += topDy;
+                }
             }
-
-            topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
-            bottomDy = contentBottom - newBounds.y - verticalThreshold;
-            if (verticalThreshold > this._contentBoundsNoRotate.height) {
-                newBounds.y += (topDy + bottomDy) / 2;
-            } else if (bottomDy < 0) {
-                newBounds.y += bottomDy;
-            } else if (topDy > 0) {
-                newBounds.y += topDy;
-            }
-
         }
 
         return newBounds;
