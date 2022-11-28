@@ -351,6 +351,10 @@
   *     it is set to 0 allowing the browser to make the maximum number of
   *     image requests in parallel as allowed by the browsers policy.
   *
+  * @property {Number} [tileSourceLoaderLimit=0]
+  *     The maximum number of tile source requests to make concurrently. By default
+  *     it is set to 0 allowing an unlimited number of concurrent requests.
+  *
   * @property {Number} [clickTimeThreshold=300]
   *      The number of milliseconds within which a pointer down-up event combination
   *      will be treated as a click gesture.
@@ -943,7 +947,7 @@ function OpenSeadragon( options ){
         requestFuncs: [],
         numRequests: 0,
         numActiveRequests: 0,
-        maxConcurrency: 50,
+        maxConcurrency: 0,
     };
 
     /**
@@ -1527,6 +1531,7 @@ function OpenSeadragon( options ){
 
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,
+            tileSourceLoaderLimit:  0,
             maxImageCacheCount:     200,
             timeout:                30000,
             tileRetryMax:           0,
@@ -2445,6 +2450,10 @@ function OpenSeadragon( options ){
         },
 
         queueAjaxRequest: function (request, sendRequestFunc) {
+            if(!$.ajaxQueue.maxConcurrency) {
+                sendRequestFunc();
+            }
+
             var oldOnStateChange = request.onreadystatechange;
 
             var onCompleteRequest = function() {
