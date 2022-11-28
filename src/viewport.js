@@ -97,7 +97,8 @@ $.Viewport = function( options ) {
 
         //internal state properties
         zoomPoint:          null,
-        viewer:           null,
+        rotationPivot:      null,
+        viewer:             null,
 
         //configurable options
         springStiffness:            $.DEFAULT_SETTINGS.springStiffness,
@@ -164,8 +165,8 @@ $.Viewport.prototype = {
 
     // deprecated
     set degrees (degrees) {
-        $.console.warn('Setting [Viewport.degrees] is deprecated. Use viewport.setRotation instead.');
-        this.setRotation(degrees);
+        $.console.warn('Setting [Viewport.degrees] is deprecated. Use viewport.rotateTo, viewport.rotateBy, or viewport.setRotation instead.');
+        this.rotateTo(degrees);
     },
 
     /**
@@ -924,14 +925,42 @@ $.Viewport.prototype = {
     },
 
     /**
+     * Rotates this viewport to the angle specified. Alias for rotateTo.
+     * @function
+     * @param {Number} degrees The degrees to set the rotation to.
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * * @returns {OpenSeadragon.Viewport} Chainable.
+     */
+    setRotation: function(degrees, pivot, immediately) {
+        return this.rotateTo(degrees, pivot, immediately);
+    },
+
+    /**
+     * Gets the current rotation in degrees.
+     * @function
+     * @param {Boolean} [current=false] True for current rotation, false for target.
+     * @returns {Number} The current rotation in degrees.
+     */
+    getRotation: function(current) {
+        return current ?
+            this.degreesSpring.current.value :
+            this.degreesSpring.target.value;
+    },
+
+    /**
      * Rotates this viewport to the angle specified.
      * @function
      * @param {Number} degrees The degrees to set the rotation to.
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function(degrees, immediately) {
+    rotateTo: function(degrees, pivot, immediately){
         if (!this.viewer || !this.viewer.drawer.canRotate()) {
             return this;
         }
@@ -940,8 +969,22 @@ $.Viewport.prototype = {
             this.degreesSpring.isAtTargetValue()) {
             return this;
         }
+        this.rotationPivot = pivot instanceof $.Point &&
+            !isNaN(pivot.x) &&
+            !isNaN(pivot.y) ?
+            pivot :
+            null;
         if (immediately) {
-            this.degreesSpring.resetTo(degrees);
+            if(this.rotationPivot){
+                var changeInDegrees = degrees - this._oldDegrees;
+                if(!changeInDegrees){
+                    this.rotationPivot = null;
+                    return this;
+                }
+                this._rotateAboutPivot(degrees);
+            } else{
+                this.degreesSpring.resetTo(degrees);
+            }
         } else {
             var normalizedFrom = $.positiveModulo(this.degreesSpring.current.value, 360);
             var normalizedTo = $.positiveModulo(degrees, 360);
@@ -970,22 +1013,26 @@ $.Viewport.prototype = {
          * @type {object}
          * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
          * @property {Number} degrees - The number of degrees the rotation was set to.
+         * @property {Boolean} immediately - Whether the rotation happened immediately or was animated
+         * @property {OpenSeadragon.Point} pivot - The point in viewport coordinates around which the rotation (if any) happened
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.viewer.raiseEvent('rotate', {degrees: degrees});
+        this.viewer.raiseEvent('rotate', {degrees: degrees, immediately: !!immediately, pivot: this.rotationPivot || this.getCenter()});
         return this;
     },
 
     /**
-     * Gets the current rotation in degrees.
+     * Rotates this viewport by the angle specified.
      * @function
-     * @param {Boolean} [current=false] True for current rotation, false for target.
-     * @returns {Number} The current rotation in degrees.
+     * @param {Number} degrees The degrees by which to rotate the viewport.
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * @returns {OpenSeadragon.Viewport} Chainable.
      */
-    getRotation: function(current) {
-        return current ?
-            this.degreesSpring.current.value :
-            this.degreesSpring.target.value;
+    rotateBy: function(degrees, pivot, immediately){
+        return this.rotateTo(this.degreesSpring.target.value + degrees, pivot, immediately);
     },
 
     /**
@@ -1040,7 +1087,7 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Update the zoom and center (X and Y) springs.
+     * Update the zoom, degrees, and center (X and Y) springs.
      * @function
      * @returns {Boolean} True if any change has been made, false otherwise.
      */
@@ -1049,11 +1096,19 @@ $.Viewport.prototype = {
         this._adjustCenterSpringsForZoomPoint(function() {
             _this.zoomSpring.update();
         });
-
+        if(this.degreesSpring.isAtTargetValue()){
+            this.rotationPivot = null;
+        }
         this.centerSpringX.update();
         this.centerSpringY.update();
 
-        this.degreesSpring.update();
+        if(this.rotationPivot){
+            this._rotateAboutPivot(true);
+        }
+        else{
+            this.degreesSpring.update();
+        }
+
 
         var changed = this.centerSpringX.current.value !== this._oldCenterX ||
             this.centerSpringY.current.value !== this._oldCenterY ||
@@ -1069,6 +1124,27 @@ $.Viewport.prototype = {
         return changed;
     },
 
+    // private - pass true to use spring, or a number for degrees for immediate rotation
+    _rotateAboutPivot: function(degreesOrUseSpring){
+        var useSpring = degreesOrUseSpring === true;
+
+        var delta = this.rotationPivot.minus(this.getCenter());
+        this.centerSpringX.shiftBy(delta.x);
+        this.centerSpringY.shiftBy(delta.y);
+
+        if(useSpring){
+            this.degreesSpring.update();
+        } else {
+            this.degreesSpring.resetTo(degreesOrUseSpring);
+        }
+
+        var changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
+        var rdelta = delta.rotate(changeInDegrees * -1).times(-1);
+        this.centerSpringX.shiftBy(rdelta.x);
+        this.centerSpringY.shiftBy(rdelta.y);
+    },
+
+    // private
     _adjustCenterSpringsForZoomPoint: function(zoomSpringHandler) {
         if (this.zoomPoint) {
             var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
