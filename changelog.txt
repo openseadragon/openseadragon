@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass false for the new immediately parameter to disable) (#2136 @jonasengelmann)
 * DEPRECATION: Don't access the viewport's degrees property directly anymore; instead use setRotation and getRotation (#2136 @jonasengelmann)
 * New gesture: Double-click and drag to zoom (on by default for touch) (#2225 @HamzaTatheer)
+* You can now provide a pivot point when rotating the viewport (#2233 @ pearcetm)
 * Improved the constraints that keep the image in the viewer, specifically when zoomed out a lot (#2160 @joedf)
 * You can now provide an element for the navigator (as an alternative to an ID) (#1303 @cameronbaney, #2166 #2175 @joedf)
 * Now supporting IIIF "id" and "identifier" in addition to "@id" (#2173 @ahankinson)
