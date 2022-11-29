@@ -514,7 +514,7 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Rect} bounds
      * @returns {OpenSeadragon.Rect} constrained bounds.
      */
-    _applyBoundaryConstraints: function(bounds) {
+     _applyBoundaryConstraints: function(bounds) {
         var newBounds = new $.Rect(
                 bounds.x,
                 bounds.y,

@@ -756,12 +756,25 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * viewer = null; //important
      *
      * @function
+     * @fires OpenSeadragon.Viewer.event:before-destroy
+     * @fires OpenSeadragon.Viewer.event:destroy
      */
     destroy: function( ) {
         if ( !THIS[ this.hash ] ) {
             //this viewer has already been destroyed: returning immediately
             return;
         }
+
+        /**
+         * Raised when the viewer is about to be destroyed (see {@link OpenSeadragon.Viewer#before-destroy}).
+         *
+         * @event before-destroy
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'before-destroy' );
 
         this._removeUpdatePixelDensityRatioEvent();
 
@@ -795,7 +808,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator = null;
         }
 
-        this.removeAllHandlers();
 
         if (this.buttonGroup) {
             this.buttonGroup.destroy();
@@ -841,6 +853,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
+
+        /**
+         * Raised when the viewer is destroyed (see {@link OpenSeadragon.Viewer#destroy}).
+         *
+         * @event destroy
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'destroy' );
+
+        this.removeAllHandlers();
     },
 
     /**
