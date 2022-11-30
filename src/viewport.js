@@ -533,6 +533,7 @@ $.Viewport.prototype = {
             } else {
                 horizontalThreshold = this.visibilityRatio * newBounds.width;
             }
+
             leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
             rightDx = contentRight - newBounds.x - horizontalThreshold;
             if (horizontalThreshold > this._contentBoundsNoRotate.width) {
