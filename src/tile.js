@@ -44,7 +44,7 @@
  *      coordinates.
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
- * @param {String} url The URL of this tile's image.
+ * @param {String|() => String} url The URL of this tile's image or a function that returns a url.
  * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
  *      is provided directly by the tile source.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
@@ -95,11 +95,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this.exists  = exists;
     /**
-     * The URL of this tile's image.
-     * @member {String} url
+     * Private property to hold string url or url retriever function.
+     * Consumers should access via Tile.getUrl()
+     * @private
+     * @member {String|() => String} url
      * @memberof OpenSeadragon.Tile#
      */
-    this.url     = url;
+    this._url     = url;
     /**
      * Post parameters for this tile. For example, it can be an URL-encoded string
      * in k1=v1&k2=v2... format, or a JSON, or a FormData instance... or null if no POST request used
@@ -269,7 +271,7 @@ $.Tile.prototype = {
     _hasTransparencyChannel: function() {
         console.warn("Tile.prototype._hasTransparencyChannel() has been " +
             "deprecated and will be removed in the future. Use TileSource.prototype.hasTransparency() instead.");
-        return !!this.context2D || this.url.match('.png');
+        return !!this.context2D || this.getUrl().match('.png');
     },
 
     /**
@@ -343,11 +345,35 @@ $.Tile.prototype = {
     },
 
     /**
+     * The URL of this tile's image.
+     * @member {String} url
+     * @memberof OpenSeadragon.Tile#
+     * @deprecated
+     * @returns {String}
+     */
+    get url() {
+        $.console.error("[Tile.url] property has been deprecated. Use [Tile.prototype.getUrl] instead.");
+        return this.getUrl();
+    },
+
+    /**
      * Get the Image object for this tile.
      * @returns {Image}
      */
     getImage: function() {
         return this.cacheImageRecord.getImage();
+    },
+
+    /**
+     * Get the url string for this tile.
+     * @returns {String}
+     */
+    getUrl: function() {
+        if (typeof this._url === 'function') {
+            return this._url();
+        }
+
+        return this._url;
     },
 
     /**
