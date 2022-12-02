@@ -616,7 +616,7 @@ $.Viewport.prototype = {
      * @function
      * @param {Boolean} [immediately=false]
      * @returns {OpenSeadragon.Viewport} Chainable.
-     * @fires OpenSeadragon.Viewer.event:constrain if the
+     * @fires OpenSeadragon.Viewer.event:constrain if constraints were applied
      */
     applyConstraints: function(immediately) {
         var actualZoom = this.getZoom();
