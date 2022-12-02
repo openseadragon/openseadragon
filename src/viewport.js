@@ -514,34 +514,37 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Rect} bounds
      * @returns {OpenSeadragon.Rect} constrained bounds.
      */
-     _applyBoundaryConstraints: function(bounds) {
-        var newBounds = new $.Rect(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height);
+    _applyBoundaryConstraints: function(bounds) {
+        var newBounds = this.viewportToViewerElementRectangle(bounds).getBoundingBox();
+        var cb = this.viewportToViewerElementRectangle(this._contentBoundsNoRotate).getBoundingBox();
+
+        var xConstrained = false;
+        var yConstrained = false;
 
         if (this.wrapHorizontal) {
             //do nothing
         } else {
             var boundsRight = newBounds.x + newBounds.width;
-            var contentRight = this._contentBoundsNoRotate.x + this._contentBoundsNoRotate.width;
+            var contentRight = cb.x + cb.width;
 
             var horizontalThreshold, leftDx, rightDx;
-            if (newBounds.width > this._contentBoundsNoRotate.width) {
-                horizontalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.width;
+            if (newBounds.width > cb.width) {
+                horizontalThreshold = this.visibilityRatio * cb.width;
             } else {
                 horizontalThreshold = this.visibilityRatio * newBounds.width;
             }
 
-            leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
+            leftDx = cb.x - boundsRight + horizontalThreshold;
             rightDx = contentRight - newBounds.x - horizontalThreshold;
-            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+            if (horizontalThreshold > cb.width) {
                 newBounds.x += (leftDx + rightDx) / 2;
+                xConstrained = true;
             } else if (rightDx < 0) {
                 newBounds.x += rightDx;
+                xConstrained = true;
             } else if (leftDx > 0) {
                 newBounds.x += leftDx;
+                xConstrained = true;
             }
 
         }
@@ -550,28 +553,36 @@ $.Viewport.prototype = {
             //do nothing
         } else {
             var boundsBottom = newBounds.y + newBounds.height;
-            var contentBottom = this._contentBoundsNoRotate.y + this._contentBoundsNoRotate.height;
+            var contentBottom = cb.y + cb.height;
 
             var verticalThreshold, topDy, bottomDy;
-            if (newBounds.height > this._contentBoundsNoRotate.height) {
-                verticalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.height;
+            if (newBounds.height > cb.height) {
+                verticalThreshold = this.visibilityRatio * cb.height;
             } else{
                 verticalThreshold = this.visibilityRatio * newBounds.height;
             }
 
-            topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
+            topDy = cb.y - boundsBottom + verticalThreshold;
             bottomDy = contentBottom - newBounds.y - verticalThreshold;
-            if (verticalThreshold > this._contentBoundsNoRotate.height) {
+            if (verticalThreshold > cb.height) {
                 newBounds.y += (topDy + bottomDy) / 2;
+                yConstrained = true;
             } else if (bottomDy < 0) {
                 newBounds.y += bottomDy;
+                yConstrained = true;
             } else if (topDy > 0) {
                 newBounds.y += topDy;
+                yConstrained = true;
             }
 
         }
 
-        return newBounds;
+        var newViewportBounds = this.viewerElementToViewportRectangle(newBounds);
+        newViewportBounds.xConstrained = xConstrained;
+        newViewportBounds.yConstrained = yConstrained;
+        newViewportBounds.constraintApplied = xConstrained || yConstrained;
+
+        return newViewportBounds;
     },
 
     /**
@@ -615,17 +626,13 @@ $.Viewport.prototype = {
             this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
         }
 
-        var bounds = this.getBoundsNoRotate();
-        var constrainedBounds = this._applyBoundaryConstraints(bounds);
+        var constrainedBounds = this.getConstrainedBounds(false);
         this._raiseConstraintsEvent(immediately);
 
-        if (bounds.x !== constrainedBounds.x ||
-            bounds.y !== constrainedBounds.y ||
-            immediately) {
-            this.fitBounds(
-                constrainedBounds.rotate(-this.getRotation(true)),
-                immediately);
+        if(constrainedBounds.constraintApplied){
+            this.fitBounds(constrainedBounds, immediately);
         }
+
         return this;
     },
 

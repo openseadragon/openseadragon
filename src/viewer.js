@@ -3049,17 +3049,16 @@ function onCanvasDrag( event ) {
                 this.viewport.centerSpringX.target.value += delta.x;
                 this.viewport.centerSpringY.target.value += delta.y;
 
-                var bounds = this.viewport.getBounds();
                 var constrainedBounds = this.viewport.getConstrainedBounds();
 
                 this.viewport.centerSpringX.target.value -= delta.x;
                 this.viewport.centerSpringY.target.value -= delta.y;
 
-                if (bounds.x !== constrainedBounds.x) {
+                if (constrainedBounds.xConstrained) {
                     event.delta.x = 0;
                 }
 
-                if (bounds.y !== constrainedBounds.y) {
+                if (constrainedBounds.yConstrained) {
                     event.delta.y = 0;
                 }
             }
