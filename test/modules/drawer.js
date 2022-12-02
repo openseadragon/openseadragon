@@ -21,6 +21,7 @@
     // ----------
     var createViewer = function(options) {
         options = options || {};
+        // eslint-disable-next-line new-cap
         viewer = OpenSeadragon(OpenSeadragon.extend({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -45,7 +46,7 @@
         });
 
         viewer.addHandler('open', function handler(event) {
-            viewer.viewport.setRotation(30, true);
+            viewer.viewport.setRotation(30, null, true);
             Util.spyOnce(viewer.drawer.context, 'rotate', function() {
                 assert.ok(true, 'drawing with new rotation');
                 done();

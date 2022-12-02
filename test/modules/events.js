@@ -9,6 +9,7 @@
 
             testLog.reset();
 
+            // eslint-disable-next-line new-cap
             viewer = OpenSeadragon( {
                 id: 'eventsexample',
                 prefixUrl: '/build/openseadragon/images/',
@@ -194,13 +195,13 @@
 
         var simulateEnter = function (x, y) {
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mouseenter', simEvent );
         };
 
         var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             simEvent.relatedTarget = document.body;
             $canvas.simulate( 'mouseleave', simEvent );
         };
@@ -215,28 +216,28 @@
         var simulateDown = function (x, y) {
             simEvent.button = 0;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mousedown', simEvent );
         };
 
         var simulateUp = function (x, y) {
             simEvent.button = 0;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mouseup', simEvent );
         };
 
         var simulateNonPrimaryDown = function (x, y, button) {
             simEvent.button = button;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mousedown', simEvent );
         };
 
         var simulateNonPrimaryUp = function (x, y, button) {
             simEvent.button = button;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mouseup', simEvent );
         };
 
@@ -680,7 +681,7 @@
 
                 // start-end-end (multi-touch start event)
                 reset();
-                touches = TouchUtil.start( [0,0], [20,20] );
+                touches = TouchUtil.start( [0, 0], [20, 20] );
                 assessTouchExpectations({
                     description:        'start-end-end (multi-touch start event) [capture]:  ',
                     captureCount:       2,
@@ -790,7 +791,7 @@
                 "Zoom should not be prevented");
             Util.assertRectangleEquals(
                 assert,
-                new OpenSeadragon.Rect(-249.5, -0.25, 500, 0.5),
+                new OpenSeadragon.Rect(-384.5, -0.25, 500, 0.5),
                 bounds,
                 epsilon,
                 'Pan should not be prevented');
@@ -813,13 +814,13 @@
 
         var simulateEnter = function (x, y) {
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mouseenter', simEvent );
         };
 
         var simulateLeave = function (x, y) {
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             simEvent.relatedTarget = document.body;
             $canvas.simulate( 'mouseleave', simEvent );
         };
@@ -827,14 +828,14 @@
         var simulateDown = function (x, y) {
             simEvent.button = 0;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mousedown', simEvent );
         };
 
         var simulateUp = function (x, y) {
             simEvent.button = 0;
             simEvent.clientX = offset.left + x;
-            simEvent.clientY = offset.top  + y;
+            simEvent.clientY = offset.top + y;
             $canvas.simulate( 'mouseup', simEvent );
         };
 
@@ -911,50 +912,6 @@
             originalEventsPassedViewer = 0,
             dragEndsExpected = 1,
             releasesExpected = 1;
-
-        var onOpen = function ( ) {
-            viewer.removeHandler( 'open', onOpen );
-
-            viewer.addHandler( 'canvas-drag', onEventSourceDrag );
-            viewer.addHandler( 'canvas-drag-end', onEventSourceDragEnd );
-            viewer.addHandler( 'canvas-release', onEventSourceRelease );
-            viewer.addHandler( 'canvas-click', onEventSourceClick );
-
-            mouseTracker = new OpenSeadragon.MouseTracker( {
-                element: $canvas[0],
-                userData: userData,
-                clickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickTimeThreshold,
-                clickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickDistThreshold,
-                dblClickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickTimeThreshold,
-                dblClickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickDistThreshold,
-                focusHandler: onMouseTrackerFocus,
-                blurHandler: onMouseTrackerBlur,
-                enterHandler: onMouseTrackerEnter,
-                pressHandler: onMouseTrackerPress,
-                moveHandler: onMouseTrackerMove,
-                dragHandler: onMouseTrackerDrag,
-                dragEndHandler: onMouseTrackerDragEnd,
-                releaseHandler: onMouseTrackerRelease,
-                clickHandler: onMouseTrackerClick,
-                leaveHandler: onMouseTrackerLeave
-            } );
-
-            var event = {
-                clientX:1,
-                clientY:1
-            };
-
-            $canvas.simulate( 'focus', event );
-            Util.simulateViewerClickWithDrag( {
-                viewer: viewer,
-                widthFactor: 0.25,
-                heightFactor: 0.25,
-                dragCount: dragCount,
-                dragDx: 1,
-                dragDy: 1
-            } );
-            $canvas.simulate( 'blur', event );
-        };
 
         var checkOriginalEventReceivedViewer = function ( event ) {
             eventsHandledViewer++;
@@ -1053,6 +1010,50 @@
 
             viewer.close();
             done();
+        };
+
+        var onOpen = function ( ) {
+            viewer.removeHandler( 'open', onOpen );
+
+            viewer.addHandler( 'canvas-drag', onEventSourceDrag );
+            viewer.addHandler( 'canvas-drag-end', onEventSourceDragEnd );
+            viewer.addHandler( 'canvas-release', onEventSourceRelease );
+            viewer.addHandler( 'canvas-click', onEventSourceClick );
+
+            mouseTracker = new OpenSeadragon.MouseTracker( {
+                element: $canvas[0],
+                userData: userData,
+                clickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickTimeThreshold,
+                clickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickDistThreshold,
+                dblClickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickTimeThreshold,
+                dblClickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickDistThreshold,
+                focusHandler: onMouseTrackerFocus,
+                blurHandler: onMouseTrackerBlur,
+                enterHandler: onMouseTrackerEnter,
+                pressHandler: onMouseTrackerPress,
+                moveHandler: onMouseTrackerMove,
+                dragHandler: onMouseTrackerDrag,
+                dragEndHandler: onMouseTrackerDragEnd,
+                releaseHandler: onMouseTrackerRelease,
+                clickHandler: onMouseTrackerClick,
+                leaveHandler: onMouseTrackerLeave
+            } );
+
+            var event = {
+                clientX: 1,
+                clientY: 1
+            };
+
+            $canvas.simulate( 'focus', event );
+            Util.simulateViewerClickWithDrag( {
+                viewer: viewer,
+                widthFactor: 0.25,
+                heightFactor: 0.25,
+                dragCount: dragCount,
+                dragDx: 1,
+                dragDy: 1
+            } );
+            $canvas.simulate( 'blur', event );
         };
 
         viewer.addHandler( 'open', onOpen );
