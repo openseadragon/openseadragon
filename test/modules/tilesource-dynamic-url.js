@@ -8,6 +8,10 @@
     var viewer = null;
     var OriginalAjax = OpenSeadragon.makeAjaxRequest;
     var OriginalTile = OpenSeadragon.Tile;
+    // These variables allow tracking when the first request for data has finished
+    var firstUrlPromise = null;
+    var isFirstUrlPromiseResolved = false;
+    var firstUrlPromiseResolver = null;
 
     /**
      * Set up shared variables for test
@@ -15,6 +19,12 @@
     var configure = function(assert, url) {
         ASSERT = assert;
         DYNAMIC_URL = url;
+        firstUrlPromise = new Promise(resolve => {
+            firstUrlPromiseResolver = () => {
+                isFirstUrlPromiseResolved = true;
+                resolve();
+            };
+        });
     };
 
     QUnit.module('TileSourceDynamicUrl', {
@@ -23,16 +33,16 @@
             $("#qunit-fixture").html("<div id='example'></div>");
 
             // Add test tile source to OSD
-            OpenSeadragon.DynamicUrlTestTileSource = function( options ) {
-                OpenSeadragon.TileSource.apply( this, [ options ] );
+            OpenSeadragon.DynamicUrlTestTileSource = function(options) {
+                OpenSeadragon.TileSource.apply(this, [options]);
             };
 
             OpenSeadragon.extend( OpenSeadragon.DynamicUrlTestTileSource.prototype, OpenSeadragon.TileSource.prototype, {
-                supports: function( data, url ){
+                supports: function(_data, url){
                     return url.indexOf('dynamic') !== -1;
                 },
 
-                configure: function( _data, url, postData ){
+                configure: function(_data, url, postData){
                     //some default data to trigger painting
                     return {
                         postData: postData,
@@ -50,22 +60,22 @@
                 },
 
                 // getTileUrl return a function that must be called by Tile.getUrl
-                getTileUrl: function( _level, _x, _y ) {
+                getTileUrl: function(_level, _x, _y) {
                     // Assert that custom tile source is called correctly
                     ASSERT.ok(true, 'DynamicUrlTileSource.getTileUrl called');
                     return () => DYNAMIC_URL;
                 },
 
-                tileExists: function ( _level, _x, _y ) {
+                tileExists: function (_level, _x, _y) {
                     return true;
                 }
             });
 
             var hasCompletedImageInfoRequest = false;
-            OpenSeadragon.makeAjaxRequest = function( url, onSuccess, onError ) {
+            OpenSeadragon.makeAjaxRequest = function(url, onSuccess, onError) {
                 // Note that our preferred API is that you pass in a single object; the named
                 // arguments are for legacy support.
-                if( $.isPlainObject( url ) ){
+                if( $.isPlainObject(url)){
                     onSuccess = url.success;
                     onError = url.error;
                     withCredentials = url.withCredentials;
@@ -79,8 +89,15 @@
                 //first AJAX firing is the image info getter, second is the first tile request: can exit
                 if (hasCompletedImageInfoRequest) {
                     // Assert dynamic url from tileSource is called
-                    ASSERT.equal(url, DYNAMIC_URL, 'Called dynamic url correctly');
-                    viewer.close();
+                    ASSERT.equal(url, DYNAMIC_URL, 'Called dynamic url correctly: ' + DYNAMIC_URL);
+                    // If we've only queried for one url, resolve that promise to set up second query
+                    // Otherwise close viewer
+                    if (isFirstUrlPromiseResolved) {
+                        viewer.close();
+                    } else {
+                        firstUrlPromiseResolver();
+                    }
+
                     return null;
                 }
 
@@ -130,9 +147,9 @@
         var timeWatcher = Util.timeWatcher(ASSERT, 7000);
 
         viewer = OpenSeadragon({
-            id:            'example',
-            prefixUrl:     '/build/openseadragon/images/',
-            tileSources:   tileSourceUrl,
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: tileSourceUrl,
             loadTilesWithAjax: true,
         });
 
@@ -151,34 +168,32 @@
         viewer.addHandler('ready', readyHandler);
 
 
-        var openHandler = function(event) {
+        var openHandler = function(_event) {
             viewer.removeHandler('open', openHandler);
             ASSERT.ok(true, 'Open event was sent');
             viewer.addHandler('close', closeHandler);
             viewer.world.draw();
         };
 
-        var closeHandler = function(event) {
+        var closeHandler = function(_event) {
             viewer.removeHandler('close', closeHandler);
             $('#example').empty();
             ASSERT.ok(true, 'Close event was sent');
             timeWatcher.done();
         };
         viewer.addHandler('open', openHandler);
+
+        return viewer;
     };
 
     // ----------
     QUnit.test('TileSource.getTileUrl supports returning a function', function(assert) {
-        /**
-         * Expect 5 assertions to be called:
-         * 1. Open event was sent
-         * 2. DynamicUrlTileSource.getTileUrl called
-         * 3. Tile.getUrl called
-         * 4. Called dynamic url correctly
-         * 5. Close event was sent
-         */
-        assert.expect(5);
         configure(assert, 'dynamicUrl');
-        testUrlCall('dynamicUrl');
+        const viewer = testUrlCall('dynamicUrl');
+        firstUrlPromise.then(() => {
+            // after querying with first dynamic url, update the url and trigger new request
+            DYNAMIC_URL = 'dyanmicUrl2';
+            delete viewer.world.getItemAt(0).tilesMatrix[1][0][0];
+        })
     });
 })();
