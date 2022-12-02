@@ -616,7 +616,7 @@ $.Viewport.prototype = {
      * @function
      * @param {Boolean} [immediately=false]
      * @returns {OpenSeadragon.Viewport} Chainable.
-     * @fires OpenSeadragon.Viewer.event:constrain
+     * @fires OpenSeadragon.Viewer.event:constrain if the
      */
     applyConstraints: function(immediately) {
         var actualZoom = this.getZoom();
@@ -627,10 +627,10 @@ $.Viewport.prototype = {
         }
 
         var constrainedBounds = this.getConstrainedBounds(false);
-        this._raiseConstraintsEvent(immediately);
 
         if(constrainedBounds.constraintApplied){
             this.fitBounds(constrainedBounds, immediately);
+            this._raiseConstraintsEvent(immediately);
         }
 
         return this;
@@ -794,7 +794,9 @@ $.Viewport.prototype = {
      * Returns bounds taking constraints into account
      * Added to improve constrained panning
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     * @returns {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Rect} The bounds after applying constraints. The returned $.Rect contains additonal
+     *                               properties xConstrained, yConstrained, constraintsApplied indicating the status
+     *                               of the constraining operation; x and y are in the viewer element coordinate system.
      */
     getConstrainedBounds: function(current) {
         var bounds,
