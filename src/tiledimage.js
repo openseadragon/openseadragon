@@ -1480,7 +1480,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             bounds,
             sourceBounds,
             exists,
-            url,
+            urlOrGetter,
             post,
             ajaxHeaders,
             context2D,
@@ -1501,7 +1501,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             bounds  = this.getTileBounds( level, x, y );
             sourceBounds = tileSource.getTileBounds( level, xMod, yMod, true );
             exists  = tileSource.tileExists( level, xMod, yMod );
-            url     = tileSource.getTileUrl( level, xMod, yMod );
+            urlOrGetter     = tileSource.getTileUrl( level, xMod, yMod );
             post    = tileSource.getTilePostData( level, xMod, yMod );
 
             // Headers are only applicable if loadTilesWithAjax is set
@@ -1524,13 +1524,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 y,
                 bounds,
                 exists,
-                url,
+                urlOrGetter,
                 context2D,
                 this.loadTilesWithAjax,
                 ajaxHeaders,
                 sourceBounds,
                 post,
-                tileSource.getTileHashKey(level, xMod, yMod, url, ajaxHeaders, post)
+                tileSource.getTileHashKey(level, xMod, yMod, urlOrGetter, ajaxHeaders, post)
             );
 
             if (this.getFlip()) {
@@ -1569,7 +1569,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var _this = this;
         tile.loading = true;
         this._imageLoader.addJob({
-            src: tile.url,
+            src: tile.getUrl(),
             tile: tile,
             source: this.source,
             postData: tile.postData,
@@ -1598,7 +1598,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _onTileLoad: function( tile, time, data, errorMsg, tileRequest ) {
         if ( !data ) {
-            $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
+            $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
             /**
              * Triggered when a tile fails to load.
              *
@@ -1624,7 +1624,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         if ( time < this.lastResetTime ) {
-            $.console.warn( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
+            $.console.warn( "Ignoring tile %s loaded before reset: %s", tile, tile.getUrl() );
             tile.loading = false;
             return;
         }
@@ -1669,7 +1669,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 tile.loading = false;
                 tile.loaded = true;
                 tile.hasTransparency = _this.source.hasTransparency(
-                    tile.context2D, tile.url, tile.ajaxHeaders, tile.postData
+                    tile.context2D, tile.getUrl(), tile.ajaxHeaders, tile.postData
                 );
                 if (!tile.context2D) {
                     _this._tileCache.cacheTile({
@@ -1852,7 +1852,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             useSketch = this.opacity < 1 ||
                 (this.compositeOperation && this.compositeOperation !== 'source-over') ||
                 (!this._isBottomItem() &&
-                    this.source.hasTransparency(tile.context2D, tile.url, tile.ajaxHeaders, tile.postData));
+                    this.source.hasTransparency(tile.context2D, tile.getUrl(), tile.ajaxHeaders, tile.postData));
         }
 
         var sketchScale;
