@@ -539,7 +539,7 @@
             var bounds = viewport.getBounds();
             Util.assertRectangleEquals(
                 assert,
-                new OpenSeadragon.Rect(1.2071067811865466, 0.20710678118654746, Math.sqrt(2), Math.sqrt(2), 45),
+                new OpenSeadragon.Rect(1.0, 0.0, Math.sqrt(2), Math.sqrt(2), 45),
                 bounds,
                 EPSILON,
                 "Viewport.applyConstraints with rotation should move viewport.");
@@ -564,7 +564,7 @@
             var bounds = viewport.getBounds();
             Util.assertRectangleEquals(
                 assert,
-                new OpenSeadragon.Rect(1.2071067811865466, 0.20710678118654746, Math.sqrt(2), Math.sqrt(2), 45),
+                new OpenSeadragon.Rect(1.0, 0.0, Math.sqrt(2), Math.sqrt(2), 45),
                 bounds,
                 EPSILON,
                 "Viewport.applyConstraints flipped and with rotation should move viewport.");

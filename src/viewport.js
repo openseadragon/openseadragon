@@ -577,10 +577,11 @@ $.Viewport.prototype = {
 
         }
 
-        var newViewportBounds = this.viewerElementToViewportRectangle(newBounds);
+        var constraintApplied = xConstrained || yConstrained;
+        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
         newViewportBounds.xConstrained = xConstrained;
         newViewportBounds.yConstrained = yConstrained;
-        newViewportBounds.constraintApplied = xConstrained || yConstrained;
+        newViewportBounds.constraintApplied = constraintApplied;
 
         return newViewportBounds;
     },
