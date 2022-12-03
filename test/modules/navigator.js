@@ -1,4 +1,5 @@
-/* global QUnit, module, Util, $, console */
+/* eslint-disable new-cap */
+/* global QUnit, Util, $ */
 
 (function () {
     var debug = false,
@@ -463,7 +464,7 @@
                 }
                 else {
                     // Navigator hosted in viewer
-                    if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition == 'ABSOLUTE') {
+                    if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition === 'ABSOLUTE') {
                         // Navigator positioned 'ABSOLUTE'...size shouldn't change
 
                         assessNavigatorSize(
