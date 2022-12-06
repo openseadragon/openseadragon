@@ -683,45 +683,55 @@ $.Viewport.prototype = {
         newBounds.y = center.y - newBounds.height / 2;
         var newZoom = 1.0 / newBounds.width;
 
-        if (constraints) {
-            var newBoundsAspectRatio = newBounds.getAspectRatio();
-            var newConstrainedZoom = this._applyZoomConstraints(newZoom);
-
-            if (newZoom !== newConstrainedZoom) {
-                newZoom = newConstrainedZoom;
-                newBounds.width = 1.0 / newZoom;
-                newBounds.x = center.x - newBounds.width / 2;
-                newBounds.height = newBounds.width / newBoundsAspectRatio;
-                newBounds.y = center.y - newBounds.height / 2;
-            }
-
-            newBounds = this._applyBoundaryConstraints(newBounds);
-            center = newBounds.getCenter();
-            this._raiseConstraintsEvent(immediately);
-        }
-
         if (immediately) {
             this.panTo(center, true);
-            return this.zoomTo(newZoom, null, true);
+            this.zoomTo(newZoom, null, true);
+            if(constraints){
+                this.applyConstraints(true);
+            }
+            return this;
         }
 
-        this.panTo(this.getCenter(true), true);
-        this.zoomTo(this.getZoom(true), null, true);
+        var currentCenter = this.getCenter(true);
+        var currentZoom = this.getZoom(true);
+        this.panTo(currentCenter, true);
+        this.zoomTo(currentZoom, null, true);
 
         var oldBounds = this.getBounds();
         var oldZoom   = this.getZoom();
 
         if (oldZoom === 0 || Math.abs(newZoom / oldZoom - 1) < 0.00000001) {
-            this.zoomTo(newZoom, true);
-            return this.panTo(center, immediately);
+            this.zoomTo(newZoom, null, true);
+            this.panTo(center, immediately);
+            if(constraints){
+                this.applyConstraints(false);
+            }
+            return this;
         }
 
-        newBounds = newBounds.rotate(-this.getRotation());
-        var referencePoint = newBounds.getTopLeft().times(newZoom)
-            .minus(oldBounds.getTopLeft().times(oldZoom))
-            .divide(newZoom - oldZoom);
+        var referencePoint;
 
-        return this.zoomTo(newZoom, referencePoint, immediately);
+        if(constraints){
+            this.panTo(center, false);
+            this.zoomTo(newZoom, null, false);
+
+            var constrainedBounds = this.getConstrainedBounds();
+
+            this.panTo(currentCenter, true);
+            this.zoomTo(currentZoom, null, true);
+
+            this.fitBounds(constrainedBounds);
+
+            // this.zoomTo(newZoom, referencePoint, immediately);
+        } else {
+            var rotatedNewBounds = newBounds.rotate(-this.getRotation());
+            referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
+                .minus(oldBounds.getTopLeft().times(oldZoom))
+                .divide(newZoom - oldZoom);
+
+            this.zoomTo(newZoom, referencePoint, immediately);
+        }
+        return this;
     },
 
     /**
@@ -796,8 +806,9 @@ $.Viewport.prototype = {
      * Added to improve constrained panning
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      * @returns {OpenSeadragon.Rect} The bounds after applying constraints. The returned $.Rect contains additonal
-     *                               properties xConstrained, yConstrained, constraintsApplied indicating the status
-     *                               of the constraining operation; x and y are in the viewer element coordinate system.
+     *                               properties constraintsApplied, xConstrained and yConstrained. These flags indicate
+     *                               whether the viewport bounds were modified by the constraints of the viewer rectangle,
+     *                               and in which dimension(s).
      */
     getConstrainedBounds: function(current) {
         var bounds,
