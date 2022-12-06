@@ -617,6 +617,7 @@ $.Viewport.prototype = {
 
         var bounds = this.getBoundsNoRotate();
         var constrainedBounds = this._applyBoundaryConstraints(bounds);
+        this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
