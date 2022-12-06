@@ -212,13 +212,13 @@
                 checkPoint(assert, ' after zoom and pan');
 
                 //Restore rotation
-                viewer.viewport.setRotation(0, null, true);
+                viewer.viewport.setRotation(0, true);
                 done();
             });
             viewer.viewport.zoomTo(0.8).panTo(new OpenSeadragon.Point(0.1, 0.2));
         });
 
-        viewer.viewport.setRotation(45, null, true);
+        viewer.viewport.setRotation(45, true);
         viewer.open([{
                 tileSource: "/test/data/testpattern.dzi"
             }, {

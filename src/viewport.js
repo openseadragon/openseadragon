@@ -617,7 +617,6 @@ $.Viewport.prototype = {
 
         var bounds = this.getBoundsNoRotate();
         var constrainedBounds = this._applyBoundaryConstraints(bounds);
-        this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
@@ -913,17 +912,15 @@ $.Viewport.prototype = {
     },
 
     /**
-     * Rotates this viewport to the angle specified. Alias for rotateTo.
+     * Rotates this viewport to the angle specified.
      * @function
      * @param {Number} degrees The degrees to set the rotation to.
-     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
-     * around which the rotation should be performed. Defaults to the center of the viewport.
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
      * * @returns {OpenSeadragon.Viewport} Chainable.
      */
-    setRotation: function(degrees, pivot, immediately) {
-        return this.rotateTo(degrees, pivot, immediately);
+    setRotation: function(degrees, immediately) {
+        return this.rotateTo(degrees, null, immediately);
     },
 
     /**
@@ -936,6 +933,20 @@ $.Viewport.prototype = {
         return current ?
             this.degreesSpring.current.value :
             this.degreesSpring.target.value;
+    },
+
+    /**
+     * Rotates this viewport to the angle specified around a pivot point. Alias for rotateTo.
+     * @function
+     * @param {Number} degrees The degrees to set the rotation to.
+     * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * around which the rotation should be performed. Defaults to the center of the viewport.
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
+     * or rotate immediately.
+     * * @returns {OpenSeadragon.Viewport} Chainable.
+     */
+    setRotationWithPivot: function(degrees, pivot, immediately) {
+        return this.rotateTo(degrees, pivot, immediately);
     },
 
     /**
