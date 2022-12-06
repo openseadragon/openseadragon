@@ -12,9 +12,10 @@
           border:thin black solid;
           margin-right:20px;
       }
-
-      #controls li {
-        cursor: pointer;
+      #buttons button{
+        width:10em;
+        text-align:center;
+        margin:5px;
       }
       .layout{
         display:grid;
@@ -63,7 +64,7 @@ setTimeout(() => viewport.applyConstraints(), 1000);</pre>
             </div>
             <button id="rotate">Rotate the viewer</button>
             <h3>Click to fit overlay bounds:</h3>
-            <ul></ul>
+            <div id="buttons"></div>
             <h4>overlay.getBounds(viewer.viewport):</h4>
             <pre class="bounds">Pick an overlay above to show the bounds</pre>
         </div>
@@ -122,7 +123,8 @@ setTimeout(() => viewport.applyConstraints(), 1000);</pre>
 
             viewer.currentOverlays.forEach(overlay=>{
                 var text = $(overlay.element).text();
-                $('<li>').text(text).appendTo('#controls ul').on('click',()=>{
+                var div=$('<div>').appendTo('#buttons');
+                var buttons=$('<button>').text(text).appendTo(div).on('click',()=>{
 
                     var bounds = overlay.getBounds(viewer.viewport);
                     $('.bounds').text(JSON.stringify(bounds,null,2));
