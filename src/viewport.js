@@ -719,8 +719,6 @@ $.Viewport.prototype = {
             this.zoomTo(currentZoom, null, true);
 
             this.fitBounds(constrainedBounds);
-
-            // this.zoomTo(newZoom, referencePoint, immediately);
         } else {
             var rotatedNewBounds = newBounds.rotate(-this.getRotation());
             var referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
