@@ -709,8 +709,6 @@ $.Viewport.prototype = {
             return this;
         }
 
-        var referencePoint;
-
         if(constraints){
             this.panTo(center, false);
             this.zoomTo(newZoom, null, false);
@@ -725,7 +723,7 @@ $.Viewport.prototype = {
             // this.zoomTo(newZoom, referencePoint, immediately);
         } else {
             var rotatedNewBounds = newBounds.rotate(-this.getRotation());
-            referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
+            var referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
                 .minus(oldBounds.getTopLeft().times(oldZoom))
                 .divide(newZoom - oldZoom);
 
