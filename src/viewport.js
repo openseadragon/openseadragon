@@ -802,7 +802,7 @@ $.Viewport.prototype = {
      * Added to improve constrained panning
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      * @returns {OpenSeadragon.Rect} The bounds in viewport coordinates after applying constraints. The returned $.Rect
-     *                               contains additonal properties constraintsApplied, xConstrained and yConstrained.
+     *                               contains additional properties constraintsApplied, xConstrained and yConstrained.
      *                               These flags indicate whether the viewport bounds were modified by the constraints
      *                               of the viewer rectangle, and in which dimension(s).
      */
