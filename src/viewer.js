@@ -328,6 +328,22 @@ $.Viewer = function( options ) {
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
+    this._onViewerResize = onViewerResize;
+    this._origViewerResize = origViewerResize; //for testing logic changes
+    if(ResizeObserver){
+        this._autoResizePolling = false;
+
+        this._resizeObserver = new ResizeObserver(function(){
+            if(_this.autoResize){
+                _this._onViewerResize(_this, _getSafeElemSize(_this.container));
+            }
+        });
+
+        this._resizeObserver.observe(this.container, {});
+    } else {
+        this._autoResizePolling = true;
+    }
+
     // Create the world
     this.world = new $.World({
         viewer: this
@@ -786,6 +802,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+        if (this._resizeObserver){
+            this._resizeObserver.disconnect();
+        }
 
         if (this.referenceStrip) {
             this.referenceStrip.destroy();
@@ -1677,6 +1696,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     forceRedraw: function() {
         THIS[ this.hash ].forceRedraw = true;
+        return this;
+    },
+
+    /**
+     * Force the viewer to reset it's size to it's container.
+     * @param Boolean ignoreAutorResizeSetting (default: false) If true, forces the resize even if Viewer.autoResize==false
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     */
+     forceResize: function(ignoreAutoResizeSetting) {
+        if(ignoreAutoResizeSetting || this.autoResize){
+            this._onViewerResize(this, _getSafeElemSize(this.container));
+        }
         return this;
     },
 
@@ -3547,7 +3578,40 @@ function updateMulti( viewer ) {
         viewer._updateRequestId = false;
     }
 }
+function origViewerResize(viewer, containerSize){
+    var viewport = viewer.viewport;
+    if (viewer.preserveImageSizeOnResize) {
+        var resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+        var zoom = viewport.getZoom() * resizeRatio;
+        var center = viewport.getCenter();
+        viewport.resize(containerSize, false);
+        viewport.zoomTo(zoom, null, true);
+        viewport.panTo(center, true);
+    } else {
+        // maintain image position
+        var oldBounds = viewport.getBounds();
+        viewport.resize(containerSize, true);
+        viewport.fitBoundsWithConstraints(oldBounds, true);
+    }
 
+    THIS[viewer.hash].prevContainerSize = containerSize;
+    THIS[viewer.hash].forceRedraw = true;
+}
+function onViewerResize(viewer, containerSize){
+    var viewport = viewer.viewport;
+    var resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+    var zoom = viewport.getZoom();
+    var center = viewport.getCenter();
+    viewport.resize(containerSize, viewer.preserveImageSizeOnResize);
+    viewport.panTo(center, true);
+    if (viewer.preserveImageSizeOnResize) {
+        viewport.zoomTo(zoom * resizeRatio, null, true);
+    } else {
+        viewport.zoomTo(zoom, null, true);
+    }
+    THIS[viewer.hash].prevContainerSize = containerSize;
+    THIS[viewer.hash].forceRedraw = true;
+}
 function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
@@ -3555,27 +3619,11 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
-
-    if (viewer.autoResize) {
+    if (viewer.autoResize && viewer._autoResizePolling){
         var containerSize = _getSafeElemSize(viewer.container);
         var prevContainerSize = THIS[viewer.hash].prevContainerSize;
         if (!containerSize.equals(prevContainerSize)) {
-            var viewport = viewer.viewport;
-            if (viewer.preserveImageSizeOnResize) {
-                var resizeRatio = prevContainerSize.x / containerSize.x;
-                var zoom = viewport.getZoom() * resizeRatio;
-                var center = viewport.getCenter();
-                viewport.resize(containerSize, false);
-                viewport.zoomTo(zoom, null, true);
-                viewport.panTo(center, true);
-            } else {
-                // maintain image position
-                var oldBounds = viewport.getBounds();
-                viewport.resize(containerSize, true);
-                viewport.fitBoundsWithConstraints(oldBounds, true);
-            }
-            THIS[viewer.hash].prevContainerSize = containerSize;
-            THIS[viewer.hash].forceRedraw = true;
+            viewer._onViewerResize(viewer, containerSize);
         }
     }
 

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Viewer Resizing Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+      .outer-container{
+        width:800px;
+        height:600px;
+        margin-right:20px;
+        border: medium gray dashed;
+        background-color:beige;
+        position:relative;
+        display:flex;
+        flex-direction:row;
+      }
+      .inner-container{
+        width:800px;
+        height:600px;
+        border: thin black solid;
+        background-color:paleturquoise;
+        position:absolute;
+        left:50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .v2-container{
+        display:flex;
+        flex-direction:row;
+        height:400px;
+      }
+      .narrow{
+        width:50px;
+        background-color:pink;
+        height:100%;
+      }
+      .wide{
+        width:150px;
+        background-color:burlywood;
+        height:100%;
+      }
+      .v2-container:not([data-index="1"]) .narrow{
+        display:none;
+      }
+      .v2-container:not([data-index="2"]) .wide{
+        display:none;
+      }
+      #viewer, #viewer2 {
+          width: 100%;
+          height: 100%;
+      }
+      #buttons button{
+        width:18em;
+        text-align:center;
+        margin:5px;
+      }
+      .layout{
+        display:grid;
+        grid-template-columns:auto 1fr;
+        row-gap:10px;
+        padding:10px;
+      }
+      .method{
+        border:medium gray solid;
+        margin:2px;
+        background-color:rgb(240, 240, 240)
+      }
+      .method.selected{
+        border:medium red solid;
+        background-color: lightgoldenrodyellow;
+      }
+      .options{
+        display:grid;
+        grid-template-columns: 50% 50%;
+        row-gap:10px;
+      }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="outer-container">
+            <div class="inner-container">
+                <div id="viewer"></div>
+            </div>
+        </div>
+        <div id="controls">
+            <div>
+                Simple demo page to show viewer behavior during resizing of the container.
+                The viewers' container elements are styled with width and height of 100%,
+                with dimensions set by CSS properties on a parent element.
+            </div>
+
+            <h3>Pick options to test:</h3>
+            <p>These options apply to both of the demo viewers on the left (top and bottom).</p>
+            <div class="options">
+                <div class="method logic-method selected" data-value="0">
+                    <pre>Use v3.1 resize logic</pre>
+                </div>
+                <div class="method logic-method" data-value="1">
+                    <pre>Use new resize logic</pre>
+                </div>
+
+                <div class="method listener-method selected" data-value="0">
+                    <pre>Use polling</pre>
+                </div>
+                <div class="method listener-method" data-value="1">
+                    <pre>Use ResizeObserver</pre>
+                </div>
+
+                <div class="method preserve-method selected" data-value="0">
+                    <pre>preserveImageSizeOnResize: false</pre>
+                </div>
+                <div class="method preserve-method" data-value="1">
+                    <pre>preserveImageSizeOnResize: true</pre>
+                </div>
+
+                <div class="method auto-method selected" data-value="1">
+                    <pre>autoResize: true</pre>
+                </div>
+                <div class="method auto-method" data-value="0">
+                    <pre>autoResize: false</pre>
+                </div>
+
+            </div>
+            <h3>Click to resize the viewer:</h3>
+            <div id="buttons">
+                <div>
+                    <button>Resize width only</button>
+                </div>
+                <div>
+                    <button>Resize height only</button>
+                </div>
+                <div>
+                    <button>Resize with constant aspect ratio</button>
+                </div>
+            </div>
+
+        </div>
+        <div>
+            <div class="outer-container v2-container">
+                <div id="viewer2"></div>
+                <div class="sidebar">
+                    <div class="wide">Wide sidebar</div>
+                    <div class="narrow">Narrow sidebar</div>
+                </div>
+
+            </div>
+
+        </div>
+        <div>
+            <h3>Demo: Issues with styling the viewer element when an image is opened</h3>
+            <p>If a DOM/CSS operation is triggered by a viewer event (e.g. the 'page') event
+                for multi-page images, the timing of the viewer resizing itself (if autoResize=true)
+                can be inconsistent - sometimes before, sometimes after the image has finished loading
+                and the Viewport.goHome() call is generated. To ensure consistency, call viewer.forceResize()
+                after altering the page layout.
+            </p>
+            <p>Note: to see this in action most clearly, select the options for "preserveImageSizeOnResize: false"
+                and "Use polling" above.
+            </p>
+            <div class="options">
+                <div class="method force-resize-method selected" data-value="0">
+                    <pre>//pseudocode
+//container will change size
+setSidebarForImage();
+
+// image might not "open" at home
+// viewer.forceResize();
+                    </pre>
+                </div>
+                <div class="method force-resize-method" data-value="1">
+                    <pre>//pseudocode
+//container will change size
+setSidebarForImage();
+
+//image should always "open" at home
+viewer.forceResize();
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var viewer = window.v1 = OpenSeadragon({
+            id: "viewer",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/iiif_2_0_sizes/info.json",
+            minZoomImageRatio: 0,
+            maxZoomPixelRatio: 10,
+            visibilityRatio:1.0,
+            constrainDuringPan:true,
+        });
+
+
+        var viewer2 = window.v2 = OpenSeadragon({
+            id: "viewer2",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: ["../data/testpattern.dzi", "../data/iiif_2_0_sizes/info.json", "../data/iiif_3_0_tiled/info.json"],
+            sequenceMode:true,
+            minZoomImageRatio: 0,
+            maxZoomPixelRatio: 10,
+            visibilityRatio:1.0,
+            constrainDuringPan:true,
+        });
+        viewer2._tilesource = "../data/iiif_2_0_sizes/info.json";
+
+
+        var _onViewerResize = viewer._onViewerResize;
+        var _origViewerResize = viewer._origViewerResize;
+
+        updateViewers();
+
+
+
+
+
+
+        var actions = ['Resize width only', 'Resize height only', 'Resize with constant aspect ratio']
+
+
+        var buttons=$('#buttons button').on('click',function(){
+            switch($(this).text()){
+                case 'Resize width only': resizeWidth(this); break;
+                case 'Resize height only': resizeHeight(this); break;
+                case 'Resize with constant aspect ratio': resizeBoth(this); break;
+            }
+        });
+
+
+        // $('#update-viewer2').on('click',function(){
+        //     // updateViewer2();
+        // })
+        function updateViewers(){
+            viewer2._onViewerResize = viewer._onViewerResize = !!parseInt($('.logic-method.selected').data('value')) ? _onViewerResize : _origViewerResize;
+
+            viewer2.preserveImageSizeOnResize = viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
+
+            viewer2.autoResize = viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
+
+            var useResizeObserver=!!parseInt($('.listener-method.selected').data('value'));
+            if(useResizeObserver){
+                if(viewer._resizeObserver && viewer._autoResizePolling){
+                    viewer._resizeObserver.observe(viewer.container);
+                    viewer2._resizeObserver.observe(viewer2.container);
+                    viewer2._autoResizePolling = viewer._autoResizePolling = false;
+                }
+            } else {
+                if(viewer._resizeObserver && !viewer._autoResizePolling){
+                    viewer._resizeObserver.observe(viewer.container);
+                    viewer2._resizeObserver.unobserve(viewer2.container);
+                    viewer2._autoResizePolling = viewer._autoResizePolling = true;
+                }
+            }
+
+        }
+        let pageEvent = 0;
+        viewer2.addHandler("page", function(event) {
+            $('.v2-container').attr('data-index',''+event.page); //this can trigger a resize of the element via css
+            if(!!parseInt($('.force-resize-method.selected').data('value'))){
+                viewer2.forceResize();
+            }
+            // console.log('Page change #'+ ++pageEvent +' - going home');
+            // setTimeout(()=>viewer2.viewport.goHome(true));
+        });
+
+        $('.logic-method').on('click',function(){
+            $('.logic-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.preserve-method').on('click',function(){
+            $('.preserve-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.auto-method').on('click',function(){
+            $('.auto-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.force-resize-method').on('click',function(){
+            $('.force-resize-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        if(!window.ResizeObserver){
+            $('.listener-method[data-value=1]').text('ResizeObserver not support in your browser').addClass('invalid');
+        }
+        $('.listener-method').on('click',function(){
+            $('.listener-method').removeClass('selected');
+            if(!$(this).hasClass('invalid')) $(this).addClass('selected');
+        })
+
+        $('.method').on('click',updateViewers);
+
+        var container = $('.inner-container');
+        function resizeWidth(b){
+            if(container.height() !== 600) return;
+            if(container.width()==800){
+                container.width(600);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.width(800);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+        function resizeHeight(b){
+            if(container.width() !== 800) return;
+            if(container.height()==600){
+                container.height(450);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+        function resizeBoth(b){
+            if(container.height()==600){
+                container.width(600);
+                container.height(450);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.width(800);
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+
+
+    </script>
+</body>
+</html>
