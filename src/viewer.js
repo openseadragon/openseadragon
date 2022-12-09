@@ -330,7 +330,7 @@ $.Viewer = function( options ) {
 
     this._onViewerResize = onViewerResize;
     this._origViewerResize = origViewerResize; //for testing logic changes
-    if(ResizeObserver){
+    if(window.ResizeObserver){
         this._autoResizePolling = false;
 
         this._resizeObserver = new ResizeObserver(function(){
@@ -1700,15 +1700,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Force the viewer to reset it's size to it's container.
-     * @param Boolean ignoreAutorResizeSetting (default: false) If true, forces the resize even if Viewer.autoResize==false
-     * @returns {OpenSeadragon.Viewer} Chainable.
+     * Force the viewer to reset its size to match its container.
      */
-     forceResize: function(ignoreAutoResizeSetting) {
-        if(ignoreAutoResizeSetting || this.autoResize){
-            this._onViewerResize(this, _getSafeElemSize(this.container));
-        }
-        return this;
+    forceImmediateResize: function() {
+        this._onViewerResize(this, _getSafeElemSize(this.container));
     },
 
     /**
