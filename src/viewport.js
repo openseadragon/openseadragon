@@ -578,7 +578,7 @@ $.Viewport.prototype = {
         }
 
         var constraintApplied = xConstrained || yConstrained;
-        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds, false) : bounds.clone();
+        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
         newViewportBounds.xConstrained = xConstrained;
         newViewportBounds.yConstrained = yConstrained;
         newViewportBounds.constraintApplied = constraintApplied;
@@ -811,7 +811,6 @@ $.Viewport.prototype = {
             constrainedBounds;
 
         bounds = this.getBounds(current);
-        // bounds = this.getBoundsNoRotate(current);
 
         constrainedBounds = this._applyBoundaryConstraints(bounds);
 
