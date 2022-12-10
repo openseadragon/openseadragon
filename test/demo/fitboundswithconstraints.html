@@ -81,8 +81,9 @@ setTimeout(() => viewport.applyConstraints(), 1000);</pre>
             tileSources: "../data/testpattern.dzi",
             minZoomImageRatio: 0,
             maxZoomPixelRatio: 10,
-            visibilityRatio:1.0,
+            visibilityRatio:1,
             constrainDuringPan:true,
+            // showNavigationControl:false,
         });
 
         viewer.addHandler("open", function(event) {
@@ -147,7 +148,29 @@ setTimeout(() => viewport.applyConstraints(), 1000);</pre>
                 });
             })
 
-            viewer.viewport.zoomTo(0.5, null, true);
+            viewer.viewport.zoomTo(1/2, null, true);
+
+            // viewer.viewport.panBy(new OpenSeadragon.Point(0.5, 0.5).minus(viewer.viewport.pointFromPixel(new OpenSeadragon.Point(0, 0))))
+            // setTimeout(()=>viewer.viewport.contentCoords(),1500);
+            // // setTimeout(()=>{
+            // //     viewer.viewport.rotateBy(-90, new OpenSeadragon.Point(0.5, 0.5));
+            // //     console.log('Rotated by -90')
+            // //     viewer.viewport.contentCoords();
+            // //     setTimeout(()=>{
+            // //         console.log('After rotation');
+            // //         viewer.viewport.contentCoords();
+            // //     },1500);
+            // // }, 2000)
+
+            // setTimeout(()=>{
+            //     viewer.viewport.zoomBy(2, new OpenSeadragon.Point(0.5, 0.5));
+            //     console.log('Zoomed by 2')
+            //     viewer.viewport.contentCoords();
+            //     setTimeout(()=>{
+            //         console.log('After zoom');
+            //         viewer.viewport.contentCoords();
+            //     },1500);
+            // }, 4500)
 
         });
         $('.method').on('click',function(){

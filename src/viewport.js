@@ -483,7 +483,7 @@ $.Viewport.prototype = {
         );
 
         newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
-        deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
+        deltaZoomPixels = newZoomPixel.minus( oldZoomPixel ).rotate(-this.getRotation(true));
         deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
 
         return centerTarget.plus( deltaZoomPoints );
@@ -578,7 +578,7 @@ $.Viewport.prototype = {
         }
 
         var constraintApplied = xConstrained || yConstrained;
-        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
+        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds, false) : bounds.clone();
         newViewportBounds.xConstrained = xConstrained;
         newViewportBounds.yConstrained = yConstrained;
         newViewportBounds.constraintApplied = constraintApplied;
@@ -811,6 +811,7 @@ $.Viewport.prototype = {
             constrainedBounds;
 
         bounds = this.getBounds(current);
+        // bounds = this.getBoundsNoRotate(current);
 
         constrainedBounds = this._applyBoundaryConstraints(bounds);
 
