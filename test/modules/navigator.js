@@ -248,14 +248,8 @@
     };
 
     var dragNavigatorBackToCenter = function () {
-        var start = viewer.viewport.getBounds().getTopLeft(),
-            target = new OpenSeadragon.Point(0.5 - viewer.viewport.getBounds().width / 2,
-                     1 / viewer.source.aspectRatio / 2 - viewer.viewport.getBounds().height / 2),
-            delta = target.minus(start);
-        if (viewer.source.aspectRatio < 1) {
-                delta.y *= viewer.source.aspectRatio;
-        }
-        simulateNavigatorDrag(viewer.navigator, delta.x * displayRegionWidth, delta.y * displayRegionHeight);
+        var delta = viewer.viewport.getHomeBounds().getCenter().minus(viewer.viewport.getCenter()).times(displayRegionWidth);
+        simulateNavigatorDrag(viewer.navigator, delta.x, delta.y);
     };
 
     var resizeElement = function ($element, width, height) {
