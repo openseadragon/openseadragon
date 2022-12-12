@@ -69,6 +69,9 @@
      * @param {Number} options.dblClickDistThreshold
      *      The maximum distance allowed between two pointer click events
      *      to be treated as a click gesture.
+     * @param {Boolean} options.flipPrimaryMouseButton
+     *      Configure which mouse button should control panning. If enabled, button 2 will be used
+     *      for panning instead of 0.
      * @param {Number} [options.stopDelay=50]
      *      The number of milliseconds without pointer move before the stop
      *      event is fired.
@@ -129,9 +132,10 @@
 
         if ( !$.isPlainObject( options ) ) {
             options = {
-                element:            args[ 0 ],
-                clickTimeThreshold: args[ 1 ],
-                clickDistThreshold: args[ 2 ]
+                element:                args[ 0 ],
+                clickTimeThreshold:     args[ 1 ],
+                clickDistThreshold:     args[ 2 ],
+                flipPrimaryMouseButton: args[ 3 ]
             };
         }
 
@@ -170,6 +174,14 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
+        /**
+         * Configure which mouse button should control panning. If enabled, button 2 will be used
+         * for panning instead of 0.
+         * @member {Boolean} flipPrimaryMouseButton
+         * @memberof OpenSeadragon.MouseTracker#
+         */
+        this.flipPrimaryMouseButton = options.flipPrimaryMouseButton || $.DEFAULT_SETTINGS.flipPrimaryMouseButton;
+
         /*eslint-disable no-multi-spaces*/
         this.userData              = options.userData          || null;
         this.stopDelay             = options.stopDelay         || 50;
@@ -3216,16 +3228,18 @@
             pointsList = tracker.getActivePointersListByType( gPoint.type ),
             updateGPoint;
 
+        var primarySecondaryButtons = tracker.flipPrimaryMouseButton ? [2, 0] : [0, 2];
+
         if ( typeof eventInfo.originalEvent.buttons !== 'undefined' ) {
             pointsList.buttons = eventInfo.originalEvent.buttons;
         } else {
-            if ( buttonChanged === 0 ) {
+            if ( buttonChanged === primarySecondaryButtons[0] ) {
                 // Primary
                 pointsList.buttons |= 1;
             } else if ( buttonChanged === 1 ) {
                 // Aux
                 pointsList.buttons |= 4;
-            } else if ( buttonChanged === 2 ) {
+            } else if ( buttonChanged === primarySecondaryButtons[1] ) {
                 // Secondary
                 pointsList.buttons |= 2;
             } else if ( buttonChanged === 3 ) {
@@ -3241,7 +3255,7 @@
         }
 
         // Only capture and track primary button, pen, and touch contacts
-        if ( buttonChanged !== 0 ) {
+        if ( buttonChanged !== primarySecondaryButtons[0] ) {
             eventInfo.shouldCapture = false;
             eventInfo.shouldReleaseCapture = false;
 
@@ -3360,16 +3374,18 @@
             wasCaptured = false,
             quick;
 
+        var primarySecondaryButtons = tracker.flipPrimaryMouseButton ? [2, 0] : [0, 2];
+
         if ( typeof eventInfo.originalEvent.buttons !== 'undefined' ) {
             pointsList.buttons = eventInfo.originalEvent.buttons;
         } else {
-            if ( buttonChanged === 0 ) {
+            if ( buttonChanged === primarySecondaryButtons[0] ) {
                 // Primary
                 pointsList.buttons ^= ~1;
             } else if ( buttonChanged === 1 ) {
                 // Aux
                 pointsList.buttons ^= ~4;
-            } else if ( buttonChanged === 2 ) {
+            } else if ( buttonChanged === primarySecondaryButtons[1] ) {
                 // Secondary
                 pointsList.buttons ^= ~2;
             } else if ( buttonChanged === 3 ) {
@@ -3387,7 +3403,7 @@
         eventInfo.shouldCapture = false;
 
         // Only capture and track primary button, pen, and touch contacts
-        if ( buttonChanged !== 0 ) {
+        if ( buttonChanged !== primarySecondaryButtons[0] ) {
             eventInfo.shouldReleaseCapture = false;
 
             // Aux Release
