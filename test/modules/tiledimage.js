@@ -9,6 +9,7 @@
 
             testLog.reset();
 
+            // eslint-disable-next-line new-cap
             viewer = OpenSeadragon({
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
@@ -517,12 +518,17 @@
             var image = viewer.world.getItemAt(0);
             assert.equal(image.getFullyLoaded(), false, 'not fully loaded at first');
 
+            // Zoom out enough that we don't start out with all the tiles loaded.
+            viewer.viewport.zoomBy(0.5, null, true);
+
             var count = 0;
 
             var fullyLoadedChangeHandler = function(event) {
                 if (count === 0) {
                     assert.equal(event.fullyLoaded, true, 'event includes true fullyLoaded property');
                     assert.equal(image.getFullyLoaded(), true, 'image is fully loaded after event');
+
+                    // Zoom in enough that it needs to load some new tiles.
                     viewer.viewport.zoomBy(5, null, true);
                 } else if (count === 1) {
                     assert.equal(event.fullyLoaded, false, 'event includes false fullyLoaded property');
