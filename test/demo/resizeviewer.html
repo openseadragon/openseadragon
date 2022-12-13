@@ -4,6 +4,8 @@
     <title>OpenSeadragon Viewer Resizing Demo</title>
     <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
     <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+    <link rel="stylesheet" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <style type="text/css">
 
       .outer-container{
@@ -135,51 +137,11 @@
                 <div>
                     <button>Resize with constant aspect ratio</button>
                 </div>
-            </div>
-
-        </div>
-        <div>
-            <div class="outer-container v2-container">
-                <div id="viewer2"></div>
-                <div class="sidebar">
-                    <div class="wide">Wide sidebar</div>
-                    <div class="narrow">Narrow sidebar</div>
-                </div>
-
-            </div>
-
-        </div>
-        <div>
-            <h3>Demo: Issues with styling the viewer element when an image is opened</h3>
-            <p>If a DOM/CSS operation is triggered by a viewer event (e.g. the 'page') event
-                for multi-page images, the timing of the viewer resizing itself (if autoResize=true)
-                can be inconsistent - sometimes before, sometimes after the image has finished loading
-                and the Viewport.goHome() call is generated. To ensure consistency, call viewer.forceResize()
-                after altering the page layout.
-            </p>
-            <p>Note: to see this in action most clearly, select the options for "preserveImageSizeOnResize: false"
-                and "Use polling" above.
-            </p>
-            <div class="options">
-                <div class="method force-resize-method selected" data-value="0">
-                    <pre>//pseudocode
-//container will change size
-setSidebarForImage();
-
-// image might not "open" at home
-// viewer.forceResize();
-                    </pre>
-                </div>
-                <div class="method force-resize-method" data-value="1">
-                    <pre>//pseudocode
-//container will change size
-setSidebarForImage();
-
-//image should always "open" at home
-viewer.forceResize();
-                    </pre>
+                <div>
+                    <button>Toggle resizable inner container</button>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -196,24 +158,10 @@ viewer.forceResize();
             constrainDuringPan:true,
         });
 
-
-        var viewer2 = window.v2 = OpenSeadragon({
-            id: "viewer2",
-            prefixUrl: "../../build/openseadragon/images/",
-            tileSources: ["../data/testpattern.dzi", "../data/iiif_2_0_sizes/info.json", "../data/iiif_3_0_tiled/info.json"],
-            sequenceMode:true,
-            minZoomImageRatio: 0,
-            maxZoomPixelRatio: 10,
-            visibilityRatio:1.0,
-            constrainDuringPan:true,
-        });
-        viewer2._tilesource = "../data/iiif_2_0_sizes/info.json";
-
-
         var _onViewerResize = viewer._onViewerResize;
         var _origViewerResize = viewer._origViewerResize;
 
-        updateViewers();
+        updateViewer();
 
 
 
@@ -228,45 +176,32 @@ viewer.forceResize();
                 case 'Resize width only': resizeWidth(this); break;
                 case 'Resize height only': resizeHeight(this); break;
                 case 'Resize with constant aspect ratio': resizeBoth(this); break;
+                case 'Toggle resizable inner container': toggleResizable(this); break;
             }
         });
 
 
-        // $('#update-viewer2').on('click',function(){
-        //     // updateViewer2();
-        // })
-        function updateViewers(){
-            viewer2._onViewerResize = viewer._onViewerResize = !!parseInt($('.logic-method.selected').data('value')) ? _onViewerResize : _origViewerResize;
+        function updateViewer(){
+            viewer._onViewerResize = !!parseInt($('.logic-method.selected').data('value')) ? _onViewerResize : _origViewerResize;
 
-            viewer2.preserveImageSizeOnResize = viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
+            viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
 
-            viewer2.autoResize = viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
+            viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
 
             var useResizeObserver=!!parseInt($('.listener-method.selected').data('value'));
             if(useResizeObserver){
                 if(viewer._resizeObserver && viewer._autoResizePolling){
                     viewer._resizeObserver.observe(viewer.container);
-                    viewer2._resizeObserver.observe(viewer2.container);
-                    viewer2._autoResizePolling = viewer._autoResizePolling = false;
+                    viewer._autoResizePolling = false;
                 }
             } else {
                 if(viewer._resizeObserver && !viewer._autoResizePolling){
                     viewer._resizeObserver.observe(viewer.container);
-                    viewer2._resizeObserver.unobserve(viewer2.container);
-                    viewer2._autoResizePolling = viewer._autoResizePolling = true;
+                    viewer._autoResizePolling = true;
                 }
             }
 
         }
-        let pageEvent = 0;
-        viewer2.addHandler("page", function(event) {
-            $('.v2-container').attr('data-index',''+event.page); //this can trigger a resize of the element via css
-            if(!!parseInt($('.force-resize-method.selected').data('value'))){
-                viewer2.forceResize();
-            }
-            // console.log('Page change #'+ ++pageEvent +' - going home');
-            // setTimeout(()=>viewer2.viewport.goHome(true));
-        });
 
         $('.logic-method').on('click',function(){
             $('.logic-method').removeClass('selected');
@@ -283,10 +218,6 @@ viewer.forceResize();
             $(this).addClass('selected');
         });
 
-        $('.force-resize-method').on('click',function(){
-            $('.force-resize-method').removeClass('selected');
-            $(this).addClass('selected');
-        });
 
         if(!window.ResizeObserver){
             $('.listener-method[data-value=1]').text('ResizeObserver not support in your browser').addClass('invalid');
@@ -296,7 +227,7 @@ viewer.forceResize();
             if(!$(this).hasClass('invalid')) $(this).addClass('selected');
         })
 
-        $('.method').on('click',updateViewers);
+        $('.method').on('click',updateViewer);
 
         var container = $('.inner-container');
         function resizeWidth(b){
@@ -331,6 +262,23 @@ viewer.forceResize();
                 container.width(800);
                 container.height(600);
                 $('#buttons button').prop('disabled', false);
+            }
+        }
+        function toggleResizable(b){
+            if(container.isResizable){
+                container.isResizable = false;
+                container.resizable('destroy');
+                container.width(800);
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            } else {
+                container.isResizable = true;
+                // container.resizable({containment:"parent", maxWidth: 800, maxHeight: 600,});
+                container.resizable();
+                $('#buttons button').prop('disabled', true);
+                container.width(800);
+                container.height(600);
+                $(b).prop('disabled', false);
             }
         }
 

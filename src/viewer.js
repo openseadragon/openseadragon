@@ -204,6 +204,7 @@ $.Viewer = function( options ) {
         prevContainerSize: null,
         animating:         false,
         forceRedraw:       false,
+        needsResize:       false,
         mouseInside:       false,
         group:             null,
         // whether we should be continuously zooming
@@ -332,10 +333,9 @@ $.Viewer = function( options ) {
     this._origViewerResize = origViewerResize; //for testing logic changes
     if(window.ResizeObserver){
         this._autoResizePolling = false;
-
         this._resizeObserver = new ResizeObserver(function(){
             if(_this.autoResize){
-                _this._onViewerResize(_this, _getSafeElemSize(_this.container));
+                THIS[_this.hash].needsResize = true;
             }
         });
 
@@ -1702,8 +1702,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Force the viewer to reset its size to match its container.
      */
-    forceImmediateResize: function() {
-        this._onViewerResize(this, _getSafeElemSize(this.container));
+    forceResize: function() {
+        THIS[this.hash].needsResize = true;
     },
 
     /**
@@ -3594,18 +3594,25 @@ function origViewerResize(viewer, containerSize){
 }
 function onViewerResize(viewer, containerSize){
     var viewport = viewer.viewport;
-    var resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
     var zoom = viewport.getZoom();
     var center = viewport.getCenter();
     viewport.resize(containerSize, viewer.preserveImageSizeOnResize);
     viewport.panTo(center, true);
+    var resizeRatio;
     if (viewer.preserveImageSizeOnResize) {
-        viewport.zoomTo(zoom * resizeRatio, null, true);
+        resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+        // viewport.zoomTo(zoom * resizeRatio, null, true);
     } else {
-        viewport.zoomTo(zoom, null, true);
+        var o = new $.Point(0, 0);
+        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(o);
+        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(o);
+        resizeRatio = newDiag / prevDiag * THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+        // viewport.zoomTo(zoom, null, true);
     }
+    viewport.zoomTo(zoom * resizeRatio, null, true);
     THIS[viewer.hash].prevContainerSize = containerSize;
     THIS[viewer.hash].forceRedraw = true;
+    THIS[viewer.hash].needsResize = false;
 }
 function updateOnce( viewer ) {
 
@@ -3614,13 +3621,22 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
-    if (viewer.autoResize && viewer._autoResizePolling){
-        var containerSize = _getSafeElemSize(viewer.container);
-        var prevContainerSize = THIS[viewer.hash].prevContainerSize;
-        if (!containerSize.equals(prevContainerSize)) {
-            viewer._onViewerResize(viewer, containerSize);
+    if (viewer.autoResize){
+        var containerSize;
+        if(viewer._autoResizePolling){
+            containerSize = _getSafeElemSize(viewer.container);
+            var prevContainerSize = THIS[viewer.hash].prevContainerSize;
+            if (!containerSize.equals(prevContainerSize)) {
+                THIS[viewer.hash].needsResize = true;
+            }
         }
+        if(THIS[viewer.hash].needsResize){
+            viewer._onViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
+        }
+
     }
+
+
 
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;
