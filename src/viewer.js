@@ -3581,13 +3581,11 @@ function doViewerResize(viewer, containerSize){
     var resizeRatio;
     if (viewer.preserveImageSizeOnResize) {
         resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
-        // viewport.zoomTo(zoom * resizeRatio, null, true);
     } else {
-        var o = new $.Point(0, 0);
-        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(o);
-        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(o);
+        var origin = new $.Point(0, 0);
+        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(origin);
+        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(origin);
         resizeRatio = newDiag / prevDiag * THIS[viewer.hash].prevContainerSize.x / containerSize.x;
-        // viewport.zoomTo(zoom, null, true);
     }
     viewport.zoomTo(zoom * resizeRatio, null, true);
     THIS[viewer.hash].prevContainerSize = containerSize;
