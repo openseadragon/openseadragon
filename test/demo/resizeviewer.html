@@ -97,12 +97,6 @@
             <h3>Pick options to test:</h3>
             <p>These options apply to both of the demo viewers on the left (top and bottom).</p>
             <div class="options">
-                <div class="method logic-method selected" data-value="0">
-                    <pre>Use v3.1 resize logic</pre>
-                </div>
-                <div class="method logic-method" data-value="1">
-                    <pre>Use new resize logic</pre>
-                </div>
 
                 <div class="method listener-method selected" data-value="0">
                     <pre>Use polling</pre>
@@ -154,21 +148,13 @@
             tileSources: "../data/iiif_2_0_sizes/info.json",
             minZoomImageRatio: 0,
             maxZoomPixelRatio: 10,
-            visibilityRatio:1.0,
-            constrainDuringPan:true,
+            visibilityRatio:0.5,
+            constrainDuringPan:false,
+            showNavigator: true,
         });
 
-        var _onViewerResize = viewer._onViewerResize;
-        var _origViewerResize = viewer._origViewerResize;
 
         updateViewer();
-
-
-
-
-
-
-        var actions = ['Resize width only', 'Resize height only', 'Resize with constant aspect ratio']
 
 
         var buttons=$('#buttons button').on('click',function(){
@@ -182,8 +168,6 @@
 
 
         function updateViewer(){
-            viewer._onViewerResize = !!parseInt($('.logic-method.selected').data('value')) ? _onViewerResize : _origViewerResize;
-
             viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
 
             viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
@@ -202,11 +186,6 @@
             }
 
         }
-
-        $('.logic-method').on('click',function(){
-            $('.logic-method').removeClass('selected');
-            $(this).addClass('selected');
-        });
 
         $('.preserve-method').on('click',function(){
             $('.preserve-method').removeClass('selected');

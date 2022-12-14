@@ -205,6 +205,7 @@ $.Viewer = function( options ) {
         animating:         false,
         forceRedraw:       false,
         needsResize:       false,
+        forceResize:       false,
         mouseInside:       false,
         group:             null,
         // whether we should be continuously zooming
@@ -329,14 +330,10 @@ $.Viewer = function( options ) {
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
-    this._onViewerResize = onViewerResize;
-    this._origViewerResize = origViewerResize; //for testing logic changes
     if(window.ResizeObserver){
         this._autoResizePolling = false;
         this._resizeObserver = new ResizeObserver(function(){
-            if(_this.autoResize){
-                THIS[_this.hash].needsResize = true;
-            }
+            THIS[_this.hash].needsResize = true;
         });
 
         this._resizeObserver.observe(this.container, {});
@@ -1704,6 +1701,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     forceResize: function() {
         THIS[this.hash].needsResize = true;
+        THIS[this.hash].forceResize = true;
     },
 
     /**
@@ -3573,26 +3571,8 @@ function updateMulti( viewer ) {
         viewer._updateRequestId = false;
     }
 }
-function origViewerResize(viewer, containerSize){
-    var viewport = viewer.viewport;
-    if (viewer.preserveImageSizeOnResize) {
-        var resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
-        var zoom = viewport.getZoom() * resizeRatio;
-        var center = viewport.getCenter();
-        viewport.resize(containerSize, false);
-        viewport.zoomTo(zoom, null, true);
-        viewport.panTo(center, true);
-    } else {
-        // maintain image position
-        var oldBounds = viewport.getBounds();
-        viewport.resize(containerSize, true);
-        viewport.fitBoundsWithConstraints(oldBounds, true);
-    }
 
-    THIS[viewer.hash].prevContainerSize = containerSize;
-    THIS[viewer.hash].forceRedraw = true;
-}
-function onViewerResize(viewer, containerSize){
+function doViewerResize(viewer, containerSize){
     var viewport = viewer.viewport;
     var zoom = viewport.getZoom();
     var center = viewport.getCenter();
@@ -3613,6 +3593,7 @@ function onViewerResize(viewer, containerSize){
     THIS[viewer.hash].prevContainerSize = containerSize;
     THIS[viewer.hash].forceRedraw = true;
     THIS[viewer.hash].needsResize = false;
+    THIS[viewer.hash].forceResize = false;
 }
 function updateOnce( viewer ) {
 
@@ -3621,7 +3602,7 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
-    if (viewer.autoResize){
+    if (viewer.autoResize || THIS[viewer.hash].forceResize){
         var containerSize;
         if(viewer._autoResizePolling){
             containerSize = _getSafeElemSize(viewer.container);
@@ -3631,7 +3612,7 @@ function updateOnce( viewer ) {
             }
         }
         if(THIS[viewer.hash].needsResize){
-            viewer._onViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
+            doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
         }
 
     }
