@@ -98,13 +98,6 @@
             <p>These options apply to both of the demo viewers on the left (top and bottom).</p>
             <div class="options">
 
-                <div class="method listener-method selected" data-value="0">
-                    <pre>Use polling</pre>
-                </div>
-                <div class="method listener-method" data-value="1">
-                    <pre>Use ResizeObserver</pre>
-                </div>
-
                 <div class="method preserve-method selected" data-value="0">
                     <pre>preserveImageSizeOnResize: false</pre>
                 </div>
@@ -169,22 +162,7 @@
 
         function updateViewer(){
             viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
-
             viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
-
-            var useResizeObserver=!!parseInt($('.listener-method.selected').data('value'));
-            if(useResizeObserver){
-                if(viewer._resizeObserver && viewer._autoResizePolling){
-                    viewer._resizeObserver.observe(viewer.container);
-                    viewer._autoResizePolling = false;
-                }
-            } else {
-                if(viewer._resizeObserver && !viewer._autoResizePolling){
-                    viewer._resizeObserver.observe(viewer.container);
-                    viewer._autoResizePolling = true;
-                }
-            }
-
         }
 
         $('.preserve-method').on('click',function(){
@@ -196,15 +174,6 @@
             $('.auto-method').removeClass('selected');
             $(this).addClass('selected');
         });
-
-
-        if(!window.ResizeObserver){
-            $('.listener-method[data-value=1]').text('ResizeObserver not support in your browser').addClass('invalid');
-        }
-        $('.listener-method').on('click',function(){
-            $('.listener-method').removeClass('selected');
-            if(!$(this).hasClass('invalid')) $(this).addClass('selected');
-        })
 
         $('.method').on('click',updateViewer);
 
