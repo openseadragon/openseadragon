@@ -3,110 +3,162 @@
 <head>
     <title>OpenSeadragon fitBoundsWithConstraints() Demo</title>
     <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
     <style type="text/css">
 
       .openseadragon1 {
           width: 800px;
-          height: 600px;
+          height: 500px;
+          border:thin black solid;
+          margin-right:20px;
       }
-
-      #highlights li {
-        cursor: pointer;
+      #buttons button{
+        width:10em;
+        text-align:center;
+        margin:5px;
       }
-
+      .layout{
+        display:grid;
+        grid-template-columns:auto 1fr;
+        padding:10px;
+      }
+      .method{
+        border:medium gray solid;
+        margin:2px;
+        background-color:rgb(240, 240, 240)
+      }
+      .method.selected{
+        border:medium red solid;
+        background-color: lightgoldenrodyellow;
+      }
     </style>
 </head>
 <body>
-    <div>
-        Simple demo page to show 'viewport.fitBounds().applyConstraints()' issue.
+    <div class="layout">
+        <div id="contentDiv" class="openseadragon1"></div>
+        <div id="controls">
+            <div>
+                Simple demo page to show viewport.fitBounds() with and without constraints. The viewer
+                is set up with visibilityRatio = 1 and constrainDuringPan = true to clearly demonstrate the
+                constraints.
+            </div>
+
+            <h3>Pick a method to use:</h3>
+            <div>
+                <div class="method selected" data-value="0">
+                    <pre>viewport.fitBounds(bounds); //Ignores constraints</pre>
+                </div>
+                <div class="method" data-value="1">
+                    <pre>viewport.fitBoundsWithConstraints(bounds);</pre>
+                </div>
+                <div class="method" data-value="4">
+                    <pre>viewport.fitBoundsWithConstraints(bounds, true); //immediate</pre>
+                </div>
+                <div class="method" data-value="2">
+                    <pre>//Initially ignore constraints
+viewport.fitBounds(bounds);
+
+//Apply constraints after 1 second delay
+setTimeout(() => viewport.applyConstraints(), 1000);</pre>
+                </div>
+            </div>
+            <button id="rotate">Rotate the viewer</button>
+            <h3>Click to fit overlay bounds:</h3>
+            <div id="buttons"></div>
+            <h4>overlay.getBounds(viewer.viewport):</h4>
+            <pre class="bounds">Pick an overlay above to show the bounds</pre>
+        </div>
     </div>
 
-    <div id="contentDiv" class="openseadragon1"></div>
-    <div id="highlights"></div>
-
-    <select onchange="changeMethod(this.value);">
-        <option value=0>viewport.fitBoundsWithConstraints(bounds);</option>
-        <option value=1>viewport.fitBounds(bounds);</option>
-        <option value=2>viewport.fitBounds(bounds).applyConstraints();</option>
-    </select>
-    <input type="button" value="Go home" onclick="goHome()"/>
 
     <script type="text/javascript">
 
-        var _viewer;
+        var viewer;
         var _fittingMethod = 0;
-
-        var _highlights = [
-            {"queryPoint":[0.13789887359998443,0.43710575899579285], "radius":0.004479581945070337,"text":"Pipe"},
-            {"queryPoint":[0.5923298766583593,0.6461653354541856],   "radius":0.013175241014912752,"text":"Fuel here"},
-            {"queryPoint":[0.43920338711232304,0.7483181389302148],  "radius":0.09222668710438928, "text":"Wheel"},
-            {"queryPoint":[0.07341677959486298,0.9028719921872319],  "radius":0.08996845561083797, "text":"Nothing special"}
-        ];
-
-        var generateUniqueHash = (function() {
-            var counter = 0;
-            return function() {
-                return "openseadragon_" + (counter++);
-            };
-        })();
-
-        var _viewer = OpenSeadragon({
-            element: document.getElementById("contentDiv"),
-            showNavigationControl: false,
+        viewer = window.viewer = OpenSeadragon({
+            id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
-            hash: generateUniqueHash(), //this is only needed if you want to instantiate more than one viewer at a time.
-            tileSources: {
-                Image: {
-                    xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
-                    Url:      'http://cdn.photosynth.net/ps2/19d5cf2b-77ed-439f-ac21-d3046320384c/packet/undistorted/img0043/',
-                    Format:   "jpg",
-                    Overlap:  1,
-                    TileSize: 510,
-                    Size: {
-                        Width:  4592,
-                        Height: 3448
+            tileSources: "../data/testpattern.dzi",
+            minZoomImageRatio: 0,
+            maxZoomPixelRatio: 10,
+            visibilityRatio:1,
+            constrainDuringPan:true,
+        });
+
+        viewer.addHandler("open", function(event) {
+            var elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "green";
+            elt.style.outline = "3px solid red";
+            elt.style.opacity = "0.7";
+            elt.textContent = "Within the image";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Rect(0.21, 0.21, 0.099, 0.299),
+                rotationMode: OpenSeadragon.OverlayRotationMode.BOUNDING_BOX
+            });
+
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "white";
+            elt.style.opacity = "0.5";
+            elt.style.outline = "5px solid pink";
+            elt.textContent = "Left edge rectangle";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Rect(-0.4, 0.7, 0.7, 0.15)
+            });
+
+            var elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.background = "lightblue";
+            elt.style.outline = "3px solid purple";
+            elt.style.opacity = "0.7";
+            elt.textContent = "Top right square";
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Rect(0.9, -0.1, 0.2, 0.2),
+                rotationMode: OpenSeadragon.OverlayRotationMode.BOUNDING_BOX
+            });
+
+            viewer.currentOverlays.forEach(overlay=>{
+                var text = $(overlay.element).text();
+                var div=$('<div>').appendTo('#buttons');
+                var buttons=$('<button>').text(text).appendTo(div).on('click',()=>{
+
+                    var bounds = overlay.getBounds(viewer.viewport);
+                    $('.bounds').text(JSON.stringify(bounds,null,2));
+
+                    var _fittingMethod = parseInt($('.method.selected').data('value'));
+
+                    if (_fittingMethod === 0) {
+                        viewer.viewport.fitBounds(bounds, false);
                     }
-                }
-            }
+                    else if (_fittingMethod === 1) {
+                        viewer.viewport.fitBoundsWithConstraints(bounds, false);
+                    }
+                    else if (_fittingMethod === 4) {
+                        viewer.viewport.fitBoundsWithConstraints(bounds, true);
+                    }
+                    else if (_fittingMethod === 2) {
+                        viewer.viewport.fitBounds(bounds, false);
+                        setTimeout(()=>viewer.viewport.applyConstraints(), 1000);
+                    }
+                });
+            })
+
+            viewer.viewport.zoomTo(0.5, null, true);
+
+
         });
-        _viewer.addHandler("open", function() {
-            var str = "<ul>";
-            for (var i=0; i<_highlights.length; ++i) {
-                var highlight = _highlights[i];
-                str += "<li onclick='gotoHighlight("+i+")'>"+highlight.text+"</li>";
-            }
-            str += "</ul>";
-            document.getElementById("highlights").innerHTML = str;
+        $('.method').on('click',function(){
+            $('.method').removeClass('selected');
+            $(this).addClass('selected');
+        })
+        $("#rotate").click(function() {
+            viewer.viewport.setRotation(viewer.viewport.getRotation() - 22.5);
+            $("#degrees").text(viewer.viewport.getRotation() + "deg");
         });
-
-        function gotoHighlight(index) {
-            var highlight = _highlights[index];
-
-            var viewport = _viewer.viewport;
-            var contentSize = viewport.contentSize;
-            var scaling = 1.0 / viewport.viewportToImageZoom(viewport.getZoom());
-            var radius  = highlight.radius*Math.min(contentSize.x, contentSize.y);/*annotation.accurateRadius*scaling;*/
-            var center      = new OpenSeadragon.Point(contentSize.x*highlight.queryPoint[0], contentSize.y*highlight.queryPoint[1]);
-            var bounds = viewport.imageToViewportRectangle(new OpenSeadragon.Rect(center.x-radius, center.y-radius, radius*2, radius*2));
-
-            if (_fittingMethod === 0) {
-                viewport.fitBoundsWithConstraints(bounds, false);
-            }
-            else if (_fittingMethod === 1) {
-                viewport.fitBounds(bounds, false);
-            }
-            else if (_fittingMethod === 2) {
-                viewport.fitBounds(bounds, false).applyConstraints();
-            }
-        }
-
-        function changeMethod(value) {
-            _fittingMethod = parseInt(value, 10);
-        }
-
-        function goHome() {
-            _viewer.viewport.goHome();
-        }
 
     </script>
 </body>
