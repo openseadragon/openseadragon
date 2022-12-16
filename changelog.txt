@@ -1,6 +1,9 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+4.0.1: (in progress...)
+
+
 4.0.0:
 
 * NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass false for the new `immediately` parameter to disable) (#2136 @jonasengelmann)
