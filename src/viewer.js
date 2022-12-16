@@ -204,6 +204,8 @@ $.Viewer = function( options ) {
         prevContainerSize: null,
         animating:         false,
         forceRedraw:       false,
+        needsResize:       false,
+        forceResize:       false,
         mouseInside:       false,
         group:             null,
         // whether we should be continuously zooming
@@ -327,6 +329,17 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
+
+    if(window.ResizeObserver){
+        this._autoResizePolling = false;
+        this._resizeObserver = new ResizeObserver(function(){
+            THIS[_this.hash].needsResize = true;
+        });
+
+        this._resizeObserver.observe(this.container, {});
+    } else {
+        this._autoResizePolling = true;
+    }
 
     // Create the world
     this.world = new $.World({
@@ -786,6 +799,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+        if (this._resizeObserver){
+            this._resizeObserver.disconnect();
+        }
 
         if (this.referenceStrip) {
             this.referenceStrip.destroy();
@@ -1678,6 +1694,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     forceRedraw: function() {
         THIS[ this.hash ].forceRedraw = true;
         return this;
+    },
+
+    /**
+     * Force the viewer to reset its size to match its container.
+     */
+    forceResize: function() {
+        THIS[this.hash].needsResize = true;
+        THIS[this.hash].forceResize = true;
     },
 
     /**
@@ -3547,6 +3571,27 @@ function updateMulti( viewer ) {
     }
 }
 
+function doViewerResize(viewer, containerSize){
+    var viewport = viewer.viewport;
+    var zoom = viewport.getZoom();
+    var center = viewport.getCenter();
+    viewport.resize(containerSize, viewer.preserveImageSizeOnResize);
+    viewport.panTo(center, true);
+    var resizeRatio;
+    if (viewer.preserveImageSizeOnResize) {
+        resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+    } else {
+        var origin = new $.Point(0, 0);
+        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(origin);
+        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(origin);
+        resizeRatio = newDiag / prevDiag * THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+    }
+    viewport.zoomTo(zoom * resizeRatio, null, true);
+    THIS[viewer.hash].prevContainerSize = containerSize;
+    THIS[viewer.hash].forceRedraw = true;
+    THIS[viewer.hash].needsResize = false;
+    THIS[viewer.hash].forceResize = false;
+}
 function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
@@ -3554,29 +3599,22 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
-
-    if (viewer.autoResize) {
-        var containerSize = _getSafeElemSize(viewer.container);
-        var prevContainerSize = THIS[viewer.hash].prevContainerSize;
-        if (!containerSize.equals(prevContainerSize)) {
-            var viewport = viewer.viewport;
-            if (viewer.preserveImageSizeOnResize) {
-                var resizeRatio = prevContainerSize.x / containerSize.x;
-                var zoom = viewport.getZoom() * resizeRatio;
-                var center = viewport.getCenter();
-                viewport.resize(containerSize, false);
-                viewport.zoomTo(zoom, null, true);
-                viewport.panTo(center, true);
-            } else {
-                // maintain image position
-                var oldBounds = viewport.getBounds();
-                viewport.resize(containerSize, true);
-                viewport.fitBoundsWithConstraints(oldBounds, true);
+    if (viewer.autoResize || THIS[viewer.hash].forceResize){
+        var containerSize;
+        if(viewer._autoResizePolling){
+            containerSize = _getSafeElemSize(viewer.container);
+            var prevContainerSize = THIS[viewer.hash].prevContainerSize;
+            if (!containerSize.equals(prevContainerSize)) {
+                THIS[viewer.hash].needsResize = true;
             }
-            THIS[viewer.hash].prevContainerSize = containerSize;
-            THIS[viewer.hash].forceRedraw = true;
         }
+        if(THIS[viewer.hash].needsResize){
+            doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
+        }
+
     }
+
+
 
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;

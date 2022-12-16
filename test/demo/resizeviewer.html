@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Viewer Resizing Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+    <link rel="stylesheet" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+    <style type="text/css">
+
+      .outer-container{
+        width:800px;
+        height:600px;
+        margin-right:20px;
+        border: medium gray dashed;
+        background-color:beige;
+        position:relative;
+        display:flex;
+        flex-direction:row;
+      }
+      .inner-container{
+        width:800px;
+        height:600px;
+        border: thin black solid;
+        background-color:paleturquoise;
+        position:absolute;
+        left:50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .v2-container{
+        display:flex;
+        flex-direction:row;
+        height:400px;
+      }
+      .narrow{
+        width:50px;
+        background-color:pink;
+        height:100%;
+      }
+      .wide{
+        width:150px;
+        background-color:burlywood;
+        height:100%;
+      }
+      .v2-container:not([data-index="1"]) .narrow{
+        display:none;
+      }
+      .v2-container:not([data-index="2"]) .wide{
+        display:none;
+      }
+      #viewer, #viewer2 {
+          width: 100%;
+          height: 100%;
+      }
+      #buttons button{
+        width:18em;
+        text-align:center;
+        margin:5px;
+      }
+      .layout{
+        display:grid;
+        grid-template-columns:auto 1fr;
+        row-gap:10px;
+        padding:10px;
+      }
+      .method{
+        border:medium gray solid;
+        margin:2px;
+        background-color:rgb(240, 240, 240)
+      }
+      .method.selected{
+        border:medium red solid;
+        background-color: lightgoldenrodyellow;
+      }
+      .options{
+        display:grid;
+        grid-template-columns: 50% 50%;
+        row-gap:10px;
+      }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="outer-container">
+            <div class="inner-container">
+                <div id="viewer"></div>
+            </div>
+        </div>
+        <div id="controls">
+            <div>
+                Simple demo page to show viewer behavior during resizing of the container.
+                The viewers' container elements are styled with width and height of 100%,
+                with dimensions set by CSS properties on a parent element.
+            </div>
+
+            <h3>Pick options to test:</h3>
+            <p>These options apply to both of the demo viewers on the left (top and bottom).</p>
+            <div class="options">
+
+                <div class="method preserve-method selected" data-value="0">
+                    <pre>preserveImageSizeOnResize: false</pre>
+                </div>
+                <div class="method preserve-method" data-value="1">
+                    <pre>preserveImageSizeOnResize: true</pre>
+                </div>
+
+                <div class="method auto-method selected" data-value="1">
+                    <pre>autoResize: true</pre>
+                </div>
+                <div class="method auto-method" data-value="0">
+                    <pre>autoResize: false</pre>
+                </div>
+
+            </div>
+            <h3>Click to resize the viewer:</h3>
+            <div id="buttons">
+                <div>
+                    <button>Resize width only</button>
+                </div>
+                <div>
+                    <button>Resize height only</button>
+                </div>
+                <div>
+                    <button>Resize with constant aspect ratio</button>
+                </div>
+                <div>
+                    <button>Toggle resizable inner container</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var viewer = window.v1 = OpenSeadragon({
+            id: "viewer",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/iiif_2_0_sizes/info.json",
+            minZoomImageRatio: 0,
+            maxZoomPixelRatio: 10,
+            visibilityRatio:0.5,
+            constrainDuringPan:false,
+            showNavigator: true,
+        });
+
+
+        updateViewer();
+
+
+        var buttons=$('#buttons button').on('click',function(){
+            switch($(this).text()){
+                case 'Resize width only': resizeWidth(this); break;
+                case 'Resize height only': resizeHeight(this); break;
+                case 'Resize with constant aspect ratio': resizeBoth(this); break;
+                case 'Toggle resizable inner container': toggleResizable(this); break;
+            }
+        });
+
+
+        function updateViewer(){
+            viewer.preserveImageSizeOnResize = !!parseInt($('.preserve-method.selected').data('value'));
+            viewer.autoResize = !!parseInt($('.auto-method.selected').data('value'));
+        }
+
+        $('.preserve-method').on('click',function(){
+            $('.preserve-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.auto-method').on('click',function(){
+            $('.auto-method').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('.method').on('click',updateViewer);
+
+        var container = $('.inner-container');
+        function resizeWidth(b){
+            if(container.height() !== 600) return;
+            if(container.width()==800){
+                container.width(600);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.width(800);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+        function resizeHeight(b){
+            if(container.width() !== 800) return;
+            if(container.height()==600){
+                container.height(450);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+        function resizeBoth(b){
+            if(container.height()==600){
+                container.width(600);
+                container.height(450);
+                $('#buttons button').prop('disabled', true);
+                $(b).prop('disabled', false);
+            } else {
+                container.width(800);
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            }
+        }
+        function toggleResizable(b){
+            if(container.isResizable){
+                container.isResizable = false;
+                container.resizable('destroy');
+                container.width(800);
+                container.height(600);
+                $('#buttons button').prop('disabled', false);
+            } else {
+                container.isResizable = true;
+                // container.resizable({containment:"parent", maxWidth: 800, maxHeight: 600,});
+                container.resizable();
+                $('#buttons button').prop('disabled', true);
+                container.width(800);
+                container.height(600);
+                $(b).prop('disabled', false);
+            }
+        }
+
+
+    </script>
+</body>
+</html>
