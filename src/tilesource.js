@@ -618,7 +618,7 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
-     * @returns {String|() => string} url - A string for the url or a function that returns a url string.
+     * @returns {String|Function} url - A string for the url or a function that returns a url string.
      * @throws {Error}
      */
     getTileUrl: function( level, x, y ) {

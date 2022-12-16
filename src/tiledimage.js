@@ -1690,7 +1690,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {Image || *} image - The image (data) of the tile. Deprecated.
+         * @property {Image|*} image - The image (data) of the tile. Deprecated.
          * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
