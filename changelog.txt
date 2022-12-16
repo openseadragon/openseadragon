@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-3.2.0: (in progress...)
+4.0.0:
 
 * NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass false for the new `immediately` parameter to disable) (#2136 @jonasengelmann)
 * NEW BEHAVIOR: The auto resize now takes both width and height into account when scaling the contents proportionally to the viewer (#2256 @pearcetm)
