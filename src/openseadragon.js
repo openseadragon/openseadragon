@@ -826,14 +826,16 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
-            '[object Boolean]':     'boolean',
-            '[object Number]':      'number',
-            '[object String]':      'string',
-            '[object Function]':    'function',
-            '[object Array]':       'array',
-            '[object Date]':        'date',
-            '[object RegExp]':      'regexp',
-            '[object Object]':      'object'
+            '[object Boolean]':       'boolean',
+            '[object Number]':        'number',
+            '[object String]':        'string',
+            '[object Function]':      'function',
+            '[object AsyncFunction]': 'function',
+            '[object Promise]':       'promise',
+            '[object Array]':         'array',
+            '[object Date]':          'date',
+            '[object RegExp]':        'regexp',
+            '[object Object]':        'object'
         },
         // Save a reference to some core methods
         toString    = Object.prototype.toString,
@@ -849,6 +851,23 @@ function OpenSeadragon( options ){
         return $.type(obj) === "function";
     };
 
+    /**
+     * Promise proxy in OpenSeadragon, can be removed once IE11 support is dropped
+     * @type {PromiseConstructor|(function())|*}
+     */
+    $.Promise = (function () {
+        if (window.Promise) {
+            return window.Promise;
+        }
+        var promise = function () {};
+        promise.prototype.then = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        promise.prototype.resolve = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        return promise;
+    })();
 
     /**
      * Taken from jQuery 1.6.1
