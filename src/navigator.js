@@ -184,6 +184,7 @@ $.Navigator = function( options ){
         style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
         style.cursor        = 'default';
+        style.boxSizing     = 'content-box';
     }( this.displayRegion.style, this.borderWidth ));
     $.setElementPointerEventsNone( this.displayRegion );
     $.setElementTouchActionNone( this.displayRegion );
