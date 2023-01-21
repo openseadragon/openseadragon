@@ -40,7 +40,6 @@
  * @callback EventHandler
  * @memberof OpenSeadragon
  * @param {Object} event - See individual events for event-specific properties.
- * @return {undefined|Promise}
  */
 
 
@@ -165,10 +164,8 @@ $.EventSource.prototype = {
      * Get a function which iterates the list of all handlers registered for a given event, calling the handler for each.
      * @function
      * @param {String} eventName - Name of event to get handlers for.
-     * @param {boolean} waitForPromiseHandlers - true to wait for asynchronous functions (promises are returned)
-     *        or plain functions that return promise
      */
-    getHandler: function ( eventName, waitForPromiseHandlers) {
+    getHandler: function ( eventName) {
         var events = this.events[ eventName ];
         if ( !events || !events.length ) {
             return null;
@@ -176,31 +173,11 @@ $.EventSource.prototype = {
         events = events.length === 1 ?
             [ events[ 0 ] ] :
             Array.apply( null, events );
-        return waitForPromiseHandlers ? function ( source, args ) {
-            var length = events.length;
-            function loop(index) {
-                if ( index >= length || !events[ index ] ) {
-                    return $.Promise.resolve();
-                }
-                args.stopPropagation = function () {
-                    index = length;
-                };
-                args.eventSource = source;
-                args.userData = events[ index ].userData;
-                var result = events[ index ].handler( args );
-                result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
-                return result.then(function () {
-                    loop(index + 1);
-                });
-            }
-            return loop(0);
-        } : function ( source, args ) {
+        return function ( source, args ) {
             var i,
-                length = events.length,
-                stop = function () { i = length; };
+                length = events.length;
             for ( i = 0; i < length; i++ ) {
                 if ( events[ i ] ) {
-                    args.stopPropagation = stop;
                     args.eventSource = source;
                     args.userData = events[ i ].userData;
                     events[ i ].handler( args );
@@ -214,22 +191,14 @@ $.EventSource.prototype = {
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
-     * @param {boolean} eventArgs.waitForPromiseHandlers - Synchronizes asynchronous-like handlers
-     * @return {undefined|Promise} - A promise is returned in case waitForPromiseHandlers = true
      */
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
         //$.console.log( eventName );
 
-        var awaits = (eventArgs && eventArgs.waitForPromiseHandlers) || false,
-            handler = this.getHandler( eventName, awaits );
-
+        var handler = this.getHandler( eventName );
         if ( handler ) {
-            if ( !eventArgs ) {
-                eventArgs = {};
-            }
-
-            return handler( this, eventArgs );
+            return handler( this, eventArgs || {} );
         }
         return undefined;
     }
