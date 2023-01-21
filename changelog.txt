@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 4.0.1: (in progress...)
 
 * The viewer no longer emits canvas-key events for both keydown and keypress events; canvas-key is now just for keydown, and the new canvas-key-press is for keypress (#2270 @hrghauri)
+* Fixed: Navigator display rectangle was off if the page had box-sizing: border-box (#2276 @ambujsahu81)
 
 4.0.0:
 
