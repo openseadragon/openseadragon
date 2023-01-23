@@ -498,6 +498,9 @@
   * @property {Number} [tileRetryMax=0]
   *     The max number of retries when a tile download fails. By default it's 0, so retries are disabled.
   *
+  * @property {Number} [tileRetryDelay=2500]
+  *     Milliseconds to wait after each tile retry if tileRetryMax is set.
+  *
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
   *
