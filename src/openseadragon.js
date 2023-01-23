@@ -495,6 +495,9 @@
   * @property {Number} [timeout=30000]
   *     The max number of milliseconds that an image job may take to complete.
   *
+  * @property {Number} [tileRetryMax=0]
+  *     The max number of retries when a tile download fails. By default it's 0, so retries are disabled.
+  *
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
   *
