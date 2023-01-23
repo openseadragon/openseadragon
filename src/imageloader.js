@@ -234,7 +234,7 @@ $.ImageLoader.prototype = {
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
-    if (job.errorMsg != '' && job.image === null && job.tries < 1 + loader.tileRetryMax) {
+    if (job.errorMsg !== '' && job.image === null && job.tries < 1 + loader.tileRetryMax) {
         loader.failedTiles.push(job);
     }
     var nextJob;
