@@ -826,14 +826,16 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
-            '[object Boolean]':     'boolean',
-            '[object Number]':      'number',
-            '[object String]':      'string',
-            '[object Function]':    'function',
-            '[object Array]':       'array',
-            '[object Date]':        'date',
-            '[object RegExp]':      'regexp',
-            '[object Object]':      'object'
+            '[object Boolean]':       'boolean',
+            '[object Number]':        'number',
+            '[object String]':        'string',
+            '[object Function]':      'function',
+            '[object AsyncFunction]': 'function',
+            '[object Promise]':       'promise',
+            '[object Array]':         'array',
+            '[object Date]':          'date',
+            '[object RegExp]':        'regexp',
+            '[object Object]':        'object'
         },
         // Save a reference to some core methods
         toString    = Object.prototype.toString,
@@ -848,7 +850,6 @@ function OpenSeadragon( options ){
     $.isFunction = function( obj ) {
         return $.type(obj) === "function";
     };
-
 
     /**
      * Taken from jQuery 1.6.1
