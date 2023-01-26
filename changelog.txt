@@ -5,8 +5,10 @@ OPENSEADRAGON CHANGELOG
 
 * The viewer no longer emits canvas-key events for both keydown and keypress events; canvas-key is now just for keydown, and the new canvas-key-press is for keypress (#2270 @hrghauri)
 * You can now specify a priority when calling addHandler, to control when your event handler gets called relative to others (#2273 @Aiosa)
+* Added tileRetryMax and tileRetryDelay options, so the viewer can retry loading failed tiles (#2238 @Ughuuu, @paaddyy)
 * Fixed: Navigator display rectangle was off if the page had box-sizing: border-box (#2276 @ambujsahu81)
 * Fixed: Code that required identifying functions would fail for async functions (#2273 @Aiosa)
+* Fixed: Reference strip click detection was not accurate for long reference strips (#2280 @damonsson)
 
 4.0.0:
 
