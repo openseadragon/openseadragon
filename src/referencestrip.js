@@ -300,7 +300,7 @@ function onStripClick( event ) {
         var page;
 
         if ( 'horizontal' === this.scroll ) {
-            // +4px fix to solve problem with precision on thumbnail selection if there is a lot of them 
+            // +4px fix to solve problem with precision on thumbnail selection if there is a lot of them
             page = Math.floor(event.position.x / (this.panelWidth + 4));
         } else {
             page = Math.floor(event.position.y / this.panelHeight);
