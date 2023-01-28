@@ -1665,7 +1665,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         function completionCallback() {
             stopper--;
-            if (stopper > 0) {
+            if (stopper >= 0) {
                 tile.loading = false;
                 tile.loaded = true;
                 tile.hasTransparency = _this.source.hasTransparency(
