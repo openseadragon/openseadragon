@@ -132,6 +132,10 @@ $.TileCache.prototype = {
         $.console.assert( options.tile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required" );
         $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
+        if( options.tile.cacheImageRecord ){
+            // the tile has already been cached
+            return;
+        }
         var cutoff = options.cutoff || 0;
         var insertionIndex = this._tilesLoaded.length;
 
