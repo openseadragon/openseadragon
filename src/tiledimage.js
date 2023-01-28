@@ -1655,17 +1655,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {XMLHttpRequest|undefined} tileRequest
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
-        var increment = 0,
+        var stopper = 1,
+            cached = false,
             _this = this;
 
         function getCompletionCallback() {
-            increment++;
             return completionCallback;
         }
 
         function completionCallback() {
-            increment--;
-            if (increment === 0) {
+            stopper--;
+            if (stopper > 0) {
                 tile.loading = false;
                 tile.loaded = true;
                 tile.hasTransparency = _this.source.hasTransparency(
@@ -1678,8 +1678,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         cutoff: cutoff,
                         tiledImage: _this
                     });
+                    cached = true;
                 }
                 _this._needsDraw = true;
+            } else if (tile.context2D && cached) {
+                $.console.error("The tile has been cached, yet tile.context2D was set afterwards." +
+                    " The cache is orphaned now. To avoid this, increase the priority of 'tile-loaded' event " +
+                    "attaching context2D property.");
             }
         }
 
