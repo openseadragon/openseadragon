@@ -1655,17 +1655,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {XMLHttpRequest|undefined} tileRequest
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
-        var stopper = 1,
-            cached = false,
+        var increment = 0,
+            completed = false,
+            eventFinished = false,
             _this = this;
 
         function getCompletionCallback() {
+            if (eventFinished) {
+                $.console.error("Event 'tile-loaded' argument getCompletionCallback must not be called asynchronously.");
+            }
+            increment++;
             return completionCallback;
         }
 
         function completionCallback() {
-            stopper--;
-            if (stopper >= 0) {
+            increment--;
+            if (increment === 0 && !completed) {
+                completed = true;
                 tile.loading = false;
                 tile.loaded = true;
                 tile.hasTransparency = _this.source.hasTransparency(
@@ -1678,13 +1684,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         cutoff: cutoff,
                         tiledImage: _this
                     });
-                    cached = true;
                 }
                 _this._needsDraw = true;
-            } else if (tile.context2D && cached) {
-                $.console.error("The tile has been cached, yet tile.context2D was set afterwards." +
-                    " The cache is orphaned now. To avoid this, increase the priority of 'tile-loaded' event " +
-                    "attaching context2D property.");
             }
         }
 
@@ -1717,6 +1718,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             getCompletionCallback: getCompletionCallback
         });
         // In case the completion callback is never called, we at least force it once.
+        eventFinished = true;
         getCompletionCallback()();
     },
 
