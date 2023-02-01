@@ -1656,13 +1656,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
         var increment = 0,
-            completed = false,
             eventFinished = false,
             _this = this;
 
         function getCompletionCallback() {
             if (eventFinished) {
-                $.console.error("Event 'tile-loaded' argument getCompletionCallback must not be called asynchronously.");
+                $.console.error("Event 'tile-loaded' argument getCompletionCallback must be called synchronously. " +
+                    "Its return value should be called asynchronously.");
             }
             increment++;
             return completionCallback;
@@ -1670,8 +1670,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         function completionCallback() {
             increment--;
-            if (increment === 0 && !completed) {
-                completed = true;
+            if (increment === 0) {
                 tile.loading = false;
                 tile.loaded = true;
                 tile.hasTransparency = _this.source.hasTransparency(
@@ -1705,7 +1704,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * when the asynchronous processing of the image is done. The image will be
          * marked as entirely loaded when the callback has been called once for each
          * call to getCompletionCallback.
+         * Note: if you do not process the tile in asynchronous context
+         * (timeout, Promises, async, callbacks such as image.onload ...), do not use this function.
          */
+
+        var fallbackCompletion = getCompletionCallback();
         this.viewer.raiseEvent("tile-loaded", {
             tile: tile,
             tiledImage: this,
@@ -1717,9 +1720,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             data: data,
             getCompletionCallback: getCompletionCallback
         });
-        // In case the completion callback is never called, we at least force it once.
         eventFinished = true;
-        getCompletionCallback()();
+        // In case the completion callback is never called, we at least force it once.
+        fallbackCompletion();
     },
 
     /**
