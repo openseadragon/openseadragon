@@ -120,4 +120,32 @@
         assertTileAtPoint(0, new OpenSeadragon.Point(1, 3033 / 2000), new OpenSeadragon.Point(0, 0));
     });
 
+    QUnit.test('changing maxLevel', function(assert) {
+        var tileSource = new OpenSeadragon.TileSource({
+            width: 4096,
+            height: 4096,
+        });
+
+        assert.equal(tileSource.maxLevel, 12, 'The initial max level should be 12.');
+
+        function assertLevelScale(level, expected) {
+            var actual = tileSource.getLevelScale(level);
+            assert.ok(Math.abs(actual - expected) < Number.EPSILON, "The scale at level " + level +
+                " should be " + expected.toString() +
+                " got " + actual.toString());
+        }
+
+        assertLevelScale(12, 1);
+        assertLevelScale(10, 1 / 4);
+        assertLevelScale(8, 1 / 16);
+        assertLevelScale(6, 1 / 64);
+
+        tileSource.setMaxLevel(9);
+
+        assertLevelScale(9, 1);
+        assertLevelScale(7, 1 / 4);
+        assertLevelScale(5, 1 / 16);
+        assertLevelScale(3, 1 / 64);
+    });
+
 }());

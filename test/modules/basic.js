@@ -58,8 +58,8 @@
 
             assert.equal($(".openseadragon-message").length, 1, "Open failures should display a message");
 
-            assert.ok(testLog.log.contains('["AJAX request returned %d: %s",404,"/test/data/not-a-real-file"]'),
-               "AJAX failures should be logged to the console");
+            assert.ok(testLog.error.contains('["HTTP 404 attempting to load TileSource: /test/data/not-a-real-file"]'),
+                "'open-failed' fired after AJAX error handler prints error to the console.'");
 
             done();
         });
@@ -305,7 +305,7 @@
 
 
     // The Wikipedia logo has CORS enabled
-    var corsImg = 'http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
+    var corsImg = 'https://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
 
     QUnit.test( 'CrossOriginPolicyMissing', function (assert) {
         var done = assert.async();

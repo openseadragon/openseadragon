@@ -2,7 +2,7 @@
  * OpenSeadragon - Drawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -176,6 +176,7 @@ $.Drawer.prototype = {
      * This function does not take rotation into account, thus assuming provided
      * point is at 0 degree.
      * @param {OpenSeadragon.Point} point - the pixel point to convert
+     * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
     viewportCoordToDrawerCoord: function(point) {
         var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
@@ -208,7 +209,7 @@ $.Drawer.prototype = {
     /**
      * Set the opacity of the drawer.
      * @param {Number} opacity
-     * @return {OpenSeadragon.Drawer} Chainable.
+     * @returns {OpenSeadragon.Drawer} Chainable.
      */
     setOpacity: function( opacity ) {
         $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
@@ -264,7 +265,7 @@ $.Drawer.prototype = {
     },
 
     /**
-     * @return {Boolean} True if rotation is supported.
+     * @returns {Boolean} True if rotation is supported.
      */
     canRotate: function() {
         return this.useCanvas;
@@ -321,7 +322,7 @@ $.Drawer.prototype = {
      * Scale from OpenSeadragon viewer rectangle to drawer rectangle
      * (ignoring rotation)
      * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
-     * @return {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
+     * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle: function(rectangle) {
         var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
@@ -344,15 +345,19 @@ $.Drawer.prototype = {
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
+     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
+     * position and size of tiles supporting alpha channel in non-transparency
+     * context.
+     * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
+    drawTile: function( tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
             scale = scale || 1;
-            tile.drawCanvas(context, drawingHandler, scale, translate);
+            tile.drawCanvas(context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
         } else {
             tile.drawHTML( this.canvas );
         }
@@ -544,8 +549,8 @@ $.Drawer.prototype = {
         context.strokeStyle = this.debugGridColor[colorIndex];
         context.fillStyle = this.debugGridColor[colorIndex];
 
-        if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation({degrees: this.viewport.degrees});
+        if (this.viewport.getRotation(true) % 360 !== 0 ) {
+            this._offsetForRotation({degrees: this.viewport.getRotation(true)});
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
@@ -554,10 +559,11 @@ $.Drawer.prototype = {
                     tiledImage._getRotationPoint(true), true)
             });
         }
-        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              tiledImage._drawer._flip();
-          }
+        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
 
         context.strokeRect(
@@ -572,7 +578,7 @@ $.Drawer.prototype = {
 
         // Rotate the text the right way around.
         context.translate( tileCenterX, tileCenterY );
-        context.rotate( Math.PI / 180 * -this.viewport.degrees );
+        context.rotate( Math.PI / 180 * -this.viewport.getRotation(true) );
         context.translate( -tileCenterX, -tileCenterY );
 
         if( tile.x === 0 && tile.y === 0 ){
@@ -618,17 +624,18 @@ $.Drawer.prototype = {
             (tile.position.y + 70) * $.pixelDensityRatio
         );
 
-        if ( this.viewport.degrees !== 0 ) {
+        if (this.viewport.getRotation(true) % 360 !== 0 ) {
             this._restoreRotationChanges();
         }
         if (tiledImage.getRotation(true) % 360 !== 0) {
             this._restoreRotationChanges();
         }
 
-        if (tiledImage.viewport.degrees === 0 && tiledImage.getRotation(true) % 360 === 0){
-          if(tiledImage._drawer.viewer.viewport.getFlip()) {
-              tiledImage._drawer._flip();
-          }
+        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
+            tiledImage.getRotation(true) % 360 === 0) {
+            if(tiledImage._drawer.viewer.viewport.getFlip()) {
+                tiledImage._drawer._flip();
+            }
         }
 
         context.restore();

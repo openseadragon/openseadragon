@@ -3,20 +3,20 @@
 OpenSeadragon is truly a community project; we welcome your involvement!
 
 When contributing, please attempt to match the code style already in the codebase.
-However, we are in the process of changing our code style (see issue [#456](https://github.com/openseadragon/openseadragon/issues/456)), so avoid spaces inside parentheses and square brackets. Note that we use four spaces per indentation stop. For easier setup you can also install [EditorConfig](http://editorconfig.org/) if your IDE is supported. For more thoughts on code style, see [idiomatic.js](https://github.com/rwldrn/idiomatic.js/).
+However, we are in the process of changing our code style (see issue [#456](https://github.com/openseadragon/openseadragon/issues/456)), so avoid spaces inside parentheses and square brackets. Note that we use four spaces per indentation stop. For easier setup you can also install [EditorConfig](https://editorconfig.org/) if your IDE is supported. For more thoughts on code style, see [idiomatic.js](https://github.com/rwldrn/idiomatic.js/).
 
 When fixing bugs and adding features, when appropriate please also:
 
-* Update related doc comments (we use [JSDoc 3](http://usejsdoc.org/))
+* Update related doc comments (we use [JSDoc 3](https://jsdoc.app/))
 * Add/update related unit tests
 
-If you're new to the project, check out our [good first bug](https://github.com/openseadragon/openseadragon/issues?labels=good+first+bug&page=1&state=open) issues for some places to dip your toe in the water.
+If you're new to the project, check out our [good first issues](https://github.com/openseadragon/openseadragon/issues?labels=good+first+issue&page=1&state=open) for some places to dip your toe in the water.
 
 If you're new to open source in general, check out [GitHub's open source intro guide](https://guides.github.com/activities/contributing-to-open-source/).
 
 ### First Time Setup
 
-All command-line operations for building and testing OpenSeadragon are scripted using [Grunt](http://gruntjs.com/) which is based on [Node.js](http://nodejs.org/). To get set up:
+All command-line operations for building and testing OpenSeadragon are scripted using [Grunt](https://gruntjs.com/) which is based on [Node.js](https://nodejs.org/). To get set up:
 
 1. Install Node, if you haven't already (available at the link above)
 1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli`
@@ -57,7 +57,7 @@ You can also publish the built version to the site-build repository. This assume
 
 ### Testing
 
-Our tests are based on [QUnit](http://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
+Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
 
     grunt test
 

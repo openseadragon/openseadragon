@@ -1,4 +1,5 @@
-/* global QUnit, module, Util, $, console */
+/* eslint-disable new-cap */
+/* global QUnit, Util, $ */
 
 (function () {
     var debug = false,
@@ -247,14 +248,8 @@
     };
 
     var dragNavigatorBackToCenter = function () {
-        var start = viewer.viewport.getBounds().getTopLeft(),
-            target = new OpenSeadragon.Point(0.5 - viewer.viewport.getBounds().width / 2,
-                     1 / viewer.source.aspectRatio / 2 - viewer.viewport.getBounds().height / 2),
-            delta = target.minus(start);
-        if (viewer.source.aspectRatio < 1) {
-                delta.y *= viewer.source.aspectRatio;
-        }
-        simulateNavigatorDrag(viewer.navigator, delta.x * displayRegionWidth, delta.y * displayRegionHeight);
+        var delta = viewer.viewport.getHomeBounds().getCenter().minus(viewer.viewport.getCenter()).times(displayRegionWidth);
+        simulateNavigatorDrag(viewer.navigator, delta.x, delta.y);
     };
 
     var resizeElement = function ($element, width, height) {
@@ -463,7 +458,7 @@
                 }
                 else {
                     // Navigator hosted in viewer
-                    if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition == 'ABSOLUTE') {
+                    if (seadragonProperties.navigatorPosition && seadragonProperties.navigatorPosition === 'ABSOLUTE') {
                         // Navigator positioned 'ABSOLUTE'...size shouldn't change
 
                         assessNavigatorSize(

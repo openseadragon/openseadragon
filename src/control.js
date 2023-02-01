@@ -2,7 +2,7 @@
  * OpenSeadragon - Control
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -74,6 +74,7 @@ $.ControlAnchor = {
  * @param {Element} container - the element to control will be anchored too.
  */
 $.Control = function ( element, options, container ) {
+
     var parent = element.parentNode;
     if (typeof options === 'number')
     {
@@ -150,6 +151,7 @@ $.Control = function ( element, options, container ) {
     } else {
         parent.appendChild( this.wrapper );
     }
+
 };
 
 /** @lends OpenSeadragon.Control.prototype */
@@ -169,7 +171,7 @@ $.Control.prototype = {
     /**
      * Determines if the control is currently visible.
      * @function
-     * @return {Boolean} true if currently visible, false otherwise.
+     * @returns {Boolean} true if currently visible, false otherwise.
      */
     isVisible: function() {
         return this.wrapper.style.display !== "none";

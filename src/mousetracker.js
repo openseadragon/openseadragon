@@ -2,7 +2,7 @@
  * OpenSeadragon - MouseTracker
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -165,8 +165,8 @@
         this.dblClickTimeThreshold = options.dblClickTimeThreshold || $.DEFAULT_SETTINGS.dblClickTimeThreshold;
         /**
          * The maximum distance allowed between two pointer click events
-         * to be treated as a click gesture.
-         * @member {Number} clickDistThreshold
+         * to be treated as a double-click gesture.
+         * @member {Number} dblClickDistThreshold
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
@@ -271,7 +271,10 @@
             lastPinchDist:         0,
             currentPinchDist:      0,
             lastPinchCenter:       null,
-            currentPinchCenter:    null
+            currentPinchCenter:    null,
+
+            // Tracking for drag
+            sentDragEvent:         false
         };
 
         this.hasGestureHandlers = !!( this.pressHandler || this.nonPrimaryPressHandler ||
@@ -737,6 +740,8 @@
          *      True if the original event is a touch event, otherwise false. <span style="color:red;">Deprecated. Use pointerType and/or originalEvent instead.</span>
          * @param {Object} event.originalEvent
          *      The original event object.
+         * @param {Element} event.originalTarget
+         *      The DOM element clicked on.
          * @param {Object} event.userData
          *      Arbitrary user-defined object.
          */
@@ -1191,7 +1196,7 @@
      *      the emulated event, a synthetic event object created with values from the actual DOM event,
      *      or null if no DOM event applies. Emulated events can occur on eventType "wheel" on legacy mouse-scroll
      *      event emitting user agents.
-     * @property {Boolean} isStopable
+     * @property {Boolean} isStoppable
      *      True if propagation of the event (e.g. bubbling) can be stopped with stopPropagation/stopImmediatePropagation.
      * @property {Boolean} isCancelable
      *      True if the event's default handling by the browser can be prevented with preventDefault.
@@ -1398,7 +1403,6 @@
             --this.contacts;
 
             if (this.contacts < 0) {
-                $.console.warn('GesturePointList.removeContact() Implausible contacts value');
                 this.contacts = 0;
             }
         }
@@ -1444,6 +1448,8 @@
         for ( i = 0; i < pointerListCount; i++ ) {
             delegate.activePointersLists.pop();
         }
+
+        delegate.sentDragEvent = false;
     }
 
     /**
@@ -1463,7 +1469,7 @@
                     tracker.element,
                     event,
                     delegate[ event ],
-                    false
+                    event === $.MouseTracker.wheelEventName ? { passive: false, capture: false } : false
                 );
             }
 
@@ -2816,10 +2822,7 @@
             // If child element relinquishes capture to a parent we may get here
             //   from a pointerleave event while a pointerup event will never be received.
             //   In that case, we'll clean up the contact count
-            if ( (pointsList.type === 'mouse' || pointsList.type === 'pen') &&
-                                                        pointsList.contacts > 0 ) {
-                pointsList.removeContact();
-            }
+            pointsList.removeContact();
 
             listLength = pointsList.removeById( gPoint.id );
         } else {
@@ -2838,7 +2841,7 @@
     function getEventProcessDefaults( tracker, eventInfo ) {
         switch ( eventInfo.eventType ) {
             case 'pointermove':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
@@ -2850,28 +2853,28 @@
             case 'keydown':
             case 'keyup':
             case 'keypress':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // onContextMenu(), onKeyDown(), onKeyUp(), onKeyPress() may set true
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerdown':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerup':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'wheel':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // handleWheelEvent() may set true
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
@@ -2880,21 +2883,21 @@
             case 'gotpointercapture':
             case 'lostpointercapture':
             case 'pointercancel':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'click':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.clickHandler;
                 eventInfo.preventGesture = false;
                 eventInfo.stopPropagation = false;
                 break;
             case 'dblclick':
-                eventInfo.isStopable = true;
+                eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.dblClickHandler;
                 eventInfo.preventGesture = false;
@@ -2905,7 +2908,7 @@
             case 'pointerenter':
             case 'pointerleave':
             default:
-                eventInfo.isStopable = false;
+                eventInfo.isStoppable = false;
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
@@ -3272,6 +3275,7 @@
             //updateGPoint.captured = true; // Handled by updatePointerCaptured()
             updateGPoint.insideElementPressed = true;
             updateGPoint.insideElement = true;
+            updateGPoint.originalTarget = eventInfo.originalEvent.target;
             updateGPoint.contactPos = gPoint.currentPos;
             updateGPoint.contactTime = gPoint.currentTime;
             updateGPoint.lastPos = updateGPoint.currentPos;
@@ -3282,12 +3286,12 @@
             gPoint = updateGPoint;
         } else {
             // Initialize for tracking and add to the tracking list (no pointerenter event occurred before this)
-            $.console.warn('pointerdown event on untracked pointer');
+            // NOTE: pointerdown event on untracked pointer
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = true;
             gPoint.insideElement = true;
+            gPoint.originalTarget = eventInfo.originalEvent.target;
             startTrackingPointer( pointsList, gPoint );
-            return;
         }
 
         pointsList.addContact();
@@ -3431,8 +3435,8 @@
             releasePoint = updateGPoint.currentPos;
             releaseTime = updateGPoint.currentTime;
         } else {
-            // should never get here...we'll start to track pointer anyway
-            $.console.warn('updatePointerUp(): pointerup on untracked gPoint');
+            // NOTE: updatePointerUp(): pointerup on untracked gPoint
+            // ...we'll start to track pointer again
             gPoint.captured = false; // Handled by updatePointerCaptured()
             gPoint.insideElementPressed = false;
             gPoint.insideElement = true;
@@ -3455,7 +3459,7 @@
                 if ( pointsList.contacts === 0 ) {
 
                     // Release (pressed in our element)
-                    if ( tracker.releaseHandler ) {
+                    if ( tracker.releaseHandler && releasePoint ) {
                         tracker.releaseHandler(
                             {
                                 eventSource:           tracker,
@@ -3472,7 +3476,7 @@
                     }
 
                     // Drag End
-                    if ( tracker.dragEndHandler ) {
+                    if ( tracker.dragEndHandler && delegate.sentDragEvent ) {
                         tracker.dragEndHandler(
                             {
                                 eventSource:          tracker,
@@ -3487,6 +3491,9 @@
                             }
                         );
                     }
+
+                    // We want to clear this flag regardless of whether we fired the dragEndHandler
+                    delegate.sentDragEvent = false;
 
                     // Click / Double-Click
                     if ( ( tracker.clickHandler || tracker.dblClickHandler ) && updateGPoint.insideElement ) {
@@ -3504,6 +3511,7 @@
                                     shift:                eventInfo.originalEvent.shiftKey,
                                     isTouchEvent:         updateGPoint.type === 'touch',
                                     originalEvent:        eventInfo.originalEvent,
+                                    originalTarget:       updateGPoint.originalTarget,
                                     userData:             tracker.userData
                                 }
                             );
@@ -3553,7 +3561,7 @@
                 eventInfo.shouldReleaseCapture = false;
 
                 // Release (pressed in another element)
-                if ( tracker.releaseHandler ) {
+                if ( tracker.releaseHandler && releasePoint ) {
                     tracker.releaseHandler(
                         {
                             eventSource:           tracker,
@@ -3674,6 +3682,7 @@
                     }
                 );
                 eventInfo.preventDefault = true;
+                delegate.sentDragEvent = true;
             }
         } else if ( pointsList.contacts === 2 ) {
             // Move (2 contacts, use center)

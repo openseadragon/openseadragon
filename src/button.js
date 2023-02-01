@@ -2,7 +2,7 @@
  * OpenSeadragon - Button
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -398,6 +398,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     disable: function(){
         this.notifyGroupExit();
         this.element.disabled = true;
+        this.tracker.setTracking(false);
         $.setElementOpacity( this.element, 0.2, true );
     },
 
@@ -406,6 +407,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      */
     enable: function(){
         this.element.disabled = false;
+        this.tracker.setTracking(true);
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
     },

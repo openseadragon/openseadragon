@@ -2,7 +2,7 @@
  * OpenSeadragon - Rect
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -230,7 +230,7 @@ $.Rect.prototype = {
      * Returns the width and height component as a vector OpenSeadragon.Point
      * @function
      * @returns {OpenSeadragon.Point} The 2 dimensional vector representing the
-     *  the width and height of the rectangle.
+     *  width and height of the rectangle.
      */
     getSize: function() {
         return new $.Point(this.width, this.height);
@@ -240,7 +240,7 @@ $.Rect.prototype = {
      * Determines if two Rectangles have equivalent components.
      * @function
      * @param {OpenSeadragon.Rect} rectangle The Rectangle to compare to.
-     * @return {Boolean} 'true' if all components are equal, otherwise 'false'.
+     * @returns {Boolean} 'true' if all components are equal, otherwise 'false'.
      */
     equals: function(other) {
         return (other instanceof $.Rect) &&
@@ -287,7 +287,7 @@ $.Rect.prototype = {
      * Returns the smallest rectangle that will contain this and the given
      * rectangle bounding boxes.
      * @param {OpenSeadragon.Rect} rect
-     * @return {OpenSeadragon.Rect} The new rectangle.
+     * @returns {OpenSeadragon.Rect} The new rectangle.
      */
     union: function(rect) {
         var thisBoundingBox = this.getBoundingBox();
@@ -313,7 +313,7 @@ $.Rect.prototype = {
      * Returns the bounding box of the intersection of this rectangle with the
      * given rectangle.
      * @param {OpenSeadragon.Rect} rect
-     * @return {OpenSeadragon.Rect} the bounding box of the intersection
+     * @returns {OpenSeadragon.Rect} the bounding box of the intersection
      * or null if the rectangles don't intersect.
      */
     intersection: function(rect) {
@@ -441,7 +441,7 @@ $.Rect.prototype = {
      * @param {Number} degrees The angle in degrees to rotate.
      * @param {OpenSeadragon.Point} [pivot] The point about which to rotate.
      * Defaults to the center of the rectangle.
-     * @return {OpenSeadragon.Rect}
+     * @returns {OpenSeadragon.Rect}
      */
     rotate: function(degrees, pivot) {
         degrees = $.positiveModulo(degrees, 360);

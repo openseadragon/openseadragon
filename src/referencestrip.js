@@ -2,7 +2,7 @@
  * OpenSeadragon - ReferenceStrip
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -288,7 +288,7 @@ $.ReferenceStrip.prototype = {
      */
     update: function () {
         if ( THIS[this.id].animating ) {
-            $.console.log( 'image reference strip update' );
+            // $.console.log( 'image reference strip update' );
             return true;
         }
         return false;
@@ -321,7 +321,8 @@ function onStripClick( event ) {
         var page;
 
         if ( 'horizontal' === this.scroll ) {
-            page = Math.floor(event.position.x / this.panelWidth);
+            // +4px fix to solve problem with precision on thumbnail selection if there is a lot of them
+            page = Math.floor(event.position.x / (this.panelWidth + 4));
         } else {
             page = Math.floor(event.position.y / this.panelHeight);
         }

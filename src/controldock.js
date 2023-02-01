@@ -2,7 +2,7 @@
  * OpenSeadragon - ControlDock
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -149,7 +149,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         removeControl: function ( element ) {
             element = $.getElement( element );
@@ -165,7 +165,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         clearControls: function () {
             while ( this.controls.length > 0 ) {
@@ -178,7 +178,7 @@
 
         /**
          * @function
-         * @return {Boolean}
+         * @returns {Boolean}
          */
         areControlsEnabled: function () {
             var i;
@@ -195,7 +195,7 @@
 
         /**
          * @function
-         * @return {OpenSeadragon.ControlDock} Chainable.
+         * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         setControlsEnabled: function( enabled ) {
             var i;

@@ -2,7 +2,7 @@
  * OpenSeadragon - Overlay
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -299,18 +299,18 @@
             this.adjust(position, size);
 
             var rotate = 0;
-            if (viewport.degrees &&
+            if (viewport.getRotation(true) &&
                 this.rotationMode !== $.OverlayRotationMode.NO_ROTATION) {
                 // BOUNDING_BOX is only valid if both directions get scaled.
                 // Get replaced by EXACT otherwise.
                 if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
                     this.width !== null && this.height !== null) {
                     var rect = new $.Rect(position.x, position.y, size.x, size.y);
-                    var boundingBox = this._getBoundingBox(rect, viewport.degrees);
+                    var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
                     size = boundingBox.getSize();
                 } else {
-                    rotate = viewport.degrees;
+                    rotate = viewport.getRotation(true);
                 }
             }
 
@@ -447,7 +447,7 @@
         // private
         _adjustBoundsForRotation: function(viewport, bounds) {
             if (!viewport ||
-                viewport.degrees === 0 ||
+                viewport.getRotation(true) === 0 ||
                 this.rotationMode === $.OverlayRotationMode.EXACT) {
                 return bounds;
             }
@@ -467,7 +467,7 @@
             }
 
             // NO_ROTATION case
-            return bounds.rotate(-viewport.degrees,
+            return bounds.rotate(-viewport.getRotation(true),
                 this._getPlacementPoint(bounds));
         }
     };

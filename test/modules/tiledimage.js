@@ -9,6 +9,7 @@
 
             testLog.reset();
 
+            // eslint-disable-next-line new-cap
             viewer = OpenSeadragon({
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
@@ -41,8 +42,11 @@
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
             var contentSize = image.getContentSize();
+            var sizeInWindowCoords = image.getSizeInWindowCoordinates();
             assert.equal(contentSize.x, 500, 'contentSize.x');
             assert.equal(contentSize.y, 2000, 'contentSize.y');
+            assert.equal(sizeInWindowCoords.x, 125, 'sizeInWindowCoords.x');
+            assert.equal(sizeInWindowCoords.y, 500, 'sizeInWindowCoords.y');
 
             checkBounds(assert, image, new OpenSeadragon.Rect(5, 6, 10, 40), 'initial bounds');
 
@@ -74,7 +78,18 @@
             image.setHeight(4);
             checkBounds(assert, image, new OpenSeadragon.Rect(7, 8, 1, 4), 'bounds after width');
 
-            assert.equal(handlerCount, 1, 'correct number of handlers called');
+            viewer.addHandler('zoom', function zoomHandler(event) {
+                var sizeInWindowCoords = image.getSizeInWindowCoordinates();
+                viewer.removeHandler('zoom', zoomHandler);
+                handlerCount++;
+                assert.equal(sizeInWindowCoords.x, 4000, 'sizeInWindowCoords.x after zoom');
+                assert.equal(sizeInWindowCoords.y, 16000, 'sizeInWindowCoords.y after zoom');
+            });
+
+            viewer.viewport.zoomTo(8, null, true);
+
+            assert.equal(handlerCount, 2, 'correct number of handlers called');
+
             done();
         });
 
@@ -503,12 +518,17 @@
             var image = viewer.world.getItemAt(0);
             assert.equal(image.getFullyLoaded(), false, 'not fully loaded at first');
 
+            // Zoom out enough that we don't start out with all the tiles loaded.
+            viewer.viewport.zoomBy(0.5, null, true);
+
             var count = 0;
 
             var fullyLoadedChangeHandler = function(event) {
                 if (count === 0) {
                     assert.equal(event.fullyLoaded, true, 'event includes true fullyLoaded property');
                     assert.equal(image.getFullyLoaded(), true, 'image is fully loaded after event');
+
+                    // Zoom in enough that it needs to load some new tiles.
                     viewer.viewport.zoomBy(5, null, true);
                 } else if (count === 1) {
                     assert.equal(event.fullyLoaded, false, 'event includes false fullyLoaded property');

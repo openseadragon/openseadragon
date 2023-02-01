@@ -2,7 +2,7 @@
  * OpenSeadragon - ImageTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
+ * Copyright (C) 2010-2022 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -89,10 +89,11 @@
          * @function
          * @param {Object} options - the options
          * @param {String} dataUrl - the url the image was retrieved from, if any.
-         * @return {Object} options - A dictionary of keyword arguments sufficient
+         * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
+         * @returns {Object} options - A dictionary of keyword arguments sufficient
          *      to configure this tile sources constructor.
          */
-        configure: function (options, dataUrl) {
+        configure: function (options, dataUrl, postData) {
             return options;
         },
         /**
@@ -271,8 +272,10 @@
          */
         _freeupCanvasMemory: function () {
             for (var i = 0; i < this.levels.length; i++) {
-                this.levels[i].context2D.canvas.height = 0;
-                this.levels[i].context2D.canvas.width = 0;
+                if(this.levels[i].context2D){
+                    this.levels[i].context2D.canvas.height = 0;
+                    this.levels[i].context2D.canvas.width = 0;
+                }
             }
         },
     });
