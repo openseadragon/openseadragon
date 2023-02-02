@@ -1704,8 +1704,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * when the asynchronous processing of the image is done. The image will be
          * marked as entirely loaded when the callback has been called once for each
          * call to getCompletionCallback.
-         * Note: if you do not process the tile in asynchronous context
-         * (timeout, Promises, async, callbacks such as image.onload ...), do not use this function.
          */
 
         var fallbackCompletion = getCompletionCallback();
