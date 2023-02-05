@@ -1656,9 +1656,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
         var increment = 0,
+            eventFinished = false,
             _this = this;
 
         function getCompletionCallback() {
+            if (eventFinished) {
+                $.console.error("Event 'tile-loaded' argument getCompletionCallback must be called synchronously. " +
+                    "Its return value should be called asynchronously.");
+            }
             increment++;
             return completionCallback;
         }
@@ -1700,6 +1705,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * marked as entirely loaded when the callback has been called once for each
          * call to getCompletionCallback.
          */
+
+        var fallbackCompletion = getCompletionCallback();
         this.viewer.raiseEvent("tile-loaded", {
             tile: tile,
             tiledImage: this,
@@ -1711,8 +1718,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             data: data,
             getCompletionCallback: getCompletionCallback
         });
+        eventFinished = true;
         // In case the completion callback is never called, we at least force it once.
-        getCompletionCallback()();
+        fallbackCompletion();
     },
 
     /**
