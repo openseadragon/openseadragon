@@ -295,7 +295,6 @@ $.Viewer = function( options ) {
         dblClickDistThreshold:    this.dblClickDistThreshold,
         contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
-        keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
         dblClickHandler:          $.delegate( this, onCanvasDblClick ),
         dragHandler:              $.delegate( this, onCanvasDrag ),
@@ -2793,40 +2792,6 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            default:
-                //console.log( 'navigator keycode %s', event.keyCode );
-                event.preventDefault = false;
-                break;
-        }
-    } else {
-        event.preventDefault = false;
-    }
-}
-function onCanvasKeyPress( event ) {
-    var canvasKeyPressEventArgs = {
-      originalEvent: event.originalEvent,
-      preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
-      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
-    };
-
-    /**
-     * Raised when a keyboard key is pressed and the focus is on the {@link OpenSeadragon.Viewer#canvas} element.
-     *
-     * @event canvas-key-press
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
-     * @property {Object} originalEvent - The original DOM event.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
-     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false.
-     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     */
-    this.raiseEvent('canvas-key-press', canvasKeyPressEventArgs);
-
-    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
             case 43://=|+
             case 61://=|+
                 this.viewport.zoomBy(1.1);
@@ -2851,22 +2816,22 @@ function onCanvasKeyPress( event ) {
                     } else {
                         this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
                     }
-                    this.viewport.applyConstraints();
-                  }
-                  event.preventDefault = true;
-                  break;
+                        this.viewport.applyConstraints();
+                    }
+                    event.preventDefault = true;
+                    break;
             case 115://s
             case 83://S
                 if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(0.9);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                    }
+                      this.viewport.applyConstraints();
+                    }
+                    event.preventDefault = true;
+                    break;
             case 97://a
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
@@ -2876,41 +2841,41 @@ function onCanvasKeyPress( event ) {
                 break;
             case 100://d
                 if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                  this.viewport.applyConstraints();
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                    this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
             case 114: //r - clockwise rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
+                if(this.viewport.flipped){
+                    this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                } else{
+                    this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                }
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
             case 82: //R - counterclockwise  rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
+                if(this.viewport.flipped){
+                    this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                } else{
+                    this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                }
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
             case 102: //f
-              this.viewport.toggleFlip();
-              event.preventDefault = true;
-              break;
+                this.viewport.toggleFlip();
+                event.preventDefault = true;
+                break;
             case 106: //j - previous image source
-              this.goToPreviousPage();
-              break;
+                this.goToPreviousPage();
+                break;
             case 107: //k - next image source
-              this.goToNextPage();
-              break;
+                this.goToNextPage();
+                break;
             default:
-                // console.log( 'navigator keycode %s', event.keyCode );
+                //console.log( 'navigator keycode %s', event.keyCode );
                 event.preventDefault = false;
                 break;
         }
@@ -2918,8 +2883,6 @@ function onCanvasKeyPress( event ) {
         event.preventDefault = false;
     }
 }
-
-
 
 function onCanvasClick( event ) {
     var gestureSettings;
