@@ -711,6 +711,8 @@ $.Viewport.prototype = {
 
         if(constraints){
             this.panTo(center, false);
+
+            newZoom = this._applyZoomConstraints(newZoom);
             this.zoomTo(newZoom, null, false);
 
             var constrainedBounds = this.getConstrainedBounds();
