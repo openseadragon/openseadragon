@@ -2810,7 +2810,7 @@ function onCanvasKeyDown( event ) {
                 break;
             case 119://w
             case 87://W
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
                     if ( event.shift ) {
                         this.viewport.zoomBy(1.1);
                     } else {
@@ -2822,7 +2822,7 @@ function onCanvasKeyDown( event ) {
                     break;
             case 115://s
             case 83://S
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
                     if ( event.shift ) {
                         this.viewport.zoomBy(0.9);
                     } else {
@@ -2833,14 +2833,14 @@ function onCanvasKeyDown( event ) {
                     event.preventDefault = true;
                     break;
             case 97://a
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                     this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
             case 100://d
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                     this.viewport.applyConstraints();
                 }
