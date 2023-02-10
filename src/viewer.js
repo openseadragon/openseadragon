@@ -2817,10 +2817,10 @@ function onCanvasKeyDown( event ) {
                     } else {
                         this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
                     }
-                        this.viewport.applyConstraints();
-                    }
-                    event.preventDefault = true;
-                    break;
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
             case 115://s
             case 83://S
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
@@ -2829,10 +2829,10 @@ function onCanvasKeyDown( event ) {
                     } else {
                         this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
                     }
-                      this.viewport.applyConstraints();
-                    }
-                    event.preventDefault = true;
-                    break;
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
             case 97://a
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
