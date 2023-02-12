@@ -2757,7 +2757,7 @@ function onCanvasKeyDown( event ) {
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
-            case 38://up arrow
+            case 38://up arrow/shift uparrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
@@ -2768,7 +2768,7 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 40://down arrow
+            case 40://down arrow/shift downarrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
@@ -2793,13 +2793,12 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 43://=|+
-            case 61://=|+
+            case 187://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
                 break;
-            case 45://-|_
+            case 189://-|_
                 this.viewport.zoomBy(0.9);
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
@@ -2809,8 +2808,7 @@ function onCanvasKeyDown( event ) {
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
                 break;
-            case 119://w
-            case 87://W
+            case 87://W/w
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                     if ( event.shift ) {
                         this.viewport.zoomBy(1.1);
@@ -2821,8 +2819,7 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 115://s
-            case 83://S
+            case 83://S/s
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                     if ( event.shift ) {
                         this.viewport.zoomBy(0.9);
@@ -2833,46 +2830,45 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 97://a
+            case 65://a/A
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                     this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
-            case 100://d
+            case 68://d/D
                 if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
                     this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
-            case 114: //r - clockwise rotation
-                if(this.viewport.flipped){
-                    this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-                } else{
-                    this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+            case 82: //r - clockwise rotation/R - counterclockwise rotation
+                if(event.shift){
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    }
+                }else{
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    }
                 }
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
                 break;
-            case 82: //R - counterclockwise  rotation
-                if(this.viewport.flipped){
-                    this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-                } else{
-                    this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-                }
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 102: //f
+            case 70: //f/F
                 this.viewport.toggleFlip();
                 event.preventDefault = true;
                 break;
-            case 106: //j - previous image source
+            case 74: //j - previous image source
                 this.goToPreviousPage();
                 break;
-            case 107: //k - next image source
+            case 75: //k - next image source
                 this.goToNextPage();
                 break;
             default:
