@@ -885,7 +885,13 @@
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
          * @param {Number} event.keyCode
-         *      The key code that was pressed.
+         *      The key code that was pressed (legacy DOM event model).
+         * @param {String} event.key
+         *      The key value of the key pressed.
+         * @param {String} event.code
+         *      The code value associated with the key’s physical placement on the keyboard.
+         * @param {Number} event.location
+         *      The location of the key on the device.
          * @param {Boolean} event.ctrl
          *      True if the ctrl key was pressed during this event.
          * @param {Boolean} event.shift
@@ -911,7 +917,13 @@
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
          * @param {Number} event.keyCode
-         *      The key code that was pressed.
+         *      The key code that was pressed (legacy DOM event model).
+         * @param {String} event.key
+         *      The key value of the key pressed.
+         * @param {String} event.code
+         *      The code value associated with the key’s physical placement on the keyboard.
+         * @param {Number} event.location
+         *      The location of the key on the device.
          * @param {Boolean} event.ctrl
          *      True if the ctrl key was pressed during this event.
          * @param {Boolean} event.shift
@@ -937,7 +949,13 @@
          * @param {OpenSeadragon.MouseTracker} event.eventSource
          *      A reference to the tracker instance.
          * @param {Number} event.keyCode
-         *      The key code that was pressed.
+         *      The key code that was pressed (legacy DOM event model).
+         * @param {String} event.key
+         *      The key value of the key pressed.
+         * @param {String} event.code
+         *      The code value associated with the key’s physical placement on the keyboard.
+         * @param {Number} event.location
+         *      The location of the key on the device.
          * @param {Boolean} event.ctrl
          *      True if the ctrl key was pressed during this event.
          * @param {Boolean} event.shift
@@ -1804,7 +1822,10 @@
         if ( tracker.keyDownHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
             eventArgs = {
                 eventSource:          tracker,
-                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                keyCode:              event.keyCode || event.charCode,
+                key:                  event.key || '',
+                code:                 event.code || '',
+                location:             event.location || 0,
                 ctrl:                 event.ctrlKey,
                 shift:                event.shiftKey,
                 alt:                  event.altKey,
@@ -1846,7 +1867,10 @@
         if ( tracker.keyUpHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
             eventArgs = {
                 eventSource:          tracker,
-                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                keyCode:              event.keyCode || event.charCode,
+                key:                  event.key || '',
+                code:                 event.code || '',
+                location:             event.location || 0,
                 ctrl:                 event.ctrlKey,
                 shift:                event.shiftKey,
                 alt:                  event.altKey,
@@ -1888,7 +1912,10 @@
         if ( tracker.keyHandler && !eventInfo.preventGesture && !eventInfo.defaultPrevented ) {
             eventArgs = {
                 eventSource:          tracker,
-                keyCode:              event.keyCode ? event.keyCode : event.charCode,
+                keyCode:              event.keyCode || event.charCode,
+                key:                  event.key || '',
+                code:                 event.code || '',
+                location:             event.location || 0,
                 ctrl:                 event.ctrlKey,
                 shift:                event.shiftKey,
                 alt:                  event.altKey,
