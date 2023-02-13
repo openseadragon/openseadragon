@@ -2905,6 +2905,7 @@ function onCanvasKeyPress( event ) {
 
     this.raiseEvent('canvas-key-press', canvasKeyPressEventArgs);
 }
+
 function onCanvasClick( event ) {
     var gestureSettings;
 
