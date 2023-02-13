@@ -2898,8 +2898,8 @@ function onCanvasKeyPress( event ) {
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {Object} originalEvent - The original DOM event.
      * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
-     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false. It has no longer any effect.
-     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false. It has no longer any effect.
+     * @property {Boolean} preventVerticalPan - No longer used, use the 'canvas-key' event instead.
+     * @property {Boolean} preventHorizontalPan - No longer used, use the 'canvas-key' event instead.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
 
