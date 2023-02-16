@@ -2757,7 +2757,7 @@ function onCanvasKeyDown( event ) {
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
-            case 38://up arrow
+            case 38://up arrow/shift uparrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
@@ -2768,7 +2768,7 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 40://down arrow
+            case 40://down arrow/shift downarrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
@@ -2793,6 +2793,84 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
+            case 187://=|+
+                this.viewport.zoomBy(1.1);
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 189://-|_
+                this.viewport.zoomBy(0.9);
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 48://0|)
+                this.viewport.goHome();
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 87://W/w
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(1.1);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
+                    }
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 83://S/s
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(0.9);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                    }
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 65://a/A
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 68://d/D
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 82: //r - clockwise rotation/R - counterclockwise rotation
+                if(event.shift){
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    }
+                }else{
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    }
+                }
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 70: //f/F
+                this.viewport.toggleFlip();
+                event.preventDefault = true;
+                break;
+            case 74: //j - previous image source
+                this.goToPreviousPage();
+                break;
+            case 75: //k - next image source
+                this.goToNextPage();
+                break;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
                 event.preventDefault = false;
@@ -2802,12 +2880,10 @@ function onCanvasKeyDown( event ) {
         event.preventDefault = false;
     }
 }
+
 function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
-      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     /**
@@ -2818,108 +2894,11 @@ function onCanvasKeyPress( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {Object} originalEvent - The original DOM event.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
-     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false.
-     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
+
     this.raiseEvent('canvas-key-press', canvasKeyPressEventArgs);
-
-    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
-            case 43://=|+
-            case 61://=|+
-                this.viewport.zoomBy(1.1);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 45://-|_
-                this.viewport.zoomBy(0.9);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 48://0|)
-                this.viewport.goHome();
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 119://w
-            case 87://W
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(1.1);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                    }
-                    this.viewport.applyConstraints();
-                  }
-                  event.preventDefault = true;
-                  break;
-            case 115://s
-            case 83://S
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 97://a
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 100://d
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 114: //r - clockwise rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 82: //R - counterclockwise  rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 102: //f
-              this.viewport.toggleFlip();
-              event.preventDefault = true;
-              break;
-            case 106: //j - previous image source
-              this.goToPreviousPage();
-              break;
-            case 107: //k - next image source
-              this.goToNextPage();
-              break;
-            default:
-                // console.log( 'navigator keycode %s', event.keyCode );
-                event.preventDefault = false;
-                break;
-        }
-    } else {
-        event.preventDefault = false;
-    }
 }
-
-
 
 function onCanvasClick( event ) {
     var gestureSettings;
