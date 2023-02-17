@@ -565,50 +565,50 @@
   *     viewing the first image and the 'next' button will wrap to the first
   *     image when viewing the last image.
   *
-  * @property {String} zoomInButton
-  *     Set the id of the custom 'Zoom in' button to use.
+  *@property {String|Element} zoomInButton
+  *     Set the id or element of the custom 'Zoom in' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} zoomOutButton
-  *     Set the id of the custom 'Zoom out' button to use.
+  * @property {String|Element} zoomOutButton
+  *     Set the id or element of the custom 'Zoom out' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} homeButton
-  *     Set the id of the custom 'Go home' button to use.
+  * @property {String|Element} homeButton
+  *     Set the id or element of the custom 'Go home' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} fullPageButton
-  *     Set the id of the custom 'Toggle full page' button to use.
+  * @property {String|Element} fullPageButton
+  *     Set the id or element of the custom 'Toggle full page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} rotateLeftButton
-  *     Set the id of the custom 'Rotate left' button to use.
+  * @property {String|Element} rotateLeftButton
+  *     Set the id or element of the custom 'Rotate left' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} rotateRightButton
-  *     Set the id of the custom 'Rotate right' button to use.
+  * @property {String|Element} rotateRightButton
+  *     Set the id or element of the custom 'Rotate right' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} previousButton
-  *     Set the id of the custom 'Previous page' button to use.
+  * @property {String|Element} previousButton
+  *     Set the id or element of the custom 'Previous page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} nextButton
-  *     Set the id of the custom 'Next page' button to use.
+  * @property {String|Element} nextButton
+  *     Set the id or element of the custom 'Next page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
