@@ -46,6 +46,7 @@
     },
     "scripts": {
         "test": "grunt test",
-        "prepare": "grunt build"
+        "prepare": "grunt build",
+        "lint": "eslint ./src"
     }
 }
