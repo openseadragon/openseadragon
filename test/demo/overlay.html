@@ -18,18 +18,34 @@
         <input type="button" value="Rotate" id="rotate">
         <span id="degrees">0deg</span>
     </div>
+    <canvas id="test-canvas" width = "400" height="400" style="image-rendering: pixelated; position:fixed;right:10px;top:10px;width:400px;height:400px;background-color:white;border:thin gray solid;"></canvas>
 
     <script type="text/javascript">
+
+        var canvas = document.getElementById('test-canvas');// width == height == 400
+        var context = canvas.getContext("2d");
+        context.fillRect(0, 0, 400, 400); // fill entire canvas with black rectangle
+        context.translate(200, 200); // translate to center
+        context.rotate(1 * Math.PI/180); // rotate by 1 degree
+        context.clearRect(-100, -100, 200, 200); // clear a 200 x 200 rectangle
+        context.fillRect(-100, -100, 100, 200); // draw a 100 x 200 rectangle in the left half
+        context.fillRect(-00, -100, 100, 200); // draw a 100 x 200 rectangle in the right half
+
+        window.context = context;
 
         var viewer = OpenSeadragon({
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
             minZoomImageRatio: 0,
-            maxZoomPixelRatio: 10
+            maxZoomPixelRatio: 10,
+            subPixelRoundingForTransparency: OpenSeadragon.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS
         });
+        window.c = viewer.drawer.canvas.getContext("2d");
 
         viewer.addHandler("open", function(event) {
+            viewer.world.getItemAt(0).source.hasTransparency = function(){ return true; }
+            viewer.viewport.rotateTo(1);
             var elt = document.createElement("div");
             elt.className = "runtime-overlay";
             elt.style.background = "green";

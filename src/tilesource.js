@@ -420,6 +420,41 @@ $.TileSource.prototype = {
         return new $.Rect( px * scale, py * scale, sx * scale, sy * scale );
     },
 
+    /**
+     * @function
+     * @param {Number} level
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Boolean} [isSource=false] Whether to return the source bounds of the tile.
+     * @returns {OpenSeadragon.Rect} Either where this tile fits (in normalized coordinates unless imageCoordinates == true) or the
+     * portion of the tile to use as the source of the drawing operation (in pixels), depending on
+     * the isSource parameter, without overlap.
+     */
+    getTileBoundsNoOverlap: function( level, x, y, isSource, imageCoordinates ) {
+        var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
+            tileWidth = this.getTileWidth(level),
+            tileHeight = this.getTileHeight(level),
+            tileOverlap = this.tileOverlap || 0,
+            px = tileWidth * x,
+            py = tileHeight * y,
+            sx = tileWidth,
+            sy = tileHeight,
+            scale = 1.0 / dimensionsScaled.x;
+
+        sx = Math.min( sx, dimensionsScaled.x - px );
+        sy = Math.min( sy, dimensionsScaled.y - py );
+
+        if (isSource) {
+            return new $.Rect((x === 0 ? 0 : tileOverlap), (y === 0 ? 0 : tileOverlap), sx, sy);
+        } else if ( imageCoordinates ){
+            return new $.Rect( px, py, sx, sy).times(scale * this.width);
+        } else {
+            return new $.Rect( px, py, sx, sy).times(scale);
+        }
+
+
+    },
+
 
     /**
      * Responsible for retrieving, and caching the
