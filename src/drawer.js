@@ -94,7 +94,7 @@ $.Drawer = function( options ) {
      * @member {Object} context
      * @memberof OpenSeadragon.Drawer#
      */
-    this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
+    this.context    = this.useCanvas ? this.canvas.getContext( this.useCanvas.contextType || "2d" ) : null;
 
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
@@ -142,33 +142,6 @@ $.Drawer = function( options ) {
 
 /** @lends OpenSeadragon.Drawer.prototype */
 $.Drawer.prototype = {
-    // deprecated
-    addOverlay: function( element, location, placement, onDraw ) {
-        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
-        this.viewer.addOverlay( element, location, placement, onDraw );
-        return this;
-    },
-
-    // deprecated
-    updateOverlay: function( element, location, placement ) {
-        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
-        this.viewer.updateOverlay( element, location, placement );
-        return this;
-    },
-
-    // deprecated
-    removeOverlay: function( element ) {
-        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
-        this.viewer.removeOverlay( element );
-        return this;
-    },
-
-    // deprecated
-    clearOverlays: function() {
-        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
-        this.viewer.clearOverlays();
-        return this;
-    },
 
     /**
      * This function converts the given point from to the drawer coordinate by
@@ -206,63 +179,9 @@ $.Drawer.prototype = {
         context.clip();
     },
 
-    /**
-     * Set the opacity of the drawer.
-     * @param {Number} opacity
-     * @returns {OpenSeadragon.Drawer} Chainable.
-     */
-    setOpacity: function( opacity ) {
-        $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
-        var world = this.viewer.world;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            world.getItemAt( i ).setOpacity( opacity );
-        }
-        return this;
-    },
 
-    /**
-     * Get the opacity of the drawer.
-     * @returns {Number}
-     */
-    getOpacity: function() {
-        $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
-        var world = this.viewer.world;
-        var maxOpacity = 0;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            var opacity = world.getItemAt( i ).getOpacity();
-            if ( opacity > maxOpacity ) {
-                maxOpacity = opacity;
-            }
-        }
-        return maxOpacity;
-    },
 
-    // deprecated
-    needsUpdate: function() {
-        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
-        return this.viewer.world.needsDraw();
-    },
 
-    // deprecated
-    numTilesLoaded: function() {
-        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
-        return this.viewer.tileCache.numTilesLoaded();
-    },
-
-    // deprecated
-    reset: function() {
-        $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
-        this.viewer.world.resetItems();
-        return this;
-    },
-
-    // deprecated
-    update: function() {
-        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
-        this.clear();
-        this.viewer.world.draw();
-        return this;
-    },
 
     /**
      * @returns {Boolean} True if rotation is supported.
@@ -761,7 +680,92 @@ $.Drawer.prototype = {
             x: sketchCanvasSize,
             y: sketchCanvasSize
         };
-    }
+    },
+
+    // deprecated functions
+    // deprecated
+    addOverlay: function( element, location, placement, onDraw ) {
+        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
+        this.viewer.addOverlay( element, location, placement, onDraw );
+        return this;
+    },
+
+    // deprecated
+    updateOverlay: function( element, location, placement ) {
+        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
+        this.viewer.updateOverlay( element, location, placement );
+        return this;
+    },
+
+    // deprecated
+    removeOverlay: function( element ) {
+        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
+        this.viewer.removeOverlay( element );
+        return this;
+    },
+
+    // deprecated
+    clearOverlays: function() {
+        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
+        this.viewer.clearOverlays();
+        return this;
+    },
+    // deprecated
+    needsUpdate: function() {
+        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
+        return this.viewer.world.needsDraw();
+    },
+
+    // deprecated
+    numTilesLoaded: function() {
+        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
+        return this.viewer.tileCache.numTilesLoaded();
+    },
+
+    // deprecated
+    reset: function() {
+        $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
+        this.viewer.world.resetItems();
+        return this;
+    },
+
+    // deprecated
+    update: function() {
+        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
+        this.clear();
+        this.viewer.world.draw();
+        return this;
+    },
+    /**
+     * Set the opacity of the drawer.
+     * @param {Number} opacity
+     * @returns {OpenSeadragon.Drawer} Chainable.
+     */
+    setOpacity: function( opacity ) {
+        $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
+        var world = this.viewer.world;
+        for (var i = 0; i < world.getItemCount(); i++) {
+            world.getItemAt( i ).setOpacity( opacity );
+        }
+        return this;
+    },
+
+    /**
+     * Get the opacity of the drawer.
+     * @returns {Number}
+     */
+    getOpacity: function() {
+        $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
+        var world = this.viewer.world;
+        var maxOpacity = 0;
+        for (var i = 0; i < world.getItemCount(); i++) {
+            var opacity = world.getItemAt( i ).getOpacity();
+            if ( opacity > maxOpacity ) {
+                maxOpacity = opacity;
+            }
+        }
+        return maxOpacity;
+    },
 };
 
 }( OpenSeadragon ));

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OSD-ThreeJS</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+    <link rel="stylesheet" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+    <!-- <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script> -->
+    <!-- <script type="importmap">
+    {
+        "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"
+        }
+    } -->
+    </script>
+    <script type="module" src="./webgl.js"></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 600px;
+            height: 400px;
+        }
+
+        #three-canvas{
+            position:fixed;
+            top:5px;
+            right:5px;
+            border: thin gray solid;
+        }
+        .image-options{
+            display: grid;
+            grid-template-columns: 2em repeat(7, 10em);
+        }
+        .image-options input[type=number]{
+            width: 5em;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show three.js based rendering.
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+
+    <div id="image-picker">
+        <div class="image-options">
+            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+            <label><input type="checkbox" checked data-image="rainbow" class="toggle"> Rainbow Grid</label>
+            <label>X: <input type="number" value="0" data-image="rainbow" data-field="x"> </label>
+            <label>Y: <input type="number" value="0" data-image="rainbow" data-field="y"> </label>
+            <label>Width: <input type="number" value="1" data-image="rainbow" data-field="width" min="0"> </label>
+            <label>Degrees: <input type="number" value="0" data-image="rainbow" data-field="degrees"> </label>
+            <label>Opacity: <input type="number" value="1" data-image="rainbow" data-field="opacity" min="0" max="1" step="0.2"> </label>
+            <label>Flipped: <input type="checkbox" data-image="rainbow" data-field="flipped"></label>
+        </div>
+        <div class="image-options">
+            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+            <label><input type="checkbox" data-image="leaves" class="toggle"> Leaves</label>
+            <label>X: <input type="number" value="0.5" data-image="leaves" data-field="x"> </label>
+            <label>Y: <input type="number" value="0.5" data-image="leaves" data-field="y"> </label>
+            <label>Width: <input type="number" value="1.5" data-image="leaves" data-field="width" min="0"> </label>
+            <label>Degrees: <input type="number" value="0" data-image="leaves" data-field="degrees"> </label>
+            <label>Opacity: <input type="number" value="0.8" data-image="leaves" data-field="opacity" min="0" max="1" step="0.2"> </label>
+            <label>Flipped: <input type="checkbox" data-image="leaves" data-field="flipped"></label>
+        </div>
+        <div class="image-options">
+            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+            <label><input type="checkbox" data-image="bblue" class="toggle"> BBlue PNG</label>
+            <label>X: <input type="number" value="0" data-image="bblue" data-field="x"> </label>
+            <label>Y: <input type="number" value="0" data-image="bblue" data-field="y"> </label>
+            <label>Width: <input type="number" value="0.5" data-image="bblue" data-field="width" min="0"> </label>
+            <label>Degrees: <input type="number" value="0" data-image="bblue" data-field="degrees"> </label>
+            <label>Opacity: <input type="number" value="1" data-image="bblue" data-field="opacity" min="0" max="1" step="0.2"> </label>
+            <label>Flipped: <input type="checkbox" data-image="bblue" data-field="flipped"></label>
+        </div>
+        <!-- <div class="image-options">
+            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+            <label><input type="checkbox" data-image="duomo" class="toggle"> Duomo</label>
+            <label>X: <input type="number" value="0" data-image="duomo" data-field="x"> </label>
+            <label>Y: <input type="number" value="0" data-image="duomo" data-field="y"> </label>
+            <label>Width: <input type="number" value="0.5" data-image="duomo" data-field="width"> </label>
+            <label>Degrees: <input type="number" value="0" data-image="duomo" data-field="degrees"> </label>
+            <label>Opacity: <input type="number" value="1" data-image="duomo" data-field="opacity"> </label>
+            <label>Flipped: <input type="checkbox" data-image="duomo" data-field="flipped"></label>
+        </div> -->
+    </div>
+
+    <canvas id="three-canvas"></canvas>
+</body>
+</html>
+

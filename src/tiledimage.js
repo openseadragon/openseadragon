@@ -307,6 +307,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
             this._updateForScale();
+            this._raiseBoundsChange();
             this._needsDraw = true;
             return true;
         }
@@ -413,7 +414,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
         var bounds = this.source.getTileBounds(level, xMod, yMod);
         if (this.getFlip()) {
-            bounds.x = 1 - bounds.x - bounds.width;
+            bounds.x = Math.max(0, 1 - bounds.x - bounds.width);
         }
         bounds.x += (x - xMod) / numTiles.x;
         bounds.y += (this._worldHeightCurrent / this._worldWidthCurrent) * ((y - yMod) / numTiles.y);
@@ -425,6 +426,46 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
+    },
+
+    /**
+     * Returns the x position and width of each column and y position and height of each row
+     * @function
+     * @param {Number} level
+     * @returns {Object}  Dictionary which defines numRows, numColumns,
+     * dimensions (in pixels), normalizedDimensions (by image width), rowInfo (Array of [x, width]),
+     * and columnInfo (Array of [y, height]) for this level of the image
+     */
+    getGridDefinition: function( level ) {
+        var numTiles = this.source.getNumTiles(level),
+            levelScale = this.source.getLevelScale(level),
+            tileWidth = this.source.getTileWidth(level) / levelScale,
+            tileHeight = this.source.getTileHeight(level) / levelScale,
+            size = this.getContentSize(),
+
+            def = {
+                numRows: numTiles.y,
+                numColumns: numTiles.x,
+                dimensions: size,
+                normalizedDimensions: size.divide(size.x),
+                rowInfo: [],
+                columnInfo: []
+            };
+        var i;
+        for(i = 0; i < numTiles.x; i++){
+            def.columnInfo[i] = {
+                x: i * tileWidth / size.x, // x is defined by regular grid spacing
+                width: (i === (numTiles.x - 1) ? Math.min(size.x - i * tileWidth, size.x) : tileWidth) / size.x, // width is standard except for last column
+            };
+        }
+        for(i = 0; i < numTiles.y; i++){
+            def.rowInfo[i] = {
+                y: i * tileHeight / size.x, // y is defined by regular grid spacing
+                height: (i === (numTiles.y - 1) ? Math.min(size.y - i * tileHeight, size.y) : tileHeight) / size.x, // height is standard except for last row
+            };
+        }
+
+        return def;
     },
 
     /**
@@ -1272,7 +1313,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         // Perform the actual drawing
+
         this._drawTiles(this.lastDrawn);
+
 
         // Load the new 'best' tile
         if (bestTile && !bestTile.context2D) {
@@ -1776,6 +1819,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         tiledImage: _this
                     });
                 }
+                /**
+                 * Triggered when a tile has just been loaded in memory. That means that the
+                 * image has been downloaded and can be modified before being drawn to the canvas.
+                 *
+                 * @event tile-ready
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
+                 * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
+                 * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+                 * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
+                 */
+                _this.viewer.raiseEvent("tile-ready", {
+                    tile: tile,
+                    tiledImage: _this,
+                    tileRequest: tileRequest,
+                    data: data
+                });
                 _this._needsDraw = true;
             }
         }
