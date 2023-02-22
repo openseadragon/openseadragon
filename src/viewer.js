@@ -3420,7 +3420,7 @@ function onCanvasPinch( event ) {
 function onCanvasFocus( event ) {
 
     /**
-     * Raised when a pointer focus on the {@link OpenSeadragon.Viewer#canvas} element.
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element gets keyboard focus.
      *
      * @event canvas-focus
      * @memberof OpenSeadragon.Viewer
@@ -3438,7 +3438,7 @@ function onCanvasFocus( event ) {
 
 function onCanvasBlur( event ) {
     /**
-     * Raised when a pointer blur on the {@link OpenSeadragon.Viewer#canvas} element.
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
      *
      * @event canvas-blur
      * @memberof OpenSeadragon.Viewer
