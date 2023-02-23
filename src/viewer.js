@@ -307,7 +307,9 @@ $.Viewer = function( options ) {
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
         scrollHandler:            $.delegate( this, onCanvasScroll ),
-        pinchHandler:             $.delegate( this, onCanvasPinch )
+        pinchHandler:             $.delegate( this, onCanvasPinch ),
+        focusHandler:             $.delegate( this, onCanvasFocus ),
+        blurHandler:              $.delegate( this, onCanvasBlur ),
     });
 
     this.outerTracker = new $.MouseTracker({
@@ -3413,6 +3415,43 @@ function onCanvasPinch( event ) {
             this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
         }
     }
+}
+
+function onCanvasFocus( event ) {
+
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element gets keyboard focus.
+     *
+     * @event canvas-focus
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-focus', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasBlur( event ) {
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
+     *
+     * @event canvas-blur
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-blur', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
 }
 
 function onCanvasScroll( event ) {
