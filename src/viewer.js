@@ -978,15 +978,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.forceRedraw();
     },
 
-     /**
-     * Add custom button  for this viewer.
+    /**
+     * Adds the given button to this viewer.
      *
      * @functions
-     * @param {Element} CustomButton A reference to an element.
+     * @param {OpenSeadragon.Button} button
      */
-     addButton: function( Custombutton ){
-        this.buttonGroup.buttons.push(Custombutton);
-        this.buttonGroup.element.appendChild(Custombutton.element);
+    addButton: function( button ){
+        this.buttonGroup.addButton(button);
     },
 
     /**

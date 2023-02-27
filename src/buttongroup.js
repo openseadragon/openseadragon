@@ -113,6 +113,17 @@ $.ButtonGroup = function( options ) {
 $.ButtonGroup.prototype = {
 
     /**
+     * Adds the given button to this button group.
+     *
+     * @functions
+     * @param {OpenSeadragon.Button} button
+     */
+    addButton: function( button ){
+        this.buttons.push(button);
+        this.element.appendChild(button.element);
+    },
+
+    /**
      * TODO: Figure out why this is used on the public API and if a more useful
      * api can be created.
      * @function
