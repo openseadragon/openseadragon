@@ -978,6 +978,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.forceRedraw();
     },
 
+     /**
+     * Add custom button  for this viewer.
+     *
+     * @functions
+     * @param {Element} CustomButton A reference to an element.
+     */
+     addButton: function( Custombutton ){
+        this.buttonGroup.buttons.push(Custombutton);
+        this.buttonGroup.element.appendChild(Custombutton.element);
+    },
+
     /**
      * @function
      * @returns {Boolean}
