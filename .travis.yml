@@ -1,3 +1,7 @@
+# Specify dist until Travis CI default Runner OS updates to one
+# with glibc version required by newer Node versions
+# See: https://github.com/nodejs/node/issues/42351#issuecomment-1068424442
+dist: focal
 language: node_js
 sudo: false
 node_js:
