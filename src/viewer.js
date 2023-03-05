@@ -417,12 +417,29 @@ $.Viewer = function( options ) {
     });
 
     // Create the drawer
-    this.drawer = new $.Drawer({
-        viewer:             this,
-        viewport:           this.viewport,
-        element:            this.canvas,
-        debugGridColor:     this.debugGridColor
-    });
+    if(this.customDrawer){
+        if(this.customDrawer.prototype.isOpenSeadragonDrawer){
+            var Drawer = this.customDrawer;
+            this.drawer = new Drawer({
+                viewer:             this,
+                viewport:           this.viewport,
+                element:            this.canvas,
+                debugGridColor:     this.debugGridColor
+            });
+        } else {
+            // $.console.error('Viewer option customDrawer must derive from OpenSeadragon.DrawerBase');
+            throw('Viewer option customDrawer must derive from OpenSeadragon.DrawerBase');
+        }
+
+    } else {
+        this.drawer = new $.Drawer({
+            viewer:             this,
+            viewport:           this.viewport,
+            element:            this.canvas,
+            debugGridColor:     this.debugGridColor
+        });
+    }
+
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );

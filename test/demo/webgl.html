@@ -16,77 +16,156 @@
     </script>
     <script type="module" src="./webgl.js"></script>
     <style type="text/css">
-
-        .openseadragon1 {
-            width: 600px;
-            height: 400px;
+        .content{
+            max-width:960px;
+            margin: 0 auto;
         }
-
-        #three-canvas{
-            position:fixed;
-            top:5px;
-            right:5px;
+        .mirrored{
+            display:grid;
+            grid-template-columns:50% 50%;
+            gap: 2em;
+        }
+        .viewer-container {
+            /* width: 600px;
+            height: 400px; */
+            aspect-ratio: 4 / 3;
             border: thin gray solid;
+            position:relative;
         }
+        .example-code{
+            background-color:tan;
+            border: thin black solid;
+            padding:10px;
+            display:inline-block;
+        }
+        .description pre{
+            display:inline-block;
+            background-color:gainsboro;
+            padding:0;
+            margin:0;
+        }
+
         .image-options{
             display: grid;
-            grid-template-columns: 2em repeat(7, 10em);
+            grid-template-columns: 2em 9em 1fr;
+            padding:3px;
+            border: thin gray solid;
+        }
+        .option-grid{
+            display: grid;
+            grid-template-columns: 7em 7em 10em 10em 10em;
+            /* grid-template-columns: repeat(5, auto); */
         }
         .image-options input[type=number]{
+            width: 5em;
+        }
+        .image-options select{
             width: 5em;
         }
     </style>
 </head>
 <body>
-    <div>
-        Simple demo page to show three.js based rendering.
-    </div>
-    <div id="contentDiv" class="openseadragon1"></div>
+    <div class="content">
+        <h2>Use a WebGL drawer implementation (using three.js) instead of the default context2d drawer</h2>
+        <div class="mirrored">
+            <div>
+                <div class="description">
+                    The context2d drawing operations in core OpenSeadragon have been
+                    consolidated from the <pre>TiledImage</pre> and <pre>Tile</pre> classes into the
+                    <pre>Drawer</pre> class, which inherits from a new <pre>DrawerBase</pre> base class.
+                    The <pre>TiledImage</pre> and <pre>Tile</pre> classes now handle the logic of managing
+                    tile positioning and image data, with cleaner separation from details of the rendering
+                    process. <pre>DrawerBase</pre> defines a public API that core OpenSeadragon code uses to
+                    interact with the drawer implementation. To use a custom drawer/render, define
+                    a new class that inherits from <pre>DrawerBase</pre> and implements the public API.
+                    The constructor of this class can be passed in during construction of the viewer using the
+                    new <pre>customDrawer</pre> option.
+                </div>
+                <pre class="example-code">
+    import { ThreeJSDrawer } from './threejsdrawer.js';
 
-    <div id="image-picker">
-        <div class="image-options">
-            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-            <label><input type="checkbox" checked data-image="rainbow" class="toggle"> Rainbow Grid</label>
-            <label>X: <input type="number" value="0" data-image="rainbow" data-field="x"> </label>
-            <label>Y: <input type="number" value="0" data-image="rainbow" data-field="y"> </label>
-            <label>Width: <input type="number" value="1" data-image="rainbow" data-field="width" min="0"> </label>
-            <label>Degrees: <input type="number" value="0" data-image="rainbow" data-field="degrees"> </label>
-            <label>Opacity: <input type="number" value="1" data-image="rainbow" data-field="opacity" min="0" max="1" step="0.2"> </label>
-            <label>Flipped: <input type="checkbox" data-image="rainbow" data-field="flipped"></label>
+    let viewer = OpenSeadragon({
+        ...
+        customDrawer: ThreeJSDrawer,
+        ...
+    });
+                </pre>
+            </div>
+            <div id="three-viewer" class="viewer-container"></div>
         </div>
-        <div class="image-options">
-            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-            <label><input type="checkbox" data-image="leaves" class="toggle"> Leaves</label>
-            <label>X: <input type="number" value="0.5" data-image="leaves" data-field="x"> </label>
-            <label>Y: <input type="number" value="0.5" data-image="leaves" data-field="y"> </label>
-            <label>Width: <input type="number" value="1.5" data-image="leaves" data-field="width" min="0"> </label>
-            <label>Degrees: <input type="number" value="0" data-image="leaves" data-field="degrees"> </label>
-            <label>Opacity: <input type="number" value="0.8" data-image="leaves" data-field="opacity" min="0" max="1" step="0.2"> </label>
-            <label>Flipped: <input type="checkbox" data-image="leaves" data-field="flipped"></label>
+
+
+        <h2>Compare behavior of <strong>Context2d</strong> and <strong>WebGL</strong> (via three.js) drawers</h2>
+        <div class="mirrored">
+            <div>
+                <h3>Use default OpenSeadragon viewer to pan/zoom</h3>
+                <div id="contentDiv" class="viewer-container"></div>
+            </div>
+
+            <div>
+                <h3>WebGL drawer linked using event listeners </h3>
+                <div id="three-canvas-container" class="viewer-container"></div>
+            </div>
         </div>
-        <div class="image-options">
-            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-            <label><input type="checkbox" data-image="bblue" class="toggle"> BBlue PNG</label>
-            <label>X: <input type="number" value="0" data-image="bblue" data-field="x"> </label>
-            <label>Y: <input type="number" value="0" data-image="bblue" data-field="y"> </label>
-            <label>Width: <input type="number" value="0.5" data-image="bblue" data-field="width" min="0"> </label>
-            <label>Degrees: <input type="number" value="0" data-image="bblue" data-field="degrees"> </label>
-            <label>Opacity: <input type="number" value="1" data-image="bblue" data-field="opacity" min="0" max="1" step="0.2"> </label>
-            <label>Flipped: <input type="checkbox" data-image="bblue" data-field="flipped"></label>
+
+
+        <div id="image-picker">
+            <h3>Image options (drag and drop to re-order images)</h3>
+            <div class="image-options">
+                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+                <label><input type="checkbox" checked data-image="rainbow" class="toggle"> Rainbow Grid</label>
+                <div class="option-grid">
+                    <label>X: <input type="number" value="0" data-image="rainbow" data-field="x"> </label>
+                    <label>Y: <input type="number" value="0" data-image="rainbow" data-field="y"> </label>
+                    <label>Width: <input type="number" value="1" data-image="rainbow" data-field="width" min="0"> </label>
+                    <label>Degrees: <input type="number" value="0" data-image="rainbow" data-field="degrees"> </label>
+                    <label>Opacity: <input type="number" value="1" data-image="rainbow" data-field="opacity" min="0" max="1" step="0.2"> </label>
+                    <label>Flipped: <input type="checkbox" data-image="rainbow" data-field="flipped"></label>
+                    <label>Cropped: <input type="checkbox" data-image="rainbow" data-field="cropped"></label>
+                    <label>Debug: <input type="checkbox" data-image="rainbow" data-field="debug"></label>
+                    <label>Composite: <select data-image="rainbow" data-field="composite"></select></label>
+                    <label>Wrapping: <select data-image="rainbow" data-field="wrapping"></select></label>
+                </div>
+
+            </div>
+            <div class="image-options">
+                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+                <label><input type="checkbox" data-image="leaves" class="toggle"> Leaves</label>
+                <div class="option-grid">
+                    <label>X: <input type="number" value="0" data-image="leaves" data-field="x"> </label>
+                    <label>Y: <input type="number" value="0" data-image="leaves" data-field="y"> </label>
+                    <label>Width: <input type="number" value="1" data-image="leaves" data-field="width" min="0"> </label>
+                    <label>Degrees: <input type="number" value="0" data-image="leaves" data-field="degrees"> </label>
+                    <label>Opacity: <input type="number" value="1" data-image="leaves" data-field="opacity" min="0" max="1" step="0.2"> </label>
+                    <label>Flipped: <input type="checkbox" data-image="leaves" data-field="flipped"></label>
+                    <label>Cropped: <input type="checkbox" data-image="leaves" data-field="cropped"></label>
+                    <label>Debug: <input type="checkbox" data-image="leaves" data-field="debug"></label>
+                    <label>Composite: <select data-image="leaves" data-field="composite" ></select></label>
+                    <label>Wrapping: <select data-image="leaves" data-field="wrapping"></select></label>
+                </div>
+            </div>
+            <div class="image-options">
+                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+                <label><input type="checkbox" data-image="bblue" class="toggle"> BBlue PNG</label>
+                <div class="option-grid">
+                    <label>X: <input type="number" value="0" data-image="bblue" data-field="x"> </label>
+                    <label>Y: <input type="number" value="0" data-image="bblue" data-field="y"> </label>
+                    <label>Width: <input type="number" value="1" data-image="bblue" data-field="width" min="0"> </label>
+                    <label>Degrees: <input type="number" value="0" data-image="bblue" data-field="degrees"> </label>
+                    <label>Opacity: <input type="number" value="1" data-image="bblue" data-field="opacity" min="0" max="1" step="0.2"> </label>
+                    <label>Flipped: <input type="checkbox" data-image="bblue" data-field="flipped"></label>
+                    <label>Cropped: <input type="checkbox" data-image="bblue" data-field="cropped"></label>
+                    <label>Debug: <input type="checkbox" data-image="bblue" data-field="debug"></label>
+                    <label>Composite: <select data-image="bblue" data-field="composite"></select></label>
+                    <label>Wrapping: <select data-image="bblue" data-field="wrapping"></select></label>
+                </div>
+            </div>
+
         </div>
-        <!-- <div class="image-options">
-            <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-            <label><input type="checkbox" data-image="duomo" class="toggle"> Duomo</label>
-            <label>X: <input type="number" value="0" data-image="duomo" data-field="x"> </label>
-            <label>Y: <input type="number" value="0" data-image="duomo" data-field="y"> </label>
-            <label>Width: <input type="number" value="0.5" data-image="duomo" data-field="width"> </label>
-            <label>Degrees: <input type="number" value="0" data-image="duomo" data-field="degrees"> </label>
-            <label>Opacity: <input type="number" value="1" data-image="duomo" data-field="opacity"> </label>
-            <label>Flipped: <input type="checkbox" data-image="duomo" data-field="flipped"></label>
-        </div> -->
+
     </div>
 
-    <canvas id="three-canvas"></canvas>
+
 </body>
 </html>
 

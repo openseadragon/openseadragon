@@ -368,7 +368,10 @@ $.TileSource.prototype = {
     getTileAtPoint: function(level, point) {
         var validPoint = point.x >= 0 && point.x <= 1 &&
             point.y >= 0 && point.y <= 1 / this.aspectRatio;
-        $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
+        // $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
+        if(!validPoint){
+            $.console.warn("[TileSource.getTileAtPoint] called with an invalid point.");
+        }
 
         var widthScaled = this.dimensions.x * this.getLevelScale(level);
         var pixelX = point.x * widthScaled;
