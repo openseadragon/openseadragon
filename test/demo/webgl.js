@@ -1,8 +1,8 @@
 //imports
-import { ThreeJSRenderer } from './webgl-renderer.js';
+import { ThreeJSDrawer } from './threejsdrawer.js';
 
 //globals
-const canvas = document.querySelector('#three-canvas');
+// const canvas = document.querySelector('#three-canvas');
 const sources = {
     "rainbow":"../data/testpattern.dzi",
     "leaves":"../data/iiif_2_0_sizes/info.json",
@@ -10,37 +10,38 @@ const sources = {
         type:'image',
         url: "../data/BBlue.png",
     },
-    // "duomo":"https://openseadragon.github.io/example-images/highsmith/highsmith.dzi"
 }
 var viewer = window.viewer = OpenSeadragon({
-    // debugMode: true,
     id: "contentDiv",
     prefixUrl: "../../build/openseadragon/images/",
-    showNavigator:true,
-    minZoomImageRatio:0.001,
-    customRenderer: true, // set this to true to use a renderer plugin instead of the built-in drawer
-    useCanvas: {contextType: 'webgl2'} //set this to match the context type used by the plugin renderer
+    minZoomImageRatio:0.01,
 });
 
-//sync size
+let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element});
 
-// let viewerCanvas = viewer.drawer.canvas;
-// canvas.style.width = viewerCanvas.clientWidth+'px';
-// canvas.style.height = viewerCanvas.clientHeight+'px';
-// canvas.width = viewerCanvas.width;
-// canvas.height = viewerCanvas.height;
+var viewer2 = window.viewer2 = OpenSeadragon({
+    id: "three-viewer",
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: ThreeJSDrawer,
+    tileSources: sources['leaves'],
+    imageSmoothingEnabled: false,
+});
 
-// //make the test canvas mirror all changes to the viewer canvas
-// viewer.addHandler("resize", function(){
-//     canvas.style.width = viewerCanvas.clientWidth+'px';
-//     canvas.style.height = viewerCanvas.clientHeight+'px';
-// })
-let noCanvas;
+//make the test canvas mirror all changes to the viewer canvas
+let viewerCanvas = viewer.drawer.canvas;
+let canvas = threeRenderer.canvas;
+let canvasContainer = $('#three-canvas-container').append(canvas);
+viewer.addHandler("resize", function(){
+    canvasContainer[0].style.width = viewerCanvas.clientWidth+'px';
+    canvasContainer[0].style.height = viewerCanvas.clientHeight+'px';
+    // canvas.width = viewerCanvas.width;
+    // canvas.height = viewerCanvas.height;
+})
 
-let threeRenderer = window.threeRenderer = new ThreeJSRenderer(viewer, noCanvas);
 
 // viewer.addHandler("open", () => viewer.world.getItemAt(0).source.hasTransparency = function(){ return true; });
-
+$('#three-viewer').resizable(true);
 $('#contentDiv').resizable(true);
 $('#image-picker').sortable({
     update: function(event, ui){
@@ -90,9 +91,82 @@ $('#image-picker input:not(.toggle)').on('change',function(){
             tiledImage.setOpacity(Number(value));
         } else if (field == 'flipped'){
             tiledImage.setFlip($(this).prop('checked'));
+        } else if (field == 'cropped'){
+            if( $(this).prop('checked') ){
+                let croppingPolygons = [ [{x:200, y:200}, {x:800, y:200}, {x:500, y:800}] ];
+                tiledImage.setCroppingPolygons(croppingPolygons);
+            } else {
+                tiledImage.resetCroppingPolygons();
+            }
+        } else if (field == 'clipped'){
+            if( $(this).prop('checked') ){
+                let clipRect = new OpenSeadragon.Rect(2000, 0, 3000, 4000);
+                tiledImage.setClip(clipRect);
+            } else {
+                tiledImage.setClip(null);
+            }
+        }
+        else if (field == 'debug'){
+            if( $(this).prop('checked') ){
+                tiledImage.debugMode = true;
+            } else {
+                tiledImage.debugMode = false;
+            }
         }
     }
-})
+});
+
+$('.image-options select[data-field=composite]').append(getCompositeOperationOptions()).on('change',function(){
+    let data = $(this).data();
+    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item');
+    if(tiledImage){
+        tiledImage.setCompositeOperation(this.value == 'null' ? null : this.value);
+    }
+}).trigger('change');
+
+$('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on('change',function(){
+    let data = $(this).data();
+    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item');
+    if(tiledImage){
+        switch(this.value){
+            case "None": tiledImage.wrapHorizontal = tiledImage.wrapVertical = false; break;
+            case "Horizontal": tiledImage.wrapHorizontal = true; tiledImage.wrapVertical = false; break;
+            case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
+            case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
+        }
+        tiledImage.viewer.raiseEvent('opacity-change');//trigger a redraw for the webgl renderer. TODO: fix this hack.
+    }
+}).trigger('change');
+
+function getWrappingOptions(){
+    let opts = ['None', 'Horizontal', 'Vertical', 'Both'];
+    let elements = opts.map((opt, i)=>{
+        let el = $('<option>',{value:opt}).text(opt);
+        if(i===0){
+            el.attr('selected',true);
+        }
+        return el[0];
+        // $('.image-options select').append(el);
+    });
+    return $(elements);
+}
+function getCompositeOperationOptions(){
+    let opts = [null,'source-over','source-in','source-out','source-atop',
+                'destination-over','destination-in','destination-out','destination-atop',
+                'lighten','darken','copy','xor','multiply','screen','overlay','color-dodge',
+                'color-burn','hard-light','soft-light','difference','exclusion',
+                'hue','saturation','color','luminosity'];
+    let elements = opts.map((opt, i)=>{
+        let el = $('<option>',{value:opt}).text(opt);
+        if(i===0){
+            el.attr('selected',true);
+        }
+        return el[0];
+        // $('.image-options select').append(el);
+    });
+    return $(elements);
+
+}
 
 function addTileSource(image, checkbox){
     let options = $(`#image-picker input[data-image=${image}][type=number]`).toArray().reduce((acc, input)=>{
