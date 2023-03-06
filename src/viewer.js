@@ -979,6 +979,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Adds the given button to this viewer.
+     *
+     * @functions
+     * @param {OpenSeadragon.Button} button
+     */
+    addButton: function( button ){
+        this.buttonGroup.addButton(button);
+    },
+
+    /**
      * @function
      * @returns {Boolean}
      */
