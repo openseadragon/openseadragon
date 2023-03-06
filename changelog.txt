@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Added tileRetryMax and tileRetryDelay options, so the viewer can retry loading failed tiles (#2238 @Ughuuu, @paaddyy)
 * All of the viewers keyboard handling is now in response to keydown events (it used to be split between keydown and keypress) (#2291 @MohitBansal321)
 * Added canvas-focus and canvas-blur events to Viewer (#2301 @MohitBansal321)
+* You can now more easily add custom buttons to the viewer (#2306 @MohitBansal321)
 * Improved documentation (#2297 @KevinBritten)
 * Fixed: The tile-loaded event's completionCallback could be called more than once in some circumstances (#2282 @Aiosa, @pearcetm)
 * Fixed: Navigator display rectangle was off if the page had box-sizing: border-box (#2276 @ambujsahu81)
