@@ -484,7 +484,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         if(item._croppingPolygons){
             let polygons = item._croppingPolygons.map(function (polygon) {
                 return polygon.map(function (coord) {
-                    let point = item.imageToViewportCoordinates(coord.x, coord.y, true);
+                    let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
+                        .rotate(_this.viewer.viewport.getRotation(true), _this.viewer.viewport.getCenter(true));
                     let clipPoint = _this.viewportCoordToDrawerCoord(point);
                     return clipPoint;
                 });
