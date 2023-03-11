@@ -3738,7 +3738,6 @@ function updateOnce( viewer ) {
 
 function drawWorld( viewer ) {
     viewer.imageLoader.clear();
-    viewer.drawer.clear();
     viewer.world.draw();
 
     /**

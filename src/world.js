@@ -256,10 +256,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Draws all items.
      */
     draw: function() {
-        for ( var i = 0; i < this._items.length; i++ ) {
-            this.viewer.drawer.draw(this._items[i]);
-        }
-
+        this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
     },
 

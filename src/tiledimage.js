@@ -1148,6 +1148,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
     },
 
+    /**
+     *
+     * @returns {Array} Array of Tiles within the viewport which should be drawn
+     */
     getTileInfoForDrawing: function(){
         return this._tilesToDraw;
     },
@@ -1252,9 +1256,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         } else {
             this._setFullyLoaded(this._tilesLoading === 0);
         }
-
-
-        // return bestTile;
     },
 
     /**

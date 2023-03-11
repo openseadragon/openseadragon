@@ -10,11 +10,24 @@ const sources = {
         type:'image',
         url: "../data/BBlue.png",
     },
+    "duomo":"https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+}
+const labels = {
+    rainbow: 'Rainbow Grid',
+    leaves: 'Leaves',
+    bblue: 'Blue B',
+    duomo: 'Duomo',
 }
 var viewer = window.viewer = OpenSeadragon({
     id: "contentDiv",
     prefixUrl: "../../build/openseadragon/images/",
+    // minZoomImageRatio:0.8,
+    // maxZoomPixelRatio:0.5,
     minZoomImageRatio:0.01,
+    maxZoomPixelRatio:100,
+    smoothTileEdgesMinZoom:1.1,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
 });
 
 let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element});
@@ -24,8 +37,11 @@ var viewer2 = window.viewer2 = OpenSeadragon({
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
     customDrawer: ThreeJSDrawer,
-    tileSources: sources['leaves'],
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
     imageSmoothingEnabled: false,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
 });
 
 //make the test canvas mirror all changes to the viewer canvas
@@ -54,6 +70,13 @@ $('#image-picker').sortable({
     }
 });
 
+Object.keys(sources).forEach((key, index)=>{
+    let element = makeImagePickerElement(key, labels[key])
+    $('#image-picker').append(element);
+    if(index === 0){
+        element.find('.toggle').prop('checked',true);
+    }
+})
 
 $('#image-picker input.toggle').on('change',function(){
     let data = $(this).data();
@@ -193,7 +216,26 @@ function addTileSource(image, checkbox){
     }
 }
 
+function makeImagePickerElement(key, label){
+    return $(`<div class="image-options">
+        <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+        <label><input type="checkbox" data-image="" class="toggle"> __title__</label>
+        <div class="option-grid">
+            <label>X: <input type="number" value="0" data-image="" data-field="x"> </label>
+            <label>Y: <input type="number" value="0" data-image="" data-field="y"> </label>
+            <label>Width: <input type="number" value="1" data-image="" data-field="width" min="0"> </label>
+            <label>Degrees: <input type="number" value="0" data-image="" data-field="degrees"> </label>
+            <label>Opacity: <input type="number" value="1" data-image="" data-field="opacity" min="0" max="1" step="0.2"> </label>
+            <label>Flipped: <input type="checkbox" data-image="" data-field="flipped"></label>
+            <label>Cropped: <input type="checkbox" data-image="" data-field="cropped"></label>
+            <label>Debug: <input type="checkbox" data-image="" data-field="debug"></label>
+            <label>Composite: <select data-image="" data-field="composite"></select></label>
+            <label>Wrapping: <select data-image="" data-field="wrapping"></select></label>
+        </div>
 
+    </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));
+
+}
 
 
 

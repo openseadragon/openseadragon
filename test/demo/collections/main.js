@@ -131,8 +131,8 @@
                     var box = new OpenSeadragon.Rect(margins.left, margins.top,
                         $('#contentDiv').width() - (margins.left + margins.right),
                         $('#contentDiv').height() - (margins.top + margins.bottom));
-
-                    self.viewer.drawer.debugRect(box);
+                    // if drawDebuggingRect is implemented, use it to show the box
+                    self.viewer.drawer.drawDebuggingRect(box);
                 });
             }
 

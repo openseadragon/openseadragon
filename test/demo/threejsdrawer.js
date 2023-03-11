@@ -106,7 +106,9 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     // Public API required by all Drawer implementations
-
+    /**
+     * Clean up the renderer, removing all resources
+     */
     destroy(){
         // clear all resources used by the renderer, geometries, textures etc
 
@@ -123,26 +125,61 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         this._camera = null;
 
     }
-    clear(){
-        //not needed by this implementation
-    }
+
+    // Public API required by all Drawer implementations
+    /**
+     *
+     * @returns true if the drawer supports rotation
+     */
     canRotate(){
         return true;
     }
-    draw(tiledImage){
+
+    // Public API required by all Drawer implementations
+    /**
+     *
+     * @param {Array} tiledImages Array of TiledImage objects to draw
+     */
+    draw(tiledImages){
         // actual drawing is handled by event listeneners
-        // just mark this tiledImage as having been drawn (possibly unnecessary)
-        tiledImage._needsDraw = false;
+        // just mark the tiledImages as having been drawn (possibly unnecessary)
+        tiledImages.forEach(tiledImage => tiledImage._needsDraw = false);
     }
+
+    // Public API required by all Drawer implementations
+    /**
+     * Set the context2d imageSmoothingEnabled parameter
+     * @param {Boolean} enabled
+     */
     setImageSmoothingEnabled(enabled){
         this._clippingContext.imageSmoothingEnabled = enabled;
         this._outputContext.imageSmoothingEnabled = enabled;
     }
 
+    /**
+     * Draw a rect onto the output canvas for debugging purposes
+     * @param {OpenSeadragon.Rect} rect
+     */
+    drawDebuggingRect(rect){
+        let context = this._outputContext;
+        context.save();
+        context.lineWidth = 2 * OpenSeadragon.pixelDensityRatio;
+        context.strokeStyle = this.debugGridColor[0];
+        context.fillStyle = this.debugGridColor[0];
+
+        context.strokeRect(
+            rect.x * OpenSeadragon.pixelDensityRatio,
+            rect.y * OpenSeadragon.pixelDensityRatio,
+            rect.width * OpenSeadragon.pixelDensityRatio,
+            rect.height * OpenSeadragon.pixelDensityRatio
+        );
+
+        context.restore();
+    }
+
     // Private methods
 
     _setupRenderer(){
-        //to do: test support for pages of sequence mode
 
         let viewerBounds = this.viewer.viewport.getBoundsNoRotate();
         this._camera = new THREE.OrthographicCamera(
@@ -170,13 +207,6 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         this.viewer.addHandler("tile-unloaded", ev => this._tileUnloadedHandler(ev));
         this.viewer.addHandler("viewport-change", () => this._viewportChangeHandler());
         this.viewer.addHandler("home", () => this._viewportChangeHandler());
-
-        // this.viewer.world.addHandler("item-index-change", () => this.renderFrame());
-        // this.viewer.addHandler("crop-change", () => this.renderFrame());
-        // this.viewer.addHandler("clip-change", () => this.renderFrame());
-        // this.viewer.addHandler("opacity-change", () => this.renderFrame());
-        // this.viewer.addHandler("composite-operation-change", () => this.renderFrame());
-
 
         this.viewer.addHandler("update-viewport", () => this.renderFrame());
 
@@ -476,7 +506,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
 
         if(item._clip){
             var box = item.imageToViewportRectangle(item._clip, true);
-            var rect = this.viewportToDrawerRectangle(box);
+            var rect = this._viewportToDrawerRectangle(box);
             this._clippingContext.beginPath();
             this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
             this._clippingContext.clip();
@@ -486,7 +516,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
                 return polygon.map(function (coord) {
                     let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
                         .rotate(_this.viewer.viewport.getRotation(true), _this.viewer.viewport.getCenter(true));
-                    let clipPoint = _this.viewportCoordToDrawerCoord(point);
+                    let clipPoint = _this._viewportCoordToDrawerCoord(point);
                     return clipPoint;
                 });
             });
@@ -625,6 +655,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         context.restore();
     }
 
+    // private
     _drawDebugInfo( tiledImage ) {
         let scene = this._tiledImageMap[tiledImage[this._uuid]];
         let level = scene.userData.currentLevel;
@@ -641,25 +672,6 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         }
     }
 
-    // private
-    _debugRect(rect) {
-        if ( this.useCanvas ) {
-            var context = this._outputContext;
-            context.save();
-            context.lineWidth = 2 * OpenSeadragon.pixelDensityRatio;
-            context.strokeStyle = this.debugGridColor[0];
-            context.fillStyle = this.debugGridColor[0];
-
-            context.strokeRect(
-                rect.x * OpenSeadragon.pixelDensityRatio,
-                rect.y * OpenSeadragon.pixelDensityRatio,
-                rect.width * OpenSeadragon.pixelDensityRatio,
-                rect.height * OpenSeadragon.pixelDensityRatio
-            );
-
-            context.restore();
-        }
-    }
 
     // private
     _restoreRotationChanges() {
