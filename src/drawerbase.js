@@ -98,6 +98,7 @@ $.DrawerBase = function( options ) {
      */
     this.element    = this.container;
 
+    // TO DO: Does this need to be in DrawerBase, or only in Drawer implementations?
     // We force our container to ltr because our drawing math doesn't work in rtl.
     // This issue only affects our canvas renderer, but we do it always for consistency.
     // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
@@ -123,10 +124,6 @@ $.DrawerBase = function( options ) {
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
 
-    // Image smoothing for canvas rendering (only if canvas is used).
-    // Canvas default is "true", so this will only be changed if user specified "false".
-    this._imageSmoothingEnabled = true;
-
     this._checkForAPIOverrides();
 };
 
@@ -134,14 +131,10 @@ $.DrawerBase = function( options ) {
 $.DrawerBase.prototype = {
 
     // Drawer implementaions must define the next four methods. These are called
-    // by core OSD, and forcing overrides (even for nullop methods) makes the
+    // by core OSD and/or public APIs, and forcing overrides (even for nullop methods) makes the
     // behavior of the implementations explicitly clear in the code.
     // Whether these have been overridden by child classes is checked in the
-    // constructor (via _checkForAPIOverrides). It could make sense to consolidate
-    // these a bit (e.g. by making `draw` take an array of `TiledImage`s and
-    // clearing the view as needed, rather than the existing pattern of
-    // `drawer.clear(); world.draw()` in the calling code), but they have been
-    // left as-is to maintain backwards compatibility.
+    // constructor (via _checkForAPIOverrides).
 
     /**
      * @param tiledImage the TiledImage that is ready to be drawn
@@ -165,13 +158,6 @@ $.DrawerBase.prototype = {
     },
 
     /**
-     * Clears the Drawer so it's ready to draw another frame.
-     */
-    clear: function() {
-        $.console.error('Drawer.clear must be implemented by child class');
-    },
-
-    /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
      *
      * @function
@@ -184,8 +170,26 @@ $.DrawerBase.prototype = {
     },
 
     /**
-     * Ensures that child classes have provided implementations for API methods
-     * draw, canRotate, destroy, and clear. Throws an exception if the original
+     * Optional public API to draw a rectangle (e.g. for debugging purposes)
+     * Child classes can override this method if they wish to support this
+     * @param {OpenSeadragon.Rect} rect
+     */
+    drawDebuggingRect: function(rect) {
+        $.console.warn('[drawer].drawDebuggingRect is not implemented by this drawer');
+    },
+
+    // Deprecated functions
+    clear: function(){
+        $.console.warn('[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles.');
+    },
+
+    // Private functions
+
+    /**
+     * @private
+     * @inner
+     * Ensures that child classes have provided implementations for public API methods
+     * draw, canRotate, destroy, and setImageSmoothinEnabled. Throws an exception if the original
      * placeholder methods are still in place.
      */
     _checkForAPIOverrides: function(){
@@ -198,21 +202,24 @@ $.DrawerBase.prototype = {
         if(this.destroy === $.DrawerBase.prototype.destroy){
             throw("[drawer].destroy must be implemented by child class");
         }
-        if(this.clear === $.DrawerBase.prototype.clear){
-            throw("[drawer].clear must be implemented by child class");
-        }
+
         if(this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled){
             throw("[drawer].setImageSmoothingEnabled must be implemented by child class");
         }
     },
 
+
+    // Utility functions internal API
+
     /**
+     * @private
+     * @inner
      * Scale from OpenSeadragon viewer rectangle to drawer rectangle
      * (ignoring rotation)
      * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
      * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
-    viewportToDrawerRectangle: function(rectangle) {
+    _viewportToDrawerRectangle: function(rectangle) {
         var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
         var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
 
@@ -225,6 +232,8 @@ $.DrawerBase.prototype = {
     },
 
     /**
+     * @private
+     * @inner
      * This function converts the given point from to the drawer coordinate by
      * multiplying it with the pixel density.
      * This function does not take rotation into account, thus assuming provided
@@ -232,7 +241,7 @@ $.DrawerBase.prototype = {
      * @param {OpenSeadragon.Point} point - the pixel point to convert
      * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
-    viewportCoordToDrawerCoord: function(point) {
+    _viewportCoordToDrawerCoord: function(point) {
         var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
         return new $.Point(
             vpPoint.x * $.pixelDensityRatio,
@@ -240,8 +249,13 @@ $.DrawerBase.prototype = {
         );
     },
 
-
-    // private
+    /**
+     * @private
+     * @inner
+     * Calculate width and height of the canvas based on viewport dimensions
+     * and pixelDensityRatio
+     * @returns {Dictionary} {x, y} size of the canvas
+     */
     _calculateCanvasSize: function() {
         var pixelDensityRatio = $.pixelDensityRatio;
         var viewportSize = this.viewport.getContainerSize();
@@ -252,86 +266,6 @@ $.DrawerBase.prototype = {
         };
     },
 
-
-    /* Deprecated Functions */
-
-    // deprecated
-    addOverlay: function( element, location, placement, onDraw ) {
-        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
-        this.viewer.addOverlay( element, location, placement, onDraw );
-        return this;
-    },
-
-    // deprecated
-    updateOverlay: function( element, location, placement ) {
-        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
-        this.viewer.updateOverlay( element, location, placement );
-        return this;
-    },
-
-    // deprecated
-    removeOverlay: function( element ) {
-        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
-        this.viewer.removeOverlay( element );
-        return this;
-    },
-
-    // deprecated
-    clearOverlays: function() {
-        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
-        this.viewer.clearOverlays();
-        return this;
-    },
-    // deprecated
-    needsUpdate: function() {
-        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
-        return this.viewer.world.needsDraw();
-    },
-
-    // deprecated
-    numTilesLoaded: function() {
-        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
-        return this.viewer.tileCache.numTilesLoaded();
-    },
-
-    // deprecated
-    reset: function() {
-        $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
-        this.viewer.world.resetItems();
-        return this;
-    },
-
-    // deprecated
-    update: function() {
-        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
-        this.clear();
-        this.viewer.world.draw();
-        return this;
-    },
-
-    // deprecated
-    setOpacity: function( opacity ) {
-        $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
-        var world = this.viewer.world;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            world.getItemAt( i ).setOpacity( opacity );
-        }
-        return this;
-    },
-
-    // deprecated
-    getOpacity: function() {
-        $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
-        var world = this.viewer.world;
-        var maxOpacity = 0;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            var opacity = world.getItemAt( i ).getOpacity();
-            if ( opacity > maxOpacity ) {
-                maxOpacity = opacity;
-            }
-        }
-        return maxOpacity;
-    },
 };
 
 Object.defineProperty($.DrawerBase.prototype, "isOpenSeadragonDrawer", {

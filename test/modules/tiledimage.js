@@ -181,7 +181,8 @@
                 done();
             });
 
-            image.draw();
+            //image.draw(); // TO DO: Is this necessary for the test? It will now fail since tiledImage.draw() is not a thing.
+            viewer.drawer.draw( [ image ] );
         });
 
         viewer.open('/test/data/testpattern.dzi');
@@ -225,7 +226,7 @@
             image.setClip(clip);
             assert.propEqual(image.getClip(), clip, 'clip is set correctly');
 
-            Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
+            Util.spyOnce(viewer.drawer, '_setClip', function(rect) {
                 var homeBounds = viewer.viewport.getHomeBounds();
                 var canvasClip = viewer.drawer
                     .viewportToDrawerRectangle(homeBounds);
