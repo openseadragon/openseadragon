@@ -27,10 +27,11 @@ var viewer = window.viewer = OpenSeadragon({
     maxZoomPixelRatio:100,
     smoothTileEdgesMinZoom:1.1,
     crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
+    ajaxWithCredentials: false,
+    useCanvas:false,
 });
 
-let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element});
+// let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element});
 
 var viewer2 = window.viewer2 = OpenSeadragon({
     id: "three-viewer",
@@ -45,15 +46,15 @@ var viewer2 = window.viewer2 = OpenSeadragon({
 });
 
 //make the test canvas mirror all changes to the viewer canvas
-let viewerCanvas = viewer.drawer.canvas;
-let canvas = threeRenderer.canvas;
-let canvasContainer = $('#three-canvas-container').append(canvas);
-viewer.addHandler("resize", function(){
-    canvasContainer[0].style.width = viewerCanvas.clientWidth+'px';
-    canvasContainer[0].style.height = viewerCanvas.clientHeight+'px';
-    // canvas.width = viewerCanvas.width;
-    // canvas.height = viewerCanvas.height;
-})
+// let viewerCanvas = viewer.drawer.canvas;
+// let canvas = threeRenderer.canvas;
+// let canvasContainer = $('#three-canvas-container').append(canvas);
+// viewer.addHandler("resize", function(){
+//     canvasContainer[0].style.width = viewerCanvas.clientWidth+'px';
+//     canvasContainer[0].style.height = viewerCanvas.clientHeight+'px';
+//     // canvas.width = viewerCanvas.width;
+//     // canvas.height = viewerCanvas.height;
+// })
 
 
 // viewer.addHandler("open", () => viewer.world.getItemAt(0).source.hasTransparency = function(){ return true; });
