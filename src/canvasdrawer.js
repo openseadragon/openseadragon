@@ -35,16 +35,16 @@
 (function( $ ){
 
 /**
- * @class Drawer
+ * @class CanvasDrawer
  * @memberof OpenSeadragon
- * @classdesc Default implementation of Drawer for an {@link OpenSeadragon.Viewer}.
+ * @classdesc Default implementation of CanvasDrawer for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
  * @param {Element} options.element - Parent element.
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
-$.Drawer = function(options) {
+$.CanvasDrawer = function(options) {
 
     $.DrawerBase.call(this, options);
 
@@ -53,7 +53,7 @@ $.Drawer = function(options) {
      * @member {Object} context
      * @memberof OpenSeadragon.Drawer#
      */
-    this.context    = this.useCanvas ? this.canvas.getContext( '2d' ) : null;
+    this.context = this.canvas.getContext( '2d' );
 
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
@@ -72,7 +72,7 @@ $.Drawer = function(options) {
     this._imageSmoothingEnabled = true;
 };
 
-$.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.Drawer.prototype */ {
+$.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.Drawer.prototype */ {
 
     /**
      * Draws the TiledImages
@@ -94,10 +94,10 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
     },
 
     /**
-     * @returns {Boolean} True if rotation is supported.
+     * @returns {Boolean} True - rotation is supported.
      */
     canRotate: function() {
-        return this.useCanvas;
+        return true;
     },
 
     /**
@@ -120,11 +120,9 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * {@link OpenSeadragon.Options} for more explanation.
      */
     setImageSmoothingEnabled: function(imageSmoothingEnabled){
-        if ( this.useCanvas ) {
-            this._imageSmoothingEnabled = imageSmoothingEnabled;
-            this._updateImageSmoothingEnabled(this.context);
-            this.viewer.forceRedraw();
-        }
+        this._imageSmoothingEnabled = imageSmoothingEnabled;
+        this._updateImageSmoothingEnabled(this.context);
+        this.viewer.forceRedraw();
     },
 
     /**
@@ -132,22 +130,21 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * @param {OpenSeadragon.Rect} rect
      */
     drawDebuggingRect: function(rect) {
-        if ( this.useCanvas ) {
-            var context = this.context;
-            context.save();
-            context.lineWidth = 2 * $.pixelDensityRatio;
-            context.strokeStyle = this.debugGridColor[0];
-            context.fillStyle = this.debugGridColor[0];
+        var context = this.context;
+        context.save();
+        context.lineWidth = 2 * $.pixelDensityRatio;
+        context.strokeStyle = this.debugGridColor[0];
+        context.fillStyle = this.debugGridColor[0];
 
-            context.strokeRect(
-                rect.x * $.pixelDensityRatio,
-                rect.y * $.pixelDensityRatio,
-                rect.width * $.pixelDensityRatio,
-                rect.height * $.pixelDensityRatio
-            );
+        context.strokeRect(
+            rect.x * $.pixelDensityRatio,
+            rect.y * $.pixelDensityRatio,
+            rect.width * $.pixelDensityRatio,
+            rect.height * $.pixelDensityRatio
+        );
 
-            context.restore();
-        }
+        context.restore();
+
     },
 
     /**
@@ -157,23 +154,21 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      *
      */
     _prepareNewFrame: function() {
-        this.canvas.innerHTML = "";
-        if ( this.useCanvas ) {
-            var viewportSize = this._calculateCanvasSize();
-            if( this.canvas.width !== viewportSize.x ||
-                this.canvas.height !== viewportSize.y ) {
-                this.canvas.width = viewportSize.x;
-                this.canvas.height = viewportSize.y;
-                this._updateImageSmoothingEnabled(this.context);
-                if ( this.sketchCanvas !== null ) {
-                    var sketchCanvasSize = this._calculateSketchCanvasSize();
-                    this.sketchCanvas.width = sketchCanvasSize.x;
-                    this.sketchCanvas.height = sketchCanvasSize.y;
-                    this._updateImageSmoothingEnabled(this.sketchContext);
-                }
+        var viewportSize = this._calculateCanvasSize();
+        if( this.canvas.width !== viewportSize.x ||
+            this.canvas.height !== viewportSize.y ) {
+            this.canvas.width = viewportSize.x;
+            this.canvas.height = viewportSize.y;
+            this._updateImageSmoothingEnabled(this.context);
+            if ( this.sketchCanvas !== null ) {
+                var sketchCanvasSize = this._calculateSketchCanvasSize();
+                this.sketchCanvas.width = sketchCanvasSize.x;
+                this.sketchCanvas.height = sketchCanvasSize.y;
+                this._updateImageSmoothingEnabled(this.sketchContext);
             }
-            this._clear();
         }
+        this._clear();
+
     },
 
     /**
@@ -183,14 +178,12 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * @param {OpenSeadragon.Rect} [bounds] The rectangle to clear
      */
     _clear: function(useSketch, bounds){
-        if( this.useCanvas ){
-            var context = this._getContext(useSketch);
-            if (bounds) {
-                context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
-            } else {
-                var canvas = context.canvas;
-                context.clearRect(0, 0, canvas.width, canvas.height);
-            }
+        var context = this._getContext(useSketch);
+        if (bounds) {
+            context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        } else {
+            var canvas = context.canvas;
+            context.clearRect(0, 0, canvas.width, canvas.height);
         }
     },
 
@@ -324,8 +317,7 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
         if (lastDrawn.length > 1 &&
             imageZoom > tiledImage.smoothTileEdgesMinZoom &&
             !tiledImage.iOSDevice &&
-            tiledImage.getRotation(true) % 360 === 0 && // TO DO: support tile edge smoothing with tiled image rotation.
-            $.supportsCanvas && this.viewer.useCanvas) {
+            tiledImage.getRotation(true) % 360 === 0 ){ // TO DO: support tile edge smoothing with tiled image rotation.
             // When zoomed in a lot (>100%) the tile edges are visible.
             // So we have to composite them at ~100% and scale them up together.
             // Note: Disabled on iOS devices per default as it causes a native crash
@@ -573,9 +565,6 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      */
     _clipWithPolygons: function (polygons, useSketch) {
-        if (!this.useCanvas) {
-            return;
-        }
         var context = this._getContext(useSketch);
         context.beginPath();
         polygons.forEach(function (polygon) {
@@ -606,13 +595,10 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
         $.console.assert(tile, '[Drawer._drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer._drawTile] drawingHandler is required');
 
-        if (this.useCanvas) {
-            var context = this._getContext(useSketch);
-            scale = scale || 1;
-            this._drawTileToCanvas(tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
-        } else {
-            this._drawTileToHTML( tile, this.canvas );
-        }
+        var context = this._getContext(useSketch);
+        scale = scale || 1;
+        this._drawTileToCanvas(tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
+
     },
 
     /**
@@ -833,10 +819,6 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * @returns
      */
     _saveContext: function( useSketch ) {
-        if (!this.useCanvas) {
-            return;
-        }
-
         this._getContext( useSketch ).save();
     },
 
@@ -848,19 +830,11 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
      * @returns
      */
     _restoreContext: function( useSketch ) {
-        if (!this.useCanvas) {
-            return;
-        }
-
         this._getContext( useSketch ).restore();
     },
 
     // private
     _setClip: function(rect, useSketch) {
-        if (!this.useCanvas) {
-            return;
-        }
-
         var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
@@ -869,10 +843,6 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
 
     // private
     _drawRectangle: function(rect, fillStyle, useSketch) {
-        if (!this.useCanvas) {
-            return;
-        }
-
         var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
@@ -906,9 +876,7 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
                 compositeOperation: compositeOperation
             };
         }
-        if (!this.useCanvas || !this.sketchCanvas) {
-            return;
-        }
+
         opacity = options.opacity;
         compositeOperation = options.compositeOperation;
         var bounds = options.bounds;
@@ -979,9 +947,6 @@ $.extend( $.Drawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.D
 
     // private
     drawDebugInfo: function(tile, count, i, tiledImage) {
-        if ( !this.useCanvas ) {
-            return;
-        }
 
         var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;

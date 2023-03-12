@@ -431,8 +431,15 @@ $.Viewer = function( options ) {
             throw('Viewer option customDrawer must derive from OpenSeadragon.DrawerBase');
         }
 
-    } else {
+    } else if(this.useCanvas && $.supportsCanvas) {
         this.drawer = new $.Drawer({
+            viewer:             this,
+            viewport:           this.viewport,
+            element:            this.canvas,
+            debugGridColor:     this.debugGridColor
+        });
+    } else {
+        this.drawer = new $.HTMLDrawer({
             viewer:             this,
             viewport:           this.viewport,
             element:            this.canvas,
