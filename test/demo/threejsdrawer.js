@@ -7,6 +7,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         super(options);
         let _this = this;
 
+        this._stats = options.stats; // optional input of stats.js object to enable performance testing
+
         // this.viewer set by parent constructor
         // this.canvas set by parent constructor, created and appended to the viewer container element
         this._camera = null;
@@ -55,12 +57,16 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         this._setupRenderer();
     }
     renderFrame(){
+        // this._stats && this._stats.begin();
         if(this._animationFrame) {
             cancelAnimationFrame(this._animationFrame);
         }
         this._animationFrame = requestAnimationFrame(()=>this.render());
+        // this._stats && this._stats.end();
     }
     render(){
+        // this._stats && this._stats.begin();
+
         let numItems = this.viewer.world.getItemCount();
         this._outputContext.clearRect(0, 0, this._outputCanvas.width, this._outputCanvas.height);
         //iterate over items to draw
@@ -94,6 +100,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         if(this._renderingContinuously){
             this.renderFrame();
         }
+
+        // this._stats && this._stats.end();
         // console.log(this._renderer.info.memory, this._renderer.info.render.triangles);
     }
     renderContinuously(continuously){
@@ -208,7 +216,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         this.viewer.addHandler("viewport-change", () => this._viewportChangeHandler());
         this.viewer.addHandler("home", () => this._viewportChangeHandler());
 
-        this.viewer.addHandler("update-viewport", () => this.renderFrame());
+        this.viewer.addHandler("update-viewport", () => this.render());
 
         this._viewportChangeHandler();
     }
@@ -341,6 +349,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
 
     _updateTiledImageRendering(tiledImage, tile){
 
+        // this._stats && this._stats.begin();
+
         let scene = this._tiledImageMap[tiledImage[this._uuid]];
 
         let bounds = this._tileMap[tile.cacheKey].userData._tileBounds
@@ -366,6 +376,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
                 this._loadBestImage(mesh);
             }
         }
+
+        // this._stats && this._stats.end();
 
         this.renderFrame();
     }
@@ -472,6 +484,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     _viewportChangeHandler(){
+        //this._stats && this._stats.begin();
         let viewer = this.viewer;
 
         let viewerBounds = viewer.viewport.getBoundsNoRotate(true);
@@ -493,9 +506,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
             let tiledImage = viewer.world.getItemAt(i);
             this._updateMeshIfNeeded(tiledImage);
         }
-
-        this.renderFrame();
-
+        this.render();
+        // this.renderFrame(); //this._stats && this._stats.end();
     }
 
     _renderToClippingCanvas(item){

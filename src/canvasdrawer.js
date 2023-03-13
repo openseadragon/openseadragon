@@ -82,9 +82,8 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
             if (tiledImage.opacity !== 0 || tiledImage._preload) {
-                tiledImage._midDraw = true;
-                _this._updateViewportWithTiledImage(tiledImage);
-                tiledImage._midDraw = false;
+                // _this._updateViewportWithTiledImage(tiledImage);
+                _this._drawTiles(tiledImage);
             }
             else {
                 tiledImage._needsDraw = false;
@@ -189,102 +188,102 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
 
     /* Methods from TiledImage */
 
-    /**
-     * @private
-     * @inner
-     * Handles drawing a single TiledImage to the canvas
-     *
-     */
-    _updateViewportWithTiledImage: function(tiledImage) {
-        var _this = this;
-        tiledImage._needsDraw = false;
-        tiledImage._tilesLoading = 0;
-        tiledImage.loadingCoverage = {};
+    // /**
+    //  * @private
+    //  * @inner
+    //  * Handles drawing a single TiledImage to the canvas
+    //  *
+    //  */
+    // _updateViewportWithTiledImage: function(tiledImage) {
+    //     var _this = this;
+    //     tiledImage._needsDraw = false;
+    //     tiledImage._tilesLoading = 0;
+    //     tiledImage.loadingCoverage = {};
 
-        // Reset tile's internal drawn state
-        while (tiledImage.lastDrawn.length > 0) {
-            var tile = tiledImage.lastDrawn.pop();
-            tile.beingDrawn = false;
-        }
-
-
-        var drawArea = tiledImage.getDrawArea();
-        if(!drawArea){
-            return;
-        }
-
-        function updateTile(info){
-            var tile = info.tile;
-            if(tile && tile.loaded){
-                var needsDraw = _this._blendTile(
-                    tiledImage,
-                    tile,
-                    tile.x,
-                    tile.y,
-                    info.level,
-                    info.levelOpacity,
-                    info.currentTime
-                );
-                if(needsDraw){
-                    tiledImage._needsDraw = true;
-                }
-            }
-        }
-
-        var infoArray = tiledImage.getTileInfoForDrawing();
-        infoArray.forEach(updateTile);
-
-        this._drawTiles(tiledImage);
-
-    },
+    //     // Reset tile's internal drawn state
+    //     while (tiledImage.lastDrawn.length > 0) {
+    //         var tile = tiledImage.lastDrawn.pop();
+    //         tile.beingDrawn = false;
+    //     }
 
 
+    //     var drawArea = tiledImage.getDrawArea();
+    //     if(!drawArea){
+    //         return;
+    //     }
 
-    /**
-     * @private
-     * @inner
-     * Updates the opacity of a tile according to the time it has been on screen
-     * to perform a fade-in.
-     * Updates coverage once a tile is fully opaque.
-     * Returns whether the fade-in has completed.
-     *
-     * @param {OpenSeadragon.Tile} tile
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} level
-     * @param {Number} levelOpacity
-     * @param {Number} currentTime
-     * @returns {Boolean}
-     */
-    _blendTile: function( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
-        var blendTimeMillis = 1000 * tiledImage.blendTime,
-            deltaTime,
-            opacity;
+    //     function updateTile(info){
+    //         var tile = info.tile;
+    //         if(tile && tile.loaded){
+    //             var needsDraw = _this._blendTile(
+    //                 tiledImage,
+    //                 tile,
+    //                 tile.x,
+    //                 tile.y,
+    //                 info.level,
+    //                 info.levelOpacity,
+    //                 info.currentTime
+    //             );
+    //             if(needsDraw){
+    //                 tiledImage._needsDraw = true;
+    //             }
+    //         }
+    //     }
 
-        if ( !tile.blendStart ) {
-            tile.blendStart = currentTime;
-        }
+    //     var infoArray = tiledImage.getTileInfoForDrawing();
+    //     infoArray.forEach(updateTile);
 
-        deltaTime   = currentTime - tile.blendStart;
-        opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
+    //     this._drawTiles(tiledImage);
 
-        if ( tiledImage.alwaysBlend ) {
-            opacity *= levelOpacity;
-        }
+    // },
 
-        tile.opacity = opacity;
 
-        tiledImage.lastDrawn.push( tile );
 
-        if ( opacity === 1 ) {
-            tiledImage._setCoverage( tiledImage.coverage, level, x, y, true );
-            tiledImage._hasOpaqueTile = true;
-        } else if ( deltaTime < blendTimeMillis ) {
-            return true;
-        }
+    // /**
+    //  * @private
+    //  * @inner
+    //  * Updates the opacity of a tile according to the time it has been on screen
+    //  * to perform a fade-in.
+    //  * Updates coverage once a tile is fully opaque.
+    //  * Returns whether the fade-in has completed.
+    //  *
+    //  * @param {OpenSeadragon.Tile} tile
+    //  * @param {Number} x
+    //  * @param {Number} y
+    //  * @param {Number} level
+    //  * @param {Number} levelOpacity
+    //  * @param {Number} currentTime
+    //  * @returns {Boolean}
+    //  */
+    // _blendTile: function( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
+    //     var blendTimeMillis = 1000 * tiledImage.blendTime,
+    //         deltaTime,
+    //         opacity;
 
-        return false;
-    },
+    //     if ( !tile.blendStart ) {
+    //         tile.blendStart = currentTime;
+    //     }
+
+    //     deltaTime   = currentTime - tile.blendStart;
+    //     opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
+
+    //     if ( tiledImage.alwaysBlend ) {
+    //         opacity *= levelOpacity;
+    //     }
+
+    //     tile.opacity = opacity;
+
+    //     tiledImage.lastDrawn.push( tile );
+
+    //     if ( opacity === 1 ) {
+    //         tiledImage._setCoverage( tiledImage.coverage, level, x, y, true );
+    //         tiledImage._hasOpaqueTile = true;
+    //     } else if ( deltaTime < blendTimeMillis ) {
+    //         return true;
+    //     }
+
+    //     return false;
+    // },
 
     /**
      * @private
