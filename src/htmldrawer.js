@@ -73,9 +73,8 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
             if (tiledImage.opacity !== 0 || tiledImage._preload) {
-                tiledImage._midDraw = true;
-                _this._updateViewportWithTiledImage(tiledImage);
-                tiledImage._midDraw = false;
+                // _this._updateViewportWithTiledImage(tiledImage);
+                _this._drawTiles(tiledImage);
             }
             else {
                 tiledImage._needsDraw = false;

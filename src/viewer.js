@@ -432,7 +432,7 @@ $.Viewer = function( options ) {
         }
 
     } else if(this.useCanvas && $.supportsCanvas) {
-        this.drawer = new $.Drawer({
+        this.drawer = new $.CanvasDrawer({
             viewer:             this,
             viewport:           this.viewport,
             element:            this.canvas,
