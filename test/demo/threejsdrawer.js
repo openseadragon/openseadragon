@@ -65,7 +65,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         // this._stats && this._stats.end();
     }
     render(){
-        // this._stats && this._stats.begin();
+        this._stats && this._stats.begin();
 
         let numItems = this.viewer.world.getItemCount();
         this._outputContext.clearRect(0, 0, this._outputCanvas.width, this._outputCanvas.height);
@@ -77,6 +77,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
             if(item.wrapHorizontal || item.wrapVertical){
                 createWrappingGrid(scene, item);
             } else {
+                cleanupObject(scene.userData.wrappedCopies);
                 scene.userData.wrappedCopies.clear();
             }
             this._renderer.render(scene, this._camera); //renders to this._renderingCanvas
@@ -101,8 +102,8 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
             this.renderFrame();
         }
 
-        // this._stats && this._stats.end();
-        // console.log(this._renderer.info.memory, this._renderer.info.render.triangles);
+        this._stats && this._stats.end();
+        console.log(this._renderer.info.memory, this._renderer.info.render.triangles);
     }
     renderContinuously(continuously){
         if(continuously){
@@ -315,13 +316,14 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     _tileUnloadedHandler(event){
+        console.log('Tile unloaded',event);
         let tile = event.tile;
         if(!this._tileMap[tile.cacheKey]){
             //already cleaned up
             return;
         }
+        cleanupObject(this._tileMap[tile.cacheKey], true);
         this._updateTiledImageRendering(event.tiledImage, tile);
-        cleanupObject(this._tileMap[tile.cacheKey]);
         delete this._tileMap[tile.cacheKey];
     }
 
@@ -755,50 +757,69 @@ function addMaterialToMesh(mesh, material, opacity){
 }
 
 function createWrappingGrid(scene, tiledImage){
-    let container = scene.userData.wrappedCopies;
-    container.clear();
+
+    // TO DO: This is a problematic approach and needs to be debugged/reworked.
+    //        Tiles of wrapped images are the wrong resolution because higher-res
+    //        images only get loaded into the main panel, and cloning the entire
+    //        image every frame is too expensive
 
     //calculate how to tile the space
 
-    let tiledImageBounds = tiledImage.getBounds();
+    let tiledImageBounds = tiledImage.getBoundsNoRotate();
     let imgBounds = {x: 0, y: 0, width: tiledImageBounds.width, height: tiledImageBounds.height };
     let drawArea = tiledImage.viewer.viewport.getBounds(true);
     let center = drawArea.getCenter();
     let halfDiag = Math.sqrt(drawArea.width * drawArea.width + drawArea.height * drawArea.height);
-    let extraBuffer = imgBounds.width + imgBounds.height;
-    let left = center.x - halfDiag - extraBuffer;
-    let right = center.x + halfDiag + extraBuffer;
-    let top = center.y - halfDiag - extraBuffer;
-    let bottom = center.y + halfDiag + extraBuffer;
+    let left = center.x - halfDiag;
+    let right = center.x + halfDiag;
+    let top = center.y - halfDiag;
+    let bottom = center.y + halfDiag;
 
     let xMin = tiledImage.wrapHorizontal ? Math.floor(left / imgBounds.width) : imgBounds.x;
     let yMin = tiledImage.wrapVertical ? Math.floor(top / imgBounds.height) : imgBounds.y;
     let xMax = tiledImage.wrapHorizontal ? Math.floor(right / imgBounds.width) : imgBounds.x;
     let yMax = tiledImage.wrapVertical ? Math.floor(bottom / imgBounds.height) : imgBounds.y;
 
-    for(let x = xMin; x <= xMax; x += 1){
-        for(let y = yMin; y <= yMax; y += 1){
-            if(x == 0 && y == 0) {
-                continue;
+    let container = scene.userData.wrappedCopies;
+    if( container.userData.xMin !== xMin ||
+        container.userData.xMax !== xMax ||
+        container.userData.yMin !== yMin ||
+        container.userData.yMax !== yMax
+        ){
+
+            // container.clear();
+        cleanupObject(container);
+        container.clear();
+
+
+        for(let x = xMin; x <= xMax; x += 1){
+            for(let y = yMin; y <= yMax; y += 1){
+                if(x == 0 && y == 0) {
+                    continue;
+                }
+                let clone = scene.userData.tileContainer.clone();
+                clone.position.x += x * imgBounds.width;
+                clone.position.y += y * imgBounds.height;
+                container.add(clone);
             }
-            let clone = scene.userData.tileContainer.clone();
-            clone.position.x += x;
-            clone.position.y += y;
-            container.add(clone);
         }
     }
+
 }
 
 
-function cleanupObject(object){
+function cleanupObject(object, cleanupTextures){
     if(object.children && object.children.forEach){
-        object.children.forEach(cleanupObject);
+        object.children.forEach(cleanupObject, cleanupTextures);
     }
     if(object.dispose){
         object.dispose();
     }
     if(object.geometry){
         object.geometry.dispose();
+    }
+    if(object.map && cleanupTextures){
+        object.map.dispose();
     }
 }
 

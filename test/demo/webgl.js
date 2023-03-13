@@ -20,9 +20,9 @@ const labels = {
 }
 
 var stats = null;
-// var stats = new Stats();
-// stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-// document.body.appendChild( stats.dom );
+var stats = new Stats();
+stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
 
 
 //Double viewer setup for comparison - CanvasDrawer and ThreeJSDrawer
