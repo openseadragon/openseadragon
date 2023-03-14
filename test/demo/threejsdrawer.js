@@ -150,8 +150,15 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
      * @param {Array} tiledImages Array of TiledImage objects to draw
      */
     draw(tiledImages){
-        // actual drawing is handled by event listeneners
-        // just mark the tiledImages as having been drawn (possibly unnecessary)
+        if(this.viewer.drawer === this){
+            // tiledImages.forEach(tiledImage => this.)
+            this.drawScene();
+        } else {
+            // actual drawing is handled by event listeneners
+            // just mark the tiledImages as having been drawn (happens below)
+
+        }
+
         tiledImages.forEach(tiledImage => tiledImage._needsDraw = false);
     }
 
@@ -214,12 +221,15 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         this.viewer.world.addHandler("remove-item", ev => this._removeTiledImage(ev));
         this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
         this.viewer.addHandler("tile-unloaded", ev => this._tileUnloadedHandler(ev));
-        this.viewer.addHandler("viewport-change", () => this._viewportChangeHandler());
-        this.viewer.addHandler("home", () => this._viewportChangeHandler());
 
-        this.viewer.addHandler("update-viewport", () => this.render());
+        if(this.viewer.drawer && this.viewer.drawer !== this){
+            // Add listeners to sync viewer, since this is not the main drawer
+            this.viewer.addHandler("viewport-change", () => this.drawScene());
+            this.viewer.addHandler("home", () => this.drawScene());
+            this.viewer.addHandler("update-viewport", () => this.drawScene());
+        }
 
-        this._viewportChangeHandler();
+        this.drawScene();
     }
 
     _addTiledImage(event){
@@ -485,7 +495,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         }
     }
 
-    _viewportChangeHandler(){
+    drawScene(){
         //this._stats && this._stats.begin();
         let viewer = this.viewer;
 
@@ -673,7 +683,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     _drawDebugInfo( tiledImage ) {
         let scene = this._tiledImageMap[tiledImage[this._uuid]];
         let level = scene.userData.currentLevel;
-        let tiles = tiledImage.getTileInfoForDrawing().filter(tile=>tile.level === level);
+        let tiles = tiledImage.getTilesToDraw().filter(tile=>tile.level === level);
 
         // only draw on the highest level tiles
         for ( var i = tiles.length - 1; i >= 0; i-- ) {
