@@ -1962,6 +1962,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         if (sketchScale) {
                             clipPoint = clipPoint.times(sketchScale);
                         }
+                        if (sketchTranslate) {
+                            clipPoint = clipPoint.plus(sketchTranslate);
+                        }
                         return clipPoint;
                     });
                 });
