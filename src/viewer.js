@@ -396,7 +396,7 @@ $.Viewer = function( options ) {
 
     // TODO: Instantiating a viewer shouldn't have
     // a side effect on the global queue
-    $.ajaxQueue.maxConcurrency = options.tileSourceLoaderLimit;
+    $.ajaxQueue.ajaxLoaderLimit = options.ajaxLoaderLimit;
 
     // Create the tile cache
     this.tileCache = new $.TileCache({
