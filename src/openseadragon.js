@@ -312,10 +312,6 @@
   *     it is set to 0 allowing the browser to make the maximum number of
   *     image requests in parallel as allowed by the browsers policy.
   *
-  * @property {Number} [ajaxLoaderLimit=0]
-  *     The maximum number of tile source requests to make concurrently. By default
-  *     it is set to 0 allowing an unlimited number of concurrent requests.
-  *
   * @property {Number} [clickTimeThreshold=300]
   *      The number of milliseconds within which a pointer down-up event combination
   *      will be treated as a click gesture.
@@ -791,13 +787,6 @@ function OpenSeadragon( options ){
 }
 
 (function( $ ){
-
-    $.ajaxQueue = {
-        requestFuncs: [],
-        numRequests: 0,
-        numActiveRequests: 0,
-        maxConcurrency: 0,
-    };
 
     /**
      * The OpenSeadragon version.
@@ -1343,7 +1332,6 @@ function OpenSeadragon( options ){
 
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,
-            ajaxLoaderLimit:        0,
             maxImageCacheCount:     200,
             timeout:                30000,
             useCanvas:              true,  // Use canvas element for drawing if available
@@ -1478,6 +1466,24 @@ function OpenSeadragon( options ){
             NEVER:        0,
             ONLY_AT_REST: 1,
             ALWAYS:       2
+        },
+
+        /**
+         * Global settings, shared across all viewers.
+         * @static
+         * @type {Object}
+         * @property {Number} ajaxLoaderLimit The maximum number of ajax requests to make concurrently. By default it is set to 0 allowing an unlimited number of concurrent requests.
+         */
+        settings: {
+            ajaxLoaderLimit: 0
+        },
+
+        setAjaxLoaderLimit: function ( maxNumAjaxRequests ) {
+            if( maxNumAjaxRequests < 0) {
+                throw new Error("The ajax loader limit must be >= 0");
+            }
+
+            $.settings.ajaxLoaderLimit = maxNumAjaxRequests;
         },
 
         /**
@@ -2343,23 +2349,42 @@ function OpenSeadragon( options ){
             return $.createAjaxRequest( local );
         },
 
+        /**
+         * An object holding the AJAX queue state.
+         * @static
+         * @type {Object}
+         * @property {Array} requestFuncs Array of functions representing queued AJAX requests
+         * @property {Array} numIncompleteRequests The number of incomplete AJAX requests, including queued and active (but not completed) requests
+         * @property {Array} numActiveRequests The number of AJAX requests currently in-flight
+         */
+        AjaxQueue: {
+            requestFuncs: [],
+            numIncompleteRequests: 0,
+            numActiveRequests: 0,
+        },
+
+        /**
+         * Queues an AJAX request.
+         * @param {XMLHttpRequest} request The request to be queued
+         * @param {Function} sendRequestFunc A function which, when called, will send the request
+         */
         queueAjaxRequest: function (request, sendRequestFunc) {
-            if(!$.ajaxQueue.maxConcurrency) {
+            if(!$.settings.ajaxLoaderLimit) {
                 sendRequestFunc();
             }
 
             var oldOnStateChange = request.onreadystatechange;
 
             var onCompleteRequest = function() {
-                $.ajaxQueue.numRequests--;
+                $.AjaxQueue.numIncompleteRequests--;
 
                 if (
-                    $.ajaxQueue.numActiveRequests === $.ajaxQueue.maxConcurrency &&
-                    $.ajaxQueue.requestFuncs.length > 0
+                    $.AjaxQueue.numActiveRequests === $.settings.ajaxLoaderLimit &&
+                    $.AjaxQueue.requestFuncs.length > 0
                 ) {
-                    $.ajaxQueue.requestFuncs.shift()();
+                    $.AjaxQueue.requestFuncs.shift()();
                 } else {
-                    $.ajaxQueue.numActiveRequests--;
+                    $.AjaxQueue.numActiveRequests--;
                 }
             };
 
@@ -2370,12 +2395,12 @@ function OpenSeadragon( options ){
                 }
             };
 
-            $.ajaxQueue.numRequests++;
+            $.AjaxQueue.numIncompleteRequests++;
 
-            if ($.ajaxQueue.numActiveRequests === $.ajaxQueue.maxConcurrency) {
-                $.ajaxQueue.requestFuncs.push(sendRequestFunc);
+            if ($.AjaxQueue.numActiveRequests === $.settings.ajaxLoaderLimit) {
+                $.AjaxQueue.requestFuncs.push(sendRequestFunc);
             } else {
-                $.ajaxQueue.numActiveRequests++;
+                $.AjaxQueue.numActiveRequests++;
                 sendRequestFunc();
             }
         },
