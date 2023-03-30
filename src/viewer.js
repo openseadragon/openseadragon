@@ -531,10 +531,6 @@ $.Viewer = function( options ) {
         tileRetryDelay: this.tileRetryDelay
     });
 
-    // TODO: Instantiating a viewer shouldn't have
-    // a side effect on the global queue
-    $.ajaxQueue.ajaxLoaderLimit = options.ajaxLoaderLimit;
-
     // Create the tile cache
     this.tileCache = new $.TileCache({
         viewer: this,
