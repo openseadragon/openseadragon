@@ -932,7 +932,7 @@ function processResponse( xhr ){
         throw new Error( $.getString( "Errors.Status", status, statusText ) );
     }
 
-    if( responseText.match(/\s*<.*/) ){
+    if( responseText.match(/^\s*<.*/) ){
         try{
         data = ( xhr.responseXML && xhr.responseXML.documentElement ) ?
             xhr.responseXML :
