@@ -351,7 +351,7 @@
   *     it is set to 0 allowing the browser to make the maximum number of
   *     image requests in parallel as allowed by the browsers policy.
   *
-  * @property {Number} [tileSourceLoaderLimit=0]
+  * @property {Number} [ajaxLoaderLimit=0]
   *     The maximum number of tile source requests to make concurrently. By default
   *     it is set to 0 allowing an unlimited number of concurrent requests.
   *
@@ -1531,7 +1531,7 @@ function OpenSeadragon( options ){
 
             //PERFORMANCE SETTINGS
             imageLoaderLimit:       0,
-            tileSourceLoaderLimit:  0,
+            ajaxLoaderLimit:        0,
             maxImageCacheCount:     200,
             timeout:                30000,
             tileRetryMax:           0,
