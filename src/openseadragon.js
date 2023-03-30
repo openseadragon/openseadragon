@@ -1472,12 +1472,17 @@ function OpenSeadragon( options ){
          * Global settings, shared across all viewers.
          * @static
          * @type {Object}
-         * @property {Number} ajaxLoaderLimit The maximum number of ajax requests to make concurrently. By default it is set to 0 allowing an unlimited number of concurrent requests.
+         * @property {Number} ajaxLoaderLimit The maximum number of AJAX requests to make concurrently. By default it is set to 0 allowing an unlimited number of concurrent requests.
          */
         settings: {
             ajaxLoaderLimit: 0
         },
 
+        /**
+         * Sets the global concurrency limit for AJAX requests
+         * @function
+         * @param {Number} maxNumAjaxRequests The maximum number of AJAX requests to make concurrently. Setting this to 0 will allow an unlimited number of requests.
+         */
         setAjaxLoaderLimit: function ( maxNumAjaxRequests ) {
             if( maxNumAjaxRequests < 0) {
                 throw new Error("The ajax loader limit must be >= 0");
