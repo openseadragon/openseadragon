@@ -399,11 +399,11 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             var style = this.displayRegion.style;
             style.display = this.world.getItemCount() ? 'block' : 'none';
 
-            style.top    = Math.round( topleft.y ) + 'px';
-            style.left   = Math.round( topleft.x ) + 'px';
+            style.top = topleft.y.toFixed(2) + "px";
+            style.left = topleft.x.toFixed(2) + "px";
 
-            var width = Math.abs( topleft.x - bottomright.x );
-            var height = Math.abs( topleft.y - bottomright.y );
+            var width = bottomright.x - topleft.x;
+            var height = bottomright.y - topleft.y;
             // make sure width and height are non-negative so IE doesn't throw
             style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
             style.height = Math.round( Math.max( height, 0 ) ) + 'px';
