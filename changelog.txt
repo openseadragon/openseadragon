@@ -17,6 +17,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Code that required identifying functions would fail for async functions (#2273 @Aiosa)
 * Fixed: Reference strip click detection was not accurate for long reference strips (#2280 @damonsson)
 * Fixed: Translation problems in some circumstances with cropping polygons enabled (#2316 @pearcetm)
+* Fixed: The navigator area rectangle would grow larger when you zoom in very far (#2318 @donotloveshampo)
 
 4.0.0:
 
