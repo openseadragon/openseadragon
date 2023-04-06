@@ -19,6 +19,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Translation problems in some circumstances with cropping polygons enabled (#2316 @pearcetm)
 * Fixed: The navigator area rectangle would grow larger when you zoom in very far (#2318 @donotloveshampo)
 * Fixed: JSON with embedded XML was being incorrectly identified as XML (#2328 @craigberry)
+* Fixed: Touch/pinch rotate was not working properly on some platforms (#2324 @rsimon, @pearcetm)
 
 4.0.0:
 
