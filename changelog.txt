@@ -22,7 +22,7 @@ OPENSEADRAGON CHANGELOG
 
 4.0.0:
 
-* NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass false for the new `immediately` parameter to disable) (#2136 @jonasengelmann)
+* NEW BEHAVIOR: Setting the viewport rotation now animates by default (pass true for the new `immediately` parameter to disable) (#2136 @jonasengelmann)
 * NEW BEHAVIOR: The auto resize now takes both width and height into account when scaling the contents proportionally to the viewer (#2256 @pearcetm)
 * DEPRECATION: Don't access the viewport's degrees property directly anymore; instead use setRotation and getRotation (#2136 @jonasengelmann)
 * New gesture: Double-click and drag to zoom (on by default for touch) (#2225 @HamzaTatheer)
