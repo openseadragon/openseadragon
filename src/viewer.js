@@ -3422,7 +3422,8 @@ function onCanvasPinch( event ) {
                 event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
             var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
                 event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            this.viewport.rotateTo(this.viewport.getRotation(true) + ((angle1 - angle2) * (180 / Math.PI)), centerPt, true);
         }
     }
 }
