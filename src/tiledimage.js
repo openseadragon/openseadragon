@@ -1621,6 +1621,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile.loading = false;
             tile.exists = false;
             return;
+        } else {
+            tile.exists = true;
         }
 
         if ( time < this.lastResetTime ) {

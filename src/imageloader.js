@@ -62,7 +62,7 @@ $.ImageJob = function(options) {
 
     /**
      * Data object which will contain downloaded image data.
-     * @member {Image|*} image data object, by default an Image object (depends on TileSource)
+     * @member {Image|*} data data object, by default an Image object (depends on TileSource)
      * @memberof OpenSeadragon.ImageJob#
      */
     this.data = null;
@@ -234,7 +234,7 @@ $.ImageLoader.prototype = {
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
-    if (job.errorMsg !== '' && (job.image === null || job.image === undefined) && job.tries < 1 + loader.tileRetryMax) {
+    if (job.errorMsg !== '' && (job.data === null || job.data === undefined) && job.tries < 1 + loader.tileRetryMax) {
         loader.failedTiles.push(job);
     }
     var nextJob;
