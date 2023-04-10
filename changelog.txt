@@ -5,7 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * The viewer no longer emits `canvas-key` events for both keydown and keypress events; canvas-key is now just for keydown, and the new `canvas-key-press` is for keypress (#2270 @hrghauri)
 * You can now specify a priority when calling addHandler, to control when your event handler gets called relative to others (#2273 @Aiosa)
-* Added tileRetryMax and tileRetryDelay options, so the viewer can retry loading failed tiles (#2238 @Ughuuu, @paaddyy)
+* Added tileRetryMax and tileRetryDelay options, so the viewer can retry loading failed tiles (#2238 @Ughuuu @paaddyy, #2334 @Ughuuu @Titan21)
 * All of the viewers keyboard handling is now in response to keydown events (it used to be split between keydown and keypress) (#2291 @MohitBansal321)
 * Added `canvas-focus` and `canvas-blur` events to Viewer (#2301 @MohitBansal321)
 * You can now more easily add custom buttons to the viewer (#2306 @MohitBansal321)
