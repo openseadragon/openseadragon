@@ -2,7 +2,7 @@
  * OpenSeadragon - IIIFTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -333,7 +333,45 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             }
         }
 
-        return $.TileSource.prototype.getNumTiles.call(this, level);
+        // Use supplied list of scaled resolution sizes if these exist
+        var levelSize = this.getLevelSize(level);
+        if( levelSize ) {
+          var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
+              y = Math.ceil( levelSize.height / this.getTileHeight(level) );
+          return new $.Point( x, y );
+        }
+        // Otherwise call default TileSource->getNumTiles() function
+        else {
+          return $.TileSource.prototype.getNumTiles.call(this, level);
+        }
+    },
+
+
+    /**
+     * Determine image size at a given resolution level using the info.json "sizes" field
+     * Returns null if this information is not present
+     * @function {Number} level
+     */
+    getLevelSize: function( level ) {
+
+      var numLevels = this.maxLevel - this.minLevel;
+      // Need to take into account that the list may or may not include the full resolution size
+      if( this.sizes && ((this.sizes.length === numLevels) ||
+                         (this.sizes.length === numLevels + 1)) ) {
+        var levelWidth, levelHeight;
+        if( this.sizes.length === numLevels ) {
+          levelWidth = (level === this.sizes.length) ? this.width : this.sizes[level].width;
+          levelHeight = (level === this.sizes.length) ? this.height : this.sizes[level].height;
+        }
+        else {
+          levelWidth = this.sizes[level].width;
+          levelHeight = this.sizes[level].height;
+        }
+        return { width: levelWidth, height: levelHeight };
+      }
+      else {
+        return null;
+      }
     },
 
 
@@ -375,10 +413,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var IIIF_ROTATION = '0',
             //## get the scale (level as a decimal)
             scale = Math.pow( 0.5, this.maxLevel - level ),
-
             //# image dimensions at this level
-            levelWidth = Math.round( this.width * scale ),
-            levelHeight = Math.round( this.height * scale ),
+            levelWidth,
+            levelHeight,
 
             //## iiif region
             tileWidth,
@@ -395,6 +432,18 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifSizeH,
             iiifQuality,
             uri;
+
+        // Use supplied list of scaled resolution sizes if these exist
+        var levelSize = this.getLevelSize( level );
+        if( levelSize ) {
+          levelWidth = levelSize.width;
+          levelHeight = levelSize.height;
+        }
+        // Otherwise calculate the sizes ourselves
+        else {
+          levelWidth = Math.ceil( this.width * scale );
+          levelHeight = Math.ceil( this.height * scale );
+        }
 
         tileWidth = this.getTileWidth(level);
         tileHeight = this.getTileHeight(level);
@@ -426,8 +475,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             } else {
                 iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
             }
-            iiifSizeW = Math.round( iiifTileW * scale );
-            iiifSizeH = Math.round( iiifTileH * scale );
+            iiifSizeW = Math.min( tileWidth, levelWidth - (x * tileWidth) );
+            iiifSizeH = Math.min( tileHeight, levelHeight - (y * tileHeight) );
             if ( this.version === 2 && iiifSizeW === this.width ) {
                 iiifSize = "full";
             } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {
