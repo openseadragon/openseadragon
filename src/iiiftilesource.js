@@ -336,13 +336,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         // Use supplied list of scaled resolution sizes if these exist
         var levelSize = this.getLevelSize(level);
         if( levelSize ) {
-          var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
-              y = Math.ceil( levelSize.height / this.getTileHeight(level) );
-          return new $.Point( x, y );
+            var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
+                y = Math.ceil( levelSize.height / this.getTileHeight(level) );
+            return new $.Point( x, y );
         }
         // Otherwise call default TileSource->getNumTiles() function
         else {
-          return $.TileSource.prototype.getNumTiles.call(this, level);
+            return $.TileSource.prototype.getNumTiles.call(this, level);
         }
     },
 
@@ -389,6 +389,35 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             return new $.Point(0, 0);
         }
 
+        // Use supplied list of scaled resolution sizes if these exist
+        var levelSize = this.getLevelSize(level);
+        if( levelSize ) {
+
+            var validPoint = point.x >= 0 && point.x <= 1 &&
+                             point.y >= 0 && point.y <= 1 / this.aspectRatio;
+            $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
+
+            var widthScaled = levelSize.width;
+            var pixelX = point.x * widthScaled;
+            var pixelY = point.y * widthScaled;
+
+            var x = Math.floor(pixelX / this.getTileWidth(level));
+            var y = Math.floor(pixelY / this.getTileHeight(level));
+
+            // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
+            // return the last tile of the row/column
+            if (point.x >= 1) {
+                x = this.getNumTiles(level).x - 1;
+            }
+            var EPSILON = 1e-15;
+            if (point.y >= 1 / this.aspectRatio - EPSILON) {
+                y = this.getNumTiles(level).y - 1;
+            }
+
+            return new $.Point(x, y);
+        }
+
+        // Otherwise call default TileSource->getTileAtPoint() function
         return $.TileSource.prototype.getTileAtPoint.call(this, level, point);
     },
 
