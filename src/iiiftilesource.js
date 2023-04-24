@@ -354,24 +354,27 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      */
     getLevelSize: function( level ) {
 
-      var numLevels = this.maxLevel - this.minLevel;
-      // Need to take into account that the list may or may not include the full resolution size
-      if( this.sizes && ((this.sizes.length === numLevels) ||
-                         (this.sizes.length === numLevels + 1)) ) {
-        var levelWidth, levelHeight;
-        if( this.sizes.length === numLevels ) {
-          levelWidth = (level === this.sizes.length) ? this.width : this.sizes[level].width;
-          levelHeight = (level === this.sizes.length) ? this.height : this.sizes[level].height;
-        }
-        else {
-          levelWidth = this.sizes[level].width;
-          levelHeight = this.sizes[level].height;
-        }
-        return { width: levelWidth, height: levelHeight };
-      }
-      else {
+      if (!this.sizes) {
         return null;
       }
+
+      var levelWidth, levelHeight;
+      var numLevels = this.maxLevel - this.minLevel;
+      var sizeLength = this.sizes.length;
+
+      // Need to take into account that the list may or may not include the full resolution size
+      if (sizeLength === numLevels) {
+        levelWidth = (level === sizeLength) ? this.width : this.sizes[level].width;
+        levelHeight = (level === sizeLength) ? this.height : this.sizes[level].height;
+      } else if ( sizeLength === numLevels + 1 ) {
+        levelWidth = this.sizes[level].width;
+        levelHeight = this.sizes[level].height;
+      } else {
+        // Sizes field doesn't contain resolution level sizes, so discard
+        return null;
+      }
+
+      return {width: levelWidth, height: levelHeight};
     },
 
 
