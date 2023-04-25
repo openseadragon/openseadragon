@@ -141,6 +141,18 @@ $.IIIFTileSource = function( options ){
         }
     }
 
+    // Create an array with our exact resolution sizes if these have been supplied
+    if( this.sizes ) {
+        var sizeLength = this.sizes.length;
+        if ( (sizeLength === options.maxLevel) || (sizeLength === options.maxLevel + 1) ) {
+            this.levelSizes = this.sizes;
+            // Need to take into account that the list may or may not include the full resolution size
+            if( sizeLength === options.maxLevel ) {
+                this.levelSizes.push( {width: this.width, height: this.height} );
+            }
+        }
+    }
+
     $.TileSource.apply( this, [ options ] );
 };
 
@@ -334,8 +346,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         }
 
         // Use supplied list of scaled resolution sizes if these exist
-        var levelSize = this.getLevelSize(level);
-        if( levelSize ) {
+        if( this.levelSizes ) {
+            var levelSize = this.levelSizes[level];
             var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
                 y = Math.ceil( levelSize.height / this.getTileHeight(level) );
             return new $.Point( x, y );
@@ -344,37 +356,6 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         else {
             return $.TileSource.prototype.getNumTiles.call(this, level);
         }
-    },
-
-
-    /**
-     * Determine image size at a given resolution level using the info.json "sizes" field
-     * Returns null if this information is not present
-     * @function {Number} level
-     */
-    getLevelSize: function( level ) {
-
-      if (!this.sizes) {
-        return null;
-      }
-
-      var levelWidth, levelHeight;
-      var numLevels = this.maxLevel - this.minLevel;
-      var sizeLength = this.sizes.length;
-
-      // Need to take into account that the list may or may not include the full resolution size
-      if (sizeLength === numLevels) {
-        levelWidth = (level === sizeLength) ? this.width : this.sizes[level].width;
-        levelHeight = (level === sizeLength) ? this.height : this.sizes[level].height;
-      } else if ( sizeLength === numLevels + 1 ) {
-        levelWidth = this.sizes[level].width;
-        levelHeight = this.sizes[level].height;
-      } else {
-        // Sizes field doesn't contain resolution level sizes, so discard
-        return null;
-      }
-
-      return {width: levelWidth, height: levelHeight};
     },
 
 
@@ -390,14 +371,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         }
 
         // Use supplied list of scaled resolution sizes if these exist
-        var levelSize = this.getLevelSize(level);
-        if( levelSize ) {
+        if( this.levelSizes ) {
 
             var validPoint = point.x >= 0 && point.x <= 1 &&
                              point.y >= 0 && point.y <= 1 / this.aspectRatio;
             $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
 
-            var widthScaled = levelSize.width;
+            var widthScaled = this.levelSizes[level].width;
             var pixelX = point.x * widthScaled;
             var pixelY = point.y * widthScaled;
 
@@ -466,15 +446,14 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             uri;
 
         // Use supplied list of scaled resolution sizes if these exist
-        var levelSize = this.getLevelSize( level );
-        if( levelSize ) {
-          levelWidth = levelSize.width;
-          levelHeight = levelSize.height;
+        if( this.levelSizes ) {
+            levelWidth = this.levelSizes[level].width;
+            levelHeight = this.levelSizes[level].height;
         }
         // Otherwise calculate the sizes ourselves
         else {
-          levelWidth = Math.ceil( this.width * scale );
-          levelHeight = Math.ceil( this.height * scale );
+            levelWidth = Math.ceil( this.width * scale );
+            levelHeight = Math.ceil( this.height * scale );
         }
 
         tileWidth = this.getTileWidth(level);
