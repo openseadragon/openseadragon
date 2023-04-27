@@ -11,6 +11,7 @@ OPENSEADRAGON CHANGELOG
 * You can now more easily add custom buttons to the viewer (#2306 @MohitBansal321)
 * The fitBounds function now takes zoom constraints into account (#2293 @pearcetm)
 * The viewer now has an `after-resize` event what happens after the viewport bounds have been updated, to complement the `resize` event which happens before (#2317 @pearcetm)
+* IIIFTileSource now uses resolution level dimensions provided in the info.json "sizes" field for more accurate tile requests (#2337 @ruven)
 * Improved documentation (#2297 @KevinBritten)
 * Fixed: The `tile-loaded` event's completionCallback could be called more than once in some circumstances (#2282 @Aiosa, @pearcetm)
 * Fixed: Navigator display rectangle was off if the page had `box-sizing: border-box` (#2276 @ambujsahu81)
