@@ -982,6 +982,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * TODO
      */
     setAjaxHeaders: function(ajaxHeaders, propagate){
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
         if ($.isPlainObject(ajaxHeaders)) {
             this.ajaxHeaders = ajaxHeaders;
         }

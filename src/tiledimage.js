@@ -1013,6 +1013,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * TODO
      */
     setAjaxHeaders: function(ajaxHeaders, propagate){
+        if (propagate === undefined) {
+            propagate = true;
+        }
 
         // use same headers if provided 'ajaxHeaders' is invalid (useful for propagation)
         if ($.isPlainObject(ajaxHeaders)) {
