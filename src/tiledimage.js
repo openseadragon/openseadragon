@@ -1030,19 +1030,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // propagate header updates to all tiles and queued imageloader jobs
         if (propagate) {
+            var numTiles, xMod, yMod, tile;
 
-            for (const [level, levelTiles] of Object.entries(this.tilesMatrix)) {
-                const numTiles = this.source.getNumTiles(level);
+            for (var level in this.tilesMatrix) {
+                numTiles = this.source.getNumTiles(level);
 
-                for (const [x, rowTiles] of Object.entries(levelTiles)) {
-                    const xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+                for (var x in this.tilesMatrix[level]) {
+                    xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
 
-                    for (const [y, tile] of Object.entries(rowTiles)) {
-                        const yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+                    for (var y in this.tilesMatrix[level][x]) {
+                        yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+                        tile = this.tilesMatrix[level][x][y];
 
                         tile.loadWithAjax = this.loadTilesWithAjax;
                         if (tile.loadWithAjax) {
-                            const tileAjaxHeaders = this.source.getTileAjaxHeaders( level, xMod, yMod );
+                            var tileAjaxHeaders = this.source.getTileAjaxHeaders( level, xMod, yMod );
                             tile.ajaxHeaders = $.extend({}, this.ajaxHeaders, tileAjaxHeaders);
                         } else {
                             tile.ajaxHeaders = null;
@@ -1053,7 +1055,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             // TODO: good enough? running jobs are not stored anywhere
             //       maybe look through this._imageLoader.failedTiles and restart jobs? but which ones?
-            for (const job of this._imageLoader.jobQueue) {
+            for (var i = 0; i < this._imageLoader.jobQueue.length; i++) {
+                var job = this._imageLoader.jobQueue[i];
                 job.loadWithAjax = job.tile.loadWithAjax;
                 job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
             }
