@@ -979,6 +979,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * TODO
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate){
+        if ($.isPlainObject(ajaxHeaders)) {
+            this.ajaxHeaders = ajaxHeaders;
+        }
+
+        if (propagate) {
+            for (var i = 0; i < this.world.getItemCount(); i++) {
+                this.world.getItemAt(i).setAjaxHeaders(null, propagate);
+            }
+        }
+    },
+
+    /**
      * Adds the given button to this viewer.
      *
      * @functions
@@ -1401,7 +1416,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Object} [options.ajaxHeaders]
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
-     *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
+     *      Is this outdated? -> Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
      * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
@@ -1450,10 +1465,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
-        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
-            options.ajaxHeaders = this.ajaxHeaders;
-        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
-            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
+        if (!$.isPlainObject(options.ajaxHeaders)) {
+            options.ajaxHeaders = {};
         }
 
         var myQueueItem = {

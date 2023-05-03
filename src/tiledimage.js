@@ -147,6 +147,9 @@ $.TiledImage = function( options ) {
     var degrees = options.degrees || 0;
     delete options.degrees;
 
+    var ajaxHeaders = options.ajaxHeaders;
+    delete options.ajaxHeaders;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -238,6 +241,9 @@ $.TiledImage = function( options ) {
             tiledImage: _this
         }, args));
     };
+
+    this._ownAjaxHeaders = {};
+    this.setAjaxHeaders(ajaxHeaders, false);
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -1001,6 +1007,57 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.raiseEvent('composite-operation-change', {
             compositeOperation: this.compositeOperation
         });
+    },
+
+    /**
+     * TODO
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate){
+
+        // use same headers if provided 'ajaxHeaders' is invalid (useful for propagation)
+        if ($.isPlainObject(ajaxHeaders)) {
+            this._ownAjaxHeaders = ajaxHeaders;
+        } else {
+            ajaxHeaders = this._ownAjaxHeaders;
+        }
+
+        // merge with viewer's headers
+        if ($.isPlainObject(this.viewer.ajaxHeaders)) {
+            this.ajaxHeaders = $.extend({}, this.viewer.ajaxHeaders, ajaxHeaders);
+        } else {
+            this.ajaxHeaders = ajaxHeaders;
+        }
+
+        // propagate header updates to all tiles and queued imageloader jobs
+        if (propagate) {
+
+            for (const [level, levelTiles] of Object.entries(this.tilesMatrix)) {
+                const numTiles = this.source.getNumTiles(level);
+
+                for (const [x, rowTiles] of Object.entries(levelTiles)) {
+                    const xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+
+                    for (const [y, tile] of Object.entries(rowTiles)) {
+                        const yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+
+                        tile.loadWithAjax = this.loadTilesWithAjax;
+                        if (tile.loadWithAjax) {
+                            const tileAjaxHeaders = this.source.getTileAjaxHeaders( level, xMod, yMod );
+                            tile.ajaxHeaders = $.extend({}, this.ajaxHeaders, tileAjaxHeaders);
+                        } else {
+                            tile.ajaxHeaders = null;
+                        }
+                    }
+                }
+            }
+
+            // TODO: good enough? running jobs are not stored anywhere
+            //       maybe look through this._imageLoader.failedTiles and restart jobs? but which ones?
+            for (const job of this._imageLoader.jobQueue) {
+                job.loadWithAjax = job.tile.loadWithAjax;
+                job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
+            }
+        }
     },
 
     // private
