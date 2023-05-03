@@ -990,6 +990,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             for (var i = 0; i < this.world.getItemCount(); i++) {
                 this.world.getItemAt(i).setAjaxHeaders(null, propagate);
             }
+
+            if (this.referenceStrip && this.referenceStrip.miniViewers) {
+                for (var key in this.referenceStrip.miniViewers) {
+                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, propagate);
+                }
+            }
         }
     },
 
