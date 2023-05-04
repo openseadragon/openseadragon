@@ -1012,23 +1012,30 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * TODO
      */
-    setAjaxHeaders: function(ajaxHeaders, propagate){
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+
+        this._ownAjaxHeaders = ajaxHeaders;
+        this._updateAjaxHeaders(propagate);
+    },
+
+    // private
+    _updateAjaxHeaders: function(propagate) {
         if (propagate === undefined) {
             propagate = true;
         }
 
-        // use same headers if provided 'ajaxHeaders' is invalid (useful for propagation)
-        if ($.isPlainObject(ajaxHeaders)) {
-            this._ownAjaxHeaders = ajaxHeaders;
-        } else {
-            ajaxHeaders = this._ownAjaxHeaders;
-        }
-
         // merge with viewer's headers
         if ($.isPlainObject(this.viewer.ajaxHeaders)) {
-            this.ajaxHeaders = $.extend({}, this.viewer.ajaxHeaders, ajaxHeaders);
+            this.ajaxHeaders = $.extend({}, this.viewer.ajaxHeaders, this._ownAjaxHeaders);
         } else {
-            this.ajaxHeaders = ajaxHeaders;
+            this.ajaxHeaders = this._ownAjaxHeaders;
         }
 
         // propagate header updates to all tiles and queued imageloader jobs

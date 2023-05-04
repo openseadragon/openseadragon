@@ -346,7 +346,7 @@
             assert.deepEqual(evt.tiledImage.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders2));
             assert.deepEqual(evt.tile.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders2, tileSourceHeaders));
             // set new TiledImage headers but do not propagate to Tile
-            evt.tiledImage.setAjaxHeaders({}, false);
+            evt.tiledImage.setAjaxHeaders(null, false);
             viewer.addHandler('tile-loaded', tileLoaded4);
         };
 

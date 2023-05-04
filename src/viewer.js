@@ -981,18 +981,23 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * TODO
      */
-    setAjaxHeaders: function(ajaxHeaders, propagate){
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
         if (propagate === undefined) {
             propagate = true;
         }
 
-        if ($.isPlainObject(ajaxHeaders)) {
-            this.ajaxHeaders = ajaxHeaders;
-        }
+        this.ajaxHeaders = ajaxHeaders;
 
         if (propagate) {
             for (var i = 0; i < this.world.getItemCount(); i++) {
-                this.world.getItemAt(i).setAjaxHeaders(null, true);
+                this.world.getItemAt(i)._updateAjaxHeaders(true);
             }
 
             if (this.referenceStrip && this.referenceStrip.miniViewers) {
