@@ -22,6 +22,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: JSON with embedded XML was being incorrectly identified as XML (#2328 @craigberry)
 * Fixed: Touch/pinch rotate was not working properly on some platforms (#2324 @rsimon, @pearcetm)
 * Fixed: Navigator rotation didn't honor `immediately` parameter (#2333 @robertjcolley)
+* Fixed: The navigator didn't update for its new size in certain circumstances (#2347 @pearcetm)
 
 4.0.0:
 
