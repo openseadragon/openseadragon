@@ -992,12 +992,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         if (propagate) {
             for (var i = 0; i < this.world.getItemCount(); i++) {
-                this.world.getItemAt(i).setAjaxHeaders(null, propagate);
+                this.world.getItemAt(i).setAjaxHeaders(null, true);
             }
 
             if (this.referenceStrip && this.referenceStrip.miniViewers) {
                 for (var key in this.referenceStrip.miniViewers) {
-                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, propagate);
+                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, true);
                 }
             }
         }
