@@ -979,7 +979,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * TODO
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiled images, each of which will subsequently
+     * propagate the changed headers to all their tiles.
+     * If applicable, the headers of the viewer's navigator and reference strip will also be updated.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * `TiledImage.ajaxHeaders`, which take precedence over the headers here in the viewer.
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to tiled images, etc.
      */
     setAjaxHeaders: function(ajaxHeaders, propagate) {
         if (ajaxHeaders === null) {
@@ -1435,7 +1448,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Object} [options.ajaxHeaders]
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
-     * requests.
+     *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", which is the resulting instance of TiledImage.

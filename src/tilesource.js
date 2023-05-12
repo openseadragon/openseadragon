@@ -663,6 +663,10 @@ $.TileSource.prototype = {
      * The headers returned here will override headers specified at the Viewer or TiledImage level.
      * Specifying a falsy value for a header will clear its existing value set at the Viewer or
      * TiledImage level (if any).
+     *
+     * Note that the headers of existing tiles don't automatically change when this function
+     * returns updated headers. To do that, you need to call {@link OpenSeadragon.TiledImage#updateAjaxHeaders}.
+     *
      * @function
      * @param {Number} level
      * @param {Number} x

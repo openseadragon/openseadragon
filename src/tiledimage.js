@@ -1010,7 +1010,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * TODO
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiles and queued image loader jobs.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * the headers here in the tiled image (`TiledImage.ajaxHeaders`).
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers, which will be merged over any headers specified in {@link OpenSeadragon.Options}.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
      */
     setAjaxHeaders: function(ajaxHeaders, propagate) {
         if (ajaxHeaders === null) {
@@ -1022,11 +1033,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         this._ownAjaxHeaders = ajaxHeaders;
-        this._updateAjaxHeaders(propagate);
+        this.updateAjaxHeaders(propagate);
     },
 
-    // private
-    _updateAjaxHeaders: function(propagate) {
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * This function has the same effect as calling {@link OpenSeadragon.TiledImage#setAjaxHeaders},
+     * expect that the headers for this tiled image do not change. This is especially useful
+     * for propagating updated headers from {@link OpenSeadragon.TileSource#getTileAjaxHeaders}
+     * to existing tiles.
+     *
+     * Note that `TiledImage.ajaxHeaders` might still change if {@link OpenSeadragon.Viewer#setAjaxHeaders}
+     * was previously called without propagating the updated headers (not recommended).
+     *
+     * @function
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
+     */
+    updateAjaxHeaders: function(propagate) {
         if (propagate === undefined) {
             propagate = true;
         }
@@ -1038,7 +1062,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this.ajaxHeaders = this._ownAjaxHeaders;
         }
 
-        // propagate header updates to all tiles and queued imageloader jobs
+        // propagate header updates to all tiles and queued image loader jobs
         if (propagate) {
             var numTiles, xMod, yMod, tile;
 
@@ -1063,8 +1087,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
             }
 
-            // TODO: good enough? running jobs are not stored anywhere
-            //       maybe look through this._imageLoader.failedTiles and restart jobs? but which ones?
             for (var i = 0; i < this._imageLoader.jobQueue.length; i++) {
                 var job = this._imageLoader.jobQueue[i];
                 job.loadWithAjax = job.tile.loadWithAjax;
