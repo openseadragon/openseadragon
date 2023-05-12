@@ -966,7 +966,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Turns debugging mode on or off for this viewer.
      *
      * @function
-     * @param {Boolean} true to turn debug on, false to turn debug off.
+     * @param {Boolean} debugMode true to turn debug on, false to turn debug off.
      */
     setDebugMode: function(debugMode){
 
@@ -1015,7 +1015,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Adds the given button to this viewer.
      *
-     * @functions
+     * @function
      * @param {OpenSeadragon.Button} button
      */
     addButton: function( button ){
