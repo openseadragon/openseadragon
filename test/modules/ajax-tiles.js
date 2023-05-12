@@ -306,7 +306,7 @@
         viewer.open(customTileSource);
     });
 
-    QUnit.test('TileImage headers can be updated', function(assert) {
+    QUnit.test('TiledImage headers can be updated', function(assert) {
         var done = assert.async();
 
         var tileSourceHeaders = {
