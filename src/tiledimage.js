@@ -147,6 +147,9 @@ $.TiledImage = function( options ) {
     var degrees = options.degrees || 0;
     delete options.degrees;
 
+    var ajaxHeaders = options.ajaxHeaders;
+    delete options.ajaxHeaders;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -238,6 +241,9 @@ $.TiledImage = function( options ) {
             tiledImage: _this
         }, args));
     };
+
+    this._ownAjaxHeaders = {};
+    this.setAjaxHeaders(ajaxHeaders, false);
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -1001,6 +1007,90 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.raiseEvent('composite-operation-change', {
             compositeOperation: this.compositeOperation
         });
+    },
+
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiles and queued image loader jobs.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * the headers here in the tiled image (`TiledImage.ajaxHeaders`).
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers, which will be merged over any headers specified in {@link OpenSeadragon.Options}.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+
+        this._ownAjaxHeaders = ajaxHeaders;
+        this._updateAjaxHeaders(propagate);
+    },
+
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * This function has the same effect as calling {@link OpenSeadragon.TiledImage#setAjaxHeaders},
+     * except that the headers for this tiled image do not change. This is especially useful
+     * for propagating updated headers from {@link OpenSeadragon.TileSource#getTileAjaxHeaders}
+     * to existing tiles.
+     *
+     * @private
+     * @function
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
+     */
+    _updateAjaxHeaders: function(propagate) {
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
+        // merge with viewer's headers
+        if ($.isPlainObject(this.viewer.ajaxHeaders)) {
+            this.ajaxHeaders = $.extend({}, this.viewer.ajaxHeaders, this._ownAjaxHeaders);
+        } else {
+            this.ajaxHeaders = this._ownAjaxHeaders;
+        }
+
+        // propagate header updates to all tiles and queued image loader jobs
+        if (propagate) {
+            var numTiles, xMod, yMod, tile;
+
+            for (var level in this.tilesMatrix) {
+                numTiles = this.source.getNumTiles(level);
+
+                for (var x in this.tilesMatrix[level]) {
+                    xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+
+                    for (var y in this.tilesMatrix[level][x]) {
+                        yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+                        tile = this.tilesMatrix[level][x][y];
+
+                        tile.loadWithAjax = this.loadTilesWithAjax;
+                        if (tile.loadWithAjax) {
+                            var tileAjaxHeaders = this.source.getTileAjaxHeaders( level, xMod, yMod );
+                            tile.ajaxHeaders = $.extend({}, this.ajaxHeaders, tileAjaxHeaders);
+                        } else {
+                            tile.ajaxHeaders = null;
+                        }
+                    }
+                }
+            }
+
+            for (var i = 0; i < this._imageLoader.jobQueue.length; i++) {
+                var job = this._imageLoader.jobQueue[i];
+                job.loadWithAjax = job.tile.loadWithAjax;
+                job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
+            }
+        }
     },
 
     // private

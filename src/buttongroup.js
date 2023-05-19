@@ -115,7 +115,7 @@ $.ButtonGroup.prototype = {
     /**
      * Adds the given button to this button group.
      *
-     * @functions
+     * @function
      * @param {OpenSeadragon.Button} button
      */
     addButton: function( button ){

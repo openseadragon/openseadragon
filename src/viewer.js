@@ -966,7 +966,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Turns debugging mode on or off for this viewer.
      *
      * @function
-     * @param {Boolean} true to turn debug on, false to turn debug off.
+     * @param {Boolean} debugMode true to turn debug on, false to turn debug off.
      */
     setDebugMode: function(debugMode){
 
@@ -979,9 +979,56 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiled images, each of which will subsequently
+     * propagate the changed headers to all their tiles.
+     * If applicable, the headers of the viewer's navigator and reference strip will also be updated.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * `TiledImage.ajaxHeaders`, which take precedence over the headers here in the viewer.
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to tiled images, etc.
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
+        this.ajaxHeaders = ajaxHeaders;
+
+        if (propagate) {
+            for (var i = 0; i < this.world.getItemCount(); i++) {
+                this.world.getItemAt(i)._updateAjaxHeaders(true);
+            }
+
+            if (this.navigator) {
+                this.navigator.setAjaxHeaders(this.ajaxHeaders, true);
+            }
+
+            if (this.referenceStrip && this.referenceStrip.miniViewers) {
+                for (var key in this.referenceStrip.miniViewers) {
+                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, true);
+                }
+            }
+        }
+    },
+
+    /**
      * Adds the given button to this viewer.
      *
-     * @functions
+     * @function
      * @param {OpenSeadragon.Button} button
      */
     addButton: function( button ){
@@ -1402,7 +1449,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
      *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
-     * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", which is the resulting instance of TiledImage.
@@ -1450,10 +1496,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
-        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
-            options.ajaxHeaders = this.ajaxHeaders;
-        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
-            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
+        if (!$.isPlainObject(options.ajaxHeaders)) {
+            options.ajaxHeaders = {};
         }
 
         var myQueueItem = {
