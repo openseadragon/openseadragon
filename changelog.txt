@@ -12,6 +12,7 @@ OPENSEADRAGON CHANGELOG
 * The fitBounds function now takes zoom constraints into account (#2293 @pearcetm)
 * The viewer now has an `after-resize` event what happens after the viewport bounds have been updated, to complement the `resize` event which happens before (#2317 @pearcetm)
 * IIIFTileSource now uses resolution level dimensions provided in the info.json "sizes" field for more accurate tile requests (#2337 @ruven)
+* Added setAjaxHeaders method to Viewer and TiledImage (#2346 @uschmidt83)
 * Improved documentation (#2297 @KevinBritten)
 * Fixed: The `tile-loaded` event's completionCallback could be called more than once in some circumstances (#2282 @Aiosa, @pearcetm)
 * Fixed: Navigator display rectangle was off if the page had `box-sizing: border-box` (#2276 @ambujsahu81)
