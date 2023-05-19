@@ -1010,7 +1010,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         if (propagate) {
             for (var i = 0; i < this.world.getItemCount(); i++) {
-                this.world.getItemAt(i).updateAjaxHeaders(true);
+                this.world.getItemAt(i)._updateAjaxHeaders(true);
             }
 
             if (this.navigator) {

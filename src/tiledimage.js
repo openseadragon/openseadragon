@@ -1033,24 +1033,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         this._ownAjaxHeaders = ajaxHeaders;
-        this.updateAjaxHeaders(propagate);
+        this._updateAjaxHeaders(propagate);
     },
 
     /**
      * Update headers to include when making AJAX requests.
      *
      * This function has the same effect as calling {@link OpenSeadragon.TiledImage#setAjaxHeaders},
-     * expect that the headers for this tiled image do not change. This is especially useful
+     * except that the headers for this tiled image do not change. This is especially useful
      * for propagating updated headers from {@link OpenSeadragon.TileSource#getTileAjaxHeaders}
      * to existing tiles.
      *
-     * Note that `TiledImage.ajaxHeaders` might still change if {@link OpenSeadragon.Viewer#setAjaxHeaders}
-     * was previously called without propagating the updated headers (not recommended).
-     *
+     * @private
      * @function
      * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
      */
-    updateAjaxHeaders: function(propagate) {
+    _updateAjaxHeaders: function(propagate) {
         if (propagate === undefined) {
             propagate = true;
         }

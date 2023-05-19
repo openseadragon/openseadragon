@@ -665,7 +665,8 @@ $.TileSource.prototype = {
      * TiledImage level (if any).
      *
      * Note that the headers of existing tiles don't automatically change when this function
-     * returns updated headers. To do that, you need to call {@link OpenSeadragon.TiledImage#updateAjaxHeaders}.
+     * returns updated headers. To do that, you need to call {@link OpenSeadragon.Viewer#setAjaxHeaders}
+     * and propagate the changes.
      *
      * @function
      * @param {Number} level
