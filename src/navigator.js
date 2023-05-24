@@ -397,6 +397,11 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
 
+            if (!this.navigatorRotate) {
+                var degrees = viewport.getRotation(true);
+                _setTransformRotate(this.displayRegion, -degrees);
+            }
+
             //update style for navigator-box
             var style = this.displayRegion.style;
             style.display = this.world.getItemCount() ? 'block' : 'none';
