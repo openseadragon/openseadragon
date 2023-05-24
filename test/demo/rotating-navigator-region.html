@@ -20,7 +20,6 @@
     </div>
     <div id="contentDiv" class="openseadragon1"></div>
     <script type="text/javascript">
-
         var viewer = OpenSeadragon({
             // debugMode: true,
             id: "contentDiv",
@@ -29,6 +28,7 @@
             showNavigator: true,
             navigatorRotate: false
         });
+        viewer.viewport.setRotation(45)
     </script>
 </body>
 </html>

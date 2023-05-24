@@ -224,8 +224,6 @@ $.Navigator = function( options ){
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
 
-    this._navigatorRotate = options.navigatorRotate;
-
     function rotate(degrees, immediately) {
         _setTransformRotate(_this.displayRegionContainer, degrees);
         _setTransformRotate(_this.displayRegion, -degrees);
@@ -399,7 +397,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
 
-            if (!this._navigatorRotate) {
+            if (!this.navigatorRotate) {
                 var degrees = viewport.getRotation(true);
                 _setTransformRotate(this.displayRegion, -degrees);
             }
