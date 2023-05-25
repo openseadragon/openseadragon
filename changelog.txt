@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 5.0.0: (in progress...)
 
+* BREAKING CHANGE: Dropped support for IE11 (#2300 @AndrewADev)
+
 4.1.0:
 
 * NEW BEHAVIOR: When `navigatorRotate` is false, while the navigator image doesn't rotate, the red outline now does (#2356 @lcl45)
