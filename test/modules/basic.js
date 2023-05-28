@@ -224,7 +224,7 @@
     });
 
     QUnit.test('FullScreen', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         if (!OpenSeadragon.supportsFullScreen) {
             assert.expect(0);
             done();
@@ -234,7 +234,7 @@
         viewer.addHandler("open", function () {
             assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
 
-            var checkEnteringPreFullScreen = function(event) {
+            const checkEnteringPreFullScreen = function(event) {
                 viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
                 assert.ok(event.fullScreen, 'Switching to fullscreen');
                 assert.ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
@@ -242,7 +242,7 @@
 
             // The fullscreen mode is always denied during tests so we are
             // exiting directly.
-            var checkExitingFullScreen = function(event) {
+            const checkExitingFullScreen = function(event) {
                 viewer.removeHandler('full-screen', checkExitingFullScreen);
                 assert.ok(!event.fullScreen, 'Exiting fullscreen');
                 assert.ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
