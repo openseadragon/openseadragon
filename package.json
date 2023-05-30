@@ -42,7 +42,7 @@
         "grunt-git-describe": "^2.4.4",
         "grunt-istanbul": "^0.8.0",
         "grunt-text-replace": "^0.4.0",
-        "qunitjs": "2.4.1"
+        "qunit": "^2.19.4"
     },
     "scripts": {
         "test": "grunt test",
