@@ -1965,7 +1965,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             imageZoom > this.smoothTileEdgesMinZoom &&
             !this.iOSDevice &&
             this.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
-            this._drawer.viewer.viewport.getFlip() === false && // TODO: support tile edge smoothing with tiled image flip.
+            this._drawer.viewer.viewport.getFlip() === false && // TODO: support tile edge smoothing with viewport flip.
             $.supportsCanvas && this.viewer.useCanvas) {
             // When zoomed in a lot (>100%) the tile edges are visible.
             // So we have to composite them at ~100% and scale them up together.
