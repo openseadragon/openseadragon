@@ -1,6 +1,6 @@
 //imports
 import { ThreeJSDrawer } from './threejsdrawer.js';
-import { default as Stats } from "https://cdnjs.cloudflare.com/ajax/libs/stats.js/17/Stats.js";
+// import { default as Stats } from "https://cdnjs.cloudflare.com/ajax/libs/stats.js/17/Stats.js";
 //globals
 // const canvas = document.querySelector('#three-canvas');
 const sources = {
@@ -20,9 +20,9 @@ const labels = {
 }
 
 var stats = null;
-var stats = new Stats();
-stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild( stats.dom );
+// var stats = new Stats();
+// stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+// document.body.appendChild( stats.dom );
 
 
 //Double viewer setup for comparison - CanvasDrawer and ThreeJSDrawer
@@ -57,17 +57,17 @@ viewer.addHandler("resize", function(){
 
 // Single viewer showing how to use plugin Drawer via configuration
 // Also shows sequence mode
-var viewer2 = window.viewer2 = OpenSeadragon({
-    id: "three-viewer",
-    prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    customDrawer: ThreeJSDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-    sequenceMode: true,
-    imageSmoothingEnabled: false,
-    crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
-});
+// var viewer2 = window.viewer2 = OpenSeadragon({
+//     id: "three-viewer",
+//     prefixUrl: "../../build/openseadragon/images/",
+//     minZoomImageRatio:0.01,
+//     customDrawer: ThreeJSDrawer,
+//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+//     sequenceMode: true,
+//     imageSmoothingEnabled: false,
+//     crossOriginPolicy: 'Anonymous',
+//     ajaxWithCredentials: false
+// });
 
 
 

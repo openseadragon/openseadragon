@@ -103,7 +103,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
         }
 
         this._stats && this._stats.end();
-        console.log(this._renderer.info.memory, this._renderer.info.render.triangles);
+        // console.log(this._renderer.info.memory, this._renderer.info.render.triangles);
     }
     renderContinuously(continuously){
         if(continuously){
@@ -397,8 +397,9 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     _updateMeshIfNeeded(tiledImage){
         let tileContainer = this._tiledImageMap[tiledImage[this._uuid]].userData.tileContainer;
         let scene = this._tiledImageMap[tiledImage[this._uuid]]
-        let levelsInterval = tiledImage._getLevelsInterval();
-        let level = levelsInterval.highestLevel;
+        // let levelsInterval = tiledImage._getLevelsInterval();
+        // let level = levelsInterval.highestLevel;
+        let level = Math.max(...tiledImage.getTilesToDraw().map(tile => tile.level));
 
         if(scene.userData.currentLevel === level){
             //we are already drawing the highest-resolution tiles, just return

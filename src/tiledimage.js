@@ -1290,8 +1290,32 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
 
+        // make a list of levels to use for the current zoom level
+        var levelList = new Array(highestLevel - lowestLevel + 1);
+        // go from highest to lowest resolution
+        for(let i = 0, level = highestLevel; level >= lowestLevel; level--, i++){
+            levelList[i] = level;
+        }
+        // if a single-tile level is loaded, add that to the end of the list
+        // as a fallback to use during zooming out, until a lower-res tile is
+        // loaded
+        for(let level = highestLevel + 1; level <= this.source.maxLevel; level++){
+            var tile = (
+                this.tilesMatrix[level] &&
+                this.tilesMatrix[level][0] &&
+                this.tilesMatrix[level][0][0]
+            );
+            if(tile && tile.isBottomMost && tile.isRightMost && tile.loaded){
+                levelList.push(level);
+                levelList.hasHigherResolutionFallback = true;
+                break;
+            }
+        }
+
+
         // Update any level that will be drawn
-        for (var level = highestLevel; level >= lowestLevel; level--) {
+        for (let i = 0; i < levelList.length; i++) {
+            let level = levelList[i];
             var drawLevel = false;
 
             //Avoid calculations for draw if we have already drawn this
@@ -1300,8 +1324,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 true
             ).x * this._scaleSpring.current.value;
 
-            if (level === lowestLevel ||
-                (!haveDrawn && currentRenderPixelRatio >= this.minPixelRatio)) {
+            if (i === levelList.length - 1 ||
+                (!haveDrawn && currentRenderPixelRatio >= this.minPixelRatio) ) {
                 drawLevel = true;
                 haveDrawn = true;
             } else if (!haveDrawn) {
@@ -1562,8 +1586,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 var result = this._updateTile(
-                    drawLevel,
                     haveDrawn,
+                    drawLevel,
                     flippedX, y,
                     level,
                     levelVisibility,
@@ -1687,7 +1711,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 best: best
             };
         }
-
+        if (tile.loaded && tile.opacity === 1){
+            this._setCoverage( this.coverage, level, x, y, true );
+        }
         if ( haveDrawn && !drawTile ) {
             if ( this._isCovered( this.coverage, level, x, y ) ) {
                 this._setCoverage( this.coverage, level, x, y, true );
