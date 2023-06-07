@@ -38,6 +38,7 @@
             border: thin black solid;
             padding:10px;
             display:inline-block;
+            width:95%;
         }
         .description pre{
             display:inline-block;
@@ -164,7 +165,33 @@
 
         </div>
 
+
+        <h2>HTMLDrawer: legacy pre-HTML5 drawer that uses &lt;img&gt; elements for tiles</h2>
+        <div class="mirrored">
+            <div>
+                <div class="description">
+                    HTML-based rendering can be selected in two different ways:
+                </div>
+                <pre class="example-code">
+    // via the useCanvas option:
+    let viewer = OpenSeadragon({
+        ...
+        useCanvas: false,
+        ...
+    });
+
+    // or by passing the HTMLDrawer constructor
+    let viewer = OpenSeadragon({
+        ...
+        customDrawer:OpenSeadragon.HTMLDrawer,
+        ...
+    });
+                </pre>
+            </div>
+            <div id="htmldrawer" class="viewer-container"></div>
+        </div>
     </div>
+
 
 
 </body>

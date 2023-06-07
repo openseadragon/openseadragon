@@ -44,40 +44,39 @@
  * @param {Element} options.element - Parent element.
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
-$.CanvasDrawer = function(options) {
 
-    $.DrawerBase.call(this, options);
+class CanvasDrawer extends $.DrawerBase{
+    constructor(options){
+        super(options);
 
-    /**
-     * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
-     * @member {Object} context
-     * @memberof OpenSeadragon.Drawer#
-     */
-    this.context = this.canvas.getContext( '2d' );
+        /**
+         * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
+         * @member {Object} context
+         * @memberof OpenSeadragon.Drawer#
+         */
+        this.context = this.canvas.getContext( '2d' );
 
-    /**
-     * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
-     * to the main canvas due to opacity. Lazily initialized.
-     */
-    this.sketchCanvas = null;
-    this.sketchContext = null;
+        /**
+         * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
+         * to the main canvas due to opacity. Lazily initialized.
+         */
+        this.sketchCanvas = null;
+        this.sketchContext = null;
 
-    // We force our container to ltr because our drawing math doesn't work in rtl.
-    // This issue only affects our canvas renderer, but we do it always for consistency.
-    // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
-    this.container.dir = 'ltr';
+        // We force our container to ltr because our drawing math doesn't work in rtl.
+        // This issue only affects our canvas renderer, but we do it always for consistency.
+        // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
+        this.container.dir = 'ltr';
 
-    // Image smoothing for canvas rendering (only if canvas is used).
-    // Canvas default is "true", so this will only be changed if user specified "false".
-    this._imageSmoothingEnabled = true;
-};
+        // Image smoothing for canvas rendering (only if canvas is used).
+        // Canvas default is "true", so this will only be changed if user specified "false".
+        this._imageSmoothingEnabled = true;
 
-$.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.Drawer.prototype */ {
-
+    }
     /**
      * Draws the TiledImages
      */
-    draw: function(tiledImages) {
+    draw(tiledImages) {
         var _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
@@ -89,26 +88,25 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
                 tiledImage._needsDraw = false;
             }
         });
-
-    },
+    }
 
     /**
      * @returns {Boolean} True - rotation is supported.
      */
-    canRotate: function() {
+    canRotate() {
         return true;
-    },
+    }
 
     /**
      * Destroy the drawer (unload current loaded tiles)
      */
-    destroy: function() {
+    destroy() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.width  = 1;
         this.canvas.height = 1;
         this.sketchCanvas = null;
         this.sketchContext = null;
-    },
+    }
 
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
@@ -118,17 +116,17 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * drawn smoothly on the canvas; see imageSmoothingEnabled in
      * {@link OpenSeadragon.Options} for more explanation.
      */
-    setImageSmoothingEnabled: function(imageSmoothingEnabled){
+    setImageSmoothingEnabled(imageSmoothingEnabled){
         this._imageSmoothingEnabled = imageSmoothingEnabled;
         this._updateImageSmoothingEnabled(this.context);
         this.viewer.forceRedraw();
-    },
+    }
 
     /**
      * Draw a rectangle onto the canvas
      * @param {OpenSeadragon.Rect} rect
      */
-    drawDebuggingRect: function(rect) {
+    drawDebuggingRect(rect) {
         var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
@@ -143,8 +141,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         );
 
         context.restore();
-
-    },
+    }
 
     /**
      * @private
@@ -152,7 +149,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * Clears the Drawer so it's ready to draw another frame.
      *
      */
-    _prepareNewFrame: function() {
+    _prepareNewFrame() {
         var viewportSize = this._calculateCanvasSize();
         if( this.canvas.width !== viewportSize.x ||
             this.canvas.height !== viewportSize.y ) {
@@ -167,8 +164,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             }
         }
         this._clear();
-
-    },
+    }
 
     /**
      * @private
@@ -176,7 +172,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} useSketch Whether to clear sketch canvas or main canvas
      * @param {OpenSeadragon.Rect} [bounds] The rectangle to clear
      */
-    _clear: function(useSketch, bounds){
+    _clear(useSketch, bounds){
         var context = this._getContext(useSketch);
         if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -184,106 +180,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             var canvas = context.canvas;
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
-    },
-
-    /* Methods from TiledImage */
-
-    // /**
-    //  * @private
-    //  * @inner
-    //  * Handles drawing a single TiledImage to the canvas
-    //  *
-    //  */
-    // _updateViewportWithTiledImage: function(tiledImage) {
-    //     var _this = this;
-    //     tiledImage._needsDraw = false;
-    //     tiledImage._tilesLoading = 0;
-    //     tiledImage.loadingCoverage = {};
-
-    //     // Reset tile's internal drawn state
-    //     while (tiledImage.lastDrawn.length > 0) {
-    //         var tile = tiledImage.lastDrawn.pop();
-    //         tile.beingDrawn = false;
-    //     }
-
-
-    //     var drawArea = tiledImage.getDrawArea();
-    //     if(!drawArea){
-    //         return;
-    //     }
-
-    //     function updateTile(info){
-    //         var tile = info.tile;
-    //         if(tile && tile.loaded){
-    //             var needsDraw = _this._blendTile(
-    //                 tiledImage,
-    //                 tile,
-    //                 tile.x,
-    //                 tile.y,
-    //                 info.level,
-    //                 info.levelOpacity,
-    //                 info.currentTime
-    //             );
-    //             if(needsDraw){
-    //                 tiledImage._needsDraw = true;
-    //             }
-    //         }
-    //     }
-
-    //     var infoArray = tiledImage.getTileInfoForDrawing();
-    //     infoArray.forEach(updateTile);
-
-    //     this._drawTiles(tiledImage);
-
-    // },
-
-
-
-    // /**
-    //  * @private
-    //  * @inner
-    //  * Updates the opacity of a tile according to the time it has been on screen
-    //  * to perform a fade-in.
-    //  * Updates coverage once a tile is fully opaque.
-    //  * Returns whether the fade-in has completed.
-    //  *
-    //  * @param {OpenSeadragon.Tile} tile
-    //  * @param {Number} x
-    //  * @param {Number} y
-    //  * @param {Number} level
-    //  * @param {Number} levelOpacity
-    //  * @param {Number} currentTime
-    //  * @returns {Boolean}
-    //  */
-    // _blendTile: function( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
-    //     var blendTimeMillis = 1000 * tiledImage.blendTime,
-    //         deltaTime,
-    //         opacity;
-
-    //     if ( !tile.blendStart ) {
-    //         tile.blendStart = currentTime;
-    //     }
-
-    //     deltaTime   = currentTime - tile.blendStart;
-    //     opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
-
-    //     if ( tiledImage.alwaysBlend ) {
-    //         opacity *= levelOpacity;
-    //     }
-
-    //     tile.opacity = opacity;
-
-    //     tiledImage.lastDrawn.push( tile );
-
-    //     if ( opacity === 1 ) {
-    //         tiledImage._setCoverage( tiledImage.coverage, level, x, y, true );
-    //         tiledImage._hasOpaqueTile = true;
-    //     } else if ( deltaTime < blendTimeMillis ) {
-    //         return true;
-    //     }
-
-    //     return false;
-    // },
+    }
 
     /**
      * @private
@@ -291,7 +188,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * Draws a TiledImage.
      *
      */
-    _drawTiles: function( tiledImage ) {
+    _drawTiles( tiledImage ) {
         var lastDrawn = tiledImage.lastDrawn;
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
@@ -532,7 +429,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         }
 
         this._drawDebugInfo( tiledImage, lastDrawn );
-    },
+    }
 
     /**
      * @private
@@ -540,7 +437,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * Draws special debug information for a TiledImage if in debug mode.
      * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
      */
-    _drawDebugInfo: function( tiledImage, lastDrawn ) {
+    _drawDebugInfo( tiledImage, lastDrawn ) {
         if( tiledImage.debugMode ) {
             for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
                 var tile = lastDrawn[ i ];
@@ -551,7 +448,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
                 }
             }
         }
-    },
+    }
 
     /* Methods from Tile */
 
@@ -563,7 +460,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {OpenSeadragon.Point[][]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      */
-    _clipWithPolygons: function (polygons, useSketch) {
+    _clipWithPolygons (polygons, useSketch) {
         var context = this._getContext(useSketch);
         context.beginPath();
         polygons.forEach(function (polygon) {
@@ -572,7 +469,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
           });
         });
         context.clip();
-    },
+    }
 
     /**
      * @private
@@ -590,7 +487,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * context.
      * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    _drawTile: function( tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
+    _drawTile( tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
         $.console.assert(tile, '[Drawer._drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer._drawTile] drawingHandler is required');
 
@@ -598,7 +495,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         scale = scale || 1;
         this._drawTileToCanvas(tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
 
-    },
+    }
 
     /**
      * @private
@@ -617,7 +514,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * context.
      * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    _drawTileToCanvas: function( tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
+    _drawTileToCanvas( tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
 
         var position = tile.position.times($.pixelDensityRatio),
             size     = tile.size.times($.pixelDensityRatio),
@@ -708,68 +605,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         );
 
         context.restore();
-    },
-
-    /**
-     * @private
-     * @inner
-     * Renders the tile in an html container.
-     * @function
-     * @param {OpenSeadragon.Tile} tile
-     * @param {Element} container
-     */
-    _drawTileToHTML: function( tile, container ) {
-        if (!tile.cacheImageRecord) {
-            $.console.warn(
-                '[Drawer._drawTileToHTML] attempting to draw tile %s when it\'s not cached',
-                tile.toString());
-            return;
-        }
-
-        if ( !tile.loaded ) {
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                tile.toString()
-            );
-            return;
-        }
-
-        //EXPERIMENTAL - trying to figure out how to scale the container
-        //               content during animation of the container size.
-
-        if ( !tile.element ) {
-            var image = tile.getImage();
-            if (!image) {
-                return;
-            }
-
-            tile.element                              = $.makeNeutralElement( "div" );
-            tile.imgElement                           = image.cloneNode();
-            tile.imgElement.style.msInterpolationMode = "nearest-neighbor";
-            tile.imgElement.style.width               = "100%";
-            tile.imgElement.style.height              = "100%";
-
-            tile.style                     = tile.element.style;
-            tile.style.position            = "absolute";
-        }
-        if ( tile.element.parentNode !== container ) {
-            container.appendChild( tile.element );
-        }
-        if ( tile.imgElement.parentNode !== tile.element ) {
-            tile.element.appendChild( tile.imgElement );
-        }
-
-        tile.style.top     = tile.position.y + "px";
-        tile.style.left    = tile.position.x + "px";
-        tile.style.height  = tile.size.y + "px";
-        tile.style.width   = tile.size.x + "px";
-
-        if (tile.flipped) {
-            tile.style.transform = "scaleX(-1)";
-        }
-
-        $.setElementOpacity( tile.element, tile.opacity );
-    },
+    }
 
     /**
      * @private
@@ -778,7 +614,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} useSketch
      * @returns
      */
-    _getContext: function( useSketch ) {
+    _getContext( useSketch ) {
         var context = this.context;
         if ( useSketch ) {
             if (this.sketchCanvas === null) {
@@ -808,7 +644,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             context = this.sketchContext;
         }
         return context;
-    },
+    }
 
     /**
      * @private
@@ -817,9 +653,9 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} useSketch
      * @returns
      */
-    _saveContext: function( useSketch ) {
+    _saveContext( useSketch ) {
         this._getContext( useSketch ).save();
-    },
+    }
 
     /**
      * @private
@@ -828,26 +664,26 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} useSketch
      * @returns
      */
-    _restoreContext: function( useSketch ) {
+    _restoreContext( useSketch ) {
         this._getContext( useSketch ).restore();
-    },
+    }
 
     // private
-    _setClip: function(rect, useSketch) {
+    _setClip(rect, useSketch) {
         var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();
-    },
+    }
 
     // private
-    _drawRectangle: function(rect, fillStyle, useSketch) {
+    _drawRectangle(rect, fillStyle, useSketch) {
         var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
         context.fillRect(rect.x, rect.y, rect.width, rect.height);
         context.restore();
-    },
+    }
 
     /**
      * Blends the sketch canvas in the main canvas.
@@ -865,7 +701,7 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * canvas to blend in the main canvas. If specified, options.scale and
      * options.translate get ignored.
      */
-    blendSketch: function(opacity, scale, translate, compositeOperation) {
+    blendSketch(opacity, scale, translate, compositeOperation) {
         var options = opacity;
         if (!$.isPlainObject(options)) {
             options = {
@@ -942,10 +778,10 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             );
         }
         this.context.restore();
-    },
+    }
 
     // private
-    drawDebugInfo: function(tile, count, i, tiledImage) {
+    drawDebugInfo(tile, count, i, tiledImage) {
 
         var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;
@@ -1045,13 +881,13 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
         }
 
         context.restore();
-    },
+    }
 
     // private
-    _updateImageSmoothingEnabled: function(context){
+    _updateImageSmoothingEnabled(context){
         context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
         context.imageSmoothingEnabled = this._imageSmoothingEnabled;
-    },
+    }
 
     /**
      * @private
@@ -1060,10 +896,10 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} sketch If set to true return the size of the sketch canvas
      * @returns {OpenSeadragon.Point} The size of the canvas
      */
-    _getCanvasSize: function(sketch) {
+    _getCanvasSize(sketch) {
         var canvas = this._getContext(sketch).canvas;
         return new $.Point(canvas.width, canvas.height);
-    },
+    }
 
     /**
      * @private
@@ -1072,12 +908,12 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
      * @param {Boolean} sketch If set to true return the center point of the sketch canvas
      * @returns {OpenSeadragon.Point} The center point of the canvas
      */
-    _getCanvasCenter: function() {
+    _getCanvasCenter() {
         return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
-    },
+    }
 
     // private
-    _offsetForRotation: function(options) {
+    _offsetForRotation(options) {
         var point = options.point ?
             options.point.times($.pixelDensityRatio) :
             this._getCanvasCenter();
@@ -1093,10 +929,10 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
           context.rotate(Math.PI / 180 * options.degrees);
         }
         context.translate(-point.x, -point.y);
-    },
+    }
 
     // private
-    _flip: function(options) {
+    _flip(options) {
       options = options || {};
       var point = options.point ?
         options.point.times($.pixelDensityRatio) :
@@ -1106,16 +942,16 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
       context.translate(point.x, 0);
       context.scale(-1, 1);
       context.translate(-point.x, 0);
-    },
+    }
 
     // private
-    _restoreRotationChanges: function(useSketch) {
+    _restoreRotationChanges(useSketch) {
         var context = this._getContext(useSketch);
         context.restore();
-    },
+    }
 
     // private
-    _calculateCanvasSize: function() {
+    _calculateCanvasSize() {
         var pixelDensityRatio = $.pixelDensityRatio;
         var viewportSize = this.viewport.getContainerSize();
         return {
@@ -1123,10 +959,10 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             x: Math.round(viewportSize.x * pixelDensityRatio),
             y: Math.round(viewportSize.y * pixelDensityRatio)
         };
-    },
+    }
 
     // private
-    _calculateSketchCanvasSize: function() {
+    _calculateSketchCanvasSize() {
         var canvasSize = this._calculateCanvasSize();
         if (this.viewport.getRotation() === 0) {
             return canvasSize;
@@ -1140,11 +976,9 @@ $.extend( $.CanvasDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadr
             x: sketchCanvasSize,
             y: sketchCanvasSize
         };
-    },
-
-
-});
-
+    }
+}
+$.CanvasDrawer = CanvasDrawer;
 
 
 /**

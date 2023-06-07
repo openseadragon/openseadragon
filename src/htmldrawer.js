@@ -1,8 +1,8 @@
 /*
- * OpenSeadragon - Drawer
+ * OpenSeadragon - HTMLDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -44,36 +44,54 @@
  * @param {Element} options.element - Parent element.
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
-$.HTMLDrawer = function(options) {
 
-    $.DrawerBase.call(this, options);
+class HTMLDrawer extends $.DrawerBase{
+    constructor(options){
+        super(options);
 
-    /**
-     * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
-     * @member {Object} context
-     * @memberof OpenSeadragon.Drawer#
-     */
-    this.context = null;
+        /**
+         * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
+         * @member {Object} context
+         * @memberof OpenSeadragon.Drawer#
+         */
+        this.context = null;
 
 
-    // We force our container to ltr because our drawing math doesn't work in rtl.
-    // This issue only affects our canvas renderer, but we do it always for consistency.
-    // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
-    this.container.dir = 'ltr';
+        // We force our container to ltr because our drawing math doesn't work in rtl.
+        // This issue only affects our canvas renderer, but we do it always for consistency.
+        // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
+        this.container.dir = 'ltr';
 
-};
+        /**
+         * Override default element to enforce div for HTMLDrawer
+         */
+        this.canvas.parentNode.removeChild(this.canvas);
+        this.canvas     = $.makeNeutralElement( "div" );
 
-$.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadragon.Drawer.prototype */ {
+        this.canvas.style.width     = "100%";
+        this.canvas.style.height    = "100%";
+        this.canvas.style.position  = "absolute";
+        $.setElementOpacity( this.canvas, this.opacity, true );
+
+        // Allow pointer events to pass through the canvas element so implicit
+        //   pointer capture works on touch devices
+        $.setElementPointerEventsNone( this.canvas );
+        $.setElementTouchActionNone( this.canvas );
+
+        // explicit left-align
+        this.container.style.textAlign = "left";
+        this.container.appendChild( this.canvas );
+
+    }
 
     /**
      * Draws the TiledImages
      */
-    draw: function(tiledImages) {
+    draw(tiledImages) {
         var _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
             if (tiledImage.opacity !== 0 || tiledImage._preload) {
-                // _this._updateViewportWithTiledImage(tiledImage);
                 _this._drawTiles(tiledImage);
             }
             else {
@@ -81,23 +99,22 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
             }
         });
 
-    },
+    }
 
     /**
      * @returns {Boolean} False - rotation is not supported.
      */
-    canRotate: function() {
+    canRotate() {
         return false;
-    },
+    }
 
     /**
      * Destroy the drawer (unload current loaded tiles)
      */
-    destroy: function() {
+    destroy() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
-        this.canvas.width  = 1;
-        this.canvas.height = 1;
-    },
+        this.canvas.innerHTML = "";
+    }
 
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored by HTML Drawer
@@ -107,10 +124,10 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
      * drawn smoothly on the canvas; see imageSmoothingEnabled in
      * {@link OpenSeadragon.Options} for more explanation.
      */
-    setImageSmoothingEnabled: function(){
+    setImageSmoothingEnabled(){
         // noop - HTML Drawer does not deal with this property
         $.console.warn('HTMLDrawer.setImageSmoothingEnabled does not have an effect.');
-    },
+    }
 
     /**
      * @private
@@ -118,108 +135,9 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
      * Clears the Drawer so it's ready to draw another frame.
      *
      */
-    _prepareNewFrame: function() {
+    _prepareNewFrame() {
         this.canvas.innerHTML = "";
-    },
-
-    /* Methods from TiledImage */
-
-    /**
-     * @private
-     * @inner
-     * Handles drawing a single TiledImage to the canvas
-     *
-     */
-    _updateViewportWithTiledImage: function(tiledImage) {
-        var _this = this;
-        tiledImage._needsDraw = false;
-        tiledImage._tilesLoading = 0;
-        tiledImage.loadingCoverage = {};
-
-        // Reset tile's internal drawn state
-        while (tiledImage.lastDrawn.length > 0) {
-            var tile = tiledImage.lastDrawn.pop();
-            tile.beingDrawn = false;
-        }
-
-
-        var drawArea = tiledImage.getDrawArea();
-        if(!drawArea){
-            return;
-        }
-
-        function updateTile(info){
-            var tile = info.tile;
-            if(tile && tile.loaded){
-                var needsDraw = _this._blendTile(
-                    tiledImage,
-                    tile,
-                    tile.x,
-                    tile.y,
-                    info.level,
-                    info.levelOpacity,
-                    info.currentTime
-                );
-                if(needsDraw){
-                    tiledImage._needsDraw = true;
-                }
-            }
-        }
-
-        var infoArray = tiledImage.getTileInfoForDrawing();
-        infoArray.forEach(updateTile);
-
-        this._drawTiles(tiledImage);
-
-    },
-
-
-
-    /**
-     * @private
-     * @inner
-     * Updates the opacity of a tile according to the time it has been on screen
-     * to perform a fade-in.
-     * Updates coverage once a tile is fully opaque.
-     * Returns whether the fade-in has completed.
-     *
-     * @param {OpenSeadragon.Tile} tile
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} level
-     * @param {Number} levelOpacity
-     * @param {Number} currentTime
-     * @returns {Boolean}
-     */
-    _blendTile: function( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
-        var blendTimeMillis = 1000 * tiledImage.blendTime,
-            deltaTime,
-            opacity;
-
-        if ( !tile.blendStart ) {
-            tile.blendStart = currentTime;
-        }
-
-        deltaTime   = currentTime - tile.blendStart;
-        opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
-
-        if ( tiledImage.alwaysBlend ) {
-            opacity *= levelOpacity;
-        }
-
-        tile.opacity = opacity;
-
-        tiledImage.lastDrawn.push( tile );
-
-        if ( opacity === 1 ) {
-            tiledImage._setCoverage( tiledImage.coverage, level, x, y, true );
-            tiledImage._hasOpaqueTile = true;
-        } else if ( deltaTime < blendTimeMillis ) {
-            return true;
-        }
-
-        return false;
-    },
+    }
 
     /**
      * @private
@@ -227,7 +145,7 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
      * Draws a TiledImage.
      *
      */
-    _drawTiles: function( tiledImage ) {
+    _drawTiles( tiledImage ) {
         var lastDrawn = tiledImage.lastDrawn;
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
@@ -258,9 +176,7 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
             }
         }
 
-    },
-
-    /* Methods from Tile */
+    }
 
     /**
      * @private
@@ -270,22 +186,11 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
      * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
      * drawingHandler({context, tile, rendered})
      */
-    _drawTile: function( tile ) {
+    _drawTile( tile ) {
         $.console.assert(tile, '[Drawer._drawTile] tile is required');
 
-        this._drawTileToHTML( tile, this.canvas );
-    },
+        let container = this.canvas;
 
-
-    /**
-     * @private
-     * @inner
-     * Renders the tile in an html container.
-     * @function
-     * @param {OpenSeadragon.Tile} tile
-     * @param {Element} container
-     */
-    _drawTileToHTML: function( tile, container ) {
         if (!tile.cacheImageRecord) {
             $.console.warn(
                 '[Drawer._drawTileToHTML] attempting to draw tile %s when it\'s not cached',
@@ -319,6 +224,7 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
             tile.style                     = tile.element.style;
             tile.style.position            = "absolute";
         }
+
         if ( tile.element.parentNode !== container ) {
             container.appendChild( tile.element );
         }
@@ -336,11 +242,11 @@ $.extend( $.HTMLDrawer.prototype, $.DrawerBase.prototype, /** @lends OpenSeadrag
         }
 
         $.setElementOpacity( tile.element, tile.opacity );
-    },
+    }
 
-});
+}
 
-
+$.HTMLDrawer = HTMLDrawer;
 
 
 }( OpenSeadragon ));

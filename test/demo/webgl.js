@@ -69,6 +69,19 @@ var viewer2 = window.viewer2 = OpenSeadragon({
     ajaxWithCredentials: false
 });
 
+// Single viewer showing how to use plugin Drawer via configuration
+// Also shows sequence mode
+var viewer3 = window.viewer3 = OpenSeadragon({
+    id: "htmldrawer",
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: OpenSeadragon.HTMLDrawer,
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
+});
+
 
 
 
