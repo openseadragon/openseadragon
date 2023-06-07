@@ -57,17 +57,17 @@ viewer.addHandler("resize", function(){
 
 // Single viewer showing how to use plugin Drawer via configuration
 // Also shows sequence mode
-// var viewer2 = window.viewer2 = OpenSeadragon({
-//     id: "three-viewer",
-//     prefixUrl: "../../build/openseadragon/images/",
-//     minZoomImageRatio:0.01,
-//     customDrawer: ThreeJSDrawer,
-//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-//     sequenceMode: true,
-//     imageSmoothingEnabled: false,
-//     crossOriginPolicy: 'Anonymous',
-//     ajaxWithCredentials: false
-// });
+var viewer2 = window.viewer2 = OpenSeadragon({
+    id: "three-viewer",
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: ThreeJSDrawer,
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
+    imageSmoothingEnabled: false,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
+});
 
 
 
