@@ -397,8 +397,6 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     _updateMeshIfNeeded(tiledImage){
         let tileContainer = this._tiledImageMap[tiledImage[this._uuid]].userData.tileContainer;
         let scene = this._tiledImageMap[tiledImage[this._uuid]]
-        // let levelsInterval = tiledImage._getLevelsInterval();
-        // let level = levelsInterval.highestLevel;
         let level = Math.max(...tiledImage.getTilesToDraw().map(tile => tile.level));
 
         if(scene.userData.currentLevel === level){
