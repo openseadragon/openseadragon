@@ -189,7 +189,7 @@ class CanvasDrawer extends $.DrawerBase{
      *
      */
     _drawTiles( tiledImage ) {
-        var lastDrawn = tiledImage.lastDrawn;
+        var lastDrawn =  tiledImage.getTilesToDraw().map(info => info.tile);
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
         }
@@ -277,7 +277,7 @@ class CanvasDrawer extends $.DrawerBase{
 
             var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
             box = box.rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
-            var clipRect = this._viewportToDrawerRectangle(box);
+            var clipRect = this.viewportToDrawerRectangle(box);
             if (sketchScale) {
                 clipRect = clipRect.times(sketchScale);
             }
@@ -316,7 +316,7 @@ class CanvasDrawer extends $.DrawerBase{
         }
 
         if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
-            var placeholderRect = this._viewportToDrawerRectangle(tiledImage.getBounds(true));
+            var placeholderRect = this.viewportToDrawerRectangle(tiledImage.getBounds(true));
             if (sketchScale) {
                 placeholderRect = placeholderRect.times(sketchScale);
             }

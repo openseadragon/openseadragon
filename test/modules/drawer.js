@@ -117,16 +117,8 @@
             tileSources: '/test/data/testpattern.dzi'
         });
         viewer.world.addHandler('add-item', function() {
-            Util.testDeprecation(assert, viewer.drawer, 'addOverlay', viewer, 'addOverlay');
-            Util.testDeprecation(assert, viewer.drawer, 'updateOverlay', viewer, 'updateOverlay');
-            Util.testDeprecation(assert, viewer.drawer, 'removeOverlay', viewer, 'removeOverlay');
-            Util.testDeprecation(assert, viewer.drawer, 'clearOverlays', viewer, 'clearOverlays');
-            Util.testDeprecation(assert, viewer.drawer, 'needsUpdate', viewer.world, 'needsDraw');
-            Util.testDeprecation(assert, viewer.drawer, 'numTilesLoaded', viewer.tileCache, 'numTilesLoaded');
-            Util.testDeprecation(assert, viewer.drawer, 'reset', viewer.world, 'resetItems');
-            Util.testDeprecation(assert, viewer.drawer, 'update', viewer.world, 'draw');
-            Util.testDeprecation(assert, viewer.drawer, 'setOpacity', viewer.world.getItemAt(0), 'setOpacity');
-            Util.testDeprecation(assert, viewer.drawer, 'getOpacity', viewer.world.getItemAt(0), 'getOpacity');
+            // no current deprecated methods
+            assert.expect(0);
             done();
         });
     });

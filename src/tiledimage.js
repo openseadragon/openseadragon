@@ -306,8 +306,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var scaleUpdated = this._scaleSpring.update();
         var degreesUpdated = this._degreesSpring.update();
 
-        this._updateLevelsForViewport();
+        let fullyLoadedFlag = this._updateLevelsForViewport();
         this._updateTilesInViewport();
+        this._setFullyLoaded(fullyLoadedFlag);
 
         if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
             this._updateForScale();
@@ -1271,7 +1272,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
     },
 
-
+    // returns boolean flag of whether the image should be marked as fully loaded
     _updateLevelsForViewport: function(){
         var levelsInterval = this._getLevelsInterval();
         var lowestLevel = levelsInterval.lowestLevel;
@@ -1281,13 +1282,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var drawArea = this.getDrawArea();
         var currentTime = $.now();
 
+        // reset each tile's beingDrawn flag
+        this._tilesToDraw.forEach(tileinfo => {
+            tileinfo.tile.beingDrawn = false;
+        });
+        // clear the list of tiles to draw
         this._tilesToDraw = [];
         this._tilesLoading = 0;
         this.loadingCoverage = {};
 
         if(!drawArea){
             this._needsDraw = false;
-            return;
+            return this._fullyLoaded;
         }
 
         // make a list of levels to use for the current zoom level
@@ -1367,7 +1373,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
 
             bestTile = result.best;
-            var tiles = result.tiles;
+            var tiles = result.tiles.filter(tile => tile.loaded);
             var makeTileInfoObject = (function(level, levelOpacity, currentTime){
                 return function(tile){
                     return {
@@ -1392,9 +1398,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (bestTile && !bestTile.context2D) {
             this._loadTile(bestTile, currentTime);
             this._needsDraw = true;
-            this._setFullyLoaded(false);
+            return false;
         } else {
-            this._setFullyLoaded(this._tilesLoading === 0);
+            return this._tilesLoading === 0;
         }
 
         // Update
@@ -1411,13 +1417,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var _this = this;
         this._tilesLoading = 0;
         this.loadingCoverage = {};
-
-        // Reset tile's internal drawn state
-        while (this.lastDrawn.length > 0) {
-            var tile = this.lastDrawn.pop();
-            tile.beingDrawn = false;
-        }
-
 
         var drawArea = this.getDrawArea();
         if(!drawArea){
@@ -1441,7 +1440,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
-        this._tilesToDraw.forEach(updateTile);
+        // Update each tile in the _tilesToDraw list. As the tiles are updated,
+        // the coverage provided is also updated. If a level provides coverage
+        // as part of this process, discard tiles from lower levels
+        let level = 0;
+        for(let i = 0; i < this._tilesToDraw.length; i++){
+            let tile = this._tilesToDraw[i];
+            updateTile(tile);
+            if(this._providesCoverage(this.coverage, tile.level)){
+                level = Math.max(level, tile.level);
+                // break;
+            }
+        }
+        if(level > 0){
+            this._tilesToDraw = this._tilesToDraw.filter(tile => tile.level >= level);
+        }
 
     },
 
@@ -1478,8 +1491,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         tile.opacity = opacity;
-
-        this.lastDrawn.push( tile );
 
         if ( opacity === 1 ) {
             this._setCoverage( this.coverage, level, x, y, true );
@@ -1708,7 +1719,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if ( !tile.exists ) {
             return {
-                best: best
+                best: best,
+                tile: tile
             };
         }
         if (tile.loaded && tile.opacity === 1){
@@ -1724,7 +1736,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if ( !drawTile ) {
             return {
-                best: best
+                best: best,
+                tile: tile
             };
         }
 

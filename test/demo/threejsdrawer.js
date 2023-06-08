@@ -397,7 +397,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     _updateMeshIfNeeded(tiledImage){
         let tileContainer = this._tiledImageMap[tiledImage[this._uuid]].userData.tileContainer;
         let scene = this._tiledImageMap[tiledImage[this._uuid]]
-        let level = Math.max(...tiledImage.getTilesToDraw().map(tile => tile.level));
+        let level = Math.max(0, ...tiledImage.getTilesToDraw().map(tile => tile.level));
 
         if(scene.userData.currentLevel === level){
             //we are already drawing the highest-resolution tiles, just return
@@ -529,7 +529,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
 
         if(item._clip){
             var box = item.imageToViewportRectangle(item._clip, true);
-            var rect = this._viewportToDrawerRectangle(box);
+            var rect = this.viewportToDrawerRectangle(box);
             this._clippingContext.beginPath();
             this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
             this._clippingContext.clip();

@@ -230,14 +230,15 @@ $.Spring.prototype = {
                     ( this.target.time - this.start.time )
                 );
 
-        var oldValue = this.current.value;
+        // var oldValue = this.current.value;
         if (this._exponential) {
             this.current.value = Math.exp(currentValue);
         } else {
             this.current.value = currentValue;
         }
 
-        return oldValue !== this.current.value;
+        return currentValue !== targetValue;
+        // return oldValue !== this.current.value;
     },
 
     /**

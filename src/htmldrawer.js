@@ -146,7 +146,7 @@ class HTMLDrawer extends $.DrawerBase{
      *
      */
     _drawTiles( tiledImage ) {
-        var lastDrawn = tiledImage.lastDrawn;
+        var lastDrawn = tiledImage.getTilesToDraw().map(info => info.tile);
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
         }

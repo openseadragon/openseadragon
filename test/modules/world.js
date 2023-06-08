@@ -159,7 +159,7 @@
                 handlerCount++;
             });
 
-            viewer.world.draw();
+            viewer.world.update();
 
             assert.equal(handlerCount, 1, 'correct number of handlers called');
             done();
