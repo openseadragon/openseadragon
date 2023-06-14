@@ -46,8 +46,12 @@
  */
 
 class CanvasDrawer extends $.DrawerBase{
-    constructor(options){
-        super(options);
+    constructor(){
+        super(...arguments);
+
+        // Options
+
+
 
         /**
          * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.

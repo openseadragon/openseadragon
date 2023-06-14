@@ -34,6 +34,10 @@
 
 (function( $ ){
 
+$.DrawerOptions = class DrawerOptions{
+    constructor(options){}
+};
+
 /**
  * @class DrawerBase
  * @memberof OpenSeadragon
@@ -44,7 +48,7 @@
  * @param {Element} options.element - Parent element.
  */
 
-class DrawerBase{
+$.DrawerBase = class DrawerBase{
     constructor(options){
         $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
@@ -66,6 +70,15 @@ class DrawerBase{
         if ( options.source ) {
             $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
         }
+
+
+        // Object.entries({}).forEach( ([key, value]) => {
+        //     try{
+        //         this[key] = value;
+        //     } catch(e) {
+        //         $.console.error(`This Drawer implementation does not support option '${key}:${value}'`);
+        //     }
+        // });
 
         this.viewer = options.viewer;
         this.viewport = options.viewport;
@@ -130,6 +143,7 @@ class DrawerBase{
     get isOpenSeadragonDrawer(){
         return true;
     }
+
     /**
      * @param tiledImage the TiledImage that is ready to be drawn
      */
@@ -259,8 +273,6 @@ class DrawerBase{
         };
     }
 
-}
-$.DrawerBase = DrawerBase;
-
+};
 
 }( OpenSeadragon ));
