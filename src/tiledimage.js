@@ -298,19 +298,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Updates the TiledImage's bounds, animating if needed. Based on the new
      * bounds, updates the levels and tiles to be drawn into the viewport.
+     * @param viewportChanged Whether the viewport changed meaning tiles need to be updated.
      * @returns {Boolean} Whether the TiledImage needs to be drawn.
      */
-    update: function() {
-        var xUpdated = this._xSpring.update();
-        var yUpdated = this._ySpring.update();
-        var scaleUpdated = this._scaleSpring.update();
-        var degreesUpdated = this._degreesSpring.update();
+    update: function(viewportChanged) {
+        let xUpdated = this._xSpring.update();
+        let yUpdated = this._ySpring.update();
+        let scaleUpdated = this._scaleSpring.update();
+        let degreesUpdated = this._degreesSpring.update();
 
-        let fullyLoadedFlag = this._updateLevelsForViewport();
-        this._updateTilesInViewport();
-        this._setFullyLoaded(fullyLoadedFlag);
+        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated);
 
-        if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
+        if (updated || viewportChanged || !this._fullyLoaded){
+            let fullyLoadedFlag = this._updateLevelsForViewport();
+            this._updateTilesInViewport();
+            this._setFullyLoaded(fullyLoadedFlag);
+        }
+
+
+        if (updated) {
             this._updateForScale();
             this._raiseBoundsChange();
             this._needsDraw = true;

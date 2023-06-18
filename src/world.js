@@ -243,10 +243,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Updates (i.e. animates bounds of) all items.
      */
-    update: function() {
+    update: function(viewportChanged) {
         var animated = false;
         for ( var i = 0; i < this._items.length; i++ ) {
-            animated = this._items[i].update() || animated;
+            animated = this._items[i].update(viewportChanged) || animated;
         }
 
         return animated;
