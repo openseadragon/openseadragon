@@ -25,7 +25,7 @@ var stats = null;
 // document.body.appendChild( stats.dom );
 
 
-//Double viewer setup for comparison - CanvasDrawer and ThreeJSDrawer
+//Double viewer setup for comparison - Context2dDrawer and ThreeJSDrawer
 
 var viewer = window.viewer = OpenSeadragon({
     id: "contentDiv",
@@ -37,11 +37,11 @@ var viewer = window.viewer = OpenSeadragon({
     smoothTileEdgesMinZoom:1.1,
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
-    useCanvas:true,
+    drawer:'context2d',
 });
 
 
-// Mirror the interactive viewer with CanvasDrawer onto a separate canvas using ThreeJSDrawer
+// Mirror the interactive viewer with Context2dDrawer onto a separate canvas using ThreeJSDrawer
 let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element, stats: stats});
 //make the test canvas mirror all changes to the viewer canvas
 let viewerCanvas = viewer.drawer.canvas;
@@ -61,7 +61,7 @@ var viewer2 = window.viewer2 = OpenSeadragon({
     id: "three-viewer",
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
-    customDrawer: ThreeJSDrawer,
+    drawer: ThreeJSDrawer,
     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
     sequenceMode: true,
     imageSmoothingEnabled: false,
@@ -73,6 +73,7 @@ var viewer2 = window.viewer2 = OpenSeadragon({
 // Also shows sequence mode
 var viewer3 = window.viewer3 = OpenSeadragon({
     id: "htmldrawer",
+    drawer:'html',
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
     customDrawer: OpenSeadragon.HTMLDrawer,

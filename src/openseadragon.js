@@ -190,6 +190,16 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
+  * @property {String|DrawerImplementation|Array} [drawer = ['context2d', 'html']]
+  *     Which drawer to use. Valid strings are 'context2d' and 'html'. Valid drawer
+  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  *     An array of strings and/or constructors can be used to indicate the priority
+  *     of different implementations, which will be tried in order based on browser support.
+  *
+  * @property {Object} [drawerOptions = {}]
+  *     Options to pass to the selected drawer implementation. See documentation
+  *     for Drawer classes that extend DrawerBase for further information.
+  *
   * @property {Number} [opacity=1]
   *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
   *     Hidden images do not draw and only load when preloading is allowed.
@@ -502,7 +512,7 @@
   *     Milliseconds to wait after each tile retry if tileRetryMax is set.
   *
   * @property {Boolean} [useCanvas=true]
-  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
+  *     Deprecated. Use drawer option to specify preferred renderer.
   *
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
@@ -1332,12 +1342,19 @@ function OpenSeadragon( options ){
             flipped:                    false,
 
             // APPEARANCE
-            opacity:                           1,
-            preload:                           false,
-            compositeOperation:                null,
-            imageSmoothingEnabled:             true,
-            placeholderFillStyle:              null,
-            subPixelRoundingForTransparency:   null,
+            opacity:                           1, // to be passed into each TiledImage
+            compositeOperation:                null, // to be passed into each TiledImage
+
+            // DRAWER SETTINGS
+            drawer:                            ['context2d', 'html'], // prefer using canvas, fallback to html
+            drawerOptions:                     {},
+            useCanvas:                         true,  // deprecated - set drawer and drawerOptions
+
+            // TILED IMAGE SETTINGS
+            preload:                           false, // to be passed into each TiledImage
+            imageSmoothingEnabled:             true,  // to be passed into each TiledImage
+            placeholderFillStyle:              null,  // to be passed into each TiledImage
+            subPixelRoundingForTransparency:   null,  // to be passed into each TiledImage
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
@@ -1360,7 +1377,6 @@ function OpenSeadragon( options ){
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
             timeout:                30000,
-            useCanvas:              true,  // Use canvas element for drawing if available
             tileRetryMax:           0,
             tileRetryDelay:         2500,
 
@@ -1429,16 +1445,6 @@ function OpenSeadragon( options ){
             silenceMultiImageWarnings: false
 
         },
-
-
-        /**
-         * TODO: get rid of this.  I can't see how it's required at all.  Looks
-         *       like an early legacy code artifact.
-         * @static
-         * @ignore
-         */
-        SIGNAL: "----seadragon----",
-
 
         /**
          * Returns a function which invokes the method as if it were a method belonging to the object.

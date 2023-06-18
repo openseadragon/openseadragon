@@ -71,24 +71,16 @@ $.DrawerBase = class DrawerBase{
             $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
         }
 
-
-        // Object.entries({}).forEach( ([key, value]) => {
-        //     try{
-        //         this[key] = value;
-        //     } catch(e) {
-        //         $.console.error(`This Drawer implementation does not support option '${key}:${value}'`);
-        //     }
-        // });
-
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
+        this.options = options.options || {};
 
+        // TO DO: This was deprectated previously. Can we get rid of it at this point?
         if (options.opacity) {
             $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
         }
 
-        this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
         /**
          * The parent element of this Drawer instance, passed in when the Drawer was created.
          * The parent of {@link OpenSeadragon.DrawerBase#canvas}.
@@ -96,21 +88,6 @@ $.DrawerBase = class DrawerBase{
          * @memberof OpenSeadragon.DrawerBase#
          */
         this.container  = $.getElement( options.element );
-        /**
-         * A &lt;canvas&gt; element if the browser supports them, otherwise a &lt;div&gt; element.
-         * Child element of {@link OpenSeadragon.DrawerBase#container}.
-         * @member {Element} canvas
-         * @memberof OpenSeadragon.DrawerBase#
-         */
-        this.canvas     = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
-
-
-        /**
-         * @member {Element} element
-         * @memberof OpenSeadragon.DrawerBase#
-         * @deprecated Alias for {@link OpenSeadragon.DrawerBase#container}.
-         */
-        this.element    = this.container;
 
         // TO DO: Does this need to be in DrawerBase, or only in Drawer implementations?
         // We force our container to ltr because our drawing math doesn't work in rtl.
@@ -118,16 +95,11 @@ $.DrawerBase = class DrawerBase{
         // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
         this.container.dir = 'ltr';
 
-        if (this.useCanvas) {
-            var viewportSize = this._calculateCanvasSize();
-            this.canvas.width = viewportSize.x;
-            this.canvas.height = viewportSize.y;
-        }
-
+        // the first time this.canvas is accessed, implementations will create it
         this.canvas.style.width     = "100%";
         this.canvas.style.height    = "100%";
         this.canvas.style.position  = "absolute";
-        $.setElementOpacity( this.canvas, this.opacity, true );
+        $.setElementOpacity( this.canvas, this.viewer.opacity, true ); // set
 
         // Allow pointer events to pass through the canvas element so implicit
         //   pointer capture works on touch devices
@@ -142,6 +114,32 @@ $.DrawerBase = class DrawerBase{
     }
     get isOpenSeadragonDrawer(){
         return true;
+    }
+    get canvas(){
+        if(!this._renderingTarget){
+            this._renderingTarget = this.createDrawingElement();
+        }
+        return this._renderingTarget;
+    }
+    get element(){
+        $.console.error('Drawer.element is deprecated. Use Drawer.container instead.');
+        return this.container;
+    }
+
+    /**
+     * @returns {Boolean} whether the drawer implementation is supported by the browser
+     */
+    isSupported() {
+        $.console.error('Drawer.isSupported must be implemented by child class');
+    }
+
+    /**
+     * create the HTML element (e.g. canvas, div) that the image will be drawn into
+     * @returns {Element} the element to draw into
+     */
+    createDrawingElement() {
+        $.console.error('Drawer.createDrawingElement must be implemented by child class');
+        return null;
     }
 
     /**

@@ -35,9 +35,9 @@
 (function( $ ){
 
 /**
- * @class CanvasDrawer
+ * @class Context2dDrawer
  * @memberof OpenSeadragon
- * @classdesc Default implementation of CanvasDrawer for an {@link OpenSeadragon.Viewer}.
+ * @classdesc Default implementation of Context2dDrawer for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
@@ -45,7 +45,7 @@
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 
-class CanvasDrawer extends $.DrawerBase{
+class Context2dDrawer extends $.DrawerBase{
     constructor(){
         super(...arguments);
 
@@ -77,6 +77,26 @@ class CanvasDrawer extends $.DrawerBase{
         this._imageSmoothingEnabled = true;
 
     }
+
+    /**
+     * @returns {Boolean} true if canvas is supported by the browser, otherwise false
+     */
+    isSupported(){
+        return $.supportsCanvas;
+    }
+
+    /**
+     * create the HTML element (e.g. canvas, div) that the image will be drawn into
+     * @returns {Element} the canvas to draw into
+     */
+    createDrawingElement(){
+        let canvas = $.makeNeutralElement("canvas");
+        let viewportSize = this._calculateCanvasSize();
+        canvas.width = viewportSize.x;
+        canvas.height = viewportSize.y;
+        return canvas;
+    }
+
     /**
      * Draws the TiledImages
      */
@@ -543,7 +563,7 @@ class CanvasDrawer extends $.DrawerBase{
         }
 
         context.save();
-        context.globalAlpha = this.opacity;
+        // context.globalAlpha = this.options.opacity; // this was deprecated previously and should not be applied as it is set per TiledImage
 
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
@@ -982,7 +1002,7 @@ class CanvasDrawer extends $.DrawerBase{
         };
     }
 }
-$.CanvasDrawer = CanvasDrawer;
+$.Context2dDrawer = Context2dDrawer;
 
 
 /**

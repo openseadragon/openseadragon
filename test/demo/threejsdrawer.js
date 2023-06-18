@@ -145,6 +145,29 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     // Public API required by all Drawer implementations
+
+    /**
+     * @returns {Boolean} returns true if canvas and webgl are supported and
+     * three.js has been exposed as a global variable named THREE
+     */
+    isSupported(){
+        let canvasElement = document.createElement( 'canvas' );
+        return !!( OpenSeadragon.isFunction( canvasElement.getContext ) &&
+                    canvasElement.getContext( 'webgl' ) ) && THREE;
+    }
+
+    /**
+     * create the HTML element (e.g. canvas, div) that the image will be drawn into
+     * @returns {Element} the canvas to draw into
+     */
+    createDrawingElement(){
+        let canvas = OpenSeadragon.makeNeutralElement("canvas");
+        let viewportSize = this._calculateCanvasSize();
+        canvas.width = viewportSize.x;
+        canvas.height = viewportSize.y;
+        return canvas;
+    }
+
     /**
      *
      * @param {Array} tiledImages Array of TiledImage objects to draw

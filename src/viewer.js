@@ -89,6 +89,21 @@ $.Viewer = function( options ) {
         delete options.config;
     }
 
+    // Move deprecated drawer options from the base options object into a sub-object
+    // This is an array to make it easy to add additional properties to convert to
+    // drawer options later if it makes sense to set at the drawer level rather than
+    // per tiled image (for example, subPixelRoundingForTransparency).
+    let drawerOptionList = [
+            'useCanvas', // deprecated
+        ];
+    options.drawerOptions = Object.assign({},
+        drawerOptionList.reduce((drawerOptions, option) => {
+            drawerOptions[option] = options[option];
+            delete options[option];
+            return drawerOptions;
+        }, {}),
+        options.drawerOptions);
+
     //Public properties
     //Allow the options object to override global defaults
     $.extend( true, this, {
@@ -197,6 +212,7 @@ $.Viewer = function( options ) {
         // the previous viewer with the same hash and now want to recreate it.
         $.console.warn("Hash " + this.hash + " has already been used.");
     }
+
 
     //Private state properties
     THIS[ this.hash ] = {
@@ -418,35 +434,48 @@ $.Viewer = function( options ) {
         maxImageCacheCount: this.maxImageCacheCount
     });
 
-    // Create the drawer
-    if(this.customDrawer){
-        if(this.customDrawer.prototype.isOpenSeadragonDrawer){
-            var Drawer = this.customDrawer;
+    //Create the drawer based on selected options
+    if (Object.prototype.hasOwnProperty.call(this.drawerOptions, 'useCanvas') ){
+        $.console.error('useCanvas is deprecated, use the "drawer" option to indicate preferred drawer(s)');
+
+        // for backwards compatibility, use HTMLDrawer if useCanvas is defined an is falsey
+        if (!this.drawerOptions.useCanvas){
+            this.drawer = $.HTMLDrawer;
+        }
+
+        delete this.drawerOptions.useCanvas;
+    }
+    let drawerPriority = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
+    let drawersToTry = drawerPriority.filter(d => ['context2d', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
+    if(drawerPriority.length !== drawersToTry.length){
+        $.console.error('An invalid drawer was requested.');
+    }
+    if(drawersToTry.length === 0){
+        drawersToTry = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
+        $.console.warn('No valid drawers were selected. Using the default value.');
+    }
+    // extend the drawerOptions object with additional properties to pass to the Drawer implementation
+    this.drawer = null; // TO DO: how to deal with the possibility that none of the requested drawers are supported?
+    for(let i = 0; i < drawersToTry.length; i++){
+        let Drawer = drawersToTry[i];
+        // replace text-based option with appropriate constructor
+        if (Drawer === 'context2d'){
+            Drawer = $.Context2dDrawer;
+        } else if (Drawer === 'html'){
+            Drawer = $.HTMLDrawer;
+        }
+        // if the drawer is supported, create it and break the loop
+        if (Drawer.prototype.isSupported()){
             this.drawer = new Drawer({
                 viewer:             this,
                 viewport:           this.viewport,
                 element:            this.canvas,
-                debugGridColor:     this.debugGridColor
+                debugGridColor:     this.debugGridColor,
+                options:            this.drawerOptions,
             });
-        } else {
-            // $.console.error('Viewer option customDrawer must derive from OpenSeadragon.DrawerBase');
-            throw('Viewer option customDrawer must derive from OpenSeadragon.DrawerBase');
+            this.drawerOptions.constructor = Drawer;
+            break;
         }
-
-    } else if(this.useCanvas && $.supportsCanvas) {
-        this.drawer = new $.CanvasDrawer({
-            viewer:             this,
-            viewport:           this.viewport,
-            element:            this.canvas,
-            debugGridColor:     this.debugGridColor
-        });
-    } else {
-        this.drawer = new $.HTMLDrawer({
-            viewer:             this,
-            viewport:           this.viewport,
-            element:            this.canvas,
-            debugGridColor:     this.debugGridColor
-        });
     }
 
 
@@ -455,7 +484,7 @@ $.Viewer = function( options ) {
     this.canvas.appendChild( this.overlaysContainer );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
-    if (!this.drawer.canRotate()) {
+    if (this.drawer && !this.drawer.canRotate()) {
         // Disable/remove the rotate left/right buttons since they aren't supported
         if (this.rotateLeft) {
             i = this.buttonGroup.buttons.indexOf(this.rotateLeft);
@@ -519,11 +548,6 @@ $.Viewer = function( options ) {
     $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
     } );
-
-    // Initial canvas options
-    if ( this.imageSmoothingEnabled !== undefined && !this.imageSmoothingEnabled){
-        this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
-    }
 
     // Register the viewer
     $._viewers.set(this.element, this);
@@ -2426,7 +2450,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width:       this.referenceStripWidth,
                     tileSources: this.tileSources,
                     prefixUrl:   this.prefixUrl,
-                    useCanvas:   this.useCanvas,
                     viewer:      this
                 });
 
@@ -2575,7 +2598,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 ajaxHeaders: imgOptions.ajaxHeaders ?
                     imgOptions.ajaxHeaders : viewer.ajaxHeaders,
                 splitHashDataForPost: viewer.splitHashDataForPost,
-                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -2592,9 +2614,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
-            }
-            if (tileSource.useCanvas === undefined) {
-                tileSource.useCanvas = viewer.useCanvas;
             }
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {

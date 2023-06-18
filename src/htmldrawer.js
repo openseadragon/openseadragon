@@ -56,32 +56,22 @@ class HTMLDrawer extends $.DrawerBase{
          */
         this.context = null;
 
+    }
 
-        // We force our container to ltr because our drawing math doesn't work in rtl.
-        // This issue only affects our canvas renderer, but we do it always for consistency.
-        // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
-        this.container.dir = 'ltr';
+    /**
+     * @returns {Boolean} always true
+     */
+    isSupported(){
+        return true;
+    }
 
-        /**
-         * Override default element to enforce div for HTMLDrawer
-         */
-        this.canvas.parentNode.removeChild(this.canvas);
-        this.canvas     = $.makeNeutralElement( "div" );
-
-        this.canvas.style.width     = "100%";
-        this.canvas.style.height    = "100%";
-        this.canvas.style.position  = "absolute";
-        $.setElementOpacity( this.canvas, this.opacity, true );
-
-        // Allow pointer events to pass through the canvas element so implicit
-        //   pointer capture works on touch devices
-        $.setElementPointerEventsNone( this.canvas );
-        $.setElementTouchActionNone( this.canvas );
-
-        // explicit left-align
-        this.container.style.textAlign = "left";
-        this.container.appendChild( this.canvas );
-
+    /**
+     * create the HTML element (e.g. canvas, div) that the image will be drawn into
+     * @returns {Element} the div to draw into
+     */
+    createDrawingElement(){
+        let canvas = $.makeNeutralElement("div");
+        return canvas;
     }
 
     /**

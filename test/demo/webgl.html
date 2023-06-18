@@ -88,7 +88,7 @@
 
     let viewer = OpenSeadragon({
         ...
-        customDrawer: ThreeJSDrawer,
+        drawer: ThreeJSDrawer,
         ...
     });
                 </pre>
@@ -173,17 +173,17 @@
                     HTML-based rendering can be selected in two different ways:
                 </div>
                 <pre class="example-code">
-    // via the useCanvas option:
+    // via the 'html' drawer option:
     let viewer = OpenSeadragon({
         ...
-        useCanvas: false,
+        drawer: 'html',
         ...
     });
 
     // or by passing the HTMLDrawer constructor
     let viewer = OpenSeadragon({
         ...
-        customDrawer:OpenSeadragon.HTMLDrawer,
+        drawer:OpenSeadragon.HTMLDrawer,
         ...
     });
                 </pre>

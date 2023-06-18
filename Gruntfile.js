@@ -59,7 +59,7 @@ module.exports = function(grunt) {
             "src/overlay.js",
             "src/drawerbase.js",
             "src/htmldrawer.js",
-            "src/canvasdrawer.js",
+            "src/context2ddrawer.js",
             "src/viewport.js",
             "src/tiledimage.js",
             "src/tilecache.js",
