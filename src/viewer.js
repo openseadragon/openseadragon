@@ -474,8 +474,10 @@ $.Viewer = function( options ) {
                 options:            this.drawerOptions,
             });
             this.drawerOptions.constructor = Drawer;
+            // TO DO: add an event that indicates which drawer was instantiated?
             break;
         }
+        // TO DO: add an event that indicates that the selected drawer could not be created?
     }
 
 
