@@ -2251,25 +2251,12 @@ function OpenSeadragon( options ){
             event.stopPropagation();
         },
 
-
-        /**
-         * Similar to OpenSeadragon.delegate, but it does not immediately call
-         * the method on the object, returning a function which can be called
-         * repeatedly to delegate the method. It also allows additional arguments
-         * to be passed during construction which will be added during each
-         * invocation, and each invocation can add additional arguments as well.
-         *
-         * @function
-         * @param {Object} object
-         * @param {Function} method
-         * @param [args] any additional arguments are passed as arguments to the
-         *  created callback
-         * @returns {Function}
-         */
+        // Deprecated
         createCallback: function( object, method ) {
             //TODO: This pattern is painful to use and debug.  It's much cleaner
             //      to use pinning plus anonymous functions.  Get rid of this
             //      pattern!
+            console.error('The createCallback function is deprecated and will be removed in future versions. Please use alternativeFunction instead.');
             var initialArgs = [],
                 i;
             for ( i = 2; i < arguments.length; i++ ) {
