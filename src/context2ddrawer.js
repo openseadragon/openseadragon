@@ -375,7 +375,8 @@ class Context2dDrawer extends $.DrawerBase{
 
             if( this.viewer ){
                 /**
-                 * Raised when a tile is drawn to the canvas
+                 * Raised when a tile is drawn to the canvas. Only valid for
+                 * context2d and html drawers.
                  *
                  * @event tile-drawn
                  * @memberof OpenSeadragon.Viewer

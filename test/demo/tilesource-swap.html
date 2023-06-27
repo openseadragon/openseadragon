@@ -80,12 +80,12 @@
                             // The changeover will look better if we wait for the first tile to be drawn.
                             var tileDrawnHandler = function(event) {
                                 if (event.tiledImage === fullImage) {
-                                    viewer.removeHandler('tile-drawn', tileDrawnHandler);
+                                    viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
                                     viewer.world.removeItem(standin);
                                 }
                             };
 
-                            viewer.addHandler('tile-drawn', tileDrawnHandler);
+                            viewer.addHandler('tiled-image-drawn', tileDrawnHandler);
                         }
                     });
                 }

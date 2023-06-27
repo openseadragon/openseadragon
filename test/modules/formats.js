@@ -45,12 +45,12 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             assert.ok(true, 'Open event was sent');
-            viewer.addHandler('tile-drawn', tileDrawnHandler);
+            viewer.addHandler('tiled-image-drawn', tileDrawnHandler);
         };
 
         var tileDrawnHandler = function(event) {
-            viewer.removeHandler('tile-drawn', tileDrawnHandler);
-            assert.ok(true, 'A tile has been drawn');
+            viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
+            assert.ok(true, 'A tiled image has been drawn');
             viewer.addHandler('close', closeHandler);
             viewer.close();
         };

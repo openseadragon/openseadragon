@@ -342,28 +342,23 @@ $.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
                 this._drawDebugInfo(tilesToDraw, tiledImage, strokeStyle, fillStyle);
             }
 
-            // TO DO: this is necessary for the tests to pass, but doesn't totally make sense for the webgl drawer.
-            // Iterate over the tiles that were just drawn and fire the tile-drawn event
-            for(let i = 0; i < tilesToDraw.length; i++){
-                let tile = tilesToDraw[i].tile;
-
-                if( this.viewer ){
-                    /**
-                     * Raised when a tile is drawn to the canvas
-                     *
-                     * @event tile-drawn
-                     * @memberof OpenSeadragon.Viewer
-                     * @type {object}
-                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                     * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                     * @property {OpenSeadragon.Tile} tile
-                     * @property {?Object} userData - Arbitrary subscriber-defined object.
-                     */
-                    this.viewer.raiseEvent( 'tile-drawn', {
-                        tiledImage: tiledImage,
-                        tile: tile
-                    });
-                }
+            if( this.viewer ){
+                /**
+                 * Raised when a tiled image is drawn to the canvas. Only valid
+                 * for webgl drawer.
+                 *
+                 * @event tiled-image-drawn
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                 * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                 * @property {Array} tiles - An array of Tile objects that were drawn.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                this.viewer.raiseEvent( 'tiled-image-drawn', {
+                    tiledImage: tiledImage,
+                    tiles: tilesToDraw.map(info => info.tile),
+                });
             }
 
         });

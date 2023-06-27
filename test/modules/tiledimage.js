@@ -178,12 +178,12 @@
             }
 
 
-            viewer.addHandler('tile-drawn', function tileDrawnHandler(event) {
-                viewer.removeHandler('tile-drawn', tileDrawnHandler);
+            viewer.addHandler('tiled-image-drawn', function tileDrawnHandler(event) {
+                viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
                 handlerCount++;
-                assert.equal(event.eventSource, viewer, 'sender of tile-drawn event was viewer');
+                assert.equal(event.eventSource, viewer, 'sender of tiled-image-drawn event was viewer');
                 assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
-                assert.ok(event.tile, 'tile-drawn event includes tile');
+                assert.ok(event.tiles, 'tiled-image-drawn event includes tiles');
 
                 assert.equal(handlerCount, expectedHandlers, 'correct number of handlers called');
                 done();
@@ -198,14 +198,14 @@
     // ----------
     QUnit.test('reset', function(assert) {
         var done = assert.async();
-        viewer.addHandler('tile-drawn', function updateHandler() {
-            viewer.removeHandler('tile-drawn', updateHandler);
-            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tile-drawn');
+        viewer.addHandler('tiled-image-drawn', function updateHandler() {
+            viewer.removeHandler('tiled-image-drawn', updateHandler);
+            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tiled-image-drawn');
             viewer.world.getItemAt(0).reset();
             assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after reset');
 
-            viewer.addHandler('tile-drawn', function updateHandler2() {
-                viewer.removeHandler('tile-drawn', updateHandler2);
+            viewer.addHandler('tiled-image-drawn', function updateHandler2() {
+                viewer.removeHandler('tiled-image-drawn', updateHandler2);
                 assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'more tiles load');
                 viewer.world.getItemAt(0).destroy();
                 assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after destroy');
