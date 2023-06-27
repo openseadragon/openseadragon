@@ -417,46 +417,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Returns the x position and width of each column and y position and height of each row
-     * @function
-     * @param {Number} level
-     * @returns {Object}  Dictionary which defines numRows, numColumns,
-     * dimensions (in pixels), normalizedDimensions (by image width), rowInfo (Array of [x, width]),
-     * and columnInfo (Array of [y, height]) for this level of the image
-     */
-    getGridDefinition: function( level ) {
-        var numTiles = this.source.getNumTiles(level),
-            levelScale = this.source.getLevelScale(level),
-            tileWidth = this.source.getTileWidth(level) / levelScale,
-            tileHeight = this.source.getTileHeight(level) / levelScale,
-            size = this.getContentSize(),
-
-            def = {
-                numRows: numTiles.y,
-                numColumns: numTiles.x,
-                dimensions: size,
-                normalizedDimensions: size.divide(size.x),
-                rowInfo: [],
-                columnInfo: []
-            };
-        var i;
-        for(i = 0; i < numTiles.x; i++){
-            def.columnInfo[i] = {
-                x: i * tileWidth / size.x, // x is defined by regular grid spacing
-                width: (i === (numTiles.x - 1) ? Math.min(size.x - i * tileWidth, size.x) : tileWidth) / size.x, // width is standard except for last column
-            };
-        }
-        for(i = 0; i < numTiles.y; i++){
-            def.rowInfo[i] = {
-                y: i * tileHeight / size.x, // y is defined by regular grid spacing
-                height: (i === (numTiles.y - 1) ? Math.min(size.y - i * tileHeight, size.y) : tileHeight) / size.x, // height is standard except for last row
-            };
-        }
-
-        return def;
-    },
-
-    /**
      * @returns {OpenSeadragon.Point} The TiledImage's content size, in window coordinates.
      */
     getSizeInWindowCoordinates: function() {

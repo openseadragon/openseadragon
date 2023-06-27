@@ -14,12 +14,6 @@ const labels = {
     duomo: 'Duomo',
 }
 
-var stats = null;
-// var stats = new Stats();
-// stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-// document.body.appendChild( stats.dom );
-
-
 //Double viewer setup for comparison - Context2dDrawer and WebGLDrawer
 
 let viewer1 = window.viewer1 = OpenSeadragon({
@@ -31,7 +25,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:'webgl',
+    drawer:'context2d',
     blendTime:0
 });
 
@@ -45,7 +39,7 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
     drawer:'webgl',
-    blendTime:0.0
+    blendTime:0
 });
 
 // Sync navigation of viewer1 and viewer 2
@@ -88,40 +82,22 @@ viewer1.addHandler('flip', viewer1Handler);
 viewer2.addHandler('flip', viewer2Handler);
 
 
-// // Single viewer showing how to use plugin Drawer via configuration
-// // Also shows sequence mode
-// var viewer3 = window.viewer3 = OpenSeadragon({
-//     id: "three-viewer",
-//     prefixUrl: "../../build/openseadragon/images/",
-//     minZoomImageRatio:0.01,
-//     drawer: ThreeJSDrawer,
-//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-//     sequenceMode: true,
-//     imageSmoothingEnabled: false,
-//     crossOriginPolicy: 'Anonymous',
-//     ajaxWithCredentials: false
-// });
-
-// // Single viewer showing how to use plugin Drawer via configuration
-// // Also shows sequence mode
-// var viewer4 = window.viewer4 = OpenSeadragon({
-//     id: "htmldrawer",
-//     drawer:'html',
-//     blendTime:2,
-//     prefixUrl: "../../build/openseadragon/images/",
-//     minZoomImageRatio:0.01,
-//     customDrawer: OpenSeadragon.HTMLDrawer,
-//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-//     sequenceMode: true,
-//     crossOriginPolicy: 'Anonymous',
-//     ajaxWithCredentials: false
-// });
+// Single viewer showing how to use plugin Drawer via configuration
+// Also shows sequence mode
+var viewer3 = window.viewer3 = OpenSeadragon({
+    id: "htmldrawer",
+    drawer:'html',
+    blendTime:2,
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: OpenSeadragon.HTMLDrawer,
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
+});
 
 
-
-
-$('#three-viewer').resizable(true);
-$('#contentDiv').resizable(true);
 $('#image-picker').sortable({
     update: function(event, ui){
         let thisItem = ui.item.find('.toggle').data('item1');
@@ -152,11 +128,11 @@ $('#image-picker input.toggle').on('change',function(){
     let data = $(this).data();
     if(this.checked){
         addTileSource(viewer1, data.image, this);
-        // addTileSource(viewer2, data.image, this);
+        addTileSource(viewer2, data.image, this);
     } else {
         if(data.item1){
             viewer1.world.removeItem(data.item1);
-            // viewer2.world.removeItem(data.item2);
+            viewer2.world.removeItem(data.item2);
             $(this).data({item1: null, item2: null});
         }
     }
