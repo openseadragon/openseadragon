@@ -84,9 +84,6 @@ class HTMLDrawer extends $.DrawerBase{
             if (tiledImage.opacity !== 0 || tiledImage._preload) {
                 _this._drawTiles(tiledImage);
             }
-            else {
-                tiledImage._needsDraw = false;
-            }
         });
 
     }
@@ -145,7 +142,6 @@ class HTMLDrawer extends $.DrawerBase{
         for (var i = lastDrawn.length - 1; i >= 0; i--) {
             var tile = lastDrawn[ i ];
             this._drawTile( tile );
-            tile.beingDrawn = true;
 
             if( this.viewer ){
                 /**

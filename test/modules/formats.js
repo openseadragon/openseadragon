@@ -5,15 +5,26 @@
     // This module tests whether our various file formats can be opened.
     // TODO: Add more file formats (with corresponding test data).
 
+    var viewer = null;
+
     QUnit.module('Formats', {
         beforeEach: function () {
             var example = document.createElement("div");
             example.id = "example";
             document.getElementById("qunit-fixture").appendChild(example);
+        },
+        afterEach: function () {
+            if ( viewer && viewer.close ) {
+                viewer.close();
+            }
+            if (viewer && viewer.destroy){
+                viewer.destroy();
+            }
+
+            viewer = null;
         }
     });
 
-    var viewer = null;
 
     // ----------
     var testOpenUrl = function(relativeUrl, assert) {

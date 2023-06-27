@@ -85,7 +85,7 @@
  *      A set of headers to include when making tile AJAX requests.
  */
 $.TiledImage = function( options ) {
-    var _this = this;
+    this._initialized = false;
     /**
      * The {@link OpenSeadragon.TileSource} that defines this TiledImage.
      * @member {OpenSeadragon.TileSource} source
@@ -162,7 +162,10 @@ $.TiledImage = function( options ) {
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
-        _tilesToDraw:   [],    // info about the tiles currently in the viewport
+        _tilesToDraw:   [],    // info about the tiles currently in the viewport, two deep: array[level][tile]
+        _lastDrawn:     [],    // array of tiles that were last fetched by the drawer
+        _isBlending:    false, // Are any tiles still being blended?
+        _wasBlending:   false, // Were any tiles blending before the last draw?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
@@ -220,30 +223,9 @@ $.TiledImage = function( options ) {
         this.fitBounds(fitBounds, fitBoundsPlacement, true);
     }
 
-    // We need a callback to give image manipulation a chance to happen
-    this._drawingHandler = function(args) {
-        /**
-         * This event is fired just before the tile is drawn giving the application a chance to alter the image.
-         *
-         * NOTE: This event is only fired when the drawer is using a &lt;canvas&gt;.
-         *
-         * @event tile-drawing
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
-         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-         * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
-         * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        _this.viewer.raiseEvent('tile-drawing', $.extend({
-            tiledImage: _this
-        }, args));
-    };
-
     this._ownAjaxHeaders = {};
     this.setAjaxHeaders(ajaxHeaders, false);
+    this._initialized = true;
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -311,7 +293,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (updated || viewportChanged || !this._fullyLoaded){
             let fullyLoadedFlag = this._updateLevelsForViewport();
-            this._updateTilesInViewport();
             this._setFullyLoaded(fullyLoadedFlag);
         }
 
@@ -328,10 +309,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Mark this TiledImage as having been drawn, so that it will only be drawn
-     * again if something changes about the image
+     * again if something changes about the image. If the image is still blending,
+     * this will have no effect.
+     * @returns {Boolean} whether the item still needs to be drawn due to blending
      */
     setDrawn: function(){
-        this._needsDraw = false;
+        this._needsDraw = this._isBlending || this._wasBlending;
+        return this._needsDraw;
     },
 
     /**
@@ -341,7 +325,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.reset();
 
         if (this.source.destroy) {
-            this.source.destroy();
+            this.source.destroy(this.viewer);
         }
     },
 
@@ -539,7 +523,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             imageX = imageX.x;
         }
 
-        var point = this._imageToViewportDelta(imageX, imageY);
+        var point = this._imageToViewportDelta(imageX, imageY, current);
         if (current) {
             point.x += this._xSpring.current.value;
             point.y += this._ySpring.current.value;
@@ -934,9 +918,39 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._flipped;
     },
     set flipped(flipped){
+        let changed = this._flipped !== !!flipped;
         this._flipped = !!flipped;
-        this._needsDraw = true;
-        this._raiseBoundsChange();
+        if(changed){
+            this.update(true);
+            this._needsDraw = true;
+            this._raiseBoundsChange();
+        }
+    },
+
+    get wrapHorizontal(){
+        return this._wrapHorizontal;
+    },
+    set wrapHorizontal(wrap){
+        let changed = this._wrapHorizontal !== !!wrap;
+        this._wrapHorizontal = !!wrap;
+        if(this._initialized && changed){
+            this.update(true);
+            this._needsDraw = true;
+            // this._raiseBoundsChange();
+        }
+    },
+
+    get wrapVertical(){
+        return this._wrapVertical;
+    },
+    set wrapVertical(wrap){
+        let changed = this._wrapVertical !== !!wrap;
+        this._wrapVertical = !!wrap;
+        if(this._initialized && changed){
+            this.update(true);
+            this._needsDraw = true;
+            // this._raiseBoundsChange();
+        }
     },
 
     get debugMode(){
@@ -1058,7 +1072,20 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Array} Array of Tiles that make up the current view
      */
     getTilesToDraw: function(){
-        return this._tilesToDraw;
+
+        let tileArray = this._tilesToDraw.flat();
+        // update all tiles (so blending can happen right at the time of drawing)
+        this._updateTilesInViewport(tileArray);
+        // _tilesToDraw might have been updated by the update; refresh it
+        tileArray = this._tilesToDraw.flat();
+
+         // mark the tiles as being drawn, so that they won't be discarded from
+        // the tileCache
+        tileArray.forEach(tileInfo => {
+            tileInfo.tile.beingDrawn = true;
+        });
+        this._lastDrawn = tileArray;
+        return tileArray;
     },
 
     /**
@@ -1289,7 +1316,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var currentTime = $.now();
 
         // reset each tile's beingDrawn flag
-        this._tilesToDraw.forEach(tileinfo => {
+        this._lastDrawn.forEach(tileinfo => {
             tileinfo.tile.beingDrawn = false;
         });
         // clear the list of tiles to draw
@@ -1391,7 +1418,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 };
             })(level, levelOpacity, currentTime);
 
-            this._tilesToDraw = this._tilesToDraw.concat(tiles.map(makeTileInfoObject));
+            this._tilesToDraw[level] = tiles.map(makeTileInfoObject);
 
             // Stop the loop if lower-res tiles would all be covered by
             // already drawn tiles
@@ -1419,47 +1446,54 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * Update all tiles that contribute to the current view
      *
      */
-    _updateTilesInViewport: function() {
-        var _this = this;
+    _updateTilesInViewport: function(tiles) {
+        let currentTime = $.now();
+        let _this = this;
         this._tilesLoading = 0;
+        this._wasBlending = this._isBlending;
+        this._isBlending = false;
         this.loadingCoverage = {};
+        let lowestLevel = tiles.length ? tiles[0].level : 0;
 
-        var drawArea = this.getDrawArea();
+        let drawArea = this.getDrawArea();
         if(!drawArea){
             return;
         }
 
         function updateTile(info){
-            var tile = info.tile;
+            let tile = info.tile;
             if(tile && tile.loaded){
-                var needsDraw = _this._blendTile(
+                let tileIsBlending = _this._blendTile(
                     tile,
                     tile.x,
                     tile.y,
                     info.level,
                     info.levelOpacity,
-                    info.currentTime
+                    currentTime,
+                    lowestLevel
                 );
-                if(needsDraw){
-                    _this._needsDraw = true;
-                }
+                _this._isBlending = _this._isBlending || tileIsBlending;
+                _this._needsDraw = _this._needsDraw || tileIsBlending || this._wasBlending;
             }
         }
 
-        // Update each tile in the _tilesToDraw list. As the tiles are updated,
+        // Update each tile in the _lastDrawn list. As the tiles are updated,
         // the coverage provided is also updated. If a level provides coverage
         // as part of this process, discard tiles from lower levels
         let level = 0;
-        for(let i = 0; i < this._tilesToDraw.length; i++){
-            let tile = this._tilesToDraw[i];
+        for(let i = 0; i < tiles.length; i++){
+            let tile = tiles[i];
             updateTile(tile);
             if(this._providesCoverage(this.coverage, tile.level)){
                 level = Math.max(level, tile.level);
-                // break;
             }
         }
         if(level > 0){
-            this._tilesToDraw = this._tilesToDraw.filter(tile => tile.level >= level);
+            for( let levelKey in this._tilesToDraw ){
+                if( levelKey < level ){
+                    delete this._tilesToDraw[levelKey];
+                }
+            }
         }
 
     },
@@ -1478,10 +1512,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} level
      * @param {Number} levelOpacity
      * @param {Number} currentTime
-     * @returns {Boolean}
+     * @param {Boolean} lowestLevel
+     * @returns {Boolean} whether the opacity of this tile has changed
      */
-    _blendTile: function(tile, x, y, level, levelOpacity, currentTime ){
-        var blendTimeMillis = 1000 * this.blendTime,
+    _blendTile: function(tile, x, y, level, levelOpacity, currentTime, lowestLevel ){
+        let blendTimeMillis = 1000 * this.blendTime,
             deltaTime,
             opacity;
 
@@ -1492,20 +1527,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         deltaTime   = currentTime - tile.blendStart;
         opacity     = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
 
+        // if this tile is at the lowest level being drawn, render at opacity=1
+        if(level === lowestLevel){
+            opacity = 1;
+            deltaTime = blendTimeMillis;
+        }
+
         if ( this.alwaysBlend ) {
             opacity *= levelOpacity;
         }
-
         tile.opacity = opacity;
 
         if ( opacity === 1 ) {
             this._setCoverage( this.coverage, level, x, y, true );
             this._hasOpaqueTile = true;
-        } else if ( deltaTime < blendTimeMillis ) {
-            return true;
         }
-
-        return false;
+        // return true if the tile is still blending
+        return deltaTime < blendTimeMillis;
     },
 
     /**
@@ -1646,6 +1684,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         boundsSize.x *= this._scaleSpring.current.value;
         boundsSize.y *= this._scaleSpring.current.value;
+
+        tile.positionedBounds.x = boundsTL.x;
+        tile.positionedBounds.y = boundsTL.y;
+        tile.positionedBounds.width = boundsSize.x;
+        tile.positionedBounds.height = boundsSize.y;
 
         var positionC = viewport.pixelFromPointNoRotate(boundsTL, true),
             positionT = viewport.pixelFromPointNoRotate(boundsTL, false),

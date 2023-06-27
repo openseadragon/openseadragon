@@ -1,8 +1,3 @@
-//imports
-import { ThreeJSDrawer } from './threejsdrawer.js';
-// import { default as Stats } from "https://cdnjs.cloudflare.com/ajax/libs/stats.js/17/Stats.js";
-//globals
-// const canvas = document.querySelector('#three-canvas');
 const sources = {
     "rainbow":"../data/testpattern.dzi",
     "leaves":"../data/iiif_2_0_sizes/info.json",
@@ -25,63 +20,102 @@ var stats = null;
 // document.body.appendChild( stats.dom );
 
 
-//Double viewer setup for comparison - Context2dDrawer and ThreeJSDrawer
+//Double viewer setup for comparison - Context2dDrawer and WebGLDrawer
 
-var viewer = window.viewer = OpenSeadragon({
-    id: "contentDiv",
+let viewer1 = window.viewer1 = OpenSeadragon({
+    id: "context2d",
     prefixUrl: "../../build/openseadragon/images/",
-    // minZoomImageRatio:0.8,
-    // maxZoomPixelRatio:0.5,
     minZoomImageRatio:0.01,
     maxZoomPixelRatio:100,
     smoothTileEdgesMinZoom:1.1,
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
-    drawer:'context2d',
+    // maxImageCacheCount: 30,
+    drawer:'webgl',
+    blendTime:0
 });
 
-
-// Mirror the interactive viewer with Context2dDrawer onto a separate canvas using ThreeJSDrawer
-let threeRenderer = window.threeRenderer = new ThreeJSDrawer({viewer, viewport: viewer.viewport, element:viewer.element, stats: stats});
-//make the test canvas mirror all changes to the viewer canvas
-let viewerCanvas = viewer.drawer.canvas;
-let canvas = threeRenderer.canvas;
-let canvasContainer = $('#three-canvas-container').append(canvas);
-viewer.addHandler("resize", function(){
-    canvasContainer[0].style.width = viewerCanvas.clientWidth+'px';
-    canvasContainer[0].style.height = viewerCanvas.clientHeight+'px';
-    // canvas.width = viewerCanvas.width;
-    // canvas.height = viewerCanvas.height;
-});
-
-
-// Single viewer showing how to use plugin Drawer via configuration
-// Also shows sequence mode
-var viewer2 = window.viewer2 = OpenSeadragon({
-    id: "three-viewer",
+let viewer2 = window.viewer2 = OpenSeadragon({
+    id: "webgl",
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
-    drawer: ThreeJSDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-    sequenceMode: true,
-    imageSmoothingEnabled: false,
+    maxZoomPixelRatio:100,
+    smoothTileEdgesMinZoom:1.1,
     crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
+    ajaxWithCredentials: false,
+    // maxImageCacheCount: 30,
+    drawer:'webgl',
+    blendTime:0.0
 });
 
-// Single viewer showing how to use plugin Drawer via configuration
-// Also shows sequence mode
-var viewer3 = window.viewer3 = OpenSeadragon({
-    id: "htmldrawer",
-    drawer:'html',
-    prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    customDrawer: OpenSeadragon.HTMLDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-    sequenceMode: true,
-    crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
-});
+// Sync navigation of viewer1 and viewer 2
+var viewer1Leading = false;
+var viewer2Leading = false;
+
+var viewer1Handler = function() {
+    if (viewer2Leading) {
+        return;
+    }
+
+    viewer1Leading = true;
+    viewer2.viewport.zoomTo(viewer1.viewport.getZoom());
+    viewer2.viewport.panTo(viewer1.viewport.getCenter());
+    viewer2.viewport.rotateTo(viewer1.viewport.getRotation());
+    viewer2.viewport.setFlip(viewer1.viewport.flipped);
+    viewer1Leading = false;
+};
+
+var viewer2Handler = function() {
+    if (viewer1Leading) {
+        return;
+    }
+
+    viewer2Leading = true;
+    viewer1.viewport.zoomTo(viewer2.viewport.getZoom());
+    viewer1.viewport.panTo(viewer2.viewport.getCenter());
+    viewer1.viewport.rotateTo(viewer2.viewport.getRotation());
+    viewer1.viewport.setFlip(viewer1.viewport.flipped);
+    viewer2Leading = false;
+};
+
+viewer1.addHandler('zoom', viewer1Handler);
+viewer2.addHandler('zoom', viewer2Handler);
+viewer1.addHandler('pan', viewer1Handler);
+viewer2.addHandler('pan', viewer2Handler);
+viewer1.addHandler('rotate', viewer1Handler);
+viewer2.addHandler('rotate', viewer2Handler);
+viewer1.addHandler('flip', viewer1Handler);
+viewer2.addHandler('flip', viewer2Handler);
+
+
+// // Single viewer showing how to use plugin Drawer via configuration
+// // Also shows sequence mode
+// var viewer3 = window.viewer3 = OpenSeadragon({
+//     id: "three-viewer",
+//     prefixUrl: "../../build/openseadragon/images/",
+//     minZoomImageRatio:0.01,
+//     drawer: ThreeJSDrawer,
+//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+//     sequenceMode: true,
+//     imageSmoothingEnabled: false,
+//     crossOriginPolicy: 'Anonymous',
+//     ajaxWithCredentials: false
+// });
+
+// // Single viewer showing how to use plugin Drawer via configuration
+// // Also shows sequence mode
+// var viewer4 = window.viewer4 = OpenSeadragon({
+//     id: "htmldrawer",
+//     drawer:'html',
+//     blendTime:2,
+//     prefixUrl: "../../build/openseadragon/images/",
+//     minZoomImageRatio:0.01,
+//     customDrawer: OpenSeadragon.HTMLDrawer,
+//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+//     sequenceMode: true,
+//     crossOriginPolicy: 'Anonymous',
+//     ajaxWithCredentials: false
+// });
 
 
 
@@ -90,11 +124,18 @@ $('#three-viewer').resizable(true);
 $('#contentDiv').resizable(true);
 $('#image-picker').sortable({
     update: function(event, ui){
-        let thisItem = ui.item.find('.toggle').data('item');
-        let items = $('#image-picker input.toggle:checked').toArray().map(item=>$(item).data('item'));
+        let thisItem = ui.item.find('.toggle').data('item1');
+        let items = $('#image-picker input.toggle:checked').toArray().map(item=>$(item).data('item1'));
         let newIndex = items.indexOf(thisItem);
         if(thisItem){
-            viewer.world.setItemIndex(thisItem, newIndex);
+            viewer1.world.setItemIndex(thisItem, newIndex);
+        }
+
+        thisItem = ui.item.find('.toggle').data('item2');
+        items = $('#image-picker input.toggle:checked').toArray().map(item=>$(item).data('item2'));
+        newIndex = items.indexOf(thisItem);
+        if(thisItem){
+            viewer2.world.setItemIndex(thisItem, newIndex);
         }
     }
 });
@@ -110,12 +151,13 @@ Object.keys(sources).forEach((key, index)=>{
 $('#image-picker input.toggle').on('change',function(){
     let data = $(this).data();
     if(this.checked){
-        addTileSource(data.image, this);
-
+        addTileSource(viewer1, data.image, this);
+        // addTileSource(viewer2, data.image, this);
     } else {
-        if(data.item){
-            viewer.world.removeItem(data.item);
-            $(this).data('item',null);
+        if(data.item1){
+            viewer1.world.removeItem(data.item1);
+            // viewer2.world.removeItem(data.item2);
+            $(this).data({item1: null, item2: null});
         }
     }
 }).trigger('change');
@@ -123,7 +165,13 @@ $('#image-picker input.toggle').on('change',function(){
 $('#image-picker input:not(.toggle)').on('change',function(){
     let data = $(this).data();
     let value = $(this).val();
-    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item');
+    let tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
+    let tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
+    updateTiledImage(tiledImage1, data, value, this);
+    updateTiledImage(tiledImage2, data, value, this);
+});
+
+function updateTiledImage(tiledImage, data, value, item){
     if(tiledImage){
         //item = tiledImage
         let field = data.field;
@@ -142,16 +190,16 @@ $('#image-picker input:not(.toggle)').on('change',function(){
         } else if (field == 'opacity'){
             tiledImage.setOpacity(Number(value));
         } else if (field == 'flipped'){
-            tiledImage.setFlip($(this).prop('checked'));
+            tiledImage.setFlip($(item).prop('checked'));
         } else if (field == 'cropped'){
-            if( $(this).prop('checked') ){
+            if( $(item).prop('checked') ){
                 let croppingPolygons = [ [{x:200, y:200}, {x:800, y:200}, {x:500, y:800}] ];
                 tiledImage.setCroppingPolygons(croppingPolygons);
             } else {
                 tiledImage.resetCroppingPolygons();
             }
         } else if (field == 'clipped'){
-            if( $(this).prop('checked') ){
+            if( $(item).prop('checked') ){
                 let clipRect = new OpenSeadragon.Rect(2000, 0, 3000, 4000);
                 tiledImage.setClip(clipRect);
             } else {
@@ -159,26 +207,40 @@ $('#image-picker input:not(.toggle)').on('change',function(){
             }
         }
         else if (field == 'debug'){
-            if( $(this).prop('checked') ){
+            if( $(item).prop('checked') ){
                 tiledImage.debugMode = true;
             } else {
                 tiledImage.debugMode = false;
             }
         }
     }
-});
+}
 
 $('.image-options select[data-field=composite]').append(getCompositeOperationOptions()).on('change',function(){
     let data = $(this).data();
-    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item');
-    if(tiledImage){
-        tiledImage.setCompositeOperation(this.value == 'null' ? null : this.value);
+    let tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
+    if(tiledImage1){
+        tiledImage1.setCompositeOperation(this.value == 'null' ? null : this.value);
+    }
+    let tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
+    if(tiledImage2){
+        tiledImage2.setCompositeOperation(this.value == 'null' ? null : this.value);
     }
 }).trigger('change');
 
 $('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on('change',function(){
     let data = $(this).data();
-    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item');
+    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
+    if(tiledImage){
+        switch(this.value){
+            case "None": tiledImage.wrapHorizontal = tiledImage.wrapVertical = false; break;
+            case "Horizontal": tiledImage.wrapHorizontal = true; tiledImage.wrapVertical = false; break;
+            case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
+            case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
+        }
+        tiledImage.viewer.raiseEvent('opacity-change');//trigger a redraw for the webgl renderer. TODO: fix this hack.
+    }
+    tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
     if(tiledImage){
         switch(this.value){
             case "None": tiledImage.wrapHorizontal = tiledImage.wrapVertical = false; break;
@@ -220,7 +282,7 @@ function getCompositeOperationOptions(){
 
 }
 
-function addTileSource(image, checkbox){
+function addTileSource(viewer, image, checkbox){
     let options = $(`#image-picker input[data-image=${image}][type=number]`).toArray().reduce((acc, input)=>{
         let field = $(input).data('field');
         if(field){
@@ -236,10 +298,11 @@ function addTileSource(image, checkbox){
 
     let tileSource = sources[image];
     if(tileSource){
-        viewer.addTiledImage({tileSource: tileSource, ...options, index: insertionIndex});
-        viewer.world.addOnceHandler('add-item',function(ev){
+        viewer&&viewer.addTiledImage({tileSource: tileSource, ...options, index: insertionIndex});
+        viewer&&viewer.world.addOnceHandler('add-item',function(ev){
             let item = ev.item;
-            $(checkbox).data('item',item);
+            let field = viewer === viewer1 ? 'item1' : 'item2';
+            $(checkbox).data(field,item);
             item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
         });
     }

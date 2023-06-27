@@ -190,15 +190,15 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['context2d', 'html']]
+  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'context2d', 'html']]
   *     Which drawer to use. Valid strings are 'context2d' and 'html'. Valid drawer
   *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
   *
-  * @property {Object} [drawerOptions = {}]
-  *     Options to pass to the selected drawer implementation. See documentation
-  *     for Drawer classes that extend DrawerBase for further information.
+  * @property {Object} drawerOptions
+  *     Options to pass to the selected drawer implementation. For details
+  *     please @see {@link drawerOptions}.
   *
   * @property {Number} [opacity=1]
   *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
@@ -1346,9 +1346,32 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['context2d', 'html'], // prefer using canvas, fallback to html
-            drawerOptions:                     {},
+            drawer:                            ['webgl', 'context2d', 'html'], // prefer using webgl, context2d, fallback to html
             useCanvas:                         true,  // deprecated - set drawer and drawerOptions
+                /**
+                 * drawerOptions dictionary.
+                 * @type {Object} drawerOptions
+                 * @property {Object} webgl - options if the WebGLDrawer is used.
+                 * Set 'continuousTileFresh: true' if tile data is modified programmatically
+                 * by filtering plugins or similar.
+                 * @property {Object} context2d - options if the Context2dDrawer is used
+                 * @property {Object} html - options if the HTMLDrawer is used
+                 * @property {Object} custom - options if a custom drawer is used
+                 */
+            drawerOptions: {
+                webgl: {
+                    continuousTileRefresh: false,
+                },
+                context2d: {
+
+                },
+                html: {
+
+                },
+                custom: {
+
+                }
+            },
 
             // TILED IMAGE SETTINGS
             preload:                           false, // to be passed into each TiledImage

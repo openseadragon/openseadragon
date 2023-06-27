@@ -446,7 +446,7 @@ $.Viewer = function( options ) {
         delete this.drawerOptions.useCanvas;
     }
     let drawerPriority = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
-    let drawersToTry = drawerPriority.filter(d => ['context2d', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
+    let drawersToTry = drawerPriority.filter(d => ['webgl', 'context2d', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
     if(drawerPriority.length !== drawersToTry.length){
         $.console.error('An invalid drawer was requested.');
     }
@@ -458,11 +458,19 @@ $.Viewer = function( options ) {
     this.drawer = null; // TO DO: how to deal with the possibility that none of the requested drawers are supported?
     for(let i = 0; i < drawersToTry.length; i++){
         let Drawer = drawersToTry[i];
+        let optsKey = null;
         // replace text-based option with appropriate constructor
         if (Drawer === 'context2d'){
             Drawer = $.Context2dDrawer;
+            optsKey = 'context2d';
         } else if (Drawer === 'html'){
             Drawer = $.HTMLDrawer;
+            optsKey = 'html';
+        } else if (Drawer === 'webgl'){
+            Drawer = $.WebGLDrawer;
+            optsKey = 'webgl';
+        } else {
+            optsKey = 'custom';
         }
         // if the drawer is supported, create it and break the loop
         if (Drawer.prototype.isSupported()){
@@ -471,13 +479,17 @@ $.Viewer = function( options ) {
                 viewport:           this.viewport,
                 element:            this.canvas,
                 debugGridColor:     this.debugGridColor,
-                options:            this.drawerOptions,
+                options:            this.drawerOptions[optsKey],
             });
             this.drawerOptions.constructor = Drawer;
             // TO DO: add an event that indicates which drawer was instantiated?
             break;
         }
         // TO DO: add an event that indicates that the selected drawer could not be created?
+    }
+    if(this.drawer === null){
+        $.console.error('No drawer could be created!');
+        throw('Error with creating the selected drawer(s)');
     }
 
 
@@ -1090,7 +1102,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isFullPage: function () {
-        return THIS[ this.hash ].fullPage;
+        return THIS[this.hash] && THIS[ this.hash ].fullPage;
     },
 
 
@@ -1137,7 +1149,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        if ( fullPage ) {
+        if ( fullPage && this.element ) {
 
             this.elementSize = $.getElementSize( this.element );
             this.pageScroll = $.getPageScroll();

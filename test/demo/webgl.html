@@ -68,7 +68,28 @@
 </head>
 <body>
     <div class="content">
-        <h2>Use a WebGL drawer implementation (using three.js) instead of the default context2d drawer</h2>
+
+        <h2>Compare behavior of <strong>Context2d</strong> and <strong>WebGL</strong> (via three.js) drawers</h2>
+        <div class="mirrored">
+            <div>
+                <h3>Context2d drawer (default in OSD &lt;= 4.1.0)</h3>
+                <div id="context2d" class="viewer-container"></div>
+            </div>
+
+            <div>
+                <h3>New WebGL drawer</h3>
+                <div id="webgl" class="viewer-container"></div>
+            </div>
+        </div>
+
+
+        <div id="image-picker">
+            <h3>Image options (drag and drop to re-order images)</h3>
+
+
+        </div>
+
+        <h2>Use a custom plugin drawer - example using three.js</h2>
         <div class="mirrored">
             <div>
                 <div class="description">
@@ -96,74 +117,6 @@
             <div id="three-viewer" class="viewer-container"></div>
         </div>
 
-
-        <h2>Compare behavior of <strong>Context2d</strong> and <strong>WebGL</strong> (via three.js) drawers</h2>
-        <div class="mirrored">
-            <div>
-                <h3>Use default OpenSeadragon viewer to pan/zoom</h3>
-                <div id="contentDiv" class="viewer-container"></div>
-            </div>
-
-            <div>
-                <h3>WebGL drawer linked using event listeners </h3>
-                <div id="three-canvas-container" class="viewer-container"></div>
-            </div>
-        </div>
-
-
-        <div id="image-picker">
-            <h3>Image options (drag and drop to re-order images)</h3>
-            <!-- <div class="image-options">
-                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-                <label><input type="checkbox" checked data-image="rainbow" class="toggle"> Rainbow Grid</label>
-                <div class="option-grid">
-                    <label>X: <input type="number" value="0" data-image="rainbow" data-field="x"> </label>
-                    <label>Y: <input type="number" value="0" data-image="rainbow" data-field="y"> </label>
-                    <label>Width: <input type="number" value="1" data-image="rainbow" data-field="width" min="0"> </label>
-                    <label>Degrees: <input type="number" value="0" data-image="rainbow" data-field="degrees"> </label>
-                    <label>Opacity: <input type="number" value="1" data-image="rainbow" data-field="opacity" min="0" max="1" step="0.2"> </label>
-                    <label>Flipped: <input type="checkbox" data-image="rainbow" data-field="flipped"></label>
-                    <label>Cropped: <input type="checkbox" data-image="rainbow" data-field="cropped"></label>
-                    <label>Debug: <input type="checkbox" data-image="rainbow" data-field="debug"></label>
-                    <label>Composite: <select data-image="rainbow" data-field="composite"></select></label>
-                    <label>Wrapping: <select data-image="rainbow" data-field="wrapping"></select></label>
-                </div>
-
-            </div>
-            <div class="image-options">
-                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-                <label><input type="checkbox" data-image="leaves" class="toggle"> Leaves</label>
-                <div class="option-grid">
-                    <label>X: <input type="number" value="0" data-image="leaves" data-field="x"> </label>
-                    <label>Y: <input type="number" value="0" data-image="leaves" data-field="y"> </label>
-                    <label>Width: <input type="number" value="1" data-image="leaves" data-field="width" min="0"> </label>
-                    <label>Degrees: <input type="number" value="0" data-image="leaves" data-field="degrees"> </label>
-                    <label>Opacity: <input type="number" value="1" data-image="leaves" data-field="opacity" min="0" max="1" step="0.2"> </label>
-                    <label>Flipped: <input type="checkbox" data-image="leaves" data-field="flipped"></label>
-                    <label>Cropped: <input type="checkbox" data-image="leaves" data-field="cropped"></label>
-                    <label>Debug: <input type="checkbox" data-image="leaves" data-field="debug"></label>
-                    <label>Composite: <select data-image="leaves" data-field="composite" ></select></label>
-                    <label>Wrapping: <select data-image="leaves" data-field="wrapping"></select></label>
-                </div>
-            </div>
-            <div class="image-options">
-                <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
-                <label><input type="checkbox" data-image="bblue" class="toggle"> BBlue PNG</label>
-                <div class="option-grid">
-                    <label>X: <input type="number" value="0" data-image="bblue" data-field="x"> </label>
-                    <label>Y: <input type="number" value="0" data-image="bblue" data-field="y"> </label>
-                    <label>Width: <input type="number" value="1" data-image="bblue" data-field="width" min="0"> </label>
-                    <label>Degrees: <input type="number" value="0" data-image="bblue" data-field="degrees"> </label>
-                    <label>Opacity: <input type="number" value="1" data-image="bblue" data-field="opacity" min="0" max="1" step="0.2"> </label>
-                    <label>Flipped: <input type="checkbox" data-image="bblue" data-field="flipped"></label>
-                    <label>Cropped: <input type="checkbox" data-image="bblue" data-field="cropped"></label>
-                    <label>Debug: <input type="checkbox" data-image="bblue" data-field="debug"></label>
-                    <label>Composite: <select data-image="bblue" data-field="composite"></select></label>
-                    <label>Wrapping: <select data-image="bblue" data-field="wrapping"></select></label>
-                </div>
-            </div> -->
-
-        </div>
 
 
         <h2>HTMLDrawer: legacy pre-HTML5 drawer that uses &lt;img&gt; elements for tiles</h2>

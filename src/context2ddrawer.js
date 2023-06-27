@@ -108,9 +108,6 @@ class Context2dDrawer extends $.DrawerBase{
                 // _this._updateViewportWithTiledImage(tiledImage);
                 _this._drawTiles(tiledImage);
             }
-            else {
-                tiledImage._needsDraw = false;
-            }
         });
     }
 
@@ -371,11 +368,10 @@ class Context2dDrawer extends $.DrawerBase{
         }
 
         // Iterate over the tiles to draw, and draw them
-        for (var i = lastDrawn.length - 1; i >= 0; i--) {
+        for (var i = 0; i < lastDrawn.length; i++) {
             tile = lastDrawn[ i ];
-            this._drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale,
+            this._drawTile( tile, tiledImage, useSketch, sketchScale,
                 sketchTranslate, shouldRoundPositionAndSize, tiledImage.source );
-            tile.beingDrawn = true;
 
             if( this.viewer ){
                 /**
@@ -456,6 +452,24 @@ class Context2dDrawer extends $.DrawerBase{
     }
 
     /**
+         * @private
+         * @inner
+         * This function converts the given point from to the drawer coordinate by
+         * multiplying it with the pixel density.
+         * This function does not take rotation into account, thus assuming provided
+         * point is at 0 degree.
+         * @param {OpenSeadragon.Point} point - the pixel point to convert
+         * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
+         */
+    _viewportCoordToDrawerCoord(point) {
+        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        return new $.Point(
+            vpPoint.x * $.pixelDensityRatio,
+            vpPoint.y * $.pixelDensityRatio
+        );
+    }
+
+    /**
      * @private
      * @inner
      * Draws special debug information for a TiledImage if in debug mode.
@@ -466,7 +480,7 @@ class Context2dDrawer extends $.DrawerBase{
             for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
                 var tile = lastDrawn[ i ];
                 try {
-                    this.drawDebugInfo(tile, lastDrawn.length, i, tiledImage);
+                    this._drawDebugInfoOnTile(tile, lastDrawn.length, i, tiledImage);
                 } catch(e) {
                     $.console.error(e);
                 }
@@ -500,8 +514,7 @@ class Context2dDrawer extends $.DrawerBase{
      * @inner
      * Draws the given tile.
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
-     * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
-     * drawingHandler({context, tile, rendered})
+     * @param {OpenSeadragon.TiledImage} tiledImage - The tiled image being drawn.
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
@@ -511,13 +524,13 @@ class Context2dDrawer extends $.DrawerBase{
      * context.
      * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    _drawTile( tile, drawingHandler, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
+    _drawTile( tile, tiledImage, useSketch, scale, translate, shouldRoundPositionAndSize, source) {
         $.console.assert(tile, '[Drawer._drawTile] tile is required');
-        $.console.assert(drawingHandler, '[Drawer._drawTile] drawingHandler is required');
+        $.console.assert(tiledImage, '[Drawer._drawTile] drawingHandler is required');
 
         var context = this._getContext(useSketch);
         scale = scale || 1;
-        this._drawTileToCanvas(tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source);
+        this._drawTileToCanvas(tile, context, tiledImage, scale, translate, shouldRoundPositionAndSize, source);
 
     }
 
@@ -528,7 +541,7 @@ class Context2dDrawer extends $.DrawerBase{
      * @function
      * @param {OpenSeadragon.Tile} tile - the tile to draw to the canvas
      * @param {Canvas} context
-     * @param {Function} drawingHandler - Method for firing the drawing event.
+     * @param {OpenSeadragon.TiledImage} tiledImage - Method for firing the drawing event.
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Number} [scale=1] - Apply a scale to position and size
@@ -538,7 +551,7 @@ class Context2dDrawer extends $.DrawerBase{
      * context.
      * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
-    _drawTileToCanvas( tile, context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
+    _drawTileToCanvas( tile, context, tiledImage, scale, translate, shouldRoundPositionAndSize, source) {
 
         var position = tile.position.times($.pixelDensityRatio),
             size     = tile.size.times($.pixelDensityRatio),
@@ -599,9 +612,7 @@ class Context2dDrawer extends $.DrawerBase{
             );
         }
 
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, tile: tile, rendered: rendered});
+        this._raiseTileDrawingEvent(tiledImage, context, tile, rendered);
 
         var sourceWidth, sourceHeight;
         if (tile.sourceBounds) {
@@ -805,7 +816,7 @@ class Context2dDrawer extends $.DrawerBase{
     }
 
     // private
-    drawDebugInfo(tile, count, i, tiledImage) {
+    _drawDebugInfoOnTile(tile, count, i, tiledImage) {
 
         var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;

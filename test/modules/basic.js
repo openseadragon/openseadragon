@@ -19,6 +19,9 @@
             if (viewer && viewer.close) {
                 viewer.close();
             }
+            if (viewer && viewer.destroy){
+                viewer.destroy();
+            }
 
             viewer = null;
         }
@@ -319,8 +322,8 @@
                     height: 155
                 } ]
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tile-drawn', function(event) {
+            assert.ok(OpenSeadragon.isCanvasTainted(event.tile.getCanvasContext().canvas),
                 "Canvas should be tainted.");
             done();
         });
@@ -339,8 +342,8 @@
                     height: 155
                 } ]
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tile-drawn', function(event) {
+            assert.ok(!OpenSeadragon.isCanvasTainted(event.tile.getCanvasContext().canvas),
                 "Canvas should not be tainted.");
             done();
         });
@@ -363,8 +366,8 @@
             },
             crossOriginPolicy : false
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tile-drawn', function(event) {
+            assert.ok(OpenSeadragon.isCanvasTainted(event.tile.getCanvasContext().canvas),
                 "Canvas should be tainted.");
             done();
         });
@@ -387,8 +390,8 @@
                 crossOriginPolicy : "Anonymous"
             }
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tile-drawn', function(event) {
+            assert.ok(!OpenSeadragon.isCanvasTainted(event.tile.getCanvasContext().canvas),
                 "Canvas should not be tainted.");
             done();
         });

@@ -90,6 +90,7 @@ $.DrawerBase = class DrawerBase{
         this.container  = $.getElement( options.element );
 
         // TO DO: Does this need to be in DrawerBase, or only in Drawer implementations?
+        // Original commment:
         // We force our container to ltr because our drawing math doesn't work in rtl.
         // This issue only affects our canvas renderer, but we do it always for consistency.
         // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
@@ -199,6 +200,9 @@ $.DrawerBase = class DrawerBase{
      * placeholder methods are still in place.
      */
     _checkForAPIOverrides(){
+        if(this.createDrawingElement === $.DrawerBase.prototype.createDrawingElement){
+            throw("[drawer].createDrawingElement must be implemented by child class");
+        }
         if(this.draw === $.DrawerBase.prototype.draw){
             throw("[drawer].draw must be implemented by child class");
         }
@@ -208,11 +212,37 @@ $.DrawerBase = class DrawerBase{
         if(this.destroy === $.DrawerBase.prototype.destroy){
             throw("[drawer].destroy must be implemented by child class");
         }
-
         if(this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled){
             throw("[drawer].setImageSmoothingEnabled must be implemented by child class");
         }
     }
+
+    _raiseTileDrawingEvent(tiledImage, context, tile, rendered){
+        /**
+         * This event is fired just before the tile is drawn giving the application a chance to alter the image.
+         *
+         * NOTE: This event is only fired in certain drawing contexts: either the 'context2d' drawer is
+         * being used, or the 'webgl' drawer with 'drawerOptions.webgl.continuousTileRefresh'.
+         *
+         * @event tile-drawing
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
+         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+         * @property {CanvasRenderingContext2D} context - The HTML canvas context being drawn into.
+         * @property {CanvasRenderingContext2D} rendered - The HTML canvas context containing the tile imagery.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.viewer.raiseEvent('tile-drawing', {
+            tiledImage: tiledImage,
+            context: context,
+            tile: tile,
+            rendered: rendered
+        });
+    }
+
+
 
 
     // Utility functions

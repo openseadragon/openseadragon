@@ -82,6 +82,12 @@
          */
         this.bounds  = bounds;
         /**
+         * Where this tile fits, in normalized coordinates, after positioning
+         * @member {OpenSeadragon.Rect} positionedBounds
+         * @memberof OpenSeadragon.Tile#
+         */
+        this.positionedBounds  = new OpenSeadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
+        /**
          * The portion of the tile to use as the source of the drawing operation, in pixels. Note that
          * this only works when drawing with canvas; when drawing with HTML the entire tile is always used.
          * @member {OpenSeadragon.Rect} sourceBounds
@@ -324,7 +330,7 @@
          * @returns {CanvasRenderingContext2D}
          */
         getCanvasContext: function() {
-            return this.context2D || this.cacheImageRecord.getRenderedContext();
+            return this.context2D || (this.cacheImageRecord && this.cacheImageRecord.getRenderedContext());
         },
 
         /**

@@ -20,6 +20,9 @@
             if (viewer && viewer.close) {
                 viewer.close();
             }
+            if (viewer && viewer.destroy){
+                viewer.destroy();
+            }
 
             viewer = null;
         }
@@ -132,6 +135,8 @@
     QUnit.test('update', function(assert) {
         var done = assert.async();
         var handlerCount = 0;
+        var testTileDrawingEvent = viewer.drawerOptions.type === 'context2d';
+        let expectedHandlers = testTileDrawingEvent ? 4 : 3;
 
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
@@ -160,15 +165,18 @@
                 assert.ok(event.tile, 'update-tile event includes tile');
             });
 
-            viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
-                viewer.removeHandler('tile-drawing', tileDrawingHandler);
-                handlerCount++;
-                assert.equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
-                assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
-                assert.ok(event.tile, 'tile-drawing event includes a tile');
-                assert.ok(event.context, 'tile-drawing event includes a context');
-                assert.ok(event.rendered, 'tile-drawing event includes a rendered');
-            });
+            if(testTileDrawingEvent){
+                viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
+                    viewer.removeHandler('tile-drawing', tileDrawingHandler);
+                    handlerCount++;
+                    assert.equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
+                    assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
+                    assert.ok(event.tile, 'tile-drawing event includes a tile');
+                    assert.ok(event.context, 'tile-drawing event includes a context');
+                    assert.ok(event.rendered, 'tile-drawing event includes a rendered');
+                });
+            }
+
 
             viewer.addHandler('tile-drawn', function tileDrawnHandler(event) {
                 viewer.removeHandler('tile-drawn', tileDrawnHandler);
@@ -177,11 +185,10 @@
                 assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
                 assert.ok(event.tile, 'tile-drawn event includes tile');
 
-                assert.equal(handlerCount, 4, 'correct number of handlers called');
+                assert.equal(handlerCount, expectedHandlers, 'correct number of handlers called');
                 done();
             });
 
-            //image.draw(); // TO DO: Is this necessary for the test? It will now fail since tiledImage.draw() is not a thing.
             viewer.drawer.draw( [ image ] );
         });
 

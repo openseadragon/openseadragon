@@ -196,8 +196,8 @@
          * Destroys ImageTileSource
          * @function
          */
-        destroy: function () {
-            this._freeupCanvasMemory();
+        destroy: function (viewer) {
+            this._freeupCanvasMemory(viewer);
         },
 
         // private
@@ -267,11 +267,23 @@
          * and Safari keeps canvas until its height and width will be set to 0).
          * @function
          */
-        _freeupCanvasMemory: function () {
+        _freeupCanvasMemory: function (viewer) {
             for (var i = 0; i < this.levels.length; i++) {
                 if(this.levels[i].context2D){
                     this.levels[i].context2D.canvas.height = 0;
                     this.levels[i].context2D.canvas.width = 0;
+
+                    /**
+                     * Triggered when an image has just been unloaded
+                     *
+                     * @event image-unloaded
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                     */
+                    viewer.raiseEvent("image-unloaded", {
+                        context2D: this.levels[i].context2D
+                    });
                 }
             }
         },

@@ -13,7 +13,9 @@
             if (viewer && viewer.close) {
                 viewer.close();
             }
-
+            if (viewer && viewer.destroy){
+                viewer.destroy();
+            }
             viewer = null;
         }
     });
@@ -42,7 +44,8 @@
     QUnit.test('rotation', function(assert) {
         var done = assert.async();
         createViewer({
-            tileSources: '/test/data/testpattern.dzi'
+            tileSources: '/test/data/testpattern.dzi',
+            drawer: 'context2d', // this test only makes sense for certain drawers
         });
 
         viewer.addHandler('open', function handler(event) {
@@ -62,8 +65,8 @@
             debugMode: true
         });
 
-        Util.spyOnce(viewer.drawer, 'drawDebugInfo', function() {
-            assert.ok(true, 'drawDebugInfo is called');
+        Util.spyOnce(viewer.drawer, '_drawDebugInfo', function() {
+            assert.ok(true, '_drawDebugInfo is called');
             done();
         });
     });
@@ -72,7 +75,8 @@
     QUnit.test('sketchCanvas', function(assert) {
         var done = assert.async();
         createViewer({
-            tileSources: '/test/data/testpattern.dzi'
+            tileSources: '/test/data/testpattern.dzi',
+            drawer: 'context2d' // test only makes sense for this drawer
         });
         var drawer = viewer.drawer;
 

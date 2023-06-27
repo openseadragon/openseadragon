@@ -170,9 +170,6 @@ $.Navigator = function( options ){
         style.border        = borderWidth + 'px solid ' + options.displayRegionColor;
         style.margin        = '0px';
         style.padding       = '0px';
-        //TODO: IE doesn't like this property being set
-        //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
-
         style.background    = 'transparent';
 
         // We use square bracket notation on the statement below, because float is a keyword.

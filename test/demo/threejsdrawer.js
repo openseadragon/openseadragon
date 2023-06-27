@@ -1,4 +1,10 @@
 // import 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js';
+
+// TO DO LIST:
+// TO DO: Viewport flip does not work right
+// TO DO: wrapHorizontal and wrapVertical do not work right with scaled TiledImages
+// TO DO: wrapping doesn't work right with resolution of wrapped part when zoomed in
+
 import '../lib/three.js';
 const THREE = window.THREE;
 
@@ -182,7 +188,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
 
         }
 
-        tiledImages.forEach(tiledImage => tiledImage._needsDraw = false);
+        //tiledImages.forEach(tiledImage => tiledImage.setDrawn());
     }
 
     // Public API required by all Drawer implementations
@@ -349,7 +355,7 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     _tileUnloadedHandler(event){
-        console.log('Tile unloaded',event);
+        // console.log('Tile unloaded',event);
         let tile = event.tile;
         if(!this._tileMap[tile.cacheKey]){
             //already cleaned up
@@ -581,6 +587,26 @@ export class ThreeJSDrawer extends OpenSeadragon.DrawerBase{
     }
 
     // private
+
+    /**
+     * @private
+     * @inner
+     * This function converts the given point from to the drawer coordinate by
+     * multiplying it with the pixel density.
+     * This function does not take rotation into account, thus assuming provided
+     * point is at 0 degree.
+     * @param {OpenSeadragon.Point} point - the pixel point to convert
+     * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
+     */
+    _viewportCoordToDrawerCoord(point) {
+        let $ = OpenSeadragon;
+        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        return new $.Point(
+            vpPoint.x * $.pixelDensityRatio,
+            vpPoint.y * $.pixelDensityRatio
+        );
+    }
+
     _offsetForRotation(options) {
         var point = options.point ?
             options.point.times(OpenSeadragon.pixelDensityRatio) :
