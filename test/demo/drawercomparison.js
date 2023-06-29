@@ -15,7 +15,7 @@ const labels = {
 }
 
 //Double viewer setup for comparison - Context2dDrawer and WebGLDrawer
-
+// viewer1: context2d drawer
 let viewer1 = window.viewer1 = OpenSeadragon({
     id: "context2d",
     prefixUrl: "../../build/openseadragon/images/",
@@ -29,6 +29,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     blendTime:0
 });
 
+// viewer2: webgl drawer
 let viewer2 = window.viewer2 = OpenSeadragon({
     id: "webgl",
     prefixUrl: "../../build/openseadragon/images/",
@@ -39,8 +40,25 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
     drawer:'webgl',
-    blendTime:0
+    blendTime:0,
 });
+
+// viewer3: html drawer
+var viewer3 = window.viewer3 = OpenSeadragon({
+    id: "htmldrawer",
+    drawer:'html',
+    blendTime:2,
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: OpenSeadragon.HTMLDrawer,
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
+});
+
+
+
 
 // Sync navigation of viewer1 and viewer 2
 var viewer1Leading = false;
@@ -80,22 +98,6 @@ viewer1.addHandler('rotate', viewer1Handler);
 viewer2.addHandler('rotate', viewer2Handler);
 viewer1.addHandler('flip', viewer1Handler);
 viewer2.addHandler('flip', viewer2Handler);
-
-
-// Single viewer showing how to use plugin Drawer via configuration
-// Also shows sequence mode
-var viewer3 = window.viewer3 = OpenSeadragon({
-    id: "htmldrawer",
-    drawer:'html',
-    blendTime:2,
-    prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    customDrawer: OpenSeadragon.HTMLDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-    sequenceMode: true,
-    crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
-});
 
 
 $('#image-picker').sortable({

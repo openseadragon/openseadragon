@@ -1,3 +1,7 @@
+// THIS CODE OVERWRITES THE ORIGINAL VERSION FOR FASTER TESTING
+// i.e. it doesn't need to be re-built with grunt after every save.
+
+
 /*
  * OpenSeadragon - WebGLDrawer
  *
@@ -360,10 +364,14 @@
                 let filters = this.filters || [];
                 for(let fi = 0; fi < filters.length; fi++){
                     let filter = this.filters[fi];
+                    if(filter.createProgram && !filter.program){
+                        filter.createProgram(gl);
+                    }
                     if(filter.apply){
-                        filter.apply(gl); // filter.apply should write data on top of the backbuffer (bound above)
+                        filter.apply(gl, this._glTiledImageTexture, tiledImage); // filter.apply should write data on top of the backbuffer (bound above)
                     }
                 }
+
                 gl.flush(); //make sure drawing to the output buffer of the rendering canvas is complete. Is this necessary?
 
                 // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
@@ -554,6 +562,7 @@
             gl_FragColor *= u_opacity_multiplier;
             }
             `;
+
             let gl = this._gl;
             this._glProgram = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             gl.useProgram(this._glProgram);
@@ -763,13 +772,13 @@
         _cleanupImageData(tileCanvas){
             let textureInfo = this._TextureMap.get(tileCanvas);
             //remove from the map
-            this._TextureMap.delete(tileCanvas);
-
             //release the texture from the GPU
             if(textureInfo){
                 this._gl.deleteTexture(textureInfo.texture);
             }
 
+            //release the texture from the GPU
+            this._gl.deleteTexture(textureInfo.texture);
             // release the position buffer from the GPU
             // TO DO: do this!
         }
