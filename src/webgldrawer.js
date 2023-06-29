@@ -197,7 +197,7 @@
 
             // Delete all our created resources
             gl.deleteBuffer(this._glUnitQuadBuffer);
-            gl.deleteBuffer(this._glFrameBuffer);
+            gl.deleteFramebuffer(this._glFrameBuffer);
             // TO DO: if/when render buffers or frame buffers are used, release them:
             // gl.deleteRenderbuffer(someRenderbuffer);
             // gl.deleteFramebuffer(someFramebuffer);
@@ -749,9 +749,17 @@
             let gl = this._gl;
             let canvas = tileContext.canvas;
 
-            // This depends on gl.TEXTURE_2D being bound to the texture
-            // associated with this canvas before calling this function
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+            try{
+                if(!canvas){
+                    throw('Tile context does not have a canvas', tileContext);
+                }
+                // This depends on gl.TEXTURE_2D being bound to the texture
+                // associated with this canvas before calling this function
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+            } catch (e){
+                $.console.error('Error uploading image data to WebGL', e);
+            }
+
 
         }
 
