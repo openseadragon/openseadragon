@@ -85,6 +85,10 @@ class CanvasDrawer extends $.DrawerBase{
         return $.supportsCanvas;
     }
 
+    get type(){
+        return 'canvas';
+    }
+
     /**
      * create the HTML element (e.g. canvas, div) that the image will be drawn into
      * @returns {Element} the canvas to draw into
@@ -128,6 +132,14 @@ class CanvasDrawer extends $.DrawerBase{
         this.sketchCanvas = null;
         this.sketchContext = null;
     }
+
+    /**
+     * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     */
+    minimumOverlapRequired() {
+       return true;
+    }
+
 
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.

@@ -123,6 +123,13 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
+     * @property {String|undefined} type What type of drawer this is. Implementations should override this property.
+     */
+    get type(){
+        return undefined;
+    }
+
+    /**
      * @returns {Boolean} whether the drawer implementation is supported by the browser
      */
     static isSupported() {
@@ -139,9 +146,9 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @param tiledImage the TiledImage that is ready to be drawn
+     * @param {Array} tiledImages - An array of TiledImages that are ready to be drawn
      */
-    draw(tiledImage) {
+    draw(tiledImages) {
         $.console.error('Drawer.draw must be implemented by child class');
     }
 
@@ -158,6 +165,14 @@ $.DrawerBase = class DrawerBase{
     destroy() {
         $.console.error('Drawer.destroy must be implemented by child class');
     }
+
+    /**
+     * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     */
+    minimumOverlapRequired() {
+        return false;
+     }
+
 
     /**
      * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.

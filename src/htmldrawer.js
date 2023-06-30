@@ -65,6 +65,17 @@ class HTMLDrawer extends $.DrawerBase{
         return true;
     }
 
+    get type(){
+        return 'html';
+    }
+
+    /**
+     * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     */
+    minimumOverlapRequired() {
+        return true;
+     }
+
     /**
      * create the HTML element (e.g. canvas, div) that the image will be drawn into
      * @returns {Element} the div to draw into

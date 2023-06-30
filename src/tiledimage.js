@@ -1657,16 +1657,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tileCenter = positionT.plus( sizeT.divide( 2 ) ),
             tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-        if ( !overlap ) {
-            sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-        }
+        if(this.viewer.drawer.minimumOverlapRequired()){
+            if ( !overlap ) {
+                sizeC = sizeC.plus( new $.Point(1, 1));
+            }
 
-        if (tile.isRightMost && this.wrapHorizontal) {
-            sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
-        }
+            if (tile.isRightMost && this.wrapHorizontal) {
+                sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
+            }
 
-        if (tile.isBottomMost && this.wrapVertical) {
-            sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
+            if (tile.isBottomMost && this.wrapVertical) {
+                sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
+            }
         }
 
         tile.position   = positionC;

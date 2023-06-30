@@ -248,6 +248,10 @@
             return !!( webglContext );
         }
 
+        get type(){
+            return 'webgl';
+        }
+
         /**
             * create the HTML element (canvas in this case) that the image will be drawn into
             * @returns {Element} the canvas to draw into
