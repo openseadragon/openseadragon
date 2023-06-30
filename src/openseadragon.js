@@ -1353,7 +1353,7 @@ function OpenSeadragon( options ){
                  * @property {Object} webgl - options if the WebGLDrawer is used.
                  * Set 'continuousTileFresh: true' if tile data is modified programmatically
                  * by filtering plugins or similar.
-                 * @property {Object} context2d - options if the Context2dDrawer is used
+                 * @property {Object} context2d - options if the CanvasDrawer is used
                  * @property {Object} html - options if the HTMLDrawer is used
                  * @property {Object} custom - options if a custom drawer is used
                  */

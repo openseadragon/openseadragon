@@ -35,9 +35,9 @@
 (function( $ ){
 
 /**
- * @class Context2dDrawer
+ * @class CanvasDrawer
  * @memberof OpenSeadragon
- * @classdesc Default implementation of Context2dDrawer for an {@link OpenSeadragon.Viewer}.
+ * @classdesc Default implementation of CanvasDrawer for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
@@ -45,7 +45,7 @@
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 
-class Context2dDrawer extends $.DrawerBase{
+class CanvasDrawer extends $.DrawerBase{
     constructor(){
         super(...arguments);
 
@@ -1014,7 +1014,7 @@ class Context2dDrawer extends $.DrawerBase{
         };
     }
 }
-$.Context2dDrawer = Context2dDrawer;
+$.CanvasDrawer = CanvasDrawer;
 
 
 /**

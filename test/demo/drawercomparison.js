@@ -14,7 +14,7 @@ const labels = {
     duomo: 'Duomo',
 }
 
-//Double viewer setup for comparison - Context2dDrawer and WebGLDrawer
+//Double viewer setup for comparison - CanvasDrawer and WebGLDrawer
 // viewer1: canvas drawer
 let viewer1 = window.viewer1 = OpenSeadragon({
     id: "canvasdrawer",
@@ -281,7 +281,7 @@ function addTileSource(viewer, image, checkbox){
             let item = ev.item;
             let field = viewer === viewer1 ? 'item1' : 'item2';
             $(checkbox).data(field,item);
-            item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
+            // item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
         });
     }
 }

@@ -461,7 +461,7 @@ $.Viewer = function( options ) {
         let optsKey = null;
         // replace text-based option with appropriate constructor
         if (Drawer === 'canvas'){
-            Drawer = $.Context2dDrawer;
+            Drawer = $.CanvasDrawer;
             optsKey = 'canvas';
         } else if (Drawer === 'html'){
             Drawer = $.HTMLDrawer;
