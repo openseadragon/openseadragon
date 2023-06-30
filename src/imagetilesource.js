@@ -195,6 +195,8 @@
         /**
          * Destroys ImageTileSource
          * @function
+         * @param {OpenSeadragon.Viewer} viewer the viewer that is calling
+         * destroy on the ImageTileSource
          */
         destroy: function (viewer) {
             this._freeupCanvasMemory(viewer);
@@ -273,17 +275,20 @@
                     this.levels[i].context2D.canvas.height = 0;
                     this.levels[i].context2D.canvas.width = 0;
 
-                    /**
-                     * Triggered when an image has just been unloaded
-                     *
-                     * @event image-unloaded
-                     * @memberof OpenSeadragon.Viewer
-                     * @type {object}
-                     * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
-                     */
-                    viewer.raiseEvent("image-unloaded", {
-                        context2D: this.levels[i].context2D
-                    });
+                    if(viewer){
+                        /**
+                        * Triggered when an image has just been unloaded
+                        *
+                        * @event image-unloaded
+                        * @memberof OpenSeadragon.Viewer
+                        * @type {object}
+                        * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                        */
+                        viewer.raiseEvent("image-unloaded", {
+                            context2D: this.levels[i].context2D
+                        });
+                    }
+
                 }
             }
         },

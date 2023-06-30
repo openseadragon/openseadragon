@@ -61,7 +61,7 @@ class HTMLDrawer extends $.DrawerBase{
     /**
      * @returns {Boolean} always true
      */
-    isSupported(){
+    static isSupported(){
         return true;
     }
 

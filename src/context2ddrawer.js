@@ -81,7 +81,7 @@ class Context2dDrawer extends $.DrawerBase{
     /**
      * @returns {Boolean} true if canvas is supported by the browser, otherwise false
      */
-    isSupported(){
+    static isSupported(){
         return $.supportsCanvas;
     }
 

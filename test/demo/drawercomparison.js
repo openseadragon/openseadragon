@@ -15,9 +15,9 @@ const labels = {
 }
 
 //Double viewer setup for comparison - Context2dDrawer and WebGLDrawer
-// viewer1: context2d drawer
+// viewer1: canvas drawer
 let viewer1 = window.viewer1 = OpenSeadragon({
-    id: "context2d",
+    id: "canvasdrawer",
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
     maxZoomPixelRatio:100,
@@ -25,7 +25,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:'context2d',
+    drawer:'canvas',
     blendTime:0
 });
 

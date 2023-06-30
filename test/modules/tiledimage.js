@@ -135,7 +135,7 @@
     QUnit.test('update', function(assert) {
         var done = assert.async();
         var handlerCount = 0;
-        var testTileDrawingEvent = viewer.drawerOptions.type === 'context2d';
+        var testTileDrawingEvent = viewer.drawerOptions.type === 'canvas';
         let expectedHandlers = testTileDrawingEvent ? 4 : 3;
 
         viewer.addHandler('open', function(event) {

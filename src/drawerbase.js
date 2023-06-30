@@ -76,11 +76,6 @@ $.DrawerBase = class DrawerBase{
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
         this.options = options.options || {};
 
-        // TO DO: This was deprectated previously. Can we get rid of it at this point?
-        if (options.opacity) {
-            $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
-        }
-
         /**
          * The parent element of this Drawer instance, passed in when the Drawer was created.
          * The parent of {@link OpenSeadragon.DrawerBase#canvas}.
@@ -130,7 +125,7 @@ $.DrawerBase = class DrawerBase{
     /**
      * @returns {Boolean} whether the drawer implementation is supported by the browser
      */
-    isSupported() {
+    static isSupported() {
         $.console.error('Drawer.isSupported must be implemented by child class');
     }
 
@@ -221,7 +216,7 @@ $.DrawerBase = class DrawerBase{
         /**
          * This event is fired just before the tile is drawn giving the application a chance to alter the image.
          *
-         * NOTE: This event is only fired in certain drawing contexts: either the 'context2d' drawer is
+         * NOTE: This event is only fired in certain drawing contexts: either the 'canvas' drawer is
          * being used, or the 'webgl' drawer with 'drawerOptions.webgl.continuousTileRefresh'.
          *
          * @event tile-drawing

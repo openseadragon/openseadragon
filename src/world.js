@@ -242,6 +242,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Updates (i.e. animates bounds of) all items.
+     * @function
+     * @param viewportChanged Whether the viewport changed, which indicates that
+     * all TiledImages need to be updated.
      */
     update: function(viewportChanged) {
         var animated = false;

@@ -238,10 +238,10 @@
         // Public API required by all Drawer implementations
 
         /**
-            * @returns {Boolean} returns true if canvas and webgl are supported and
-            * three.js has been exposed as a global variable named THREE
-            */
-        isSupported(){
+        * @returns {Boolean} returns true if canvas and webgl are supported and
+        * three.js has been exposed as a global variable named THREE
+        */
+        static isSupported(){
             let canvasElement = document.createElement( 'canvas' );
             let webglContext = $.isFunction( canvasElement.getContext ) &&
                         canvasElement.getContext( 'webgl' );

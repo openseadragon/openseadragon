@@ -446,7 +446,7 @@ $.Viewer = function( options ) {
         delete this.drawerOptions.useCanvas;
     }
     let drawerPriority = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
-    let drawersToTry = drawerPriority.filter(d => ['webgl', 'context2d', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
+    let drawersToTry = drawerPriority.filter(d => ['webgl', 'canvas', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
     if(drawerPriority.length !== drawersToTry.length){
         $.console.error('An invalid drawer was requested.');
     }
@@ -460,9 +460,9 @@ $.Viewer = function( options ) {
         let Drawer = drawersToTry[i];
         let optsKey = null;
         // replace text-based option with appropriate constructor
-        if (Drawer === 'context2d'){
+        if (Drawer === 'canvas'){
             Drawer = $.Context2dDrawer;
-            optsKey = 'context2d';
+            optsKey = 'canvas';
         } else if (Drawer === 'html'){
             Drawer = $.HTMLDrawer;
             optsKey = 'html';
@@ -473,7 +473,7 @@ $.Viewer = function( options ) {
             optsKey = 'custom';
         }
         // if the drawer is supported, create it and break the loop
-        if (Drawer.prototype.isSupported()){
+        if (Drawer.isSupported()){
             this.drawer = new Drawer({
                 viewer:             this,
                 viewport:           this.viewport,

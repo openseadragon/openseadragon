@@ -45,7 +45,7 @@
         var done = assert.async();
         createViewer({
             tileSources: '/test/data/testpattern.dzi',
-            drawer: 'context2d', // this test only makes sense for certain drawers
+            drawer: 'canvas', // this test only makes sense for certain drawers
         });
 
         viewer.addHandler('open', function handler(event) {
@@ -76,7 +76,7 @@
         var done = assert.async();
         createViewer({
             tileSources: '/test/data/testpattern.dzi',
-            drawer: 'context2d' // test only makes sense for this drawer
+            drawer: 'canvas' // test only makes sense for this drawer
         });
         var drawer = viewer.drawer;
 
