@@ -65,7 +65,7 @@ class HTMLDrawer extends $.DrawerBase{
         return true;
     }
 
-    get type(){
+    getType(){
         return 'html';
     }
 

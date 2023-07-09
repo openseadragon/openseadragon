@@ -171,14 +171,16 @@ function updateTiledImage(tiledImage, data, value, item){
             tiledImage.setFlip($(item).prop('checked'));
         } else if (field == 'cropped'){
             if( $(item).prop('checked') ){
-                let croppingPolygons = [ [{x:200, y:200}, {x:800, y:200}, {x:500, y:800}] ];
+                let scale = tiledImage.source.width;
+                let croppingPolygons = [ [{x:0.2*scale, y:0.2*scale}, {x:0.8*scale, y:0.2*scale}, {x:0.5*scale, y:0.8*scale}] ];
                 tiledImage.setCroppingPolygons(croppingPolygons);
             } else {
                 tiledImage.resetCroppingPolygons();
             }
         } else if (field == 'clipped'){
             if( $(item).prop('checked') ){
-                let clipRect = new OpenSeadragon.Rect(2000, 0, 3000, 4000);
+                let scale = tiledImage.source.width;
+                let clipRect = new OpenSeadragon.Rect(0.1*scale, 0.2*scale, 0.6*scale, 0.4*scale);
                 tiledImage.setClip(clipRect);
             } else {
                 tiledImage.setClip(null);
@@ -296,11 +298,13 @@ function makeImagePickerElement(key, label){
             <label>Width: <input type="number" value="1" data-image="" data-field="width" min="0"> </label>
             <label>Degrees: <input type="number" value="0" data-image="" data-field="degrees"> </label>
             <label>Opacity: <input type="number" value="1" data-image="" data-field="opacity" min="0" max="1" step="0.2"> </label>
+            <span></span>
             <label>Flipped: <input type="checkbox" data-image="" data-field="flipped"></label>
             <label>Cropped: <input type="checkbox" data-image="" data-field="cropped"></label>
+            <label>Clipped: <input type="checkbox" data-image="" data-field="clipped"></label>
             <label>Debug: <input type="checkbox" data-image="" data-field="debug"></label>
             <label>Composite: <select data-image="" data-field="composite"></select></label>
-            <label>Wrapping: <select data-image="" data-field="wrapping"></select></label>
+            <label>Wrap: <select data-image="" data-field="wrapping"></select></label>
         </div>
 
     </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));

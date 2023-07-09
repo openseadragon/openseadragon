@@ -206,7 +206,8 @@ $.Spring.prototype = {
 
     /**
      * @function
-     * @returns true if the value got updated, false otherwise
+     * @returns true if the spring is still updating its value, false if it is
+     * already at the target value.
      */
     update: function() {
         this.current.time  = $.now();
@@ -230,7 +231,6 @@ $.Spring.prototype = {
                     ( this.target.time - this.start.time )
                 );
 
-        // var oldValue = this.current.value;
         if (this._exponential) {
             this.current.value = Math.exp(currentValue);
         } else {
@@ -238,7 +238,6 @@ $.Spring.prototype = {
         }
 
         return currentValue !== targetValue;
-        // return oldValue !== this.current.value;
     },
 
     /**
