@@ -482,10 +482,8 @@ $.Viewer = function( options ) {
                 options:            this.drawerOptions[optsKey],
             });
             this.drawerOptions.constructor = Drawer;
-            // TO DO: add an event that indicates which drawer was instantiated?
             break;
         }
-        // TO DO: add an event that indicates that the selected drawer could not be created?
     }
     if(this.drawer === null){
         $.console.error('No drawer could be created!');

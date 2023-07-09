@@ -85,7 +85,7 @@ class CanvasDrawer extends $.DrawerBase{
         return $.supportsCanvas;
     }
 
-    get type(){
+    getType(){
         return 'canvas';
     }
 

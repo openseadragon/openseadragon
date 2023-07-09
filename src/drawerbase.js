@@ -125,7 +125,7 @@ $.DrawerBase = class DrawerBase{
     /**
      * @property {String|undefined} type What type of drawer this is. Implementations should override this property.
      */
-    get type(){
+    getType(){
         return undefined;
     }
 
