@@ -161,8 +161,11 @@ module.exports = function(grunt) {
             normal: {
                 options: {
                     urls: [ "http://localhost:8000/test/test.html" ],
-                    timeout: 10000
-                }
+                    timeout: 10000,
+                    puppeteer: {
+                        headless: 'new'
+                    }
+                },
             },
             coverage: {
                 options: {
