@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
 * Fixed: Sometimes if the viewport was flipped and the user zoomed in far enough, it would flip back (#2364 @SebDelile)
+* Test improvements (#2382 @AndrewADev)
 
 4.1.0:
 
