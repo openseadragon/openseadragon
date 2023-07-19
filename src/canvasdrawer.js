@@ -324,7 +324,9 @@ class CanvasDrawer extends $.DrawerBase{
 
         if (tiledImage._croppingPolygons) {
             var self = this;
-            this._saveContext(useSketch);
+            if(!usedClip){
+                this._saveContext(useSketch);
+            }
             try {
                 var polygons = tiledImage._croppingPolygons.map(function (polygon) {
                     return polygon.map(function (coord) {
