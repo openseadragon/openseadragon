@@ -293,8 +293,8 @@
   * @property {Number} [maxTilesPerFrame=1]
   *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
   *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
-  *     loaded tiles per frame can be adjusted here. (Note that the actual frame rate is given by the client's
-  *     browser and machine).
+  *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
+  *     (Note that the actual frame rate is given by the client's browser and machine).
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
