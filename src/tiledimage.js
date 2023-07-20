@@ -182,7 +182,8 @@ $.TiledImage = function( options ) {
         opacity:                           $.DEFAULT_SETTINGS.opacity,
         preload:                           $.DEFAULT_SETTINGS.preload,
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
-        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency
+        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
+        maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame
     }, options );
 
     this._preload = this.preload;
@@ -1208,7 +1209,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var levelsInterval = this._getLevelsInterval();
         var lowestLevel = levelsInterval.lowestLevel;
         var highestLevel = levelsInterval.highestLevel;
-        var bestTile = null;
+        var bestTiles = [];
         var haveDrawn = false;
         var currentTime = $.now();
 
@@ -1253,7 +1254,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
 
             // Update the level and keep track of 'best' tile to load
-            bestTile = this._updateLevel(
+            bestTiles = this._updateLevel(
                 haveDrawn,
                 drawLevel,
                 level,
@@ -1261,7 +1262,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 levelVisibility,
                 drawArea,
                 currentTime,
-                bestTile
+                bestTiles
             );
 
             // Stop the loop if lower-res tiles would all be covered by
@@ -1274,9 +1275,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // Perform the actual drawing
         this._drawTiles(this.lastDrawn);
 
-        // Load the new 'best' tile
-        if (bestTile && !bestTile.context2D) {
-            this._loadTile(bestTile, currentTime);
+        // Load the new 'best' n tiles
+        if (bestTiles) {
+            bestTiles.forEach(function (tile) {
+                if (tile && !tile.context2D) {
+                    this._loadTile(tile, currentTime);
+                }
+            }, this);
             this._needsDraw = true;
             this._setFullyLoaded(false);
         } else {
@@ -1335,7 +1340,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelVisibility
      * @param {OpenSeadragon.Rect} drawArea
      * @param {Number} currentTime
-     * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+     * @param {OpenSeadragon.Tile[]} best - The current "best" n tiles to draw.
      */
     _updateLevel: function(haveDrawn, drawLevel, level, levelOpacity,
                            levelVisibility, drawArea, currentTime, best) {
@@ -1360,7 +1365,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {Object} topleft deprecated, use drawArea instead
              * @property {Object} bottomright deprecated, use drawArea instead
              * @property {Object} currenttime
-             * @property {Object} best
+             * @property {Object[]} best
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent('update-level', {
@@ -1449,7 +1454,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Point} viewportCenter
      * @param {Number} numberOfTiles
      * @param {Number} currentTime
-     * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+     * @param {OpenSeadragon.Tile[]} best - The current "best" tiles to draw.
      */
     _updateTile: function( haveDrawn, drawLevel, x, y, level, levelOpacity,
                            levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
@@ -1538,7 +1543,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // the tile is already in the download queue
             this._tilesLoading++;
         } else if (!loadingCoverage) {
-            best = this._compareTiles( best, tile );
+            best = this._compareTiles( best, tile, this.maxTilesPerFrame );
         }
 
         return best;
@@ -1912,24 +1917,34 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * @private
      * @inner
-     * Determines whether the 'last best' tile for the area is better than the
+     * Determines the 'best tiles' from the given 'last best' tiles and the
      * tile in question.
      *
-     * @param {OpenSeadragon.Tile} previousBest
-     * @param {OpenSeadragon.Tile} tile
-     * @returns {OpenSeadragon.Tile} The new best tile.
+     * @param {OpenSeadragon.Tile[]} previousBest The best tiles so far.
+     * @param {OpenSeadragon.Tile} tile The new tile to consider.
+     * @param {Number} maxNTiles The max number of best tiles.
+     * @returns {OpenSeadragon.Tile[]} The new best tiles.
      */
-    _compareTiles: function( previousBest, tile ) {
+    _compareTiles: function( previousBest, tile, maxNTiles ) {
         if ( !previousBest ) {
-            return tile;
+            return [tile];
         }
-
-        if ( tile.visibility > previousBest.visibility ) {
-            return tile;
-        } else if ( tile.visibility === previousBest.visibility ) {
-            if ( tile.squaredDistance < previousBest.squaredDistance ) {
-                return tile;
+        previousBest.push(tile);
+        previousBest.sort(function (a, b) {
+            if (a === null) {
+                return 1;
             }
+            if (b === null) {
+                return -1;
+            }
+            if (a.visibility === b.visibility) {
+                return (a.squaredDistance - b.squaredDistance);
+            } else {
+                return (a.visibility - b.visibility);
+            }
+        });
+        if (previousBest.length > maxNTiles) {
+            previousBest.pop();
         }
         return previousBest;
     },
