@@ -1276,7 +1276,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._drawTiles(this.lastDrawn);
 
         // Load the new 'best' n tiles
-        if (bestTiles) {
+        if (bestTiles && bestTiles.length > 0) {
             bestTiles.forEach(function (tile) {
                 if (tile && !tile.context2D) {
                     this._loadTile(tile, currentTime);
@@ -1930,20 +1930,20 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return [tile];
         }
         previousBest.push(tile);
-        previousBest.sort(function (a, b) {
-            if (a === null) {
-                return 1;
-            }
-            if (b === null) {
-                return -1;
-            }
-            if (a.visibility === b.visibility) {
-                return (a.squaredDistance - b.squaredDistance);
-            } else {
-                return (a.visibility - b.visibility);
-            }
-        });
         if (previousBest.length > maxNTiles) {
+            previousBest.sort(function (a, b) {
+                if (a === null) {
+                    return 1;
+                }
+                if (b === null) {
+                    return -1;
+                }
+                if (a.visibility === b.visibility) {
+                    return (a.squaredDistance - b.squaredDistance);
+                } else {
+                    return (a.visibility - b.visibility);
+                }
+            });
             previousBest.pop();
         }
         return previousBest;
