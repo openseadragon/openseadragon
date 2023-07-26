@@ -53,7 +53,7 @@ $('#create-drawer').on('click',function(){
     window.setInterval(()=>{
         let m = movingLeft ? 1 : -1;
         movingLeft = m === -1;
-        let dist = viewer.viewport.getBounds().width / 2 / viewer.viewport.getZoom();
+        let dist = viewer.viewport.getBounds().width;
         viewer.viewport.panBy(new OpenSeadragon.Point( dist * m/2, 0));
 
     }, 1000);
