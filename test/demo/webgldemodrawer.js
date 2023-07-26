@@ -302,7 +302,7 @@
                                         tiledImage._croppingPolygons ||
                                         tiledImage.debugMode
                                     );
-                let useTwoPassRendering = useContext2dPipeline ||(tiledImage.opacity < 1); // TO DO: check hasTransparency in addition to opacity
+                let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1); // TO DO: check hasTransparency in addition to opacity
 
 
                 let tilesToDraw = tiledImage.getTilesToDraw();
