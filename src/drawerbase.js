@@ -84,7 +84,7 @@ $.DrawerBase = class DrawerBase{
          */
         this.container  = $.getElement( options.element );
 
-        // TO DO: Does this need to be in DrawerBase, or only in Drawer implementations?
+        // TODO: Does this need to be in DrawerBase, or only in Drawer implementations?
         // Original commment:
         // We force our container to ltr because our drawing math doesn't work in rtl.
         // This issue only affects our canvas renderer, but we do it always for consistency.
@@ -108,9 +108,7 @@ $.DrawerBase = class DrawerBase{
 
         this._checkForAPIOverrides();
     }
-    get isOpenSeadragonDrawer(){
-        return true;
-    }
+
     get canvas(){
         if(!this._renderingTarget){
             this._renderingTarget = this.createDrawingElement();

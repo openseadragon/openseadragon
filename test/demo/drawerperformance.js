@@ -30,7 +30,10 @@ let viewer;
 $('#create-drawer').on('click',function(){
     let drawerType = $('#select-drawer').val();
     let num = Math.floor($('#input-number').val());
+    run(drawerType, num);
+});
 
+function run(drawerType, num) {
     if(viewer){
         viewer.destroy();
     }
@@ -57,8 +60,7 @@ $('#create-drawer').on('click',function(){
         viewer.viewport.panBy(new OpenSeadragon.Point( dist * m/2, 0));
 
     }, 1000);
-
-});
+}
 
 function makeViewer(drawerType){
     let viewer = OpenSeadragon({
