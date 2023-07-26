@@ -200,7 +200,7 @@
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
             gl.deleteFramebuffer(this._glFrameBuffer);
-            // TO DO: if/when render buffers or frame buffers are used, release them:
+            // TODO: if/when render buffers or frame buffers are used, release them:
             // gl.deleteRenderbuffer(someRenderbuffer);
             // gl.deleteFramebuffer(someFramebuffer);
 
@@ -302,7 +302,7 @@
                                         tiledImage._croppingPolygons ||
                                         tiledImage.debugMode
                                     );
-                let useTwoPassRendering = useContext2dPipeline ||(tiledImage.opacity < 1); // TO DO: check hasTransparency in addition to opacity
+                let useTwoPassRendering = useContext2dPipeline ||(tiledImage.opacity < 1); // TODO: check hasTransparency in addition to opacity
 
 
                 let tilesToDraw = tiledImage.getTilesToDraw();
@@ -433,7 +433,7 @@
                     // Draw the quad (two triangles)
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-                    // TO DO: is this the mechanism we want to use here?
+                    // TODO: is this the mechanism we want to use here?
                     // iterate over any filters - filters can use this._renderToTexture to get rendered data if desired
                     let filters = this.filters || [];
                     for(let fi = 0; fi < filters.length; fi++){
@@ -458,7 +458,7 @@
                 }
 
                 // Fire tiled-image-drawn event.
-                // TO DO: the image data may not be on the output canvas yet!!
+                // TODO: the image data may not be on the output canvas yet!!
                 if( this.viewer ){
                     /**
                         * Raised when a tiled image is drawn to the canvas. Only valid
@@ -479,7 +479,7 @@
                 }
 
             });
-            // TO DO: the line below is a test!
+            // TODO: the line below is a test!
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
@@ -598,7 +598,7 @@
 
             if(this.continuousTileRefresh){
                 // Upload the image into the texture
-                // TO DO: test if this works appropriately
+                // TODO: test if this works appropriately
                 let tileContext = tile.getCanvasContext();
                 this._raiseTileDrawingEvent(tiledImage, this._outputContext, tile, tileContext);
                 this._uploadImageData(tileContext, tile, tiledImage);
@@ -979,7 +979,7 @@
             }
 
             // release the position buffer from the GPU
-            // TO DO: do this!
+            // TODO: do this!
         }
         // private
         // necessary for clip testing to pass (test uses spyOnce(drawer._setClip))

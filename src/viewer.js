@@ -455,35 +455,32 @@ $.Viewer = function( options ) {
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
     // extend the drawerOptions object with additional properties to pass to the Drawer implementation
-    this.drawer = null; // TO DO: how to deal with the possibility that none of the requested drawers are supported?
+    // TODO: how to deal with the possibility that none of the requested drawers are supported?
+    this.drawer = null;
     for(let i = 0; i < drawersToTry.length; i++){
-        let Drawer = drawersToTry[i];
-        let optsKey = null;
-        // replace text-based option with appropriate constructor
-        if (Drawer === 'canvas'){
-            Drawer = $.CanvasDrawer;
-            optsKey = 'canvas';
-        } else if (Drawer === 'html'){
-            Drawer = $.HTMLDrawer;
-            optsKey = 'html';
-        } else if (Drawer === 'webgl'){
-            Drawer = $.WebGLDrawer;
-            optsKey = 'webgl';
-        } else {
+
+        //todo necessary? why not to use class names as drawer IDs
+        let optsKey = drawersToTry[i];
+        let Drawer = $.determineDrawer(optsKey);
+        if (!Drawer) {
             optsKey = 'custom';
+            //todo will raise error anyway...
+        } else {
+            // if the drawer is supported, create it and break the loop
+            if (Drawer.isSupported()){
+                this.drawer = new Drawer({
+                    viewer:             this,
+                    viewport:           this.viewport,
+                    element:            this.canvas,
+                    debugGridColor:     this.debugGridColor,
+                    options:            this.drawerOptions[optsKey],
+                });
+                this.drawerOptions.constructor = Drawer;
+                break;
+            }
         }
-        // if the drawer is supported, create it and break the loop
-        if (Drawer.isSupported()){
-            this.drawer = new Drawer({
-                viewer:             this,
-                viewport:           this.viewport,
-                element:            this.canvas,
-                debugGridColor:     this.debugGridColor,
-                options:            this.drawerOptions[optsKey],
-            });
-            this.drawerOptions.constructor = Drawer;
-            break;
-        }
+
+
     }
     if(this.drawer === null){
         $.console.error('No drawer could be created!');
@@ -4001,5 +3998,23 @@ function onRotateRight() {
 function onFlip() {
    this.viewport.toggleFlip();
 }
+
+/**
+ * Find drawer
+ */
+$.determineDrawer = function( id ){
+    for (let property in OpenSeadragon) {
+        const drawer = OpenSeadragon[ property ],
+            proto = drawer.prototype;
+        if( proto &&
+            proto instanceof OpenSeadragon.DrawerBase &&
+            $.isFunction( proto.getType ) &&
+            proto.getType.call( drawer ) === id
+        ){
+            return drawer;
+        }
+    }
+    return null;
+};
 
 }( OpenSeadragon ));

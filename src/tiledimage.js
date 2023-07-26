@@ -1473,7 +1473,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelOpacity
      * @param {Number} currentTime
      * @param {Boolean} lowestLevel
-     * @returns {Boolean} whether the opacity of this tile has changed
+     * @returns {Boolean} true if blending did not yet finish
      */
     _blendTile: function(tile, x, y, level, levelOpacity, currentTime, lowestLevel ){
         let blendTimeMillis = 1000 * this.blendTime,

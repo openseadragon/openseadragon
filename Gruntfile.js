@@ -28,6 +28,7 @@ module.exports = function(grunt) {
         coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
+            "src/matrix.js",
             "src/fullscreen.js",
             "src/eventsource.js",
             "src/mousetracker.js",
@@ -64,7 +65,15 @@ module.exports = function(grunt) {
             "src/viewport.js",
             "src/tiledimage.js",
             "src/tilecache.js",
-            "src/world.js"
+            "src/world.js",
+
+            // Aoisa's webgl drawer - needs optimization, polishing, trimming
+            // "src/webgl/webGLWrapper.js",
+            // "src/webgl/visualisationLayer.js",
+            // "src/webgl/dataLoader.js",
+            // "src/webgl/webGLContext.js",
+            // "src/webgl/drawer.js",
+            // "src/webgl/plainShader.js",
         ];
 
     var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
@@ -195,7 +204,7 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            files: [ "Gruntfile.js", "src/*.js", "images/*" ],
+            files: [ "Gruntfile.js", "src/*.js", "images/*" /*, "src/webgl/*.js" */ ],
             tasks: "watchTask"
         },
         eslint: {
