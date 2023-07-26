@@ -445,44 +445,44 @@ $.Viewer = function( options ) {
 
         delete this.drawerOptions.useCanvas;
     }
-    let drawerPriority = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
-    let drawersToTry = drawerPriority.filter(d => ['webgl', 'canvas', 'html'].includes(d) || (d.prototype && d.prototype.isOpenSeadragonDrawer) );
-    if(drawerPriority.length !== drawersToTry.length){
-        $.console.error('An invalid drawer was requested.');
-    }
-    if(drawersToTry.length === 0){
-        drawersToTry = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
+    let drawerCandidates = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
+    if (drawerCandidates.length === 0){
+        drawerCandidates = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
     // extend the drawerOptions object with additional properties to pass to the Drawer implementation
     // TODO: how to deal with the possibility that none of the requested drawers are supported?
     this.drawer = null;
-    for(let i = 0; i < drawersToTry.length; i++){
+    for (let i = 0; i < drawerCandidates.length; i++) {
 
-        //todo necessary? why not to use class names as drawer IDs
-        let optsKey = drawersToTry[i];
-        let Drawer = $.determineDrawer(optsKey);
-        if (!Drawer) {
-            optsKey = 'custom';
-            //todo will raise error anyway...
+        let drawerCandidate = drawerCandidates[i];
+        let Drawer = null;
+
+        //if inherits from a drawer base, use it
+        if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
+            Drawer = drawerCandidate;
+            drawerCandidate = 'custom';
+        } else if (typeof drawerCandidate === "string") {
+            Drawer = $.determineDrawer(drawerCandidate);
         } else {
-            // if the drawer is supported, create it and break the loop
-            if (Drawer.isSupported()){
-                this.drawer = new Drawer({
-                    viewer:             this,
-                    viewport:           this.viewport,
-                    element:            this.canvas,
-                    debugGridColor:     this.debugGridColor,
-                    options:            this.drawerOptions[optsKey],
-                });
-                this.drawerOptions.constructor = Drawer;
-                break;
-            }
+            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
+            continue;
         }
 
-
+        // if the drawer is supported, create it and break the loop
+        if (Drawer.isSupported()) {
+            this.drawer = new Drawer({
+                viewer:             this,
+                viewport:           this.viewport,
+                element:            this.canvas,
+                debugGridColor:     this.debugGridColor,
+                options:            this.drawerOptions[drawerCandidate],
+            });
+            this.drawerOptions.constructor = Drawer;
+            break;
+        }
     }
-    if(this.drawer === null){
+    if (!this.drawer){
         $.console.error('No drawer could be created!');
         throw('Error with creating the selected drawer(s)');
     }

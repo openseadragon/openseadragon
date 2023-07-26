@@ -108,9 +108,7 @@ $.DrawerBase = class DrawerBase{
 
         this._checkForAPIOverrides();
     }
-    get isOpenSeadragonDrawer(){
-        return true;
-    }
+
     get canvas(){
         if(!this._renderingTarget){
             this._renderingTarget = this.createDrawingElement();

@@ -1,8 +1,8 @@
-
 /*
  * OpenSeadragon - Mat3
  *
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Modified from https://webglfundamentals.org/webgl/lessons/webgl-2d-matrices.html
+ * Copyright (C) 2010-2023 webglfundamentals.org and OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,7 +36,6 @@
 
 /**
  * Matrix left-to-right system representation
- * Modified from https://webglfundamentals.org/webgl/lessons/webgl-2d-matrices.html
  */
 $.Mat3 = class Mat3 {
     constructor(values){

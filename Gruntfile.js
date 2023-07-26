@@ -67,7 +67,7 @@ module.exports = function(grunt) {
             "src/tilecache.js",
             "src/world.js",
 
-            // Aoisa's webgl drawer - needs optimization, polishing, trimming
+            // Aiosa's webgl drawer - needs optimization, polishing, trimming
             // "src/webgl/webGLWrapper.js",
             // "src/webgl/visualisationLayer.js",
             // "src/webgl/dataLoader.js",
