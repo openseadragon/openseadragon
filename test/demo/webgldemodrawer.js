@@ -302,8 +302,8 @@
                                         tiledImage._croppingPolygons ||
                                         tiledImage.debugMode
                                     );
-              
-                let useTwoPassRendering = useContext2dPipeline ||(tiledImage.opacity < 1); // TODO: check hasTransparency in addition to opacity
+
+                let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1); // TODO: check hasTransparency in addition to opacity
 
                 let tilesToDraw = tiledImage.getTilesToDraw();
 
@@ -364,20 +364,21 @@
                 // iterate over tiles and add data for each one to the buffers
                 for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                     let tile = tilesToDraw[tileIndex].tile;
-                    let index = tileIndex % maxTextures;
+                    let indexInDrawArray = tileIndex % maxTextures;
+                    let numTilesToDraw =  indexInDrawArray + 1;
                     let tileContext = tile.getCanvasContext();
 
                     let textureInfo = tileContext ? this._TextureMap.get(tileContext.canvas) : null;
                     if(textureInfo){
-                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, index, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                     } else {
                         // console.log('No tile info', tile);
                     }
-                    if( (index === maxTextures - 1) || (tileIndex === tilesToDraw.length - 1)){
+                    if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
                         // We've filled up the buffers: time to draw this set of tiles
 
                         // bind each tile's texture to the appropriate gl.TEXTURE#
-                        for(let i = 0; i <= index; i++){
+                        for(let i = 0; i <= numTilesToDraw; i++){
                             gl.activeTexture(gl.TEXTURE0 + i);
                             gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
                         }
@@ -404,7 +405,7 @@
                         gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
 
                         // Draw! 6 vertices per tile (2 triangles per rectangle)
-                        gl.drawArrays(gl.TRIANGLES, 0, 6 * (index + 1) );
+                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
                     }
                 }
 
@@ -479,7 +480,7 @@
                 }
 
             });
-            // TODO: the line below is a test!
+
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
