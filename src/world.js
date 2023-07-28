@@ -262,7 +262,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
         this._items.forEach(function(item){
-            this._needsDraw = item.setDrawn() || this._needsDraw || true;
+            this._needsDraw = item.setDrawn() || this._needsDraw;
         });
     },
 
