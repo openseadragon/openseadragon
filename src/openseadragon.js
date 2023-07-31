@@ -2,7 +2,7 @@
  * OpenSeadragon
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -60,7 +60,7 @@
 /*
  * Portions of this source file taken from mattsnider.com:
  *
- * Copyright (c) 2006-2022 Matt Snider
+ * Copyright (c) 2006-2013 Matt Snider
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -499,6 +499,12 @@
   * @property {Number} [timeout=30000]
   *     The max number of milliseconds that an image job may take to complete.
   *
+  * @property {Number} [tileRetryMax=0]
+  *     The max number of retries when a tile download fails. By default it's 0, so retries are disabled.
+  *
+  * @property {Number} [tileRetryDelay=2500]
+  *     Milliseconds to wait after each tile retry if tileRetryMax is set.
+  *
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
   *
@@ -563,50 +569,50 @@
   *     viewing the first image and the 'next' button will wrap to the first
   *     image when viewing the last image.
   *
-  * @property {String} zoomInButton
-  *     Set the id of the custom 'Zoom in' button to use.
+  *@property {String|Element} zoomInButton
+  *     Set the id or element of the custom 'Zoom in' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} zoomOutButton
-  *     Set the id of the custom 'Zoom out' button to use.
+  * @property {String|Element} zoomOutButton
+  *     Set the id or element of the custom 'Zoom out' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} homeButton
-  *     Set the id of the custom 'Go home' button to use.
+  * @property {String|Element} homeButton
+  *     Set the id or element of the custom 'Go home' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} fullPageButton
-  *     Set the id of the custom 'Toggle full page' button to use.
+  * @property {String|Element} fullPageButton
+  *     Set the id or element of the custom 'Toggle full page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} rotateLeftButton
-  *     Set the id of the custom 'Rotate left' button to use.
+  * @property {String|Element} rotateLeftButton
+  *     Set the id or element of the custom 'Rotate left' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} rotateRightButton
-  *     Set the id of the custom 'Rotate right' button to use.
+  * @property {String|Element} rotateRightButton
+  *     Set the id or element of the custom 'Rotate right' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} previousButton
-  *     Set the id of the custom 'Previous page' button to use.
+  * @property {String|Element} previousButton
+  *     Set the id or element of the custom 'Previous page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
   *
-  * @property {String} nextButton
-  *     Set the id of the custom 'Next page' button to use.
+  * @property {String|Element} nextButton
+  *     Set the id or element of the custom 'Next page' button to use.
   *     This is useful to have a custom button anywhere in the web page.<br>
   *     To only change the button images, consider using
   *     {@link OpenSeadragon.Options.navImages}
@@ -830,14 +836,16 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
-            '[object Boolean]':     'boolean',
-            '[object Number]':      'number',
-            '[object String]':      'string',
-            '[object Function]':    'function',
-            '[object Array]':       'array',
-            '[object Date]':        'date',
-            '[object RegExp]':      'regexp',
-            '[object Object]':      'object'
+            '[object Boolean]':       'boolean',
+            '[object Number]':        'number',
+            '[object String]':        'string',
+            '[object Function]':      'function',
+            '[object AsyncFunction]': 'function',
+            '[object Promise]':       'promise',
+            '[object Array]':         'array',
+            '[object Date]':          'date',
+            '[object RegExp]':        'regexp',
+            '[object Object]':        'object'
         },
         // Save a reference to some core methods
         toString    = Object.prototype.toString,
@@ -852,7 +860,6 @@ function OpenSeadragon( options ){
     $.isFunction = function( obj ) {
         return $.type(obj) === "function";
     };
-
 
     /**
      * Taken from jQuery 1.6.1
@@ -1359,6 +1366,8 @@ function OpenSeadragon( options ){
             maxImageCacheCount:     200,
             timeout:                30000,
             useCanvas:              true,  // Use canvas element for drawing if available
+            tileRetryMax:           0,
+            tileRetryDelay:         2500,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
@@ -2247,25 +2256,12 @@ function OpenSeadragon( options ){
             event.stopPropagation();
         },
 
-
-        /**
-         * Similar to OpenSeadragon.delegate, but it does not immediately call
-         * the method on the object, returning a function which can be called
-         * repeatedly to delegate the method. It also allows additional arguments
-         * to be passed during construction which will be added during each
-         * invocation, and each invocation can add additional arguments as well.
-         *
-         * @function
-         * @param {Object} object
-         * @param {Function} method
-         * @param [args] any additional arguments are passed as arguments to the
-         *  created callback
-         * @returns {Function}
-         */
+        // Deprecated
         createCallback: function( object, method ) {
             //TODO: This pattern is painful to use and debug.  It's much cleaner
             //      to use pinning plus anonymous functions.  Get rid of this
             //      pattern!
+            console.error('The createCallback function is deprecated and will be removed in future versions. Please use alternativeFunction instead.');
             var initialArgs = [],
                 i;
             for ( i = 2; i < arguments.length; i++ ) {

@@ -2,7 +2,7 @@
  * OpenSeadragon - Tile
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -44,7 +44,7 @@
  *      coordinates.
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
- * @param {String|() => String} url The URL of this tile's image or a function that returns a url.
+ * @param {String|Function} url The URL of this tile's image or a function that returns a url.
  * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
  *      is provided directly by the tile source.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
@@ -98,7 +98,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * Private property to hold string url or url retriever function.
      * Consumers should access via Tile.getUrl()
      * @private
-     * @member {String|() => String} url
+     * @member {String|Function} url
      * @memberof OpenSeadragon.Tile#
      */
     this._url     = url;

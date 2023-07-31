@@ -2,7 +2,7 @@
  * OpenSeadragon - TileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -618,7 +618,7 @@ $.TileSource.prototype = {
      * @param {Number} level
      * @param {Number} x
      * @param {Number} y
-     * @returns {String|() => string} url - A string for the url or a function that returns a url string.
+     * @returns {String|Function} url - A string for the url or a function that returns a url string.
      * @throws {Error}
      */
     getTileUrl: function( level, x, y ) {
@@ -663,6 +663,11 @@ $.TileSource.prototype = {
      * The headers returned here will override headers specified at the Viewer or TiledImage level.
      * Specifying a falsy value for a header will clear its existing value set at the Viewer or
      * TiledImage level (if any).
+     *
+     * Note that the headers of existing tiles don't automatically change when this function
+     * returns updated headers. To do that, you need to call {@link OpenSeadragon.Viewer#setAjaxHeaders}
+     * and propagate the changes.
+     *
      * @function
      * @param {Number} level
      * @param {Number} x
@@ -932,7 +937,7 @@ function processResponse( xhr ){
         throw new Error( $.getString( "Errors.Status", status, statusText ) );
     }
 
-    if( responseText.match(/\s*<.*/) ){
+    if( responseText.match(/^\s*<.*/) ){
         try{
         data = ( xhr.responseXML && xhr.responseXML.documentElement ) ?
             xhr.responseXML :

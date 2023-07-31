@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -204,6 +204,8 @@ $.Viewer = function( options ) {
         prevContainerSize: null,
         animating:         false,
         forceRedraw:       false,
+        needsResize:       false,
+        forceResize:       false,
         mouseInside:       false,
         group:             null,
         // whether we should be continuously zooming
@@ -306,7 +308,9 @@ $.Viewer = function( options ) {
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
         scrollHandler:            $.delegate( this, onCanvasScroll ),
-        pinchHandler:             $.delegate( this, onCanvasPinch )
+        pinchHandler:             $.delegate( this, onCanvasPinch ),
+        focusHandler:             $.delegate( this, onCanvasFocus ),
+        blurHandler:              $.delegate( this, onCanvasBlur ),
     });
 
     this.outerTracker = new $.MouseTracker({
@@ -329,6 +333,17 @@ $.Viewer = function( options ) {
     this.bindStandardControls();
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
+
+    if(window.ResizeObserver){
+        this._autoResizePolling = false;
+        this._resizeObserver = new ResizeObserver(function(){
+            THIS[_this.hash].needsResize = true;
+        });
+
+        this._resizeObserver.observe(this.container, {});
+    } else {
+        this._autoResizePolling = true;
+    }
 
     // Create the world
     this.world = new $.World({
@@ -395,7 +410,9 @@ $.Viewer = function( options ) {
     // Create the image loader
     this.imageLoader = new $.ImageLoader({
         jobLimit: this.imageLoaderLimit,
-        timeout: options.timeout
+        timeout: options.timeout,
+        tileRetryMax: this.tileRetryMax,
+        tileRetryDelay: this.tileRetryDelay
     });
 
     // Create the tile cache
@@ -788,6 +805,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //TODO: implement this...
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
+        if (this._resizeObserver){
+            this._resizeObserver.disconnect();
+        }
 
         if (this.referenceStrip) {
             this.referenceStrip.destroy();
@@ -948,7 +968,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Turns debugging mode on or off for this viewer.
      *
      * @function
-     * @param {Boolean} true to turn debug on, false to turn debug off.
+     * @param {Boolean} debugMode true to turn debug on, false to turn debug off.
      */
     setDebugMode: function(debugMode){
 
@@ -958,6 +978,63 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.debugMode = debugMode;
         this.forceRedraw();
+    },
+
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiled images, each of which will subsequently
+     * propagate the changed headers to all their tiles.
+     * If applicable, the headers of the viewer's navigator and reference strip will also be updated.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * `TiledImage.ajaxHeaders`, which take precedence over the headers here in the viewer.
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to tiled images, etc.
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
+        this.ajaxHeaders = ajaxHeaders;
+
+        if (propagate) {
+            for (var i = 0; i < this.world.getItemCount(); i++) {
+                this.world.getItemAt(i)._updateAjaxHeaders(true);
+            }
+
+            if (this.navigator) {
+                this.navigator.setAjaxHeaders(this.ajaxHeaders, true);
+            }
+
+            if (this.referenceStrip && this.referenceStrip.miniViewers) {
+                for (var key in this.referenceStrip.miniViewers) {
+                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, true);
+                }
+            }
+        }
+    },
+
+    /**
+     * Adds the given button to this viewer.
+     *
+     * @function
+     * @param {OpenSeadragon.Button} button
+     */
+    addButton: function( button ){
+        this.buttonGroup.addButton(button);
     },
 
     /**
@@ -1374,7 +1451,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
      *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
-     * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", which is the resulting instance of TiledImage.
@@ -1422,10 +1498,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
-        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
-            options.ajaxHeaders = this.ajaxHeaders;
-        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
-            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
+        if (!$.isPlainObject(options.ajaxHeaders)) {
+            options.ajaxHeaders = {};
         }
 
         var myQueueItem = {
@@ -1680,6 +1754,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     forceRedraw: function() {
         THIS[ this.hash ].forceRedraw = true;
         return this;
+    },
+
+    /**
+     * Force the viewer to reset its size to match its container.
+     */
+    forceResize: function() {
+        THIS[this.hash].needsResize = true;
+        THIS[this.hash].forceResize = true;
     },
 
     /**
@@ -2733,7 +2815,7 @@ function onCanvasKeyDown( event ) {
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
-            case 38://up arrow
+            case 38://up arrow/shift uparrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
@@ -2744,7 +2826,7 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 40://down arrow
+            case 40://down arrow/shift downarrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
@@ -2769,35 +2851,12 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            default:
-                //console.log( 'navigator keycode %s', event.keyCode );
-                event.preventDefault = false;
-                break;
-        }
-    } else {
-        event.preventDefault = false;
-    }
-}
-function onCanvasKeyPress( event ) {
-    var canvasKeyPressEventArgs = {
-      originalEvent: event.originalEvent,
-      preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
-      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
-    };
-
-    // This event is documented in onCanvasKeyDown
-    this.raiseEvent('canvas-key', canvasKeyPressEventArgs);
-
-    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
-            case 43://=|+
-            case 61://=|+
+            case 187://=|+
                 this.viewport.zoomBy(1.1);
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
                 break;
-            case 45://-|_
+            case 189://-|_
                 this.viewport.zoomBy(0.9);
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
@@ -2807,74 +2866,71 @@ function onCanvasKeyPress( event ) {
                 this.viewport.applyConstraints();
                 event.preventDefault = true;
                 break;
-            case 119://w
-            case 87://W
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
+            case 87://W/w
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
                     if ( event.shift ) {
                         this.viewport.zoomBy(1.1);
                     } else {
                         this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
                     }
                     this.viewport.applyConstraints();
-                  }
-                  event.preventDefault = true;
-                  break;
-            case 115://s
-            case 83://S
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                  }
-                  this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
-            case 97://a
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
+            case 83://S/s
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(0.9);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                    }
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 65://a/A
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
                     this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
                     this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
-            case 100://d
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                  this.viewport.applyConstraints();
+            case 68://d/D
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                    this.viewport.applyConstraints();
                 }
                 event.preventDefault = true;
                 break;
-            case 114: //r - clockwise rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 82: //R - counterclockwise  rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 102: //f
-              this.viewport.toggleFlip();
-              event.preventDefault = true;
-              break;
-            case 106: //j - previous image source
-              this.goToPreviousPage();
-              break;
-            case 107: //k - next image source
-              this.goToNextPage();
-              break;
+            case 82: //r - clockwise rotation/R - counterclockwise rotation
+                if(event.shift){
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    }
+                }else{
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    }
+                }
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 70: //f/F
+                this.viewport.toggleFlip();
+                event.preventDefault = true;
+                break;
+            case 74: //j - previous image source
+                this.goToPreviousPage();
+                break;
+            case 75: //k - next image source
+                this.goToNextPage();
+                break;
             default:
-                // console.log( 'navigator keycode %s', event.keyCode );
+                //console.log( 'navigator keycode %s', event.keyCode );
                 event.preventDefault = false;
                 break;
         }
@@ -2883,7 +2939,24 @@ function onCanvasKeyPress( event ) {
     }
 }
 
+function onCanvasKeyPress( event ) {
+    var canvasKeyPressEventArgs = {
+      originalEvent: event.originalEvent,
+    };
 
+    /**
+     * Raised when a keyboard key is pressed and the focus is on the {@link OpenSeadragon.Viewer#canvas} element.
+     *
+     * @event canvas-key-press
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+
+    this.raiseEvent('canvas-key-press', canvasKeyPressEventArgs);
+}
 
 function onCanvasClick( event ) {
     var gestureSettings;
@@ -3051,17 +3124,16 @@ function onCanvasDrag( event ) {
                 this.viewport.centerSpringX.target.value += delta.x;
                 this.viewport.centerSpringY.target.value += delta.y;
 
-                var bounds = this.viewport.getBounds();
                 var constrainedBounds = this.viewport.getConstrainedBounds();
 
                 this.viewport.centerSpringX.target.value -= delta.x;
                 this.viewport.centerSpringY.target.value -= delta.y;
 
-                if (bounds.x !== constrainedBounds.x) {
+                if (constrainedBounds.xConstrained) {
                     event.delta.x = 0;
                 }
 
-                if (bounds.y !== constrainedBounds.y) {
+                if (constrainedBounds.yConstrained) {
                     event.delta.y = 0;
                 }
             }
@@ -3396,9 +3468,47 @@ function onCanvasPinch( event ) {
                 event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
             var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
                 event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            this.viewport.rotateTo(this.viewport.getRotation(true) + ((angle1 - angle2) * (180 / Math.PI)), centerPt, true);
         }
     }
+}
+
+function onCanvasFocus( event ) {
+
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element gets keyboard focus.
+     *
+     * @event canvas-focus
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-focus', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasBlur( event ) {
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
+     *
+     * @event canvas-blur
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-blur', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
 }
 
 function onCanvasScroll( event ) {
@@ -3550,6 +3660,27 @@ function updateMulti( viewer ) {
     }
 }
 
+function doViewerResize(viewer, containerSize){
+    var viewport = viewer.viewport;
+    var zoom = viewport.getZoom();
+    var center = viewport.getCenter();
+    viewport.resize(containerSize, viewer.preserveImageSizeOnResize);
+    viewport.panTo(center, true);
+    var resizeRatio;
+    if (viewer.preserveImageSizeOnResize) {
+        resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+    } else {
+        var origin = new $.Point(0, 0);
+        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(origin);
+        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(origin);
+        resizeRatio = newDiag / prevDiag * THIS[viewer.hash].prevContainerSize.x / containerSize.x;
+    }
+    viewport.zoomTo(zoom * resizeRatio, null, true);
+    THIS[viewer.hash].prevContainerSize = containerSize;
+    THIS[viewer.hash].forceRedraw = true;
+    THIS[viewer.hash].needsResize = false;
+    THIS[viewer.hash].forceResize = false;
+}
 function updateOnce( viewer ) {
 
     //viewer.profiler.beginUpdate();
@@ -3557,29 +3688,22 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
-
-    if (viewer.autoResize) {
-        var containerSize = _getSafeElemSize(viewer.container);
-        var prevContainerSize = THIS[viewer.hash].prevContainerSize;
-        if (!containerSize.equals(prevContainerSize)) {
-            var viewport = viewer.viewport;
-            if (viewer.preserveImageSizeOnResize) {
-                var resizeRatio = prevContainerSize.x / containerSize.x;
-                var zoom = viewport.getZoom() * resizeRatio;
-                var center = viewport.getCenter();
-                viewport.resize(containerSize, false);
-                viewport.zoomTo(zoom, null, true);
-                viewport.panTo(center, true);
-            } else {
-                // maintain image position
-                var oldBounds = viewport.getBounds();
-                viewport.resize(containerSize, true);
-                viewport.fitBoundsWithConstraints(oldBounds, true);
+    if (viewer.autoResize || THIS[viewer.hash].forceResize){
+        var containerSize;
+        if(viewer._autoResizePolling){
+            containerSize = _getSafeElemSize(viewer.container);
+            var prevContainerSize = THIS[viewer.hash].prevContainerSize;
+            if (!containerSize.equals(prevContainerSize)) {
+                THIS[viewer.hash].needsResize = true;
             }
-            THIS[viewer.hash].prevContainerSize = containerSize;
-            THIS[viewer.hash].forceRedraw = true;
         }
+        if(THIS[viewer.hash].needsResize){
+            doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
+        }
+
     }
+
+
 
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;

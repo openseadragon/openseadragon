@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewport
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -483,7 +483,7 @@ $.Viewport.prototype = {
         );
 
         newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
-        deltaZoomPixels = newZoomPixel.minus( oldZoomPixel );
+        deltaZoomPixels = newZoomPixel.minus( oldZoomPixel ).rotate(-this.getRotation(true));
         deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
 
         return centerTarget.plus( deltaZoomPoints );
@@ -514,34 +514,37 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Rect} bounds
      * @returns {OpenSeadragon.Rect} constrained bounds.
      */
-     _applyBoundaryConstraints: function(bounds) {
-        var newBounds = new $.Rect(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height);
+    _applyBoundaryConstraints: function(bounds) {
+        var newBounds = this.viewportToViewerElementRectangle(bounds).getBoundingBox();
+        var cb = this.viewportToViewerElementRectangle(this._contentBoundsNoRotate).getBoundingBox();
+
+        var xConstrained = false;
+        var yConstrained = false;
 
         if (this.wrapHorizontal) {
             //do nothing
         } else {
             var boundsRight = newBounds.x + newBounds.width;
-            var contentRight = this._contentBoundsNoRotate.x + this._contentBoundsNoRotate.width;
+            var contentRight = cb.x + cb.width;
 
             var horizontalThreshold, leftDx, rightDx;
-            if (newBounds.width > this._contentBoundsNoRotate.width) {
-                horizontalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.width;
+            if (newBounds.width > cb.width) {
+                horizontalThreshold = this.visibilityRatio * cb.width;
             } else {
                 horizontalThreshold = this.visibilityRatio * newBounds.width;
             }
 
-            leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
+            leftDx = cb.x - boundsRight + horizontalThreshold;
             rightDx = contentRight - newBounds.x - horizontalThreshold;
-            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+            if (horizontalThreshold > cb.width) {
                 newBounds.x += (leftDx + rightDx) / 2;
+                xConstrained = true;
             } else if (rightDx < 0) {
                 newBounds.x += rightDx;
+                xConstrained = true;
             } else if (leftDx > 0) {
                 newBounds.x += leftDx;
+                xConstrained = true;
             }
 
         }
@@ -550,28 +553,37 @@ $.Viewport.prototype = {
             //do nothing
         } else {
             var boundsBottom = newBounds.y + newBounds.height;
-            var contentBottom = this._contentBoundsNoRotate.y + this._contentBoundsNoRotate.height;
+            var contentBottom = cb.y + cb.height;
 
             var verticalThreshold, topDy, bottomDy;
-            if (newBounds.height > this._contentBoundsNoRotate.height) {
-                verticalThreshold = this.visibilityRatio * this._contentBoundsNoRotate.height;
+            if (newBounds.height > cb.height) {
+                verticalThreshold = this.visibilityRatio * cb.height;
             } else{
                 verticalThreshold = this.visibilityRatio * newBounds.height;
             }
 
-            topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
+            topDy = cb.y - boundsBottom + verticalThreshold;
             bottomDy = contentBottom - newBounds.y - verticalThreshold;
-            if (verticalThreshold > this._contentBoundsNoRotate.height) {
+            if (verticalThreshold > cb.height) {
                 newBounds.y += (topDy + bottomDy) / 2;
+                yConstrained = true;
             } else if (bottomDy < 0) {
                 newBounds.y += bottomDy;
+                yConstrained = true;
             } else if (topDy > 0) {
                 newBounds.y += topDy;
+                yConstrained = true;
             }
 
         }
 
-        return newBounds;
+        var constraintApplied = xConstrained || yConstrained;
+        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
+        newViewportBounds.xConstrained = xConstrained;
+        newViewportBounds.yConstrained = yConstrained;
+        newViewportBounds.constraintApplied = constraintApplied;
+
+        return newViewportBounds;
     },
 
     /**
@@ -605,7 +617,7 @@ $.Viewport.prototype = {
      * @function
      * @param {Boolean} [immediately=false]
      * @returns {OpenSeadragon.Viewport} Chainable.
-     * @fires OpenSeadragon.Viewer.event:constrain
+     * @fires OpenSeadragon.Viewer.event:constrain if constraints were applied
      */
     applyConstraints: function(immediately) {
         var actualZoom = this.getZoom();
@@ -615,17 +627,13 @@ $.Viewport.prototype = {
             this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
         }
 
-        var bounds = this.getBoundsNoRotate();
-        var constrainedBounds = this._applyBoundaryConstraints(bounds);
-        this._raiseConstraintsEvent(immediately);
+        var constrainedBounds = this.getConstrainedBounds(false);
 
-        if (bounds.x !== constrainedBounds.x ||
-            bounds.y !== constrainedBounds.y ||
-            immediately) {
-            this.fitBounds(
-                constrainedBounds.rotate(-this.getRotation(true)),
-                immediately);
+        if(constrainedBounds.constraintApplied){
+            this.fitBounds(constrainedBounds, immediately);
+            this._raiseConstraintsEvent(immediately);
         }
+
         return this;
     },
 
@@ -675,45 +683,53 @@ $.Viewport.prototype = {
         newBounds.y = center.y - newBounds.height / 2;
         var newZoom = 1.0 / newBounds.width;
 
-        if (constraints) {
-            var newBoundsAspectRatio = newBounds.getAspectRatio();
-            var newConstrainedZoom = this._applyZoomConstraints(newZoom);
-
-            if (newZoom !== newConstrainedZoom) {
-                newZoom = newConstrainedZoom;
-                newBounds.width = 1.0 / newZoom;
-                newBounds.x = center.x - newBounds.width / 2;
-                newBounds.height = newBounds.width / newBoundsAspectRatio;
-                newBounds.y = center.y - newBounds.height / 2;
-            }
-
-            newBounds = this._applyBoundaryConstraints(newBounds);
-            center = newBounds.getCenter();
-            this._raiseConstraintsEvent(immediately);
-        }
-
         if (immediately) {
             this.panTo(center, true);
-            return this.zoomTo(newZoom, null, true);
+            this.zoomTo(newZoom, null, true);
+            if(constraints){
+                this.applyConstraints(true);
+            }
+            return this;
         }
 
-        this.panTo(this.getCenter(true), true);
-        this.zoomTo(this.getZoom(true), null, true);
+        var currentCenter = this.getCenter(true);
+        var currentZoom = this.getZoom(true);
+        this.panTo(currentCenter, true);
+        this.zoomTo(currentZoom, null, true);
 
         var oldBounds = this.getBounds();
         var oldZoom   = this.getZoom();
 
         if (oldZoom === 0 || Math.abs(newZoom / oldZoom - 1) < 0.00000001) {
-            this.zoomTo(newZoom, true);
-            return this.panTo(center, immediately);
+            this.zoomTo(newZoom, null, true);
+            this.panTo(center, immediately);
+            if(constraints){
+                this.applyConstraints(false);
+            }
+            return this;
         }
 
-        newBounds = newBounds.rotate(-this.getRotation());
-        var referencePoint = newBounds.getTopLeft().times(newZoom)
-            .minus(oldBounds.getTopLeft().times(oldZoom))
-            .divide(newZoom - oldZoom);
+        if(constraints){
+            this.panTo(center, false);
 
-        return this.zoomTo(newZoom, referencePoint, immediately);
+            newZoom = this._applyZoomConstraints(newZoom);
+            this.zoomTo(newZoom, null, false);
+
+            var constrainedBounds = this.getConstrainedBounds();
+
+            this.panTo(currentCenter, true);
+            this.zoomTo(currentZoom, null, true);
+
+            this.fitBounds(constrainedBounds);
+        } else {
+            var rotatedNewBounds = newBounds.rotate(-this.getRotation());
+            var referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
+                .minus(oldBounds.getTopLeft().times(oldZoom))
+                .divide(newZoom - oldZoom);
+
+            this.zoomTo(newZoom, referencePoint, immediately);
+        }
+        return this;
     },
 
     /**
@@ -787,7 +803,10 @@ $.Viewport.prototype = {
      * Returns bounds taking constraints into account
      * Added to improve constrained panning
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
-     * @returns {OpenSeadragon.Viewport} Chainable.
+     * @returns {OpenSeadragon.Rect} The bounds in viewport coordinates after applying constraints. The returned $.Rect
+     *                               contains additional properties constraintsApplied, xConstrained and yConstrained.
+     *                               These flags indicate whether the viewport bounds were modified by the constraints
+     *                               of the viewer rectangle, and in which dimension(s).
      */
     getConstrainedBounds: function(current) {
         var bounds,
@@ -1059,7 +1078,10 @@ $.Viewport.prototype = {
 
         if( this.viewer ){
             /**
-             * Raised when the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             * Raised when a viewer resize operation is initiated (see {@link OpenSeadragon.Viewport#resize}).
+             * This event happens before the viewport bounds have been updated.
+             * See also {@link OpenSeadragon.Viewer#after-resize} which reflects
+             * the new viewport bounds following the resize action.
              *
              * @event resize
              * @memberof OpenSeadragon.Viewer
@@ -1075,7 +1097,29 @@ $.Viewport.prototype = {
             });
         }
 
-        return this.fitBounds( newBounds, true );
+        var output = this.fitBounds( newBounds, true );
+
+        if( this.viewer ){
+            /**
+             * Raised after the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             * See also {@link OpenSeadragon.Viewer#resize} event which happens
+             * before the new bounds have been calculated and applied.
+             *
+             * @event after-resize
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} newContainerSize
+             * @property {Boolean} maintain
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.viewer.raiseEvent( 'after-resize', {
+                newContainerSize: newContainerSize,
+                maintain: maintain
+            });
+        }
+
+        return output;
     },
 
     // private

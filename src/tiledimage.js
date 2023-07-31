@@ -2,7 +2,7 @@
  * OpenSeadragon - TiledImage
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -147,6 +147,9 @@ $.TiledImage = function( options ) {
     var degrees = options.degrees || 0;
     delete options.degrees;
 
+    var ajaxHeaders = options.ajaxHeaders;
+    delete options.ajaxHeaders;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -238,6 +241,9 @@ $.TiledImage = function( options ) {
             tiledImage: _this
         }, args));
     };
+
+    this._ownAjaxHeaders = {};
+    this.setAjaxHeaders(ajaxHeaders, false);
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -1003,6 +1009,90 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         });
     },
 
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiles and queued image loader jobs.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * the headers here in the tiled image (`TiledImage.ajaxHeaders`).
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers, which will be merged over any headers specified in {@link OpenSeadragon.Options}.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+
+        this._ownAjaxHeaders = ajaxHeaders;
+        this._updateAjaxHeaders(propagate);
+    },
+
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * This function has the same effect as calling {@link OpenSeadragon.TiledImage#setAjaxHeaders},
+     * except that the headers for this tiled image do not change. This is especially useful
+     * for propagating updated headers from {@link OpenSeadragon.TileSource#getTileAjaxHeaders}
+     * to existing tiles.
+     *
+     * @private
+     * @function
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to existing tiles and queued image loader jobs.
+     */
+    _updateAjaxHeaders: function(propagate) {
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
+        // merge with viewer's headers
+        if ($.isPlainObject(this.viewer.ajaxHeaders)) {
+            this.ajaxHeaders = $.extend({}, this.viewer.ajaxHeaders, this._ownAjaxHeaders);
+        } else {
+            this.ajaxHeaders = this._ownAjaxHeaders;
+        }
+
+        // propagate header updates to all tiles and queued image loader jobs
+        if (propagate) {
+            var numTiles, xMod, yMod, tile;
+
+            for (var level in this.tilesMatrix) {
+                numTiles = this.source.getNumTiles(level);
+
+                for (var x in this.tilesMatrix[level]) {
+                    xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+
+                    for (var y in this.tilesMatrix[level][x]) {
+                        yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+                        tile = this.tilesMatrix[level][x][y];
+
+                        tile.loadWithAjax = this.loadTilesWithAjax;
+                        if (tile.loadWithAjax) {
+                            var tileAjaxHeaders = this.source.getTileAjaxHeaders( level, xMod, yMod );
+                            tile.ajaxHeaders = $.extend({}, this.ajaxHeaders, tileAjaxHeaders);
+                        } else {
+                            tile.ajaxHeaders = null;
+                        }
+                    }
+                }
+            }
+
+            for (var i = 0; i < this._imageLoader.jobQueue.length; i++) {
+                var job = this._imageLoader.jobQueue[i];
+                job.loadWithAjax = job.tile.loadWithAjax;
+                job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
+            }
+        }
+    },
+
     // private
     _setScale: function(scale, immediately) {
         var sameTarget = (this._scaleSpring.target.value === scale);
@@ -1621,6 +1711,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile.loading = false;
             tile.exists = false;
             return;
+        } else {
+            tile.exists = true;
         }
 
         if ( time < this.lastResetTime ) {
@@ -1656,9 +1748,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest) {
         var increment = 0,
+            eventFinished = false,
             _this = this;
 
         function getCompletionCallback() {
+            if (eventFinished) {
+                $.console.error("Event 'tile-loaded' argument getCompletionCallback must be called synchronously. " +
+                    "Its return value should be called asynchronously.");
+            }
             increment++;
             return completionCallback;
         }
@@ -1690,7 +1787,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
-         * @property {Image || *} image - The image (data) of the tile. Deprecated.
+         * @property {Image|*} image - The image (data) of the tile. Deprecated.
          * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
@@ -1700,6 +1797,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * marked as entirely loaded when the callback has been called once for each
          * call to getCompletionCallback.
          */
+
+        var fallbackCompletion = getCompletionCallback();
         this.viewer.raiseEvent("tile-loaded", {
             tile: tile,
             tiledImage: this,
@@ -1711,8 +1810,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             data: data,
             getCompletionCallback: getCompletionCallback
         });
+        eventFinished = true;
         // In case the completion callback is never called, we at least force it once.
-        getCompletionCallback()();
+        fallbackCompletion();
     },
 
     /**
@@ -1864,7 +1964,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (lastDrawn.length > 1 &&
             imageZoom > this.smoothTileEdgesMinZoom &&
             !this.iOSDevice &&
-            this.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation.
+            this.getRotation(true) % 360 === 0 && // TODO: support tile edge smoothing with tiled image rotation (viewport rotation is not a problem).
+            this._drawer.viewer.viewport.getFlip() === false && // TODO: support tile edge smoothing with viewport flip (tiled image flip is not a problem).
             $.supportsCanvas && this.viewer.useCanvas) {
             // When zoomed in a lot (>100%) the tile edges are visible.
             // So we have to composite them at ~100% and scale them up together.
@@ -1953,6 +2054,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         var clipPoint = self._drawer.viewportCoordToDrawerCoord(point);
                         if (sketchScale) {
                             clipPoint = clipPoint.times(sketchScale);
+                        }
+                        if (sketchTranslate) {
+                            clipPoint = clipPoint.plus(sketchTranslate);
                         }
                         return clipPoint;
                     });

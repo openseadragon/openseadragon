@@ -2,7 +2,7 @@
  * OpenSeadragon - EventSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -58,7 +58,7 @@ $.EventSource.prototype = {
 
     /**
      * Add an event handler to be triggered only once (or a given number of times)
-     * for a given event.
+     * for a given event. It is not removable with removeHandler().
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {OpenSeadragon.EventHandler} handler - Function to call when event
@@ -67,8 +67,9 @@ $.EventSource.prototype = {
      * to the handler.
      * @param {Number} [times=1] - The number of times to handle the event
      * before removing it.
+     * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
      */
-    addOnceHandler: function(eventName, handler, userData, times) {
+    addOnceHandler: function(eventName, handler, userData, times, priority) {
         var self = this;
         times = times || 1;
         var count = 0;
@@ -77,9 +78,9 @@ $.EventSource.prototype = {
             if (count === times) {
                 self.removeHandler(eventName, onceHandler);
             }
-            handler(event);
+            return handler(event);
         };
-        this.addHandler(eventName, onceHandler, userData);
+        this.addHandler(eventName, onceHandler, userData, priority);
     },
 
     /**
@@ -88,14 +89,22 @@ $.EventSource.prototype = {
      * @param {String} eventName - Name of event to register.
      * @param {OpenSeadragon.EventHandler} handler - Function to call when event is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged to the handler.
+     * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
      */
-    addHandler: function ( eventName, handler, userData ) {
+    addHandler: function ( eventName, handler, userData, priority ) {
         var events = this.events[ eventName ];
         if ( !events ) {
             this.events[ eventName ] = events = [];
         }
         if ( handler && $.isFunction( handler ) ) {
-            events[ events.length ] = { handler: handler, userData: userData || null };
+            var index = events.length,
+                event = { handler: handler, userData: userData || null, priority: priority || 0 };
+            events[ index ] = event;
+            while ( index > 0 && events[ index - 1 ].priority < events[ index ].priority ) {
+                events[ index ] = events[ index - 1 ];
+                events[ index - 1 ] = event;
+                index--;
+            }
         }
     },
 
@@ -156,7 +165,7 @@ $.EventSource.prototype = {
      * @function
      * @param {String} eventName - Name of event to get handlers for.
      */
-    getHandler: function ( eventName ) {
+    getHandler: function ( eventName) {
         var events = this.events[ eventName ];
         if ( !events || !events.length ) {
             return null;
@@ -186,15 +195,12 @@ $.EventSource.prototype = {
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
         //$.console.log( eventName );
+
         var handler = this.getHandler( eventName );
-
         if ( handler ) {
-            if ( !eventArgs ) {
-                eventArgs = {};
-            }
-
-            handler( this, eventArgs );
+            return handler( this, eventArgs || {} );
         }
+        return undefined;
     }
 };
 

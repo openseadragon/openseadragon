@@ -15,18 +15,20 @@
 </head>
 <body>
     <div>
-        Simple demo page to show a default OpenSeadragon viewer.
+        Simple demo page. The navigator region is expected to rotate when the image is rotated.
+        The default behaviour is to keep the region still as the image below it rotates.
     </div>
     <div id="contentDiv" class="openseadragon1"></div>
     <script type="text/javascript">
-
         var viewer = OpenSeadragon({
             // debugMode: true,
             id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
-            showNavigator: true
+            showNavigator: true,
+            navigatorRotate: false
         });
+        viewer.viewport.setRotation(45)
     </script>
 </body>
 </html>
