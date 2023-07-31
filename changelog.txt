@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
 * Fixed: Sometimes if the viewport was flipped and the user zoomed in far enough, it would flip back (#2364 @SebDelile)
 * Test improvements (#2382 @AndrewADev)
+* MouseTracker options documentation fixes (#2389 @msalsbery)
 
 4.1.0:
 
