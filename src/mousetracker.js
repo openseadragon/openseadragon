@@ -57,16 +57,16 @@
      * @param {Boolean} [options.startDisabled=false]
      *      If true, event tracking on the element will not start until
      *      {@link OpenSeadragon.MouseTracker.setTracking|setTracking} is called.
-     * @param {Number} options.clickTimeThreshold
+     * @param {Number} [options.clickTimeThreshold=300]
      *      The number of milliseconds within which a pointer down-up event combination
      *      will be treated as a click gesture.
-     * @param {Number} options.clickDistThreshold
+     * @param {Number} [options.clickDistThreshold=5]
      *      The maximum distance allowed between a pointer down event and a pointer up event
      *      to be treated as a click gesture.
-     * @param {Number} options.dblClickTimeThreshold
+     * @param {Number} [options.dblClickTimeThreshold=300]
      *      The number of milliseconds within which two pointer down-up event combinations
      *      will be treated as a double-click gesture.
-     * @param {Number} options.dblClickDistThreshold
+     * @param {Number} [options.dblClickDistThreshold=20]
      *      The maximum distance allowed between two pointer click events
      *      to be treated as a click gesture.
      * @param {Number} [options.stopDelay=50]
