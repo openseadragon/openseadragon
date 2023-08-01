@@ -470,7 +470,7 @@ $.Viewer = function( options ) {
         }
 
         // if the drawer is supported, create it and break the loop
-        if (Drawer.isSupported()) {
+        if (Drawer && Drawer.isSupported()) {
             this.drawer = new Drawer({
                 viewer:             this,
                 viewport:           this.viewport,

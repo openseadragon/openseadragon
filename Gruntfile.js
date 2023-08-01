@@ -67,13 +67,13 @@ module.exports = function(grunt) {
             "src/tilecache.js",
             "src/world.js",
 
-            // Aiosa's webgl drawer - needs optimization, polishing, trimming
-            // "src/webgl/webGLWrapper.js",
-            // "src/webgl/visualisationLayer.js",
-            // "src/webgl/dataLoader.js",
-            // "src/webgl/webGLContext.js",
-            // "src/webgl/drawer.js",
-            // "src/webgl/plainShader.js",
+            //Aiosa's webgl drawer - needs optimization, polishing, trimming
+            "src/webgl/renderer.js",
+            "src/webgl/shaderLayer.js",
+            "src/webgl/dataLoader.js",
+            "src/webgl/webGLContext.js",
+            "src/webgl/drawer.js",
+            "src/webgl/plainShader.js",
         ];
 
     var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
@@ -204,7 +204,7 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            files: [ "Gruntfile.js", "src/*.js", "images/*" /*, "src/webgl/*.js" */ ],
+            files: [ "Gruntfile.js", "src/*.js", "images/*", "src/webgl/*.js" ],
             tasks: "watchTask"
         },
         eslint: {
