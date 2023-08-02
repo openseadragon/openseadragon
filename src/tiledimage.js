@@ -1437,6 +1437,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
+        this._sortTiles(best);
         return best;
     },
 
@@ -1930,8 +1931,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return [tile];
         }
         previousBest.push(tile);
-        this._sortTiles(previousBest);
         if (previousBest.length > maxNTiles) {
+            this._sortTiles(previousBest);
             previousBest.pop();
         }
         return previousBest;
