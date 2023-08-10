@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -307,7 +307,9 @@ $.Viewer = function( options ) {
         nonPrimaryPressHandler:   $.delegate( this, onCanvasNonPrimaryPress ),
         nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
         scrollHandler:            $.delegate( this, onCanvasScroll ),
-        pinchHandler:             $.delegate( this, onCanvasPinch )
+        pinchHandler:             $.delegate( this, onCanvasPinch ),
+        focusHandler:             $.delegate( this, onCanvasFocus ),
+        blurHandler:              $.delegate( this, onCanvasBlur ),
     });
 
     this.outerTracker = new $.MouseTracker({
@@ -964,7 +966,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * Turns debugging mode on or off for this viewer.
      *
      * @function
-     * @param {Boolean} true to turn debug on, false to turn debug off.
+     * @param {Boolean} debugMode true to turn debug on, false to turn debug off.
      */
     setDebugMode: function(debugMode){
 
@@ -974,6 +976,63 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.debugMode = debugMode;
         this.forceRedraw();
+    },
+
+    /**
+     * Update headers to include when making AJAX requests.
+     *
+     * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
+     * the updated headers are propagated to all tiled images, each of which will subsequently
+     * propagate the changed headers to all their tiles.
+     * If applicable, the headers of the viewer's navigator and reference strip will also be updated.
+     *
+     * Note that the rules for merging headers still apply, i.e. headers returned by
+     * {@link OpenSeadragon.TileSource#getTileAjaxHeaders} take precedence over
+     * `TiledImage.ajaxHeaders`, which take precedence over the headers here in the viewer.
+     *
+     * @function
+     * @param {Object} ajaxHeaders Updated AJAX headers.
+     * @param {Boolean} [propagate=true] Whether to propagate updated headers to tiled images, etc.
+     */
+    setAjaxHeaders: function(ajaxHeaders, propagate) {
+        if (ajaxHeaders === null) {
+            ajaxHeaders = {};
+        }
+        if (!$.isPlainObject(ajaxHeaders)) {
+            console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            return;
+        }
+        if (propagate === undefined) {
+            propagate = true;
+        }
+
+        this.ajaxHeaders = ajaxHeaders;
+
+        if (propagate) {
+            for (var i = 0; i < this.world.getItemCount(); i++) {
+                this.world.getItemAt(i)._updateAjaxHeaders(true);
+            }
+
+            if (this.navigator) {
+                this.navigator.setAjaxHeaders(this.ajaxHeaders, true);
+            }
+
+            if (this.referenceStrip && this.referenceStrip.miniViewers) {
+                for (var key in this.referenceStrip.miniViewers) {
+                    this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, true);
+                }
+            }
+        }
+    },
+
+    /**
+     * Adds the given button to this viewer.
+     *
+     * @function
+     * @param {OpenSeadragon.Button} button
+     */
+    addButton: function( button ){
+        this.buttonGroup.addButton(button);
     },
 
     /**
@@ -1390,7 +1449,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
      *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
-     * requests.
      * @param {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", which is the resulting instance of TiledImage.
@@ -1438,10 +1496,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
-        if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
-            options.ajaxHeaders = this.ajaxHeaders;
-        } else if ($.isPlainObject(options.ajaxHeaders) && $.isPlainObject(this.ajaxHeaders)) {
-            options.ajaxHeaders = $.extend({}, this.ajaxHeaders, options.ajaxHeaders);
+        if (!$.isPlainObject(options.ajaxHeaders)) {
+            options.ajaxHeaders = {};
         }
 
         var myQueueItem = {
@@ -1548,6 +1604,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     minZoomImageRatio: _this.minZoomImageRatio,
                     wrapHorizontal: _this.wrapHorizontal,
                     wrapVertical: _this.wrapVertical,
+                    maxTilesPerFrame: _this.maxTilesPerFrame,
                     immediateRender: _this.immediateRender,
                     blendTime: _this.blendTime,
                     alwaysBlend: _this.alwaysBlend,
@@ -2757,7 +2814,7 @@ function onCanvasKeyDown( event ) {
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
-            case 38://up arrow
+            case 38://up arrow/shift uparrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(1.1);
@@ -2768,7 +2825,7 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
-            case 40://down arrow
+            case 40://down arrow/shift downarrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
                   if ( event.shift ) {
                     this.viewport.zoomBy(0.9);
@@ -2793,6 +2850,84 @@ function onCanvasKeyDown( event ) {
                 }
                 event.preventDefault = true;
                 break;
+            case 187://=|+
+                this.viewport.zoomBy(1.1);
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 189://-|_
+                this.viewport.zoomBy(0.9);
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 48://0|)
+                this.viewport.goHome();
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 87://W/w
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(1.1);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
+                    }
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 83://S/s
+                if (!canvasKeyDownEventArgs.preventVerticalPan) {
+                    if ( event.shift ) {
+                        this.viewport.zoomBy(0.9);
+                    } else {
+                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
+                    }
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 65://a/A
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 68://d/D
+                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
+                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
+                    this.viewport.applyConstraints();
+                }
+                event.preventDefault = true;
+                break;
+            case 82: //r - clockwise rotation/R - counterclockwise rotation
+                if(event.shift){
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    }
+                }else{
+                    if(this.viewport.flipped){
+                        this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
+                    } else{
+                        this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
+                    }
+                }
+                this.viewport.applyConstraints();
+                event.preventDefault = true;
+                break;
+            case 70: //f/F
+                this.viewport.toggleFlip();
+                event.preventDefault = true;
+                break;
+            case 74: //j - previous image source
+                this.goToPreviousPage();
+                break;
+            case 75: //k - next image source
+                this.goToNextPage();
+                break;
             default:
                 //console.log( 'navigator keycode %s', event.keyCode );
                 event.preventDefault = false;
@@ -2802,12 +2937,10 @@ function onCanvasKeyDown( event ) {
         event.preventDefault = false;
     }
 }
+
 function onCanvasKeyPress( event ) {
     var canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: false,
-      preventVerticalPan: event.preventVerticalPan || !this.panVertical,
-      preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
 
     /**
@@ -2818,108 +2951,11 @@ function onCanvasKeyPress( event ) {
      * @type {object}
      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
      * @property {Object} originalEvent - The original DOM event.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent default keyboard behaviour. Default: false.
-     * @property {Boolean} preventVerticalPan - Set to true to prevent keyboard vertical panning. Default: false.
-     * @property {Boolean} preventHorizontalPan - Set to true to prevent keyboard horizontal panning. Default: false.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
+
     this.raiseEvent('canvas-key-press', canvasKeyPressEventArgs);
-
-    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
-            case 43://=|+
-            case 61://=|+
-                this.viewport.zoomBy(1.1);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 45://-|_
-                this.viewport.zoomBy(0.9);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 48://0|)
-                this.viewport.goHome();
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 119://w
-            case 87://W
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(1.1);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                    }
-                    this.viewport.applyConstraints();
-                  }
-                  event.preventDefault = true;
-                  break;
-            case 115://s
-            case 83://S
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 97://a
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 100://d
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 114: //r - clockwise rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 82: //R - counterclockwise  rotation
-              if(this.viewport.flipped){
-                this.viewport.setRotation(this.viewport.getRotation() + this.rotationIncrement);
-              } else{
-                this.viewport.setRotation(this.viewport.getRotation() - this.rotationIncrement);
-              }
-              this.viewport.applyConstraints();
-              event.preventDefault = true;
-              break;
-            case 102: //f
-              this.viewport.toggleFlip();
-              event.preventDefault = true;
-              break;
-            case 106: //j - previous image source
-              this.goToPreviousPage();
-              break;
-            case 107: //k - next image source
-              this.goToNextPage();
-              break;
-            default:
-                // console.log( 'navigator keycode %s', event.keyCode );
-                event.preventDefault = false;
-                break;
-        }
-    } else {
-        event.preventDefault = false;
-    }
 }
-
-
 
 function onCanvasClick( event ) {
     var gestureSettings;
@@ -3431,9 +3467,47 @@ function onCanvasPinch( event ) {
                 event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
             var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
                 event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
+            centerPt = this.viewport.pointFromPixel( event.center, true );
+            this.viewport.rotateTo(this.viewport.getRotation(true) + ((angle1 - angle2) * (180 / Math.PI)), centerPt, true);
         }
     }
+}
+
+function onCanvasFocus( event ) {
+
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element gets keyboard focus.
+     *
+     * @event canvas-focus
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-focus', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
+}
+
+function onCanvasBlur( event ) {
+    /**
+     * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
+     *
+     * @event canvas-blur
+     * @memberof OpenSeadragon.Viewer
+     * @type {object}
+     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+     * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+     * @property {Object} originalEvent - The original DOM event.
+     * @property {?Object} userData - Arbitrary subscriber-defined object.
+     */
+    this.raiseEvent( 'canvas-blur', {
+        tracker: event.eventSource,
+        originalEvent: event.originalEvent
+    });
 }
 
 function onCanvasScroll( event ) {

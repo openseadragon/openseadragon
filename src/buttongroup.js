@@ -2,7 +2,7 @@
  * OpenSeadragon - ButtonGroup
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -111,6 +111,17 @@ $.ButtonGroup = function( options ) {
 
 /** @lends OpenSeadragon.ButtonGroup.prototype */
 $.ButtonGroup.prototype = {
+
+    /**
+     * Adds the given button to this button group.
+     *
+     * @function
+     * @param {OpenSeadragon.Button} button
+     */
+    addButton: function( button ){
+        this.buttons.push(button);
+        this.element.appendChild(button.element);
+    },
 
     /**
      * TODO: Figure out why this is used on the public API and if a more useful

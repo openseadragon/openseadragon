@@ -245,4 +245,130 @@
             tileSource: staticHeaderTileSource
         });
     });
+
+    QUnit.test('Viewer headers can be updated', function(assert) {
+        var done = assert.async();
+
+        var newHeaders = {
+            'X-Viewer-Header': 'ViewerHeaderValue-Updated',
+            'X-Viewer-Header2': 'ViewerHeaderValue2'
+        }
+        var newHeaders2 = {
+            Range: 'test',
+        }
+
+        var tileLoaded = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            // set new Viewer headers and propagate to TiledImage and Tile
+            viewer.setAjaxHeaders(newHeaders);
+            viewer.addHandler('tile-loaded', tileLoaded2);
+        };
+
+        var tileLoaded2 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded2);
+            assert.deepEqual(viewer.ajaxHeaders, newHeaders);
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, newHeaders);
+            assert.deepEqual(
+                evt.tile.ajaxHeaders,
+                OpenSeadragon.extend(
+                    {}, viewer.ajaxHeaders, evt.tiledImage.ajaxHeaders,
+                    { Range: getTileRangeHeader(evt.tile.level, evt.tile.x, evt.tile.y) }
+                )
+            );
+            // set new Viewer headers and propagate to TiledImage and Tile
+            viewer.setAjaxHeaders(newHeaders2, true);
+            viewer.addHandler('tile-loaded', tileLoaded3);
+        };
+
+        var tileLoaded3 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded3);
+            assert.deepEqual(viewer.ajaxHeaders, newHeaders2);
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, newHeaders2);
+            assert.equal(evt.tile.ajaxHeaders['X-Viewer-Header'], undefined);
+            assert.equal(evt.tile.ajaxHeaders['X-Viewer-Header2'], undefined);
+            // 'Range' header entry set per tile and must not be overwritten by Viewer header
+            assert.equal(evt.tile.ajaxHeaders.Range, getTileRangeHeader(evt.tile.level, evt.tile.x, evt.tile.y));
+            // set new Viewer headers but do not propagate to TiledImage and Tile
+            viewer.setAjaxHeaders(newHeaders, false);
+            viewer.addHandler('tile-loaded', tileLoaded4);
+        };
+
+        var tileLoaded4 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded4);
+            assert.deepEqual(viewer.ajaxHeaders, newHeaders);
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, newHeaders2);
+            assert.equal(evt.tile.ajaxHeaders['X-Viewer-Header'], undefined);
+            assert.equal(evt.tile.ajaxHeaders['X-Viewer-Header2'], undefined);
+            done();
+        };
+
+        viewer.addHandler('tile-loaded', tileLoaded);
+        viewer.open(customTileSource);
+    });
+
+    QUnit.test('TiledImage headers can be updated', function(assert) {
+        var done = assert.async();
+
+        var tileSourceHeaders = {
+            'X-Tile-Header': 'TileHeaderValue'
+        }
+        var newHeaders = {
+            'X-TiledImage-Header': 'TiledImageHeaderValue-Updated',
+            'X-TiledImage-Header2': 'TiledImageHeaderValue2'
+        }
+        var newHeaders2 = {
+            'X-Viewer-Header': 'ViewerHeaderValue-Updated',
+            'X-Tile-Header': 'TileHeaderValue-Updated'
+        }
+
+        var tileLoaded = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            // set new TiledImage headers and propagate to Tile
+            evt.tiledImage.setAjaxHeaders(newHeaders);
+            viewer.addHandler('tile-loaded', tileLoaded2);
+        };
+
+        var tileLoaded2 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded2);
+            assert.deepEqual(viewer.ajaxHeaders, { 'X-Viewer-Header': 'ViewerHeaderValue' });
+            assert.deepEqual(evt.tiledImage._ownAjaxHeaders, newHeaders);
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders));
+            assert.deepEqual(evt.tile.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders, tileSourceHeaders));
+            // set new TiledImage headers (that overwrite header entries of Viewer and Tile) and propagate to Tile
+            evt.tiledImage.setAjaxHeaders(newHeaders2, true);
+            viewer.addHandler('tile-loaded', tileLoaded3);
+        };
+
+        var tileLoaded3 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded3);
+            assert.deepEqual(viewer.ajaxHeaders, { 'X-Viewer-Header': 'ViewerHeaderValue' });
+            assert.deepEqual(evt.tiledImage._ownAjaxHeaders, newHeaders2);
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders2));
+            assert.deepEqual(evt.tile.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders2, tileSourceHeaders));
+            // set new TiledImage headers but do not propagate to Tile
+            evt.tiledImage.setAjaxHeaders(null, false);
+            viewer.addHandler('tile-loaded', tileLoaded4);
+        };
+
+        var tileLoaded4 = function tileLoaded(evt) {
+            viewer.removeHandler('tile-loaded', tileLoaded4);
+            assert.deepEqual(viewer.ajaxHeaders, { 'X-Viewer-Header': 'ViewerHeaderValue' });
+            assert.deepEqual(evt.tiledImage._ownAjaxHeaders, {});
+            assert.deepEqual(evt.tiledImage.ajaxHeaders, viewer.ajaxHeaders);
+            assert.deepEqual(evt.tile.ajaxHeaders, OpenSeadragon.extend({}, viewer.ajaxHeaders, newHeaders2, tileSourceHeaders));
+            done();
+        };
+
+        viewer.addHandler('tile-loaded', tileLoaded);
+        viewer.addTiledImage({
+            ajaxHeaders: {
+                'X-TiledImage-Header': 'TiledImageHeaderValue'
+            },
+            tileSource: OpenSeadragon.extend({}, customTileSource, {
+                getTileAjaxHeaders: function() {
+                    return tileSourceHeaders;
+                }
+            }),
+        });
+    });
 })();

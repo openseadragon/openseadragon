@@ -2,7 +2,7 @@
  * OpenSeadragon - IIIFTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -138,6 +138,18 @@ $.IIIFTileSource = function( options ){
         } else {
             var maxScaleFactor = Math.max.apply(null, this.scale_factors);
             options.maxLevel = Math.round(Math.log(maxScaleFactor) * Math.LOG2E);
+        }
+    }
+
+    // Create an array with our exact resolution sizes if these have been supplied
+    if( this.sizes ) {
+        var sizeLength = this.sizes.length;
+        if ( (sizeLength === options.maxLevel) || (sizeLength === options.maxLevel + 1) ) {
+            this.levelSizes = this.sizes;
+            // Need to take into account that the list may or may not include the full resolution size
+            if( sizeLength === options.maxLevel ) {
+                this.levelSizes.push( {width: this.width, height: this.height} );
+            }
         }
     }
 
@@ -333,7 +345,17 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             }
         }
 
-        return $.TileSource.prototype.getNumTiles.call(this, level);
+        // Use supplied list of scaled resolution sizes if these exist
+        if( this.levelSizes ) {
+            var levelSize = this.levelSizes[level];
+            var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
+                y = Math.ceil( levelSize.height / this.getTileHeight(level) );
+            return new $.Point( x, y );
+        }
+        // Otherwise call default TileSource->getNumTiles() function
+        else {
+            return $.TileSource.prototype.getNumTiles.call(this, level);
+        }
     },
 
 
@@ -348,6 +370,34 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             return new $.Point(0, 0);
         }
 
+        // Use supplied list of scaled resolution sizes if these exist
+        if( this.levelSizes ) {
+
+            var validPoint = point.x >= 0 && point.x <= 1 &&
+                             point.y >= 0 && point.y <= 1 / this.aspectRatio;
+            $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
+
+            var widthScaled = this.levelSizes[level].width;
+            var pixelX = point.x * widthScaled;
+            var pixelY = point.y * widthScaled;
+
+            var x = Math.floor(pixelX / this.getTileWidth(level));
+            var y = Math.floor(pixelY / this.getTileHeight(level));
+
+            // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
+            // return the last tile of the row/column
+            if (point.x >= 1) {
+                x = this.getNumTiles(level).x - 1;
+            }
+            var EPSILON = 1e-15;
+            if (point.y >= 1 / this.aspectRatio - EPSILON) {
+                y = this.getNumTiles(level).y - 1;
+            }
+
+            return new $.Point(x, y);
+        }
+
+        // Otherwise call default TileSource->getTileAtPoint() function
         return $.TileSource.prototype.getTileAtPoint.call(this, level, point);
     },
 
@@ -375,10 +425,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         var IIIF_ROTATION = '0',
             //## get the scale (level as a decimal)
             scale = Math.pow( 0.5, this.maxLevel - level ),
-
             //# image dimensions at this level
-            levelWidth = Math.round( this.width * scale ),
-            levelHeight = Math.round( this.height * scale ),
+            levelWidth,
+            levelHeight,
 
             //## iiif region
             tileWidth,
@@ -395,6 +444,17 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             iiifSizeH,
             iiifQuality,
             uri;
+
+        // Use supplied list of scaled resolution sizes if these exist
+        if( this.levelSizes ) {
+            levelWidth = this.levelSizes[level].width;
+            levelHeight = this.levelSizes[level].height;
+        }
+        // Otherwise calculate the sizes ourselves
+        else {
+            levelWidth = Math.ceil( this.width * scale );
+            levelHeight = Math.ceil( this.height * scale );
+        }
 
         tileWidth = this.getTileWidth(level);
         tileHeight = this.getTileHeight(level);
@@ -426,8 +486,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             } else {
                 iiifRegion = [ iiifTileX, iiifTileY, iiifTileW, iiifTileH ].join( ',' );
             }
-            iiifSizeW = Math.round( iiifTileW * scale );
-            iiifSizeH = Math.round( iiifTileH * scale );
+            iiifSizeW = Math.min( tileWidth, levelWidth - (x * tileWidth) );
+            iiifSizeH = Math.min( tileHeight, levelHeight - (y * tileHeight) );
             if ( this.version === 2 && iiifSizeW === this.width ) {
                 iiifSize = "full";
             } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {

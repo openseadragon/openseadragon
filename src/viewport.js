@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewport
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2023 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -711,6 +711,8 @@ $.Viewport.prototype = {
 
         if(constraints){
             this.panTo(center, false);
+
+            newZoom = this._applyZoomConstraints(newZoom);
             this.zoomTo(newZoom, null, false);
 
             var constrainedBounds = this.getConstrainedBounds();
@@ -1076,7 +1078,10 @@ $.Viewport.prototype = {
 
         if( this.viewer ){
             /**
-             * Raised when the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             * Raised when a viewer resize operation is initiated (see {@link OpenSeadragon.Viewport#resize}).
+             * This event happens before the viewport bounds have been updated.
+             * See also {@link OpenSeadragon.Viewer#after-resize} which reflects
+             * the new viewport bounds following the resize action.
              *
              * @event resize
              * @memberof OpenSeadragon.Viewer
@@ -1092,7 +1097,29 @@ $.Viewport.prototype = {
             });
         }
 
-        return this.fitBounds( newBounds, true );
+        var output = this.fitBounds( newBounds, true );
+
+        if( this.viewer ){
+            /**
+             * Raised after the viewer is resized (see {@link OpenSeadragon.Viewport#resize}).
+             * See also {@link OpenSeadragon.Viewer#resize} event which happens
+             * before the new bounds have been calculated and applied.
+             *
+             * @event after-resize
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+             * @property {OpenSeadragon.Point} newContainerSize
+             * @property {Boolean} maintain
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.viewer.raiseEvent( 'after-resize', {
+                newContainerSize: newContainerSize,
+                maintain: maintain
+            });
+        }
+
+        return output;
     },
 
     // private
