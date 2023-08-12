@@ -35,7 +35,7 @@
 (function ( $ ) {
 
 // dictionary from id to private properties
-var THIS = {};
+const THIS = {};
 
 /**
  *  The CollectionDrawer is a reimplementation if the Drawer API that
@@ -84,42 +84,43 @@ $.ReferenceStrip = function ( options ) {
     //     viewer:      this
     // });
 
-    var _this       = this,
-        viewer      = options.viewer,
-        viewerSize  = $.getElementSize( viewer.element ),
-        element,
-        style,
-        i;
+    const viewer      = options.viewer,
+          viewerSize  = $.getElementSize( viewer.element );
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if ( !options.id ) {
-        options.id              = 'referencestrip-' + $.now();
-        this.element            = $.makeNeutralElement( "div" );
-        this.element.id         = options.id;
-        this.element.className  = 'referencestrip';
+        options.id                   = 'referencestrip-' + $.now();
+        this.stripElement            = $.makeNeutralElement( "div" );
+        this.stripElement.id         = options.id;
+        this.stripElement.className  = 'referencestrip';
     }
 
-    options = $.extend( true, {
-        sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
-        position:   $.DEFAULT_SETTINGS.referenceStripPosition,
-        scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
-        clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold
-    }, options, {
-        element:                this.element
-    } );
+    options = $.extend(
+        true,
+        {
+            sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
+            position:   $.DEFAULT_SETTINGS.referenceStripPosition,
+            scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
+            clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold
+        },
+        options,
+        {
+            element:    this.stripElement
+        }
+    );
 
     $.extend( this, options );
     //Private state properties
     THIS[this.id] = {
-        animating:           false
+        animating:      false
     };
 
     this.minPixelRatio = this.viewer.minPixelRatio;
 
-    this.element.tabIndex = 0;
+    this.stripElement.tabIndex = 0;
 
-    style = this.element.style;
+    const style = this.stripElement.style;
     style.marginTop     = '0px';
     style.marginRight   = '0px';
     style.marginBottom  = '0px';
@@ -130,14 +131,14 @@ $.ReferenceStrip = function ( options ) {
     style.background    = '#000';
     style.position      = 'relative';
 
-    $.setElementTouchActionNone( this.element );
+    $.setElementTouchActionNone( this.stripElement );
 
-    $.setElementOpacity( this.element, 0.8 );
+    $.setElementOpacity( this.stripElement, 0.8 );
 
     this.viewer = viewer;
     this.tracker = new $.MouseTracker( {
         userData:       'ReferenceStrip.tracker',
-        element:        this.element,
+        element:        this.stripElement,
         clickHandler:   $.delegate( this, onStripClick ),
         dragHandler:    $.delegate( this, onStripDrag ),
         scrollHandler:  $.delegate( this, onStripScroll ),
@@ -159,10 +160,10 @@ $.ReferenceStrip = function ( options ) {
         this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 12;
         this.panelHeight = ( viewerSize.y * this.sizeRatio );
 
-        this.element.style.width  = options.width + 'px';
-        this.element.style.height = options.height + 'px';
+        this.stripElement.style.width  = options.width + 'px';
+        this.stripElement.style.height = options.height + 'px';
         viewer.addControl(
-            this.element,
+            this.stripElement,
             { anchor: $.ControlAnchor.BOTTOM_LEFT }
         );
     } else {
@@ -170,30 +171,30 @@ $.ReferenceStrip = function ( options ) {
             this.panelWidth = ( viewerSize.x * this.sizeRatio ) + 12;
             this.panelHeight = ( viewerSize.y * this.sizeRatio );
 
-            this.element.style.width = (
+            this.stripElement.style.width = (
                 this.panelWidth *
                 viewer.tileSources.length
             ) + 'px';
 
-            this.element.style.height = this.panelHeight + 'px';
+            this.stripElement.style.height = this.panelHeight + 'px';
 
             viewer.addControl(
-                this.element,
+                this.stripElement,
                 { anchor: $.ControlAnchor.BOTTOM_LEFT }
             );
         } else {
             this.panelWidth = ( viewerSize.x * this.sizeRatio );
             this.panelHeight = ( viewerSize.y * this.sizeRatio ) + 12;
 
-            this.element.style.height = (
+            this.stripElement.style.height = (
                 this.panelHeight *
                 viewer.tileSources.length
             ) + 'px';
 
-            this.element.style.width = this.panelWidth + 'px';
+            this.stripElement.style.width = this.panelWidth + 'px';
 
             viewer.addControl(
-                this.element,
+                this.stripElement,
                 { anchor: $.ControlAnchor.TOP_LEFT }
             );
 
@@ -204,26 +205,27 @@ $.ReferenceStrip = function ( options ) {
     this.miniViewers = {};
 
     /*jshint loopfunc:true*/
-    for ( i = 0; i < viewer.tileSources.length; i++ ) {
+    for ( let i = 0; i < viewer.tileSources.length; i++ ) {
 
-        element = $.makeNeutralElement( 'div' );
-        element.id = this.element.id + "-" + i;
+        const panelElement = $.makeNeutralElement( 'div' );
 
-        element.style.width         = _this.panelWidth + 'px';
-        element.style.height        = _this.panelHeight + 'px';
-        element.style.display       = 'inline';
-        element.style['float']      = 'left'; //Webkit
-        element.style.cssFloat      = 'left'; //Firefox
-        element.style.styleFloat    = 'left'; //IE
-        element.style.padding       = '2px';
-        $.setElementTouchActionNone( element );
-        $.setElementPointerEventsNone( element );
+        panelElement.id = this.stripElement.id + "-" + i;
 
-        this.element.appendChild( element );
+        panelElement.style.width         = this.panelWidth + 'px';
+        panelElement.style.height        = this.panelHeight + 'px';
+        panelElement.style.display       = 'inline';
+        panelElement.style['float']      = 'left'; //Webkit
+        panelElement.style.cssFloat      = 'left'; //Firefox
+        panelElement.style.styleFloat    = 'left'; //IE
+        panelElement.style.padding       = '2px';
+        $.setElementTouchActionNone( panelElement );
+        $.setElementPointerEventsNone( panelElement );
 
-        element.activePanel = false;
+        this.stripElement.appendChild( panelElement );
 
-        this.panels.push( element );
+        panelElement.activePanel = false;
+
+        this.panels.push( panelElement );
 
     }
     loadPanels( this, this.scroll === 'vertical' ? viewerSize.y : viewerSize.x, 0 );
@@ -238,42 +240,41 @@ $.ReferenceStrip.prototype = {
      * @function
      */
     setFocus: function ( page ) {
-        var element      = this.element.querySelector('#' + this.element.id + '-' + page ),
-            viewerSize   = $.getElementSize( this.viewer.canvas ),
-            scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-            scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-            offsetLeft   = -Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-            offsetTop    = -Number( this.element.style.marginTop.replace( 'px', '' ) ),
-            offset;
+        const panelElement = this.stripElement.querySelector('#' + this.stripElement.id + '-' + page ),
+              viewerSize   = $.getElementSize( this.viewer.canvas ),
+              scrollWidth  = Number( this.stripElement.style.width.replace( 'px', '' ) ),
+              scrollHeight = Number( this.stripElement.style.height.replace( 'px', '' ) ),
+              offsetLeft   = -Number( this.stripElement.style.marginLeft.replace( 'px', '' ) ),
+              offsetTop    = -Number( this.stripElement.style.marginTop.replace( 'px', '' ) );
 
-        if ( this.currentSelected !== element ) {
+        if ( this.currentSelected !== panelElement ) {
             if ( this.currentSelected ) {
                 this.currentSelected.style.background = '#000';
             }
-            this.currentSelected = element;
+            this.currentSelected = panelElement;
             this.currentSelected.style.background = '#999';
 
             if ( 'horizontal' === this.scroll ) {
                 //right left
-                offset = ( Number( page ) ) * ( this.panelWidth + 3 );
+                let offset = ( Number( page ) ) * ( this.panelWidth + 3 );
                 if ( offset > offsetLeft + viewerSize.x - this.panelWidth ) {
                     offset = Math.min( offset, ( scrollWidth - viewerSize.x ) );
-                    this.element.style.marginLeft = -offset + 'px';
+                    this.stripElement.style.marginLeft = -offset + 'px';
                     loadPanels( this, viewerSize.x, -offset );
                 } else if ( offset < offsetLeft ) {
                     offset = Math.max( 0, offset - viewerSize.x / 2 );
-                    this.element.style.marginLeft = -offset + 'px';
+                    this.stripElement.style.marginLeft = -offset + 'px';
                     loadPanels( this, viewerSize.x, -offset );
                 }
             } else {
-                offset = ( Number( page ) ) * ( this.panelHeight + 3 );
+                let offset = ( Number( page ) ) * ( this.panelHeight + 3 );
                 if ( offset > offsetTop + viewerSize.y - this.panelHeight ) {
                     offset = Math.min( offset, ( scrollHeight - viewerSize.y ) );
-                    this.element.style.marginTop = -offset + 'px';
+                    this.stripElement.style.marginTop = -offset + 'px';
                     loadPanels( this, viewerSize.y, -offset );
                 } else if ( offset < offsetTop ) {
                     offset = Math.max( 0, offset - viewerSize.y / 2 );
-                    this.element.style.marginTop = -offset + 'px';
+                    this.stripElement.style.marginTop = -offset + 'px';
                     loadPanels( this, viewerSize.y, -offset );
                 }
             }
@@ -296,15 +297,15 @@ $.ReferenceStrip.prototype = {
 
     destroy: function() {
         if (this.miniViewers) {
-          for (var key in this.miniViewers) {
+          for (const key in this.miniViewers) {
             this.miniViewers[key].destroy();
           }
         }
 
         this.tracker.destroy();
 
-        if (this.element) {
-            this.viewer.removeControl( this.element );
+        if (this.stripElement) {
+            this.viewer.removeControl( this.stripElement );
         }
     }
 
@@ -318,7 +319,7 @@ $.ReferenceStrip.prototype = {
  */
 function onStripClick( event ) {
     if ( event.quick ) {
-        var page;
+        let page;
 
         if ( 'horizontal' === this.scroll ) {
             // // +4px fix to solve problem with precision on thumbnail selection if there is a lot of them
@@ -333,7 +334,7 @@ function onStripClick( event ) {
         this.viewer.goToPage( page );
     }
 
-    this.element.focus();
+    this.stripElement.focus();
 }
 
 
@@ -344,25 +345,24 @@ function onStripClick( event ) {
  */
 function onStripDrag( event ) {
 
-    this.dragging = true;
-    if ( this.element ) {
-        var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-        scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize   = $.getElementSize( this.viewer.canvas );
+    if ( this.stripElement ) {
+        const offsetLeft   = Number( this.stripElement.style.marginLeft.replace( 'px', '' ) ),
+              offsetTop    = Number( this.stripElement.style.marginTop.replace( 'px', '' ) ),
+              scrollWidth  = Number( this.stripElement.style.width.replace( 'px', '' ) ),
+              scrollHeight = Number( this.stripElement.style.height.replace( 'px', '' ) ),
+              viewerSize   = $.getElementSize( this.viewer.canvas );
 
         if ( 'horizontal' === this.scroll ) {
             if ( -event.delta.x > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
-                    this.element.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
+                    this.stripElement.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
                     loadPanels( this, viewerSize.x, offsetLeft + ( event.delta.x * 2 ) );
                 }
             } else if ( -event.delta.x < 0 ) {
                 //reverse
                 if ( offsetLeft < 0 ) {
-                    this.element.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
+                    this.stripElement.style.marginLeft = ( offsetLeft + ( event.delta.x * 2 ) ) + 'px';
                     loadPanels( this, viewerSize.x, offsetLeft + ( event.delta.x * 2 ) );
                 }
             }
@@ -370,13 +370,13 @@ function onStripDrag( event ) {
             if ( -event.delta.y > 0 ) {
                 //forward
                 if ( offsetTop > -( scrollHeight - viewerSize.y ) ) {
-                    this.element.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
                     loadPanels( this, viewerSize.y, offsetTop + ( event.delta.y * 2 ) );
                 }
             } else if ( -event.delta.y < 0 ) {
                 //reverse
                 if ( offsetTop < 0 ) {
-                    this.element.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.delta.y * 2 ) ) + 'px';
                     loadPanels( this, viewerSize.y, offsetTop + ( event.delta.y * 2 ) );
                 }
             }
@@ -393,24 +393,24 @@ function onStripDrag( event ) {
  * @function
  */
 function onStripScroll( event ) {
-    if ( this.element ) {
-        var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-        scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize   = $.getElementSize( this.viewer.canvas );
+    if ( this.stripElement ) {
+        const offsetLeft   = Number( this.stripElement.style.marginLeft.replace( 'px', '' ) ),
+              offsetTop    = Number( this.stripElement.style.marginTop.replace( 'px', '' ) ),
+              scrollWidth  = Number( this.stripElement.style.width.replace( 'px', '' ) ),
+              scrollHeight = Number( this.stripElement.style.height.replace( 'px', '' ) ),
+              viewerSize   = $.getElementSize( this.viewer.canvas );
 
         if ( 'horizontal' === this.scroll ) {
             if ( event.scroll > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
-                    this.element.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
+                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
                     loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
                 }
             } else if ( event.scroll < 0 ) {
                 //reverse
                 if ( offsetLeft < 0 ) {
-                    this.element.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
+                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
                     loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
                 }
             }
@@ -418,13 +418,13 @@ function onStripScroll( event ) {
             if ( event.scroll < 0 ) {
                 //scroll up
                 if ( offsetTop > viewerSize.y - scrollHeight ) {
-                    this.element.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
                     loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
                 }
             } else if ( event.scroll > 0 ) {
                 //scroll dowm
                 if ( offsetTop < 0 ) {
-                    this.element.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
                     loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
                 }
             }
@@ -436,27 +436,22 @@ function onStripScroll( event ) {
 
 
 function loadPanels( strip, viewerSize, scroll ) {
-    var panelSize,
-        activePanelsStart,
-        activePanelsEnd,
-        miniViewer,
-        i,
-        element;
+    let panelSize;
     if ( 'horizontal' === strip.scroll ) {
         panelSize = strip.panelWidth;
     } else {
         panelSize = strip.panelHeight;
     }
-    activePanelsStart = Math.ceil( viewerSize / panelSize ) + 5;
-    activePanelsEnd = Math.ceil( ( Math.abs( scroll ) + viewerSize ) / panelSize ) + 1;
+    const activePanelsEnd = Math.ceil( ( Math.abs( scroll ) + viewerSize ) / panelSize ) + 1;
+    let activePanelsStart = Math.ceil( viewerSize / panelSize ) + 5;
     activePanelsStart = activePanelsEnd - activePanelsStart;
     activePanelsStart = activePanelsStart < 0 ? 0 : activePanelsStart;
 
-    for ( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ) {
-        element = strip.panels[i];
-        if ( !element.activePanel ) {
-            var miniTileSource;
-            var originalTileSource = strip.viewer.tileSources[i];
+    for ( let i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ) {
+        const panelElement = strip.panels[i];
+        if ( !panelElement.activePanel ) {
+            const originalTileSource = strip.viewer.tileSources[i];
+            let miniTileSource;
             if (originalTileSource.referenceStripThumbnailUrl) {
                 miniTileSource = {
                     type: 'image',
@@ -465,10 +460,10 @@ function loadPanels( strip, viewerSize, scroll ) {
             } else {
                 miniTileSource = originalTileSource;
             }
-            miniViewer = new $.Viewer( {
-                id:                     element.id,
+            const miniViewer = new $.Viewer( {
+                id:                     panelElement.id,
                 tileSources:            [miniTileSource],
-                element:                element,
+                element:                panelElement,
                 navigatorSizeRatio:     strip.sizeRatio,
                 showNavigator:          false,
                 mouseNavEnabled:        false,
@@ -490,9 +485,9 @@ function loadPanels( strip, viewerSize, scroll ) {
             miniViewer.innerTracker.setTracking( false );
             miniViewer.outerTracker.setTracking( false );
 
-            strip.miniViewers[element.id] = miniViewer;
+            strip.miniViewers[panelElement.id] = miniViewer;
 
-            element.activePanel = true;
+            panelElement.activePanel = true;
         }
     }
 }
@@ -504,7 +499,7 @@ function loadPanels( strip, viewerSize, scroll ) {
  * @function
  */
 function onStripEnter( event ) {
-    var element = event.eventSource.element;
+    const element = event.eventSource.element;
 
     //$.setElementOpacity(element, 0.8);
 
@@ -531,7 +526,7 @@ function onStripEnter( event ) {
  * @function
  */
 function onStripLeave( event ) {
-    var element = event.eventSource.element;
+    const element = event.eventSource.element;
 
     if ( 'horizontal' === this.scroll ) {
 
