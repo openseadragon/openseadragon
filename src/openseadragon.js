@@ -645,17 +645,66 @@
   *     If sequenceMode is true, then display a scrolling strip of image thumbnails for
   *     navigating through the images.
   *
+  * @property {Element} [referenceStripElement=null]
+  *     The element to hold the reference strip.
+  *     If an element is specified, the Id option (see referenceStripId) is ignored.
+  *     If no element nor ID is specified, a div element will be generated accordingly.
+  *
   * @property {Element} [referenceStripId=null]
+  *     The ID of a div to hold the reference strip.
+  *     If an ID is specified, the referenceStripPosition, referenceStripSizeRatio, referenceStripMaintainSizeRatio, referenceStrip[Top|Left|Height|Width], referenceStripAutoHide and referenceStripAutoFade options will be ignored.
+  *     If an ID is not specified, a div element will be generated and placed on top of the main image.
   *
   * @property {String} [referenceStripScroll='horizontal']
+  *     The orientation of the reference strip. Valid values are 'horizontal' and 'vertical'
   *
   * @property {String} [referenceStripPosition='BOTTOM_LEFT']
+  *     Valid values are 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', or 'ABSOLUTE'.<br>
+  *     If 'ABSOLUTE' is specified, then referenceStrip[Top|Left|Height|Width] determines the size and position of the reference strip in the viewer, and referenceStripSizeRatio and referenceStripMaintainSizeRatio are ignored.<br>
+  *     For 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', and 'BOTTOM_RIGHT', the referenceStripSizeRatio or referenceStrip[Height|Width] values determine the size of the reference strip.
   *
   * @property {Number} [referenceStripSizeRatio=0.2]
+  *     Ratio of reference strip size to viewer size. Ignored if referenceStrip[Height|Width] are specified.
   *
-  * @property {Number} [referenceStripHeight=null]
+  * @property {Boolean} [referenceStripMaintainSizeRatio=false]
+  *     If true, the reference strip is resized (using referenceStripSizeRatio) when the viewer size changes.
   *
-  * @property {Number} [referenceStripWidth=null]
+  * @property {Number|String} [referenceStripTop=null]
+  *     Specifies the location of the reference strip (see referenceStripPosition).
+  *
+  * @property {Number|String} [referenceStripLeft=null]
+  *     Specifies the location of the reference strip (see referenceStripPosition).
+  *
+  * @property {Number|String} [referenceStripHeight=null]
+  *     Specifies the size of the reference strip (see referenceStripPosition).
+  *     If specified, referenceStripSizeRatio is ignored.
+  *
+  * @property {Number|String} [referenceStripWidth=null]
+  *     Specifies the size of the reference strip (see referenceStripPosition).
+  *     If specified, referenceStripSizeRatio is ignored.
+  *
+  * @property {Boolean} [referenceStripAutoResize=true]
+  *     When true and reference strip is embedded in its Viewer,the reference strip will automatically resize when its Viewer size changes.
+  *
+  * @property {Boolean} [referenceStripAutoHide=true]
+  *     If the user stops interacting with the reference strip, hide the reference strip.
+  *
+  * @property {Number} [referenceStripAutoHideFactor=0.5]
+  *     Amount of the reference strip to auto hide when referenceStripAutoHide is true.
+  *     Valid values are 0.0 to 1.0, where 1.0 hides the entire strip, 0.5 hides half the strip, etc.
+  *
+  * @property {Boolean} [referenceStripAutoFade=true]
+  *     If the user stops interacting with the viewport, fade the reference strip.
+  *     Setting to false will make the reference strip always visible.
+  *
+  * @property {String} [referenceStripBackground='#000']
+  *     Specifies the background color of the reference strip
+  *
+  * @property {Number} [referenceStripOpacity=0.8]
+  *     Specifies the opacity of the reference strip.
+  *
+  * @property {String} [referenceStripBorderColor='#555']
+  *     Specifies the border color of the reference strip
   *
   * @property {Boolean} [collectionMode=false]
   *     Set to true to have the viewer arrange your TiledImages in a grid or line.
@@ -1347,13 +1396,24 @@ function OpenSeadragon( options ){
             subPixelRoundingForTransparency:   null,
 
             //REFERENCE STRIP SETTINGS
-            showReferenceStrip:          false,
-            referenceStripId:            null,
-            referenceStripScroll:       'horizontal',
-            referenceStripPosition:      'BOTTOM_LEFT',
-            referenceStripSizeRatio:     0.2,
-            referenceStripHeight:        null,
-            referenceStripWidth:         null,
+            showReferenceStrip:              false,
+            referenceStripElement:           null,
+            referenceStripId:                null,
+            referenceStripScroll:            'horizontal',
+            referenceStripPosition:          'BOTTOM_LEFT',
+            referenceStripSizeRatio:         0.2,
+            referenceStripMaintainSizeRatio: false,
+            referenceStripTop:               null,
+            referenceStripLeft:              null,
+            referenceStripHeight:            null,
+            referenceStripWidth:             null,
+            referenceStripAutoResize:        true,
+            referenceStripAutoHide:          true,
+            referenceStripAutoHideFactor:    0.5,
+            referenceStripAutoFade:          true,
+            referenceStripBackground:        '#000',
+            referenceStripOpacity:           0.8,
+            referenceStripBorderColor:       '#555',
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows:         3, //or columns depending on layout

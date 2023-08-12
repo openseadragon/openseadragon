@@ -63,15 +63,47 @@ const THIS = {};
  */
 $.ReferenceStrip = function ( options ) {
     // //REFERENCE STRIP SETTINGS ($.DEFAULT_SETTINGS)
-    // showReferenceStrip:          false,
-    // referenceStripId:            null,
-    // referenceStripScroll:        'horizontal',
-    // referenceStripPosition:      'BOTTOM_LEFT',
-    // referenceStripSizeRatio:     0.2,
-    // referenceStripHeight:        null,
-    // referenceStripWidth:         null,
+    // showReferenceStrip:           false,
+    // referenceStripElement:        null,
+    // referenceStripId:             null,
+    // referenceStripScroll:         'horizontal',
+    // referenceStripPosition:       'BOTTOM_LEFT',
+    // referenceStripSizeRatio:      0.2,
+    // referenceStripMaintainSizeRatio: false,
+    // referenceStripTop:            null,
+    // referenceStripLeft:           null,
+    // referenceStripHeight:         null,
+    // referenceStripWidth:          null,
+    // referenceStripAutoResize:     true,
+    // referenceStripAutoHide:       true,
+    // referenceStripAutoHideFactor: 0.5,
+    // referenceStripAutoFade:       true,
+    // referenceStripBackground:     '#000',
+    // referenceStripOpacity:        0.8,
+    // referenceStripBorderColor:    '#555',
 
     // this.referenceStrip = new $.ReferenceStrip({
+    //     viewer:            this,
+    //     element:           this.referenceStripElement,
+    //     id:                this.referenceStripId,
+    //     scroll:            this.referenceStripScroll,
+    //     position:          this.referenceStripPosition,
+    //     sizeRatio:         this.referenceStripSizeRatio,
+    //     maintainSizeRatio: this.referenceStripMaintainSizeRatio,
+    //     top:               this.referenceStripTop,
+    //     left:              this.referenceStripLeft,
+    //     width:             this.referenceStripWidth,
+    //     height:            this.referenceStripHeight,
+    //     autoResize:        this.referenceStripAutoResize,
+    //     autoHide:          this.referenceStripAutoHide,
+    //     autoHideFactor:    this.referenceStripAutoHideFactor,
+    //     autoFade:          this.referenceStripAutoFade,
+    //     background:        this.referenceStripBackground,
+    //     opacity:           this.referenceStripOpacity,
+    //     borderColor:       this.referenceStripBorderColor,
+    //     //TODO
+    //     //crossOriginPolicy: this.crossOriginPolicy,
+
     //     viewer:      this,
     //     id:          this.referenceStripId,
     //     scroll:      this.referenceStripScroll,
@@ -96,9 +128,27 @@ $.ReferenceStrip = function ( options ) {
     options = $.extend(
         true,
         {
-            sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
-            position:   $.DEFAULT_SETTINGS.referenceStripPosition,
-            scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
+            // // Viewer passes these commented options always...
+            // // We only need these if ReferenceStrip constructor is made usable outside of Viewer
+            // element:             $.DEFAULT_SETTINGS.referenceStripElement,
+            // id:                  $.DEFAULT_SETTINGS.referenceStripId,
+            // scroll:              $.DEFAULT_SETTINGS.referenceStripScroll,
+            // position:            $.DEFAULT_SETTINGS.referenceStripPosition,
+            // sizeRatio:           $.DEFAULT_SETTINGS.referenceStripSizeRatio,
+            // maintainSizeRatio:   $.DEFAULT_SETTINGS.referenceStripMaintainSizeRatio,
+            // top:                 $.DEFAULT_SETTINGS.referenceStripTop,
+            // left:                $.DEFAULT_SETTINGS.referenceStripLeft,
+            // width:               $.DEFAULT_SETTINGS.referenceStripWidth,
+            // height:              $.DEFAULT_SETTINGS.referenceStripHeight,
+            // autoResize:          $.DEFAULT_SETTINGS.referenceStripAutoResize,
+            // autoHide:            $.DEFAULT_SETTINGS.referenceStripAutoHide,
+            // autoHideFactor:      $.DEFAULT_SETTINGS.referenceStripAutoHideFactor,
+            // autoFade:            $.DEFAULT_SETTINGS.referenceStripAutoFade,
+            // background:          $.DEFAULT_SETTINGS.referenceStripBackground,
+            // opacity:             $.DEFAULT_SETTINGS.referenceStripOpacity,
+            // borderColor:         $.DEFAULT_SETTINGS.referenceStripBorderColor,
+            clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold,
+            clickDistThreshold:  $.DEFAULT_SETTINGS.clickDistThreshold,
         },
         options
     );
@@ -109,8 +159,6 @@ $.ReferenceStrip = function ( options ) {
     THIS[this.id] = {
         animating:      false
     };
-
-    this.minPixelRatio = this.viewer.minPixelRatio;
 
     this.stripElement.tabIndex = 0;
 
@@ -130,17 +178,17 @@ $.ReferenceStrip = function ( options ) {
     $.setElementOpacity( this.stripElement, 0.8 );
 
     this.stripTracker = new $.MouseTracker( {
-        userData:       'ReferenceStrip.stripTracker',
-        element:        this.stripElement,
-        clickTimeThreshold: viewer.clickTimeThreshold || $.DEFAULT_SETTINGS.clickTimeThreshold,
-        clickDistThreshold: viewer.clickDistThreshold || $.DEFAULT_SETTINGS.clickDistThreshold,
-        clickHandler:   $.delegate( this, onStripClick ),
-        dragHandler:    $.delegate( this, onStripDrag ),
-        scrollHandler:  $.delegate( this, onStripScroll ),
-        enterHandler:   $.delegate( this, onStripEnter ),
-        leaveHandler:   $.delegate( this, onStripLeave ),
-        keyDownHandler: $.delegate( this, onStripKeyDown ),
-        keyHandler:     $.delegate( this, onStripKeyPress ),
+        userData:           'ReferenceStrip.stripTracker',
+        element:            this.stripElement,
+        clickTimeThreshold: this.clickTimeThreshold,
+        clickDistThreshold: this.clickDistThreshold,
+        clickHandler:       $.delegate( this, onStripClick ),
+        dragHandler:        $.delegate( this, onStripDrag ),
+        scrollHandler:      $.delegate( this, onStripScroll ),
+        enterHandler:       $.delegate( this, onStripEnter ),
+        leaveHandler:       $.delegate( this, onStripLeave ),
+        keyDownHandler:     $.delegate( this, onStripKeyDown ),
+        keyHandler:         $.delegate( this, onStripKeyPress ),
         preProcessEventHandler: function (eventInfo) {
             if (eventInfo.eventType === 'wheel') {
                 eventInfo.preventDefault = true;
@@ -231,6 +279,52 @@ $.ReferenceStrip = function ( options ) {
 /** @lends OpenSeadragon.ReferenceStrip.prototype */
 $.ReferenceStrip.prototype = {
 
+    //TODO reference strip auto resize
+
+    // /**
+    //  * Used to notify the reference strip when its size has changed.
+    //  * Especially useful when {@link OpenSeadragon.Options}.referenceStripAutoResize is set to false and the reference strip is resizable.
+    //  * @function
+    //  */
+    // updateSize: function () {
+    //     if ( this.viewport ) {
+    //         var containerSize = new $.Point(
+    //                 (this.container.clientWidth === 0 ? 1 : this.container.clientWidth),
+    //                 (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
+    //             );
+
+    //         if ( !containerSize.equals( this.oldContainerSize ) ) {
+    //             this.viewport.resize( containerSize, true );
+    //             this.viewport.goHome(true);
+    //             this.oldContainerSize = containerSize;
+    //             this.drawer.clear();
+    //             this.world.draw();
+    //         }
+    //     }
+    // },
+
+    // /**
+    //  * Explicitly sets the width of the reference strip, in web coordinates. Disables automatic resizing.
+    //  * @param {Number|String} width - the new width, either a number of pixels or a CSS string, such as "100%"
+    //  */
+    // setWidth: function(width) {
+    //     this.width = width;
+    //     this.element.style.width = typeof (width) === "number" ? (width + 'px') : width;
+    //     this._resizeWithViewer = false;
+    //     this.updateSize();
+    // },
+
+    // /**
+    //  * Explicitly sets the height of the reference strip, in web coordinates. Disables automatic resizing.
+    //  * @param {Number|String} height - the new height, either a number of pixels or a CSS string, such as "100%"
+    //  */
+    // setHeight: function(height) {
+    //     this.height = height;
+    //     this.element.style.height = typeof (height) === "number" ? (height + 'px') : height;
+    //     this._resizeWithViewer = false;
+    //     this.updateSize();
+    // },
+
     /**
      * @function
      */
@@ -287,6 +381,35 @@ $.ReferenceStrip.prototype = {
             // $.console.log( 'image reference strip update' );
             return true;
         }
+
+        //TODO reference strip auto resize
+
+        // var viewerSize,
+        //     newWidth,
+        //     newHeight;
+
+        // viewerSize = $.getElementSize( this.viewer.element );
+        // if ( this._resizeWithViewer && viewerSize.x && viewerSize.y && !viewerSize.equals( this.oldViewerSize ) ) {
+        //     this.oldViewerSize = viewerSize;
+
+        //     if ( this.maintainSizeRatio || !this.elementArea) {
+        //         newWidth  = viewerSize.x * this.sizeRatio;
+        //         newHeight = viewerSize.y * this.sizeRatio;
+        //     } else {
+        //         newWidth = Math.sqrt(this.elementArea * (viewerSize.x / viewerSize.y));
+        //         newHeight = this.elementArea / newWidth;
+        //     }
+
+        //     this.element.style.width  = Math.round( newWidth ) + 'px';
+        //     this.element.style.height = Math.round( newHeight ) + 'px';
+
+        //     if (!this.elementArea) {
+        //         this.elementArea = newWidth * newHeight;
+        //     }
+
+        //     this.updateSize();
+        // }
+
         return false;
     },
 
@@ -459,17 +582,13 @@ function loadPanels( strip, viewerSize, scroll ) {
                 id:                     panelElement.id,
                 tileSources:            [miniTileSource],
                 element:                panelElement,
-                navigatorSizeRatio:     strip.sizeRatio,
-                showNavigator:          false,
                 mouseNavEnabled:        false,
                 showNavigationControl:  false,
-                showSequenceControl:    false,
                 immediateRender:        true,
                 blendTime:              0,
                 animationTime:          0,
                 loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
                 ajaxHeaders:            strip.viewer.ajaxHeaders,
-                useCanvas:              strip.viewer.useCanvas || $.DEFAULT_SETTINGS.useCanvas
             } );
             // Allow pointer events to pass through miniViewer's canvas/container
             //   elements so implicit pointer capture works on touch devices
@@ -564,7 +683,7 @@ function onStripKeyDown( event ) {
                 event.preventDefault = true;
                 break;
             default:
-                //console.log( 'navigator keycode %s', event.keyCode );
+                //console.log( 'reference strip keycode %s', event.keyCode );
                 event.preventDefault = false;
                 break;
         }
@@ -612,7 +731,7 @@ function onStripKeyPress( event ) {
                 event.preventDefault = true;
                 break;
             default:
-                //console.log( 'navigator keycode %s', event.keyCode );
+                //console.log( 'reference strip keycode %s', event.keyCode );
                 event.preventDefault = false;
                 break;
         }
