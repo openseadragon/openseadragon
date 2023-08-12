@@ -645,17 +645,17 @@
   *     If sequenceMode is true, then display a scrolling strip of image thumbnails for
   *     navigating through the images.
   *
-  * @property {String} [referenceStripScroll='horizontal']
-  *
   * @property {Element} [referenceStripId=null]
   *
-  * @property {Number} [referenceStripHeight=null]
-  *
-  * @property {Number} [referenceStripWidth=null]
+  * @property {String} [referenceStripScroll='horizontal']
   *
   * @property {String} [referenceStripPosition='BOTTOM_LEFT']
   *
   * @property {Number} [referenceStripSizeRatio=0.2]
+  *
+  * @property {Number} [referenceStripHeight=null]
+  *
+  * @property {Number} [referenceStripWidth=null]
   *
   * @property {Boolean} [collectionMode=false]
   *     Set to true to have the viewer arrange your TiledImages in a grid or line.
@@ -1348,12 +1348,12 @@ function OpenSeadragon( options ){
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
-            referenceStripScroll:       'horizontal',
             referenceStripId:            null,
-            referenceStripHeight:        null,
-            referenceStripWidth:         null,
+            referenceStripScroll:       'horizontal',
             referenceStripPosition:      'BOTTOM_LEFT',
             referenceStripSizeRatio:     0.2,
+            referenceStripHeight:        null,
+            referenceStripWidth:         null,
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows:         3, //or columns depending on layout

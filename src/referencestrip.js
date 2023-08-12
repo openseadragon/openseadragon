@@ -64,24 +64,21 @@ const THIS = {};
 $.ReferenceStrip = function ( options ) {
     // //REFERENCE STRIP SETTINGS ($.DEFAULT_SETTINGS)
     // showReferenceStrip:          false,
-    // referenceStripScroll:        'horizontal',
     // referenceStripId:            null,
-    // referenceStripHeight:        null,
-    // referenceStripWidth:         null,
+    // referenceStripScroll:        'horizontal',
     // referenceStripPosition:      'BOTTOM_LEFT',
     // referenceStripSizeRatio:     0.2,
+    // referenceStripHeight:        null,
+    // referenceStripWidth:         null,
 
     // this.referenceStrip = new $.ReferenceStrip({
+    //     viewer:      this,
     //     id:          this.referenceStripId,
+    //     scroll:      this.referenceStripScroll,
     //     position:    this.referenceStripPosition,
     //     sizeRatio:   this.referenceStripSizeRatio,
-    //     scroll:      this.referenceStripScroll,
     //     height:      this.referenceStripHeight,
-    //     width:       this.referenceStripWidth,
-    //     tileSources: this.tileSources,
-    //     prefixUrl:   this.prefixUrl,
-    //     useCanvas:   this.useCanvas,
-    //     viewer:      this
+    //     width:       this.referenceStripWidth
     // });
 
     const viewer      = options.viewer,
@@ -102,15 +99,12 @@ $.ReferenceStrip = function ( options ) {
             sizeRatio:  $.DEFAULT_SETTINGS.referenceStripSizeRatio,
             position:   $.DEFAULT_SETTINGS.referenceStripPosition,
             scroll:     $.DEFAULT_SETTINGS.referenceStripScroll,
-            clickTimeThreshold:  $.DEFAULT_SETTINGS.clickTimeThreshold
         },
-        options,
-        {
-            element:    this.stripElement
-        }
+        options
     );
 
     $.extend( this, options );
+
     //Private state properties
     THIS[this.id] = {
         animating:      false
@@ -135,17 +129,18 @@ $.ReferenceStrip = function ( options ) {
 
     $.setElementOpacity( this.stripElement, 0.8 );
 
-    this.viewer = viewer;
-    this.tracker = new $.MouseTracker( {
-        userData:       'ReferenceStrip.tracker',
+    this.stripTracker = new $.MouseTracker( {
+        userData:       'ReferenceStrip.stripTracker',
         element:        this.stripElement,
+        clickTimeThreshold: viewer.clickTimeThreshold || $.DEFAULT_SETTINGS.clickTimeThreshold,
+        clickDistThreshold: viewer.clickDistThreshold || $.DEFAULT_SETTINGS.clickDistThreshold,
         clickHandler:   $.delegate( this, onStripClick ),
         dragHandler:    $.delegate( this, onStripDrag ),
         scrollHandler:  $.delegate( this, onStripScroll ),
         enterHandler:   $.delegate( this, onStripEnter ),
         leaveHandler:   $.delegate( this, onStripLeave ),
-        keyDownHandler: $.delegate( this, onKeyDown ),
-        keyHandler:     $.delegate( this, onKeyPress ),
+        keyDownHandler: $.delegate( this, onStripKeyDown ),
+        keyHandler:     $.delegate( this, onStripKeyPress ),
         preProcessEventHandler: function (eventInfo) {
             if (eventInfo.eventType === 'wheel') {
                 eventInfo.preventDefault = true;
@@ -280,7 +275,7 @@ $.ReferenceStrip.prototype = {
             }
 
             this.currentPage = page;
-            onStripEnter.call( this, { eventSource: this.tracker } );
+            onStripEnter.call( this, { eventSource: this.stripTracker } );
         }
     },
 
@@ -302,7 +297,7 @@ $.ReferenceStrip.prototype = {
           }
         }
 
-        this.tracker.destroy();
+        this.stripTracker.destroy();
 
         if (this.stripElement) {
             this.viewer.removeControl( this.stripElement );
@@ -404,28 +399,28 @@ function onStripScroll( event ) {
             if ( event.scroll > 0 ) {
                 //forward
                 if ( offsetLeft > -( scrollWidth - viewerSize.x ) ) {
-                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
+                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 50 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 50 ) );
                 }
             } else if ( event.scroll < 0 ) {
                 //reverse
                 if ( offsetLeft < 0 ) {
-                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 60 ) );
+                    this.stripElement.style.marginLeft = ( offsetLeft - ( event.scroll * 50 ) ) + 'px';
+                    loadPanels( this, viewerSize.x, offsetLeft - ( event.scroll * 50 ) );
                 }
             }
         } else {
             if ( event.scroll < 0 ) {
                 //scroll up
                 if ( offsetTop > viewerSize.y - scrollHeight ) {
-                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 50 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 50 ) );
                 }
             } else if ( event.scroll > 0 ) {
                 //scroll dowm
                 if ( offsetTop < 0 ) {
-                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 60 ) ) + 'px';
-                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 60 ) );
+                    this.stripElement.style.marginTop = ( offsetTop + ( event.scroll * 50 ) ) + 'px';
+                    loadPanels( this, viewerSize.y, offsetTop + ( event.scroll * 50 ) );
                 }
             }
         }
@@ -474,7 +469,7 @@ function loadPanels( strip, viewerSize, scroll ) {
                 animationTime:          0,
                 loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
                 ajaxHeaders:            strip.viewer.ajaxHeaders,
-                useCanvas:              strip.useCanvas
+                useCanvas:              strip.viewer.useCanvas || $.DEFAULT_SETTINGS.useCanvas
             } );
             // Allow pointer events to pass through miniViewer's canvas/container
             //   elements so implicit pointer capture works on touch devices
@@ -547,25 +542,25 @@ function onStripLeave( event ) {
  * @inner
  * @function
  */
-function onKeyDown( event ) {
+function onStripKeyDown( event ) {
     //console.log( event.keyCode );
 
     if ( !event.ctrl && !event.alt && !event.meta ) {
         switch ( event.keyCode ) {
             case 38: //up arrow
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: 1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 40: //down arrow
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: -1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 37: //left arrow
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: -1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 39: //right arrow
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: 1, shift: null } );
                 event.preventDefault = true;
                 break;
             default:
@@ -584,36 +579,36 @@ function onKeyDown( event ) {
  * @inner
  * @function
  */
-function onKeyPress( event ) {
+function onStripKeyPress( event ) {
     //console.log( event.keyCode );
 
     if ( !event.ctrl && !event.alt && !event.meta ) {
         switch ( event.keyCode ) {
             case 61: //=|+
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: 1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 45: //-|_
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: -1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 48: //0|)
             case 119: //w
             case 87: //W
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: 1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 115: //s
             case 83: //S
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: -1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 97: //a
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: -1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: -1, shift: null } );
                 event.preventDefault = true;
                 break;
             case 100: //d
-                onStripScroll.call( this, { eventSource: this.tracker, position: null, scroll: 1, shift: null } );
+                onStripScroll.call( this, { eventSource: this.stripTracker, position: null, scroll: 1, shift: null } );
                 event.preventDefault = true;
                 break;
             default:

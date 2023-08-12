@@ -2395,16 +2395,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (this.tileSources.length && this.tileSources.length > 1) {
                 this.referenceStrip = new $.ReferenceStrip({
+                    viewer:      this,
                     id:          this.referenceStripId,
+                    scroll:      this.referenceStripScroll,
                     position:    this.referenceStripPosition,
                     sizeRatio:   this.referenceStripSizeRatio,
-                    scroll:      this.referenceStripScroll,
                     height:      this.referenceStripHeight,
-                    width:       this.referenceStripWidth,
-                    tileSources: this.tileSources,
-                    prefixUrl:   this.prefixUrl,
-                    useCanvas:   this.useCanvas,
-                    viewer:      this
+                    width:       this.referenceStripWidth
                 });
 
                 this.referenceStrip.setFocus( this._sequenceIndex );
