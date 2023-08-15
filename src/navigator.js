@@ -162,7 +162,7 @@ $.Navigator = function( options ){
     this.displayRegion.className = 'displayregion';
 
     (function( style, borderWidth ){
-        style.position      = 'relative';
+        if (style.position === 'static') { style.position = 'relative'; }
         style.top           = '0px';
         style.left          = '0px';
         style.fontSize      = '0px';
