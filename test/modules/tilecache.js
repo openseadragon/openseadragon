@@ -31,6 +31,9 @@
             url: 'foo.jpg',
             cacheKey: 'foo.jpg',
             image: {},
+            loaded: true,
+            tiledImage: fakeTiledImage0,
+            _caches: [],
             unload: function() {}
         };
 
@@ -38,6 +41,9 @@
             url: 'foo.jpg',
             cacheKey: 'foo.jpg',
             image: {},
+            loaded: true,
+            tiledImage: fakeTiledImage1,
+            _caches: [],
             unload: function() {}
         };
 
@@ -84,6 +90,9 @@
             url: 'different.jpg',
             cacheKey: 'different.jpg',
             image: {},
+            loaded: true,
+            tiledImage: fakeTiledImage0,
+            _caches: [],
             unload: function() {}
         };
 
@@ -91,6 +100,9 @@
             url: 'same.jpg',
             cacheKey: 'same.jpg',
             image: {},
+            loaded: true,
+            tiledImage: fakeTiledImage0,
+            _caches: [],
             unload: function() {}
         };
 
@@ -98,6 +110,9 @@
             url: 'same.jpg',
             cacheKey: 'same.jpg',
             image: {},
+            loaded: true,
+            tiledImage: fakeTiledImage0,
+            _caches: [],
             unload: function() {}
         };
 

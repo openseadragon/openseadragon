@@ -112,12 +112,38 @@ $.ImageJob.prototype = {
      * Finish this job.
      * @param {*} data data that has been downloaded
      * @param {XMLHttpRequest} request reference to the request if used
-     * @param {string} errorMessage description upon failure
+     * @param {string} dataType data type identifier
+     *   old behavior: dataType treated as errorMessage if data is falsey value
      */
-    finish: function(data, request, errorMessage ) {
+    finish: function(data, request, dataType) {
+        // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
+        if (data === null || data === undefined || data === false) {
+            this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
+            return;
+        }
+
         this.data = data;
         this.request = request;
+        this.errorMsg = null;
+        this.dataType = dataType;
+
+        if (this.jobId) {
+            window.clearTimeout(this.jobId);
+        }
+
+        this.callback(this);
+    },
+
+    /**
+     * Finish this job as a failure.
+     * @param {string} errorMessage description upon failure
+     * @param {XMLHttpRequest} request reference to the request if used
+     */
+    fail: function(errorMessage, request) {
+        this.data = null;
+        this.request = request;
         this.errorMsg = errorMessage;
+        this.dataType = null;
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
@@ -180,10 +206,7 @@ $.ImageLoader.prototype = {
             };
         }
 
-        var _this = this,
-            complete = function(job) {
-                completeJob(_this, job, options.callback);
-            },
+        const _this = this,
             jobOptions = {
                 src: options.src,
                 tile: options.tile || {},
@@ -193,7 +216,7 @@ $.ImageLoader.prototype = {
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
                 postData: options.postData,
-                callback: complete,
+                callback: (job) => completeJob(_this, job, options.callback),
                 abort: options.abort,
                 timeout: this.timeout
             },
@@ -234,10 +257,10 @@ $.ImageLoader.prototype = {
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
-    if (job.errorMsg !== '' && (job.data === null || job.data === undefined) && job.tries < 1 + loader.tileRetryMax) {
+    if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax) {
         loader.failedTiles.push(job);
     }
-    var nextJob;
+    let nextJob;
 
     loader.jobsInProgress--;
 
@@ -249,15 +272,15 @@ function completeJob(loader, job, callback) {
 
     if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
         if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
-             nextJob = loader.failedTiles.shift();
-             setTimeout(function () {
-                 nextJob.start();
-             }, loader.tileRetryDelay);
-             loader.jobsInProgress++;
-         }
-     }
+            nextJob = loader.failedTiles.shift();
+            setTimeout(function () {
+                nextJob.start();
+            }, loader.tileRetryDelay);
+            loader.jobsInProgress++;
+        }
+    }
 
-    callback(job.data, job.errorMsg, job.request);
+    callback(job.data, job.errorMsg, job.request, job.dataType);
 }
 
 }(OpenSeadragon));

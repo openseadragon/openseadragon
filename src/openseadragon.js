@@ -838,16 +838,20 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
-            '[object Boolean]':       'boolean',
-            '[object Number]':        'number',
-            '[object String]':        'string',
-            '[object Function]':      'function',
-            '[object AsyncFunction]': 'function',
-            '[object Promise]':       'promise',
-            '[object Array]':         'array',
-            '[object Date]':          'date',
-            '[object RegExp]':        'regexp',
-            '[object Object]':        'object'
+            '[object Boolean]':                  'boolean',
+            '[object Number]':                   'number',
+            '[object String]':                   'string',
+            '[object Function]':                 'function',
+            '[object AsyncFunction]':            'function',
+            '[object Promise]':                  'promise',
+            '[object Array]':                    'array',
+            '[object Date]':                     'date',
+            '[object RegExp]':                   'regexp',
+            '[object Object]':                   'object',
+            '[object HTMLUnknownElement]':       'dom-node',
+            '[object HTMLImageElement]':         'image',
+            '[object HTMLCanvasElement]':        'canvas',
+            '[object CanvasRenderingContext2D]': 'context2d'
         },
         // Save a reference to some core methods
         toString    = Object.prototype.toString,
@@ -2375,6 +2379,7 @@ function OpenSeadragon( options ){
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
+            // FIXME ^ are we ready to drop legacy support? since we abandoned old ES...
             if( $.isPlainObject( url ) ){
                 onSuccess = url.success;
                 onError = url.error;

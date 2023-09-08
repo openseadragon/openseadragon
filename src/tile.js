@@ -45,8 +45,8 @@
  * @param {Boolean} exists Is this tile a part of a sparse image? ( Also has
  *      this tile failed to load? )
  * @param {String|Function} url The URL of this tile's image or a function that returns a url.
- * @param {CanvasRenderingContext2D} context2D The context2D of this tile if it
- *      is provided directly by the tile source.
+ * @param {CanvasRenderingContext2D} [context2D=undefined] The context2D of this tile if it
+ *  *      is provided directly by the tile source. Deprecated: use Tile::setCache(...) instead.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
  * @param {Object} ajaxHeaders The headers to send with this tile's AJAX request (if applicable).
  * @param {OpenSeadragon.Rect} sourceBounds The portion of the tile to use as the source of the
@@ -115,7 +115,9 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @member {CanvasRenderingContext2D} context2D
      * @memberOf OpenSeadragon.Tile#
      */
-    this.context2D = context2D;
+    if (context2D) {
+        this.context2D = context2D;
+    }
     /**
      * Whether to load this tile's image with an AJAX request.
      * @member {Boolean} loadWithAjax
@@ -136,7 +138,8 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
         cacheKey = $.TileSource.prototype.getTileHashKey(level, x, y, url, ajaxHeaders, postData);
     }
     /**
-     * The unique cache key for this tile.
+     * The unique main cache key for this tile. Created automatically
+     *  from the given tiledImage.source.getTileHashKey(...) implementation.
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
      */
@@ -252,6 +255,24 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.isBottomMost = false;
+    /**
+     * FIXME: I would like to remove this reference but there is no way
+     *   to remove it since tile-unloaded event requires the tiledImage reference.
+     *   And, unloadTilesFor(tiledImage) in cache uses it too. Storing the
+     *   reference on a tile level rather than cache level is more efficient.
+     *
+     * Owner of this tile.
+     * @member {OpenSeadragon.TiledImage}
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.tiledImage = null;
+
+    /**
+     * Array of cached tile data associated with the tile.
+     * @member {Object} _caches
+     * @private
+     */
+    this._caches = {};
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -267,26 +288,12 @@ $.Tile.prototype = {
         return this.level + "/" + this.x + "_" + this.y;
     },
 
-    // private
-    _hasTransparencyChannel: function() {
-        console.warn("Tile.prototype._hasTransparencyChannel() has been " +
-            "deprecated and will be removed in the future. Use TileSource.prototype.hasTransparency() instead.");
-        return !!this.context2D || this.getUrl().match('.png');
-    },
-
     /**
      * Renders the tile in an html container.
      * @function
      * @param {Element} container
      */
     drawHTML: function( container ) {
-        if (!this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
-                this.toString());
-            return;
-        }
-
         if ( !this.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
@@ -297,10 +304,12 @@ $.Tile.prototype = {
 
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
-
         if ( !this.element ) {
-            var image = this.getImage();
+            const image = this.getImage();
             if (!image) {
+                $.console.warn(
+                    '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
+                    this.toString());
                 return;
             }
 
@@ -358,10 +367,10 @@ $.Tile.prototype = {
 
     /**
      * Get the Image object for this tile.
-     * @returns {Image}
+     * @returns {?Image}
      */
     getImage: function() {
-        return this.cacheImageRecord.getImage();
+        return this.getData("image");
     },
 
     /**
@@ -379,40 +388,143 @@ $.Tile.prototype = {
     /**
      * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
-     * @returns {CanvasRenderingContext2D}
+     * @returns {?CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
-        return this.context2D || this.cacheImageRecord.getRenderedContext();
+        return this.getData("context2d");
+    },
+
+    /**
+     * The context2D of this tile if it is provided directly by the tile source.
+     * @deprecated
+     * @type {CanvasRenderingContext2D} context2D
+     */
+    get context2D() {
+        $.console.error("[Tile.context2D] property has been deprecated. Use Tile::getCache().");
+        return this.getData("context2d");
+    },
+
+    /**
+     * The context2D of this tile if it is provided directly by the tile source.
+     * @deprecated
+     */
+    set context2D(value) {
+        $.console.error("[Tile.context2D] property has been deprecated. Use Tile::setCache().");
+        this.setData(value, "context2d");
+    },
+
+    /**
+     * The default cache for this tile.
+     * @deprecated
+     * @type OpenSeadragon.CacheRecord
+     */
+    get cacheImageRecord() {
+        $.console.error("[Tile.cacheImageRecord] property has been deprecated. Use Tile::getCache.");
+        return this.getCache(this.cacheKey);
+    },
+
+    /**
+     * The default cache for this tile.
+     * @deprecated
+     */
+    set cacheImageRecord(value) {
+        $.console.error("[Tile.cacheImageRecord] property has been deprecated. Use Tile::setCache.");
+        this._caches[this.cacheKey] = value;
+    },
+
+    /**
+     * Get the default data for this tile
+     * @param {?string} [type=undefined] data type to require
+     */
+    getData(type = undefined) {
+        const cache = this.getCache(this.cacheKey);
+        if (!cache) {
+            return undefined;
+        }
+        return cache.getData(type);
+    },
+
+    /**
+     * Invalidate the tile so that viewport gets updated.
+     */
+    save() {
+        this._needsDraw = true;
+    },
+
+    /**
+     * Set cache data
+     * @param {*} value
+     * @param {?string} [type=undefined] data type to require
+     */
+    setData(value, type = undefined) {
+        this.setCache(this.cacheKey, value, type);
+    },
+
+    /**
+     * Read tile cache data object (CacheRecord)
+     * @param {string} key cache key to read that belongs to this tile
+     * @return {OpenSeadragon.CacheRecord}
+     */
+    getCache: function(key) {
+        return this._caches[key];
+    },
+
+    /**
+     * Set tile cache, possibly multiple with custom key
+     * @param {string} key cache key, must be unique (we recommend re-using this.cacheTile
+     *   value and extend it with some another unique content, by default overrides the existing
+     *   main cache used for drawing, if not existing.
+     * @param {*} data data to cache - this data will be sent to the TileSource API for refinement.
+     * @param {?string} type data type, will be guessed if not provided
+     * @param [_safely=true] private
+     * @param [_cutoff=0] private
+     */
+    setCache: function(key, data, type = undefined, _safely = true, _cutoff = 0) {
+        type = type || $.convertor.guessType(data);
+
+        if (_safely && key === this.cacheKey) {
+            //todo later, we could have drawers register their supported rendering type
+            // and OpenSeadragon would check compatibility automatically, now we render
+            // using two main types so we check their ability
+            const conversion = $.convertor.getConversionPath(type, "canvas", "image");
+            $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
+                "to render. Make sure OpenSeadragon.convertor was taught to convert type: " + type);
+        }
+
+        this.tiledImage._tileCache.cacheTile({
+            data: data,
+            dataType: type,
+            tile: this,
+            cacheKey: key,
+            cutoff: _cutoff
+        });
     },
 
     /**
      * Renders the tile in a canvas-based context.
      * @function
-     * @param {Canvas} context
+     * @param {CanvasRenderingContext2D} context
      * @param {Function} drawingHandler - Method for firing the drawing event.
      * drawingHandler({context, tile, rendered})
      * where <code>rendered</code> is the context with the pre-drawn image.
      * @param {Number} [scale=1] - Apply a scale to position and size
      * @param {OpenSeadragon.Point} [translate] - A translation vector
      * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
-     * position and size of tiles supporting alpha channel in non-transparency
-     * context.
+     * position and size of tiles supporting alpha channel in non-transparency context.
      * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
      */
     drawCanvas: function( context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
 
         var position = this.position.times($.pixelDensityRatio),
             size     = this.size.times($.pixelDensityRatio),
-            rendered;
+            rendered = this.getCanvasContext();
 
-        if (!this.context2D && !this.cacheImageRecord) {
+        if (!rendered) {
             $.console.warn(
                 '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
                 this.toString());
             return;
         }
-
-        rendered = this.getCanvasContext();
 
         if ( !this.loaded || !rendered ){
             $.console.warn(
@@ -495,15 +607,11 @@ $.Tile.prototype = {
     /**
      * Get the ratio between current and original size.
      * @function
-     * @returns {Float}
+     * @returns {Number}
      */
     getScaleForEdgeSmoothing: function() {
-        var context;
-        if (this.cacheImageRecord) {
-            context = this.cacheImageRecord.getRenderedContext();
-        } else if (this.context2D) {
-            context = this.context2D;
-        } else {
+        const context = this.getCanvasContext();
+        if (!context) {
             $.console.warn(
                 '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
                 this.toString());
@@ -548,6 +656,8 @@ $.Tile.prototype = {
             this.element.parentNode.removeChild( this.element );
         }
 
+        this.tiledImage = null;
+        this._caches    = [];
         this.element    = null;
         this.imgElement = null;
         this.loaded     = false;

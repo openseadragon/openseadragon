@@ -176,10 +176,20 @@
 
     for ( var i in testLog ) {
         if ( testLog.hasOwnProperty( i ) && testLog[i].push ) {
+            //Tile.tiledImage creates circular reference, copy object to avoid and allow JSON serialization
+            const tileCircularStructureReplacer = function (key, value) {
+                if (value instanceof OpenSeadragon.Tile) {
+                    var instance = {};
+                    Object.assign(instance, value);
+                    delete value.tiledImage;
+                }
+                return value;
+            };
+
             testConsole[i] = ( function ( arr ) {
                 return function () {
                     var args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
-                    arr.push( JSON.stringify( args ) ); // Store as JSON to avoid tedious array-equality tests
+                    arr.push( JSON.stringify( args, tileCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
                 };
             } )( testLog[i] );
 

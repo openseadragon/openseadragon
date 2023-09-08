@@ -415,6 +415,7 @@ $.Viewer = function( options ) {
 
     // Create the tile cache
     this.tileCache = new $.TileCache({
+        viewer: this,
         maxImageCacheCount: this.maxImageCacheCount
     });
 
@@ -1434,7 +1435,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
      * @param {Number} [options.opacity=1] Proportional opacity of the tiled images (1=opaque, 0=hidden)
-     * @param {Boolean} [options.preload=false]  Default switch for loading hidden images (true loads, false blocks)
+     * @param {Boolean} [options.preload=false] Default switch for loading hidden images (true loads, false blocks)
+     * @param {Boolean} [options.zombieCache] In the case that this method removes any TiledImage instance,
+     *      allow the item-referenced cache to remain in memory even without active tiles. Default false.
      * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
      * @param {Boolean} [options.flipped=false] Whether to horizontally flip the image.
@@ -1576,6 +1579,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     if (newIndex !== -1) {
                         queueItem.options.index = newIndex;
                     }
+                    queueItem.options.replaceItem.allowZombieCache(queueItem.options.zombieCache || false);
                     _this.world.removeItem(queueItem.options.replaceItem);
                 }
 

@@ -69,6 +69,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Add the specified item.
      * @param {OpenSeadragon.TiledImage} item - The item to add.
+     * @param {Object} options - Options affecting insertion.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.World.event:metrics-change

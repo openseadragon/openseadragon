@@ -224,12 +224,13 @@
     });
 
     QUnit.test('FullScreen', function(assert) {
-        const done = assert.async();
         if (!OpenSeadragon.supportsFullScreen) {
+            const done = assert.async();
             assert.expect(0);
             done();
             return;
         }
+        var timeWatcher = Util.timeWatcher(assert, 7000);
 
         viewer.addHandler('open', function () {
             assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
@@ -244,7 +245,7 @@
                 viewer.removeHandler('full-screen', checkExitingFullScreen);
                 assert.ok(!event.fullScreen, 'Disabling fullscreen');
                 assert.ok(!OpenSeadragon.isFullScreen(), 'Fullscreen disabled');
-                done();
+                timeWatcher.done();
             }
 
             // The 'new' headless mode allows us to enter fullscreen, so verify
@@ -254,10 +255,10 @@
                 viewer.removeHandler('full-screen', checkAcquiredFullScreen);
                 viewer.addHandler('full-screen', checkExitingFullScreen);
                 assert.ok(event.fullScreen, 'Acquired fullscreen');
-                assert.ok(OpenSeadragon.isFullScreen(), 'Fullscreen enabled');
+                assert.ok(OpenSeadragon.isFullScreen(), 'Fullscreen enabled. Note: this test might fail ' +
+                    'because fullscreen might be blocked by your browser - not a trusted event!');
                 viewer.setFullScreen(false);
             };
-
 
             viewer.addHandler('pre-full-screen', checkEnteringPreFullScreen);
             viewer.addHandler('full-screen', checkAcquiredFullScreen);
@@ -330,7 +331,7 @@
                     height: 155
                 } ]
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
+        viewer.addOnceHandler('tile-drawn', function(e) {
             assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
                 "Canvas should be tainted.");
             done();

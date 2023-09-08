@@ -221,11 +221,12 @@
         viewer.addHandler('open', function() {
             var firstImage = viewer.world.getItemAt(0);
             firstImage.addHandler('fully-loaded-change', function() {
-                var imageData = viewer.drawer.context.getImageData(0, 0,
-                    500 * density, 500 * density);
+                var aX = Math.round(500 * density), aY = Math.round(500 * density);
+                var imageData = viewer.drawer.context.getImageData(0, 0, aX, aY);
 
                 // Pixel 250,250 will be in the hole of the A
-                var expectedVal = getPixelValue(imageData, 250 * density, 250 * density);
+                aX = Math.round(250 * density); aY = Math.round(250 * density);
+                var expectedVal = getPixelValue(imageData, aX, aY);
 
                 assert.notEqual(expectedVal.r, 0, 'Red channel should not be 0');
                 assert.notEqual(expectedVal.g, 0, 'Green channel should not be 0');
@@ -237,8 +238,10 @@
                     success: function() {
                         var secondImage = viewer.world.getItemAt(1);
                         secondImage.addHandler('fully-loaded-change', function() {
-                            var imageData = viewer.drawer.context.getImageData(0, 0, 500 * density, 500 * density);
-                            var actualVal = getPixelValue(imageData, 250 * density, 250 * density);
+                            var aX = Math.round(500 * density), aY = Math.round(500 * density);
+                            var imageData = viewer.drawer.context.getImageData(0, 0, aX, aY);
+                            aX = Math.round(250 * density); aY = Math.round(250 * density);
+                            var actualVal = getPixelValue(imageData, aX, aY);
 
                             assert.equal(actualVal.r, expectedVal.r,
                                 'Red channel should not change in transparent part of the A');
@@ -249,11 +252,12 @@
                             assert.equal(actualVal.a, expectedVal.a,
                                 'Alpha channel should not change in transparent part of the A');
 
-                            var onAVal = getPixelValue(imageData, 333 * density, 250 * density);
-                            assert.equal(onAVal.r, 0, 'Red channel should be null on the A');
-                            assert.equal(onAVal.g, 0, 'Green channel should be null on the A');
-                            assert.equal(onAVal.b, 0, 'Blue channel should be null on the A');
-                            assert.equal(onAVal.a, 255, 'Alpha channel should be 255 on the A');
+                            aX = Math.round(333 * density); aY = Math.round(250 * density);
+                            var onAVal = getPixelValue(imageData, aX, aY);
+                            assert.equal(onAVal.r, 0, 'Red channel should be null on the A pixel (' + aX + ', ' + aY + ')');
+                            assert.equal(onAVal.g, 0, 'Green channel should be null on the A pixel (' + aX + ', ' + aY + ')');
+                            assert.equal(onAVal.b, 0, 'Blue channel should be null on the A pixel (' + aX + ', ' + aY + ')');
+                            assert.equal(onAVal.a, 255, 'Alpha channel should be 255 on the A pixel (' + aX + ', ' + aY + ')');
 
                             done();
                         });
