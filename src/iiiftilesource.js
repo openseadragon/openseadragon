@@ -269,6 +269,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                     }
                 }
             }
+            data.sizes = data.sizes && data.sizes.sort(
+                ( size1, size2 ) => size1.width - size2.width
+            );
             return data;
         }
     },

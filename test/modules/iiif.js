@@ -141,6 +141,21 @@
             "width": 2000,
             "height": 1000,
             "profile": "level1"
+        },
+        infoJson3DescendingSizeOrder = {
+            "@context": "http://iiif.io/api/image/3/context.json",
+            "id": id,
+            "width": 2000,
+            "height": 1000,
+            "tiles": [
+                { "width": 512, "scaleFactors": [ 1, 2, 4 ] }
+            ],
+            "sizes": [
+                { width: 2000, height: 1000 },
+                { width: 1000, height: 500 },
+                { width: 500, height: 250 }
+            ],
+            "profile": "level1",
         };
 
     QUnit.module('IIIF');
@@ -246,6 +261,11 @@
         assert.equal(source3Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,512/0/default.jpg");
         assert.equal(source3Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,488/0/default.jpg");
         assert.equal(source3Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,488/0/default.jpg");
+
+        var source3DescendingSizeOrder = getSource(infoJson3DescendingSizeOrder);
+        assert.equal(source3DescendingSizeOrder.getTileUrl(0, 0, 0), "http://example.com/identifier/full/500,250/0/default.jpg");
+        assert.equal(source3DescendingSizeOrder.getTileUrl(1, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
+        assert.equal(source3DescendingSizeOrder.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
     });
 
 })();
