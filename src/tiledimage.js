@@ -1530,15 +1530,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             levelVisibility
         );
 
-        if (!tile.loaded) {
+        if (!tile.loaded && !tile.loading) {
             // Tile was created or its data removed: check whether cache has the data before downloading.
             if (!tile.cacheKey) {
                 tile.cacheKey = "";
-                this._setTileLoaded(tile, null);
-            } else {
-                const imageRecord = this._tileCache.getCacheRecord(tile.cacheKey);
-                if (imageRecord) {
-                    this._setTileLoaded(tile, imageRecord.getData());
+                tile.originalCacheKey = "";
+            }
+            const similarCacheRecord =
+                this._tileCache.getCacheRecord(tile.originalCacheKey) ||
+                this._tileCache.getCacheRecord(tile.cacheKey);
+
+            if (similarCacheRecord) {
+                const cutoff = this.source.getClosestLevel();
+                if (similarCacheRecord.loaded) {
+                    this._setTileLoaded(tile, similarCacheRecord.data, cutoff, null, similarCacheRecord.type);
+                } else {
+                    similarCacheRecord.getData().then(data =>
+                        this._setTileLoaded(tile, data, cutoff, null, similarCacheRecord.type));
                 }
             }
         }
@@ -1762,80 +1770,94 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @inner
      * @param {OpenSeadragon.Tile} tile
-     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object,
+     *   can be null: in that case, cache is assigned to a tile without further processing
      * @param {?Number} cutoff
      * @param {?XMLHttpRequest} tileRequest
      * @param {?String} [dataType=undefined] data type, derived automatically if not set
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
-        var increment = 0,
-            eventFinished = false,
-            _this = this;
-
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // -> reason why it is not in the constructor
         tile.setCache(tile.cacheKey, data, dataType, false, cutoff);
 
-        function getCompletionCallback() {
-            if (eventFinished) {
-                $.console.error("Event 'tile-loaded' argument getCompletionCallback must be called synchronously. " +
-                    "Its return value should be called asynchronously.");
-            }
-            increment++;
-            return completionCallback;
-        }
+        let resolver = null;
+        const _this = this,
+            finishPromise = new $.Promise(r => {
+                resolver = r;
+            });
 
         function completionCallback() {
-            increment--;
-            if (increment === 0) {
+            //do not override true if set (false is default)
+            tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
+                undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
+            );
+            //make sure cache data is ready for drawing, if not, request the desired format
+            const cache = tile.getCache(tile.cacheKey),
+                // TODO: dynamic type declaration from the drawer base class interface from v5.0 onwards
+                requiredType = _this._drawer.useCanvas ? "context2d" : "image";
+            if (!cache) {
+                $.console.warn("Tile %s not cached at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
+                resolver(tile);
+            } else if (cache.type !== requiredType) {
+                //initiate conversion as soon as possible if incompatible with the drawer
+                cache.getData(requiredType).then(_ => {
+                    tile.loading = false;
+                    tile.loaded = true;
+                    resolver(tile);
+                });
+            } else {
                 tile.loading = false;
                 tile.loaded = true;
-                //do not override true if set (false is default)
-                tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
-                    undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
-                );
-                //FIXME: design choice: cache tile now set automatically so users can do
-                // tile.getCache(...) inside this event, but maybe we would like to have users
-                // freedom to decide on the cache creation (note, tiles now MUST have cache, e.g.
-                // it is no longer possible to store all tiles in the memory as it was with context2D prop)
-                tile.save();
+                resolver(tile);
             }
+
+            //FIXME: design choice: cache tile now set automatically so users can do
+            // tile.getCache(...) inside this event, but maybe we would like to have users
+            // freedom to decide on the cache creation (note, tiles now MUST have cache, e.g.
+            // it is no longer possible to store all tiles in the memory as it was with context2D prop)
+            tile.save();
         }
 
-        const fallbackCompletion = getCompletionCallback();
         /**
          * Triggered when a tile has just been loaded in memory. That means that the
          * image has been downloaded and can be modified before being drawn to the canvas.
+         * This event awaits its handlers - they can return promises, or be async functions.
          *
-         * @event tile-loaded
+         * @event tile-loaded awaiting event
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {Image|*} image - The image (data) of the tile. Deprecated.
-         * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
+         * @property {*} data image data, the data sent to ImageJob.prototype.finish(),
+         *   by default an Image object. Deprecated
          * @property {String} dataType type of the data
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
-         * @property {function} getCompletionCallback - A function giving a callback to call
-         * when the asynchronous processing of the image is done. The image will be
-         * marked as entirely loaded when the callback has been called once for each
-         * call to getCompletionCallback.
+         * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
+         * @property {function} getCompletionCallback - deprecated
          */
-        this.viewer.raiseEvent("tile-loaded", {
+        const promise = this.viewer.raiseEventAwaiting("tile-loaded", {
             tile: tile,
             tiledImage: this,
             tileRequest: tileRequest,
+            promise: finishPromise,
             get image() {
-                $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'data' property instead.");
+                $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'tile.getData()' instead.");
                 return data;
             },
-            data: data,
-            dataType: dataType,
-            getCompletionCallback: getCompletionCallback
+            get data() {
+                $.console.error("[tile-loaded] event 'data' has been deprecated. Use 'tile.getData()' instead.");
+                return data;
+            },
+            getCompletionCallback: function () {
+                $.console.error("[tile-loaded] getCompletionCallback is not supported: it is compulsory to handle the event with async functions if applicable.");
+            },
         });
-        eventFinished = true;
-        // In case the completion callback is never called, we at least force it once.
-        fallbackCompletion();
+        promise.then(completionCallback).catch(() => {
+            $.console.error("[tile-loaded] event finished with failure: there might be a problem with a plugin you are using.");
+            completionCallback();
+        });
     },
 
     /**

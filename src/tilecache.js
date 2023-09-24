@@ -37,21 +37,50 @@
 /**
  * Cached Data Record, the cache object.
  * Keeps only latest object type required.
+ *
+ * This class acts like the Maybe type:
+ *  - it has 'loaded' flag indicating whether the tile data is ready
+ *  - it has 'data' property that has value if loaded=true
+ *
+ * Furthermore, it has a 'getData' function that returns a promise resolving
+ * with the value on the desired type passed to the function.
+ *
  * @typedef {{
- *    getImage: function,
+ *    destroy: function,
+ *    save: function,
  *    getData: function,
- *    getRenderedContext: function
+ *    data: ?,
+ *    loaded: boolean
  * }} OpenSeadragon.CacheRecord
  */
 $.CacheRecord = class {
     constructor() {
         this._tiles = [];
+        this._data = null;
+        this.loaded = false;
+        this._promise = $.Promise.resolve();
     }
 
     destroy() {
         this._tiles = null;
         this._data = null;
         this._type = null;
+        this.loaded = false;
+        //make sure this gets destroyed even if loaded=false
+        if (this.loaded) {
+            $.convertor.destroy(this._type, this._data);
+        } else {
+            this._promise.then(x => $.convertor.destroy(this._type, x));
+        }
+        this._promise = $.Promise.resolve();
+    }
+
+    get data() {
+        return this._data;
+    }
+
+    get type() {
+        return this._type;
     }
 
     save() {
@@ -60,48 +89,46 @@ $.CacheRecord = class {
         }
     }
 
-    get data() {
-        $.console.warn("[CacheRecord.data] is deprecated property. Use getData(...) instead!");
-        return this._data;
-    }
-
-    set data(value) {
-        //FIXME: addTile bit bad name, related to the issue mentioned elsewhere
-        $.console.warn("[CacheRecord.data] is deprecated property. Use addTile(...) instead!");
-        this._data = value;
-        this._type = $.convertor.guessType(value);
-    }
-
-    getImage() {
-        return this.getData("image");
-    }
-
-    getRenderedContext() {
-        return this.getData("context2d");
-    }
-
     getData(type = this._type) {
         if (type !== this._type) {
-            this._data = $.convertor.convert(this._data, this._type, type);
-            this._type = type;
+            if (!this.loaded) {
+                $.console.warn("Attempt to call getData with desired type %s, the tile data type is %s and the tile is not loaded!", type, this._type);
+                return this._promise;
+            }
+            this._convert(this._type, type);
         }
-        return this._data;
+        return this._promise;
     }
 
+    /**
+     * Add tile dependency on this record
+     * @param tile
+     * @param data
+     * @param type
+     */
     addTile(tile, data, type) {
         $.console.assert(tile, '[CacheRecord.addTile] tile is required');
 
         //allow overriding the cache - existing tile or different type
         if (this._tiles.includes(tile)) {
             this.removeTile(tile);
-        } else if (!this._type !== type) {
+
+        } else if (!this.loaded) {
             this._type = type;
+            this._promise = $.Promise.resolve(data);
             this._data = data;
+            this.loaded = true;
+        } else if (this._type !== type) {
+            $.console.warn("[CacheRecord.addTile] Tile %s was added to an existing cache, but the tile is supposed to carry incompatible data type %s!", tile, type);
         }
 
         this._tiles.push(tile);
     }
 
+    /**
+     * Remove tile dependency on this record.
+     * @param tile
+     */
     removeTile(tile) {
         for (let i = 0; i < this._tiles.length; i++) {
             if (this._tiles[i] === tile) {
@@ -113,123 +140,178 @@ $.CacheRecord = class {
         $.console.warn('[CacheRecord.removeTile] trying to remove unknown tile', tile);
     }
 
+    /**
+     * Get the amount of tiles sharing this record.
+     * @return {number}
+     */
     getTileCount() {
         return this._tiles.length;
+    }
+
+    /**
+     * Private conversion that makes sure the cache knows its data is ready
+     * @private
+     */
+    _convert(from, to) {
+        const convertor = $.convertor,
+            conversionPath = convertor.getConversionPath(from, to);
+        if (!conversionPath) {
+            $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
+            return; //no-op
+        }
+
+        const originalData = this._data,
+            stepCount = conversionPath.length,
+            _this = this,
+            convert = (x, i) => {
+            if (i >= stepCount) {
+                _this._data = x;
+                _this.loaded = true;
+                return $.Promise.resolve(x);
+            }
+            let edge = conversionPath[i];
+            return $.Promise.resolve(edge.transform(x)).then(
+                y => {
+                    if (!y) {
+                        $.console.error(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting using %s)`, edge);
+                        //try to recover using original data, but it returns inconsistent type (the log be hopefully enough)
+                        _this._data = from;
+                        _this._type = from;
+                        _this.loaded = true;
+                        return originalData;
+                    }
+                    //node.value holds the type string
+                    convertor.destroy(edge.origin.value, x);
+                    return convert(y, i + 1);
+                }
+            );
+
+        };
+
+        this.loaded = false;
+        this._data = undefined;
+        this._type = to;
+        this._promise = convert(originalData, 0);
     }
 };
 
 //FIXME: really implement or throw away? new parameter would allow users to
-// use this implementation isntead of the above to allow caching for old data
+// use this implementation instead of the above to allow caching for old data
 // (for example in the default use, the data is downloaded as an image, and
 // converted to a canvas -> the image record gets thrown away)
-$.MemoryCacheRecord = class extends $.CacheRecord {
-    constructor(memorySize) {
-        super();
-        this.length = memorySize;
-        this.index = 0;
-        this.content = [];
-        this.types = [];
-        this.defaultType = "image";
-    }
-
-    // overrides:
-
-    destroy() {
-        super.destroy();
-        this.types = null;
-        this.content = null;
-        this.types = null;
-        this.defaultType = null;
-    }
-
-    getData(type = this.defaultType) {
-        let item = this.add(type, undefined);
-        if (item === undefined) {
-            //no such type available, get if possible
-            //todo: possible unomptimal use, we could cache costs and re-use known paths, though it adds overhead...
-            item = $.convertor.convert(this.current(), this.currentType(), type);
-            this.add(type, item);
-        }
-        return item;
-    }
-
-    /**
-     * @deprecated
-     */
-    get data() {
-        $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use getData(...) instead!");
-        return this.current();
-    }
-
-    /**
-     * @deprecated
-     * @param value
-     */
-    set data(value) {
-        //FIXME: addTile bit bad name, related to the issue mentioned elsewhere
-        $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use addTile(...) instead!");
-        this.defaultType = $.convertor.guessType(value);
-        this.add(this.defaultType, value);
-    }
-
-    addTile(tile, data, type) {
-        $.console.assert(tile, '[CacheRecord.addTile] tile is required');
-
-        //allow overriding the cache - existing tile or different type
-        if (this._tiles.includes(tile)) {
-            this.removeTile(tile);
-        } else if (!this.defaultType !== type) {
-            this.defaultType = type;
-            this.add(type, data);
-        }
-
-        this._tiles.push(tile);
-    }
-
-    // extends:
-
-    add(type, item) {
-        const index = this.hasIndex(type);
-        if (index > -1) {
-            //no index change, swap (optimally, move all by one - too expensive...)
-            item = this.content[index];
-            this.content[index] = this.content[this.index];
-        } else {
-            this.index = (this.index + 1) % this.length;
-        }
-        this.content[this.index] = item;
-        this.types[this.index] = type;
-        return item;
-    }
-
-    has(type) {
-        for (let i = 0; i < this.types.length; i++) {
-            const t = this.types[i];
-            if (t === type) {
-                return this.content[i];
-            }
-        }
-        return undefined;
-    }
-
-    hasIndex(type) {
-        for (let i = 0; i < this.types.length; i++) {
-            const t = this.types[i];
-            if (t === type) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    current() {
-        return this.content[this.index];
-    }
-
-    currentType() {
-        return this.types[this.index];
-    }
-};
+//
+//FIXME: Note that this can be also achieved somewhat by caching the midresults
+// as a single cache object instead. Also, there is the problem of lifecycle-oriented
+// data types such as WebGL textures we want to unload manually: this looks like
+// we really want to cache midresuls and have their custom destructors
+// $.MemoryCacheRecord = class extends $.CacheRecord {
+//     constructor(memorySize) {
+//         super();
+//         this.length = memorySize;
+//         this.index = 0;
+//         this.content = [];
+//         this.types = [];
+//         this.defaultType = "image";
+//     }
+//
+//     // overrides:
+//
+//     destroy() {
+//         super.destroy();
+//         this.types = null;
+//         this.content = null;
+//         this.types = null;
+//         this.defaultType = null;
+//     }
+//
+//     getData(type = this.defaultType) {
+//         let item = this.add(type, undefined);
+//         if (item === undefined) {
+//             //no such type available, get if possible
+//             //todo: possible unomptimal use, we could cache costs and re-use known paths, though it adds overhead...
+//             item = $.convertor.convert(this.current(), this.currentType(), type);
+//             this.add(type, item);
+//         }
+//         return item;
+//     }
+//
+//     /**
+//      * @deprecated
+//      */
+//     get data() {
+//         $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use getData(...) instead!");
+//         return this.current();
+//     }
+//
+//     /**
+//      * @deprecated
+//      * @param value
+//      */
+//     set data(value) {
+//         //FIXME: addTile bit bad name, related to the issue mentioned elsewhere
+//         $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use addTile(...) instead!");
+//         this.defaultType = $.convertor.guessType(value);
+//         this.add(this.defaultType, value);
+//     }
+//
+//     addTile(tile, data, type) {
+//         $.console.assert(tile, '[CacheRecord.addTile] tile is required');
+//
+//         //allow overriding the cache - existing tile or different type
+//         if (this._tiles.includes(tile)) {
+//             this.removeTile(tile);
+//         } else if (!this.defaultType !== type) {
+//             this.defaultType = type;
+//             this.add(type, data);
+//         }
+//
+//         this._tiles.push(tile);
+//     }
+//
+//     // extends:
+//
+//     add(type, item) {
+//         const index = this.hasIndex(type);
+//         if (index > -1) {
+//             //no index change, swap (optimally, move all by one - too expensive...)
+//             item = this.content[index];
+//             this.content[index] = this.content[this.index];
+//         } else {
+//             this.index = (this.index + 1) % this.length;
+//         }
+//         this.content[this.index] = item;
+//         this.types[this.index] = type;
+//         return item;
+//     }
+//
+//     has(type) {
+//         for (let i = 0; i < this.types.length; i++) {
+//             const t = this.types[i];
+//             if (t === type) {
+//                 return this.content[i];
+//             }
+//         }
+//         return undefined;
+//     }
+//
+//     hasIndex(type) {
+//         for (let i = 0; i < this.types.length; i++) {
+//             const t = this.types[i];
+//             if (t === type) {
+//                 return i;
+//             }
+//         }
+//         return -1;
+//     }
+//
+//     current() {
+//         return this.content[this.index];
+//     }
+//
+//     currentType() {
+//         return this.types[this.index];
+//     }
+// };
 
 /**
  * @class TileCache

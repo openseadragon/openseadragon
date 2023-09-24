@@ -2886,6 +2886,30 @@ function OpenSeadragon( options ){
         }
     }
 
+    /**
+     * Promise proxy in OpenSeadragon, can be removed once IE11 support is dropped
+     * @type {PromiseConstructor}
+     */
+    $.Promise = (function () {
+        if (window.Promise) {
+            return window.Promise;
+        }
+        const promise = function () {};
+        //TODO consider supplying promise API via callbacks/polyfill
+        promise.prototype.then = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        promise.prototype.resolve = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        promise.prototype.reject = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        promise.prototype.finally = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        return promise;
+    })();
 }(OpenSeadragon));
 
 

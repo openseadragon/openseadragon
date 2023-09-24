@@ -3,6 +3,14 @@
 <head>
     <meta charset="utf-8">
     <title>OpenSeadragon QUnit</title>
+    <script type="text/javascript">
+        window.QUnit = {
+            config: {
+                //one minute per test timeout
+                testTimeout: 60000
+            }
+        };
+    </script>
     <link rel="stylesheet" href="/node_modules/qunit/qunit/qunit.css">
     <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <link rel="stylesheet" href="/test/helpers/test.css">

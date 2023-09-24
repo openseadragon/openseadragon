@@ -34,7 +34,10 @@
 
 (function($){
 
-//modified from https://gist.github.com/Prottoy2938/66849e04b0bac459606059f5f9f3aa1a
+/**
+ * modified from https://gist.github.com/Prottoy2938/66849e04b0bac459606059f5f9f3aa1a
+ * @private
+ */
 class WeightedGraph {
     constructor() {
         this.adjacencyList = {};
@@ -48,13 +51,12 @@ class WeightedGraph {
         }
         return false;
     }
-    addEdge(vertex1, vertex2, weight, data) {
-        this.adjacencyList[vertex1].push({ target: this.vertices[vertex2], weight, data });
+    addEdge(vertex1, vertex2, weight, transform) {
+        this.adjacencyList[vertex1].push({ target: this.vertices[vertex2], origin: this.vertices[vertex1], weight, transform });
     }
 
     /**
      * @return {{path: *[], cost: number}|undefined} cheapest path for
-     *
      */
     dijkstra(start, finish) {
         let path = []; //to return at end
@@ -95,7 +97,7 @@ class WeightedGraph {
             }
         }
 
-        if (!smallestNode._previous) {
+        if (!smallestNode || !smallestNode._previous) {
             return undefined; //no path
         }
 
@@ -119,17 +121,47 @@ class WeightedGraph {
     }
 }
 
-class DataTypeConvertor {
+/**
+ * Node on the conversion path in OpenSeadragon.converter.getConversionPath().
+ *  It can be also conversion to undefined if used as destructor implementation.
+ *
+ * @callback TypeConvertor
+ * @memberof OpenSeadragon
+ * @param {?} data data in the input format
+ * @return {?} data in the output format
+ */
+
+/**
+ * Node on the conversion path in OpenSeadragon.converter.getConversionPath().
+ *
+ * @typedef {Object} ConversionStep
+ * @memberof OpenSeadragon
+ * @param {OpenSeadragon.PriorityQueue.Node} target - Target node of the conversion step.
+ *  Its value is the target format.
+ * @param {OpenSeadragon.PriorityQueue.Node} origin - Origin node of the conversion step.
+ *  Its value is the origin format.
+ * @param {number} weight cost of the conversion
+ * @param {TypeConvertor} transform the conversion itself
+ */
+
+/**
+ * Class that orchestrates automated data types conversion. Do not instantiate
+ * this class, use OpenSeadragon.convertor - a global instance, instead.
+ * @class DataTypeConvertor
+ * @memberOf OpenSeadragon
+ */
+$.DataTypeConvertor = class {
 
     constructor() {
         this.graph = new WeightedGraph();
+        this.destructors = {};
 
-        this.learn("canvas", "string", (canvas) => canvas.toDataURL(), 1, 1);
-        this.learn("image", "string", (image) => image.url);
+        // Teaching OpenSeadragon built-in conversions:
+
+        this.learn("canvas", "rasterUrl", (canvas) => canvas.toDataURL(), 1, 1);
+        this.learn("image", "rasterUrl", (image) => image.url);
         this.learn("canvas", "context2d", (canvas) => canvas.getContext("2d"));
         this.learn("context2d", "canvas", (context2D) => context2D.canvas);
-
-        //OpenSeadragon supports two conversions out of the box: canvas and image.
         this.learn("image", "canvas", (image) => {
             const canvas = document.createElement( 'canvas' );
             canvas.width = image.width;
@@ -138,20 +170,13 @@ class DataTypeConvertor {
             context.drawImage( image, 0, 0 );
             return canvas;
         }, 1, 1);
-
-        this.learn("string", "image", (url) => {
-            const img = new Image();
-            img.src = url;
-            //FIXME: support async functions! some function conversions are async (like image here)
-            // and returning immediatelly will possibly cause the system work with incomplete data
-            // - a) remove canvas->image conversion path support
-            // - b) busy wait cycle (ugly as..)
-            // - c) async conversion execution (makes the whole cache -> transitively rendering async)
-            // - d) callbacks (makes the cache API more complicated)
-            while (!img.complete) {
-                console.log("Burning through CPU :)");
-            }
-            return img;
+        this.learn("rasterUrl", "image", (url) => {
+            return new $.Promise((resolve, reject) => {
+                const img = new Image();
+                img.onerror = img.onabort = reject;
+                img.onload = () => resolve(img);
+                img.src = url;
+            });
         }, 1, 1);
     }
 
@@ -198,7 +223,6 @@ class DataTypeConvertor {
             return guessType.nodeName.toLowerCase();
         }
 
-        //todo consider event...
         if (guessType === "object") {
             if ($.isFunction(x.getType)) {
                 return x.getType();
@@ -208,9 +232,12 @@ class DataTypeConvertor {
     }
 
     /**
+     * Teach the system to convert data type 'from' -> 'to'
      * @param {string} from unique ID of the data item 'from'
      * @param {string} to unique ID of the data item 'to'
-     * @param {function} callback convertor that takes type 'from', and converts to type 'to'
+     * @param {OpenSeadragon.TypeConvertor} callback convertor that takes type 'from', and converts to type 'to'.
+     *  Callback can return function. This function returns the data in type 'to',
+     *  it can return also the value wrapped in a Promise (returned in resolve) or it can be async function.
      * @param {Number} [costPower=0] positive cost class of the conversion, smaller or equal than 7.
      *   Should reflect the actual cost of the conversion:
      *   - if nothing must be done and only reference is retrieved (or a constant operation done),
@@ -231,78 +258,130 @@ class DataTypeConvertor {
         this.graph.addVertex(from);
         this.graph.addVertex(to);
         this.graph.addEdge(from, to, costPower * 10 ^ 5 + costMultiplier, callback);
-        this._known = {};
+        this._known = {}; //invalidate precomputed paths :/
     }
 
     /**
-     * FIXME: we could convert as 'convert(x, from, ...to)' and get cheapest path to any of the data
-     *  for example, we could say tile.getCache(key)..getData("image", "canvas") if we do not care what we use and
-     *  our system would then choose the cheapest option (both can be rendered by html for example).
-     *
-     * FIXME: conversion should be allowed to await results (e.g. image creation), now it is buggy,
-     *  because we do not await image creation...
-     *
+     * Teach the system to destroy data type 'type'
+     * for example, textures loaded to GPU have to be also manually removed when not needed anymore.
+     * Needs to be defined only when the created object has extra deletion process.
+     * @param {string} type
+     * @param {OpenSeadragon.TypeConvertor} callback destructor, receives the object created,
+     *   it is basically a type conversion to 'undefined' - thus the type.
+     */
+    learnDestroy(type, callback) {
+        this.destructors[type] = callback;
+    }
+
+    /**
+     * Convert data item x of type 'from' to any of the 'to' types, chosen is the cheapest known conversion.
+     * Data is destroyed upon conversion. For different behavior, implement your conversion using the
+     * path rules obtained from getConversionPath().
      * @param {*} x data item to convert
      * @param {string} from data item type
-     * @param {string} to desired type
-     * @return {*} data item with type 'to', or undefined if the conversion failed
+     * @param {string} to desired type(s)
+     * @return {OpenSeadragon.Promise<?>} promise resolution with type 'to' or undefined if the conversion failed
      */
-    convert(x, from, to) {
+    convert(x, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
-
         if (!conversionPath) {
-            $.console.warn(`[DataTypeConvertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
-            return undefined;
+            $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
+            return $.Promise.resolve();
         }
 
-        for (let node of conversionPath) {
-            x = node.data(x);
-            if (!x) {
-                $.console.warn(`[DataTypeConvertor.convert] data mid result falsey value (conversion to ${node.node})`);
-                return undefined;
+        const stepCount = conversionPath.length,
+            _this = this;
+        const step = (x, i) => {
+            if (i >= stepCount) {
+                return $.Promise.resolve(x);
             }
+            let edge = conversionPath[i];
+            let y = edge.transform(x);
+            if (!y) {
+                $.console.warn(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting to %s)`, edge.target);
+                return $.Promise.resolve();
+            }
+            //node.value holds the type string
+            _this.destroy(edge.origin.value, x);
+            const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
+            return result.then(res => step(res, i + 1));
+        };
+        return step(x, 0);
+    }
+
+    /**
+     * Destroy the data item given.
+     * @param {string} type data type
+     * @param {?} data
+     */
+    destroy(type, data) {
+        const destructor = this.destructors[type];
+        if (destructor) {
+            destructor(data);
         }
-        return x;
     }
 
     /**
      * Get possible system type conversions and cache result.
      * @param {string} from data item type
-     * @param {string} to desired type
-     * @return {[object]|undefined} array of required conversions (returns empty array
+     * @param {string|string[]} to array of accepted types
+     * @return {[ConversionStep]|undefined} array of required conversions (returns empty array
      *  for from===to), or undefined if the system cannot convert between given types.
+     *  Each object has 'transform' function that converts between neighbouring types, such
+     *  that x = arr[i].transform(x) is valid input for convertor arr[i+1].transform(), e.g.
+     *  arr[i+1].transform(arr[i].transform( ... )) is a valid conversion procedure.
+     *
+     *  Note: if a function is returned, it is a callback called once the data is ready.
      */
-    getConversionPath(from, ...to) {
-        $.console.assert(to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
+    getConversionPath(from, to) {
+        let bestConvertorPath, selectedType;
+        let knownFrom = this._known[from];
+        if (!knownFrom) {
+            this._known[from] = knownFrom = {};
+        }
 
-        let bestConvertorPath;
-        const knownFrom = this._known[from];
-        if (knownFrom) {
+        if (Array.isArray(to)) {
+            $.console.assert(typeof to === "string" || to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
             let bestCost = Infinity;
+
+            //FIXME: pre-compute all paths in 'to' array? could be efficient for multiple
+            // type system, but overhead for simple use cases... now we just use the first type if costs unknown
+            selectedType = to[0];
+
             for (const outType of to) {
                 const conversion = knownFrom[outType];
                 if (conversion && bestCost > conversion.cost) {
                     bestConvertorPath = conversion;
                     bestCost = conversion.cost;
+                    selectedType = outType;
                 }
             }
         } else {
-            this._known[from] = {};
+            $.console.assert(typeof to === "string", "[getConversionPath] conversion 'to' type must be defined.");
+            bestConvertorPath = knownFrom[to];
+            selectedType = to;
         }
+
         if (!bestConvertorPath) {
-            //FIXME: pre-compute all paths? could be efficient for multiple
-            // type system, but overhead for simple use cases...
-            bestConvertorPath = this.graph.dijkstra(from, to[0]);
-            this._known[from][to[0]] = bestConvertorPath;
+            bestConvertorPath = this.graph.dijkstra(from, selectedType);
+            this._known[from][selectedType] = bestConvertorPath;
         }
         return bestConvertorPath ? bestConvertorPath.path : undefined;
     }
-}
+};
 
 /**
- * Static convertor available throughout OpenSeadragon
+ * Static convertor available throughout OpenSeadragon.
+ *
+ * Built-in conversions include types:
+ *  - context2d    canvas 2d context
+ *  - image        HTMLImage element
+ *  - rasterUrl    url string carrying or pointing to 2D raster data
+ *  - canvas       HTMLCanvas element
+ *
+ * @type OpenSeadragon.DataTypeConvertor
  * @memberOf OpenSeadragon
  */
-$.convertor = new DataTypeConvertor();
+$.convertor = new $.DataTypeConvertor();
 
 }(OpenSeadragon));

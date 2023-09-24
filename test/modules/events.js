@@ -2,6 +2,7 @@
 
 (function () {
     var viewer;
+    var sleep = time => new Promise(res => setTimeout(res, time));
 
     QUnit.module( 'Events', {
         beforeEach: function () {
@@ -1210,11 +1211,12 @@
             var tile = event.tile;
             assert.ok( tile.loading, "The tile should be marked as loading.");
             assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-            setTimeout(function() {
+            //make sure we require tile loaded status once the data is ready
+            event.promise.then(function() {
                 assert.notOk( tile.loading, "The tile should not be marked as loading.");
                 assert.ok( tile.loaded, "The tile should be marked as loaded.");
                 done();
-            }, 0);
+            });
         }
 
         viewer.addHandler( 'tile-loaded', tileLoaded);
@@ -1226,51 +1228,61 @@
         function tileLoaded ( event ) {
             viewer.removeHandler( 'tile-loaded', tileLoaded);
             var tile = event.tile;
-            var callback = event.getCompletionCallback();
             assert.ok( tile.loading, "The tile should be marked as loading.");
             assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-            assert.ok( callback, "The event should have a callback.");
-            setTimeout(function() {
-                assert.ok( tile.loading, "The tile should be marked as loading.");
-                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-                callback();
+            event.promise.then( _ => {
                 assert.notOk( tile.loading, "The tile should not be marked as loading.");
                 assert.ok( tile.loaded, "The tile should be marked as loaded.");
                 done();
-            }, 0);
+            });
         }
 
         viewer.addHandler( 'tile-loaded', tileLoaded);
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
-    QUnit.test( 'Viewer: tile-loaded event with 2 callbacks.', function (assert) {
-        var done = assert.async();
-        function tileLoaded ( event ) {
-            viewer.removeHandler( 'tile-loaded', tileLoaded);
-            var tile = event.tile;
-            var callback1 = event.getCompletionCallback();
-            var callback2 = event.getCompletionCallback();
+    QUnit.test( 'Viewer: asynchronous tile processing.', function (assert) {
+        var done = assert.async(),
+            handledOnce = false;
+
+        const tileLoaded1 = async (event) => {
+            assert.ok( handledOnce, "tileLoaded1 with priority 5 should be called second.");
+            const tile = event.tile;
+            handledOnce = true;
             assert.ok( tile.loading, "The tile should be marked as loading.");
             assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-            setTimeout(function() {
-                assert.ok( tile.loading, "The tile should be marked as loading.");
-                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-                callback1();
-                assert.ok( tile.loading, "The tile should be marked as loading.");
-                assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-                setTimeout(function() {
-                    assert.ok( tile.loading, "The tile should be marked as loading.");
-                    assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
-                    callback2();
-                    assert.notOk( tile.loading, "The tile should not be marked as loading.");
-                    assert.ok( tile.loaded, "The tile should be marked as loaded.");
-                    done();
-                }, 0);
-            }, 0);
-        }
 
-        viewer.addHandler( 'tile-loaded', tileLoaded);
+            event.promise.then(() => {
+                assert.notOk( tile.loading, "The tile should not be marked as loading.");
+                assert.ok( tile.loaded, "The tile should be marked as loaded.");
+                done();
+                done = null;
+            });
+            await sleep(10);
+        };
+        const tileLoaded2 = async (event) => {
+            assert.notOk( handledOnce, "TileLoaded2 with priority 10 should be called first.");
+            const tile = event.tile;
+
+            //remove handlers immediatelly, processing is async -> removing in the second function could
+            //get after a different tile gets processed
+            viewer.removeHandler( 'tile-loaded', tileLoaded1);
+            viewer.removeHandler( 'tile-loaded', tileLoaded2);
+
+            handledOnce = true;
+            assert.ok( tile.loading, "The tile should be marked as loading.");
+            assert.notOk( tile.loaded, "The tile should not be marked as loaded.");
+
+            event.promise.then(() => {
+                assert.notOk( tile.loading, "The tile should not be marked as loading.");
+                assert.ok( tile.loaded, "The tile should be marked as loaded.");
+            });
+            await sleep(30);
+        };
+
+        //first will get called tileLoaded2 although registered later
+        viewer.addHandler( 'tile-loaded', tileLoaded1, null, 5);
+        viewer.addHandler( 'tile-loaded', tileLoaded2, null, 10);
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 

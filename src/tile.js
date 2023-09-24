@@ -145,6 +145,15 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this.cacheKey = cacheKey;
     /**
+     * By default equal to tile.cacheKey, marks a cache associated with this tile
+     * that holds the cache original data (it was loaded with). In case you
+     * change the tile data, the tile original data should be left with the cache
+     * 'originalCacheKey' and the new, modified data should be stored in cache 'cacheKey'.
+     * @member {String} originalCacheKey
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.originalCacheKey = this.cacheKey;
+    /**
      * Is this tile loaded?
      * @member {Boolean} loaded
      * @memberof OpenSeadragon.Tile#
@@ -441,14 +450,19 @@ $.Tile.prototype = {
         if (!cache) {
             return undefined;
         }
-        return cache.getData(type);
+        cache.getData(type); //returns a promise
+        //we return the data synchronously immediatelly (undefined if conversion happens)
+        return cache.data;
     },
 
     /**
      * Invalidate the tile so that viewport gets updated.
      */
     save() {
-        this._needsDraw = true;
+        const parent = this.tiledImage;
+        if (parent) {
+            parent._needsDraw = true;
+        }
     },
 
     /**
@@ -499,6 +513,15 @@ $.Tile.prototype = {
             cutoff: _cutoff
         });
     },
+
+    /**
+     * FIXME:refactor
+     * @return {boolean}
+     */
+    dataReady() {
+        return this.getCache(this.cacheKey).loaded;
+    },
+
 
     /**
      * Renders the tile in a canvas-based context.
