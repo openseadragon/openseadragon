@@ -2899,10 +2899,7 @@ function OpenSeadragon( options ){
         promise.prototype.then = function () {
             throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
         };
-        promise.prototype.resolve = function () {
-            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
-        };
-        promise.prototype.reject = function () {
+        promise.prototype.catch = function () {
             throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
         };
         promise.prototype.finally = function () {

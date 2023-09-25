@@ -515,15 +515,6 @@ $.Tile.prototype = {
     },
 
     /**
-     * FIXME:refactor
-     * @return {boolean}
-     */
-    dataReady() {
-        return this.getCache(this.cacheKey).loaded;
-    },
-
-
-    /**
      * Renders the tile in a canvas-based context.
      * @function
      * @param {CanvasRenderingContext2D} context

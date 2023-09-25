@@ -892,7 +892,6 @@ $.TileSource.prototype = {
      * @deprecated
      */
     destroyTileCache: function (cacheObject) {
-        // FIXME: still allow custom desctruction? probably not - cache system should handle all
         $.console.error("[TileSource.destroyTileCache] has been deprecated. Use cache API of a tile instead.");
         //no-op, handled internally
     },
@@ -901,7 +900,7 @@ $.TileSource.prototype = {
      * Raw data getter, should return anything that is compatible with the system, or undefined
      * if the system can handle it.
      * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
-     * @returns {*} cache data
+     * @returns {Promise<?>} cache data
      * @deprecated
      */
     getTileCacheData: function(cacheObject) {
