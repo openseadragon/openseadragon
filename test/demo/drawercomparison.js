@@ -13,6 +13,19 @@ const labels = {
     bblue: 'Blue B',
     duomo: 'Duomo',
 }
+const drawers = {
+    canvas: "Context2d drawer (default in OSD &lt;= 4.1.0)",
+    webgl: "New WebGL drawer",
+    universal_webgl: "New WebGL (Modular)"
+}
+
+//Support drawer type from the url
+const url = new URL(window.location.href);
+const drawer1 = url.searchParams.get("left") || 'canvas';
+const drawer2 = url.searchParams.get("right") || 'webgl';
+
+$("#title-w1").html(drawers[drawer1]);
+$("#title-w2").html(drawers[drawer2]);
 
 //Double viewer setup for comparison - CanvasDrawer and WebGLDrawer
 // viewer1: canvas drawer
@@ -25,7 +38,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:'canvas',
+    drawer:drawer1,
     blendTime:0
 });
 
@@ -39,25 +52,23 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:'webgl',
+    drawer:drawer2,
     blendTime:0,
 });
 
-// viewer3: html drawer
-var viewer3 = window.viewer3 = OpenSeadragon({
-    id: "htmldrawer",
-    drawer:'html',
-    blendTime:2,
-    prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    customDrawer: OpenSeadragon.HTMLDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-    sequenceMode: true,
-    crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
-});
-
-
+// // viewer3: html drawer, unused
+// var viewer3 = window.viewer3 = OpenSeadragon({
+//     id: "htmldrawer",
+//     drawer:'html',
+//     blendTime:2,
+//     prefixUrl: "../../build/openseadragon/images/",
+//     minZoomImageRatio:0.01,
+//     customDrawer: OpenSeadragon.HTMLDrawer,
+//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+//     sequenceMode: true,
+//     crossOriginPolicy: 'Anonymous',
+//     ajaxWithCredentials: false
+// });
 
 
 // Sync navigation of viewer1 and viewer 2
@@ -125,6 +136,8 @@ Object.keys(sources).forEach((key, index)=>{
         element.find('.toggle').prop('checked',true);
     }
 })
+
+$('#image-picker').append(makeComparisonSwitcher());
 
 $('#image-picker input.toggle').on('change',function(){
     let data = $(this).data();
@@ -288,6 +301,30 @@ function addTileSource(viewer, image, checkbox){
     }
 }
 
+function getAvailableDrawerSelect(name, selectedDrawer) {
+    return `
+<select name="${name}">
+  ${Object.entries(drawers).map(([k, v]) => {
+      const selected = selectedDrawer === k ? "selected" : "";
+      return `<option value="${k}" ${selected}>${v}</option>`;
+    }).join("\n")}
+</select>`;
+}
+
+function makeComparisonSwitcher() {
+    const left = getAvailableDrawerSelect("left", drawer1),
+        right = getAvailableDrawerSelect("right", drawer2);
+    return `
+<div>
+  Note: you can run the comparison with desired drawers like this: drawercomparison.html?left=[type]&right=[type]
+  <form method="get">
+     ${left}
+     ${right}
+     <button>Submit</button>
+  </form>
+</div>`;
+}
+
 function makeImagePickerElement(key, label){
     return $(`<div class="image-options">
         <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
@@ -306,7 +343,6 @@ function makeImagePickerElement(key, label){
             <label>Composite: <select data-image="" data-field="composite"></select></label>
             <label>Wrap: <select data-image="" data-field="wrapping"></select></label>
         </div>
-
     </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));
 
 }

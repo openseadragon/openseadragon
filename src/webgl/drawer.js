@@ -114,6 +114,30 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         engine.init(size.x, size.y);
         this.viewer.addHandler("resize", this._resizeRenderer.bind(this));
         this.renderer = engine;
+        this.renderer.setDataBlendingEnabled(true);
+
+        // const gl = this.renderer.gl;
+        // this._renderToTexture = gl.createTexture();
+        // gl.activeTexture(gl.TEXTURE0);
+        // gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
+        // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size.x, size.y, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        //
+        // // set up the framebuffer for render-to-texture
+        // this._glFrameBuffer = gl.createFramebuffer();
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+        // gl.framebufferTexture2D(
+        //     gl.FRAMEBUFFER,
+        //     gl.COLOR_ATTACHMENT0,       // attach texture as COLOR_ATTACHMENT0
+        //     gl.TEXTURE_2D,              // attach a 2D texture
+        //     this._renderToTexture,  // the texture to attach
+        //     0
+        // );
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+        // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._renderToTexture, 0);
+
         return engine.canvas;
     }
 
@@ -136,23 +160,19 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         let rotMatrix = $.Mat3.makeRotation(-viewport.rotation);
         let viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
-        this.renderer.clear();
-        this.renderer.setDataBlendingEnabled(false);
+        // const gl = this.renderer.gl;
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+        // clear the buffer to draw a new image
+        // gl.clear(gl.COLOR_BUFFER_BIT);
 
         //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
-
-        let drawn = 0;
-
         for (const tiledImage of tiledImages) {
+            console.log("START TILED IMAGE");
             let tilesToDraw = tiledImage.getTilesToDraw();
 
-            if (tilesToDraw.length === 0) {
-                break;
-            }
-
-            if (drawn === 1) {
-                this.renderer.setDataBlendingEnabled(true);
-            }
+            // if (tilesToDraw.length === 0) {
+            //     break;
+            // }
 
             let overallMatrix = viewMatrix;
             let imageRotation = tiledImage.getRotation(true);
@@ -168,12 +188,15 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
                 overallMatrix = viewMatrix.multiply(localMatrix);
             }
 
+
             //todo better access to the rendering context
             const shader = this.renderer.specification(0).shaders.renderShader._renderContext;
-
             // iterate over tiles and add data for each one to the buffers
             for (let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                 const tile = tilesToDraw[tileIndex].tile;
+
+                console.log("TILE " + tile.level + "-" + tile.x + "_" + tile.y);
+
                 const matrix = this._getTileMatrix(tile, tiledImage, overallMatrix);
                 shader.opacity.set(tile.opacity * tiledImage.opacity);
 
@@ -205,8 +228,6 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
                     tiles: tilesToDraw.map(info => info.tile),
                 });
             }
-
-            drawn++;
         }
     }
 

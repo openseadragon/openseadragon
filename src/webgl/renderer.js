@@ -144,7 +144,7 @@ $.WebGLModule = class extends $.EventSource {
                     const options = {
                         wrap: readGlProp("wrap", "MIRRORED_REPEAT"),
                         magFilter: readGlProp("magFilter", "LINEAR"),
-                        minFilter: readGlProp("minFilter", "NEAREST"),
+                        minFilter: readGlProp("minFilter", "LINEAR"),
                         dataLoader: contextOpts.dataLoader || "TEXTURE_2D"
                     };
                     this.webglContext = new Context(this, glContext, options);
@@ -592,9 +592,11 @@ $.WebGLModule = class extends $.EventSource {
 
     setDataBlendingEnabled(enabled) {
         if (enabled) {
+            // this.gl.enable(this.gl.BLEND);
+            // this.gl.blendEquation(this.gl.FUNC_ADD);
+            // this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE);
             this.gl.enable(this.gl.BLEND);
-            this.gl.blendEquation(this.gl.FUNC_ADD);
-            this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE);
+            this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
         } else {
             this.gl.disable(this.gl.BLEND);
         }

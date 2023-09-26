@@ -185,7 +185,7 @@ $.WebGLModule.WebGL20 = class extends $.WebGLModule.WebGLImplementation {
     }
 
     static create(canvas) {
-        return canvas.getContext('webgl2', { premultipliedAlpha: false, alpha: true });
+        return canvas.getContext('webgl2', { premultipliedAlpha: true, alpha: true });
     }
 
     //todo try to implement on the global scope version-independntly
@@ -263,6 +263,7 @@ vec4 lid_${layer._index}_xo() {
         return `#version 300 es
 precision mediump float;
 precision mediump sampler2DArray;
+precision mediump sampler2D;
 
 ${this.texture.declare(shaderDataIndexToGlobalDataIndex)}
 uniform float pixel_size_in_fragments;
@@ -283,17 +284,7 @@ void show(vec4 color) {
     vec4 fg = _last_rendered_color;
     _last_rendered_color = color;
     vec4 pre_fg = vec4(fg.rgb * fg.a, fg.a);
-    final_color = pre_fg + final_color * (1.0-fg.a);
-}
-
-void finalize() {
-    show(vec4(.0));
-
-    if (close(final_color.a, 0.0)) {
-        final_color = vec4(0.);
-    } else {
-        final_color = vec4(final_color.rgb/final_color.a, final_color.a);
-    }
+    final_color = pre_fg + final_color;
 }
 
 vec4 blend_equation(in vec4 foreground, in vec4 background) {
@@ -317,7 +308,8 @@ ${definition}
 void main() {
     ${execution}
 
-    finalize();
+    //blend last level
+    show(vec4(.0));
 }`;
     }
 
