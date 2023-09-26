@@ -160,19 +160,14 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         let rotMatrix = $.Mat3.makeRotation(-viewport.rotation);
         let viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
-        // const gl = this.renderer.gl;
+        const gl = this.renderer.gl;
         // gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
         // clear the buffer to draw a new image
-        // gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
         //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
         for (const tiledImage of tiledImages) {
-            console.log("START TILED IMAGE");
             let tilesToDraw = tiledImage.getTilesToDraw();
-
-            // if (tilesToDraw.length === 0) {
-            //     break;
-            // }
 
             let overallMatrix = viewMatrix;
             let imageRotation = tiledImage.getRotation(true);
@@ -195,15 +190,13 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
             for (let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                 const tile = tilesToDraw[tileIndex].tile;
 
-                console.log("TILE " + tile.level + "-" + tile.x + "_" + tile.y);
-
                 const matrix = this._getTileMatrix(tile, tiledImage, overallMatrix);
                 shader.opacity.set(tile.opacity * tiledImage.opacity);
 
                 //todo pixelSize value (not yet memoized)
                 this.renderer.processData(tile.cacheKey, {
-                    transform: matrix, zoom:
-                    viewport.zoom,
+                    transform: matrix,
+                    zoom: viewport.zoom,
                     pixelSize: 0
                 });
             }
