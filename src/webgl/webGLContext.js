@@ -60,9 +60,10 @@ $.WebGLModule.WebGLImplementation = class {
     /**
      * Static context creation (to avoid class instantiation in case of missing support)
      * @param canvas
+     * @param options desired options used in the canvas webgl context creation
      * @return {WebGLRenderingContextBase} //todo base is not common to all, remove from docs
      */
-    static create(canvas) {
+    static create(canvas, options) {
         throw("::create() must be implemented!");
     }
 
@@ -184,8 +185,10 @@ $.WebGLModule.WebGL20 = class extends $.WebGLModule.WebGLImplementation {
         return "2.0";
     }
 
-    static create(canvas) {
-        return canvas.getContext('webgl2', { premultipliedAlpha: true, alpha: true });
+    static create(canvas, options) {
+        options.alpha = true;
+        options.premultipliedAlpha = true;
+        return canvas.getContext('webgl2', options);
     }
 
     //todo try to implement on the global scope version-independntly

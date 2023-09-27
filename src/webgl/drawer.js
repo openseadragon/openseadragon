@@ -97,6 +97,11 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
 
         const engine = new $.WebGLModule($.extend(this.options, {
             uniqueId: "openseadragon",
+            "2.0": {
+                canvasOptions: {
+                    stencil: true
+                }
+            }
         }));
 
         engine.addRenderingSpecifications({
@@ -116,7 +121,7 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         this.renderer = engine;
         this.renderer.setDataBlendingEnabled(true);
 
-        // const gl = this.renderer.gl;
+        const gl = this.renderer.gl;
         // this._renderToTexture = gl.createTexture();
         // gl.activeTexture(gl.TEXTURE0);
         // gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
@@ -138,6 +143,10 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         // gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
         // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._renderToTexture, 0);
 
+        gl.enable(gl.STENCIL_TEST);
+        gl.stencilMask(0xff);
+        gl.stencilFunc(gl.GREATER, 1, 0xff);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         return engine.canvas;
     }
 
@@ -153,10 +162,11 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
             zoom: this.viewport.getZoom(true)
         };
 
-        let flipMultiplier = this.viewport.flipped ? -1 : 1;
+
+        // let flipMultiplier = this.viewport.flipped ? -1 : 1;
         // calculate view matrix for viewer
         let posMatrix = $.Mat3.makeTranslation(-viewport.center.x, -viewport.center.y);
-        let scaleMatrix = $.Mat3.makeScaling(2 / viewport.bounds.width * flipMultiplier, -2 / viewport.bounds.height);
+        let scaleMatrix = $.Mat3.makeScaling(2 / viewport.bounds.width, -2 / viewport.bounds.height);
         let rotMatrix = $.Mat3.makeRotation(-viewport.rotation);
         let viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
@@ -168,6 +178,12 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
         //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
         for (const tiledImage of tiledImages) {
             let tilesToDraw = tiledImage.getTilesToDraw();
+
+            if (tilesToDraw.length === 0) {
+                continue;
+            }
+
+            gl.clear(gl.STENCIL_BUFFER_BIT);
 
             let overallMatrix = viewMatrix;
             let imageRotation = tiledImage.getRotation(true);
@@ -187,7 +203,7 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
             //todo better access to the rendering context
             const shader = this.renderer.specification(0).shaders.renderShader._renderContext;
             // iterate over tiles and add data for each one to the buffers
-            for (let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+            for (let tileIndex = tilesToDraw.length - 1; tileIndex >= 0; tileIndex--){
                 const tile = tilesToDraw[tileIndex].tile;
 
                 const matrix = this._getTileMatrix(tile, tiledImage, overallMatrix);
@@ -264,6 +280,7 @@ $.WebGL = class WebGL extends OpenSeadragon.DrawerBase {
             let localMatrix = t1.multiply($.Mat3.makeScaling(-1, 1)).multiply(t2);
             matrix = matrix.multiply(localMatrix);
         }
+
         let overallMatrix = viewMatrix.multiply(matrix);
         return overallMatrix.values;
     }

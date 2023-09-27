@@ -81,7 +81,6 @@ $.WebGLModule = class extends $.EventSource {
         this.visualisationInUse = function(visualisation) { };
         this.visualisationChanged = function(oldVis, newVis) { };
 
-
         /**
          * Debug mode.
          * @member {boolean}
@@ -124,12 +123,15 @@ $.WebGLModule = class extends $.EventSource {
         try {
             const canvas = document.createElement("canvas");
             for (let version of [this.webGlPreferredVersion, "2.0", "1.0"]) {
+                const contextOpts = incomingOptions[version] || {};
+
                 const Context = $.WebGLModule.determineContext(version);
-                let glContext = Context && Context.create(canvas);
+                //todo documment this
+                let glContext = Context && Context.create(canvas, contextOpts.canvasOptions || {});
 
                 if (glContext) {
                     this.gl = glContext;
-                    const contextOpts = incomingOptions[version] || {};
+
                     const readGlProp = function(prop, defaultValue) {
                         return glContext[contextOpts[prop] || defaultValue] || glContext[defaultValue];
                     };
