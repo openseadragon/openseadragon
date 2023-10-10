@@ -107,6 +107,21 @@
             ],
             "profile": "level0"
         },
+        infoJson3level0WithTiles = {
+            "@context": "http://iiif.io/api/image/3/context.json",
+            "id": id,
+            "width": 2000,
+            "height": 1000,
+            "tiles": [
+                { "width": 256, "scaleFactors": [ 2, 4, 1 ] }
+            ],
+            "sizes": [
+                { width: 2000, height: 1000 },
+                { width: 1000, height: 500 },
+                { width: 500, height: 250 }
+            ],
+            "profile": "level0"
+        },
         infoJson3level0ContextExtension = {
             "@context": [
                 "http://iiif.io/api/image/3/context.json",
@@ -252,6 +267,11 @@
         var source2Level0 = getSource(infoJson2level0);
         assert.equal(source2Level0.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/default.jpg");
         assert.equal(source2Level0.getTileUrl(1, 0, 0), "http://example.com/identifier/full/2000,/0/default.jpg");
+
+        var source3Level0WithTiles = getSource(infoJson3level0WithTiles);
+        assert.equal(source3Level0WithTiles.getTileUrl(0, 0, 0), "http://example.com/identifier/0,0,1024,1000/256,250/0/default.jpg");
+        assert.equal(source3Level0WithTiles.getTileUrl(1, 1, 0), "http://example.com/identifier/512,0,512,512/256,256/0/default.jpg");
+        assert.equal(source3Level0WithTiles.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,256,256/256,256/0/default.jpg");
 
         var source3Level1 = getSource(infoJson3level1);
         assert.equal(source3Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/default.jpg");
