@@ -129,9 +129,6 @@ $('#image-picker').sortable({
     }
 });
 
-$('#image-picker').append(`<div class="option-grid">
-  <label>Blend Time (s): <input type="number" value="0" data-field="blend-time" min="0" max="1" step="0.2"> </label>
-</div>`);
 Object.keys(sources).forEach((key, index)=>{
     let element = makeImagePickerElement(key, labels[key])
     $('#image-picker').append(element);
@@ -211,9 +208,6 @@ function updateTiledImage(tiledImage, data, value, item){
         }
     } else {
         //viewer-level option
-        if (field == "blend-time") {
-            //todo
-        }
     }
 }
 
