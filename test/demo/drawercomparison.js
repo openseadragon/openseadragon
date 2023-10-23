@@ -129,6 +129,9 @@ $('#image-picker').sortable({
     }
 });
 
+$('#image-picker').append(`<div class="option-grid">
+  <label>Blend Time (s): <input type="number" value="0" data-field="blend-time" min="0" max="1" step="0.2"> </label>
+</div>`);
 Object.keys(sources).forEach((key, index)=>{
     let element = makeImagePickerElement(key, labels[key])
     $('#image-picker').append(element);
@@ -163,9 +166,10 @@ $('#image-picker input:not(.toggle)').on('change',function(){
 });
 
 function updateTiledImage(tiledImage, data, value, item){
+    let field = data.field;
+
     if(tiledImage){
         //item = tiledImage
-        let field = data.field;
         if(field == 'x'){
             let bounds = tiledImage.getBoundsNoRotate();
             let position = new OpenSeadragon.Point(Number(value), bounds.y);
@@ -198,13 +202,17 @@ function updateTiledImage(tiledImage, data, value, item){
             } else {
                 tiledImage.setClip(null);
             }
-        }
-        else if (field == 'debug'){
+        } else if (field == 'debug'){
             if( $(item).prop('checked') ){
                 tiledImage.debugMode = true;
             } else {
                 tiledImage.debugMode = false;
             }
+        }
+    } else {
+        //viewer-level option
+        if (field == "blend-time") {
+            //todo
         }
     }
 }
@@ -339,6 +347,7 @@ function makeImagePickerElement(key, label){
             <label>Flipped: <input type="checkbox" data-image="" data-field="flipped"></label>
             <label>Cropped: <input type="checkbox" data-image="" data-field="cropped"></label>
             <label>Clipped: <input type="checkbox" data-image="" data-field="clipped"></label>
+            <label>Chess Tile Opacity: <input type="checkbox" data-image="" data-field="tile-level-opecity"></label>
             <label>Debug: <input type="checkbox" data-image="" data-field="debug"></label>
             <label>Composite: <select data-image="" data-field="composite"></select></label>
             <label>Wrap: <select data-image="" data-field="wrapping"></select></label>

@@ -125,8 +125,11 @@ $.WebGLModule.IDataLoader = class {
      * @param id
      */
     free(renderer, id) {
-        this.unloadTexture(renderer, id, this.getLoaded(id));
-        this.setUnloaded(id);
+        const loaded  = this.getLoaded(id);
+        if (loaded) {
+            this.unloadTexture(renderer, id, this.getLoaded(id));
+            this.setUnloaded(id);
+        }
     }
 
     /**

@@ -12,8 +12,8 @@
 $.WebGLModule = class extends $.EventSource {
     /**
      * @typedef {{
-     *  name: string,
-     *  lossless: boolean,
+     *  name?: string,
+     *  lossless?: boolean,
      *  shaders: Object.<string, OpenSeadragon.WebGLModule.ShaderLayerConfig>
      * }} OpenSeadragon.WebGLModule.RenderingConfig
      *
@@ -26,11 +26,11 @@ $.WebGLModule = class extends $.EventSource {
      * @type {{TUseChannel,TUseFilter,TIControlConfig}}
      *
      * @typedef {{
-     *   name: string,
+     *   name?: string,
      *   type: string,
-     *   visible: boolean,
+     *   visible?: boolean,
      *   dataReferences: number[],
-     *   params: OpenSeadragon.WebGLModule.ShaderLayerParams
+     *   params?: OpenSeadragon.WebGLModule.ShaderLayerParams,
      *  }} OpenSeadragon.WebGLModule.ShaderLayerConfig
      *
      *
@@ -53,8 +53,6 @@ $.WebGLModule = class extends $.EventSource {
      * @param {boolean} incomingOptions.debug debug mode default false
      * @param {function} incomingOptions.ready function called when ready
      * @param {function} incomingOptions.resetCallback function called when user input changed, e.g. changed output of the current rendering
-     * @param {function} incomingOptions.visualisationInUse function called when a specification is initialized and run
-     * @param {function} incomingOptions.visualisationChanged function called when a visualization swap is performed:
      *   signature f({Visualization} oldVisualisation,{Visualization} newVisualisation)
      * @constructor
      * @memberOf OpenSeadragon.WebGLModule
@@ -77,9 +75,6 @@ $.WebGLModule = class extends $.EventSource {
         this.resetCallback = function() { };
         //called once a visualisation is compiled and linked (might not happen)
         this.visualisationReady = function(i, visualisation) { };
-        //called once a visualisation is switched to (including first run)
-        this.visualisationInUse = function(visualisation) { };
-        this.visualisationChanged = function(oldVis, newVis) { };
 
         /**
          * Debug mode.
@@ -110,7 +105,7 @@ $.WebGLModule = class extends $.EventSource {
 
         /**
          * WebGL context
-         * @member {WebGLRenderingContextBase}
+         * @member {WebGLRenderingContext|WebGL2RenderingContext}
          */
         this.gl = null;
 
@@ -141,13 +136,11 @@ $.WebGLModule = class extends $.EventSource {
                      * @param {string} options.wrap  texture wrap parameteri
                      * @param {string} options.magFilter  texture filter parameteri
                      * @param {string} options.minFilter  texture filter parameteri
-                     * @param {string|WebGLModule.IDataLoader} options.dataLoader class name or implementation of a given loader
                      */
                     const options = {
                         wrap: readGlProp("wrap", "MIRRORED_REPEAT"),
                         magFilter: readGlProp("magFilter", "LINEAR"),
                         minFilter: readGlProp("minFilter", "LINEAR"),
-                        dataLoader: contextOpts.dataLoader || "TEXTURE_2D"
                     };
                     this.webglContext = new Context(this, glContext, options);
                 }
@@ -159,10 +152,10 @@ $.WebGLModule = class extends $.EventSource {
              */
             this.raiseEvent('fatal-error', {message: "Unable to initialize the WebGL renderer.",
                 details: e});
-            console.error(e);
+            $.console.error(e);
             return;
         }
-        console.log(`WebGL ${this.webglContext.getVersion()} Rendering module (ID ${this.uniqueId})`);
+        $.console.log(`WebGL ${this.webglContext.getVersion()} Rendering module (ID ${this.uniqueId})`);
     }
 
     /**
@@ -171,26 +164,16 @@ $.WebGLModule = class extends $.EventSource {
      * @memberOf OpenSeadragon.WebGLModule
      */
     reset() {
-        this._unloadCurrentProgram();
-        this._programConfigurations = [];
+        if (this._programs) {
+            Object.values(this._programs).forEach(p => this._unloadProgram(p));
+        }
+        this._programSpecifications = [];
         this._dataSources = [];
-        this._shaderDataIndexToGlobalDataIndex = [];
         this._origDataSources = [];
         this._programs = {};
         this._program = -1;
-        this._prepared = false;
         this.running = false;
         this._initialized = false;
-    }
-
-    /**
-     * Check if prepare() was called.
-     * @return {boolean}
-     * @instance
-     * @memberOf OpenSeadragon.WebGLModule
-     */
-    get isPrepared() {
-        return this._prepared;
     }
 
     /**
@@ -237,49 +220,107 @@ $.WebGLModule = class extends $.EventSource {
     }
 
     /**
+     *
+     */
+    getCompiled(name, programIndex = this._program) {
+        return this.webglContext.getCompiled(this._programs[programIndex], name);
+    }
+
+    /**
      * Set program shaders. Vertex shader is set by default a square.
-     * @param {RenderingConfig} configurations - objects that define the what to render (see Readme)
+     * @param {RenderingConfig} specifications - objects that define the what to render (see Readme)
      * @return {boolean} true if loaded successfully
      * @instance
      * @memberOf OpenSeadragon.WebGLModule
      */
-    addRenderingSpecifications(...configurations) {
-          if (this._prepared) {
-            console.error("New specification cannot be introduced after the visualiser was prepared.");
-            return false;
-        }
-        for (let config of configurations) {
-            if (!config.shaders) {
-                console.warn("Invalid visualization: no shaders defined", config);
-                continue;
+    addRenderingSpecifications(...specifications) {
+        for (let spec of specifications) {
+            const parsed = this._parseSpec(spec);
+            if (parsed) {
+                this._programSpecifications.push(parsed);
             }
-
-            let count = 0;
-            for (let sid in config.shaders) {
-                const shader = config.shaders[sid];
-                if (!shader.params) {
-                    shader.params = {};
-                }
-                count++;
-            }
-
-            if (count < 0) {
-                console.warn("Invalid configualization: no shader configuration present!", config);
-                continue;
-            }
-            this._programConfigurations.push(config);
         }
         return true;
     }
 
+    setRenderingSpecification(i, spec) {
+        if (!spec) {
+            const program = this._programs[i];
+            if (program) {
+                this._unloadProgram();
+            }
+            delete this._programs[i];
+            delete this._programSpecifications[i];
+            this.getCurrentProgramIndex();
+            return true;
+        } else {
+            const parsed = this._parseSpec(spec);
+            if (parsed) {
+                this._programSpecifications[i] = parsed;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    _parseSpec(spec) {
+        if (!spec.shaders) {
+            $.console.warn("Invalid visualization: no shaders defined", spec);
+            return undefined;
+        }
+
+        let count = 0;
+        for (let sid in spec.shaders) {
+            const shader = spec.shaders[sid];
+            if (!shader.params) {
+                shader.params = {};
+            }
+            count++;
+        }
+
+        if (count < 0) {
+            $.console.warn("Invalid rendering specs: no shader configuration present!", spec);
+            return undefined;
+        }
+        return spec;
+    }
+
     /**
-     * Runs a callback on each specification
-     * @param {function} call callback to perform on each specification (its object given as the only parameter)
-     * @instance
-     * @memberOf OpenSeadragon.WebGLModule
+     *
+     * @param i
+     * @param order
+     * @param force
+     * @param {object} options
+     * @param {boolean} options.withHtml whether html should be also created (false if no UI controls are desired)
+     * @param {string} options.textureType id of texture to be used, supported are TEXTURE_2D, TEXTURE_2D_ARRAY, TEXTURE_3D
+     * @param {string} options.instanceCount number of instances to draw at once
+     * @param {boolean} options.debug draw debugging info
+     * @return {boolean}
      */
-    foreachRenderingSpecification(call) {
-        this._programConfigurations.forEach(vis => call(vis));
+    buildProgram(i, order, force, options) {
+        let vis = this._programSpecifications[i];
+
+        if (!vis) {
+            $.console.error("Invalid rendering program target!", i);
+            return false;
+        }
+
+        if (order) {
+            vis.order = order;
+        }
+
+        let program = this._programs && this._programs[i];
+        force = force || (program && !program['VERTEX_SHADER']);
+        if (force) {
+            this._unloadProgram(program);
+            this._specificationToProgram(vis, i, options);
+
+            if (i === this._program) {
+                this._forceSwitchShader(this._program);
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -289,15 +330,11 @@ $.WebGLModule = class extends $.EventSource {
      * @instance
      * @memberOf OpenSeadragon.WebGLModule
      */
-    rebuildSpecification(order = undefined) {
-        let vis = this._programConfigurations[this._program];
-
-        if (order) {
-            vis.order = order;
+    rebuildCurrentProgram(order = undefined) {
+        const program = this._programs[this._program];
+        if (this.buildProgram(this._program, order, true, program && program._osdOptions)) {
+            this._forceSwitchShader(this._program);
         }
-        this._unloadCurrentProgram();
-        this._specificationToProgram(vis, this._program);
-        this._forceSwitchShader(this._program);
     }
 
     /**
@@ -307,7 +344,7 @@ $.WebGLModule = class extends $.EventSource {
      * @memberOf OpenSeadragon.WebGLModule
      */
     specification(index) {
-        return this._programConfigurations[Math.min(index, this._programConfigurations.length - 1)];
+        return this._programSpecifications[index];
     }
 
     /**
@@ -328,17 +365,25 @@ $.WebGLModule = class extends $.EventSource {
      * @instance
      * @memberOf OpenSeadragon.WebGLModule
      */
-    useSpecification(i) {
+    useProgram(i) {
         if (!this._initialized) {
-            console.warn("$.WebGLModule::useSpecification(): not initialized.");
+            $.console.warn("$.WebGLModule::useSpecification(): not initialized.");
             return;
         }
+
         if (this._program === i) {
             return;
         }
-        let oldIndex = this._program;
         this._forceSwitchShader(i);
-        this.visualisationChanged(this._programConfigurations[oldIndex], this._programConfigurations[i]);
+    }
+
+    useCustomProgram(program) {
+        this._program = -1;
+        this.webglContext.programLoaded(program, null);
+    }
+
+    getSpecificationsCount() {
+        return this._programSpecifications.length;
     }
 
     /**
@@ -347,57 +392,53 @@ $.WebGLModule = class extends $.EventSource {
      * @memberOf WebGLModule
      */
     getSources() {
-        //return this._programConfigurations[this._program].dziExtendedUrl;
         return this._dataSources;
     }
 
     /**
-     * Supported: 'wrap', 'minFilter', 'magFilter'
-     * @param {string} name WebGL name of the parameter
-     * @param {GLuint} value
+     * Set data srouces
      */
-    setTextureParam(name, value) {
-       this.webglContext.texture.setTextureParam(name, value);
-    }
-
-    /**
-     * @param id
-     * @param data
-     * @param width
-     * @param height
-     */
-    loadData(id, data, width, height) {
-        this.webglContext.texture.load(this, id, data, width, height);
+    setSources(sources) {
+        if (!this._initialized) {
+            $.console.warn("$.WebGLModule::useSpecification(): not initialized.");
+            return;
+        }
+        this._origDataSources = sources || [];
     }
 
     /**
      * Renders data using WebGL
-     * @param {string} id used in loadImage()
+     * @param {GLuint|[GLuint]} texture or texture array for instanced drawing
      *
      * @param {object} tileOpts
      * @param {number} tileOpts.zoom value passed to the shaders as zoom_level
      * @param {number} tileOpts.pixelSize value passed to the shaders as pixel_size_in_fragments
-     * @param {OpenSeadragon.Mat3} tileOpts.transform position of the rendered tile
+     * @param {OpenSeadragon.Mat3|[OpenSeadragon.Mat3]} tileOpts.transform position transform
+     *   matrix or flat matrix array (instance drawing)
+     * @param {number?} tileOpts.instanceCount how many instances to draw in case instanced drawing is enabled
      *
      * @instance
      * @memberOf WebGLModule
      */
-    processData(id, tileOpts) {
-        this.webglContext.programUsed(
-            this.program,
-            this._programConfigurations[this._program],
-            id,
-            tileOpts
-        );
+    processData(texture, tileOpts) {
+        const spec = this._programSpecifications[this._program];
+        if (!spec) {
+            $.console.error("Cannot render using invalid specification: did you call useCustomProgram?", this._program);
+        } else {
+            this.webglContext.programUsed(this.program, spec, texture, tileOpts);
+            // if (this.debug) {
+            //     //todo
+            //     this._renderDebugIO(data, result);
+            // }
+        }
+    }
 
+    processCustomData(texture, tileOpts) {
+        this.webglContext.programUsed(this.program, null, texture, tileOpts);
         // if (this.debug) {
         //     //todo
         //     this._renderDebugIO(data, result);
         // }
-    }
-
-    freeData(id) {
-
     }
 
     /**
@@ -431,9 +472,12 @@ $.WebGLModule = class extends $.EventSource {
     static eachValidShaderLayer(vis, callback,
                                        onFail = (layer, e) => {
                                            layer.error = e.message;
-                                           console.error(e);
+                                           $.console.error(e);
                                        }) {
         let shaders = vis.shaders;
+        if (!shaders) {
+            return true;
+        }
         let noError = true;
         for (let key in shaders) {
             let shader = shaders[key];
@@ -466,10 +510,13 @@ $.WebGLModule = class extends $.EventSource {
     static eachVisibleShaderLayer(vis, callback,
                                               onFail = (layer, e) => {
                                                     layer.error = e.message;
-                                                    console.error(e);
+                                                    $.console.error(e);
                                               }) {
 
         let shaders = vis.shaders;
+        if (!shaders) {
+            return true;
+        }
         let noError = true;
         for (let key in shaders) {
             //rendering == true means no error
@@ -499,7 +546,7 @@ $.WebGLModule = class extends $.EventSource {
      * @return {number} program index
      */
     getCurrentProgramIndex() {
-        if (this._program < 0 || this._program >= this._programConfigurations.length) {
+        if (this._program < 0 || this._program >= this._programSpecifications.length) {
             this._program = 0;
         }
         return this._program;
@@ -516,36 +563,21 @@ $.WebGLModule = class extends $.EventSource {
     }
 
     /**
-     * For easy initialization, do both in once call.
-     * For separate initialization (prepare|init), see functions below.
-     * @param {string[]|undefined} dataSources a list of data identifiers available to the specifications
-     *  - specification configurations should not reference data not present in this array
-     *  - the module gives you current list of required subset of this list for particular active visualization goal
-     * @param width initialization width
-     * @param height initialization height
-     */
-    prepareAndInit(dataSources = undefined, width = 1, height = 1) {
-        this.prepare(dataSources);
-        this.init(width, height);
-    }
-
-    /**
-     * Prepares the WebGL wrapper for being initialized. It is separated from
-     * initialization as this must be finished before OSD is ready (we must be ready to draw when the data comes).
-     * The idea is to open the protocol for OSD in onPrepared.
-     * Shaders are fetched from `specification.url` parameter.
+     * Initialization. It is separated from preparation as this actually initiates the rendering,
+     * sometimes this can happen only when other things are ready. Must be performed after
+     * all the prepare() strategy finished: e.g. as onPrepared. Or use prepareAndInit();
      *
-     * @param {string[]|undefined} dataSources id's of data such that server can understand which image to send (usually paths)
-     * @param {number} visIndex index of the initial specification
+     * @param {int} width width of the first tile going to be drawn
+     * @param {int} height height of the first tile going to be drawn
+     * @param firstProgram
      */
-    prepare(dataSources = undefined, visIndex = 0) {
-        if (this._prepared) {
-            console.error("Already prepared!");
+    init(width = 1, height = 1, firstProgram = 0) {
+        if (this._initialized) {
+            $.console.error("Already initialized!");
             return;
         }
-
-        if (this._programConfigurations.length < 1) {
-            console.error("No specification specified!");
+        if (this._programSpecifications.length < 1) {
+            $.console.error("No specification specified!");
             /**
              * @event fatal-error
              */
@@ -553,34 +585,11 @@ $.WebGLModule = class extends $.EventSource {
                 details: "::prepare() called with no specification set."});
             return;
         }
-        this._origDataSources = dataSources || [];
-        this._program = visIndex;
+        this._program = firstProgram;
+        this.getCurrentProgramIndex(); //validates index
 
-        this._prepared = true;
-        this.getCurrentProgramIndex(); //resets index
-        this._specificationToProgram(this._programConfigurations[this._program], this._program);
-    }
-
-    /**
-     * Initialization. It is separated from preparation as this actually initiates the rendering,
-     * sometimes this can happen only when other things are ready. Must be performed after
-     * all the prepare() strategy finished: e.g. as onPrepared. Or use prepareAndInit();
-     *
-     * @param {int} width width of the first tile going to be drawn
-     * @param {int} height height of the first tile going to be drawn
-     */
-    init(width = 1, height = 1) {
-        if (!this._prepared) {
-            console.error("The viaGL was not yet prepared. Call prepare() before init()!");
-            return;
-        }
-        if (this._initialized) {
-            console.error("Already initialized!");
-            return;
-        }
         this._initialized = true;
         this.setDimensions(width, height);
-
 
         //todo rotate anticlockwise to cull backfaces
         this.gl.enable(this.gl.CULL_FACE);
@@ -602,23 +611,6 @@ $.WebGLModule = class extends $.EventSource {
         } else {
             this.gl.disable(this.gl.BLEND);
         }
-    }
-
-    /**
-     * Supported are two modes: show and blend
-     * show is the default option, stacking layers by generalized alpha blending
-     * blend is a custom alternative, default is a mask (remove background where foreground.a > 0.001)
-     *
-     * vec4 my_blend(vec4 foreground, vec4 background) {
-     *      <<code>> //here goes your blending code
-     * }
-     *
-     * @param code GLSL code to blend - must return vec4() and can use
-     * two variables: background, foreground
-     */
-    setLayerBlending(code) {
-        this.webglContext.setBlendEquation(code);
-        this.rebuildSpecification();
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -659,16 +651,14 @@ $.WebGLModule = class extends $.EventSource {
             i = this._program;
         }
 
-        if (i >= this._programConfigurations.length) {
-            console.error("Invalid specification index ", i, "trying to use index 0...");
-            if (i === 0) {
-                return;
-            }
-            i = 0;
+        let target = this._programSpecifications[i];
+        if (!target) {
+            $.console.error("Invalid rendering target index!", i);
+            return;
         }
 
-        let target = this._programConfigurations[i];
-        if (!this._programs[i]) {
+        const program = this._programs[i];
+        if (!program) {
             this._specificationToProgram(target, i);
         } else if (i !== this._program) {
             this._updateRequiredDataSources(target);
@@ -677,11 +667,11 @@ $.WebGLModule = class extends $.EventSource {
         this._program = i;
         if (target.error) {
             if (this.supportsHtmlControls()) {
-                this._loadHtml(i, this._program);
+                this._loadHtml(i, program);
             }
-            this._loadScript(i, this._program);
+            this._loadScript(i);
             this.running = false;
-            if (this._programConfigurations.length < 2) {
+            if (this._programSpecifications.length < 2) {
                 /**
                  * @event fatal-error
                  */
@@ -695,22 +685,21 @@ $.WebGLModule = class extends $.EventSource {
         } else {
             this.running = true;
             if (this.supportsHtmlControls()) {
-                this._loadHtml(i, this._program);
+                this._loadHtml(program);
             }
             this._loadDebugInfo();
-            if (!this._loadScript(i, this._program)) {
+            if (!this._loadScript(i)) {
                 if (!_reset) {
                     throw "Could not build visualization";
                 }
                 this._forceSwitchShader(i, false); //force reset in errors
                 return;
             }
-            this.webglContext.programLoaded(this._programs[i], target);
+            this.webglContext.programLoaded(program, target);
         }
     }
 
-    _unloadCurrentProgram() {
-        let program = this._programs && this._programs[this._program];
+    _unloadProgram(program) {
         if (program) {
             //must remove before attaching new
             this._detachShader(program, "VERTEX_SHADER");
@@ -718,13 +707,13 @@ $.WebGLModule = class extends $.EventSource {
         }
     }
 
-    _loadHtml(visId) {
+    _loadHtml(program) {
         let htmlControls = document.getElementById(this.htmlControlsId);
-        htmlControls.innerHTML = this._programConfigurations[visId]._built["html"];
+        htmlControls.innerHTML = this.webglContext.getCompiled(program, "html") || "";
     }
 
     _loadScript(visId) {
-        return $.WebGLModule.eachValidShaderLayer(this._programConfigurations[visId], layer => layer._renderContext.init());
+        return $.WebGLModule.eachValidShaderLayer(this._programSpecifications[visId], layer => layer._renderContext.init());
     }
 
     _getDebugInfoPanel() {
@@ -774,33 +763,29 @@ Output:<br><div style="border: 1px solid;display: inline-block; overflow: auto;"
     }
 
     _buildFailed(specification, error) {
-        console.error(error);
+        $.console.error(error);
         specification.error = "Failed to compose this specification.";
         specification.desc = error;
     }
 
-    _buildSpecification(order, specification) {
+    _buildSpecification(program, order, specification, options) {
         try {
-            let data = this.webglContext.compileSpecification(order, specification,
-                this._shaderDataIndexToGlobalDataIndex, this.supportsHtmlControls());
+            options.withHtml = this.supportsHtmlControls();
+            const usableShaderCount = this.webglContext.compileSpecification(
+                program, order, specification, options);
 
-            if (data.usableShaders < 1) {
+            if (usableShaderCount < 1) {
                 this._buildFailed(specification, `Empty specification: no valid specification has been specified.
 <br><b>Specification setup:</b></br> <code>${JSON.stringify(specification, $.WebGLModule.jsonReplacer)}</code>
 <br><b>Dynamic shader data:</b></br><code>${JSON.stringify(specification.data)}</code>`);
-                return null;
+                return;
             }
-            data.dziExtendedUrl = data.dataUrls.join(",");
-            specification._built = data;
-
             //preventive
             delete specification.error;
             delete specification.desc;
-            return data;
         } catch (error) {
             this._buildFailed(specification, error);
         }
-        return null;
     }
 
     _detachShader(program, type) {
@@ -812,73 +797,9 @@ Output:<br><div style="border: 1px solid;display: inline-block; overflow: auto;"
         }
     }
 
-    _specificationToProgram(vis, idx) {
-        if (!vis._built) {
-            vis._built = {};
-        }
-
-        this._updateRequiredDataSources(vis);
-        this._processSpecification(vis, idx);
-        return idx;
-    }
-
-    _initializeShaderFactory(ShaderFactoryClass, layer, idx) {
-        if (!ShaderFactoryClass) {
-            layer.error = "Unknown layer type.";
-            layer.desc = `The layer type '${layer.type}' has no associated factory. Missing in 'shaderSources'.`;
-            console.warn("Skipping layer " + layer.name);
-            return;
-        }
-        layer._index = idx;
-        layer.visible = layer.visible === undefined ? true : layer.visible;
-        layer._renderContext = new ShaderFactoryClass(`${this.uniqueId}${idx}`, layer.params || {}, {
-            layer: layer,
-            webgl: this.webglContext,
-            invalidate: this.resetCallback,
-            rebuild: this.rebuildSpecification.bind(this, undefined)
-        });
-    }
-
-    _updateRequiredDataSources(specs) {
-        //for now just request all data, later decide in the context on what to really send
-        //might in the future decide to only request used data, now not supported
-        let usedIds = new Set();
-        for (let key in specs.shaders) {
-            let layer = specs.shaders[key];
-            if (layer) {
-                for (let x of layer.dataReferences) {
-                    usedIds.add(x);
-                }
-            }
-        }
-        usedIds = [...usedIds].sort();
-        this._dataSources = [];
-
-        while (usedIds[usedIds.length - 1] >= this._origDataSources.length) {
-            //make sure values are set if user did not provide
-            this._origDataSources.push("__generated_do_not_use__");
-        }
-
-        this._shaderDataIndexToGlobalDataIndex = new Array(
-            Math.max(this._origDataSources.length, usedIds[usedIds.length - 1])
-        ).fill(-1);
-
-        for (let id of usedIds) {
-            this._shaderDataIndexToGlobalDataIndex[id] = this._dataSources.length;
-            this._dataSources.push(this._origDataSources[id]);
-            while (id > this._shaderDataIndexToGlobalDataIndex.length) {
-                this._shaderDataIndexToGlobalDataIndex.push(-1);
-            }
-        }
-    }
-
-    _processSpecification(spec, idx) {
-        let gl = this.gl,
-            err = function(message, description) {
-                spec.error = message;
-                spec.desc = description;
-            };
-
+    _specificationToProgram(spec, idx, options) {
+        this._updateRequiredDataSources(spec);
+        let gl = this.gl;
         let program;
 
         if (!this._programs[idx]) {
@@ -923,55 +844,50 @@ Output:<br><div style="border: 1px solid;display: inline-block; overflow: auto;"
             spec.order = Object.keys(spec.shaders);
         }
 
-        this._buildSpecification(spec.order, spec);
-
-        if (spec.error) {
-            this.visualisationReady(idx, spec);
-            return;
-        }
-
-        this.constructor.compileShader(gl, program,
-            spec._built.vertexShader, spec._built.fragmentShader, err, this.debug);
+        this._buildSpecification(program, spec.order, spec, options);
         this.visualisationReady(idx, spec);
+        return idx;
     }
 
-    static compileShader(gl, program, VS, FS, onError, isDebugMode) {
-        function ok (kind, status, value, sh) {
-            if (!gl['get' + kind + 'Parameter'](value, gl[status + '_STATUS'])) {
-                console.error((sh || 'LINK') + ':\n' + gl['get' + kind + 'InfoLog'](value));
-                return false;
+    _initializeShaderFactory(ShaderFactoryClass, layer, idx) {
+        if (!ShaderFactoryClass) {
+            layer.error = "Unknown layer type.";
+            layer.desc = `The layer type '${layer.type}' has no associated factory. Missing in 'shaderSources'.`;
+            $.console.warn("Skipping layer " + layer.name);
+            return;
+        }
+        layer._index = idx;
+        layer.visible = layer.visible === undefined ? true : layer.visible;
+        layer._renderContext = new ShaderFactoryClass(`${this.uniqueId}${idx}`, layer.params || {}, {
+            layer: layer,
+            webgl: this.webglContext,
+            invalidate: this.resetCallback,
+            rebuild: this.rebuildCurrentProgram.bind(this, undefined)
+        });
+    }
+
+    _updateRequiredDataSources(specs) {
+        //for now just request all data, later decide in the context on what to really send
+        //might in the future decide to only request used data, now not supported
+        let usedIds = new Set();
+        for (let key in specs.shaders) {
+            let layer = specs.shaders[key];
+            if (layer) {
+                for (let x of layer.dataReferences) {
+                    usedIds.add(x);
+                }
             }
-            return true;
+        }
+        usedIds = [...usedIds].sort();
+        this._dataSources = [];
+
+        while (usedIds[usedIds.length - 1] >= this._origDataSources.length) {
+            //make sure values are set if user did not provide
+            this._origDataSources.push("__generated_do_not_use__");
         }
 
-        function useShader(gl, program, data, type) {
-            let shader = gl.createShader(gl[type]);
-            gl.shaderSource(shader, data);
-            gl.compileShader(shader);
-            gl.attachShader(program, shader);
-            program[type] = shader;
-            return ok('Shader', 'COMPILE', shader, type);
-        }
-
-        function numberLines(str) {
-            //https://stackoverflow.com/questions/49714971/how-to-add-line-numbers-to-beginning-of-each-line-in-string-in-javascript
-            return str.split('\n').map((line, index) => `${index + 1} ${line}`).join('\n');
-        }
-
-        if (!useShader(gl, program, VS, 'VERTEX_SHADER') ||
-            !useShader(gl, program, FS, 'FRAGMENT_SHADER')) {
-            onError("Unable to use this specification.",
-                "Compilation of shader failed. For more information, see logs in the console.");
-            console.warn("VERTEX SHADER\n", numberLines( VS ));
-            console.warn("FRAGMENT SHADER\n", numberLines( FS ));
-        } else {
-            gl.linkProgram(program);
-            if (!ok('Program', 'LINK', program)) {
-                onError("Unable to use this specification.",
-                    "Linking of shader failed. For more information, see logs in the console.");
-            } else { //if (isDebugMode) { //todo testing
-                console.info("FRAGMENT SHADER\n", numberLines( FS ));
-            }
+        for (let id of usedIds) {
+            this._dataSources.push(this._origDataSources[id]);
         }
     }
 };

@@ -8,7 +8,7 @@ $.WebGLModule.ShaderMediator = class {
 
     /**
      * Register shader
-     * @param {function} LayerRendererClass class extends OpenSeadragon.WebGLModule.ShaderLayer
+     * @param {typeof OpenSeadragon.WebGLModule.ShaderLayer} LayerRendererClass static class definition
      */
     static registerLayer(LayerRendererClass) {
         //todo why not hasOwnProperty check allowed by syntax checker
@@ -18,7 +18,14 @@ $.WebGLModule.ShaderMediator = class {
         // if (!$.WebGLModule.ShaderLayer.isPrototypeOf(LayerRendererClass)) {
         //     throw `${LayerRendererClass} does not inherit from ShaderLayer!`;
         // }
+        if (!this.acceptsShaders) {
+            $.console.error("Registering layer renderer when registering disabled!", LayerRendererClass.type());
+        }
         this._layers[LayerRendererClass.type()] = LayerRendererClass;
+    }
+
+    static setAcceptsRegistrations(accepts) {
+        this.acceptsShaders = accepts;
     }
 
     /**
@@ -32,16 +39,52 @@ $.WebGLModule.ShaderMediator = class {
 
     /**
      * Get all available shaders
-     * @return {function[]} classes that extend OpenSeadragon.WebGLModule.ShaderLayer
+     * @return {typeof OpenSeadragon.WebGLModule.ShaderLayer[]} classes that extend OpenSeadragon.WebGLModule.ShaderLayer
      */
     static availableShaders() {
         return Object.values(this._layers);
     }
+
+    /**
+     * Get all available shaders
+     * @return {string[]} classes that extend OpenSeadragon.WebGLModule.ShaderLayer
+     */
+    static availableTypes() {
+        return Object.keys(this._layers);
+    }
 };
 //todo why cannot be inside object :/
+$.WebGLModule.ShaderMediator.acceptsShaders = true;
 $.WebGLModule.ShaderMediator._layers = {};
 
-
+$.WebGLModule.BLEND_MODE = {
+    'source-over': 0,
+    'source-in': 1,
+    'source-out': 1,
+    'source-atop': 1,
+    'destination-over': 1,
+    'destination-in': 1,
+    'destination-out': 1,
+    'destination-atop': 1,
+    lighten: 1,
+    darken: 1,
+    copy: 1,
+    xor: 1,
+    multiply: 1,
+    screen: 1,
+    overlay: 1,
+    'color-dodge': 1,
+    'color-burn': 1,
+    'hard-light': 1,
+    'soft-light': 1,
+    difference: 1,
+    exclusion: 1,
+    hue: 1,
+    saturation: 1,
+    color: 1,
+    luminosity: 1
+};
+$.WebGLModule.BLEND_MODE_MULTIPLY = 1;
 /**
  * Abstract interface to any Shader.
  * @abstract
@@ -103,6 +146,9 @@ $.WebGLModule.ShaderLayer = class {
         this._buildControls(options);
         this.resetChannel(options);
         this.resetMode(options);
+        this._blendUniform = null;
+        this._clipUniform = null;
+        this.blendMode = $.WebGLModule.BLEND_MODE["source-over"];
     }
 
     /**
@@ -121,8 +167,10 @@ $.WebGLModule.ShaderLayer = class {
      * @return {string}
      */
     getFragmentShaderDefinition() {
+        this._blendUniform = `${this.uid}_blend`;
+        this._clipUniform = `${this.uid}_clip`;
         let controls = this.constructor.defaultControls,
-            html = [];
+            glsl = [`uniform int ${this._blendUniform};`, `uniform bool ${this._clipUniform};`];
         for (let control in controls) {
             if (control.startsWith("use_")) {
                 continue;
@@ -133,11 +181,19 @@ $.WebGLModule.ShaderLayer = class {
                 let code = controlObject.define();
                 if (code) {
                     code = code.trim();
-                    html.push(code);
+                    glsl.push(code);
                 }
             }
         }
-        return html.join("\n");
+        return glsl.join("\n");
+    }
+
+    setBlendMode(name) {
+        const modes = $.WebGLModule.BLEND_MODE;
+        this.blendMode = modes[name];
+        if (this.blendMode === undefined) {
+            this.blendMode = modes["source-over"];
+        }
     }
 
     /**
@@ -159,6 +215,11 @@ $.WebGLModule.ShaderLayer = class {
      * @param {WebGLRenderingContextBase} gl
      */
     glDrawing(program, gl) {
+        if (this._blendUniform) {
+            gl.uniform1i(this._blendLoc, this.blendMode);
+            gl.uniform1i(this._clipLoc, 0); //todo
+        }
+
         let controls = this.constructor.defaultControls;
         for (let control in controls) {
             if (control.startsWith("use_")) {
@@ -178,6 +239,13 @@ $.WebGLModule.ShaderLayer = class {
      * @param {WebGLRenderingContextBase} gl WebGL Context
      */
     glLoaded(program, gl) {
+        if (!this._blendUniform) {
+            $.console.warn("Shader layer has autoblending disabled: are you sure you call super.getFragmentShaderDefinition()?");
+        } else {
+            this._clipLoc = gl.getUniformLocation(program, this._clipUniform);
+            this._blendLoc = gl.getUniformLocation(program, this._blendUniform);
+        }
+
         let controls = this.constructor.defaultControls;
         for (let control in controls) {
             if (control.startsWith("use_")) {
@@ -295,7 +363,7 @@ $.WebGLModule.ShaderLayer = class {
                     return 'vec4(0.0)';
             }
         }
-        let sampled = `${this.webglContext.texture.sample(refs[otherDataIndex], textureCoords)}.${chan}`;
+        let sampled = `${this.webglContext.sampleTexture(refs[otherDataIndex], textureCoords)}.${chan}`;
         // if (raw) return sampled;
         // return this.filter(sampled);
         return sampled;

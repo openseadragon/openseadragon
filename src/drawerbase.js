@@ -39,6 +39,12 @@ $.DrawerOptions = class DrawerOptions{
 };
 
 /**
+ * @typedef {Object} Point
+ * @property {number} x
+ * @property {number} y
+ */
+
+/**
  * @class DrawerBase
  * @memberof OpenSeadragon
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
@@ -297,7 +303,7 @@ $.DrawerBase = class DrawerBase{
      * @inner
      * Calculate width and height of the canvas based on viewport dimensions
      * and pixelDensityRatio
-     * @returns {Dictionary} {x, y} size of the canvas
+     * @returns {Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {
         var pixelDensityRatio = $.pixelDensityRatio;

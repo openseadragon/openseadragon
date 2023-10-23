@@ -272,7 +272,8 @@ $.TileCache.prototype = {
                  * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
                  */
                 tiledImage.viewer.raiseEvent("image-unloaded", {
-                    context2D: context2D
+                    context2D: context2D,
+                    tile: tile
                 });
             }
 
