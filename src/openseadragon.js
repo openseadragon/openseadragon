@@ -141,6 +141,9 @@
   *     <strong>DEPRECATED</strong>. A relative path to load a DZI file from the server.
   *     Prefer the newer Options.tileSources.
   *
+  * @property {Boolean} [debouncePanEvents=false]
+  *     Group multiple move events into one event. This is useful for debouncing.
+  *
   * @property {String} [prefixUrl='/images/']
   *     Prepends the prefixUrl to navImages paths, which is very useful
   *     since the default paths are rarely useful for production
@@ -1370,6 +1373,7 @@ function OpenSeadragon( options ){
             useCanvas:              true,  // Use canvas element for drawing if available
             tileRetryMax:           0,
             tileRetryDelay:         2500,
+            debouncePanEvents:      false,
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
