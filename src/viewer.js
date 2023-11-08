@@ -3097,55 +3097,28 @@ function onCanvasDrag( event ) {
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
     this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
-    if (this.debouncePanEvents) {
-        if (!this.dragEventCombined) {
-            this.dragEventCombined = canvasDragEventArgs;
-            this.dragEventCombined.timeStamp = canvasDragEventArgs.originalEvent.timeStamp;
-        }
-        else {
-            this.dragEventCombined.delta = this.dragEventCombined.delta.plus(canvasDragEventArgs.delta);
-        }
-        if (this.dragEventCombined.timeout) {
-            clearTimeout(this.dragEventCombined.timeout);
-            this.dragEventCombined.timeout = null;
-        }
-        if (canvasDragEventArgs.originalEvent.timeStamp - this.dragEventCombined.timeStamp > this.debouncePanEvents) {
-            canvasDragEventArgs = this.dragEventCombined;
-            this.dragEventCombined = null;
-        }
-        else {
-            this.dragEventCombined.timeout = setTimeout(function () {
-                // call onCanvasDrag with en event with delta.x and delat.y = 0
-                let newEvent = event;
-                newEvent.delta.x = 0;
-                newEvent.delta.y = 0;
-                this.dragEventCombined.timeStamp -= this.debouncePanEvents;
-                onCanvasDrag.call(this, newEvent);
-            }.bind(this), this.debouncePanEvents / 5);
-            return;
-        }
-    }
-    gestureSettings = this.gestureSettingsByDeviceType( canvasDragEventArgs.pointerType );
+
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
 
         if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
-            var factor = Math.pow( this.zoomPerDblClickDrag, canvasDragEventArgs.delta.y / 50);
+            var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
             this.viewport.zoomBy(factor);
         }
         else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom) {
             if( !this.panHorizontal ){
-                canvasDragEventArgs.delta.x = 0;
+                event.delta.x = 0;
             }
             if( !this.panVertical ){
-                canvasDragEventArgs.delta.y = 0;
+                event.delta.y = 0;
             }
             if(this.viewport.flipped){
-                canvasDragEventArgs.delta.x = -canvasDragEventArgs.delta.x;
+                event.delta.x = -event.delta.x;
             }
 
             if( this.constrainDuringPan ){
-                var delta = this.viewport.deltaPointsFromPixels( canvasDragEventArgs.delta.negate() );
+                var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
 
                 this.viewport.centerSpringX.target.value += delta.x;
                 this.viewport.centerSpringY.target.value += delta.y;
@@ -3156,14 +3129,14 @@ function onCanvasDrag( event ) {
                 this.viewport.centerSpringY.target.value -= delta.y;
 
                 if (constrainedBounds.xConstrained) {
-                    canvasDragEventArgs.delta.x = 0;
+                    event.delta.x = 0;
                 }
 
                 if (constrainedBounds.yConstrained) {
-                    canvasDragEventArgs.delta.y = 0;
+                    event.delta.y = 0;
                 }
             }
-            this.viewport.panBy( this.viewport.deltaPointsFromPixels( canvasDragEventArgs.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
+            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
         }
 
     }
