@@ -2070,7 +2070,7 @@
         //   y-index scrolling.
         // event.deltaMode: 0=pixel, 1=line, 2=page
         // TODO: Deltas in pixel mode should be accumulated then a scroll value computed after $.DEFAULT_SETTINGS.pixelsPerWheelLine threshold reached
-        nDelta = event.deltaY < 0 ? 1 : -1;
+        nDelta = event.deltaY ? (event.deltaY < 0 ? 1 : -1) : 0;
 
         eventInfo = {
             originalEvent: event,
