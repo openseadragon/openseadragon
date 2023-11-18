@@ -1579,7 +1579,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     if (newIndex !== -1) {
                         queueItem.options.index = newIndex;
                     }
-                    queueItem.options.replaceItem.allowZombieCache(queueItem.options.zombieCache || false);
                     _this.world.removeItem(queueItem.options.replaceItem);
                 }
 

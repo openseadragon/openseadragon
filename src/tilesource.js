@@ -786,7 +786,7 @@ $.TileSource.prototype = {
                 return;
             }
             image.onload = image.onerror = image.onabort = null;
-            context.finish(image, dataStore.request); //dataType="image" recognized automatically
+            context.finish(image, dataStore.request, "image");
         };
         image.onload = function () {
             finalize();
@@ -900,7 +900,7 @@ $.TileSource.prototype = {
      * Raw data getter, should return anything that is compatible with the system, or undefined
      * if the system can handle it.
      * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
-     * @returns {Promise<?>} cache data
+     * @returns {OpenSeadragon.Promise<?>} cache data
      * @deprecated
      */
     getTileCacheData: function(cacheObject) {

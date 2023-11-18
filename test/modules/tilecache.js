@@ -1,13 +1,41 @@
 /* global QUnit, testLog */
 
 (function() {
+    let viewer;
+
+    //we override jobs: remember original function
+    const originalJob = OpenSeadragon.ImageLoader.prototype.addJob;
+
+    //event awaiting
+    function waitFor(predicate) {
+        const time = setInterval(() => {
+            if (predicate()) {
+                clearInterval(time);
+            }
+        }, 20);
+    }
 
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
+
             testLog.reset();
+
+            viewer = OpenSeadragon({
+                id: 'example',
+                prefixUrl: '/build/openseadragon/images/',
+                maxImageCacheCount: 200, //should be enough to fit test inside the cache
+                springStiffness: 100 // Faster animation = faster tests
+            });
+            OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
         },
         afterEach: function () {
+            if (viewer && viewer.close) {
+                viewer.close();
+            }
+
+            viewer = null;
         }
     });
 
@@ -144,6 +172,161 @@
         assert.equal(cache.numTilesLoaded(), 2, 'tile count after additional same image');
 
         done();
+    });
+
+    QUnit.test('Zombie Cache', function(test) {
+        const done = test.async();
+
+        //test jobs by coverage: fail if
+        let jobCounter = 0, coverage = undefined;
+        OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
+            jobCounter++;
+            if (coverage) {
+                //old coverage of previous tiled image: if loaded, fail --> should be in cache
+                const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
+                test.ok(!coverageItem, "Attempt to add job for tile that is not in cache OK if previously not loaded.");
+            }
+            return originalJob.call(this, options);
+        };
+
+        let tilesFinished = 0;
+        const tileCounter = function (event) {tilesFinished++;}
+
+        const openHandler = function(event) {
+            event.item.allowZombieCache(true);
+
+            viewer.world.removeHandler('add-item', openHandler);
+            test.ok(jobCounter === 0, 'Initial state, no images loaded');
+
+            waitFor(() => {
+                if (tilesFinished === jobCounter && event.item._fullyLoaded) {
+                    coverage = $.extend(true, {}, event.item.coverage);
+                    viewer.world.removeAll();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        let jobsAfterRemoval = 0;
+        const removalHandler = function (event) {
+            viewer.world.removeHandler('remove-item', removalHandler);
+            test.ok(jobCounter > 0, 'Tiled image removed after 100 ms, should load some images.');
+            jobsAfterRemoval = jobCounter;
+
+            viewer.world.addHandler('add-item', reopenHandler);
+            viewer.addTiledImage({
+                tileSource: '/test/data/testpattern.dzi'
+            });
+        }
+
+        const reopenHandler = function (event) {
+            event.item.allowZombieCache(true);
+
+            viewer.removeHandler('add-item', reopenHandler);
+            test.equal(jobCounter, jobsAfterRemoval, 'Reopening image does not fetch any tiles imemdiatelly.');
+
+            waitFor(() => {
+                if (event.item._fullyLoaded) {
+                    viewer.removeHandler('tile-unloaded', unloadTileHandler);
+                    viewer.removeHandler('tile-loaded', tileCounter);
+
+                    //console test needs here explicit removal to finish correctly
+                    OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
+                    done();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const unloadTileHandler = function (event) {
+            test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
+        }
+
+        viewer.world.addHandler('add-item', openHandler);
+        viewer.world.addHandler('remove-item', removalHandler);
+        viewer.addHandler('tile-unloaded', unloadTileHandler);
+        viewer.addHandler('tile-loaded', tileCounter);
+
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    QUnit.test('Zombie Cache Replace Item', function(test) {
+        const done = test.async();
+
+        //test jobs by coverage: fail if
+        let jobCounter = 0, coverage = undefined;
+        OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
+            jobCounter++;
+            if (coverage) {
+                //old coverage of previous tiled image: if loaded, fail --> should be in cache
+                const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
+                if (!coverageItem) {
+                    console.warn(coverage, coverage[options.tile.level][options.tile.x], options.tile);
+                }
+                test.ok(!coverageItem, "Attempt to add job for tile data that was previously loaded.");
+            }
+            return originalJob.call(this, options);
+        };
+
+        let tilesFinished = 0;
+        const tileCounter = function (event) {tilesFinished++;}
+
+        const openHandler = function(event) {
+            event.item.allowZombieCache(true);
+            viewer.world.removeHandler('add-item', openHandler);
+            viewer.world.addHandler('add-item', reopenHandler);
+
+            const oldCacheSize = event.item._tileCache._cachesLoadedCount +
+                event.item._tileCache._zombiesLoadedCount;
+
+                waitFor(() => {
+                if (tilesFinished === jobCounter && event.item._fullyLoaded) {
+                    coverage = $.extend(true, {}, event.item.coverage);
+                    viewer.addTiledImage({
+                        tileSource: '/test/data/testpattern.dzi',
+                        index: 0,
+                        replace: true,
+                        success: e => {
+                            test.equal(oldCacheSize, e.item._tileCache._cachesLoadedCount +
+                                e.item._tileCache._zombiesLoadedCount,
+                                "Image replace should erase no cache with zombies.");
+                        }
+                    });
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const reopenHandler = function (event) {
+            event.item.allowZombieCache(true);
+
+            viewer.removeHandler('add-item', reopenHandler);
+            waitFor(() => {
+                if (event.item._fullyLoaded) {
+                    viewer.removeHandler('tile-unloaded', unloadTileHandler);
+                    viewer.removeHandler('tile-loaded', tileCounter);
+
+                    //console test needs here explicit removal to finish correctly
+                    OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
+                    done();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const unloadTileHandler = function (event) {
+            test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
+        }
+
+        viewer.world.addHandler('add-item', openHandler);
+        viewer.addHandler('tile-unloaded', unloadTileHandler);
+        viewer.addHandler('tile-loaded', tileCounter);
+
+        viewer.open('/test/data/testpattern.dzi');
     });
 
 })();

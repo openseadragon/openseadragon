@@ -43,6 +43,12 @@ class WeightedGraph {
         this.adjacencyList = {};
         this.vertices = {};
     }
+
+    /**
+     * Add vertex to graph
+     * @param vertex unique vertex ID
+     * @return {boolean} true if inserted, false if exists (no-op)
+     */
     addVertex(vertex) {
         if (!this.vertices[vertex]) {
             this.vertices[vertex] = new $.PriorityQueue.Node(0, vertex);
@@ -51,8 +57,28 @@ class WeightedGraph {
         }
         return false;
     }
+
+    /**
+     * Add edge to graph
+     * @param vertex1 id, must exist by calling addVertex()
+     * @param vertex2 id, must exist by calling addVertex()
+     * @param weight
+     * @param transform function that transforms on path vertex1 -> vertex2
+     * @return {boolean} true if new edge, false if replaced existing
+     */
     addEdge(vertex1, vertex2, weight, transform) {
-        this.adjacencyList[vertex1].push({ target: this.vertices[vertex2], origin: this.vertices[vertex1], weight, transform });
+        if (weight < 0) {
+            $.console.error("WeightedGraph: negative weights will make for invalid shortest path computation!");
+        }
+        const outgoingPaths = this.adjacencyList[vertex1],
+            replacedEdgeIndex = outgoingPaths.findIndex(edge => edge.target === this.vertices[vertex2]),
+            newEdge = { target: this.vertices[vertex2], origin: this.vertices[vertex1], weight, transform };
+        if (replacedEdgeIndex < 0) {
+            this.adjacencyList[vertex1].push(newEdge);
+            return true;
+        }
+        this.adjacencyList[vertex1][replacedEdgeIndex] = newEdge;
+        return false;
     }
 
     /**
@@ -97,7 +123,7 @@ class WeightedGraph {
             }
         }
 
-        if (!smallestNode || !smallestNode._previous) {
+        if (!smallestNode || !smallestNode._previous || smallestNode.value !== finish) {
             return undefined; //no path
         }
 
@@ -158,11 +184,11 @@ $.DataTypeConvertor = class {
 
         // Teaching OpenSeadragon built-in conversions:
 
-        this.learn("canvas", "rasterUrl", (canvas) => canvas.toDataURL(), 1, 1);
-        this.learn("image", "rasterUrl", (image) => image.url);
-        this.learn("canvas", "context2d", (canvas) => canvas.getContext("2d"));
-        this.learn("context2d", "canvas", (context2D) => context2D.canvas);
-        this.learn("image", "canvas", (image) => {
+        this.learn("canvas", "url", canvas => canvas.toDataURL(), 1, 1);
+        this.learn("image", "url", image => image.url);
+        this.learn("canvas", "context2d", canvas => canvas.getContext("2d"));
+        this.learn("context2d", "canvas", context2D => context2D.canvas);
+        this.learn("image", "canvas", image => {
             const canvas = document.createElement( 'canvas' );
             canvas.width = image.width;
             canvas.height = image.height;
@@ -170,7 +196,7 @@ $.DataTypeConvertor = class {
             context.drawImage( image, 0, 0 );
             return canvas;
         }, 1, 1);
-        this.learn("rasterUrl", "image", (url) => {
+        this.learn("url", "image", url => {
             return new $.Promise((resolve, reject) => {
                 const img = new Image();
                 img.onerror = img.onabort = reject;
@@ -181,17 +207,15 @@ $.DataTypeConvertor = class {
     }
 
     /**
-     * FIXME: types are sensitive thing. Same data type might have different data semantics.
-     *  - 'string' can be anything, for images, dataUrl or some URI, or incompatible stuff: vector data (JSON)
-     *  - using $.type makes explicit requirements on its extensibility, and makes mess in naming
-     *    - most types are [object X]
-     *    - selected types are 'nice' -> string, canvas...
-     *    - hard to debug
-     *
      * Unique identifier (unlike toString.call(x)) to be guessed
-     * from the data value
+     * from the data value. This type guess is more strict than
+     * OpenSeadragon.type() implementation, but for most type recognition
+     * this test relies on the output of OpenSeadragon.type().
      *
-     * @function uniqueType
+     * Note: although we try to implement the type guessing, do
+     * not rely on this functionality! Prefer explicit type declaration.
+     *
+     * @function guessType
      * @param x object to get unique identifier for
      *  - can be array, in that case, alphabetically-ordered list of inner unique types
      *    is returned (null, undefined are ignored)
@@ -368,6 +392,23 @@ $.DataTypeConvertor = class {
         }
         return bestConvertorPath ? bestConvertorPath.path : undefined;
     }
+
+    /**
+     * Return a list of known conversion types
+     * @return {string[]}
+     */
+    getKnownTypes() {
+        return Object.keys(this.graph.vertices);
+    }
+
+    /**
+     * Check whether given type is known to the convertor
+     * @param {string} type type to test
+     * @return {boolean}
+     */
+    existsType(type) {
+        return !!this.graph.vertices[type];
+    }
 };
 
 /**
@@ -376,7 +417,7 @@ $.DataTypeConvertor = class {
  * Built-in conversions include types:
  *  - context2d    canvas 2d context
  *  - image        HTMLImage element
- *  - rasterUrl    url string carrying or pointing to 2D raster data
+ *  - url    url string carrying or pointing to 2D raster data
  *  - canvas       HTMLCanvas element
  *
  * @type OpenSeadragon.DataTypeConvertor

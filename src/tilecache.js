@@ -62,17 +62,23 @@ $.CacheRecord = class {
     }
 
     destroy() {
-        this._tiles = null;
-        this._data = null;
-        this._type = null;
-        this.loaded = false;
         //make sure this gets destroyed even if loaded=false
         if (this.loaded) {
             $.convertor.destroy(this._type, this._data);
+            this._tiles = null;
+            this._data = null;
+            this._type = null;
+            this._promise = $.Promise.resolve();
         } else {
-            this._promise.then(x => $.convertor.destroy(this._type, x));
+            this._promise.then(x => {
+                $.convertor.destroy(this._type, x);
+                this._tiles = null;
+                this._data = null;
+                this._type = null;
+                this._promise = $.Promise.resolve();
+            });
         }
-        this._promise = $.Promise.resolve();
+        this.loaded = false;
     }
 
     get data() {
@@ -119,7 +125,9 @@ $.CacheRecord = class {
             this._data = data;
             this.loaded = true;
         } else if (this._type !== type) {
-            $.console.warn("[CacheRecord.addTile] Tile %s was added to an existing cache, but the tile is supposed to carry incompatible data type %s!", tile, type);
+            //pass: the tile data type will silently change
+            // as it inherits this cache
+            // todo do not call events?
         }
 
         this._tiles.push(tile);
@@ -164,29 +172,28 @@ $.CacheRecord = class {
             stepCount = conversionPath.length,
             _this = this,
             convert = (x, i) => {
-            if (i >= stepCount) {
-                _this._data = x;
-                _this.loaded = true;
-                return $.Promise.resolve(x);
-            }
-            let edge = conversionPath[i];
-            return $.Promise.resolve(edge.transform(x)).then(
-                y => {
-                    if (!y) {
-                        $.console.error(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting using %s)`, edge);
-                        //try to recover using original data, but it returns inconsistent type (the log be hopefully enough)
-                        _this._data = from;
-                        _this._type = from;
-                        _this.loaded = true;
-                        return originalData;
-                    }
-                    //node.value holds the type string
-                    convertor.destroy(edge.origin.value, x);
-                    return convert(y, i + 1);
+                if (i >= stepCount) {
+                    _this._data = x;
+                    _this.loaded = true;
+                    return $.Promise.resolve(x);
                 }
-            );
-
-        };
+                let edge = conversionPath[i];
+                return $.Promise.resolve(edge.transform(x)).then(
+                    y => {
+                        if (!y) {
+                            $.console.error(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting using %s)`, edge);
+                            //try to recover using original data, but it returns inconsistent type (the log be hopefully enough)
+                            _this._data = from;
+                            _this._type = from;
+                            _this.loaded = true;
+                            return originalData;
+                        }
+                        //node.value holds the type string
+                        convertor.destroy(edge.origin.value, x);
+                        return convert(y, i + 1);
+                    }
+                );
+            };
 
         this.loaded = false;
         this._data = undefined;
@@ -194,124 +201,6 @@ $.CacheRecord = class {
         this._promise = convert(originalData, 0);
     }
 };
-
-//FIXME: really implement or throw away? new parameter would allow users to
-// use this implementation instead of the above to allow caching for old data
-// (for example in the default use, the data is downloaded as an image, and
-// converted to a canvas -> the image record gets thrown away)
-//
-//FIXME: Note that this can be also achieved somewhat by caching the midresults
-// as a single cache object instead. Also, there is the problem of lifecycle-oriented
-// data types such as WebGL textures we want to unload manually: this looks like
-// we really want to cache midresuls and have their custom destructors
-// $.MemoryCacheRecord = class extends $.CacheRecord {
-//     constructor(memorySize) {
-//         super();
-//         this.length = memorySize;
-//         this.index = 0;
-//         this.content = [];
-//         this.types = [];
-//         this.defaultType = "image";
-//     }
-//
-//     // overrides:
-//
-//     destroy() {
-//         super.destroy();
-//         this.types = null;
-//         this.content = null;
-//         this.types = null;
-//         this.defaultType = null;
-//     }
-//
-//     getData(type = this.defaultType) {
-//         let item = this.add(type, undefined);
-//         if (item === undefined) {
-//             //no such type available, get if possible
-//             //todo: possible unomptimal use, we could cache costs and re-use known paths, though it adds overhead...
-//             item = $.convertor.convert(this.current(), this.currentType(), type);
-//             this.add(type, item);
-//         }
-//         return item;
-//     }
-//
-//     /**
-//      * @deprecated
-//      */
-//     get data() {
-//         $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use getData(...) instead!");
-//         return this.current();
-//     }
-//
-//     /**
-//      * @deprecated
-//      * @param value
-//      */
-//     set data(value) {
-//         //FIXME: addTile bit bad name, related to the issue mentioned elsewhere
-//         $.console.warn("[MemoryCacheRecord.data] is deprecated property. Use addTile(...) instead!");
-//         this.defaultType = $.convertor.guessType(value);
-//         this.add(this.defaultType, value);
-//     }
-//
-//     addTile(tile, data, type) {
-//         $.console.assert(tile, '[CacheRecord.addTile] tile is required');
-//
-//         //allow overriding the cache - existing tile or different type
-//         if (this._tiles.includes(tile)) {
-//             this.removeTile(tile);
-//         } else if (!this.defaultType !== type) {
-//             this.defaultType = type;
-//             this.add(type, data);
-//         }
-//
-//         this._tiles.push(tile);
-//     }
-//
-//     // extends:
-//
-//     add(type, item) {
-//         const index = this.hasIndex(type);
-//         if (index > -1) {
-//             //no index change, swap (optimally, move all by one - too expensive...)
-//             item = this.content[index];
-//             this.content[index] = this.content[this.index];
-//         } else {
-//             this.index = (this.index + 1) % this.length;
-//         }
-//         this.content[this.index] = item;
-//         this.types[this.index] = type;
-//         return item;
-//     }
-//
-//     has(type) {
-//         for (let i = 0; i < this.types.length; i++) {
-//             const t = this.types[i];
-//             if (t === type) {
-//                 return this.content[i];
-//             }
-//         }
-//         return undefined;
-//     }
-//
-//     hasIndex(type) {
-//         for (let i = 0; i < this.types.length; i++) {
-//             const t = this.types[i];
-//             if (t === type) {
-//                 return i;
-//             }
-//         }
-//         return -1;
-//     }
-//
-//     current() {
-//         return this.content[this.index];
-//     }
-//
-//     currentType() {
-//         return this.types[this.index];
-//     }
-// };
 
 /**
  * @class TileCache
@@ -328,6 +217,8 @@ $.TileCache = class {
 
         this._maxCacheItemCount = options.maxImageCacheCount || $.DEFAULT_SETTINGS.maxImageCacheCount;
         this._tilesLoaded = [];
+        this._zombiesLoaded = [];
+        this._zombiesLoadedCount = 0;
         this._cachesLoaded = [];
         this._cachesLoadedCount = 0;
     }
@@ -368,7 +259,7 @@ $.TileCache = class {
             insertionIndex = this._tilesLoaded.length,
             cacheKey = options.cacheKey || options.tile.cacheKey;
 
-        let cacheRecord = this._cachesLoaded[options.tile.cacheKey];
+        let cacheRecord = this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
         if (!cacheRecord) {
 
             if (!options.data) {
@@ -378,14 +269,12 @@ $.TileCache = class {
             }
 
             $.console.assert( options.data, "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
-            cacheRecord = this._cachesLoaded[options.tile.cacheKey] = new $.CacheRecord();
+            cacheRecord = this._cachesLoaded[cacheKey] = new $.CacheRecord();
             this._cachesLoadedCount++;
-        } else if (cacheRecord.__zombie__) {
-            delete cacheRecord.__zombie__;
-            //revive cache, replace from _tilesLoaded so it won't get unloaded
-            this._tilesLoaded.splice( cacheRecord.__index__, 1 );
-            delete cacheRecord.__index__;
-            insertionIndex--;
+        } else if (!cacheRecord.getTileCount()) {
+            //revive zombie
+            delete this._zombiesLoaded[cacheKey];
+            this._zombiesLoadedCount--;
         }
 
         if (!options.dataType) {
@@ -398,51 +287,47 @@ $.TileCache = class {
 
         // Note that just because we're unloading a tile doesn't necessarily mean
         // we're unloading its cache records. With repeated calls it should sort itself out, though.
-        if ( this._cachesLoadedCount > this._maxCacheItemCount ) {
-            let worstTile       = null;
-            let worstTileIndex  = -1;
-            let prevTile, worstTime, worstLevel, prevTime, prevLevel;
-
-            for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
-                prevTile = this._tilesLoaded[ i ];
-
-                //todo try different approach? the only ugly part, keep tilesLoaded array empty of unloaded tiles
-                if (!prevTile.loaded) {
-                    //iterates from the array end, safe to remove
-                    this._tilesLoaded.splice( i, 1 );
-                    continue;
-                }
-
-                if ( prevTile.__zombie__ !== undefined ) {
-                    //remove without hesitation, CacheRecord instance
-                    worstTile       = prevTile.__zombie__;
-                    worstTileIndex  = i;
+        if ( this._cachesLoadedCount + this._zombiesLoadedCount > this._maxCacheItemCount ) {
+            //prefer zombie deletion, faster, better
+            if (this._zombiesLoadedCount > 0) {
+                for (let zombie in this._zombiesLoaded) {
+                    this._zombiesLoaded[zombie].destroy();
+                    delete this._zombiesLoaded[zombie];
+                    this._zombiesLoadedCount--;
                     break;
                 }
+            } else {
+                let worstTile       = null;
+                let worstTileIndex  = -1;
+                let prevTile, worstTime, worstLevel, prevTime, prevLevel;
 
-                if ( prevTile.level <= cutoff || prevTile.beingDrawn ) {
-                    continue;
-                } else if ( !worstTile ) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
-                    continue;
+                for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
+                    prevTile = this._tilesLoaded[ i ];
+
+                    if ( prevTile.level <= cutoff || prevTile.beingDrawn ) {
+                        continue;
+                    } else if ( !worstTile ) {
+                        worstTile       = prevTile;
+                        worstTileIndex  = i;
+                        continue;
+                    }
+
+                    prevTime    = prevTile.lastTouchTime;
+                    worstTime   = worstTile.lastTouchTime;
+                    prevLevel   = prevTile.level;
+                    worstLevel  = worstTile.level;
+
+                    if ( prevTime < worstTime ||
+                        ( prevTime === worstTime && prevLevel > worstLevel )) {
+                        worstTile       = prevTile;
+                        worstTileIndex  = i;
+                    }
                 }
 
-                prevTime    = prevTile.lastTouchTime;
-                worstTime   = worstTile.lastTouchTime;
-                prevLevel   = prevTile.level;
-                worstLevel  = worstTile.level;
-
-                if ( prevTime < worstTime ||
-                    ( prevTime === worstTime && prevLevel > worstLevel )) {
-                    worstTile       = prevTile;
-                    worstTileIndex  = i;
+                if ( worstTile && worstTileIndex >= 0 ) {
+                    this._unloadTile(worstTile, true);
+                    insertionIndex = worstTileIndex;
                 }
-            }
-
-            if ( worstTile && worstTileIndex >= 0 ) {
-                this._unloadTile(worstTile, true);
-                insertionIndex = worstTileIndex;
             }
         }
 
@@ -456,17 +341,28 @@ $.TileCache = class {
     clearTilesFor( tiledImage ) {
         $.console.assert(tiledImage, '[TileCache.clearTilesFor] tiledImage is required');
         let tile;
+
+        let cacheOverflows = this._cachesLoadedCount + this._zombiesLoadedCount > this._maxCacheItemCount;
+        if (tiledImage._zombieCache && cacheOverflows && this._zombiesLoadedCount > 0) {
+            //prefer newer zombies
+            for (let zombie in this._zombiesLoaded) {
+                this._zombiesLoaded[zombie].destroy();
+                delete this._zombiesLoaded[zombie];
+            }
+            this._zombiesLoadedCount = 0;
+            cacheOverflows = this._cachesLoadedCount > this._maxCacheItemCount;
+        }
         for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
             tile = this._tilesLoaded[ i ];
 
-            //todo try different approach? the only ugly part, keep tilesLoaded array empty of unloaded tiles
+            //todo might be errorprone: tile.loading true--> problem! maybe set some other flag by
             if (!tile.loaded) {
                 //iterates from the array end, safe to remove
                 this._tilesLoaded.splice( i, 1 );
                 i--;
             } else if ( tile.tiledImage === tiledImage ) {
-                this._unloadTile(tile, !tiledImage._zombieCache ||
-                    this._cachesLoadedCount > this._maxCacheItemCount, i);
+                //todo tile loading, if abort... we cloud notify the cache, maybe it works (cache destroy will wait for conversion...)
+                this._unloadTile(tile, !tiledImage._zombieCache || cacheOverflows, i);
             }
         }
     }
@@ -496,18 +392,14 @@ $.TileCache = class {
                         cacheRecord.destroy();
                         delete this._cachesLoaded[tile.cacheKey];
                         this._cachesLoadedCount--;
-
-                        //delete also the tile record
-                        if (deleteAtIndex !== undefined) {
-                            this._tilesLoaded.splice( deleteAtIndex, 1 );
-                        }
                     } else if (deleteAtIndex !== undefined) {
                         // #2 Tile is a zombie. Do not delete record, reuse.
-                        // a bit dirty but performant... -> we can remove later, or revive
-                        // we can do this, in array the tile is once for each its cache object
-                        this._tilesLoaded[ deleteAtIndex ] = cacheRecord;
-                        cacheRecord.__zombie__ = tile;
-                        cacheRecord.__index__ = deleteAtIndex;
+                        this._zombiesLoaded[ tile.cacheKey ] = cacheRecord;
+                        this._zombiesLoadedCount++;
+                    }
+                    //delete also the tile record
+                    if (deleteAtIndex !== undefined) {
+                        this._tilesLoaded.splice( deleteAtIndex, 1 );
                     }
                 } else if (deleteAtIndex !== undefined) {
                     // #3 Cache stays. Tile record needs to be removed anyway, since the tile is removed.
@@ -528,10 +420,12 @@ $.TileCache = class {
          * @type {object}
          * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the unloaded tile.
          * @property {OpenSeadragon.Tile} tile - The tile which has been unloaded.
+         * @property {boolean} destroyed - False if the tile data was kept in the system.
          */
         tiledImage.viewer.raiseEvent("tile-unloaded", {
             tile: tile,
-            tiledImage: tiledImage
+            tiledImage: tiledImage,
+            destroyed: destroy
         });
     }
 };

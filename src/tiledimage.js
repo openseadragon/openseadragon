@@ -1536,12 +1536,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 tile.cacheKey = "";
                 tile.originalCacheKey = "";
             }
-            const similarCacheRecord =
-                this._tileCache.getCacheRecord(tile.originalCacheKey) ||
-                this._tileCache.getCacheRecord(tile.cacheKey);
+
+            //do not use tile.cacheKey: that cache might be different from what we really want
+            // since this request could come from different tiled image and might not want
+            // to use the modified data
+            const similarCacheRecord = this._tileCache.getCacheRecord(tile.originalCacheKey);
 
             if (similarCacheRecord) {
                 const cutoff = this.source.getClosestLevel();
+                tile.loading = true;
+                tile.loaded = false;
                 if (similarCacheRecord.loaded) {
                     this._setTileLoaded(tile, similarCacheRecord.data, cutoff, null, similarCacheRecord.type);
                 } else {

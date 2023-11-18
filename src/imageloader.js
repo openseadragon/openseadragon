@@ -95,7 +95,7 @@ $.ImageJob.prototype = {
         var selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
-            self.finish(null, null, "Image load exceeded timeout (" + self.timeout + " ms)");
+            self.fail("Image load exceeded timeout (" + self.timeout + " ms)", null);
         }, this.timeout);
 
         this.abort = function() {

@@ -149,6 +149,8 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * that holds the cache original data (it was loaded with). In case you
      * change the tile data, the tile original data should be left with the cache
      * 'originalCacheKey' and the new, modified data should be stored in cache 'cacheKey'.
+     * This key is used in cache resolution: in case new tile data is requested, if
+     * this cache key exists in the cache it is loaded.
      * @member {String} originalCacheKey
      * @memberof OpenSeadragon.Tile#
      */
@@ -444,6 +446,7 @@ $.Tile.prototype = {
     /**
      * Get the default data for this tile
      * @param {?string} [type=undefined] data type to require
+     * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
     getData(type = undefined) {
         const cache = this.getCache(this.cacheKey);
@@ -494,7 +497,12 @@ $.Tile.prototype = {
      * @param [_cutoff=0] private
      */
     setCache: function(key, data, type = undefined, _safely = true, _cutoff = 0) {
-        type = type || $.convertor.guessType(data);
+        if (!type && this.tiledImage && !this.tiledImage.__typeWarningReported) {
+            $.console.warn(this, "[Tile.setCache] called without type specification. " +
+                "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
+            this.tiledImage.__typeWarningReported = true;
+            type = $.convertor.guessType(data);
+        }
 
         if (_safely && key === this.cacheKey) {
             //todo later, we could have drawers register their supported rendering type
