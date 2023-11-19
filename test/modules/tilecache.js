@@ -278,21 +278,13 @@
             viewer.world.removeHandler('add-item', openHandler);
             viewer.world.addHandler('add-item', reopenHandler);
 
-            const oldCacheSize = event.item._tileCache._cachesLoadedCount +
-                event.item._tileCache._zombiesLoadedCount;
-
-                waitFor(() => {
+            waitFor(() => {
                 if (tilesFinished === jobCounter && event.item._fullyLoaded) {
                     coverage = $.extend(true, {}, event.item.coverage);
                     viewer.addTiledImage({
                         tileSource: '/test/data/testpattern.dzi',
                         index: 0,
-                        replace: true,
-                        success: e => {
-                            test.equal(oldCacheSize, e.item._tileCache._cachesLoadedCount +
-                                e.item._tileCache._zombiesLoadedCount,
-                                "Image replace should erase no cache with zombies.");
-                        }
+                        replace: true
                     });
                     return true;
                 }

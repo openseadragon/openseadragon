@@ -187,6 +187,21 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
             url = this.levels[ level ].url;
         }
         return url;
+    },
+
+    /**
+     * Equality comparator
+     */
+    equals: function (otherSource) {
+        if (!otherSource.levels || otherSource.levels.length !== this.levels.length) {
+            return false;
+        }
+        for (let i = this.minLevel; i <= this.maxLevel; i++) {
+            if (this.levels[i].url !== otherSource.levels[i].url) {
+                return false;
+            }
+        }
+        return true;
     }
 } );
 

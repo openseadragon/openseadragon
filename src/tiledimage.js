@@ -1785,13 +1785,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // -> reason why it is not in the constructor
         tile.setCache(tile.cacheKey, data, dataType, false, cutoff);
 
-        let resolver = null;
+        let resolver = null,
+            increment = 0,
+            eventFinished = false;
         const _this = this,
             finishPromise = new $.Promise(r => {
                 resolver = r;
             });
 
         function completionCallback() {
+            increment--;
+            if (increment > 0) {
+                return;
+            }
             //do not override true if set (false is default)
             tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
                 undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
@@ -1823,6 +1829,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile.save();
         }
 
+        function getCompletionCallback() {
+            if (eventFinished) {
+                $.console.error("Event 'tile-loaded' argument getCompletionCallback must be called synchronously. " +
+                    "Its return value should be called asynchronously.");
+            }
+            increment++;
+            return completionCallback;
+        }
+
+        const fallbackCompletion = getCompletionCallback();
+
         /**
          * Triggered when a tile has just been loaded in memory. That means that the
          * image has been downloaded and can be modified before being drawn to the canvas.
@@ -1841,7 +1858,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
          * @property {function} getCompletionCallback - deprecated
          */
-        const promise = this.viewer.raiseEventAwaiting("tile-loaded", {
+        this.viewer.raiseEventAwaiting("tile-loaded", {
             tile: tile,
             tiledImage: this,
             tileRequest: tileRequest,
@@ -1855,13 +1872,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 return data;
             },
             getCompletionCallback: function () {
-                $.console.error("[tile-loaded] getCompletionCallback is not supported: it is compulsory to handle the event with async functions if applicable.");
+                $.console.error("[tile-loaded] getCompletionCallback is deprecated: it introduces race conditions: " +
+                    "use async event handlers instead, execution order is deducted by addHandler(...) priority");
+                return getCompletionCallback();
             },
-        });
-        promise.then(completionCallback).catch(() => {
+        }).catch(() => {
             $.console.error("[tile-loaded] event finished with failure: there might be a problem with a plugin you are using.");
-            completionCallback();
-        });
+        }).then(() => {
+            eventFinished = true;
+        }).then(fallbackCompletion);
     },
 
     /**

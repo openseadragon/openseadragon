@@ -180,6 +180,13 @@ $.ImageTileSource = class extends $.TileSource {
         return `${this.url}?l=${level}&x=${x}&y=${y}`;
     }
 
+    /**
+     * Equality comparator
+     */
+    equals(otherSource) {
+        return this.url === otherSource.url;
+    }
+
     getTilePostData(level, x, y) {
         return {level: level, x: x, y: y};
     }

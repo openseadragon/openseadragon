@@ -592,6 +592,17 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Check whether two tileSources are equal. This is used for example
+     * when replacing tile-sources, which turns on the zombie cache before
+     * old item removal.
+     * @param {OpenSeadragon.TileSource} otherSource
+     * @returns {Boolean}
+     */
+    equals: function (otherSource) {
+        return false;
+    },
+
+    /**
      * Responsible for parsing and configuring the
      * image metadata pertinent to this TileSources implementation.
      * This method is not implemented by this class other than to throw an Error

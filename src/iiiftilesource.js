@@ -503,6 +503,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         return uri;
     },
 
+    /**
+     * Equality comparator
+     */
+    equals: function(otherSource) {
+        return this._id === otherSource._id;
+    },
+
     __testonly__: {
         canBeTiled: canBeTiled,
         constructLevels: constructLevels
