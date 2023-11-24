@@ -13,6 +13,13 @@ const labels = {
     bblue: 'Blue B',
     duomo: 'Duomo',
 }
+const drawers = {
+    canvas: "Context2d drawer (default in OSD &lt;= 4.1.0)",
+    webgl: "New WebGL drawer",
+    html: ""
+}
+
+
 let viewer;
 
 ( function () {
@@ -408,6 +415,10 @@ function rStats ( settings ) {
 
         _base = document.createElement( 'div' );
         _base.className = 'rs-base';
+        _base.style.bottom = '0px';
+        _base.style.right = '0px';
+        _base.style.top = 'initial';
+        _base.style.left = 'initial';
         _div = document.createElement( 'div' );
         _div.className = 'rs-container';
         _div.style.height = 'auto';
@@ -508,6 +519,8 @@ function rStats ( settings ) {
     };
 
 }
+
+
 
 var glStats = function() {
 
@@ -898,16 +911,9 @@ Stats.Panel = function ( name, fg, bg ) {
 
 // })();
 
-
-$('#create-drawer').on('click',function(){
-    let drawerType = $('#select-drawer').val();
-    let num = Math.floor($('#input-number').val());
-    rS('other').start();
-    run(drawerType, num);
-});
-
-
 function run(drawerType, num) {
+    rS('other').start();
+
     if(viewer){
         viewer.destroy();
     }
@@ -967,5 +973,30 @@ function makeTileSources(num){
         return ts;
     })
 
+}
+
+const url = new URL(window.location.href);
+const drawer = url.searchParams.get("drawer");
+const numberOfSources = Number.parseInt(url.searchParams.get("sources")) || 1;
+
+$('#create-drawer').on('click',function(){
+    const drawer = $('#select-drawer').val();
+    let num = Math.floor($('#input-number').val());
+
+    url.searchParams.set("drawer", drawer);
+    url.searchParams.set("sources", num);
+    if ("undefined" !== typeof history.replaceState) {
+        history.replaceState(null, window.location.title, url.toString());
+    }
+    run(drawer, num);
+});
+
+$('#input-number').val(numberOfSources);
+$("#select-drawer").html(Object.entries(drawers).map(([k, v]) => {
+    const selected = drawer === k ? "selected" : "";
+    return `<option value="${k}" ${selected}>${v}</option>`;
+}).join("\n"));
+if (drawer) {
+    run(drawer, numberOfSources);
 }
 

@@ -66,14 +66,6 @@ module.exports = function(grunt) {
             "src/tiledimage.js",
             "src/tilecache.js",
             "src/world.js",
-
-            //Aiosa's webgl drawer - needs optimization, polishing, trimming
-            "src/webgl/renderer.js",
-            "src/webgl/shaderLayer.js",
-            "src/webgl/dataLoader.js",
-            "src/webgl/webGLContext.js",
-            "src/webgl/drawer.js",
-            "src/webgl/plainShader.js",
         ];
 
     var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
