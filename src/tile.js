@@ -284,6 +284,10 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @private
      */
     this._caches = {};
+    /**
+     * @private
+     */
+    this._cacheSize = 0;
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -360,7 +364,7 @@ $.Tile.prototype = {
      * @returns {Image}
      */
     get image() {
-        $.console.error("[Tile.image] property has been deprecated. Use [Tile.prototype.getImage] instead.");
+        $.console.error("[Tile.image] property has been deprecated. Use [Tile.getData] instead.");
         return this.getImage();
     },
 
@@ -372,7 +376,7 @@ $.Tile.prototype = {
      * @returns {String}
      */
     get url() {
-        $.console.error("[Tile.url] property has been deprecated. Use [Tile.prototype.getUrl] instead.");
+        $.console.error("[Tile.url] property has been deprecated. Use [Tile.getUrl] instead.");
         return this.getUrl();
     },
 
@@ -381,7 +385,14 @@ $.Tile.prototype = {
      * @returns {?Image}
      */
     getImage: function() {
-        return this.getData("image");
+        //TODO: after merge $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
+        //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
+        const cache = this.getCache(this.cacheKey);
+        if (!cache) {
+            return undefined;
+        }
+        cache.transformTo("image");
+        return cache.data;
     },
 
     /**
@@ -402,7 +413,14 @@ $.Tile.prototype = {
      * @returns {?CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
-        return this.getData("context2d");
+        //TODO: after merge $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
+        //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
+        const cache = this.getCache(this.cacheKey);
+        if (!cache) {
+            return undefined;
+        }
+        cache.transformTo("context2d");
+        return cache.data;
     },
 
     /**
@@ -411,8 +429,8 @@ $.Tile.prototype = {
      * @type {CanvasRenderingContext2D} context2D
      */
     get context2D() {
-        $.console.error("[Tile.context2D] property has been deprecated. Use Tile::getCache().");
-        return this.getData("context2d");
+        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.getData] instead.");
+        return this.getCanvasContext();
     },
 
     /**
@@ -420,7 +438,7 @@ $.Tile.prototype = {
      * @deprecated
      */
     set context2D(value) {
-        $.console.error("[Tile.context2D] property has been deprecated. Use Tile::setCache().");
+        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.setData] instead.");
         this.setData(value, "context2d");
     },
 
@@ -440,49 +458,63 @@ $.Tile.prototype = {
      */
     set cacheImageRecord(value) {
         $.console.error("[Tile.cacheImageRecord] property has been deprecated. Use Tile::setCache.");
-        this._caches[this.cacheKey] = value;
+        const cache = this._caches[this.cacheKey];
+
+        if (!value) {
+            this.unsetCache(this.cacheKey);
+        } else {
+            const _this = this;
+            cache.await().then(x => _this.setCache(this.cacheKey, x, cache.type, false));
+        }
     },
 
     /**
      * Get the default data for this tile
-     * @param {?string} [type=undefined] data type to require
+     * @param {string} type data type to require
+     * @param {boolean?} [copy=this.loaded] whether to force copy retrieval
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
-    getData(type = undefined) {
+    getData: function(type, copy = this.loaded) {
+        //we return the data synchronously immediatelly (undefined if conversion happens)
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
+            $.console.error("[Tile::getData] There is no cache available for tile with key " + this.cacheKey);
             return undefined;
         }
-        cache.getData(type); //returns a promise
-        //we return the data synchronously immediatelly (undefined if conversion happens)
-        return cache.data;
-    },
-
-    /**
-     * Invalidate the tile so that viewport gets updated.
-     */
-    save() {
-        const parent = this.tiledImage;
-        if (parent) {
-            parent._needsDraw = true;
-        }
+        return cache.getDataAs(type, copy);
     },
 
     /**
      * Set cache data
      * @param {*} value
-     * @param {?string} [type=undefined] data type to require
+     * @param {?string} type data type to require
+     * @param {boolean} [preserveOriginalData=true] if true and cacheKey === originalCacheKey,
+     * then stores the underlying data as 'original' and changes the cacheKey to point
+     * to a new data. This makes the Tile assigned to two cache objects.
      */
-    setData(value, type = undefined) {
-        this.setCache(this.cacheKey, value, type);
+    setData: function(value, type, preserveOriginalData = true) {
+        if (preserveOriginalData && this.cacheKey === this.originalCacheKey) {
+            //caches equality means we have only one cache:
+            // change current pointer to a new cache and create it: new tiles will
+            // not arrive at this data, but at originalCacheKey state
+            this.cacheKey = "mod://" + this.originalCacheKey;
+            return this.setCache(this.cacheKey, value, type)._promise;
+        }
+        //else overwrite cache
+        const cache = this.getCache(this.cacheKey);
+        if (!cache) {
+            $.console.error("[Tile::setData] There is no cache available for tile with key " + this.cacheKey);
+            return $.Promise.resolve();
+        }
+        return cache.setDataAs(value, type);
     },
 
     /**
      * Read tile cache data object (CacheRecord)
-     * @param {string} key cache key to read that belongs to this tile
+     * @param {string?} [key=this.cacheKey] cache key to read that belongs to this tile
      * @return {OpenSeadragon.CacheRecord}
      */
-    getCache: function(key) {
+    getCache: function(key = this.cacheKey) {
         return this._caches[key];
     },
 
@@ -495,12 +527,15 @@ $.Tile.prototype = {
      * @param {?string} type data type, will be guessed if not provided
      * @param [_safely=true] private
      * @param [_cutoff=0] private
+     * @returns {OpenSeadragon.CacheRecord} - The cache record the tile was attached to.
      */
     setCache: function(key, data, type = undefined, _safely = true, _cutoff = 0) {
-        if (!type && this.tiledImage && !this.tiledImage.__typeWarningReported) {
-            $.console.warn(this, "[Tile.setCache] called without type specification. " +
-                "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
-            this.tiledImage.__typeWarningReported = true;
+        if (!type) {
+            if (this.tiledImage && !this.tiledImage.__typeWarningReported) {
+                $.console.warn(this, "[Tile.setCache] called without type specification. " +
+                    "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
+                this.tiledImage.__typeWarningReported = true;
+            }
             type = $.convertor.guessType(data);
         }
 
@@ -508,18 +543,54 @@ $.Tile.prototype = {
             //todo later, we could have drawers register their supported rendering type
             // and OpenSeadragon would check compatibility automatically, now we render
             // using two main types so we check their ability
-            const conversion = $.convertor.getConversionPath(type, "canvas", "image");
+            const conversion = $.convertor.getConversionPath(type, "context2d");
             $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
                 "to render. Make sure OpenSeadragon.convertor was taught to convert type: " + type);
         }
 
-        this.tiledImage._tileCache.cacheTile({
+        const cachedItem = this.tiledImage._tileCache.cacheTile({
             data: data,
             dataType: type,
             tile: this,
             cacheKey: key,
             cutoff: _cutoff
         });
+        const havingRecord = this._caches[key];
+        if (havingRecord !== cachedItem) {
+            if (!havingRecord) {
+                this._cacheSize++;
+            }
+            this._caches[key] = cachedItem;
+        }
+        return cachedItem;
+    },
+
+    /**
+     * Get the number of caches available to this tile
+     * @returns {number} number of caches
+     */
+    getCacheSize: function() {
+        return this._cacheSize;
+    },
+
+    /**
+     * Free tile cache. Removes by default the cache record if no other tile uses it.
+     * @param {string} key cache key, required
+     * @param {boolean} [freeIfUnused=true] set to false if zombie should be created
+     */
+    unsetCache: function(key, freeIfUnused = true) {
+        if (this.cacheKey === key) {
+            if (this.cacheKey !== this.originalCacheKey) {
+                this.cacheKey = this.originalCacheKey;
+            } else {
+                $.console.warn("[Tile.unsetCache] trying to remove the only cache that is used to draw the tile!");
+            }
+        }
+        if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused)) {
+            //if we managed to free tile from record, we are sure we decreased cache count
+            this._cacheSize--;
+            delete this._caches[key];
+        }
     },
 
     /**
@@ -680,10 +751,12 @@ $.Tile.prototype = {
 
         this.tiledImage = null;
         this._caches    = [];
+        this._cacheSize = 0;
         this.element    = null;
         this.imgElement = null;
         this.loaded     = false;
         this.loading    = false;
+        this.cacheKey = this.originalCacheKey;
     }
 };
 

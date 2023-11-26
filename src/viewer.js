@@ -1623,7 +1623,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode,
-                    subPixelRoundingForTransparency: _this.subPixelRoundingForTransparency
+                    subPixelRoundingForTransparency: _this.subPixelRoundingForTransparency,
+                    callTileLoadedWithCachedData: _this.callTileLoadedWithCachedData,
                 });
 
                 if (_this.collectionMode) {

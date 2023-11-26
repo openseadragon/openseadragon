@@ -707,6 +707,12 @@
   *     NOTE: passing POST data from URL by this feature only supports string values, however,
   *     TileSource can send any data using POST as long as the header is correct
   *     (@see OpenSeadragon.TileSource.prototype.getTilePostData)
+  *
+  * @property {Boolean} [callTileLoadedWithCachedData=false]
+  *     tile-loaded event is called only for tiles that downloaded new data or
+  *     their data is stored in the original form in a suplementary cache object.
+  *     Caches that render directly from re-used cache does not trigger this event again,
+  *     as possible modifications would be applied twice.
   */
 
  /**
@@ -1207,6 +1213,7 @@ function OpenSeadragon( options ){
             loadTilesWithAjax:      false,
             ajaxHeaders:            {},
             splitHashDataForPost:   false,
+            callTileLoadedWithCachedData: false,
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,

@@ -77,7 +77,7 @@
         options.minLevel = 0;
         options.maxLevel = options.gridSize.length - 1;
 
-        OpenSeadragon.TileSource.apply(this, [options]);
+        $.TileSource.apply(this, [options]);
     };
 
     $.extend($.ZoomifyTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.ZoomifyTileSource.prototype */ {

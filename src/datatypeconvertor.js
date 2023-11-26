@@ -181,29 +181,33 @@ $.DataTypeConvertor = class {
     constructor() {
         this.graph = new WeightedGraph();
         this.destructors = {};
+        this.copyings = {};
 
         // Teaching OpenSeadragon built-in conversions:
-
-        this.learn("canvas", "url", canvas => canvas.toDataURL(), 1, 1);
-        this.learn("image", "url", image => image.url);
-        this.learn("canvas", "context2d", canvas => canvas.getContext("2d"));
-        this.learn("context2d", "canvas", context2D => context2D.canvas);
-        this.learn("image", "canvas", image => {
+        const imageCreator = (url) => new $.Promise((resolve, reject) => {
+            const img = new Image();
+            img.onerror = img.onabort = reject;
+            img.onload = () => resolve(img);
+            img.src = url;
+        });
+        const canvasContextCreator = (imageData) => {
             const canvas = document.createElement( 'canvas' );
-            canvas.width = image.width;
-            canvas.height = image.height;
+            canvas.width = imageData.width;
+            canvas.height = imageData.height;
             const context = canvas.getContext('2d');
-            context.drawImage( image, 0, 0 );
-            return canvas;
-        }, 1, 1);
-        this.learn("url", "image", url => {
-            return new $.Promise((resolve, reject) => {
-                const img = new Image();
-                img.onerror = img.onabort = reject;
-                img.onload = () => resolve(img);
-                img.src = url;
-            });
-        }, 1, 1);
+            context.drawImage( imageData, 0, 0 );
+            return context;
+        };
+
+        this.learn("context2d", "url", ctx => ctx.canvas.toDataURL(), 1, 2);
+        this.learn("image", "url", image => image.url);
+        this.learn("image", "context2d", canvasContextCreator, 1, 1);
+        this.learn("url", "image", imageCreator, 1, 1);
+
+        //Copies
+        this.learn("image", "image", image => imageCreator(image.src), 1, 1);
+        this.learn("url", "url", url => url, 0, 1); //strings are immutable, no need to copy
+        this.learn("context2d", "context2d", ctx => canvasContextCreator(ctx.canvas));
     }
 
     /**
@@ -276,13 +280,17 @@ $.DataTypeConvertor = class {
         $.console.assert(costPower >= 0 && costPower <= 7, "[DataTypeConvertor] Conversion costPower must be between <0, 7>.");
         $.console.assert($.isFunction(callback), "[DataTypeConvertor:learn] Callback must be a valid function!");
 
-        //we won't know if somebody added multiple edges, though it will choose some edge anyway
-        costPower++;
-        costMultiplier = Math.min(Math.max(costMultiplier, 1), 10 ^ 5);
-        this.graph.addVertex(from);
-        this.graph.addVertex(to);
-        this.graph.addEdge(from, to, costPower * 10 ^ 5 + costMultiplier, callback);
-        this._known = {}; //invalidate precomputed paths :/
+        if (from === to) {
+            this.copyings[to] = callback;
+        } else {
+            //we won't know if somebody added multiple edges, though it will choose some edge anyway
+            costPower++;
+            costMultiplier = Math.min(Math.max(costMultiplier, 1), 10 ^ 5);
+            this.graph.addVertex(from);
+            this.graph.addVertex(to);
+            this.graph.addEdge(from, to, costPower * 10 ^ 5 + costMultiplier, callback);
+            this._known = {}; //invalidate precomputed paths :/
+        }
     }
 
     /**
@@ -301,6 +309,9 @@ $.DataTypeConvertor = class {
      * Convert data item x of type 'from' to any of the 'to' types, chosen is the cheapest known conversion.
      * Data is destroyed upon conversion. For different behavior, implement your conversion using the
      * path rules obtained from getConversionPath().
+     * Note: conversion DOES NOT COPY data if [to] contains type 'from' (e.g., the cheapest conversion is no conversion).
+     * It automatically calls destructor on immediate types, but NOT on the x and the result. You should call these
+     * manually if these should be destroyed.
      * @param {*} x data item to convert
      * @param {string} from data item type
      * @param {string} to desired type(s)
@@ -315,7 +326,7 @@ $.DataTypeConvertor = class {
 
         const stepCount = conversionPath.length,
             _this = this;
-        const step = (x, i) => {
+        const step = (x, i, destroy = true) => {
             if (i >= stepCount) {
                 return $.Promise.resolve(x);
             }
@@ -326,23 +337,46 @@ $.DataTypeConvertor = class {
                 return $.Promise.resolve();
             }
             //node.value holds the type string
-            _this.destroy(edge.origin.value, x);
+            if (destroy) {
+                _this.destroy(x, edge.origin.value);
+            }
             const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
             return result.then(res => step(res, i + 1));
         };
-        return step(x, 0);
+        //destroy only mid-results, but not the original value
+        return step(x, 0, false);
     }
 
     /**
      * Destroy the data item given.
      * @param {string} type data type
      * @param {?} data
+     * @return {OpenSeadragon.Promise<?>|undefined} promise resolution with data passed from constructor
      */
-    destroy(type, data) {
+    copy(data, type) {
+        const copyTransform = this.copyings[type];
+        if (copyTransform) {
+            const y = copyTransform(data);
+            return $.type(y) === "promise" ? y : $.Promise.resolve(y);
+        }
+        $.console.warn(`[OpenSeadragon.convertor.copy] is not supported with type %s`, type);
+        return $.Promise.resolve(undefined);
+    }
+
+    /**
+     * Destroy the data item given.
+     * @param {string} type data type
+     * @param {?} data
+     * @return {OpenSeadragon.Promise<?>|undefined} promise resolution with data passed from constructor, or undefined
+     *  if not such conversion exists
+     */
+    destroy(data, type) {
         const destructor = this.destructors[type];
         if (destructor) {
-            destructor(data);
+            const y = destructor(data);
+            return $.type(y) === "promise" ? y : $.Promise.resolve(y);
         }
+        return undefined;
     }
 
     /**

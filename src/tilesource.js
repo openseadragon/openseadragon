@@ -915,7 +915,8 @@ $.TileSource.prototype = {
      * @deprecated
      */
     getTileCacheData: function(cacheObject) {
-        return cacheObject.getData();
+        $.console.error("[TileSource.getTileCacheData] has been deprecated. Use cache API of a tile instead.");
+        return cacheObject.getDataAs(undefined, false);
     },
 
     /**
@@ -930,7 +931,7 @@ $.TileSource.prototype = {
      */
     getTileCacheDataAsImage: function(cacheObject) {
         $.console.error("[TileSource.getTileCacheDataAsImage] has been deprecated. Use cache API of a tile instead.");
-        return cacheObject.getData("image");
+        return cacheObject.getImage();
     },
 
     /**
@@ -944,7 +945,7 @@ $.TileSource.prototype = {
      */
     getTileCacheDataAsContext2D: function(cacheObject) {
         $.console.error("[TileSource.getTileCacheDataAsContext2D] has been deprecated. Use cache API of a tile instead.");
-        return cacheObject.getData("context2d");
+        return cacheObject.getRenderedContext();
     }
 };
 

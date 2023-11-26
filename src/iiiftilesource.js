@@ -263,7 +263,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
             if (data.preferredFormats) {
                 for (var f = 0; f < data.preferredFormats.length; f++ ) {
-                    if ( OpenSeadragon.imageFormatSupported(data.preferredFormats[f]) ) {
+                    if ( $.imageFormatSupported(data.preferredFormats[f]) ) {
                         data.tileFormat = data.preferredFormats[f];
                         break;
                     }
