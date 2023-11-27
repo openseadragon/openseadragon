@@ -65,7 +65,7 @@ $.CacheRecord = class {
      * Might be undefined if this.loaded = false.
      * You can access the data in synchronous way, but the data might not be available.
      * If you want to access the data indirectly (await), use this.transformTo or this.getDataAs
-     * @return {any}
+     * @returns {any}
      */
     get data() {
         return this._data;
@@ -74,7 +74,7 @@ $.CacheRecord = class {
     /**
      * Read the cache type. The type can dynamically change, but should be consistent at
      * one point in the time. For available types see the OpenSeadragon.Convertor, or the tutorials.
-     * @return {string}
+     * @returns {string}
      */
     get type() {
         return this._type;
@@ -315,6 +315,12 @@ $.CacheRecord = class {
         });
     }
 
+    _triggerNeedsDraw() {
+        for (let tile of this._tiles) {
+            tile.tiledImage._needsDraw = true;
+        }
+    }
+
     /**
      * Safely overwrite the cache data and return the old data
      * @private
@@ -330,6 +336,7 @@ $.CacheRecord = class {
             this._type = type;
             this._data = data;
             this._promise = $.Promise.resolve(data);
+            this._triggerNeedsDraw();
             return this._promise;
         }
         return this._promise.then(x => {
@@ -337,6 +344,7 @@ $.CacheRecord = class {
             this._type = type;
             this._data = data;
             this._promise = $.Promise.resolve(data);
+            this._triggerNeedsDraw();
             return x;
         });
     }
@@ -481,6 +489,9 @@ $.TileCache = class {
         }
 
         cacheRecord.addTile(theTile, options.data, options.dataType);
+        if (cacheKey === theTile.cacheKey) {
+            theTile.tiledImage._needsDraw = true;
+        }
 
         // Note that just because we're unloading a tile doesn't necessarily mean
         // we're unloading its cache records. With repeated calls it should sort itself out, though.

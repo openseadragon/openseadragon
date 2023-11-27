@@ -469,7 +469,7 @@ $.Tile.prototype = {
     },
 
     /**
-     * Get the default data for this tile
+     * Get the data to render for this tile
      * @param {string} type data type to require
      * @param {boolean?} [copy=this.loaded] whether to force copy retrieval
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
@@ -479,6 +479,22 @@ $.Tile.prototype = {
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
             $.console.error("[Tile::getData] There is no cache available for tile with key " + this.cacheKey);
+            return undefined;
+        }
+        return cache.getDataAs(type, copy);
+    },
+
+    /**
+     * Get the original data data for this tile
+     * @param {string} type data type to require
+     * @param {boolean?} [copy=this.loaded] whether to force copy retrieval
+     * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
+     */
+    getOriginalData: function(type, copy = true) {
+        //we return the data synchronously immediatelly (undefined if conversion happens)
+        const cache = this.getCache(this.originalCacheKey);
+        if (!cache) {
+            $.console.error("[Tile::getData] There is no cache available for tile with key " + this.originalCacheKey);
             return undefined;
         }
         return cache.getDataAs(type, copy);
@@ -539,7 +555,8 @@ $.Tile.prototype = {
             type = $.convertor.guessType(data);
         }
 
-        if (_safely && key === this.cacheKey) {
+        const writesToRenderingCache = key === this.cacheKey;
+        if (writesToRenderingCache && _safely) {
             //todo later, we could have drawers register their supported rendering type
             // and OpenSeadragon would check compatibility automatically, now we render
             // using two main types so we check their ability
@@ -609,24 +626,52 @@ $.Tile.prototype = {
     drawCanvas: function( context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
 
         var position = this.position.times($.pixelDensityRatio),
-            size     = this.size.times($.pixelDensityRatio),
-            rendered = this.getCanvasContext();
+            size     = this.size.times($.pixelDensityRatio);
 
-        if (!rendered) {
-            $.console.warn(
-                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
-                this.toString());
-            return;
-        }
+        const _this = this;
+        // This gives the application a chance to make image manipulation
+        // changes as we are rendering the image
+        drawingHandler({context: context, tile: this, get rendered() {
+            $.console.warn("[tile-drawing rendered] property is deprecated. Use Tile data API.");
+            const context = _this.getCanvasContext();
+            if (!context) {
+                $.console.warn(
+                    '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
+                    _this.toString());
+                return undefined;
+            }
 
-        if ( !this.loaded || !rendered ){
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
+            if ( !_this.loaded || !context ){
+                $.console.warn(
+                    "Attempting to draw tile %s when it's not yet loaded.",
+                    _this.toString()
+                );
+                return undefined;
+            }
+            return _this.getCanvasContext();
+        }});
+
+        //Now really get the tile data
+        const cache = this.getCache(this.cacheKey);
+        if (!cache) {
+            $.console.error(
+                "Attempting to draw tile %s when it's main cache key has no associated cache record!",
                 this.toString()
             );
-
             return;
         }
+
+        if (cache.type !== "context2d") {
+            //cache not ready to render, wait
+            cache.transformTo("context2d");
+            return;
+        }
+
+        if ( !cache.loaded ){
+            //cache not ready to render, wait
+            return;
+        }
+        const rendered = cache.data;
 
         context.save();
         context.globalAlpha = this.opacity;
@@ -664,10 +709,6 @@ $.Tile.prototype = {
                 size.y
             );
         }
-
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, tile: this, rendered: rendered});
 
         var sourceWidth, sourceHeight;
         if (this.sourceBounds) {

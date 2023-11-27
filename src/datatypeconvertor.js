@@ -194,7 +194,7 @@ $.DataTypeConvertor = class {
             const canvas = document.createElement( 'canvas' );
             canvas.width = imageData.width;
             canvas.height = imageData.height;
-            const context = canvas.getContext('2d');
+            const context = canvas.getContext('2d', { willReadFrequently: true });
             context.drawImage( imageData, 0, 0 );
             return context;
         };

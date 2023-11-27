@@ -213,7 +213,7 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-
+        dummyTile.tiledImage = {};
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
 
@@ -262,7 +262,7 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-
+        dummyTile.tiledImage = {};
         const cache = new OpenSeadragon.CacheRecord();
         cache.testGetSet = async function(type) {
             const value = await cache.getDataAs(type, false);
@@ -330,7 +330,7 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-
+        dummyTile.tiledImage = {};
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.getDataAs("__TEST__longConversionProcessForTesting").then(convertedData => {
@@ -374,7 +374,7 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-
+        dummyTile.tiledImage = {};
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.transformTo("__TEST__longConversionProcessForTesting").then(_ => {
