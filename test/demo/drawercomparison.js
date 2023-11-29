@@ -58,18 +58,18 @@ let viewer2 = window.viewer2 = OpenSeadragon({
 });
 
 // // viewer3: html drawer, unused
-// var viewer3 = window.viewer3 = OpenSeadragon({
-//     id: "htmldrawer",
-//     drawer:'html',
-//     blendTime:2,
-//     prefixUrl: "../../build/openseadragon/images/",
-//     minZoomImageRatio:0.01,
-//     customDrawer: OpenSeadragon.HTMLDrawer,
-//     tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
-//     sequenceMode: true,
-//     crossOriginPolicy: 'Anonymous',
-//     ajaxWithCredentials: false
-// });
+var viewer3 = window.viewer3 = OpenSeadragon({
+    id: "htmldrawer",
+    drawer:'html',
+    blendTime:2,
+    prefixUrl: "../../build/openseadragon/images/",
+    minZoomImageRatio:0.01,
+    customDrawer: OpenSeadragon.HTMLDrawer,
+    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    sequenceMode: true,
+    crossOriginPolicy: 'Anonymous',
+    ajaxWithCredentials: false
+});
 
 
 // Sync navigation of viewer1 and viewer 2

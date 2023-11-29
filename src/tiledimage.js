@@ -1404,7 +1404,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     this._loadTile(tile, currentTime);
                 }
             }, this);
-          
+
             this._needsDraw = true;
             return false;
         } else {
@@ -2144,6 +2144,30 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
         return previousBest;
     },
+
+    /**
+     * @private
+     * @inner
+     * Sorts tiles in an array according to distance and visibility.
+     *
+     * @param {OpenSeadragon.Tile[]} tiles The tiles.
+     */
+    _sortTiles: function( tiles ) {
+        tiles.sort(function (a, b) {
+            if (a === null) {
+                return 1;
+            }
+            if (b === null) {
+                return -1;
+            }
+            if (a.visibility === b.visibility) {
+                return (a.squaredDistance - b.squaredDistance);
+            } else {
+                return (a.visibility - b.visibility);
+            }
+        });
+    },
+
 
     /**
      * @private
