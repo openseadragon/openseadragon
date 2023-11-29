@@ -185,7 +185,8 @@ $.TiledImage = function( options ) {
         opacity:                           $.DEFAULT_SETTINGS.opacity,
         preload:                           $.DEFAULT_SETTINGS.preload,
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
-        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency
+        subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
+        maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame
     }, options );
 
     this._preload = this.preload;
@@ -1277,7 +1278,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var levelsInterval = this._getLevelsInterval();
         var lowestLevel = levelsInterval.lowestLevel;
         var highestLevel = levelsInterval.highestLevel;
-        var bestTile = null;
+        var bestTiles = [];
         var haveDrawn = false;
         var drawArea = this.getDrawArea();
         var currentTime = $.now();
@@ -1360,7 +1361,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 optimalRatio - targetRenderPixelRatio
             );
 
-            // Update the level and keep track of 'best' tile to load
+            // Update the level and keep track of 'best' tiles to load
+
             var result = this._updateLevel(
                 haveDrawn,
                 drawLevel,
@@ -1369,10 +1371,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 levelVisibility,
                 drawArea,
                 currentTime,
-                bestTile
+                bestTiles
             );
 
-            bestTile = result.best;
+            bestTiles = result.best;
             var tiles = result.tiles.filter(tile => tile.loaded);
             var makeTileInfoObject = (function(level, levelOpacity, currentTime){
                 return function(tile){
@@ -1394,9 +1396,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
-        // Load the new 'best' tile
-        if (bestTile && !bestTile.context2D) {
-            this._loadTile(bestTile, currentTime);
+
+        // Load the new 'best' n tiles
+        if (bestTiles && bestTiles.length > 0) {
+            bestTiles.forEach(function (tile) {
+                if (tile && !tile.context2D) {
+                    this._loadTile(tile, currentTime);
+                }
+            }, this);
+          
             this._needsDraw = true;
             return false;
         } else {
@@ -1523,7 +1531,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelVisibility
      * @param {OpenSeadragon.Rect} drawArea
      * @param {Number} currentTime
-     * @param {Object} result Dictionary {best: OpenSeadragon.Tile - the current "best" tile to draw, tiles: Array(OpenSeadragon.Tile) - the updated tiles}.
+     * @param {Object} result Dictionary {best: OpenSeadragon.Tile - the current "best" tiles to draw, tiles: Array(OpenSeadragon.Tile) - the updated tiles}.
      */
     _updateLevel: function(haveDrawn, drawLevel, level, levelOpacity,
                            levelVisibility, drawArea, currentTime, best) {
@@ -1548,7 +1556,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {Object} topleft deprecated, use drawArea instead
              * @property {Object} bottomright deprecated, use drawArea instead
              * @property {Object} currenttime
-             * @property {Object} best
+             * @property {Object[]} best
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
             this.viewer.raiseEvent('update-level', {
@@ -1782,7 +1790,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // the tile is already in the download queue
             this._tilesLoading++;
         } else if (!loadingCoverage) {
-            best = this._compareTiles( best, tile );
+            best = this._compareTiles( best, tile, this.maxTilesPerFrame );
         }
 
         return {
@@ -2117,24 +2125,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * @private
      * @inner
-     * Determines whether the 'last best' tile for the area is better than the
+     * Determines the 'best tiles' from the given 'last best' tiles and the
      * tile in question.
      *
-     * @param {OpenSeadragon.Tile} previousBest
-     * @param {OpenSeadragon.Tile} tile
-     * @returns {OpenSeadragon.Tile} The new best tile.
+     * @param {OpenSeadragon.Tile[]} previousBest The best tiles so far.
+     * @param {OpenSeadragon.Tile} tile The new tile to consider.
+     * @param {Number} maxNTiles The max number of best tiles.
+     * @returns {OpenSeadragon.Tile[]} The new best tiles.
      */
-    _compareTiles: function( previousBest, tile ) {
+    _compareTiles: function( previousBest, tile, maxNTiles ) {
         if ( !previousBest ) {
-            return tile;
+            return [tile];
         }
-
-        if ( tile.visibility > previousBest.visibility ) {
-            return tile;
-        } else if ( tile.visibility === previousBest.visibility ) {
-            if ( tile.squaredDistance < previousBest.squaredDistance ) {
-                return tile;
-            }
+        previousBest.push(tile);
+        this._sortTiles(previousBest);
+        if (previousBest.length > maxNTiles) {
+            previousBest.pop();
         }
         return previousBest;
     },

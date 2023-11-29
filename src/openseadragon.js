@@ -300,6 +300,12 @@
   * @property {Number} [rotationIncrement=90]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
+  * @property {Number} [maxTilesPerFrame=1]
+  *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
+  *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
+  *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
+  *     (Note that the actual frame rate is given by the client's browser and machine).
+  *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
@@ -1298,6 +1304,7 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
+            maxTilesPerFrame:       1,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -2277,25 +2284,12 @@ function OpenSeadragon( options ){
             event.stopPropagation();
         },
 
-
-        /**
-         * Similar to OpenSeadragon.delegate, but it does not immediately call
-         * the method on the object, returning a function which can be called
-         * repeatedly to delegate the method. It also allows additional arguments
-         * to be passed during construction which will be added during each
-         * invocation, and each invocation can add additional arguments as well.
-         *
-         * @function
-         * @param {Object} object
-         * @param {Function} method
-         * @param [args] any additional arguments are passed as arguments to the
-         *  created callback
-         * @returns {Function}
-         */
+        // Deprecated
         createCallback: function( object, method ) {
             //TODO: This pattern is painful to use and debug.  It's much cleaner
             //      to use pinning plus anonymous functions.  Get rid of this
             //      pattern!
+            console.error('The createCallback function is deprecated and will be removed in future versions. Please use alternativeFunction instead.');
             var initialArgs = [],
                 i;
             for ( i = 2; i < arguments.length; i++ ) {

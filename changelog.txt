@@ -4,6 +4,14 @@ OPENSEADRAGON CHANGELOG
 5.0.0: (in progress...)
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
+* DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
+* Introduced maxTilesPerFrame option to allow loading more tiles simultaneously (#2387 @jetic83)
+* Now when creating a viewer or navigator, we leave its position style alone if possible (#2393 @VIRAT9358)
+* Test improvements (#2382 @AndrewADev)
+* MouseTracker options documentation fixes (#2389 @msalsbery)
+* Fixed: Sometimes if the viewport was flipped and the user zoomed in far enough, it would flip back (#2364 @SebDelile)
+* Fixed: Strange behavior if IIIF sizes were not in ascending order (#2416 @lutzhelm)
+* Fixed: Two-finger tap on a Mac trackpad would zoom you out (#2431 @cavenel)
 
 4.1.0:
 

@@ -234,25 +234,36 @@
             return;
         }
 
-        viewer.addHandler("open", function () {
+        viewer.addHandler('open', function () {
             assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
 
-            const checkEnteringPreFullScreen = function(event) {
+            const checkEnteringPreFullScreen = (event) => {
                 viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
                 assert.ok(event.fullScreen, 'Switching to fullscreen');
                 assert.ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
             };
 
-            // The fullscreen mode is always denied during tests so we are
-            // exiting directly.
-            const checkExitingFullScreen = function(event) {
+            const checkExitingFullScreen = (event) => {
                 viewer.removeHandler('full-screen', checkExitingFullScreen);
-                assert.ok(!event.fullScreen, 'Exiting fullscreen');
-                assert.ok(!OpenSeadragon.isFullScreen(), 'Disabled fullscreen');
+                assert.ok(!event.fullScreen, 'Disabling fullscreen');
+                assert.ok(!OpenSeadragon.isFullScreen(), 'Fullscreen disabled');
                 done();
+            }
+
+            // The 'new' headless mode allows us to enter fullscreen, so verify
+            // that we see the correct values returned. We will then close out
+            // of fullscreen to check the same values when exiting.
+            const checkAcquiredFullScreen = (event) => {
+                viewer.removeHandler('full-screen', checkAcquiredFullScreen);
+                viewer.addHandler('full-screen', checkExitingFullScreen);
+                assert.ok(event.fullScreen, 'Acquired fullscreen');
+                assert.ok(OpenSeadragon.isFullScreen(), 'Fullscreen enabled');
+                viewer.setFullScreen(false);
             };
-            viewer.addHandler("pre-full-screen", checkEnteringPreFullScreen);
-            viewer.addHandler("full-screen", checkExitingFullScreen);
+
+
+            viewer.addHandler('pre-full-screen', checkEnteringPreFullScreen);
+            viewer.addHandler('full-screen', checkAcquiredFullScreen);
             viewer.setFullScreen(true);
         });
 

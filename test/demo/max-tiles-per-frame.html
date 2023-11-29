@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon maxTilesPerFrame Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 100vw;
+            height: 100vh;
+        }
+
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show an OpenSeadragon viewer with a higher maxTilesPerFrame.
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources:  "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+            showNavigator:true,
+            debugMode:true,
+            maxTilesPerFrame:3,
+        });
+
+    </script>
+</body>
+</html>

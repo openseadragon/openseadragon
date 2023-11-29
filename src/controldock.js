@@ -59,7 +59,9 @@
         if( this.element ){
             this.element = $.getElement( this.element );
             this.element.appendChild( this.container );
-            this.element.style.position = 'relative';
+            if( $.getElementStyle(this.element).position === 'static' ){
+                this.element.style.position = 'relative';
+            }
             this.container.style.width = '100%';
             this.container.style.height = '100%';
         }
