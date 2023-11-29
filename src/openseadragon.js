@@ -1346,22 +1346,20 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, context2d, fallback to html
+            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
                 /**
                  * drawerOptions dictionary.
                  * @type {Object} drawerOptions
-                 * @property {Object} webgl - options if the WebGLDrawer is used.
-                 * Set 'continuousTileFresh: true' if tile data is modified programmatically
-                 * by filtering plugins or similar.
-                 * @property {Object} context2d - options if the CanvasDrawer is used
-                 * @property {Object} html - options if the HTMLDrawer is used
-                 * @property {Object} custom - options if a custom drawer is used
+                 * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
+                 * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
+                 * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
+                 * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
                  */
             drawerOptions: {
                 webgl: {
-                    continuousTileRefresh: false,
+
                 },
-                context2d: {
+                canvas: {
 
                 },
                 html: {

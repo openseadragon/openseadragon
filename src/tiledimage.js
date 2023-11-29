@@ -237,6 +237,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Mark the tiled image as needing to be (re)drawn
+     */
+    redraw: function() {
+        this._needsDraw = true;
+    },
+
+    /**
      * @returns {Boolean} Whether all tiles necessary for this TiledImage to draw at the current view have been loaded.
      */
     getFullyLoaded: function() {

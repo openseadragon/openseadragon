@@ -237,6 +237,7 @@ $.DrawerBase = class DrawerBase{
          *
          * NOTE: This event is only fired in certain drawing contexts: either the 'canvas' drawer is
          * being used, or the 'webgl' drawer with 'drawerOptions.webgl.continuousTileRefresh'.
+         * TODO: if we get rid of this in the webgl drawer, this can be moved to canvas drawer and the comment about continuousTileRefresh can be removed
          *
          * @event tile-drawing
          * @memberof OpenSeadragon.Viewer

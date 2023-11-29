@@ -38,7 +38,8 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
     drawer:drawer1,
-    blendTime:0
+    blendTime:0,
+    showNavigator:true,
 });
 
 // viewer2: webgl drawer
@@ -53,6 +54,7 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     // maxImageCacheCount: 30,
     drawer:drawer2,
     blendTime:0,
+    showNavigator:true,
 });
 
 // // viewer3: html drawer, unused
@@ -232,7 +234,7 @@ $('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on(
             case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
             case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
         }
-        tiledImage.viewer.raiseEvent('opacity-change');//trigger a redraw for the webgl renderer. TODO: fix this hack.
+        tiledImage.redraw();//trigger a redraw for the webgl renderer.
     }
     tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
     if(tiledImage){
@@ -242,7 +244,7 @@ $('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on(
             case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
             case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
         }
-        tiledImage.viewer.raiseEvent('opacity-change');//trigger a redraw for the webgl renderer. TODO: fix this hack.
+        tiledImage.redraw();//trigger a redraw for the webgl renderer.
     }
 }).trigger('change');
 

@@ -438,7 +438,7 @@ $.Viewer = function( options ) {
     if (Object.prototype.hasOwnProperty.call(this.drawerOptions, 'useCanvas') ){
         $.console.error('useCanvas is deprecated, use the "drawer" option to indicate preferred drawer(s)');
 
-        // for backwards compatibility, use HTMLDrawer if useCanvas is defined an is falsey
+        // for backwards compatibility, use HTMLDrawer if useCanvas is defined and is falsey
         if (!this.drawerOptions.useCanvas){
             this.drawer = $.HTMLDrawer;
         }
@@ -450,8 +450,8 @@ $.Viewer = function( options ) {
         drawerCandidates = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
-    // extend the drawerOptions object with additional properties to pass to the Drawer implementation
-    // TODO: how to deal with the possibility that none of the requested drawers are supported?
+
+
     this.drawer = null;
     for (let i = 0; i < drawerCandidates.length; i++) {
 
@@ -532,6 +532,7 @@ $.Viewer = function( options ) {
             displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
+            drawer:            this.drawer.getType(),
         });
     }
 

@@ -112,9 +112,6 @@
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
             gl.deleteFramebuffer(this._glFrameBuffer);
-            // TODO: if/when render buffers or frame buffers are used, release them:
-            // gl.deleteRenderbuffer(someRenderbuffer);
-            // gl.deleteFramebuffer(someFramebuffer);
 
             // make canvases 1 x 1 px and delete references
             this._renderingCanvas.width = this._renderingCanvas.height = 1;
@@ -208,20 +205,21 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                let useContext2dPipeline = ( tiledImage.compositeOperation ||
-                                        this.viewer.compositeOperation ||
-                                        tiledImage._clip ||
-                                        tiledImage._croppingPolygons ||
-                                        tiledImage.debugMode
-                                    );
-
-                let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1); // TODO: check hasTransparency in addition to opacity
-
                 let tilesToDraw = tiledImage.getTilesToDraw();
 
                 if(tilesToDraw.length === 0){
                     return;
                 }
+                let firstTile = tilesToDraw[0];
+
+                let useContext2dPipeline = ( tiledImage.compositeOperation ||
+                    this.viewer.compositeOperation ||
+                    tiledImage._clip ||
+                    tiledImage._croppingPolygons ||
+                    tiledImage.debugMode
+                );
+
+                let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.hasTransparency;
 
                 // using the context2d pipeline requires a clean rendering (back) buffer to start
                 if(useContext2dPipeline){
@@ -321,8 +319,6 @@
                     }
                 }
 
-                // gl.flush(); // is this necessary?
-
                 if(useTwoPassRendering){
                     // Second rendering pass: Render the tiled image from the framebuffer into the back buffer
                     gl.useProgram(this._secondPass.shaderProgram);
@@ -346,20 +342,18 @@
                     // Draw the quad (two triangles)
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-                    // TODO: is this the mechanism we want to use here?
+                    // TODO: Can we get rid of this entirely in this version of the webgl drawer?
                     // iterate over any filters - filters can use this._renderToTexture to get rendered data if desired
-                    let filters = this.filters || [];
-                    for(let fi = 0; fi < filters.length; fi++){
-                        let filter = this.filters[fi];
-                        if(filter.apply){
-                            filter.apply(gl); // filter.apply should write data on top of the backbuffer (bound above)
-                        }
-                    }
+                    // let filters = this.filters || [];
+                    // for(let fi = 0; fi < filters.length; fi++){
+                    //     let filter = this.filters[fi];
+                    //     if(filter.apply){
+                    //         filter.apply(gl); // filter.apply should write data on top of the backbuffer (bound above)
+                    //     }
+                    // }
                 }
 
                 renderingBufferHasImageData = true;
-
-                // gl.flush(); //make sure drawing to the output buffer of the rendering canvas is complete. Is this necessary?
 
                 if(useContext2dPipeline){
                     // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
@@ -371,7 +365,7 @@
                 }
 
                 // Fire tiled-image-drawn event.
-                // TODO: the image data may not be on the output canvas yet!!
+                // TODO: do we need to ensure the image has been drawn to the output canvas already? is it possible the image data may not be on the output canvas?
                 if( this.viewer ){
                     /**
                         * Raised when a tiled image is drawn to the canvas. Only valid
@@ -505,17 +499,18 @@
 
             let overallMatrix = viewMatrix.multiply(matrix);
 
-            opacityArray[index] = tile.opacity;// * tiledImage.opacity;
+            opacityArray[index] = tile.opacity;
             textureDataArray[index] = texture;
             matrixArray[index] = overallMatrix.values;
 
-            if(this.continuousTileRefresh){
-                // Upload the image into the texture
-                // TODO: test if this works appropriately
-                let tileContext = tile.getCanvasContext();
-                this._raiseTileDrawingEvent(tiledImage, this._outputContext, tile, tileContext);
-                this._uploadImageData(tileContext, tile, tiledImage);
-            }
+            // TODO: can we get rid of this in this version of the webgl drawer?
+            // if(this.continuousTileRefresh){
+            //     // Upload the image into the texture
+            //     // TODO: test if this works appropriately
+            //     let tileContext = tile.getCanvasContext();
+            //     this._raiseTileDrawingEvent(tiledImage, this._outputContext, tile, tileContext);
+            //     this._uploadImageData(tileContext, tile, tiledImage);
+            // }
 
         }
 
@@ -889,8 +884,6 @@
                 this._gl.deleteTexture(textureInfo.texture);
             }
 
-            // release the position buffer from the GPU
-            // TODO: do this!
         }
         // private
         // necessary for clip testing to pass (test uses spyOnce(drawer._setClip))
