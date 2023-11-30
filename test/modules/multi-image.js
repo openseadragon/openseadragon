@@ -262,12 +262,12 @@
 
                                     done();
                                 });
-
+                                // trigger a redraw so the event fires
+                                firstImage.redraw();
                             });
                         }
                     });
                 });
-
             });
         });
 
