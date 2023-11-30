@@ -119,7 +119,8 @@
 
             OpenSeadragon.extend( Tile.prototype, OpenSeadragon.Tile.prototype, {
                 getUrl: function() {
-                    ASSERT.ok(true, 'Tile.getUrl called');
+                    // TODO: it seems sometimes this can be called after ASSERT is destroyed; should this be fixed differently?
+                    ASSERT && ASSERT.ok(true, 'Tile.getUrl called');
                     return OriginalTile.prototype.getUrl.apply(this);
                 }
             });
