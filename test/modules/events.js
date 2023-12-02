@@ -1163,7 +1163,7 @@
             done();
             return;
         }
-        // var previousValue = viewer.drawer.continuousTileRefresh;
+
         assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
             "'tile-drawing' event is empty by default.");
 
@@ -1171,7 +1171,7 @@
             viewer.removeHandler( 'tile-drawing', tileDrawing );
             assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
                 "'tile-drawing' deleted: count is 0.");
-            // viewer.drawer.continuousTileRefresh = previousValue; // reset property
+
             viewer.close();
             done();
         };
@@ -1190,7 +1190,6 @@
         assert.ok(viewer.numberOfHandlers('tile-drawing') === 1,
             "'tile-drawing' deleted once: count is 1.");
 
-        // viewer.drawer.continuousTileRefresh = true; // set to true so the tile-drawing event fires
         viewer.open( '/test/data/testpattern.dzi' );
     } );
 
@@ -1201,7 +1200,6 @@
             done();
             return;
         }
-        // var previousValue = viewer.drawer.continuousTileRefresh;
 
         var tileDrawing = function ( event ) {
             viewer.removeHandler( 'tile-drawing', tileDrawing );
@@ -1212,12 +1210,10 @@
                 assert.ok(event.tile, "Tile should be set");
                 assert.ok(event.rendered, "Rendered should be set");
             }
-            // viewer.drawer.continuousTileRefresh = previousValue; // reset property
             viewer.close();
             done();
         };
 
-        // viewer.drawer.continuousTileRefresh = true; // set to true so the tile-drawing event fires
         viewer.addHandler( 'tile-drawing', tileDrawing );
         viewer.open( '/test/data/testpattern.dzi' );
     } );

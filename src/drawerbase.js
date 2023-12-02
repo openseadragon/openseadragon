@@ -231,34 +231,6 @@ $.DrawerBase = class DrawerBase{
         }
     }
 
-    _raiseTileDrawingEvent(tiledImage, context, tile, rendered){
-        /**
-         * This event is fired just before the tile is drawn giving the application a chance to alter the image.
-         *
-         * NOTE: This event is only fired in certain drawing contexts: either the 'canvas' drawer is
-         * being used, or the 'webgl' drawer with 'drawerOptions.webgl.continuousTileRefresh'.
-         * TODO: if we get rid of this in the webgl drawer, this can be moved to canvas drawer and the comment about continuousTileRefresh can be removed
-         *
-         * @event tile-drawing
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-         * @property {OpenSeadragon.Tile} tile - The Tile being drawn.
-         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-         * @property {CanvasRenderingContext2D} context - The HTML canvas context being drawn into.
-         * @property {CanvasRenderingContext2D} rendered - The HTML canvas context containing the tile imagery.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.viewer.raiseEvent('tile-drawing', {
-            tiledImage: tiledImage,
-            context: context,
-            tile: tile,
-            rendered: rendered
-        });
-    }
-
-
-
 
     // Utility functions
 

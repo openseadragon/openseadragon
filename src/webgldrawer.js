@@ -342,15 +342,6 @@
                     // Draw the quad (two triangles)
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-                    // TODO: Can we get rid of this entirely in this version of the webgl drawer?
-                    // iterate over any filters - filters can use this._renderToTexture to get rendered data if desired
-                    // let filters = this.filters || [];
-                    // for(let fi = 0; fi < filters.length; fi++){
-                    //     let filter = this.filters[fi];
-                    //     if(filter.apply){
-                    //         filter.apply(gl); // filter.apply should write data on top of the backbuffer (bound above)
-                    //     }
-                    // }
                 }
 
                 renderingBufferHasImageData = true;
@@ -369,7 +360,7 @@
                 if( this.viewer ){
                     /**
                         * Raised when a tiled image is drawn to the canvas. Only valid
-                        * for webgl drawer.
+                        * for webgl and canvas drawers.
                         *
                         * @event tiled-image-drawn
                         * @memberof OpenSeadragon.Viewer
@@ -502,15 +493,6 @@
             opacityArray[index] = tile.opacity;
             textureDataArray[index] = texture;
             matrixArray[index] = overallMatrix.values;
-
-            // TODO: can we get rid of this in this version of the webgl drawer?
-            // if(this.continuousTileRefresh){
-            //     // Upload the image into the texture
-            //     // TODO: test if this works appropriately
-            //     let tileContext = tile.getCanvasContext();
-            //     this._raiseTileDrawingEvent(tiledImage, this._outputContext, tile, tileContext);
-            //     this._uploadImageData(tileContext, tile, tiledImage);
-            // }
 
         }
 
