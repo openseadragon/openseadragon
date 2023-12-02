@@ -511,7 +511,7 @@ class CanvasDrawer extends $.DrawerBase{
                 */
             this.viewer.raiseEvent( 'tiled-image-drawn', {
                 tiledImage: tiledImage,
-                tiles: tilesToDraw.map(info => info.tile),
+                tiles: lastDrawn,
             });
         }
     }
