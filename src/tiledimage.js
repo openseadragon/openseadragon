@@ -241,6 +241,7 @@ $.TiledImage = function( options ) {
          * @property {OpenSeadragon.Tile} context - The HTML canvas context being drawn into.
          * @property {OpenSeadragon.Tile} rendered - The HTML canvas context containing the tile imagery.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
+         * @deprecated
          */
         _this.viewer.raiseEvent('tile-drawing', $.extend({
             tiledImage: _this
@@ -288,6 +289,32 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.raiseEvent('fully-loaded-change', {
             fullyLoaded: this._fullyLoaded
         });
+    },
+
+    /**
+     * Forces the system consider all tiles in this tiled image
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-needs-update'
+     * event. TODO: consider re-using update function instead?
+     * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
+     * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     */
+    invalidate: function (viewportOnly, tStamp) {
+        tStamp = tStamp || $.now();
+        this.invalidatedAt = tStamp; //todo document, or remove by something nicer
+
+        //always invalidate active tiles
+        for (let tile of this.lastDrawn) {
+            $.invalidateTile(tile, this, tStamp, this.viewer);
+        }
+        //if not called from world or not desired, avoid update of offscreen data
+        if (viewportOnly) {
+            return;
+        }
+        //else update all tiles at some point, but by priority of access time
+        const tiles = this.tileCache.getLoadedTilesFor(this);
+        tiles.sort((a, b) => a.lastTouchTime - b.lastTouchTime);
+        $.invalidateTilesLater(tiles, tStamp, this.viewer);
     },
 
     /**
@@ -1575,14 +1602,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         let record = this._tileCache.getCacheRecord(tile.cacheKey);
-        const cutoff = this.source.getClosestLevel();
 
         if (record) {
             //setup without calling tile loaded event! tile cache is ready for usage,
             tile.loading = true;
             tile.loaded = false;
             //set data as null, cache already has data, it does not overwrite
-            this._setTileLoaded(tile, null, cutoff, null, record.type,
+            this._setTileLoaded(tile, null, null, null, record.type,
                 this.callTileLoadedWithCachedData);
             return true;
         }
@@ -1594,7 +1620,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 tile.loading = true;
                 tile.loaded = false;
                 //set data as null, cache already has data, it does not overwrite
-                this._setTileLoaded(tile, null, cutoff, null, record.type);
+                this._setTileLoaded(tile, null, null, null, record.type);
                 return true;
             }
         }
@@ -1673,8 +1699,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 ajaxHeaders,
                 sourceBounds,
                 post,
-                tileSource.getTileHashKey(level, xMod, yMod, urlOrGetter, ajaxHeaders, post),
-                this
+                tileSource.getTileHashKey(level, xMod, yMod, urlOrGetter, ajaxHeaders, post)
             );
 
             if (this.getFlip()) {
@@ -1779,9 +1804,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         var _this = this,
             finish = function() {
-                var ccc = _this.source;
-                var cutoff = ccc.getClosestLevel();
-                _this._setTileLoaded(tile, data, cutoff, tileRequest, dataType);
+                _this._setTileLoaded(tile, data, null, tileRequest, dataType);
             };
 
         // Check if we're mid-update; this can happen on IE8 because image load events for
@@ -1800,7 +1823,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object,
      *   can be null: in that case, cache is assigned to a tile without further processing
-     * @param {?Number} cutoff
+     * @param {?Number} cutoff ignored, @deprecated
      * @param {?XMLHttpRequest} tileRequest
      * @param {?String} [dataType=undefined] data type, derived automatically if not set
      * @param {?Boolean} [withEvent=true] do not trigger event if true
@@ -1808,7 +1831,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType, withEvent = true) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // -> reason why it is not in the constructor
-        tile.setCache(tile.cacheKey, data, dataType, false, cutoff);
+        tile.setCache(tile.cacheKey, data, dataType, false);
 
         let resolver = null,
             increment = 0,
@@ -1829,7 +1852,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
             //make sure cache data is ready for drawing, if not, request the desired format
             const cache = tile.getCache(tile.cacheKey),
-                // TODO: dynamic type declaration from the drawer base class interface from v5.0 onwards
+                // TODO: after-merge-aiosa dynamic type declaration from the drawer base class interface
                 requiredType = _this._drawer.useCanvas ? "context2d" : "image";
             if (!cache) {
                 $.console.warn("Tile %s not cached at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
@@ -1866,9 +1889,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         /**
          * Triggered when a tile has just been loaded in memory. That means that the
          * image has been downloaded and can be modified before being drawn to the canvas.
-         * This event awaits its handlers - they can return promises, or be async functions.
+         * This event is _awaiting_, it supports asynchronous functions or functions that return a promise.
          *
-         * @event tile-loaded awaiting event
+         * @event tile-loaded
          * @memberof OpenSeadragon.Viewer
          * @type {object}
          * @property {Image|*} image - The image (data) of the tile. Deprecated.
@@ -2213,15 +2236,26 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             shouldRoundPositionAndSize = !isAnimating;
         }
 
-        for (var i = lastDrawn.length - 1; i >= 0; i--) {
+        for (let i = lastDrawn.length - 1; i >= 0; i--) {
             tile = lastDrawn[ i ];
+
+            if (tile.loaded) {
+                const cache = tile.getCache();
+                if (cache._updateStamp && cache._updateStamp !== $.__updated) {
+                    console.warn("Tile not updated", cache);
+                }
+            }
+
             this._drawer.drawTile( tile, this._drawingHandler, useSketch, sketchScale,
                 sketchTranslate, shouldRoundPositionAndSize, this.source );
             tile.beingDrawn = true;
 
             if( this.viewer ){
+                const targetTile = tile;
                 /**
-                 * <em>- Needs documentation -</em>
+                 * This event is fired after a tile has been drawn on the viewport. You can
+                 * use this event to modify the tile data if necessary.
+                 * This event is _awaiting_, it supports asynchronous functions or functions that return a promise.
                  *
                  * @event tile-drawn
                  * @memberof OpenSeadragon.Viewer
@@ -2231,9 +2265,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                  * @property {OpenSeadragon.Tile} tile
                  * @property {?Object} userData - Arbitrary subscriber-defined object.
                  */
-                this.viewer.raiseEvent( 'tile-drawn', {
+                this.viewer.raiseEventAwaiting( 'tile-drawn', {
                     tiledImage: this,
-                    tile: tile
+                    tile: targetTile
+                }).then(() => {
+                    const cache = targetTile.getCache(targetTile.cacheKey),
+                        // TODO: after-merge-aiosa dynamic type declaration from the drawer base class interface
+                        requiredType = this._drawer.useCanvas ? "context2d" : "image";
+                    if (!cache) {
+                        $.console.warn("Tile %s not cached at the end of tile-drawn event: tile will not be drawn - it has no data!", targetTile);
+                    } else if (cache.type !== requiredType) {
+                        //initiate conversion as soon as possible if incompatible with the drawer
+                        cache.transformTo(requiredType);
+                    }
                 });
             }
         }

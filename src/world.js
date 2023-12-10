@@ -233,6 +233,28 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
+     * Forces the system consider all tiles across all tiled images
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-needs-update'
+     * event.
+     */
+    invalidateItems: function () {
+        const updatedAt = $.now();
+        $.__updated = updatedAt;
+        for ( let i = 0; i < this._items.length; i++ ) {
+            console.log("Refreshing ", this._items[i].lastDrawn);
+
+            this._items[i].invalidate(true, updatedAt);
+        }
+
+        //update all tiles at some point, but by priority of access time
+        const tiles = this.viewer.tileCache.getLoadedTilesFor(true);
+        tiles.sort((a, b) => a.lastTouchTime - b.lastTouchTime);
+        console.log("Refreshing with late update: ", tiles);
+        $.invalidateTilesLater(tiles, updatedAt, this.viewer);
+    },
+
+    /**
      * Clears all tiles and triggers updates for all items.
      */
     resetItems: function() {

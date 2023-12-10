@@ -266,18 +266,13 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.isBottomMost = false;
+
     /**
-     * FIXME: I would like to remove this reference but there is no way
-     *   to remove it since tile-unloaded event requires the tiledImage reference.
-     *   And, unloadTilesFor(tiledImage) in cache uses it too. Storing the
-     *   reference on a tile level rather than cache level is more efficient.
-     *
-     * Owner of this tile.
+     * Owner of this tile. Do not change this property manually.
      * @member {OpenSeadragon.TiledImage}
      * @memberof OpenSeadragon.Tile#
      */
     this.tiledImage = null;
-
     /**
      * Array of cached tile data associated with the tile.
      * @member {Object} _caches
@@ -385,7 +380,7 @@ $.Tile.prototype = {
      * @returns {?Image}
      */
     getImage: function() {
-        //TODO: after merge $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
+        //TODO: after-merge-aiosa $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -413,7 +408,7 @@ $.Tile.prototype = {
      * @returns {?CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
-        //TODO: after merge $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
+        //TODO: after-merge-aiosa $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -471,10 +466,14 @@ $.Tile.prototype = {
     /**
      * Get the data to render for this tile
      * @param {string} type data type to require
-     * @param {boolean?} [copy=this.loaded] whether to force copy retrieval
+     * @param {boolean?} [copy=true] whether to force copy retrieval
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
-    getData: function(type, copy = this.loaded) {
+    getData: function(type, copy = true) {
+        if (!this.tiledImage) {
+            return null; //async can access outside its lifetime
+        }
+
         //we return the data synchronously immediatelly (undefined if conversion happens)
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -491,6 +490,10 @@ $.Tile.prototype = {
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
     getOriginalData: function(type, copy = true) {
+        if (!this.tiledImage) {
+            return null; //async can access outside its lifetime
+        }
+
         //we return the data synchronously immediatelly (undefined if conversion happens)
         const cache = this.getCache(this.originalCacheKey);
         if (!cache) {
@@ -509,6 +512,10 @@ $.Tile.prototype = {
      * to a new data. This makes the Tile assigned to two cache objects.
      */
     setData: function(value, type, preserveOriginalData = true) {
+        if (!this.tiledImage) {
+            return null; //async can access outside its lifetime
+        }
+
         if (preserveOriginalData && this.cacheKey === this.originalCacheKey) {
             //caches equality means we have only one cache:
             // change current pointer to a new cache and create it: new tiles will
@@ -542,10 +549,13 @@ $.Tile.prototype = {
      * @param {*} data data to cache - this data will be sent to the TileSource API for refinement.
      * @param {?string} type data type, will be guessed if not provided
      * @param [_safely=true] private
-     * @param [_cutoff=0] private
-     * @returns {OpenSeadragon.CacheRecord} - The cache record the tile was attached to.
+     * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
      */
-    setCache: function(key, data, type = undefined, _safely = true, _cutoff = 0) {
+    setCache: function(key, data, type = undefined, _safely = true) {
+        if (!this.tiledImage) {
+            return null; //async can access outside its lifetime
+        }
+
         if (!type) {
             if (this.tiledImage && !this.tiledImage.__typeWarningReported) {
                 $.console.warn(this, "[Tile.setCache] called without type specification. " +
@@ -557,20 +567,22 @@ $.Tile.prototype = {
 
         const writesToRenderingCache = key === this.cacheKey;
         if (writesToRenderingCache && _safely) {
-            //todo later, we could have drawers register their supported rendering type
-            // and OpenSeadragon would check compatibility automatically, now we render
-            // using two main types so we check their ability
+            //todo after-merge-aiosa decide dynamically
             const conversion = $.convertor.getConversionPath(type, "context2d");
             $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
                 "to render. Make sure OpenSeadragon.convertor was taught to convert type: " + type);
         }
 
+        if (!this.__cutoff) {
+            //todo consider caching this on a tiled image level..
+            this.__cutoff = this.tiledImage.source.getClosestLevel();
+        }
         const cachedItem = this.tiledImage._tileCache.cacheTile({
             data: data,
             dataType: type,
             tile: this,
             cacheKey: key,
-            cutoff: _cutoff
+            cutoff: this.__cutoff,
         });
         const havingRecord = this._caches[key];
         if (havingRecord !== cachedItem) {
@@ -631,8 +643,13 @@ $.Tile.prototype = {
         const _this = this;
         // This gives the application a chance to make image manipulation
         // changes as we are rendering the image
-        drawingHandler({context: context, tile: this, get rendered() {
-            $.console.warn("[tile-drawing rendered] property is deprecated. Use Tile data API.");
+        drawingHandler({context: context, get tile() {
+                $.console.warn("[tile-drawing] event is deprecated. " +
+                    "Use 'tile-drawn' event instead.");
+                return _this;
+            }, get rendered() {
+            $.console.warn("[tile-drawing] rendered property and this event itself are deprecated. " +
+                "Use Tile data API and `tile-drawn` event instead.");
             const context = _this.getCanvasContext();
             if (!context) {
                 $.console.warn(

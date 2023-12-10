@@ -582,6 +582,18 @@ $.TileCache = class {
     }
 
     /**
+     * Returns reference to all tiles loaded by a particular
+     * tiled image item
+     * @param {OpenSeadragon.TiledImage|Boolean} tiledImage true for all, reference for selection
+     */
+    getLoadedTilesFor(tiledImage) {
+        if (tiledImage === true) {
+            return [...this._tilesLoaded];
+        }
+        return this._tilesLoaded.filter(tile => tile.tiledImage === tiledImage);
+    }
+
+    /**
      * Get cache record (might be a unattached record, i.e. a zombie)
      * @param cacheKey
      * @returns {OpenSeadragon.CacheRecord|undefined}

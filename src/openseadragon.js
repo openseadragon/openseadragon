@@ -1450,12 +1450,14 @@ function OpenSeadragon( options ){
 
 
         /**
-         * TODO: get rid of this.  I can't see how it's required at all.  Looks
-         *       like an early legacy code artifact.
-         * @static
+         * TODO: remove soon
+         * @deprecated
          * @ignore
          */
-        SIGNAL: "----seadragon----",
+        get SIGNAL() {
+            $.console.error("OpenSeadragon.SIGNAL is deprecated and should not be used.");
+            return "----seadragon----";
+        },
 
 
         /**
@@ -2269,29 +2271,6 @@ function OpenSeadragon( options ){
             event.stopPropagation();
         },
 
-        // Deprecated
-        createCallback: function( object, method ) {
-            //TODO: This pattern is painful to use and debug.  It's much cleaner
-            //      to use pinning plus anonymous functions.  Get rid of this
-            //      pattern!
-            console.error('The createCallback function is deprecated and will be removed in future versions. Please use alternativeFunction instead.');
-            var initialArgs = [],
-                i;
-            for ( i = 2; i < arguments.length; i++ ) {
-                initialArgs.push( arguments[ i ] );
-            }
-
-            return function() {
-                var args = initialArgs.concat( [] ),
-                    i;
-                for ( i = 0; i < arguments.length; i++ ) {
-                    args.push( arguments[ i ] );
-                }
-
-                return method.apply( object, args );
-            };
-        },
-
 
         /**
          * Retrieves the value of a url parameter from the window.location string.
@@ -2632,8 +2611,72 @@ function OpenSeadragon( options ){
         setImageFormatsSupported: function(formats) {
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);
-        }
+        },
 
+
+        //@private, runs non-invasive update of all tiles given in the list
+        invalidateTilesLater: function(tileList, tStamp, viewer, batch = 999) {
+            let i = 0;
+            let interval = setInterval(() => {
+                let tile = tileList[i];
+                while (tile && !tile.loaded) {
+                    tile = tileList[i++];
+                }
+
+                if (i >= tileList.length) {
+                    console.log(":::::::::::::::::::::::::::::end");
+                    clearInterval(interval);
+                    return;
+                }
+                const tiledImage = tile.tiledImage;
+                if (tiledImage.invalidatedAt > tStamp) {
+                    console.log(":::::::::::::::::::::::::::::end");
+                    clearInterval(interval);
+                    return;
+                }
+                let count = 1;
+                for (; i < tileList.length; i++) {
+                    const tile = tileList[i];
+                    if (!tile.loaded) {
+                        console.log("skipping tile: not loaded", tile);
+                        continue;
+                    }
+
+                    const tileCache = tile.getCache();
+                    if (tileCache._updateStamp >= tStamp) {
+                        continue;
+                    }
+                    // prevents other tiles sharing the cache (~the key) from event
+                    //todo works unless the cache key CHANGES by plugins
+                    // - either prevent
+                    // - or ...?
+                    tileCache._updateStamp = tStamp;
+                    $.invalidateTile(tile, tile.tiledImage, tStamp, viewer, i);
+                    if (++count > batch) {
+                        break;
+                    }
+                }
+            }, 5); //how to select the delay...?? todo: just try out
+        },
+
+        //@private, runs tile update event
+        invalidateTile: function(tile, image, tStamp, viewer, i = -1) {
+            console.log(i, "tile: process", tile);
+
+            //todo consider also ability to cut execution of ongoing event if outdated by providing comparison timestamp
+            viewer.raiseEventAwaiting('tile-needs-update', {
+                tile: tile,
+                tiledImage: image,
+            }).then(() => {
+                //TODO IF NOT CACHE ERRO
+                const newCache = tile.getCache();
+                if (newCache) {
+                    newCache._updateStamp = tStamp;
+                } else {
+                    $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' evemt!", tile);
+                }
+            });
+        }
     });
 
 
@@ -2903,13 +2946,10 @@ function OpenSeadragon( options ){
         }
         const promise = function () {};
         //TODO consider supplying promise API via callbacks/polyfill
-        promise.prototype.then = function () {
-            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
-        };
-        promise.prototype.catch = function () {
-            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
-        };
-        promise.prototype.finally = function () {
+        promise.prototype.then =
+            promise.prototype.catch =
+                promise.prototype.finally =
+                    promise.all = promise.race = function () {
             throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
         };
         return promise;

@@ -232,6 +232,13 @@ $.ImageLoader.prototype = {
     },
 
     /**
+     * @returns {boolean} true if a job can be submitted
+     */
+    canAcceptNewJob() {
+        return !this.jobLimit || this.jobsInProgress < this.jobLimit;
+    },
+
+    /**
      * Clear any unstarted image loading jobs from the queue.
      * @method
      */
@@ -264,14 +271,14 @@ function completeJob(loader, job, callback) {
 
     loader.jobsInProgress--;
 
-    if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.jobQueue.length > 0) {
+    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
         nextJob = loader.jobQueue.shift();
         nextJob.start();
         loader.jobsInProgress++;
     }
 
     if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
-        if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
+        if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
             nextJob = loader.failedTiles.shift();
             setTimeout(function () {
                 nextJob.start();
