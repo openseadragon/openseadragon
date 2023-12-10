@@ -356,7 +356,7 @@ $.Viewer = function( options ) {
 
         //if we are not throttling
         if (_this.imageLoader.canAcceptNewJob()) {
-            //todo small hack, we could make this builtin speedup more sophisticated
+            //todo small hack, we could make this builtin speedup more sophisticated, breaks tests --> commented out
             const item = event.item;
             const origOpacity = item.opacity;
             const origMaxTiles = item.maxTilesPerFrame;
@@ -367,10 +367,10 @@ $.Viewer = function( options ) {
             item._needsDraw = true; //we did not draw
             item.opacity = origOpacity;
             item.maxTilesPerFrame = origMaxTiles;
+        }
 
-            if (!_this._updateRequestId) {
-                _this._updateRequestId = scheduleUpdate( _this, updateMulti );
-            }
+        if (!_this._updateRequestId) {
+            _this._updateRequestId = scheduleUpdate( _this, updateMulti );
         }
     });
 

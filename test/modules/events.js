@@ -1288,22 +1288,25 @@
 
     QUnit.test( 'Viewer: tile-unloaded event.', function(assert) {
         var tiledImage;
-        var tile;
+        var tiles = [];
         var done = assert.async();
 
         function tileLoaded( event ) {
-            viewer.removeHandler( 'tile-loaded', tileLoaded);
             tiledImage = event.tiledImage;
-            tile = event.tile;
-            setTimeout(function() {
-                tiledImage.reset();
-            }, 0);
+            tiles.push(event.tile);
+            if (tiles.length === 1) {
+                setTimeout(function() {
+                    tiledImage.reset();
+                }, 0);
+            }
         }
 
         function tileUnloaded( event ) {
+            viewer.removeHandler( 'tile-loaded', tileLoaded);
             viewer.removeHandler( 'tile-unloaded', tileUnloaded );
-            assert.equal( tile, event.tile,
-                "The unloaded tile should be the same than the loaded one." );
+
+            assert.equal( tiles.find(t => t === event.tile), event.tile,
+                "The unloaded tile should be one of the loaded tiles." );
             assert.equal( tiledImage, event.tiledImage,
                 "The tiledImage of the unloaded tile should be the same than the one of the loaded one." );
             done();
