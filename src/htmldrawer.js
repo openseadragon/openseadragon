@@ -47,6 +47,7 @@
 
 class HTMLDrawer extends $.DrawerBase{
     constructor(){
+        // pass through ...arguments to DrawerBase to support positional arguments (legacy, not preferred)
         super(...arguments);
 
         /**

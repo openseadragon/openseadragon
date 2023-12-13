@@ -47,6 +47,7 @@
 
 class CanvasDrawer extends $.DrawerBase{
     constructor(){
+        // pass through ...arguments to DrawerBase to support positional arguments (legacy, not preferred)
         super(...arguments);
 
         /**
@@ -165,9 +166,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
      * Fires the tile-drawing event.
-     *
+     * @private
      */
     _raiseTileDrawingEvent(tiledImage, context, tile, rendered){
         /**
@@ -194,9 +194,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Clears the Drawer so it's ready to draw another frame.
+     * @private
      *
      */
     _prepareNewFrame() {
@@ -218,7 +217,6 @@ class CanvasDrawer extends $.DrawerBase{
 
     /**
      * @private
-     * @inner
      * @param {Boolean} useSketch Whether to clear sketch canvas or main canvas
      * @param {OpenSeadragon.Rect} [bounds] The rectangle to clear
      */
@@ -233,9 +231,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Draws a TiledImage.
+     * @private
      *
      */
     _drawTiles( tiledImage ) {
@@ -504,12 +501,11 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-         * @private
-         * @inner
          * This function converts the given point from to the drawer coordinate by
          * multiplying it with the pixel density.
          * This function does not take rotation into account, thus assuming provided
          * point is at 0 degree.
+         * @private
          * @param {OpenSeadragon.Point} point - the pixel point to convert
          * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
          */
@@ -522,9 +518,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Draws special debug information for a TiledImage if in debug mode.
+     * @private
      * @param {OpenSeadragon.Tile[]} lastDrawn - An unordered list of Tiles drawn last frame.
      */
     _drawDebugInfo( tiledImage, lastDrawn ) {
@@ -541,10 +536,9 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * This function will create multiple polygon paths on the drawing context by provided polygons,
      * then clip the context to the paths.
+     * @private
      * @param {OpenSeadragon.Point[][]} polygons - an array of polygons. A polygon is an array of OpenSeadragon.Point
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      */
@@ -561,9 +555,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Draws the given tile.
+     * @private
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
      * @param {OpenSeadragon.TiledImage} tiledImage - The tiled image being drawn.
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
@@ -586,9 +579,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Renders the tile in a canvas-based context.
+     * @private
      * @function
      * @param {OpenSeadragon.Tile} tile - the tile to draw to the canvas
      * @param {Canvas} context
@@ -694,11 +686,10 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Get the context of the main or sketch canvas
+     * @private
      * @param {Boolean} useSketch
-     * @returns
+     * @returns {CanvasRenderingContext2D}
      */
     _getContext( useSketch ) {
         var context = this.context;
@@ -733,22 +724,18 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Save the context of the main or sketch canvas
+     * @private
      * @param {Boolean} useSketch
-     * @returns
      */
     _saveContext( useSketch ) {
         this._getContext( useSketch ).save();
     }
 
     /**
-     * @private
-     * @inner
      * Restore the context of the main or sketch canvas
+     * @private
      * @param {Boolean} useSketch
-     * @returns
      */
     _restoreContext( useSketch ) {
         this._getContext( useSketch ).restore();
@@ -763,6 +750,7 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     // private
+    // used to draw a placeholder rectangle
     _drawRectangle(rect, fillStyle, useSketch) {
         var context = this._getContext( useSketch );
         context.save();
@@ -976,9 +964,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Get the canvas size
+     * @private
      * @param {Boolean} sketch If set to true return the size of the sketch canvas
      * @returns {OpenSeadragon.Point} The size of the canvas
      */
@@ -988,9 +975,8 @@ class CanvasDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
-     * @inner
      * Get the canvas center
+     * @private
      * @param {Boolean} sketch If set to true return the center point of the sketch canvas
      * @returns {OpenSeadragon.Point} The center point of the canvas
      */
@@ -1068,17 +1054,15 @@ $.CanvasDrawer = CanvasDrawer;
 
 
 /**
- * @private
- * @inner
  * Defines the value for subpixel rounding to fallback to in case of missing or
  * invalid value.
+ * @private
  */
 var DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
 
 /**
- * @private
- * @inner
  * Checks whether the input value is an invalid subpixel rounding enum value.
+ * @private
  *
  * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to check.
  * @returns {Boolean} Returns true if the input value is none of the expected
@@ -1091,11 +1075,9 @@ function isSubPixelRoundingRuleUnknown(value) {
 }
 
 /**
- * @private
- * @inner
  * Ensures the returned value is always a valid subpixel rounding enum value,
  * defaulting to {@link SUBPIXEL_ROUNDING_OCCURRENCES.NEVER} if input is missing or invalid.
- *
+ * @private
  * @param {SUBPIXEL_ROUNDING_OCCURRENCES} value - The subpixel rounding enum value to normalize.
  * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns a valid subpixel rounding enum value.
  */
@@ -1107,10 +1089,9 @@ function normalizeSubPixelRoundingRule(value) {
 }
 
 /**
- * @private
- * @inner
  * Ensures the returned value is always a valid subpixel rounding enum value,
  * defaulting to 'NEVER' if input is missing or invalid.
+ * @private
  *
  * @param {Object} subPixelRoundingRules - A subpixel rounding enum values dictionary [{@link BROWSERS}] --> {@link SUBPIXEL_ROUNDING_OCCURRENCES}.
  * @returns {SUBPIXEL_ROUNDING_OCCURRENCES} Returns the determined subpixel rounding enum value for the

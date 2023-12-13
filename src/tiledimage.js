@@ -1019,7 +1019,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * Get the region of this tiled image that falls within the viewport.
-     * @returns OpenSeadragon.Rect
+     * @returns {OpenSeadragon.Rect} the region of this tiled image that falls within the viewport.
      */
     getDrawArea: function(){
 

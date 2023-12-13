@@ -1356,7 +1356,7 @@ function OpenSeadragon( options ){
             drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
                 /**
                  * drawerOptions dictionary.
-                 * @type {Object} drawerOptions
+                 * @type {Object}
                  * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
                  * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
                  * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.

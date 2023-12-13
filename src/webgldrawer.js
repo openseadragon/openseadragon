@@ -136,7 +136,7 @@
         // Public API required by all Drawer implementations
         /**
             *
-            * @returns true if the drawer supports rotation
+            * @returns {Boolean} true if the drawer supports rotation
             */
         canRotate(){
             return true;
@@ -145,7 +145,7 @@
         // Public API required by all Drawer implementations
 
         /**
-        * @returns {Boolean} returns true if canvas and webgl are supported
+        * @returns {Boolean} true if canvas and webgl are supported
         */
         static isSupported(){
             let canvasElement = document.createElement( 'canvas' );
