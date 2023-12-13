@@ -80,7 +80,7 @@ class HTMLDrawer extends $.DrawerBase{
      * create the HTML element (e.g. canvas, div) that the image will be drawn into
      * @returns {Element} the div to draw into
      */
-    createDrawingElement(){
+    _createDrawingElement(){
         let canvas = $.makeNeutralElement("div");
         return canvas;
     }

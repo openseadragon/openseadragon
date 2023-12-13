@@ -166,7 +166,7 @@
             * create the HTML element (canvas in this case) that the image will be drawn into
             * @returns {Element} the canvas to draw into
             */
-        createDrawingElement(){
+        _createDrawingElement(){
             let canvas = $.makeNeutralElement("canvas");
             let viewportSize = this._calculateCanvasSize();
             canvas.width = viewportSize.x;

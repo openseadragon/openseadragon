@@ -1,5 +1,5 @@
 /*
- * OpenSeadragon - Drawer
+ * OpenSeadragon - CanvasDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2022 OpenSeadragon contributors
@@ -49,31 +49,20 @@ class CanvasDrawer extends $.DrawerBase{
     constructor(){
         super(...arguments);
 
-        // Options
-
-
-
         /**
-         * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
+         * 2d drawing context for {@link OpenSeadragon.CanvasDrawer#canvas}.
          * @member {Object} context
-         * @memberof OpenSeadragon.Drawer#
+         * @memberof OpenSeadragon.CanvasDrawer#
          */
         this.context = this.canvas.getContext( '2d' );
 
-        /**
-         * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
-         * to the main canvas due to opacity. Lazily initialized.
-         */
+        // Sketch canvas used to temporarily draw tiles which cannot be drawn directly
+        // to the main canvas due to opacity. Lazily initialized.
         this.sketchCanvas = null;
         this.sketchContext = null;
 
-        // We force our container to ltr because our drawing math doesn't work in rtl.
-        // This issue only affects our canvas renderer, but we do it always for consistency.
-        // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
-        this.container.dir = 'ltr';
-
         // Image smoothing for canvas rendering (only if canvas is used).
-        // Canvas default is "true", so this will only be changed if user specified "false".
+        // Canvas default is "true", so this will only be changed if user specifies "false" in setImageSmoothinEnabled.
         this._imageSmoothingEnabled = true;
 
     }
@@ -93,7 +82,7 @@ class CanvasDrawer extends $.DrawerBase{
      * create the HTML element (e.g. canvas, div) that the image will be drawn into
      * @returns {Element} the canvas to draw into
      */
-    createDrawingElement(){
+    _createDrawingElement(){
         let canvas = $.makeNeutralElement("canvas");
         let viewportSize = this._calculateCanvasSize();
         canvas.width = viewportSize.x;
@@ -105,14 +94,13 @@ class CanvasDrawer extends $.DrawerBase{
      * Draws the TiledImages
      */
     draw(tiledImages) {
-        var _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
-        tiledImages.forEach(function(tiledImage){
+
+        for(const tiledImage of tiledImages){
             if (tiledImage.opacity !== 0 || tiledImage._preload) {
-                // _this._updateViewportWithTiledImage(tiledImage);
-                _this._drawTiles(tiledImage);
+                this._drawTiles(tiledImage);
             }
-        });
+        }
     }
 
     /**
@@ -178,7 +166,6 @@ class CanvasDrawer extends $.DrawerBase{
 
     /**
      * @private
-     * @inner
      * Fires the tile-drawing event.
      *
      */
@@ -553,8 +540,6 @@ class CanvasDrawer extends $.DrawerBase{
         }
     }
 
-    /* Methods from Tile */
-
     /**
      * @private
      * @inner
@@ -566,11 +551,12 @@ class CanvasDrawer extends $.DrawerBase{
     _clipWithPolygons (polygons, useSketch) {
         var context = this._getContext(useSketch);
         context.beginPath();
-        polygons.forEach(function (polygon) {
-            polygon.forEach(function (coord, i) {
+        for(const polygon of polygons){
+            for(const [i, coord] of polygon.entries() ){
                 context[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
-          });
-        });
+            }
+        }
+
         context.clip();
     }
 

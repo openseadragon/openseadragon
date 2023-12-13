@@ -90,8 +90,6 @@ $.DrawerBase = class DrawerBase{
          */
         this.container  = $.getElement( options.element );
 
-        // TODO: Does this need to be in DrawerBase, or only in Drawer implementations?
-        // Original commment:
         // We force our container to ltr because our drawing math doesn't work in rtl.
         // This issue only affects our canvas renderer, but we do it always for consistency.
         // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
@@ -117,7 +115,7 @@ $.DrawerBase = class DrawerBase{
 
     get canvas(){
         if(!this._renderingTarget){
-            this._renderingTarget = this.createDrawingElement();
+            this._renderingTarget = this._createDrawingElement();
         }
         return this._renderingTarget;
     }
@@ -144,8 +142,8 @@ $.DrawerBase = class DrawerBase{
      * create the HTML element (e.g. canvas, div) that the image will be drawn into
      * @returns {Element} the element to draw into
      */
-    createDrawingElement() {
-        $.console.error('Drawer.createDrawingElement must be implemented by child class');
+    _createDrawingElement() {
+        $.console.error('Drawer._createDrawingElement must be implemented by child class');
         return null;
     }
 
@@ -214,8 +212,8 @@ $.DrawerBase = class DrawerBase{
      * placeholder methods are still in place.
      */
     _checkForAPIOverrides(){
-        if(this.createDrawingElement === $.DrawerBase.prototype.createDrawingElement){
-            throw("[drawer].createDrawingElement must be implemented by child class");
+        if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
+            throw("[drawer]._createDrawingElement must be implemented by child class");
         }
         if(this.draw === $.DrawerBase.prototype.draw){
             throw("[drawer].draw must be implemented by child class");
