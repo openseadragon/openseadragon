@@ -2,7 +2,7 @@
  * OpenSeadragon - CanvasDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2022 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -347,7 +347,7 @@ class CanvasDrawer extends $.DrawerBase{
                         var point = tiledImage
                             .imageToViewportCoordinates(coord.x, coord.y, true)
                             .rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
-                        var clipPoint = self._viewportCoordToDrawerCoord(point);
+                        var clipPoint = self.viewportCoordToDrawerCoord(point);
                         if (sketchScale) {
                             clipPoint = clipPoint.times(sketchScale);
                         }
@@ -498,23 +498,6 @@ class CanvasDrawer extends $.DrawerBase{
                 tiles: lastDrawn,
             });
         }
-    }
-
-    /**
-         * This function converts the given point from to the drawer coordinate by
-         * multiplying it with the pixel density.
-         * This function does not take rotation into account, thus assuming provided
-         * point is at 0 degree.
-         * @private
-         * @param {OpenSeadragon.Point} point - the pixel point to convert
-         * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
-         */
-    _viewportCoordToDrawerCoord(point) {
-        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
-        return new $.Point(
-            vpPoint.x * $.pixelDensityRatio,
-            vpPoint.y * $.pixelDensityRatio
-        );
     }
 
     /**

@@ -2,7 +2,7 @@
  * OpenSeadragon - Mat3
  *
  * Modified from https://webglfundamentals.org/webgl/lessons/webgl-2d-matrices.html
- * Copyright (C) 2010-2023 webglfundamentals.org and OpenSeadragon contributors
+ * Copyright (C) 2010-2024 webglfundamentals.org and OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are

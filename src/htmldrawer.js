@@ -2,7 +2,7 @@
  * OpenSeadragon - HTMLDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -130,7 +130,6 @@ class HTMLDrawer extends $.DrawerBase{
 
     /**
      * @private
-     * @inner
      * Clears the Drawer so it's ready to draw another frame.
      *
      */
@@ -140,7 +139,6 @@ class HTMLDrawer extends $.DrawerBase{
 
     /**
      * @private
-     * @inner
      * Draws a TiledImage.
      *
      */
@@ -179,7 +177,6 @@ class HTMLDrawer extends $.DrawerBase{
 
     /**
      * @private
-     * @inner
      * Draws the given tile.
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
      * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.

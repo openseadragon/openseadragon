@@ -3,7 +3,7 @@
  * OpenSeadragon - WebGLDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -875,7 +875,6 @@
             this._clippingContext.clip();
         }
         _renderToClippingCanvas(item){
-            let _this = this;
 
             this._clippingContext.clearRect(0, 0, this._clippingCanvas.width, this._clippingCanvas.height);
             this._clippingContext.save();
@@ -886,18 +885,18 @@
                 this._setClip(rect);
             }
             if(item._croppingPolygons){
-                let polygons = item._croppingPolygons.map(function (polygon) {
-                    return polygon.map(function (coord) {
+                let polygons = item._croppingPolygons.map(polygon => {
+                    return polygon.map(coord => {
                         let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
-                            .rotate(_this.viewer.viewport.getRotation(true), _this.viewer.viewport.getCenter(true));
-                        let clipPoint = _this._viewportCoordToDrawerCoord(point);
+                            .rotate(this.viewer.viewport.getRotation(true), this.viewer.viewport.getCenter(true));
+                        let clipPoint = this.viewportCoordToDrawerCoord(point);
                         return clipPoint;
                     });
                 });
                 this._clippingContext.beginPath();
-                polygons.forEach(function (polygon) {
-                    polygon.forEach(function (coord, i) {
-                        _this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+                polygons.forEach(polygon => {
+                    polygon.forEach( (coord, i) => {
+                        this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
                     });
                 });
                 this._clippingContext.clip();
@@ -925,25 +924,6 @@
                 context.rotate(Math.PI / 180 * options.degrees);
             }
             context.translate(-point.x, -point.y);
-        }
-
-
-        /**
-            * @private
-            * @inner
-            * This function converts the given point from to the drawer coordinate by
-            * multiplying it with the pixel density.
-            * This function does not take rotation into account, thus assuming provided
-            * point is at 0 degree.
-            * @param {OpenSeadragon.Point} point - the pixel point to convert
-            * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
-            */
-        _viewportCoordToDrawerCoord(point) {
-            var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
-            return new $.Point(
-                vpPoint.x * $.pixelDensityRatio,
-                vpPoint.y * $.pixelDensityRatio
-            );
         }
 
         // private

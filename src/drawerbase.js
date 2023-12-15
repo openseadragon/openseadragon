@@ -2,7 +2,7 @@
  * OpenSeadragon - DrawerBase
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,16 +33,6 @@
  */
 
 (function( $ ){
-
-$.DrawerOptions = class DrawerOptions{
-    constructor(options){}
-};
-
-/**
- * @typedef {Object} Point
- * @property {number} x
- * @property {number} y
- */
 
 /**
  * @class DrawerBase
@@ -90,16 +80,14 @@ $.DrawerBase = class DrawerBase{
          */
         this.container  = $.getElement( options.element );
 
-        // We force our container to ltr because our drawing math doesn't work in rtl.
-        // This issue only affects our canvas renderer, but we do it always for consistency.
-        // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
-        this.container.dir = 'ltr';
+        this._renderingTarget = this._createDrawingElement();
 
-        // the first time this.canvas is accessed, implementations will create it
+
         this.canvas.style.width     = "100%";
         this.canvas.style.height    = "100%";
         this.canvas.style.position  = "absolute";
-        $.setElementOpacity( this.canvas, this.viewer.opacity, true ); // set
+        this.canvas.style.left = "0";
+        $.setElementOpacity( this.canvas, this.viewer.opacity, true );
 
         // Allow pointer events to pass through the canvas element so implicit
         //   pointer capture works on touch devices
@@ -113,10 +101,8 @@ $.DrawerBase = class DrawerBase{
         this._checkForAPIOverrides();
     }
 
+    // protect the canvas member with a getter
     get canvas(){
-        if(!this._renderingTarget){
-            this._renderingTarget = this._createDrawingElement();
-        }
         return this._renderingTarget;
     }
     get element(){
@@ -125,9 +111,10 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @property {String|undefined} type What type of drawer this is. Implementations should override this property.
+     * @returns {String|undefined} What type of drawer this is.
      */
     getType(){
+        $.console.error('Drawer.getType must be implemented by child class');
         return undefined;
     }
 
@@ -206,26 +193,25 @@ $.DrawerBase = class DrawerBase{
 
     /**
      * @private
-     * @inner
      * Ensures that child classes have provided implementations for public API methods
      * draw, canRotate, destroy, and setImageSmoothinEnabled. Throws an exception if the original
      * placeholder methods are still in place.
      */
     _checkForAPIOverrides(){
         if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
-            throw("[drawer]._createDrawingElement must be implemented by child class");
+            throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
         }
         if(this.draw === $.DrawerBase.prototype.draw){
-            throw("[drawer].draw must be implemented by child class");
+            throw(new Error("[drawer].draw must be implemented by child class"));
         }
         if(this.canRotate === $.DrawerBase.prototype.canRotate){
-            throw("[drawer].canRotate must be implemented by child class");
+            throw(new Error("[drawer].canRotate must be implemented by child class"));
         }
         if(this.destroy === $.DrawerBase.prototype.destroy){
-            throw("[drawer].destroy must be implemented by child class");
+            throw(new Error("[drawer].destroy must be implemented by child class"));
         }
         if(this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled){
-            throw("[drawer].setImageSmoothingEnabled must be implemented by child class");
+            throw(new Error("[drawer].setImageSmoothingEnabled must be implemented by child class"));
         }
     }
 
@@ -271,19 +257,14 @@ $.DrawerBase = class DrawerBase{
 
     /**
      * @private
-     * @inner
      * Calculate width and height of the canvas based on viewport dimensions
      * and pixelDensityRatio
-     * @returns {Point} {x, y} size of the canvas
+     * @returns {OpenSeadragon.Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {
         var pixelDensityRatio = $.pixelDensityRatio;
         var viewportSize = this.viewport.getContainerSize();
-        return {
-            // canvas width and height are integers
-            x: Math.round(viewportSize.x * pixelDensityRatio),
-            y: Math.round(viewportSize.y * pixelDensityRatio)
-        };
+        return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
     }
 
 };
