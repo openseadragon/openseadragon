@@ -83,8 +83,8 @@
 
         // Public API required by all Drawer implementations
         /**
-            * Clean up the renderer, removing all resources
-            */
+        * Clean up the renderer, removing all resources
+        */
         destroy(){
             if(this.destroyed){
                 return;
@@ -135,9 +135,9 @@
 
         // Public API required by all Drawer implementations
         /**
-            *
-            * @returns {Boolean} true if the drawer supports rotation
-            */
+        *
+        * @returns {Boolean} true if the drawer supports rotation
+        */
         canRotate(){
             return true;
         }
@@ -163,9 +163,10 @@
         }
 
         /**
-            * create the HTML element (canvas in this case) that the image will be drawn into
-            * @returns {Element} the canvas to draw into
-            */
+        * create the HTML element (canvas in this case) that the image will be drawn into
+        * @private
+        * @returns {Element} the canvas to draw into
+        */
         _createDrawingElement(){
             let canvas = $.makeNeutralElement("canvas");
             let viewportSize = this._calculateCanvasSize();
@@ -175,9 +176,9 @@
         }
 
         /**
-            *
-            * @param {Array} tiledImages Array of TiledImage objects to draw
-            */
+        *
+        * @param {Array} tiledImages Array of TiledImage objects to draw
+        */
         draw(tiledImages){
             let gl = this._gl;
             let viewport = {
@@ -356,7 +357,8 @@
                 }
 
                 // Fire tiled-image-drawn event.
-                // TODO: do we need to ensure the image has been drawn to the output canvas already? is it possible the image data may not be on the output canvas?
+                // TODO: for discussion: do we need to ensure the image has been drawn to the output canvas already?
+                // Is it possible the image data may not be on the output canvas? Does it matter?
                 if( this.viewer ){
                     /**
                         * Raised when a tiled image is drawn to the canvas. Only valid
@@ -496,6 +498,7 @@
 
         }
 
+        // private
         _setupRenderer(){
             let gl = this._gl;
             if(!gl){
@@ -531,6 +534,7 @@
 
         }
 
+        //private
         _makeFirstPassShaderProgram(){
             let numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
             let makeMatrixUniforms = () => {
@@ -627,6 +631,7 @@
 
         }
 
+        // private
         _makeSecondPassShaderProgram(){
             const vertexShaderProgram = `
             attribute vec2 a_output_position;
@@ -694,6 +699,7 @@
             gl.uniformMatrix3fv(this._secondPass.uMatrix, false, matrix.values);
         }
 
+        // private
         _resizeRenderer(){
             let gl = this._gl;
             let w = this._renderingCanvas.width;
@@ -717,6 +723,7 @@
 
         }
 
+        // private
         _setupCanvases(){
             let _this = this;
 
@@ -757,6 +764,7 @@
             });
         }
 
+        // private
         _makeQuadVertexBuffer(left, right, top, bottom){
             return new Float32Array([
                 left, bottom,
@@ -767,7 +775,7 @@
                 right, top]);
         }
 
-
+        // private
         _tileReadyHandler(event){
             let tile = event.tile;
             let tiledImage = event.tiledImage;
@@ -820,6 +828,7 @@
 
         }
 
+        // private
         _calculateOverlapFraction(tile, tiledImage){
             let overlap = tiledImage.source.tileOverlap;
             let nativeWidth = tile.sourceBounds.width; // in pixels
@@ -834,6 +843,7 @@
             };
         }
 
+        // private
         _uploadImageData(tileContext){
 
             let gl = this._gl;
@@ -851,11 +861,13 @@
             }
         }
 
+        // private
         _imageUnloadedHandler(event){
             let canvas = event.context2D.canvas;
             this._cleanupImageData(canvas);
         }
 
+        // private
         _cleanupImageData(tileCanvas){
             let textureInfo = this._TextureMap.get(tileCanvas);
             //remove from the map
@@ -867,6 +879,7 @@
             }
 
         }
+
         // private
         // necessary for clip testing to pass (test uses spyOnce(drawer._setClip))
         _setClip(rect){
@@ -874,6 +887,8 @@
             this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
             this._clippingContext.clip();
         }
+
+        // private
         _renderToClippingCanvas(item){
 
             this._clippingContext.clearRect(0, 0, this._clippingCanvas.width, this._clippingCanvas.height);

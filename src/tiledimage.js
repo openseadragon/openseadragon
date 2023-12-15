@@ -1417,7 +1417,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Update all tiles that contribute to the current view
      *
      */
@@ -1475,7 +1474,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Updates the opacity of a tile according to the time it has been on screen
      * to perform a fade-in.
      * Updates coverage once a tile is fully opaque.
@@ -1640,7 +1638,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * @param {OpenSeadragon.Tile} tile
      * @param {Boolean} overlap
      * @param {OpenSeadragon.Viewport} viewport
@@ -1694,7 +1691,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Update a single tile at a particular resolution level.
      * @param {Boolean} haveDrawn
      * @param {Boolean} drawLevel
@@ -1842,24 +1838,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Obtains a tile at the given location.
      * @param {Number} x
      * @param {Number} y
      * @param {Number} level
      * @param {Number} time
      * @param {Number} numTiles
-     * @param {Number} worldWidth
-     * @param {Number} worldHeight
      * @returns {OpenSeadragon.Tile}
      */
     _getTile: function(
         x, y,
         level,
         time,
-        numTiles,
-        worldWidth,
-        worldHeight
+        numTiles
     ) {
         var xMod,
             yMod,
@@ -1946,7 +1937,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Dispatch a job to the ImageLoader to load the Image for a Tile.
      * @param {OpenSeadragon.Tile} tile
      * @param {Number} time
@@ -1974,7 +1964,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Callback fired when a Tile's Image finished downloading.
      * @param {OpenSeadragon.Tile} tile
      * @param {Number} time
@@ -2030,7 +2019,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * @param {OpenSeadragon.Tile} tile
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
      * @param {Number|undefined} cutoff
@@ -2124,7 +2112,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Determines the 'best tiles' from the given 'last best' tiles and the
      * tile in question.
      *
@@ -2147,7 +2134,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Sorts tiles in an array according to distance and visibility.
      *
      * @param {OpenSeadragon.Tile[]} tiles The tiles.
@@ -2171,7 +2157,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Returns true if the given tile provides coverage to lower-level tiles of
      * lower resolution representing the same content. If neither x nor y is
      * given, returns true if the entire visible level provides coverage.
@@ -2220,7 +2205,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Returns true if the given tile is completely covered by higher-level
      * tiles of higher resolution representing the same content. If neither x
      * nor y is given, returns true if the entire visible level is covered.
@@ -2246,7 +2230,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Sets whether the given tile provides coverage or not.
      *
      * @param {Object} coverage - A '3d' dictionary [level][x][y] --> Boolean.
@@ -2273,7 +2256,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     /**
      * @private
-     * @inner
      * Resets coverage information for the given level. This should be called
      * after every draw routine. Note that at the beginning of the next draw
      * routine, coverage for every visible tile should be explicitly set.
