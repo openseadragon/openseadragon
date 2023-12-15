@@ -46,17 +46,8 @@
  */
 
 class HTMLDrawer extends $.DrawerBase{
-    constructor(){
-        // pass through ...arguments to DrawerBase to support positional arguments (legacy, not preferred)
-        super(...arguments);
-
-        /**
-         * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
-         * @member {Object} context
-         * @memberof OpenSeadragon.Drawer#
-         */
-        this.context = null;
-
+    constructor(options){
+        super(options);
     }
 
     /**

@@ -47,25 +47,8 @@
 $.DrawerBase = class DrawerBase{
     constructor(options){
         $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
-
-        //backward compatibility for positional args while preferring more
-        //idiomatic javascript options object as the only argument
-        var args  = arguments;
-
-        if( !$.isPlainObject( options ) ){
-            options = {
-                source:     args[ 0 ], // Reference to Viewer tile source.
-                viewport:   args[ 1 ], // Reference to Viewer viewport.
-                element:    args[ 2 ]  // Parent element.
-            };
-        }
-
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
         $.console.assert( options.element, "[Drawer] options.element is required" );
-
-        if ( options.source ) {
-            $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
-        }
 
         this.viewer = options.viewer;
         this.viewport = options.viewport;
@@ -86,6 +69,7 @@ $.DrawerBase = class DrawerBase{
         this.canvas.style.width     = "100%";
         this.canvas.style.height    = "100%";
         this.canvas.style.position  = "absolute";
+        // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
         this.canvas.style.left = "0";
         $.setElementOpacity( this.canvas, this.viewer.opacity, true );
 

@@ -46,9 +46,8 @@
  */
 
 class CanvasDrawer extends $.DrawerBase{
-    constructor(){
-        // pass through ...arguments to DrawerBase to support positional arguments (legacy, not preferred)
-        super(...arguments);
+    constructor(options){
+        super(options);
 
         /**
          * 2d drawing context for {@link OpenSeadragon.CanvasDrawer#canvas}.

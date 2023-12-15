@@ -1710,9 +1710,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             x, y,
             level,
             currentTime,
-            numberOfTiles,
-            this._worldWidthCurrent,
-            this._worldHeightCurrent
+            numberOfTiles
             ),
             drawTile = drawLevel;
 
