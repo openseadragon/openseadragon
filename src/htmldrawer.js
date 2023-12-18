@@ -102,7 +102,6 @@ class HTMLDrawer extends $.DrawerBase{
      * Destroy the drawer (unload current loaded tiles)
      */
     destroy() {
-        //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.innerHTML = "";
     }
 
@@ -120,8 +119,8 @@ class HTMLDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
      * Clears the Drawer so it's ready to draw another frame.
+     * @private
      *
      */
     _prepareNewFrame() {
@@ -129,8 +128,8 @@ class HTMLDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
      * Draws a TiledImage.
+     * @private
      *
      */
     _drawTiles( tiledImage ) {
@@ -167,8 +166,8 @@ class HTMLDrawer extends $.DrawerBase{
     }
 
     /**
-     * @private
      * Draws the given tile.
+     * @private
      * @param {OpenSeadragon.Tile} tile - The tile to draw.
      * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
      * drawingHandler({context, tile, rendered})

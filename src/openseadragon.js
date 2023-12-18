@@ -198,7 +198,7 @@
   *
   * @property {Object} drawerOptions
   *     Options to pass to the selected drawer implementation. For details
-  *     please @see {@link drawerOptions}.
+  *     please see {@link OpenSeadragon.DrawerOptions}.
   *
   * @property {Number} [opacity=1]
   *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
@@ -518,7 +518,7 @@
   *     Milliseconds to wait after each tile retry if tileRetryMax is set.
   *
   * @property {Boolean} [useCanvas=true]
-  *     Deprecated. Use drawer option to specify preferred renderer.
+  *     Deprecated. Use options.drawer to specify preferred renderer.
   *
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
@@ -753,6 +753,16 @@
   *     Note: springStiffness and animationTime also affect the "spring" used to stop the flick animation.
   *
   */
+
+ /**
+  * @typedef {Object} DrawerOptions
+  * @memberof OpenSeadragon
+  * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
+  * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
+  * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
+  * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
+  */
+
 
 /**
   * The names for the image resources used for the image navigation buttons.
@@ -1354,14 +1364,7 @@ function OpenSeadragon( options ){
 
             // DRAWER SETTINGS
             drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
-                /**
-                 * drawerOptions dictionary.
-                 * @type {Object}
-                 * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
-                 * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
-                 * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
-                 * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
-                 */
+
             drawerOptions: {
                 webgl: {
 

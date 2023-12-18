@@ -176,10 +176,11 @@ $.DrawerBase = class DrawerBase{
     // Private functions
 
     /**
-     * @private
      * Ensures that child classes have provided implementations for public API methods
      * draw, canRotate, destroy, and setImageSmoothinEnabled. Throws an exception if the original
      * placeholder methods are still in place.
+     * @private
+     *
      */
     _checkForAPIOverrides(){
         if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
@@ -240,9 +241,9 @@ $.DrawerBase = class DrawerBase{
     // Internal utility functions
 
     /**
-     * @private
-     * Calculate width and height of the canvas based on viewport dimensions
+     * * Calculate width and height of the canvas based on viewport dimensions
      * and pixelDensityRatio
+     * @private
      * @returns {OpenSeadragon.Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {

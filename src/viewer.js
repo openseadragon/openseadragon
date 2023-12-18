@@ -478,7 +478,7 @@ $.Viewer = function( options ) {
                 debugGridColor:     this.debugGridColor,
                 options:            this.drawerOptions[drawerCandidate],
             });
-            this.drawerOptions.constructor = Drawer;
+
             break;
         }
     }
