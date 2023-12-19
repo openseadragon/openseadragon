@@ -241,7 +241,7 @@ $.DrawerBase = class DrawerBase{
     // Internal utility functions
 
     /**
-     * * Calculate width and height of the canvas based on viewport dimensions
+     * Calculate width and height of the canvas based on viewport dimensions
      * and pixelDensityRatio
      * @private
      * @returns {OpenSeadragon.Point} {x, y} size of the canvas

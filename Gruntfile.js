@@ -28,7 +28,7 @@ module.exports = function(grunt) {
         coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
-            "src/matrix.js",
+            "src/matrix3.js",
             "src/fullscreen.js",
             "src/eventsource.js",
             "src/mousetracker.js",

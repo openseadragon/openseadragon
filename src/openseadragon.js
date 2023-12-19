@@ -518,7 +518,7 @@
   *     Milliseconds to wait after each tile retry if tileRetryMax is set.
   *
   * @property {Boolean} [useCanvas=true]
-  *     Deprecated. Use options.drawer to specify preferred renderer.
+  *     Deprecated. Use the `drawer` option to specify preferred renderer.
   *
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
