@@ -1153,17 +1153,15 @@ $.Viewport.prototype = {
             this.degreesSpring.update();
         }
 
-
-        var changed = this.centerSpringX.current.value !== this._oldCenterX ||
-            this.centerSpringY.current.value !== this._oldCenterY ||
-            this.zoomSpring.current.value !== this._oldZoom ||
-            this.degreesSpring.current.value !== this._oldDegrees;
-
-
         this._oldCenterX = this.centerSpringX.current.value;
         this._oldCenterY = this.centerSpringY.current.value;
         this._oldZoom    = this.zoomSpring.current.value;
         this._oldDegrees = this.degreesSpring.current.value;
+
+        var changed = !this.zoomSpring.isAtTargetValue() ||
+                      !this.centerSpringX.isAtTargetValue() ||
+                      !this.centerSpringY.isAtTargetValue() ||
+                      !this.degreesSpring.isAtTargetValue();
 
         return changed;
     },
