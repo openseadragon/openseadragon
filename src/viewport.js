@@ -1133,7 +1133,7 @@ $.Viewport.prototype = {
     /**
      * Update the zoom, degrees, and center (X and Y) springs.
      * @function
-     * @returns {Boolean} True if any change has been made, false otherwise.
+     * @returns {Boolean} True if any spring is still animating, false otherwise.
      */
     update: function() {
         var _this = this;
@@ -1158,12 +1158,12 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
         this._oldDegrees = this.degreesSpring.current.value;
 
-        var changed = !this.zoomSpring.isAtTargetValue() ||
-                      !this.centerSpringX.isAtTargetValue() ||
-                      !this.centerSpringY.isAtTargetValue() ||
-                      !this.degreesSpring.isAtTargetValue();
+        var stillUpdating = !this.zoomSpring.isAtTargetValue() ||
+                            !this.centerSpringX.isAtTargetValue() ||
+                            !this.centerSpringY.isAtTargetValue() ||
+                            !this.degreesSpring.isAtTargetValue();
 
-        return changed;
+        return stillUpdating;
     },
 
     // private - pass true to use spring, or a number for degrees for immediate rotation
