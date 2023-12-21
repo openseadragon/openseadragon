@@ -1040,10 +1040,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Array} Array of Tiles that make up the current view
      */
     getTilesToDraw: function(){
-
+        // start with all the tiles added to this._tilesToDraw during the most recent
+        // call to this.update. Then update them so the blending and coverage properties
+        // are updated based on the current time
         let tileArray = this._tilesToDraw.flat();
-        // update all tiles (so blending can happen right at the time of drawing)
+
+        // update all tiles, which can change the coverage provided
         this._updateTilesInViewport(tileArray);
+
         // _tilesToDraw might have been updated by the update; refresh it
         tileArray = this._tilesToDraw.flat();
 
@@ -1362,7 +1366,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
 
             // Update the level and keep track of 'best' tiles to load
-
+            // the bestTiles
             var result = this._updateLevel(
                 haveDrawn,
                 drawLevel,
@@ -1374,8 +1378,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bestTiles
             );
 
-            bestTiles = result.best;
-            var tiles = result.tiles.filter(tile => tile.loaded);
+            bestTiles = result.bestTiles;
+            var tiles = result.updatedTiles.filter(tile => tile.loaded);
             var makeTileInfoObject = (function(level, levelOpacity, currentTime){
                 return function(tile){
                     return {
@@ -1451,7 +1455,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
-        // Update each tile in the _lastDrawn list. As the tiles are updated,
+        // Update each tile in the list of tiles. As the tiles are updated,
         // the coverage provided is also updated. If a level provides coverage
         // as part of this process, discard tiles from lower levels
         let level = 0;
@@ -1529,7 +1533,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelVisibility
      * @param {OpenSeadragon.Rect} drawArea
      * @param {Number} currentTime
-     * @param {Object} result Dictionary {best: OpenSeadragon.Tile - the current "best" tiles to draw, tiles: Array(OpenSeadragon.Tile) - the updated tiles}.
+     * @param {OpenSeadragon.Tile[]} best Array of the current best tiles
+     * @returns {Object} Dictionary {bestTiles: OpenSeadragon.Tile - the current "best" tiles to draw, updatedTiles: OpenSeadragon.Tile) - the updated tiles}.
      */
     _updateLevel: function(haveDrawn, drawLevel, level, levelOpacity,
                            levelVisibility, drawArea, currentTime, best) {
@@ -1624,15 +1629,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     currentTime,
                     best
                 );
-                best = result.best;
+                best = result.bestTiles;
                 tiles[tileIndex] = result.tile;
                 tileIndex += 1;
             }
         }
 
         return {
-            best: best,
-            tiles: tiles
+            bestTiles: best,
+            updatedTiles: tiles
         };
     },
 
@@ -1702,6 +1707,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} numberOfTiles
      * @param {Number} currentTime
      * @param {OpenSeadragon.Tile} best - The current "best" tile to draw.
+     * @returns {Object} Dictionary {bestTiles: OpenSeadragon.Tile[] - the current best tiles, tile: OpenSeadragon.Tile the current tile}
      */
     _updateTile: function( haveDrawn, drawLevel, x, y, level,
                            levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
@@ -1739,7 +1745,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if ( !tile.exists ) {
             return {
-                best: best,
+                bestTiles: best,
                 tile: tile
             };
         }
@@ -1756,7 +1762,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if ( !drawTile ) {
             return {
-                best: best,
+                bestTiles: best,
                 tile: tile
             };
         }
@@ -1788,7 +1794,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         return {
-            best: best,
+            bestTiles: best,
             tile: tile
         };
     },
