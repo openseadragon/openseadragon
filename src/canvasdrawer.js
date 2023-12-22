@@ -62,7 +62,7 @@ class CanvasDrawer extends $.DrawerBase{
         this.sketchContext = null;
 
         // Image smoothing for canvas rendering (only if canvas is used).
-        // Canvas default is "true", so this will only be changed if user specifies "false" in setImageSmoothinEnabled.
+        // Canvas default is "true", so this will only be changed if user specifies "false" in the options or via setImageSmoothinEnabled.
         this._imageSmoothingEnabled = true;
 
     }
@@ -138,7 +138,7 @@ class CanvasDrawer extends $.DrawerBase{
      * {@link OpenSeadragon.Options} for more explanation.
      */
     setImageSmoothingEnabled(imageSmoothingEnabled){
-        this._imageSmoothingEnabled = imageSmoothingEnabled;
+        this._imageSmoothingEnabled = !!imageSmoothingEnabled;
         this._updateImageSmoothingEnabled(this.context);
         this.viewer.forceRedraw();
     }

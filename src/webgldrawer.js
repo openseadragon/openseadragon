@@ -392,8 +392,10 @@
         * @param {Boolean} enabled
         */
         setImageSmoothingEnabled(enabled){
-            this._clippingContext.imageSmoothingEnabled = enabled;
-            this._outputContext.imageSmoothingEnabled = enabled;
+            //TODO: does imageSmoothingEnabled make sense in the WebGL drawer?
+            // We aren't scaling small images up to larger ones using context2d canvas operations so it may not apply
+            this._clippingContext.imageSmoothingEnabled = !!enabled;
+            this._outputContext.imageSmoothingEnabled = !!enabled;
         }
 
         /**

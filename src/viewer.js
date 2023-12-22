@@ -447,6 +447,8 @@ $.Viewer = function( options ) {
     }
     let drawerCandidates = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
     if (drawerCandidates.length === 0){
+        // if an empty array was passed in, throw a warning and use the defaults
+        // note: if the drawer option is not specified, the defaults will already be set so this won't apply
         drawerCandidates = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
@@ -487,13 +489,15 @@ $.Viewer = function( options ) {
         throw('Error with creating the selected drawer(s)');
     }
 
+    // Pass the imageSmoothingEnabled option along to the drawer
+    this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
     this.canvas.appendChild( this.overlaysContainer );
 
     // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
-    if (this.drawer && !this.drawer.canRotate()) {
+    if (!this.drawer.canRotate()) {
         // Disable/remove the rotate left/right buttons since they aren't supported
         if (this.rotateLeft) {
             i = this.buttonGroup.buttons.indexOf(this.rotateLeft);
