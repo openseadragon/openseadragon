@@ -72,10 +72,10 @@
            this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
            this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
 
-           // this.viewer is set by parent constructor
-           // this.canvas is set by parent constructor, created and appended to the viewer container element
+           // this.viewer and this.canvas are part of the public DrawerBase API
+           // and are set by the parent constructor. Additional setup is done by
+           // the private _setupCanvases and _setupRenderer functions.
            this._setupCanvases();
-
            this._setupRenderer();
 
            this.context = this._outputContext; // API required by tests
@@ -143,7 +143,6 @@
         }
 
         // Public API required by all Drawer implementations
-
         /**
         * @returns {Boolean} true if canvas and webgl are supported
         */
@@ -181,7 +180,7 @@
         */
         draw(tiledImages){
             let gl = this._gl;
-            let viewport = {
+            let view = {
                 bounds: this.viewport.getBoundsNoRotate(true),
                 center: this.viewport.getCenter(true),
                 rotation: this.viewport.getRotation(true) * Math.PI / 180
@@ -189,9 +188,9 @@
 
             let flipMultiplier = this.viewport.flipped ? -1 : 1;
             // calculate view matrix for viewer
-            let posMatrix = $.Mat3.makeTranslation(-viewport.center.x, -viewport.center.y);
-            let scaleMatrix = $.Mat3.makeScaling(2 / viewport.bounds.width * flipMultiplier, -2 / viewport.bounds.height);
-            let rotMatrix = $.Mat3.makeRotation(-viewport.rotation);
+            let posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
+            let scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
+            let rotMatrix = $.Mat3.makeRotation(-view.rotation);
             let viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -247,9 +246,6 @@
                     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                     // no need to clear, just draw on top of the existing pixels
                 }
-
-
-
 
                 let overallMatrix = viewMatrix;
 
@@ -418,6 +414,7 @@
 
             context.restore();
         }
+
         // private
         _getTextureDataFromTile(tile){
             return tile.getCanvasContext().canvas;
@@ -804,7 +801,7 @@
                     let bottom = tile.isBottomMost ? 1 : 1 - overlapFraction.y;
                     position = this._makeQuadVertexBuffer(left, right, top, bottom);
                 } else {
-                    // no overlap: this texture can use the unit quad as it's position data
+                    // no overlap: this texture can use the unit quad as its position data
                     position = this._unitQuad;
                 }
 
@@ -883,7 +880,6 @@
         }
 
         // private
-        // necessary for clip testing to pass (test uses spyOnce(drawer._setClip))
         _setClip(rect){
             this._clippingContext.beginPath();
             this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
@@ -955,6 +951,7 @@
                 }
             }
         }
+
         // private
         _drawDebugInfoOnTile(tile, count, i, tiledImage, stroke, fill) {
 
@@ -1065,6 +1062,31 @@
 
         // modified from https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
         static initShaderProgram(gl, vsSource, fsSource) {
+
+            function loadShader(gl, type, source) {
+                const shader = gl.createShader(type);
+
+                // Send the source to the shader object
+
+                gl.shaderSource(shader, source);
+
+                // Compile the shader program
+
+                gl.compileShader(shader);
+
+                // See if it compiled successfully
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    $.console.error(
+                        `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`
+                    );
+                    gl.deleteShader(shader);
+                    return null;
+                }
+
+                return shader;
+            }
+
             const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
             const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -1078,7 +1100,7 @@
             // If creating the shader program failed, alert
 
             if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert(
+            $.console.error(
                 `Unable to initialize the shader program: ${gl.getProgramInfoLog(
                 shaderProgram
                 )}`
@@ -1087,30 +1109,6 @@
             }
 
             return shaderProgram;
-
-            function loadShader(gl, type, source) {
-                    const shader = gl.createShader(type);
-
-                    // Send the source to the shader object
-
-                    gl.shaderSource(shader, source);
-
-                    // Compile the shader program
-
-                    gl.compileShader(shader);
-
-                    // See if it compiled successfully
-
-                    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                        alert(
-                            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`
-                        );
-                        gl.deleteShader(shader);
-                        return null;
-                    }
-
-                return shader;
-            }
         }
 
     };
