@@ -101,24 +101,6 @@ class CanvasDrawer extends $.DrawerBase{
                 this._drawTiles(tiledImage);
             }
         }
-
-        // // Fire the frame-drawn event.
-        // if( this.viewer ){
-        //     /**
-        //         * Raised when a tiled image is drawn to the canvas. Only valid
-        //         * for webgl and canvas drawers.
-        //         *
-        //         * @event tiled-image-drawn
-        //         * @memberof OpenSeadragon.Viewer
-        //         * @type {object}
-        //         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-        //         * @property {HTMLElement} canvas - The canvas which has been drawn onto
-        //         * @property {?Object} userData - Arbitrary subscriber-defined object.
-        //         */
-        //     this.viewer.raiseEvent( 'frame-drawn', {
-        //         canvas: this.canvas
-        //     });
-        // }
     }
 
     /**
@@ -499,17 +481,17 @@ class CanvasDrawer extends $.DrawerBase{
         // Fire tiled-image-drawn event.
         if( this.viewer ){
             /**
-                * Raised when a tiled image is drawn to the canvas. Only valid
-                * for webgl and canvas drawers.
-                *
-                * @event tiled-image-drawn
-                * @memberof OpenSeadragon.Viewer
-                * @type {object}
-                * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                * @property {Array} tiles - An array of Tile objects that were drawn.
-                * @property {?Object} userData - Arbitrary subscriber-defined object.
-                */
+            *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
+            *  The update-viewport event is preferred if you want to know when a frame has been drawn.
+            *
+            * @event tiled-image-drawn
+            * @memberof OpenSeadragon.Viewer
+            * @type {object}
+            * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+            * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+            * @property {Array} tiles - An array of Tile objects that were drawn.
+            * @property {?Object} userData - Arbitrary subscriber-defined object.
+            */
             this.viewer.raiseEvent( 'tiled-image-drawn', {
                 tiledImage: tiledImage,
                 tiles: lastDrawn,

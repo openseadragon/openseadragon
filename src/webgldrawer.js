@@ -352,22 +352,20 @@
                     gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
                 }
 
-                // Fire tiled-image-drawn event.
-                // TODO: for discussion: do we need to ensure the image has been drawn to the output canvas already?
-                // Is it possible the image data may not be on the output canvas? Does it matter?
+                // Fire tiled-image-drawn event. This is used for the tests
                 if( this.viewer ){
                     /**
-                        * Raised when a tiled image is drawn to the canvas. Only valid
-                        * for webgl and canvas drawers.
-                        *
-                        * @event tiled-image-drawn
-                        * @memberof OpenSeadragon.Viewer
-                        * @type {object}
-                        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                        * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                        * @property {Array} tiles - An array of Tile objects that were drawn.
-                        * @property {?Object} userData - Arbitrary subscriber-defined object.
-                        */
+                    * Raised when a tiled image is drawn to the canvas. Used internally for testing.
+                    * The update-viewport event is preferred if you want to know when a frame has been drawn.
+                    *
+                    * @event tiled-image-drawn
+                    * @memberof OpenSeadragon.Viewer
+                    * @type {object}
+                    * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                    * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                    * @property {Array} tiles - An array of Tile objects that were drawn.
+                    * @property {?Object} userData - Arbitrary subscriber-defined object.
+                    */
                     this.viewer.raiseEvent( 'tiled-image-drawn', {
                         tiledImage: tiledImage,
                         tiles: tilesToDraw.map(info => info.tile),
@@ -379,24 +377,6 @@
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
-
-            // // Fire the frame-drawn event.
-            // if( this.viewer ){
-            //     /**
-            //         * Raised when a tiled image is drawn to the canvas. Only valid
-            //         * for webgl and canvas drawers.
-            //         *
-            //         * @event tiled-image-drawn
-            //         * @memberof OpenSeadragon.Viewer
-            //         * @type {object}
-            //         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-            //         * @property {HTMLElement} canvas - The canvas which has been drawn onto
-            //         * @property {?Object} userData - Arbitrary subscriber-defined object.
-            //         */
-            //     this.viewer.raiseEvent( 'frame-drawn', {
-            //         canvas: this.canvas
-            //     });
-            // }
 
         }
 
