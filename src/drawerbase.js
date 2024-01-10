@@ -252,6 +252,33 @@ $.DrawerBase = class DrawerBase{
         return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
     }
 
+    /**
+     * Called by implementations to fire the tiled-image-drawn event (used by tests)
+     * @private
+     */
+    _raiseTiledImageDrawnEvent(tiledImage, tiles){
+        if(!this.viewer) {
+            return;
+        }
+
+        /**
+        *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
+        *  The update-viewport event is preferred if you want to know when a frame has been drawn.
+        *
+        * @event tiled-image-drawn
+        * @memberof OpenSeadragon.Viewer
+        * @type {object}
+        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+        * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+        * @property {Array} tiles - An array of Tile objects that were drawn.
+        * @property {?Object} userData - Arbitrary subscriber-defined object.
+        */
+        this.viewer.raiseEvent( 'tiled-image-drawn', {
+            tiledImage: tiledImage,
+            tiles: tiles,
+        });
+    }
+
 };
 
 }( OpenSeadragon ));

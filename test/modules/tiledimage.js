@@ -13,7 +13,8 @@
             viewer = OpenSeadragon({
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
-                springStiffness: 100 // Faster animation = faster tests
+                springStiffness: 100, // Faster animation = faster tests
+                drawer: 'canvas', // always use canvas drawer for these tests
             });
         },
         afterEach: function() {
@@ -132,8 +133,7 @@
     QUnit.test('update', function(assert) {
         var done = assert.async();
         var handlerCount = 0;
-        var testTileDrawingEvent = viewer.drawer.getType() === 'canvas';
-        let expectedHandlers = testTileDrawingEvent ? 4 : 3;
+        let expectedHandlers = 4;
 
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
@@ -162,17 +162,17 @@
                 assert.ok(event.tile, 'update-tile event includes tile');
             });
 
-            if(testTileDrawingEvent){
-                viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
-                    viewer.removeHandler('tile-drawing', tileDrawingHandler);
-                    handlerCount++;
-                    assert.equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
-                    assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
-                    assert.ok(event.tile, 'tile-drawing event includes a tile');
-                    assert.ok(event.context, 'tile-drawing event includes a context');
-                    assert.ok(event.rendered, 'tile-drawing event includes a rendered');
-                });
-            }
+
+            viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
+                viewer.removeHandler('tile-drawing', tileDrawingHandler);
+                handlerCount++;
+                assert.equal(event.eventSource, viewer, 'sender of tile-drawing event was viewer');
+                assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
+                assert.ok(event.tile, 'tile-drawing event includes a tile');
+                assert.ok(event.context, 'tile-drawing event includes a context');
+                assert.ok(event.rendered, 'tile-drawing event includes a rendered');
+            });
+
 
 
             viewer.addHandler('tiled-image-drawn', function tileDrawnHandler(event) {
