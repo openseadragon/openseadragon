@@ -101,6 +101,24 @@ class CanvasDrawer extends $.DrawerBase{
                 this._drawTiles(tiledImage);
             }
         }
+
+        // // Fire the frame-drawn event.
+        // if( this.viewer ){
+        //     /**
+        //         * Raised when a tiled image is drawn to the canvas. Only valid
+        //         * for webgl and canvas drawers.
+        //         *
+        //         * @event tiled-image-drawn
+        //         * @memberof OpenSeadragon.Viewer
+        //         * @type {object}
+        //         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+        //         * @property {HTMLElement} canvas - The canvas which has been drawn onto
+        //         * @property {?Object} userData - Arbitrary subscriber-defined object.
+        //         */
+        //     this.viewer.raiseEvent( 'frame-drawn', {
+        //         canvas: this.canvas
+        //     });
+        // }
     }
 
     /**

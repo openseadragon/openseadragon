@@ -20,16 +20,6 @@
     <div id="contentDiv" class="openseadragon1"></div>
     <script type="text/javascript">
 
-        const url = new URL(window.location.href);
-        let drawer = url.searchParams.get("drawer");
-        if (!drawer) {
-            drawer = 'canvas';
-            url.searchParams.set('drawer', drawer);
-            if ("undefined" !== typeof history.replaceState) {
-                history.replaceState(null, window.location.title, url.toString());
-            }
-        }
-
         var viewer = OpenSeadragon({
             // debugMode: true,
             id: "contentDiv",
